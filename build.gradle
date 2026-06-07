@@ -7,6 +7,8 @@ version = project.mod_version
 group = project.maven_group
 
 repositories {
+	mavenCentral()
+
 	exclusiveContent {
 		forRepository {
 			maven {
@@ -63,6 +65,14 @@ dependencies {
 
 	// GeckoLib — 3D animated models (used by Slenderman hero)
 	modImplementation "software.bernie.geckolib:geckolib-fabric-1.21:4.5.8"
+
+	testImplementation platform("org.junit:junit-bom:5.10.2")
+	testImplementation "org.junit.jupiter:junit-jupiter"
+	testRuntimeOnly "org.junit.platform:junit-platform-launcher"
+}
+
+tasks.withType(Test).configureEach {
+	useJUnitPlatform()
 }
 
 processResources {

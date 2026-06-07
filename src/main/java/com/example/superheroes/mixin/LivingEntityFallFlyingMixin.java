@@ -1,7 +1,7 @@
 package com.example.superheroes.mixin;
 
-import com.example.superheroes.ability.AbilityIds;
 import com.example.superheroes.attachment.ModAttachments;
+import com.example.superheroes.effect.FlightController;
 import com.example.superheroes.transform.HeroData;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -23,7 +23,7 @@ public abstract class LivingEntityFallFlyingMixin {
 			return;
 		}
 		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
-		if (data.hasHero() && (data.isActive(AbilityIds.FLIGHT) || data.isActive(AbilityIds.IRON_MAN_FLIGHT) || data.isActive(AbilityIds.SUPERSONIC))) {
+		if (data.hasHero() && FlightController.isFlightActive(data)) {
 			player.startFallFlying();
 			this.fallFlyTicks++;
 			ci.cancel();

@@ -1,7 +1,7 @@
 package com.example.superheroes.mixin;
 
-import com.example.superheroes.ability.AbilityIds;
 import com.example.superheroes.attachment.ModAttachments;
+import com.example.superheroes.effect.FlightController;
 import com.example.superheroes.transform.HeroData;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.player.Player;
@@ -19,9 +19,7 @@ public abstract class PlayerFlightPoseMixin {
 		if (!data.hasHero()) {
 			return;
 		}
-		if (data.isActive(AbilityIds.FLIGHT)
-				|| data.isActive(AbilityIds.IRON_MAN_FLIGHT)
-				|| data.isActive(AbilityIds.SUPERSONIC)) {
+		if (FlightController.isFlightActive(data)) {
 			if (!self.isFallFlying()) {
 				self.startFallFlying();
 			}

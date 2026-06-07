@@ -18,7 +18,7 @@ triggers: ["model"]
 
 ## Версии
 
-- Current mod version: `3.14.0`
+- Current mod version: `3.15.0`
 - Base tag: `v3.12.2`
 - Minecraft: `1.21`
 - Loader: Fabric (`fabric-loader 0.19.2`, `fabric-api 0.102.0+1.21`)
@@ -33,7 +33,7 @@ triggers: ["model"]
 
 `Homelander`, `Iron Man`, `Regulus`, `Sung Jin-Woo`, `Doomsday`, `Goku`, `Naruto`, `Captain America`, `Kratos`, `Loki`, `Thanos`, `Reinhard van Astrea`, `Raiden Shogun`, `Invincible`.
 
-Зарегистрировано 80 abilities в `AbilityRegistry.java` на базе `v3.14.0`.
+Зарегистрировано 80 abilities в `AbilityRegistry.java` на базе `v3.15.0`.
 
 ## Главные системы
 

@@ -146,6 +146,7 @@ public final class RegulusMadnessController {
 			com.example.superheroes.ability.AbilityRouter.deactivate(sp, com.example.superheroes.ability.AbilityIds.SUPERSONIC);
 		} catch (Throwable ignored) {
 		}
+		FlightController.stop(sp);
 		net.minecraft.world.entity.player.Abilities a = sp.getAbilities();
 		a.flying = false;
 		if (sp.gameMode.getGameModeForPlayer() != net.minecraft.world.level.GameType.CREATIVE) {

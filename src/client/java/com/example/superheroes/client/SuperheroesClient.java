@@ -171,6 +171,7 @@ public class SuperheroesClient implements ClientModInitializer {
 			}
 		});
 
+		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> ClientFlightState.clearAll());
 
 	}
 }
