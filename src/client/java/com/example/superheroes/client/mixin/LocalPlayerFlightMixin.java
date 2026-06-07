@@ -4,9 +4,13 @@ import com.example.superheroes.client.ClientFlightState;
 import com.example.superheroes.client.ClientHeroState;
 import com.example.superheroes.effect.ModEffects;
 import com.example.superheroes.flight.FlightAbilityState;
+import com.example.superheroes.flight.FlightControls;
 import com.example.superheroes.flight.FlightMode;
+import com.example.superheroes.flight.FlightMotionMath;
+import com.example.superheroes.flight.FlightPhase;
 import com.example.superheroes.flight.FlightProfiles;
 import com.example.superheroes.flight.FlightTuning;
+import com.example.superheroes.flight.FlightVector;
 import com.example.superheroes.transform.HeroData;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.entity.MoverType;
@@ -27,90 +31,28 @@ public abstract class LocalPlayerFlightMixin {
 		}
 		HeroData heroData = ClientHeroState.data();
 		FlightMode mode = FlightAbilityState.activeMode(heroData);
+		FlightPhase phase = FlightPhase.CRUISE;
 		ClientFlightState.State state = ClientFlightState.get(player.getId());
 		if (state != null) {
 			mode = state.mode();
+			phase = state.phase();
 		}
 		if (mode == null) {
 			return;
 		}
 
 		FlightTuning tuning = FlightProfiles.tuning(mode, heroData.energy(), ClientHeroState.energyMax(), ModEffects.isMadness(player));
-		double maxHorizontal = tuning.maxHorizontalSpeed();
-		double maxVertical = tuning.maxVerticalSpeed();
-		double accelMag = tuning.acceleration();
-
-		float forward = player.zza;
-		float strafe = player.xxa;
-		boolean jumping = player.input != null && player.input.jumping;
-		boolean sneaking = player.input != null && player.input.shiftKeyDown;
-		if (tuning.forcesForward() && forward < 1.0f) {
-			forward = 1.0f;
-		}
-
-		float yawRad = (float) Math.toRadians(player.getYRot());
-		float pitchRad = (float) Math.toRadians(player.getXRot());
-		double sinYaw = Math.sin(yawRad);
-		double cosYaw = Math.cos(yawRad);
-		double sinPitch = Math.sin(pitchRad);
-		double cosPitch = Math.cos(pitchRad);
-
-		double inputForwardX = -sinYaw * cosPitch;
-		double inputForwardY = -sinPitch;
-		double inputForwardZ = cosYaw * cosPitch;
-
-		double inputStrafeX = cosYaw;
-		double inputStrafeZ = sinYaw;
-
-		double accelX = inputForwardX * forward + inputStrafeX * strafe;
-		double accelY = inputForwardY * forward;
-		double accelZ = inputForwardZ * forward + inputStrafeZ * strafe;
-
-		if (jumping) {
-			accelY += 1.0;
-		}
-		if (sneaking) {
-			accelY -= 1.0;
-		}
-
-		double inputMag = Math.sqrt(accelX * accelX + accelY * accelY + accelZ * accelZ);
-		if (inputMag > 1e-4) {
-			double scale = accelMag / Math.max(inputMag, 1.0);
-			accelX *= scale;
-			accelY *= scale;
-			accelZ *= scale;
-		} else {
-			accelX = 0;
-			accelY = 0;
-			accelZ = 0;
-		}
-
 		Vec3 motion = self.getDeltaMovement();
-		double mx = motion.x + accelX;
-		double my = motion.y + accelY;
-		double mz = motion.z + accelZ;
+		FlightControls controls = new FlightControls(
+				player.getYRot(),
+				player.getXRot(),
+				player.zza,
+				player.xxa,
+				player.input != null && player.input.jumping,
+				player.input != null && player.input.shiftKeyDown);
+		FlightVector next = FlightMotionMath.next(new FlightVector(motion.x, motion.y, motion.z), controls, tuning, phase);
 
-		double horizSq = mx * mx + mz * mz;
-		if (horizSq > maxHorizontal * maxHorizontal) {
-			double s = maxHorizontal / Math.sqrt(horizSq);
-			mx *= s;
-			mz *= s;
-		}
-		if (Math.abs(my) > maxVertical) {
-			my = Math.signum(my) * maxVertical;
-		}
-
-		boolean noHorizInput = forward == 0 && strafe == 0;
-		boolean noVertInput = !jumping && !sneaking && forward == 0;
-		if (noHorizInput) {
-			mx *= tuning.horizontalFriction();
-			mz *= tuning.horizontalFriction();
-		}
-		if (noVertInput) {
-			my *= tuning.verticalFriction();
-		}
-
-		self.setDeltaMovement(mx, my, mz);
+		self.setDeltaMovement(next.x(), next.y(), next.z());
 		self.move(MoverType.SELF, self.getDeltaMovement());
 		ci.cancel();
 	}

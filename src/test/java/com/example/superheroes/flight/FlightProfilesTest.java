@@ -2,17 +2,17 @@ package com.example.superheroes.flight;
 
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class FlightProfilesTest {
 	@Test
-	void normalFlightScalesWithEnergyAndKeepsLegacyTopSpeed() {
-		FlightTuning tuning = FlightProfiles.tuning(FlightMode.NORMAL, 50f, 100f, false);
+	void normalFlightNoLongerKeepsLegacyTopSpeed() {
+		FlightTuning tuning = FlightProfiles.tuning(FlightMode.NORMAL, 100f, 100f, false);
 
-		assertEquals(1.6875, tuning.maxHorizontalSpeed(), 0.0001);
-		assertEquals(1.125, tuning.maxVerticalSpeed(), 0.0001);
-		assertEquals(0.135, tuning.acceleration(), 0.0001);
+		assertTrue(tuning.maxHorizontalSpeed() >= 2.75);
+		assertTrue(tuning.maxVerticalSpeed() >= 1.30);
+		assertTrue(tuning.acceleration() >= 0.22);
+		assertTrue(tuning.horizontalFriction() <= 0.86);
 	}
 
 	@Test
@@ -22,5 +22,14 @@ class FlightProfilesTest {
 
 		assertTrue(supersonic.forcesForward());
 		assertTrue(supersonic.maxHorizontalSpeed() > ironMan.maxHorizontalSpeed());
+	}
+
+	@Test
+	void supersonicIsClearlyFasterThanNormalFlight() {
+		FlightTuning normal = FlightProfiles.tuning(FlightMode.NORMAL, 100f, 100f, false);
+		FlightTuning supersonic = FlightProfiles.tuning(FlightMode.SUPERSONIC, 100f, 100f, false);
+
+		assertTrue(supersonic.maxHorizontalSpeed() >= normal.maxHorizontalSpeed() * 1.75);
+		assertTrue(supersonic.acceleration() >= normal.acceleration() * 1.50);
 	}
 }

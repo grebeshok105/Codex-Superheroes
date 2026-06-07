@@ -1,16 +1,16 @@
 package com.example.superheroes.flight;
 
 public final class FlightProfiles {
-	public static final double BASE_MAX_HORIZONTAL_SPEED = 1.5;
-	public static final double BASE_MAX_VERTICAL_SPEED = 1.0;
-	public static final double BASE_ACCELERATION = 0.12;
+	public static final double BASE_MAX_HORIZONTAL_SPEED = 2.0;
+	public static final double BASE_MAX_VERTICAL_SPEED = 1.05;
+	public static final double BASE_ACCELERATION = 0.16;
 	public static final double MIN_ENERGY_MULTIPLIER = 0.5;
 	public static final double MADNESS_MULTIPLIER = 1.5;
-	public static final double NORMAL_FLIGHT_MULTIPLIER = 1.5;
-	public static final double IRON_MAN_MULTIPLIER = 0.56;
-	public static final double SUPERSONIC_MULTIPLIER = 2.6;
-	public static final double HORIZONTAL_FRICTION = 0.92;
-	public static final double VERTICAL_FRICTION = 0.90;
+	public static final double NORMAL_FLIGHT_MULTIPLIER = 1.45;
+	public static final double IRON_MAN_MULTIPLIER = 0.85;
+	public static final double SUPERSONIC_MULTIPLIER = 3.6;
+	public static final double HORIZONTAL_FRICTION = 0.84;
+	public static final double VERTICAL_FRICTION = 0.78;
 
 	private FlightProfiles() {
 	}
