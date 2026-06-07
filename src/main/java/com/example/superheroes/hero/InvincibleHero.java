@@ -78,6 +78,8 @@ public final class InvincibleHero implements Hero {
 		return List.of(
 				AbilityIds.FLIGHT,
 				AbilityIds.VILTRUMITE_CHARGE,
+				AbilityIds.SHOCKWAVE_PULSE,
+				AbilityIds.VILTRUMITE_RECOVERY,
 				AbilityIds.METEOR_SLAM);
 	}
 

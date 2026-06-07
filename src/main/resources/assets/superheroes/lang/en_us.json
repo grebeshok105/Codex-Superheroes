@@ -572,8 +572,12 @@
   "ability.superheroes.viltrumite_charge.desc": "Burst forward 22 blocks, smashing through enemies for 28 damage and heavy knockback. 8s cooldown.",
   "ability.superheroes.meteor_slam": "Meteor Slam",
   "ability.superheroes.meteor_slam.desc": "Launch or dive into a ground-shaking impact. Airborne slams hit harder and wider. 11s cooldown.",
+  "ability.superheroes.viltrumite_recovery": "Viltrumite Recovery",
+  "ability.superheroes.viltrumite_recovery.desc": "Patch yourself up in combat: instant healing, brief Regen II and Absorption. 14s cooldown.",
+  "ability.superheroes.shockwave_pulse": "Shockwave Pulse",
+  "ability.superheroes.shockwave_pulse.desc": "Release a close-range radial shockwave around you for damage, knockback and screen shake. 6s cooldown.",
   "hero.superheroes.invincible.passive.1": "Viltrumite Durability: +40 HP, +26 armor, +12 toughness, permanent Resistance I",
-  "hero.superheroes.invincible.passive.2": "Super Strength: +12 attack damage, +0.6 attack speed, full knockback resistance",
+  "hero.superheroes.invincible.passive.2": "Super Strength: +12 attack damage, +0.6 attack speed, full knockback resistance, lighter Iron Fists impacts on melee",
   "hero.superheroes.invincible.passive.3": "Aerial Combat: inertial flight, no fall damage, landing shockwaves",
   "hero.superheroes.invincible.passive.4": "Fast Recovery: permanent Regeneration I and Fire Resistance",
 

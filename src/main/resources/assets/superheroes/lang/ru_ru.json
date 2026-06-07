@@ -573,8 +573,12 @@
   "ability.superheroes.viltrumite_charge.desc": "Рывок на 22 блока вперёд, пробивает врагов на 28 урона и сильный нокбек. КД 8с.",
   "ability.superheroes.meteor_slam": "Метеоритный удар",
   "ability.superheroes.meteor_slam.desc": "Подпрыгни или рухни вниз мощным ударом по земле. Удар с воздуха сильнее и шире. КД 11с.",
+  "ability.superheroes.viltrumite_recovery": "Вилтрумитское восстановление",
+  "ability.superheroes.viltrumite_recovery.desc": "Подлатай себя в бою: мгновенное лечение, краткие Regen II и Absorption. КД 14с.",
+  "ability.superheroes.shockwave_pulse": "Шоквейв-импульс",
+  "ability.superheroes.shockwave_pulse.desc": "Выпусти ближнюю круговую волну вокруг себя: урон, нокбек и тряска экрана. КД 6с.",
   "hero.superheroes.invincible.passive.1": "Вилтрумитская прочность: +40 HP, +26 брони, +12 toughness, постоянный Resistance I",
-  "hero.superheroes.invincible.passive.2": "Суперсила: +12 урона, +0.6 attack speed, полный иммунитет к нокбеку",
+  "hero.superheroes.invincible.passive.2": "Суперсила: +12 урона, +0.6 attack speed, полный иммунитет к нокбеку, лёгкий Iron Fists на melee",
   "hero.superheroes.invincible.passive.3": "Воздушный бой: инерционный полёт, нет урона от падения, шоквейвы при приземлении",
   "hero.superheroes.invincible.passive.4": "Быстрое восстановление: постоянный Regeneration I и Fire Resistance",
 
