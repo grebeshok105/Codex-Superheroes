@@ -1,0 +1,109 @@
+# Superheroes Mod - Coordination Log
+# Two agents work in parallel. Format: [ISO-time] [agent-id] [event] [details]
+# Append-only. Newest entries go to bottom.
+
+[2026-04-27T18:06] cascade-A: CLAIM plan A+C+D (inertial flight + custom damage type + debug commands)
+
+[2026-04-27T18:06] cascade-A: DO-NOT-TOUCH zones (owned by other agent):
+  - src/client/java/com/example/superheroes/client/render/*
+  - src/client/java/com/example/superheroes/client/hud/*
+  - src/client/java/com/example/superheroes/client/SuperheroesClient.java
+  - src/main/java/com/example/superheroes/particle/*
+  - src/main/java/com/example/superheroes/hero/Hero.java
+  - src/main/java/com/example/superheroes/hero/HomelanderHero.java
+  - src/main/java/com/example/superheroes/transform/HeroTransformService.java (only call its public methods, do not modify)
+  - src/main/java/com/example/superheroes/item/CompoundVItem.java (sound was just added there)
+
+[2026-04-27T18:06] cascade-A: MY FILES (CREATE)
+  - src/main/java/com/example/superheroes/command/SuperheroesCommands.java
+  - src/main/java/com/example/superheroes/damage/ModDamageTypes.java
+  - src/main/resources/data/superheroes/damage_type/eye_laser.json
+  - src/main/resources/data/minecraft/tags/damage_type/bypasses_armor.json
+  - src/client/java/com/example/superheroes/client/mixin/LocalPlayerFlightMixin.java
+
+[2026-04-27T18:06] cascade-A: MY FILES (MODIFY)
+  - src/main/java/com/example/superheroes/ability/FlightAbility.java (overwrite logic, untouched by other agent)
+  - src/main/java/com/example/superheroes/ability/EyeLasersAbility.java (single-line: damageSources().magic() -> ModDamageTypes.eyeLaser)
+  - src/main/java/com/example/superheroes/SuperheroesMod.java (append: commands registration, +1 import +1 line)
+  - src/main/resources/assets/superheroes/lang/en_us.json (append commands keys before closing brace)
+  - src/main/resources/assets/superheroes/lang/ru_ru.json (append commands keys before closing brace)
+  - src/client/resources/superheroes.client.mixins.json (append LocalPlayerFlightMixin to client array)
+
+[2026-04-27T18:06] cascade-A: PROTOCOL
+  - Append-only on shared files. No rewrites of existing methods.
+  - Do not edit other-agent zones.
+  - Update this file at start/done of each task.
+
+[2026-04-27T18:10] cascade-A: DONE A+C+D, build green (compileJava + compileClientJava clean, 3 tasks, 10s)
+
+[2026-04-27T18:10] cascade-A: SUMMARY
+  D - Debug commands:
+    /superheroes hero <id>           - transform via HeroTransformService
+    /superheroes untransform         - revert
+    /superheroes energy <amount>     - clamped to hero.getEnergyMax
+    /superheroes mana <amount>       - clamped to hero.getManaMax
+    /superheroes abilities           - list with binding + ON/OFF state
+    /superheroes info                - hero + energy + mana + active count
+    All require op-level 2.
+  C - Custom DamageType eye_laser:
+    ResourceKey in ModDamageTypes.EYE_LASER
+    JSON registers it as datapack damage type with effects=burning, scaling=never
+    Tag bypasses_armor includes superheroes:eye_laser
+    EyeLasersAbility:54 now uses ModDamageTypes.eyeLaser(level, player)
+    Death messages localized in en_us/ru_ru
+  A - Inertial flight (client-side mixin):
+    LocalPlayerFlightMixin @Inject HEAD travel(Vec3) cancellable
+    Activates only when LocalPlayer is owner AND HeroData.activeAbilities contains FLIGHT
+    Constants: MAX_HORIZONTAL_SPEED=1.5, MAX_VERTICAL_SPEED=1.0, ACCEL=0.12,
+               FRICTION_HORIZONTAL=0.92, FRICTION_VERTICAL=0.90
+    Reads input via player.zza/xxa + player.input.jumping/shiftKeyDown
+    Anti-cheat OK because FlightAbility still sets vanilla Abilities.flying=true on server
+    fallDistance reset to 0 on every flight tick
+    FlightAbility.java NOT modified (server still uses vanilla flying flag for anti-cheat compat)
+
+[2026-04-27T18:10] cascade-A: KNOWN INTERACTIONS WITH OTHER AGENT
+  - EyeLasersAbility was edited concurrently by other agent (he added ModParticles.LASER_SPARK).
+    My single-line damage source replacement merged cleanly.
+  - superheroes.client.mixins.json had PlayerRendererMixin already; my LocalPlayerFlightMixin
+    appended without conflict.
+  - SuperheroesMod imports added cleanly after his ModParticles import.
+
+[2026-04-27T18:10] cascade-A: NOTES FOR NEXT SESSION
+  - B (Sounds) is still pending. Recommend after other agent finishes VFX milestone
+    so EyeLasersAbility/HeroTransformService/CompoundVItem stop being touched.
+  - No regression tests added (Fabric mod project, gametest infra not set up yet).
+
+[2026-04-27T18:18] cascade-A: CLAIM Section 14 - Datagen infrastructure
+
+[2026-04-27T18:24] cascade-A: DONE Section 14, gradlew assemble GREEN (10s, 9 tasks)
+  Created:
+    - datagen/SuperheroesDataGenerator.java (entrypoint with buildRegistry for DAMAGE_TYPE)
+    - datagen/ModItemModelProvider.java (FlatItem for HOMELANDER_SUIT, COMPOUND_V)
+    - datagen/ModRecipeProvider.java (empty stub - transformation items have no recipes)
+    - datagen/ModDamageTypeProvider.java (FabricDynamicRegistryProvider, exports EYE_LASER)
+    - datagen/ModDamageTypeTagProvider.java (adds eye_laser to DamageTypeTags.BYPASSES_ARMOR)
+  Modified:
+    - damage/ModDamageTypes.java: added bootstrap(BootstrapContext) for DynamicRegistryProvider
+    - fabric.mod.json: added fabric-datagen entrypoint
+    - build.gradle: added loom.runs.datagen + sourceSets.main.resources.srcDirs += 'src/main/generated'
+  Removed (now generated by datagen, content identical):
+    - src/main/resources/data/superheroes/damage_type/eye_laser.json
+    - src/main/resources/data/minecraft/tags/damage_type/bypasses_armor.json
+    - src/main/resources/assets/superheroes/models/item/compound_v.json
+    - src/main/resources/assets/superheroes/models/item/homelander_suit.json
+  Generated location: src/main/generated/ (in resources sourceset)
+  Workflow for next agent: edit Java provider, run `gradlew runDatagen`, commit src/main/generated/.
+
+[2026-04-27T18:24] cascade-A: API NOTES (1.21 / Fabric 0.102.0)
+  - DamageType ctor: new DamageType(msgId, DamageScaling, exhaustion, DamageEffects)
+  - BootstrapContext: net.minecraft.data.worldgen.BootstrapContext (no typo in 1.21)
+  - FabricRecipeProvider needs CompletableFuture<HolderLookup.Provider> in ctor
+  - FabricDynamicRegistryProvider: configure(registries, entries), entries.add(lookup, ResourceKey)
+  - FabricTagProvider for DamageType: pass Registries.DAMAGE_TYPE in super
+  - DataGeneratorEntrypoint.buildRegistry needed when providers reference custom dynamic-registry entries
+
+[2026-04-27T18:24] cascade-A: STILL OPEN FOR PARALLEL AGENTS
+  Section 11.4 (GeckoLib): build.gradle dep + HeroFeatureRenderer skeleton, replaces HeroSkinLayer when assets ready
+  Section 12 (B - Sounds): wait until other agent finishes touching EyeLasersAbility/HeroTransformService/CompoundVItem
+  Iron Man / Batman / Captain America / Doomsday: separate hero packages, parallelizable per-hero
+  Tooltips on items: small task, ItemStack.appendHoverText pattern

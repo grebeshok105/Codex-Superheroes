@@ -1,0 +1,24 @@
+{
+	"required": true,
+	"package": "com.example.superheroes.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"mixins": [
+		"LightningBoltAccessor",
+		"PlayerDimensionsMixin",
+		"PlayerFlightPoseMixin",
+		"LivingEntityFallDamageMixin",
+		"LivingEntityFallFlyingMixin",
+		"LivingEntityEffectMixin",
+		"LivingEntityHealBlockMixin",
+		"ThanosBlockBreakingMixin",
+		"KryptoniteShardPickupMixin",
+		"RoyalIcicleNoDropMixin",
+		"YamatoNoDropMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	},
+	"overwrites": {
+		"requireAnnotations": true
+	}
+}

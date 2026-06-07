@@ -1,0 +1,41 @@
+{
+	"schemaVersion": 1,
+	"id": "superheroes",
+	"version": "${version}",
+	"name": "Superheroes Mod",
+	"description": "Superheroes mod with custom models, abilities, dual-resource system and real-time radial menu.",
+	"authors": [
+		"Me!"
+	],
+	"contact": {
+		"homepage": "https://fabricmc.net/",
+		"sources": "https://github.com/FabricMC/fabric-example-mod"
+	},
+	"license": "CC0-1.0",
+	"icon": "assets/superheroes/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"com.example.superheroes.SuperheroesMod"
+		],
+		"client": [
+			"com.example.superheroes.client.SuperheroesClient"
+		],
+		"fabric-datagen": [
+			"com.example.superheroes.datagen.SuperheroesDataGenerator"
+		]
+	},
+	"mixins": [
+		"superheroes.mixins.json",
+		{
+			"config": "superheroes.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.19.2",
+		"minecraft": "~1.21",
+		"java": ">=21",
+		"fabric-api": "*"
+	}
+}

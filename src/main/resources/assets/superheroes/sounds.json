@@ -1,0 +1,130 @@
+{
+	"lightning.thunder.anime": {
+		"subtitle": "subtitles.entity.lightning_bolt.thunder",
+		"sounds": [
+			{
+				"name": "superheroes:lightning/thunder_anime",
+				"stream": true
+			}
+		]
+	},
+	"lightning.thunder.loud": {
+		"subtitle": "subtitles.entity.lightning_bolt.thunder",
+		"sounds": [
+			{
+				"name": "superheroes:lightning/thunder_loud",
+				"stream": true
+			}
+		]
+	},
+	"unibeam.charge": {
+		"subtitle": "subtitles.superheroes.unibeam.charge",
+		"sounds": [
+			{
+				"name": "superheroes:unibeam/unibeam_charge",
+				"stream": true
+			}
+		]
+	},
+	"unibeam.beam": {
+		"subtitle": "subtitles.superheroes.unibeam.beam",
+		"sounds": [
+			{
+				"name": "superheroes:unibeam/unibeam_beam",
+				"stream": true
+			}
+		]
+	},
+	"unibeam.blast": {
+		"subtitle": "subtitles.superheroes.unibeam.blast",
+		"sounds": [
+			{
+				"name": "superheroes:unibeam/unibeam_blast"
+			}
+		]
+	},
+	"homelander.roar": {
+		"subtitle": "subtitles.superheroes.homelander.roar",
+		"sounds": [
+			{
+				"name": "superheroes:homelander/roar",
+				"stream": true
+			}
+		]
+	},
+	"homelander.roar.deep": {
+		"subtitle": "subtitles.superheroes.homelander.roar",
+		"sounds": [
+			{
+				"name": "superheroes:homelander/roar_deep",
+				"stream": true
+			}
+		]
+	},
+	"homelander.hand_clap": {
+		"subtitle": "subtitles.superheroes.homelander.hand_clap",
+		"sounds": [
+			{
+				"name": "superheroes:homelander/hand_clap"
+			}
+		]
+	},
+	"homelander.iron_fists.impact": {
+		"subtitle": "subtitles.superheroes.homelander.iron_fists",
+		"sounds": [
+			{
+				"name": "superheroes:homelander/iron_fists_impact"
+			}
+		]
+	},
+	"homelander.iron_fists.charge": {
+		"subtitle": "subtitles.superheroes.homelander.iron_fists",
+		"sounds": [
+			{
+				"name": "superheroes:homelander/iron_fists_charge"
+			}
+		]
+	},
+	"doomsday.roar": {
+		"subtitle": "subtitles.superheroes.doomsday.roar",
+		"sounds": [
+			{
+				"name": "superheroes:doomsday/roar_a",
+				"stream": true,
+				"weight": 1
+			},
+			{
+				"name": "superheroes:doomsday/roar_b",
+				"stream": true,
+				"weight": 1
+			}
+		]
+	},
+	"thanos.snap.voice": {
+		"subtitle": "subtitles.superheroes.thanos.snap_voice",
+		"sounds": [
+			{
+				"name": "superheroes:thanos/snap_voice",
+				"stream": true
+			}
+		]
+	},
+	"reinhard.sword_strike.voice": {
+		"subtitle": "subtitles.superheroes.reinhard.sword_strike_voice",
+		"sounds": [
+			{
+				"name": "superheroes:reinhard/sword_strike_voice",
+				"stream": true
+			}
+		]
+	},
+	"reinhard.sword_draw.ceremony": {
+		"subtitle": "subtitles.superheroes.reinhard.sword_draw_ceremony",
+		"sounds": [
+			{
+				"name": "superheroes:reinhard/sword_draw_ceremony",
+				"stream": true
+			}
+		]
+	}
+}

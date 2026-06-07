@@ -1,0 +1,44 @@
+{
+  "parent": "minecraft:item/handheld",
+  "textures": {
+    "particle": "superheroes:item/vibranium_shield_face",
+    "face": "superheroes:item/vibranium_shield_face"
+  },
+  "elements": [
+    {
+      "from": [2, 2, 7],
+      "to": [14, 14, 9],
+      "rotation": {
+        "angle": 0,
+        "axis": "y",
+        "origin": [8, 8, 8]
+      },
+      "faces": {
+        "north": {
+          "uv": [0, 0, 16, 16],
+          "texture": "#face"
+        },
+        "south": {
+          "uv": [16, 0, 0, 16],
+          "texture": "#face"
+        },
+        "east": {
+          "uv": [15, 0, 16, 16],
+          "texture": "#face"
+        },
+        "west": {
+          "uv": [0, 0, 1, 16],
+          "texture": "#face"
+        },
+        "up": {
+          "uv": [0, 0, 16, 1],
+          "texture": "#face"
+        },
+        "down": {
+          "uv": [0, 15, 16, 16],
+          "texture": "#face"
+        }
+      }
+    }
+  ]
+}

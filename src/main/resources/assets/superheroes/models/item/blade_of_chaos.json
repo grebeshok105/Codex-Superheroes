@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/handheld",
+  "textures": {
+    "layer0": "superheroes:item/blade_of_chaos"
+  }
+}

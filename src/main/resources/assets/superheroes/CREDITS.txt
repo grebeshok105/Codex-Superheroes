@@ -1,0 +1,21 @@
+Third-party assets used in this mod
+====================================
+
+Murvel Mod by FortPlatypus25 (Academic Free License v3.0)
+Source: https://www.curseforge.com/minecraft/mc-mods/murvel
+The following texture files are derived from Murvel V2.8.8.5:
+
+  textures/particle/repulsor_spark.png   <- repulsorpart.png
+  textures/particle/unibeam_spark.png    <- unibeampart.png
+  textures/gui/unibar_0_25.png           <- unibar125.png
+  textures/gui/unibar_26_50.png          <- unibar2650.png
+  textures/gui/unibar_51_75.png          <- unibar5175.png
+  textures/gui/unibar_76_100.png         <- unibar76100.png
+  textures/item/arc_reactor.png          <- arc_reactor.png
+  textures/item/nanotech_reactor.png     <- nanotech_reactor.png
+
+Fractal Lightning by Builderb0y (MIT License)
+Source: https://github.com/builderb0y/FractalLightning
+Algorithmic implementation referenced in:
+
+  client/render/lightning/FractalLightningRenderer.java

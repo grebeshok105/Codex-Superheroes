@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "U",
+    "S"
+  ],
+  "key": {
+    "U": {
+      "item": "superheroes:uranium_isotope"
+    },
+    "S": {
+      "item": "minecraft:stick"
+    }
+  },
+  "result": {
+    "id": "superheroes:uranium_dagger",
+    "count": 1
+  }
+}

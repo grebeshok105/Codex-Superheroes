@@ -1,0 +1,171 @@
+package com.example.superheroes.command;
+
+import com.example.superheroes.attachment.ModAttachments;
+import com.example.superheroes.hero.Hero;
+import com.example.superheroes.hero.Heroes;
+import com.example.superheroes.network.ModNetworking;
+import com.example.superheroes.transform.HeroData;
+import com.example.superheroes.transform.HeroTransformService;
+import com.mojang.brigadier.arguments.FloatArgumentType;
+import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.suggestion.SuggestionProvider;
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.commands.arguments.ResourceLocationArgument;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+
+public final class SuperheroesCommands {
+	private static final SuggestionProvider<CommandSourceStack> HERO_SUGGESTIONS =
+			(ctx, builder) -> SharedSuggestionProvider.suggestResource(Heroes.all().keySet(), builder);
+
+	private SuperheroesCommands() {
+	}
+
+	public static void init() {
+		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, env) ->
+				dispatcher.register(Commands.literal("superheroes")
+						.requires(src -> src.hasPermission(2))
+						.then(Commands.literal("hero")
+								.then(Commands.argument("id", ResourceLocationArgument.id())
+										.suggests(HERO_SUGGESTIONS)
+										.executes(SuperheroesCommands::setHero)))
+						.then(Commands.literal("untransform")
+								.executes(SuperheroesCommands::untransform))
+						.then(Commands.literal("energy")
+								.then(Commands.argument("amount", FloatArgumentType.floatArg(0f))
+										.executes(ctx -> setEnergy(ctx, FloatArgumentType.getFloat(ctx, "amount")))))
+						.then(Commands.literal("mana")
+								.then(Commands.argument("amount", FloatArgumentType.floatArg(0f))
+										.executes(ctx -> setMana(ctx, FloatArgumentType.getFloat(ctx, "amount")))))
+						.then(Commands.literal("abilities")
+								.executes(SuperheroesCommands::listAbilities))
+						.then(Commands.literal("info")
+								.executes(SuperheroesCommands::info))));
+	}
+
+	private static int setHero(CommandContext<CommandSourceStack> ctx) {
+		ServerPlayer player = playerOrNull(ctx);
+		if (player == null) {
+			return 0;
+		}
+		ResourceLocation heroId = ResourceLocationArgument.getId(ctx, "id");
+		Hero hero = Heroes.get(heroId);
+		if (hero == null) {
+			ctx.getSource().sendFailure(Component.translatable("commands.superheroes.hero.unknown", heroId.toString()));
+			return 0;
+		}
+		boolean ok = HeroTransformService.transform(player, heroId);
+		if (!ok) {
+			ctx.getSource().sendFailure(Component.translatable("commands.superheroes.hero.failed", heroId.toString()));
+			return 0;
+		}
+		ctx.getSource().sendSuccess(() -> Component.translatable("commands.superheroes.hero.success",
+				heroId.toString(), player.getScoreboardName()), true);
+		return 1;
+	}
+
+	private static int untransform(CommandContext<CommandSourceStack> ctx) {
+		ServerPlayer player = playerOrNull(ctx);
+		if (player == null) {
+			return 0;
+		}
+		boolean ok = HeroTransformService.untransform(player);
+		if (!ok) {
+			ctx.getSource().sendFailure(Component.translatable("commands.superheroes.untransform.no_hero"));
+			return 0;
+		}
+		ctx.getSource().sendSuccess(() -> Component.translatable("commands.superheroes.untransform.success",
+				player.getScoreboardName()), true);
+		return 1;
+	}
+
+	private static int setEnergy(CommandContext<CommandSourceStack> ctx, float amount) {
+		ServerPlayer player = playerOrNull(ctx);
+		if (player == null) {
+			return 0;
+		}
+		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
+		if (!data.hasHero()) {
+			ctx.getSource().sendFailure(Component.translatable("commands.superheroes.no_hero"));
+			return 0;
+		}
+		Hero hero = Heroes.get(data.heroId());
+		float clamped = hero == null ? amount : Math.min(amount, hero.getEnergyMax());
+		HeroData updated = data.withEnergy(clamped);
+		player.setAttached(ModAttachments.HERO_DATA, updated);
+		ModNetworking.syncResources(player, updated);
+		ctx.getSource().sendSuccess(() -> Component.translatable("commands.superheroes.energy.set",
+				String.format("%.1f", clamped)), false);
+		return (int) clamped;
+	}
+
+	private static int setMana(CommandContext<CommandSourceStack> ctx, float amount) {
+		ServerPlayer player = playerOrNull(ctx);
+		if (player == null) {
+			return 0;
+		}
+		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
+		if (!data.hasHero()) {
+			ctx.getSource().sendFailure(Component.translatable("commands.superheroes.no_hero"));
+			return 0;
+		}
+		Hero hero = Heroes.get(data.heroId());
+		float clamped = hero == null ? amount : Math.min(amount, hero.getManaMax());
+		HeroData updated = data.withMana(clamped);
+		player.setAttached(ModAttachments.HERO_DATA, updated);
+		ModNetworking.syncResources(player, updated);
+		ctx.getSource().sendSuccess(() -> Component.translatable("commands.superheroes.mana.set",
+				String.format("%.1f", clamped)), false);
+		return (int) clamped;
+	}
+
+	private static int listAbilities(CommandContext<CommandSourceStack> ctx) {
+		ServerPlayer player = playerOrNull(ctx);
+		if (player == null) {
+			return 0;
+		}
+		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
+		if (!data.hasHero()) {
+			ctx.getSource().sendFailure(Component.translatable("commands.superheroes.no_hero"));
+			return 0;
+		}
+		Hero hero = Heroes.get(data.heroId());
+		if (hero == null) {
+			return 0;
+		}
+		ctx.getSource().sendSuccess(() -> Component.translatable("commands.superheroes.abilities.header",
+				hero.getId().toString()), false);
+		for (ResourceLocation abilityId : hero.getAbilities()) {
+			boolean active = data.isActive(abilityId);
+			ctx.getSource().sendSuccess(() -> Component.translatable("commands.superheroes.abilities.row",
+					abilityId.toString(), data.binding(abilityId, hero.getDefaultBinding(abilityId)).name(),
+					active ? "ON" : "OFF"), false);
+		}
+		return hero.getAbilities().size();
+	}
+
+	private static int info(CommandContext<CommandSourceStack> ctx) {
+		ServerPlayer player = playerOrNull(ctx);
+		if (player == null) {
+			return 0;
+		}
+		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
+		String heroId = data.hasHero() ? data.heroId().toString() : "<none>";
+		ctx.getSource().sendSuccess(() -> Component.translatable("commands.superheroes.info",
+				heroId, String.format("%.1f", data.energy()), String.format("%.1f", data.mana()),
+				data.activeAbilities().size()), false);
+		return 1;
+	}
+
+	private static ServerPlayer playerOrNull(CommandContext<CommandSourceStack> ctx) {
+		if (!(ctx.getSource().getEntity() instanceof ServerPlayer player)) {
+			ctx.getSource().sendFailure(Component.translatable("commands.superheroes.not_a_player"));
+			return null;
+		}
+		return player;
+	}
+}

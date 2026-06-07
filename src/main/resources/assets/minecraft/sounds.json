@@ -1,0 +1,30 @@
+{
+  "entity.lightning_bolt.thunder": {
+    "replace": true,
+    "subtitle": "subtitles.entity.lightning_bolt.thunder",
+    "sounds": [
+      {
+        "name": "entity/lightning_bolt/custom_thunder_strike",
+        "weight": 1
+      },
+      {
+        "name": "entity/lightning_bolt/custom_thunder_echoy",
+        "weight": 1
+      }
+    ]
+  },
+  "entity.lightning_bolt.impact": {
+    "replace": true,
+    "subtitle": "subtitles.entity.lightning_bolt.impact",
+    "sounds": [
+      {
+        "name": "entity/lightning_bolt/custom_thunder_strike",
+        "weight": 1
+      },
+      {
+        "name": "entity/lightning_bolt/custom_thunder_echoy",
+        "weight": 1
+      }
+    ]
+  }
+}

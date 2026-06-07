@@ -1,0 +1,81 @@
+# Auto-release: on every push to baseline (typically a PR merge), build a jar
+# and publish it as a GitHub Release. The next version is computed by bumping
+# the patch of the highest existing `v1.0.X` tag. `mod_version` stays 1.0.0 in
+# gradle.properties; the release version is injected via -Pmod_version at build
+# time.
+
+name: release
+on:
+  push:
+    branches: [baseline]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: validate gradle wrapper
+        uses: gradle/actions/wrapper-validation@v6
+      - name: setup jdk
+        uses: actions/setup-java@v5
+        with:
+          java-version: '25'
+          distribution: 'microsoft'
+      - name: make gradle wrapper executable
+        run: chmod +x ./gradlew
+      - name: compute next version
+        id: ver
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --tags --force
+          latest=$(git tag -l 'v1.0.*' | grep -E '^v1\.0\.[0-9]+$' | sort -V | tail -n 1 || true)
+          if [ -z "$latest" ]; then
+            next_patch=1
+          else
+            patch="${latest#v1.0.}"
+            next_patch=$((patch + 1))
+          fi
+          next="1.0.${next_patch}"
+          tag="v${next}"
+          # Safety: if the computed tag somehow already exists, bump until free.
+          while git rev-parse -q --verify "refs/tags/${tag}" >/dev/null; do
+            next_patch=$((next_patch + 1))
+            next="1.0.${next_patch}"
+            tag="v${next}"
+          done
+          echo "version=${next}" >> "$GITHUB_OUTPUT"
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+          echo "Next release: ${tag}"
+      - name: build
+        run: ./gradlew build -Pmod_version=${{ steps.ver.outputs.version }}
+      - name: locate jar
+        id: jar
+        shell: bash
+        run: |
+          set -euo pipefail
+          jar="build/libs/superheroes-${{ steps.ver.outputs.version }}.jar"
+          if [ ! -f "$jar" ]; then
+            echo "Expected jar not found: $jar" >&2
+            ls -la build/libs || true
+            exit 1
+          fi
+          echo "path=${jar}" >> "$GITHUB_OUTPUT"
+      - name: create github release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.ver.outputs.tag }}
+          name: ${{ steps.ver.outputs.tag }}
+          target_commitish: baseline
+          generate_release_notes: true
+          files: ${{ steps.jar.outputs.path }}
