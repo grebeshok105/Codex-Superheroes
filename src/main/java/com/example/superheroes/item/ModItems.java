@@ -162,6 +162,11 @@ public final class ModItems {
 			new RaidenSuitItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
 	);
 
+	public static final InvincibleSuitItem INVINCIBLE_SUIT = register(
+			"invincible_suit",
+			new InvincibleSuitItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
+	);
+
 	public static final MusouNoHitotachiItem MUSOU_NO_HITOTACHI = register(
 			"musou_no_hitotachi",
 			new MusouNoHitotachiItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))

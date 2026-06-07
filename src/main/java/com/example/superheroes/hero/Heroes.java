@@ -22,6 +22,7 @@ public final class Heroes {
 	public static final ThanosHero THANOS = new ThanosHero();
 	public static final ReinhardHero REINHARD = new ReinhardHero();
 	public static final RaidenHero RAIDEN_SHOGUN = new RaidenHero();
+	public static final InvincibleHero INVINCIBLE = new InvincibleHero();
 
 	private Heroes() {
 	}
@@ -40,6 +41,7 @@ public final class Heroes {
 		register(THANOS);
 		register(REINHARD);
 		register(RAIDEN_SHOGUN);
+		register(INVINCIBLE);
 	}
 
 	public static void register(Hero hero) {

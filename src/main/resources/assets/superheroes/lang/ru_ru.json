@@ -563,6 +563,21 @@
 
   "key.superheroes.raiden_sword_draw": "Райден: Призвать Ямато",
 
+  "hero.superheroes.invincible": "Неуязвимый",
+  "item.superheroes.invincible_suit": "Костюм Неуязвимого",
+  "item.superheroes.invincible_suit.lore.line1": "\"Я всё ещё могу драться.\"",
+  "item.superheroes.invincible_suit.lore.line2": "Тренировочная форма вилтрумита",
+  "item.superheroes.invincible_suit.lore.usage": "▶ ПКМ — Трансформация",
+  "item.superheroes.invincible_suit.lore.untransform": "▶ Shift + ПКМ — Отмена трансформации",
+  "ability.superheroes.viltrumite_charge": "Вилтрумитский рывок",
+  "ability.superheroes.viltrumite_charge.desc": "Рывок на 22 блока вперёд, пробивает врагов на 28 урона и сильный нокбек. КД 8с.",
+  "ability.superheroes.meteor_slam": "Метеоритный удар",
+  "ability.superheroes.meteor_slam.desc": "Подпрыгни или рухни вниз мощным ударом по земле. Удар с воздуха сильнее и шире. КД 11с.",
+  "hero.superheroes.invincible.passive.1": "Вилтрумитская прочность: +40 HP, +26 брони, +12 toughness, постоянный Resistance I",
+  "hero.superheroes.invincible.passive.2": "Суперсила: +12 урона, +0.6 attack speed, полный иммунитет к нокбеку",
+  "hero.superheroes.invincible.passive.3": "Воздушный бой: инерционный полёт, нет урона от падения, шоквейвы при приземлении",
+  "hero.superheroes.invincible.passive.4": "Быстрое восстановление: постоянный Regeneration I и Fire Resistance",
+
   "ability.superheroes.status.on": "ВКЛ",
   "ability.superheroes.status.off": "ВЫКЛ",
   "ability.superheroes.status.ready": "ГОТОВ"

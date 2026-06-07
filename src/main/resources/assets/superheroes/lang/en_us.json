@@ -562,6 +562,21 @@
 
   "key.superheroes.raiden_sword_draw": "Raiden: Manifest Yamato",
 
+  "hero.superheroes.invincible": "Invincible",
+  "item.superheroes.invincible_suit": "Invincible Suit",
+  "item.superheroes.invincible_suit.lore.line1": "\"I can still fight.\"",
+  "item.superheroes.invincible_suit.lore.line2": "Viltrumite training uniform",
+  "item.superheroes.invincible_suit.lore.usage": "▶ Right-click — Transform",
+  "item.superheroes.invincible_suit.lore.untransform": "▶ Shift + Right-click — Revert",
+  "ability.superheroes.viltrumite_charge": "Viltrumite Charge",
+  "ability.superheroes.viltrumite_charge.desc": "Burst forward 22 blocks, smashing through enemies for 28 damage and heavy knockback. 8s cooldown.",
+  "ability.superheroes.meteor_slam": "Meteor Slam",
+  "ability.superheroes.meteor_slam.desc": "Launch or dive into a ground-shaking impact. Airborne slams hit harder and wider. 11s cooldown.",
+  "hero.superheroes.invincible.passive.1": "Viltrumite Durability: +40 HP, +26 armor, +12 toughness, permanent Resistance I",
+  "hero.superheroes.invincible.passive.2": "Super Strength: +12 attack damage, +0.6 attack speed, full knockback resistance",
+  "hero.superheroes.invincible.passive.3": "Aerial Combat: inertial flight, no fall damage, landing shockwaves",
+  "hero.superheroes.invincible.passive.4": "Fast Recovery: permanent Regeneration I and Fire Resistance",
+
   "ability.superheroes.status.on": "ON",
   "ability.superheroes.status.off": "OFF",
   "ability.superheroes.status.ready": "READY"

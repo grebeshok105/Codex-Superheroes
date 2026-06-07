@@ -14,11 +14,11 @@ triggers: ["model"]
 - Main class: `com.example.superheroes.SuperheroesMod`
 - Client class: `com.example.superheroes.client.SuperheroesClient`
 - Datagen class: `com.example.superheroes.datagen.SuperheroesDataGenerator`
-- Branch: `work/v3.12.2` in worktree `grebeshok105-v3.12.2`
+- Branch: `main` / feature branches in worktree `grebeshok105-v3.12.2`
 
 ## Версии
 
-- Current mod version: `3.12.2`
+- Current mod version: `3.13.0`
 - Base tag: `v3.12.2`
 - Minecraft: `1.21`
 - Loader: Fabric (`fabric-loader 0.19.2`, `fabric-api 0.102.0+1.21`)
@@ -29,11 +29,11 @@ triggers: ["model"]
 
 ## Текущее содержимое
 
-Зарегистрировано 13 героев в `Heroes.java`:
+Зарегистрировано 14 героев в `Heroes.java`:
 
-`Homelander`, `Iron Man`, `Regulus`, `Sung Jin-Woo`, `Doomsday`, `Goku`, `Naruto`, `Captain America`, `Kratos`, `Loki`, `Thanos`, `Reinhard van Astrea`, `Raiden Shogun`.
+`Homelander`, `Iron Man`, `Regulus`, `Sung Jin-Woo`, `Doomsday`, `Goku`, `Naruto`, `Captain America`, `Kratos`, `Loki`, `Thanos`, `Reinhard van Astrea`, `Raiden Shogun`, `Invincible`.
 
-Зарегистрировано 79 abilities в `AbilityRegistry.java` на базе `v3.12.2`.
+Зарегистрировано 81 abilities в `AbilityRegistry.java` на базе `v3.13.0`.
 
 ## Главные системы
 

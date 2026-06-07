@@ -16,6 +16,8 @@ public final class AbilityRegistry {
 	public static final IronFistsAbility IRON_FISTS = new IronFistsAbility();
 	public static final HandClapAbility HAND_CLAP = new HandClapAbility();
 	public static final StunningRoarAbility STUNNING_ROAR = new StunningRoarAbility();
+	public static final ViltrumiteChargeAbility VILTRUMITE_CHARGE = new ViltrumiteChargeAbility();
+	public static final MeteorSlamAbility METEOR_SLAM = new MeteorSlamAbility();
 	public static final IronManFlightAbility IRON_MAN_FLIGHT = new IronManFlightAbility();
 	public static final SupersonicAbility SUPERSONIC = new SupersonicAbility();
 	public static final RepulsorAbility REPULSOR = new RepulsorAbility();
@@ -112,6 +114,8 @@ public final class AbilityRegistry {
 		register(IRON_FISTS);
 		register(HAND_CLAP);
 		register(STUNNING_ROAR);
+		register(VILTRUMITE_CHARGE);
+		register(METEOR_SLAM);
 		register(IRON_MAN_FLIGHT);
 		register(SUPERSONIC);
 		register(REPULSOR);

@@ -5,7 +5,7 @@ description: Use when user asks to release the mod, create a GitHub release, tag
 
 # Release Mod
 
-GitHub release с прикреплённым jar. Эта рабочая папка основана на `v3.12.2`; не подтягивай поздний `baseline`, если пользователь хочет оставаться на стабильной базе `3.12.2`.
+GitHub release с прикреплённым jar. Работай из актуальной Codex-базы и сверяй версию с `gradle.properties`.
 
 ## Шаги
 
@@ -15,9 +15,9 @@ GitHub release с прикреплённым jar. Эта рабочая папк
 git status --short --branch
 ```
 
-Ожидаемо: branch `work/v3.12.2` или ветка, созданная от неё.
+Ожидаемо: `main` или feature branch, созданная от актуального `origin/main`.
 
-2. Если нужна новая версия на базе `3.12.2`, временно обновить `gradle.properties`:
+2. Если нужна новая версия, обновить `gradle.properties`:
 
 ```properties
 mod_version=X.Y.Z
@@ -51,5 +51,5 @@ git checkout -- gradle.properties
 ## Naming
 
 - Теги: `vX.Y.Z`.
-- Если это hotfix/fork от `3.12.2`, заранее согласовать номер с пользователем.
+- Если это hotfix/fork от старой версии, заранее согласовать номер с пользователем.
 - PR/commit style: `feat(scope): ...` или `fix(scope): ...`.

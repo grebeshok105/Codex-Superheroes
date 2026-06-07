@@ -85,6 +85,8 @@ public class SuperheroesMod implements ModInitializer {
 			com.example.superheroes.effect.DoomGripController.serverTick();
 			for (ServerPlayer p : server.getPlayerList().getPlayers()) {
 				com.example.superheroes.ability.ChargeTackleAbility.serverTick(p);
+				com.example.superheroes.ability.ViltrumiteChargeAbility.serverTick(p);
+				com.example.superheroes.ability.MeteorSlamAbility.serverTick(p);
 				com.example.superheroes.ability.GokuKamehamehaAbility.serverTick(p);
 				com.example.superheroes.ability.GokuSpiritBombAbility.serverTick(p);
 				com.example.superheroes.ability.NarutoRasenganAbility.serverTick(p);

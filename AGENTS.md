@@ -2,9 +2,9 @@
 
 ## Project Structure & Module Organization
 
-Это Fabric-мод `superheroes` для Minecraft `1.21` на Java 21. Текущая база рабочей папки `grebeshok105-v3.12.2`: версия `3.12.2`, package `com.example.superheroes`, official Mojang mappings, Fabric Loader `0.19.2`, Fabric API `0.102.0+1.21`, GeckoLib `4.5.8`.
+Это Fabric-мод `superheroes` для Minecraft `1.21` на Java 21. Текущая база рабочей папки `grebeshok105-v3.12.2`: версия `3.13.0`, package `com.example.superheroes`, official Mojang mappings, Fabric Loader `0.19.2`, Fabric API `0.102.0+1.21`, GeckoLib `4.5.8`.
 
-Главный lifecycle идёт через `SuperheroesMod`: attachments/effects/heroes/abilities/items/network/resources/controllers регистрируются там. Client entrypoint `SuperheroesClient` отвечает за HUD, render, FX, keybinds и client networking. `Heroes.java` регистрирует 13 героев; `AbilityRegistry.java` регистрирует способности; `HeroData` хранит состояние трансформации. Data generation живёт в `src/main/java/com/example/superheroes/datagen/`, результат подключён из `src/main/generated/`. Runtime assets лежат в `src/main/resources/assets/superheroes/`, сырьё пользователя сначала ищи в `art-source/`. Публичный addon API описан в `docs/api.md`.
+Главный lifecycle идёт через `SuperheroesMod`: attachments/effects/heroes/abilities/items/network/resources/controllers регистрируются там. Client entrypoint `SuperheroesClient` отвечает за HUD, render, FX, keybinds и client networking. `Heroes.java` регистрирует 14 героев; `AbilityRegistry.java` регистрирует способности; `HeroData` хранит состояние трансформации. Data generation живёт в `src/main/java/com/example/superheroes/datagen/`, результат подключён из `src/main/generated/`. Runtime assets лежат в `src/main/resources/assets/superheroes/`, сырьё пользователя сначала ищи в `art-source/`. Публичный addon API описан в `docs/api.md`.
 
 ## Build, Test, and Development Commands
 

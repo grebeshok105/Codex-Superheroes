@@ -59,6 +59,8 @@ public final class ModItemGroups {
 				output.accept(ModItems.REINHARD_SUIT);
 
 				output.accept(ModItems.RAIDEN_SUIT);
+
+				output.accept(ModItems.INVINCIBLE_SUIT);
 			})
 			.build();
 

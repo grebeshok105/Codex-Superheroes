@@ -381,6 +381,28 @@ public final class HeroAttributes {
 			.add(Attributes.ATTACK_SPEED, RAIDEN_BURST_ATTACK_SPEED, 1.5, AttributeModifier.Operation.ADD_VALUE)
 			.build();
 
+	public static final ResourceLocation INVINCIBLE_ARMOR = ModId.of("modifiers/invincible/armor");
+	public static final ResourceLocation INVINCIBLE_TOUGHNESS = ModId.of("modifiers/invincible/toughness");
+	public static final ResourceLocation INVINCIBLE_DAMAGE = ModId.of("modifiers/invincible/damage");
+	public static final ResourceLocation INVINCIBLE_SPEED = ModId.of("modifiers/invincible/speed");
+	public static final ResourceLocation INVINCIBLE_HP = ModId.of("modifiers/invincible/max_health");
+	public static final ResourceLocation INVINCIBLE_KNOCKBACK = ModId.of("modifiers/invincible/knockback_resistance");
+	public static final ResourceLocation INVINCIBLE_ATTACK_SPEED = ModId.of("modifiers/invincible/attack_speed");
+	public static final ResourceLocation INVINCIBLE_JUMP = ModId.of("modifiers/invincible/jump_strength");
+	public static final ResourceLocation INVINCIBLE_STEP = ModId.of("modifiers/invincible/step_height");
+
+	public static final AttributeModifierSet INVINCIBLE = AttributeModifierSet.builder()
+			.add(Attributes.ARMOR, INVINCIBLE_ARMOR, 26.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ARMOR_TOUGHNESS, INVINCIBLE_TOUGHNESS, 12.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ATTACK_DAMAGE, INVINCIBLE_DAMAGE, 12.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.MOVEMENT_SPEED, INVINCIBLE_SPEED, 0.25, AttributeModifier.Operation.ADD_MULTIPLIED_BASE)
+			.add(Attributes.MAX_HEALTH, INVINCIBLE_HP, 40.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.KNOCKBACK_RESISTANCE, INVINCIBLE_KNOCKBACK, 1.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ATTACK_SPEED, INVINCIBLE_ATTACK_SPEED, 0.6, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.JUMP_STRENGTH, INVINCIBLE_JUMP, 0.3, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.STEP_HEIGHT, INVINCIBLE_STEP, 0.5, AttributeModifier.Operation.ADD_VALUE)
+			.build();
+
 	public static void thanosClearStoneModifiers(net.minecraft.world.entity.LivingEntity entity) {
 		for (com.example.superheroes.item.infinity.InfinityStoneType t : com.example.superheroes.item.infinity.InfinityStoneType.values()) {
 			net.minecraft.world.entity.ai.attributes.AttributeInstance instance = entity.getAttribute(t.getAttribute());
