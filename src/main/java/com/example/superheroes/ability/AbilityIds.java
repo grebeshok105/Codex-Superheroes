@@ -88,15 +88,12 @@ public final class AbilityIds {
 
 	public static final ResourceLocation REINHARD_SWORD_DRAW = ModId.of("reinhard_sword_draw");
 	public static final ResourceLocation REINHARD_AIR_SLASH = ModId.of("reinhard_air_slash");
-	public static final ResourceLocation REINHARD_TELEPORT_BEHIND = ModId.of("reinhard_teleport_behind");
 	public static final ResourceLocation REINHARD_JUDGMENT_MARK = ModId.of("reinhard_judgment_mark");
 	public static final ResourceLocation REINHARD_WISH = ModId.of("reinhard_wish");
 	public static final ResourceLocation REINHARD_SWORD_WAVE = ModId.of("reinhard_sword_wave");
-	public static final ResourceLocation REINHARD_HEAVENS_STRIKE = ModId.of("reinhard_heavens_strike");
 	public static final ResourceLocation REINHARD_COUNTER_RIPOSTE = ModId.of("reinhard_counter_riposte");
 	public static final ResourceLocation REINHARD_DIVINE_AURA = ModId.of("reinhard_divine_aura");
-	public static final ResourceLocation REINHARD_RIFT_STRIKE = ModId.of("reinhard_rift_strike");
-	public static final ResourceLocation REINHARD_SECOND_COMING_RIFT = ModId.of("reinhard_second_coming_rift");
+	public static final ResourceLocation REINHARD_SPEED_JUDGMENT = ModId.of("reinhard_speed_judgment");
 
 	public static final ResourceLocation RAIDEN_SWORD_DRAW = ModId.of("raiden_sword_draw");
 	public static final ResourceLocation RAIDEN_EYE_OF_JUDGMENT = ModId.of("raiden_eye_of_judgment");
@@ -108,12 +105,9 @@ public final class AbilityIds {
 
 	public static boolean isReinhardSwordOnly(ResourceLocation id) {
 		return REINHARD_AIR_SLASH.equals(id)
-				|| REINHARD_TELEPORT_BEHIND.equals(id)
 				|| REINHARD_SWORD_WAVE.equals(id)
-				|| REINHARD_HEAVENS_STRIKE.equals(id)
 				|| REINHARD_COUNTER_RIPOSTE.equals(id)
-				|| REINHARD_DIVINE_AURA.equals(id)
-				|| REINHARD_RIFT_STRIKE.equals(id);
+				|| REINHARD_DIVINE_AURA.equals(id);
 	}
 
 	private AbilityIds() {

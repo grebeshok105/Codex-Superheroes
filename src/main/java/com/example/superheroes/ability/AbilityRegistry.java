@@ -88,15 +88,12 @@ public final class AbilityRegistry {
 
 	public static final ReinhardSwordDrawAbility REINHARD_SWORD_DRAW = new ReinhardSwordDrawAbility();
 	public static final ReinhardAirSlashAbility REINHARD_AIR_SLASH = new ReinhardAirSlashAbility();
-	public static final ReinhardTeleportBehindAbility REINHARD_TELEPORT_BEHIND = new ReinhardTeleportBehindAbility();
 	public static final ReinhardJudgmentMarkAbility REINHARD_JUDGMENT_MARK = new ReinhardJudgmentMarkAbility();
 	public static final ReinhardWishAbility REINHARD_WISH = new ReinhardWishAbility();
 	public static final ReinhardSwordWaveAbility REINHARD_SWORD_WAVE = new ReinhardSwordWaveAbility();
-	public static final ReinhardHeavensStrikeAbility REINHARD_HEAVENS_STRIKE = new ReinhardHeavensStrikeAbility();
 	public static final ReinhardCounterRiposteAbility REINHARD_COUNTER_RIPOSTE = new ReinhardCounterRiposteAbility();
 	public static final ReinhardDivineAuraAbility REINHARD_DIVINE_AURA = new ReinhardDivineAuraAbility();
-	public static final ReinhardRiftStrikeAbility REINHARD_RIFT_STRIKE = new ReinhardRiftStrikeAbility();
-	public static final ReinhardSecondComingRiftAbility REINHARD_SECOND_COMING_RIFT = new ReinhardSecondComingRiftAbility();
+	public static final ReinhardSpeedJudgmentAbility REINHARD_SPEED_JUDGMENT = new ReinhardSpeedJudgmentAbility();
 
 	public static final RaidenSwordDrawAbility RAIDEN_SWORD_DRAW = new RaidenSwordDrawAbility();
 	public static final RaidenEyeOfJudgmentAbility RAIDEN_EYE_OF_JUDGMENT = new RaidenEyeOfJudgmentAbility();
@@ -178,15 +175,12 @@ public final class AbilityRegistry {
 		register(THANOS_SNAP);
 		register(REINHARD_SWORD_DRAW);
 		register(REINHARD_AIR_SLASH);
-		register(REINHARD_TELEPORT_BEHIND);
 		register(REINHARD_JUDGMENT_MARK);
 		register(REINHARD_WISH);
 		register(REINHARD_SWORD_WAVE);
-		register(REINHARD_HEAVENS_STRIKE);
 		register(REINHARD_COUNTER_RIPOSTE);
 		register(REINHARD_DIVINE_AURA);
-		register(REINHARD_RIFT_STRIKE);
-		register(REINHARD_SECOND_COMING_RIFT);
+		register(REINHARD_SPEED_JUDGMENT);
 		register(RAIDEN_SWORD_DRAW);
 		register(RAIDEN_EYE_OF_JUDGMENT);
 		register(RAIDEN_MUSOU_SHINSETSU);

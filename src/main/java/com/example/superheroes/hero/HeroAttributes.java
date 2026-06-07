@@ -134,7 +134,6 @@ public final class HeroAttributes {
 	public static final ResourceLocation REINHARD_SECOND_COMING_KNOCKBACK = ModId.of("modifiers/reinhard/second_coming_knockback_resistance");
 	public static final ResourceLocation REINHARD_SECOND_COMING_ATTACK_SPEED = ModId.of("modifiers/reinhard/second_coming_attack_speed");
 	public static final ResourceLocation REINHARD_SECOND_COMING_REACH = ModId.of("modifiers/reinhard/second_coming_entity_reach");
-	public static final ResourceLocation REINHARD_SECOND_COMING_JUMP = ModId.of("modifiers/reinhard/second_coming_jump_strength");
 	public static final ResourceLocation REINHARD_SECOND_COMING_STEP = ModId.of("modifiers/reinhard/second_coming_step_height");
 
 
@@ -349,7 +348,6 @@ public final class HeroAttributes {
 			.add(Attributes.KNOCKBACK_RESISTANCE, REINHARD_SECOND_COMING_KNOCKBACK, 1.0, AttributeModifier.Operation.ADD_VALUE)
 			.add(Attributes.ATTACK_SPEED, REINHARD_SECOND_COMING_ATTACK_SPEED, 4.0, AttributeModifier.Operation.ADD_VALUE)
 			.add(Attributes.ENTITY_INTERACTION_RANGE, REINHARD_SECOND_COMING_REACH, 2.0, AttributeModifier.Operation.ADD_VALUE)
-			.add(Attributes.JUMP_STRENGTH, REINHARD_SECOND_COMING_JUMP, 0.6, AttributeModifier.Operation.ADD_VALUE)
 			.add(Attributes.STEP_HEIGHT, REINHARD_SECOND_COMING_STEP, 0.5, AttributeModifier.Operation.ADD_VALUE)
 			.build();
 

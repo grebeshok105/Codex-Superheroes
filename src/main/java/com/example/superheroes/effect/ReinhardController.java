@@ -1,16 +1,19 @@
 package com.example.superheroes.effect;
 
 import com.example.superheroes.attachment.ModAttachments;
+import com.example.superheroes.damage.ModDamageTypes;
 import com.example.superheroes.hero.HeroAttributes;
 import com.example.superheroes.hero.ReinhardHero;
 import com.example.superheroes.transform.HeroData;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
@@ -21,6 +24,7 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
@@ -50,10 +54,12 @@ public final class ReinhardController {
 	private static final float SUPER_REFLEX_DODGE_CHANCE = 0.15f;
 	private static final float COUNTER_DAMAGE = 12.0f;
 	private static final int COUNTER_LOCKOUT_TICKS = 40;
+	private static final float BEAM_REFLECT_MULTIPLIER = 1.5f;
 
 	private static final java.util.concurrent.ConcurrentHashMap<UUID, Long> COUNTER_LOCKOUT = new java.util.concurrent.ConcurrentHashMap<>();
 	private static final java.util.concurrent.ConcurrentHashMap<UUID, Long> LAST_DAMAGE_TICK = new java.util.concurrent.ConcurrentHashMap<>();
 	private static final Set<UUID> DAMAGE_REENTRY_GUARD = Collections.newSetFromMap(new java.util.concurrent.ConcurrentHashMap<>());
+	private static final Set<UUID> FIRST_DODGE_USED = Collections.newSetFromMap(new java.util.concurrent.ConcurrentHashMap<>());
 	private static final Set<ResourceKey<DamageType>> NON_TRACKED = Set.of(
 			DamageTypes.STARVE,
 			DamageTypes.IN_WALL,
@@ -229,6 +235,14 @@ public final class ReinhardController {
 		}
 
 		// Track recent damage type (FIFO 5) — exclude non-adaptable types (mob_attack, player_attack)
+		if (tryReflectProjectileOrBeam(player, source, amount)) {
+			return false;
+		}
+
+		if (tryFirstDodge(player, source)) {
+			return false;
+		}
+
 		if (typeId != null && isAdaptable(source)) {
 			List<String> recent = new ArrayList<>(state.recentDamageTypes());
 			recent.remove(typeId);
@@ -320,6 +334,104 @@ public final class ReinhardController {
 		return true;
 	}
 
+	private static boolean tryReflectProjectileOrBeam(ServerPlayer player, DamageSource source, float amount) {
+		Entity direct = source.getDirectEntity();
+		if (direct instanceof Projectile projectile) {
+			reflectProjectile(player, projectile, source.getEntity());
+			playProtectionFx(player, ParticleTypes.END_ROD, SoundEvents.SHIELD_BLOCK, 1.7f);
+			return true;
+		}
+		if (isBeamDamage(source) && source.getEntity() instanceof LivingEntity attacker && attacker != player) {
+			attacker.invulnerableTime = 0;
+			attacker.hurt(player.serverLevel().damageSources().playerAttack(player),
+					Math.max(8.0f, amount * BEAM_REFLECT_MULTIPLIER));
+			attacker.hurtMarked = true;
+			player.serverLevel().sendParticles(ParticleTypes.END_ROD,
+					attacker.getX(), attacker.getY() + attacker.getBbHeight() * 0.5, attacker.getZ(),
+					24, 0.4, 0.6, 0.4, 0.10);
+			playProtectionFx(player, ParticleTypes.GLOW, SoundEvents.AMETHYST_BLOCK_RESONATE, 1.8f);
+			return true;
+		}
+		return false;
+	}
+
+	private static void reflectProjectile(ServerPlayer player, Projectile projectile, Entity attacker) {
+		Vec3 target = attacker == null
+				? player.getEyePosition().subtract(projectile.getDeltaMovement())
+				: attacker.position().add(0.0, attacker.getBbHeight() * 0.5, 0.0);
+		Vec3 direction = target.subtract(player.getEyePosition());
+		if (direction.lengthSqr() < 0.001) {
+			direction = player.getViewVector(1f);
+		} else {
+			direction = direction.normalize();
+		}
+		double speed = Math.max(1.4, projectile.getDeltaMovement().length() * 1.5);
+		projectile.setOwner(player);
+		projectile.setPos(player.getX(), player.getEyeY() - 0.1, player.getZ());
+		projectile.setDeltaMovement(direction.scale(speed));
+		projectile.hasImpulse = true;
+		projectile.hurtMarked = true;
+	}
+
+	private static boolean tryFirstDodge(ServerPlayer player, DamageSource source) {
+		if (!isProtectableAttack(source)) return false;
+		if (!FIRST_DODGE_USED.add(player.getUUID())) return false;
+
+		Vec3 dodge = dodgeVector(player, source.getEntity());
+		player.setDeltaMovement(player.getDeltaMovement().add(dodge.x * 0.8, 0.25, dodge.z * 0.8));
+		player.hasImpulse = true;
+		playProtectionFx(player, ParticleTypes.PORTAL, SoundEvents.ENDERMAN_TELEPORT, 2.0f);
+		return true;
+	}
+
+	private static Vec3 dodgeVector(ServerPlayer player, Entity attacker) {
+		if (attacker != null) {
+			Vec3 away = player.position().subtract(attacker.position());
+			if (away.horizontalDistanceSqr() > 0.001) {
+				return new Vec3(away.x, 0.0, away.z).normalize();
+			}
+		}
+		Vec3 look = player.getViewVector(1f);
+		Vec3 side = new Vec3(-look.z, 0.0, look.x);
+		if (side.lengthSqr() < 0.001) return new Vec3(1.0, 0.0, 0.0);
+		return side.normalize();
+	}
+
+	private static void playProtectionFx(ServerPlayer player, ParticleOptions particle, SoundEvent sound, float pitch) {
+		player.serverLevel().sendParticles(particle,
+				player.getX(), player.getY() + 1.0, player.getZ(),
+				28, 0.45, 0.65, 0.45, 0.18);
+		player.serverLevel().sendParticles(ParticleTypes.FLASH,
+				player.getX(), player.getY() + 1.0, player.getZ(),
+				1, 0.0, 0.0, 0.0, 0.0);
+		player.serverLevel().playSound(null, player.getX(), player.getY(), player.getZ(),
+				sound, SoundSource.PLAYERS, 1.2f, pitch);
+	}
+
+	private static boolean isProtectableAttack(DamageSource source) {
+		return !isNonTracked(source)
+				&& (source.getEntity() != null || source.getDirectEntity() != null || isBeamDamage(source));
+	}
+
+	private static boolean isBeamDamage(DamageSource source) {
+		ResourceKey<DamageType> key = source.typeHolder().unwrapKey().orElse(null);
+		if (key == null) return false;
+		if (key.equals(ModDamageTypes.EYE_LASER)
+				|| key.equals(ModDamageTypes.REPULSOR)
+				|| key.equals(ModDamageTypes.UNIBEAM)
+				|| key.equals(ModDamageTypes.HOMELANDER_EYE_LASER)
+				|| key.equals(ModDamageTypes.HOMELANDER_HEAT_VISION)
+				|| key.equals(ModDamageTypes.GOKU_KAMEHAMEHA)) {
+			return true;
+		}
+		String path = key.location().getPath();
+		return path.contains("laser")
+				|| path.contains("beam")
+				|| path.contains("heat_vision")
+				|| path.contains("repulsor")
+				|| path.contains("kamehameha");
+	}
+
 	private static void advancePhase(ServerPlayer player, int newPhase) {
 		ServerLevel level = player.serverLevel();
 		// Снять старые phase-modifiers, поставить новые
@@ -392,7 +504,6 @@ public final class ReinhardController {
 		player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, duration, 1, true, false, false));
 		player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, duration, 1, true, false, false));
 		player.addEffect(new MobEffectInstance(MobEffects.DIG_SPEED, duration, 1, true, false, false));
-		player.addEffect(new MobEffectInstance(MobEffects.JUMP, duration, 1, true, false, false));
 		player.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, duration, 0, true, false, false));
 		player.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, duration, 0, true, false, false));
 		player.addEffect(new MobEffectInstance(MobEffects.ABSORPTION, duration, 4, true, false, false));
@@ -413,6 +524,7 @@ public final class ReinhardController {
 		}
 		HeroAttributes.REINHARD_DRAW.remove(player);
 		HeroAttributes.REINHARD_SECOND_COMING.remove(player);
+		FIRST_DODGE_USED.remove(player.getUUID());
 	}
 
 	public static void clearAdaptations(ServerPlayer player) {
@@ -436,6 +548,7 @@ public final class ReinhardController {
 		com.example.superheroes.ability.ReinhardSwordDrawAbility.removeSword(player);
 		COUNTER_LOCKOUT.remove(player.getUUID());
 		LAST_DAMAGE_TICK.remove(player.getUUID());
+		FIRST_DODGE_USED.remove(player.getUUID());
 	}
 
 	public static void onRespawn(ServerPlayer player) {
@@ -454,6 +567,7 @@ public final class ReinhardController {
 		}
 		HeroAttributes.REINHARD_DRAW.remove(player);
 		HeroAttributes.REINHARD_SECOND_COMING.remove(player);
+		FIRST_DODGE_USED.remove(player.getUUID());
 	}
 
 	private static String damageTypeKey(DamageSource source) {
