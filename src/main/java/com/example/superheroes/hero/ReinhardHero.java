@@ -49,14 +49,11 @@ public final class ReinhardHero implements Hero {
 				AbilityIds.REINHARD_SWORD_DRAW,
 				AbilityIds.REINHARD_AIR_SLASH,
 				AbilityIds.REINHARD_SWORD_WAVE,
-				AbilityIds.REINHARD_HEAVENS_STRIKE,
 				AbilityIds.REINHARD_COUNTER_RIPOSTE,
 				AbilityIds.REINHARD_DIVINE_AURA,
-				AbilityIds.REINHARD_TELEPORT_BEHIND,
-				AbilityIds.REINHARD_RIFT_STRIKE,
+				AbilityIds.REINHARD_SPEED_JUDGMENT,
 				AbilityIds.REINHARD_JUDGMENT_MARK,
-				AbilityIds.REINHARD_WISH,
-				AbilityIds.REINHARD_SECOND_COMING_RIFT
+				AbilityIds.REINHARD_WISH
 		);
 	}
 

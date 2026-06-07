@@ -134,7 +134,6 @@ public final class HeroAttributes {
 	public static final ResourceLocation REINHARD_SECOND_COMING_KNOCKBACK = ModId.of("modifiers/reinhard/second_coming_knockback_resistance");
 	public static final ResourceLocation REINHARD_SECOND_COMING_ATTACK_SPEED = ModId.of("modifiers/reinhard/second_coming_attack_speed");
 	public static final ResourceLocation REINHARD_SECOND_COMING_REACH = ModId.of("modifiers/reinhard/second_coming_entity_reach");
-	public static final ResourceLocation REINHARD_SECOND_COMING_JUMP = ModId.of("modifiers/reinhard/second_coming_jump_strength");
 	public static final ResourceLocation REINHARD_SECOND_COMING_STEP = ModId.of("modifiers/reinhard/second_coming_step_height");
 
 
@@ -349,7 +348,6 @@ public final class HeroAttributes {
 			.add(Attributes.KNOCKBACK_RESISTANCE, REINHARD_SECOND_COMING_KNOCKBACK, 1.0, AttributeModifier.Operation.ADD_VALUE)
 			.add(Attributes.ATTACK_SPEED, REINHARD_SECOND_COMING_ATTACK_SPEED, 4.0, AttributeModifier.Operation.ADD_VALUE)
 			.add(Attributes.ENTITY_INTERACTION_RANGE, REINHARD_SECOND_COMING_REACH, 2.0, AttributeModifier.Operation.ADD_VALUE)
-			.add(Attributes.JUMP_STRENGTH, REINHARD_SECOND_COMING_JUMP, 0.6, AttributeModifier.Operation.ADD_VALUE)
 			.add(Attributes.STEP_HEIGHT, REINHARD_SECOND_COMING_STEP, 0.5, AttributeModifier.Operation.ADD_VALUE)
 			.build();
 
@@ -379,6 +377,28 @@ public final class HeroAttributes {
 			.add(Attributes.ATTACK_DAMAGE, RAIDEN_BURST_DAMAGE, 6.0, AttributeModifier.Operation.ADD_VALUE)
 			.add(Attributes.MOVEMENT_SPEED, RAIDEN_BURST_SPEED, 0.50, AttributeModifier.Operation.ADD_MULTIPLIED_BASE)
 			.add(Attributes.ATTACK_SPEED, RAIDEN_BURST_ATTACK_SPEED, 1.5, AttributeModifier.Operation.ADD_VALUE)
+			.build();
+
+	public static final ResourceLocation INVINCIBLE_ARMOR = ModId.of("modifiers/invincible/armor");
+	public static final ResourceLocation INVINCIBLE_TOUGHNESS = ModId.of("modifiers/invincible/toughness");
+	public static final ResourceLocation INVINCIBLE_DAMAGE = ModId.of("modifiers/invincible/damage");
+	public static final ResourceLocation INVINCIBLE_SPEED = ModId.of("modifiers/invincible/speed");
+	public static final ResourceLocation INVINCIBLE_HP = ModId.of("modifiers/invincible/max_health");
+	public static final ResourceLocation INVINCIBLE_KNOCKBACK = ModId.of("modifiers/invincible/knockback_resistance");
+	public static final ResourceLocation INVINCIBLE_ATTACK_SPEED = ModId.of("modifiers/invincible/attack_speed");
+	public static final ResourceLocation INVINCIBLE_JUMP = ModId.of("modifiers/invincible/jump_strength");
+	public static final ResourceLocation INVINCIBLE_STEP = ModId.of("modifiers/invincible/step_height");
+
+	public static final AttributeModifierSet INVINCIBLE = AttributeModifierSet.builder()
+			.add(Attributes.ARMOR, INVINCIBLE_ARMOR, 26.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ARMOR_TOUGHNESS, INVINCIBLE_TOUGHNESS, 12.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ATTACK_DAMAGE, INVINCIBLE_DAMAGE, 12.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.MOVEMENT_SPEED, INVINCIBLE_SPEED, 0.25, AttributeModifier.Operation.ADD_MULTIPLIED_BASE)
+			.add(Attributes.MAX_HEALTH, INVINCIBLE_HP, 40.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.KNOCKBACK_RESISTANCE, INVINCIBLE_KNOCKBACK, 1.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ATTACK_SPEED, INVINCIBLE_ATTACK_SPEED, 0.6, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.JUMP_STRENGTH, INVINCIBLE_JUMP, 0.3, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.STEP_HEIGHT, INVINCIBLE_STEP, 0.5, AttributeModifier.Operation.ADD_VALUE)
 			.build();
 
 	public static void thanosClearStoneModifiers(net.minecraft.world.entity.LivingEntity entity) {

@@ -63,6 +63,7 @@ public final class HeroTransformService {
 		com.example.superheroes.effect.RegulusMadnessController.clearMadness(player);
 		hero.applyPassives(player);
 		player.refreshDimensions();
+		player.setHealth(player.getMaxHealth());
 		ModNetworking.syncHeroData(player, updated);
 		ModNetworking.broadcastRemoteHeroSkin(player);
 		playTransformFx(player, true);

@@ -37,8 +37,8 @@ java -version
 
 После успешного `build`:
 
-- `build/libs/superheroes-3.12.2.jar` — release jar для этой базы
-- `build/libs/superheroes-3.12.2-sources.jar` — sources
+- `build/libs/superheroes-3.14.0.jar` — release jar для этой базы
+- `build/libs/superheroes-3.14.0-sources.jar` — sources
 
 Версия берётся из `gradle.properties: mod_version=...`.
 
