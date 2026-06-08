@@ -11,6 +11,7 @@ import net.minecraft.world.damagesource.DamageTypes;
 
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -27,6 +28,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class ReinhardSwordDeathMarkController {
 	/** victim UUID -> attacker UUID. */
 	private static final Map<UUID, UUID> MARKED = new ConcurrentHashMap<>();
+	private static final Set<UUID> FINALIZING = ConcurrentHashMap.newKeySet();
+	private static final Set<UUID> BYPASS = ConcurrentHashMap.newKeySet();
 
 	private ReinhardSwordDeathMarkController() {
 	}
@@ -34,6 +37,8 @@ public final class ReinhardSwordDeathMarkController {
 	public static void init() {
 		ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> {
 			if (!(entity instanceof ServerPlayer victim)) return true;
+			if (BYPASS.contains(victim.getUUID())) return true;
+			if (FINALIZING.contains(victim.getUUID())) return true;
 			if (!(source.getEntity() instanceof ServerPlayer attacker)) return true;
 			if (attacker == victim) return true;
 			if (!ReinhardController.isReinhard(attacker)) return true;
@@ -42,16 +47,24 @@ public final class ReinhardSwordDeathMarkController {
 			if (!(attacker.getMainHandItem().getItem() instanceof com.example.superheroes.item.RoyalIcicleItem)) return true;
 			ReinhardState astate = attacker.getAttachedOrCreate(ModAttachments.REINHARD_STATE);
 			if (!astate.swordDrawn()) return true;
-			// Только летальный удар "схватываем" — не-летальный пропускаем штатно.
-			if (amount < victim.getHealth()) return true;
+			if (!ReinhardTimeSlowController.isActive(attacker)) return true;
 			if (!MARKED.containsKey(victim.getUUID())) {
 				MARKED.put(victim.getUUID(), attacker.getUUID());
-				victim.setHealth(1.0f);
-				victim.invulnerableTime = 0;
-				ServerPlayNetworking.send(victim, new ReinhardSwordKillS2CPayload(true));
 			}
+			victim.setAbsorptionAmount(0.0f);
+			victim.setHealth(1.0f);
+			victim.invulnerableTime = 0;
 			return false;
 		});
+	}
+
+	public static boolean hurtBypassingMark(ServerPlayer victim, net.minecraft.world.damagesource.DamageSource source, float amount) {
+		BYPASS.add(victim.getUUID());
+		try {
+			return victim.hurt(source, amount);
+		} finally {
+			BYPASS.remove(victim.getUUID());
+		}
 	}
 
 	public static void flushDeaths(MinecraftServer server) {
@@ -68,7 +81,12 @@ public final class ReinhardSwordDeathMarkController {
 					? victim.serverLevel().damageSources().playerAttack(attacker)
 					: victim.serverLevel().damageSources().genericKill();
 			victim.invulnerableTime = 0;
-			victim.hurt(damage, Float.MAX_VALUE);
+			FINALIZING.add(victim.getUUID());
+			try {
+				victim.hurt(damage, Float.MAX_VALUE);
+			} finally {
+				FINALIZING.remove(victim.getUUID());
+			}
 		}
 	}
 }

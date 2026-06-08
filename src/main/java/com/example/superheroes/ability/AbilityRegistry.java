@@ -20,6 +20,10 @@ public final class AbilityRegistry {
 	public static final MeteorSlamAbility METEOR_SLAM = new MeteorSlamAbility();
 	public static final ViltrumiteRecoveryAbility VILTRUMITE_RECOVERY = new ViltrumiteRecoveryAbility();
 	public static final ShockwavePulseAbility SHOCKWAVE_PULSE = new ShockwavePulseAbility();
+	public static final ViltrumiteThunderClapAbility VILTRUMITE_THUNDER_CLAP = new ViltrumiteThunderClapAbility();
+	public static final GuardiansBreakerAbility GUARDIANS_BREAKER = new GuardiansBreakerAbility();
+	public static final OmnimanViltrumiteRushAbility OMNIMAN_VILTRUMITE_RUSH = new OmnimanViltrumiteRushAbility();
+	public static final OmnimanWorldBreakerAbility OMNIMAN_WORLD_BREAKER = new OmnimanWorldBreakerAbility();
 	public static final IronManFlightAbility IRON_MAN_FLIGHT = new IronManFlightAbility();
 	public static final SupersonicAbility SUPERSONIC = new SupersonicAbility();
 	public static final RepulsorAbility REPULSOR = new RepulsorAbility();
@@ -117,6 +121,10 @@ public final class AbilityRegistry {
 		register(METEOR_SLAM);
 		register(VILTRUMITE_RECOVERY);
 		register(SHOCKWAVE_PULSE);
+		register(VILTRUMITE_THUNDER_CLAP);
+		register(GUARDIANS_BREAKER);
+		register(OMNIMAN_VILTRUMITE_RUSH);
+		register(OMNIMAN_WORLD_BREAKER);
 		register(IRON_MAN_FLIGHT);
 		register(SUPERSONIC);
 		register(REPULSOR);

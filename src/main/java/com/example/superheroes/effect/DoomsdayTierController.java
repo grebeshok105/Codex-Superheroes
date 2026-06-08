@@ -24,7 +24,6 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 
 public final class DoomsdayTierController {
-	private static final long TIER_UP_COOLDOWN_TICKS = 1200L; // 60s
 	private static final int RELOCATE_MIN = 50;
 	private static final int RELOCATE_MAX = 100;
 
@@ -49,13 +48,11 @@ public final class DoomsdayTierController {
 		String sourceKey = describeDamageSource(source);
 		Vec3 deathPos = player.position();
 
-		long tick = player.serverLevel().getGameTime();
-		boolean canTierUp = (tick - progress.lastTierUpTick()) >= TIER_UP_COOLDOWN_TICKS;
 		int oldTier = progress.tier();
 
 		DoomsdayProgress next = progress.withDeathSource(sourceKey, deathPos);
-		if (canTierUp && oldTier < 7) {
-			next = next.withTierUp(tick);
+		if (oldTier < 7) {
+			next = next.withTierUp(player.serverLevel().getGameTime());
 		}
 		player.setAttached(ModAttachments.DOOMSDAY_PROGRESS, next);
 
@@ -81,12 +78,7 @@ public final class DoomsdayTierController {
 		DoomGripController.clear(player);
 		com.example.superheroes.ability.ChargeTackleAbility.clear(player);
 
-		// Reapply tier passives (atomically rebuild)
-		HeroAttributes.DOOMSDAY.remove(player);
-		HeroAttributes.buildDoomsdayTierSet(progress.tier()).apply(player);
-		// Re-apply adapt damage modifier (depends on adapt count)
-		DoomsdayAdaptationController.reapplyDamageBonus(player);
-		player.setHealth(player.getMaxHealth());
+		applyProgress(player);
 
 		if (progress.pendingRelocate()) {
 			Vec3 deathPos = progress.lastDeathPos();
@@ -96,6 +88,23 @@ public final class DoomsdayTierController {
 		}
 
 		sync(player);
+	}
+
+	public static void applyProgress(ServerPlayer player) {
+		DoomsdayProgress progress = player.getAttachedOrCreate(ModAttachments.DOOMSDAY_PROGRESS);
+		HeroAttributes.DOOMSDAY.remove(player);
+		HeroAttributes.buildDoomsdayTierSet(progress.tier()).apply(player);
+		DoomsdayHero.applyTierEffects(player, progress.tier());
+		DoomsdayAdaptationController.reapplyDamageBonus(player);
+		player.setHealth(player.getMaxHealth());
+		sync(player);
+	}
+
+	public static void setTier(ServerPlayer player, int tier) {
+		int clamped = Math.max(1, Math.min(7, tier));
+		DoomsdayProgress progress = player.getAttachedOrCreate(ModAttachments.DOOMSDAY_PROGRESS);
+		player.setAttached(ModAttachments.DOOMSDAY_PROGRESS, progress.withTier(clamped));
+		applyProgress(player);
 	}
 
 	private static void tryRelocate(ServerPlayer player, ServerLevel level, Vec3 from) {

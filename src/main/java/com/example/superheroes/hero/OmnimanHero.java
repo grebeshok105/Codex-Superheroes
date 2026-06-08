@@ -2,8 +2,8 @@ package com.example.superheroes.hero;
 
 import com.example.superheroes.ModId;
 import com.example.superheroes.ability.AbilityIds;
-import com.example.superheroes.ability.MeteorSlamAbility;
-import com.example.superheroes.ability.ViltrumiteChargeAbility;
+import com.example.superheroes.ability.OmnimanViltrumiteRushAbility;
+import com.example.superheroes.effect.OmnimanMomentumController;
 import com.example.superheroes.physics.ShockwaveUtil;
 import com.example.superheroes.resource.ResourceKind;
 import net.minecraft.core.particles.ParticleTypes;
@@ -20,28 +20,28 @@ import net.minecraft.world.entity.player.Player;
 
 import java.util.List;
 
-public final class InvincibleHero implements Hero {
-	public static final ResourceLocation ID = ModId.of("invincible");
-	public static final ResourceLocation SKIN = ModId.of("textures/entity/hero/invincible.png");
+public final class OmnimanHero implements Hero {
+	public static final ResourceLocation ID = ModId.of("omniman");
+	public static final ResourceLocation SKIN = ModId.of("textures/entity/hero/omniman.png");
 	public static final HeroTheme THEME = new HeroTheme(
-			0xE0081F38,
-			0xD0030C1A,
-			0x990AA4D8,
-			0x44FFE15A,
-			0xFFFFE15A,
-			0xFF073C68,
-			0xFF0AA4D8,
-			0x660AD8FF,
-			0xFF33CFFF,
-			0xFF2B2200,
-			0xFFFFD640,
-			0x66FFE878,
-			0xFFFFD640,
-			0x660AA4D8,
-			0xFFFFD640,
-			0xFFFFD640,
+			0xE00F1720,
+			0xD0081018,
+			0xAA7A0F18,
+			0x55E5D0C8,
+			0xFFE5D0C8,
+			0xFF2A333D,
+			0xFFB01C28,
+			0x66D93642,
+			0xFFFFE6DA,
+			0xFF161C22,
+			0xFFC9D1D9,
+			0x66C9D1D9,
+			0xFFE6D5CB,
+			0x66840E18,
+			0xFFC9D1D9,
+			0xFFE6D5CB,
 			0xFFFFFFFF,
-			0x66FFE15A
+			0x66B01C28
 	);
 
 	@Override
@@ -51,12 +51,12 @@ public final class InvincibleHero implements Hero {
 
 	@Override
 	public float getEnergyMax() {
-		return 240f;
+		return 320f;
 	}
 
 	@Override
 	public float getEnergyRegenPerTick() {
-		return 1.2f;
+		return 1.5f;
 	}
 
 	@Override
@@ -69,7 +69,7 @@ public final class InvincibleHero implements Hero {
 		return switch (pose) {
 			case CROUCHING -> EntityDimensions.scalable(0.6f, 1.5f).withEyeHeight(1.27f);
 			case SWIMMING, FALL_FLYING, SPIN_ATTACK -> EntityDimensions.scalable(0.6f, 0.6f).withEyeHeight(0.4f);
-			default -> EntityDimensions.scalable(0.6f, 1.85f).withEyeHeight(1.65f);
+			default -> EntityDimensions.scalable(0.6f, 1.88f).withEyeHeight(1.68f);
 		};
 	}
 
@@ -77,10 +77,10 @@ public final class InvincibleHero implements Hero {
 	public List<ResourceLocation> getAbilities() {
 		return List.of(
 				AbilityIds.FLIGHT,
-				AbilityIds.VILTRUMITE_THUNDER_CLAP,
+				AbilityIds.OMNIMAN_VILTRUMITE_RUSH,
+				AbilityIds.OMNIMAN_WORLD_BREAKER,
 				AbilityIds.SHOCKWAVE_PULSE,
-				AbilityIds.VILTRUMITE_RECOVERY,
-				AbilityIds.GUARDIANS_BREAKER);
+				AbilityIds.VILTRUMITE_RECOVERY);
 	}
 
 	@Override
@@ -90,21 +90,21 @@ public final class InvincibleHero implements Hero {
 
 	@Override
 	public void applyPassives(Player player) {
-		HeroAttributes.INVINCIBLE.apply(player);
-		player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, -1, 0, true, false, true));
-		player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, -1, 0, true, false, true));
+		HeroAttributes.OMNIMAN.apply(player);
+		player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, -1, 1, true, false, true));
+		player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, -1, 1, true, false, true));
 		player.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, -1, 0, true, false, true));
 	}
 
 	@Override
 	public void removePassives(Player player) {
-		HeroAttributes.INVINCIBLE.remove(player);
+		HeroAttributes.OMNIMAN.remove(player);
 		player.removeEffect(MobEffects.REGENERATION);
 		player.removeEffect(MobEffects.DAMAGE_RESISTANCE);
 		player.removeEffect(MobEffects.FIRE_RESISTANCE);
 		if (player instanceof ServerPlayer sp) {
-			ViltrumiteChargeAbility.clear(sp);
-			MeteorSlamAbility.clear(sp);
+			OmnimanMomentumController.clear(sp);
+			OmnimanViltrumiteRushAbility.clear(sp);
 		}
 	}
 
@@ -126,20 +126,20 @@ public final class InvincibleHero implements Hero {
 	@Override
 	public void onLanded(ServerPlayer player, LandingImpact impact) {
 		float intensity = impact.intensity();
-		float scale = 0.25f + intensity * 1.1f;
-		double radius = 2.8 + scale * 7.0;
-		float damage = 3.0f + scale * 8.0f;
+		float momentum = OmnimanMomentumController.momentum(player) / 100f;
+		float scale = 0.45f + intensity * 1.45f + momentum * 0.45f;
+		double radius = 4.0 + scale * 9.0;
+		float damage = 7.0f + scale * 13.0f;
 		ShockwaveUtil.detonate(player, player.position(), radius, damage, false);
 
 		ServerLevel level = player.serverLevel();
 		double cx = player.getX();
 		double cy = player.getY();
 		double cz = player.getZ();
-		level.sendParticles(ParticleTypes.ELECTRIC_SPARK, cx, cy + 0.3, cz,
-				(int) (16 + radius * 5), radius * 0.35, 0.15, radius * 0.35, 0.12);
-		if (impact.tier() == LandingImpact.Tier.STRONG || impact.tier() == LandingImpact.Tier.EPIC) {
-			level.sendParticles(ParticleTypes.FLASH, cx, cy + 0.8, cz, 1, 0, 0, 0, 0);
-			level.playSound(null, cx, cy, cz, SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 0.8f, 1.2f);
-		}
+		level.playSound(null, cx, cy, cz, SoundEvents.GENERIC_EXPLODE.value(), SoundSource.PLAYERS, 1.8f, 0.55f);
+		level.playSound(null, cx, cy, cz, SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 1.2f, 0.85f);
+		level.sendParticles(ParticleTypes.EXPLOSION_EMITTER, cx, cy + 0.3, cz, 2, radius * 0.35, 0.15, radius * 0.35, 0.0);
+		level.sendParticles(ParticleTypes.LARGE_SMOKE, cx, cy + 0.15, cz, 70, radius * 0.55, 0.25, radius * 0.55, 0.1);
+		level.sendParticles(ParticleTypes.CRIT, cx, cy + 0.65, cz, 34, radius * 0.35, 0.2, radius * 0.35, 0.16);
 	}
 }

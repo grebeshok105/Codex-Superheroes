@@ -14,6 +14,10 @@ public final class AbilityIds {
 	public static final ResourceLocation METEOR_SLAM = ModId.of("meteor_slam");
 	public static final ResourceLocation VILTRUMITE_RECOVERY = ModId.of("viltrumite_recovery");
 	public static final ResourceLocation SHOCKWAVE_PULSE = ModId.of("shockwave_pulse");
+	public static final ResourceLocation VILTRUMITE_THUNDER_CLAP = ModId.of("viltrumite_thunder_clap");
+	public static final ResourceLocation GUARDIANS_BREAKER = ModId.of("guardians_breaker");
+	public static final ResourceLocation OMNIMAN_VILTRUMITE_RUSH = ModId.of("omniman_viltrumite_rush");
+	public static final ResourceLocation OMNIMAN_WORLD_BREAKER = ModId.of("omniman_world_breaker");
 
 	public static final ResourceLocation IRON_MAN_FLIGHT = ModId.of("iron_man_flight");
 	public static final ResourceLocation SUPERSONIC = ModId.of("supersonic");

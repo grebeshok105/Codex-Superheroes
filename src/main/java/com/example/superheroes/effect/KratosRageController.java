@@ -21,8 +21,8 @@ import java.util.UUID;
 
 public final class KratosRageController {
 	public static final float MAX_RAGE = 100f;
-	private static final float TAKEN_PER_DMG = 0.4f;
-	private static final float DEALT_PER_DMG = 1.0f;
+	private static final float TAKEN_PER_DMG = 0.3f;
+	private static final float DEALT_PER_DMG = 0.75f;
 	private static final int DURATION_TICKS = 240;
 	private static final float DRAIN_PER_TICK = MAX_RAGE / (float) DURATION_TICKS;
 

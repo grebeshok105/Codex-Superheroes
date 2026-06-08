@@ -28,7 +28,7 @@ public final class FlightAbility implements Ability {
 
 	@Override
 	public float costPerTick() {
-		return 0.5f;
+		return 0f;
 	}
 
 	@Override
