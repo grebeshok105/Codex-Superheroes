@@ -53,6 +53,7 @@ public class SuperheroesMod implements ModInitializer {
 		com.example.superheroes.effect.HeroPassiveRegenController.init();
 		com.example.superheroes.effect.IronFistsController.init();
 		com.example.superheroes.effect.InvincibleCombatController.init();
+		com.example.superheroes.effect.OmnimanMomentumController.init();
 		com.example.superheroes.effect.UraniumDefenseController.init();
 		com.example.superheroes.effect.UraniumOffhandController.init();
 		com.example.superheroes.effect.FlightController.init();
@@ -90,6 +91,7 @@ public class SuperheroesMod implements ModInitializer {
 				com.example.superheroes.ability.ChargeTackleAbility.serverTick(p);
 				com.example.superheroes.ability.ViltrumiteChargeAbility.serverTick(p);
 				com.example.superheroes.ability.MeteorSlamAbility.serverTick(p);
+				com.example.superheroes.ability.OmnimanViltrumiteRushAbility.serverTick(p);
 				com.example.superheroes.ability.GokuKamehamehaAbility.serverTick(p);
 				com.example.superheroes.ability.GokuSpiritBombAbility.serverTick(p);
 				com.example.superheroes.ability.NarutoRasenganAbility.serverTick(p);

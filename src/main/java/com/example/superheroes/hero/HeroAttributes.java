@@ -388,6 +388,16 @@ public final class HeroAttributes {
 	public static final ResourceLocation INVINCIBLE_ATTACK_SPEED = ModId.of("modifiers/invincible/attack_speed");
 	public static final ResourceLocation INVINCIBLE_JUMP = ModId.of("modifiers/invincible/jump_strength");
 	public static final ResourceLocation INVINCIBLE_STEP = ModId.of("modifiers/invincible/step_height");
+	public static final ResourceLocation OMNIMAN_ARMOR = ModId.of("modifiers/omniman/armor");
+	public static final ResourceLocation OMNIMAN_TOUGHNESS = ModId.of("modifiers/omniman/toughness");
+	public static final ResourceLocation OMNIMAN_DAMAGE = ModId.of("modifiers/omniman/damage");
+	public static final ResourceLocation OMNIMAN_SPEED = ModId.of("modifiers/omniman/speed");
+	public static final ResourceLocation OMNIMAN_HP = ModId.of("modifiers/omniman/max_health");
+	public static final ResourceLocation OMNIMAN_KNOCKBACK = ModId.of("modifiers/omniman/knockback_resistance");
+	public static final ResourceLocation OMNIMAN_ATTACK_SPEED = ModId.of("modifiers/omniman/attack_speed");
+	public static final ResourceLocation OMNIMAN_JUMP = ModId.of("modifiers/omniman/jump_strength");
+	public static final ResourceLocation OMNIMAN_STEP = ModId.of("modifiers/omniman/step_height");
+	public static final ResourceLocation OMNIMAN_REACH = ModId.of("modifiers/omniman/entity_reach");
 
 	public static final AttributeModifierSet INVINCIBLE = AttributeModifierSet.builder()
 			.add(Attributes.ARMOR, INVINCIBLE_ARMOR, 26.0, AttributeModifier.Operation.ADD_VALUE)
@@ -399,6 +409,19 @@ public final class HeroAttributes {
 			.add(Attributes.ATTACK_SPEED, INVINCIBLE_ATTACK_SPEED, 0.6, AttributeModifier.Operation.ADD_VALUE)
 			.add(Attributes.JUMP_STRENGTH, INVINCIBLE_JUMP, 0.3, AttributeModifier.Operation.ADD_VALUE)
 			.add(Attributes.STEP_HEIGHT, INVINCIBLE_STEP, 0.5, AttributeModifier.Operation.ADD_VALUE)
+			.build();
+
+	public static final AttributeModifierSet OMNIMAN = AttributeModifierSet.builder()
+			.add(Attributes.ARMOR, OMNIMAN_ARMOR, 30.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ARMOR_TOUGHNESS, OMNIMAN_TOUGHNESS, 16.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ATTACK_DAMAGE, OMNIMAN_DAMAGE, 16.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.MOVEMENT_SPEED, OMNIMAN_SPEED, 0.32, AttributeModifier.Operation.ADD_MULTIPLIED_BASE)
+			.add(Attributes.MAX_HEALTH, OMNIMAN_HP, 60.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.KNOCKBACK_RESISTANCE, OMNIMAN_KNOCKBACK, 1.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ATTACK_SPEED, OMNIMAN_ATTACK_SPEED, 0.8, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.JUMP_STRENGTH, OMNIMAN_JUMP, 0.35, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.STEP_HEIGHT, OMNIMAN_STEP, 0.6, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ENTITY_INTERACTION_RANGE, OMNIMAN_REACH, 0.8, AttributeModifier.Operation.ADD_VALUE)
 			.build();
 
 	public static void thanosClearStoneModifiers(net.minecraft.world.entity.LivingEntity entity) {

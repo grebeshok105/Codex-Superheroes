@@ -41,6 +41,7 @@ public final class AbilityDescriptions {
 		HERO_PASSIVE_COUNT.put("reinhard", 6);
 		HERO_PASSIVE_COUNT.put("raiden_shogun", 0);
 		HERO_PASSIVE_COUNT.put("invincible", 4);
+		HERO_PASSIVE_COUNT.put("omniman", 4);
 	}
 
 	private AbilityDescriptions() {
