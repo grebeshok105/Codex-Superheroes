@@ -50,7 +50,7 @@ public final class KratosSpartanRageAbility implements Ability {
 		player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, DURATION_TICKS, 1, true, false, true));
 		player.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, DURATION_TICKS, 0, true, false, true));
 		player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, DURATION_TICKS, 0, true, false, true));
-		player.addEffect(new MobEffectInstance(MobEffects.ABSORPTION, DURATION_TICKS, 3, true, false, true));
+		player.addEffect(new MobEffectInstance(MobEffects.ABSORPTION, DURATION_TICKS, 2, true, false, true));
 
 		ServerLevel level = player.serverLevel();
 		level.playSound(null, player.getX(), player.getY(), player.getZ(),

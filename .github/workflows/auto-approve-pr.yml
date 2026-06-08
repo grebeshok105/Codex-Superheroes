@@ -1,0 +1,43 @@
+name: auto-approve-pr
+
+on:
+  workflow_run:
+    workflows: ["build"]
+    types: [completed]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  approve:
+    if: >-
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-24.04
+    steps:
+      - name: find matching pull request
+        id: pr
+        env:
+          GH_TOKEN: ${{ secrets.AUTO_APPROVE_TOKEN || github.token }}
+          GH_REPO: ${{ github.repository }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          pr_json="$(gh pr list --repo "$GH_REPO" --state open --search "$HEAD_SHA" --json number,headRepository,isDraft --jq 'map(select(.isDraft == false and .headRepository.nameWithOwner == env.GH_REPO)) | first // empty')"
+          if [ -z "$pr_json" ]; then
+            echo "No non-draft same-repository pull request found for $HEAD_SHA."
+            echo "number=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          number="$(jq -r '.number' <<< "$pr_json")"
+          echo "number=$number" >> "$GITHUB_OUTPUT"
+
+      - name: approve pull request
+        if: steps.pr.outputs.number != ''
+        env:
+          GH_TOKEN: ${{ secrets.AUTO_APPROVE_TOKEN || github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
+        run: gh pr review --repo "$GH_REPO" "$PR_NUMBER" --approve

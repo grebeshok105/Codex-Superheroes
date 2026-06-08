@@ -62,6 +62,14 @@ public final class ReinhardTimeSlowController {
 		ARMED.remove(player.getUUID());
 	}
 
+	public static boolean isActive(ServerPlayer player) {
+		return ACTIVE.containsKey(player.getUUID());
+	}
+
+	public static void triggerAbilitySlow(ServerPlayer player) {
+		triggerSlow(player);
+	}
+
 	private static void triggerSlow(ServerPlayer player) {
 		long endAt = System.currentTimeMillis() + SLOW_DURATION_MS;
 		ACTIVE.put(player.getUUID(), endAt);

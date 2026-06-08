@@ -273,9 +273,9 @@ public final class HeroAttributes {
 			.add(Attributes.ATTACK_DAMAGE, KRATOS_RAGE_FLAT, 12.0, AttributeModifier.Operation.ADD_VALUE)
 			.add(Attributes.ATTACK_DAMAGE, KRATOS_RAGE_DAMAGE, 1.5, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL)
 			.add(Attributes.MOVEMENT_SPEED, KRATOS_RAGE_SPEED, 0.30, AttributeModifier.Operation.ADD_MULTIPLIED_BASE)
-			.add(Attributes.ARMOR, KRATOS_RAGE_ARMOR, 20.0, AttributeModifier.Operation.ADD_VALUE)
-			.add(Attributes.ARMOR_TOUGHNESS, KRATOS_RAGE_TOUGHNESS, 8.0, AttributeModifier.Operation.ADD_VALUE)
-			.add(Attributes.MAX_HEALTH, KRATOS_RAGE_HP, 20.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ARMOR, KRATOS_RAGE_ARMOR, 15.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ARMOR_TOUGHNESS, KRATOS_RAGE_TOUGHNESS, 6.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.MAX_HEALTH, KRATOS_RAGE_HP, 15.0, AttributeModifier.Operation.ADD_VALUE)
 			.add(Attributes.KNOCKBACK_RESISTANCE, KRATOS_RAGE_KB, 1.0, AttributeModifier.Operation.ADD_VALUE)
 			.build();
 

@@ -93,6 +93,14 @@ public final class DoomsdayHero implements Hero {
                 int tier = getTier(player);
                 HeroAttributes.DOOMSDAY.remove(player);
                 HeroAttributes.buildDoomsdayTierSet(tier).apply(player);
+                applyTierEffects(player, tier);
+                if (player instanceof ServerPlayer sp) {
+                        com.example.superheroes.effect.DoomsdayAdaptationController.reapplyDamageBonus(sp);
+                        com.example.superheroes.effect.DoomsdayTierController.sync(sp);
+                }
+        }
+
+        public static void applyTierEffects(Player player, int tier) {
                 if (tier >= 7) {
                         player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, -1, 1, true, false, true));
                         player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, -1, 1, true, false, true));
@@ -109,9 +117,6 @@ public final class DoomsdayHero implements Hero {
                         } else {
                                 player.removeEffect(MobEffects.DAMAGE_RESISTANCE);
                         }
-                }
-                if (player instanceof ServerPlayer sp) {
-                        com.example.superheroes.effect.DoomsdayTierController.sync(sp);
                 }
         }
 
