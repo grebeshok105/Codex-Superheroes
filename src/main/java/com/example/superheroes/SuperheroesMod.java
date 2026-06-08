@@ -75,9 +75,11 @@ public class SuperheroesMod implements ModInitializer {
 		com.example.superheroes.effect.ReinhardSwordDrawCeremonyController.init();
 		com.example.superheroes.effect.ReinhardSwordDrawGateController.init();
 		com.example.superheroes.effect.ReinhardSwordDeathMarkController.init();
+		com.example.superheroes.effect.ReinhardSpeedJudgmentController.init();
 		com.example.superheroes.effect.RaidenBurstController.init();
 		com.example.superheroes.effect.RaidenAuraController.init();
 		com.example.superheroes.effect.RaidenPlungingLandingController.init();
+		com.example.superheroes.effect.RaidenMusouIsshinController.init();
 		com.example.superheroes.effect.HeavensStrikeController.init();
 		com.example.superheroes.effect.ThanosSnapWindupController.init();
 		SuperheroesCommands.init();

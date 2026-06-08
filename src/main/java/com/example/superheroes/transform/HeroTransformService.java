@@ -3,6 +3,7 @@ package com.example.superheroes.transform;
 import com.example.superheroes.ability.Ability;
 import com.example.superheroes.ability.AbilityRegistry;
 import com.example.superheroes.attachment.ModAttachments;
+import com.example.superheroes.hero.DoomsdayHero;
 import com.example.superheroes.hero.Hero;
 import com.example.superheroes.hero.Heroes;
 import com.example.superheroes.network.ModNetworking;
@@ -147,8 +148,7 @@ public final class HeroTransformService {
 		if (data.hasHero()) {
 			Hero hero = Heroes.get(data.heroId());
 			if (hero != null) {
-				hero.removePassives(player);
-				hero.applyPassives(player);
+				reapplyLifecyclePassives(player, hero);
 			}
 		}
 		ModNetworking.syncHeroData(player, data);
@@ -163,12 +163,20 @@ public final class HeroTransformService {
 		if (data.hasHero()) {
 			Hero hero = Heroes.get(data.heroId());
 			if (hero != null) {
-				hero.removePassives(newPlayer);
-				hero.applyPassives(newPlayer);
+				reapplyLifecyclePassives(newPlayer, hero);
 			}
 		}
 		com.example.superheroes.effect.ReinhardController.onRespawn(newPlayer);
 		ModNetworking.syncHeroData(newPlayer, data);
+	}
+
+	private static void reapplyLifecyclePassives(ServerPlayer player, Hero hero) {
+		if (DoomsdayHero.ID.equals(hero.getId())) {
+			hero.applyPassives(player);
+			return;
+		}
+		hero.removePassives(player);
+		hero.applyPassives(player);
 	}
 
 	public static void onPlayerDisconnect(ServerPlayer player) {
