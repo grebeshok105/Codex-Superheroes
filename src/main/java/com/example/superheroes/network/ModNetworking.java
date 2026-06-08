@@ -28,6 +28,7 @@ public final class ModNetworking {
 
 		PayloadTypeRegistry.playS2C().register(ResourceUpdateS2CPayload.TYPE, ResourceUpdateS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(HeroDataSyncS2CPayload.TYPE, HeroDataSyncS2CPayload.STREAM_CODEC);
+		PayloadTypeRegistry.playS2C().register(FlightStateS2CPayload.TYPE, FlightStateS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(LaserFiredS2CPayload.TYPE, LaserFiredS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(RepulsorBlastS2CPayload.TYPE, RepulsorBlastS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(ThanosCosmicBeamS2CPayload.TYPE, ThanosCosmicBeamS2CPayload.STREAM_CODEC);
@@ -77,6 +78,18 @@ public final class ModNetworking {
 
 	public static void syncHeroData(ServerPlayer player, HeroData data) {
 		ServerPlayNetworking.send(player, new HeroDataSyncS2CPayload(data));
+	}
+
+	public static void syncFlightState(ServerPlayer player, com.example.superheroes.flight.FlightMode mode,
+			com.example.superheroes.flight.FlightPhase phase, float horizontalSpeed, boolean active) {
+		FlightStateS2CPayload payload = new FlightStateS2CPayload(
+				player.getId(), active, mode.ordinal(), phase.ordinal(), horizontalSpeed);
+		ServerPlayNetworking.send(player, payload);
+		for (ServerPlayer observer : PlayerLookup.tracking(player)) {
+			if (observer != player) {
+				ServerPlayNetworking.send(observer, payload);
+			}
+		}
 	}
 
 

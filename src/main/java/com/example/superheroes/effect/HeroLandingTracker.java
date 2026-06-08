@@ -91,9 +91,7 @@ public final class HeroLandingTracker {
 		double currentY = player.getY();
 		double currentZ = player.getZ();
 		boolean onGround = player.onGround();
-		boolean flying = data.isActive(AbilityIds.FLIGHT)
-				|| data.isActive(AbilityIds.IRON_MAN_FLIGHT)
-				|| data.isActive(AbilityIds.SUPERSONIC);
+		boolean flying = FlightController.isFlightActive(data);
 
 		double drop = s.prevY - currentY;
 		double dx = currentX - s.prevX;

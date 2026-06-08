@@ -1,8 +1,8 @@
 package com.example.superheroes.client.network;
 
 import com.example.superheroes.attachment.ModAttachments;
-import com.example.superheroes.ability.AbilityIds;
 import com.example.superheroes.client.ClientAbilityCooldowns;
+import com.example.superheroes.client.ClientFlightState;
 import com.example.superheroes.client.ClientHeroState;
 import com.example.superheroes.client.ClientMadnessState;
 import com.example.superheroes.client.ClientReactorState;
@@ -12,7 +12,9 @@ import com.example.superheroes.client.hud.BloodRainHud;
 import com.example.superheroes.client.render.CosmicBeamRenderer;
 import com.example.superheroes.client.render.LaserBeamRenderer;
 import com.example.superheroes.client.render.RepulsorBeamRenderer;
+import com.example.superheroes.flight.FlightAbilityState;
 import com.example.superheroes.network.HeroDataSyncS2CPayload;
+import com.example.superheroes.network.FlightStateS2CPayload;
 import com.example.superheroes.network.LaserFiredS2CPayload;
 import com.example.superheroes.network.ThanosCosmicBeamS2CPayload;
 import com.example.superheroes.network.MadnessSyncS2CPayload;
@@ -47,20 +49,27 @@ public final class ClientNetworking {
 								|| (data.hasHero() && !data.heroId().equals(previous.heroId()))) {
 							self.refreshDimensions();
 						}
-						boolean wasFlight = previous.isActive(AbilityIds.FLIGHT)
-								|| previous.isActive(AbilityIds.IRON_MAN_FLIGHT)
-								|| previous.isActive(AbilityIds.SUPERSONIC);
-						boolean isFlight = data.isActive(AbilityIds.FLIGHT)
-								|| data.isActive(AbilityIds.IRON_MAN_FLIGHT)
-								|| data.isActive(AbilityIds.SUPERSONIC);
+						boolean wasFlight = FlightAbilityState.isActive(previous);
+						boolean isFlight = FlightAbilityState.isActive(data);
 						if (!wasFlight && isFlight && !self.isFallFlying()) {
 							self.startFallFlying();
+						}
+						if (!isFlight) {
+							ClientFlightState.clear(self.getId());
 						}
 					}
 				}));
 
 		ClientPlayNetworking.registerGlobalReceiver(ResourceUpdateS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> ClientHeroState.updateResources(payload.energy(), payload.mana())));
+
+		ClientPlayNetworking.registerGlobalReceiver(FlightStateS2CPayload.TYPE, (payload, context) ->
+				context.client().execute(() -> ClientFlightState.update(
+						payload.entityId(),
+						payload.active(),
+						com.example.superheroes.flight.FlightMode.byOrdinal(payload.mode()),
+						com.example.superheroes.flight.FlightPhase.byOrdinal(payload.phase()),
+						payload.horizontalSpeed())));
 
 		ClientPlayNetworking.registerGlobalReceiver(LaserFiredS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> LaserBeamRenderer.add(payload.start(), payload.end())));
