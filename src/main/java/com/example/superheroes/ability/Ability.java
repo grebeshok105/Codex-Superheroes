@@ -12,6 +12,11 @@ public interface Ability {
 
 	float costPerTick();
 
+	/**
+	 * Runs activation side effects on the server.
+	 * Return {@code false} when the activation did not actually start; {@link AbilityRouter}
+	 * will not spend the activation cost for that attempt.
+	 */
 	boolean tryActivate(ServerPlayer player);
 
 	/**

@@ -489,6 +489,7 @@
   "ability.superheroes.reinhard_speed_judgment": "Суд Скорости",
   "ability.superheroes.reinhard_speed_judgment.desc": "Находит движущегося игрока в радиусе 50 блоков, телепортируется за спину, замедляет время, ждёт 3 секунды и наносит удар на 50 урона. КД 8с.",
   "ability.superheroes.reinhard_speed_judgment.no_target": "Поблизости нет движущихся игроков.",
+  "ability.superheroes.reinhard_speed_judgment.no_target_debug": "Поблизости нет движущихся игроков или debug-мобов.",
   "ability.superheroes.reinhard.phase_up": "Фаза %s",
   "ability.superheroes.reinhard.phoenix": "Второе пришествие №%s — небывалая мощь!",
   "ability.superheroes.reinhard.second_coming": "Второе Пришествие — Рейнхард восстал",
@@ -563,7 +564,7 @@
   "item.superheroes.invincible_suit.lore.usage": "▶ ПКМ — Трансформация",
   "item.superheroes.invincible_suit.lore.untransform": "▶ Shift + ПКМ — Отмена трансформации",
   "ability.superheroes.viltrumite_charge": "Вилтрумитский рывок",
-  "ability.superheroes.viltrumite_charge.desc": "Рывок на 22 блока вперёд, пробивает врагов на 28 урона и сильный нокбек. КД 8с.",
+  "ability.superheroes.viltrumite_charge.desc": "Рывок на 22 блока вперёд или примерно на 55 блоков в полёте, пробивает врагов на 28 урона и сильный нокбек. КД 8с.",
   "ability.superheroes.meteor_slam": "Метеоритный удар",
   "ability.superheroes.meteor_slam.desc": "Подпрыгни или рухни вниз мощным ударом по земле. Удар с воздуха сильнее и шире. КД 11с.",
   "ability.superheroes.viltrumite_recovery": "Реген",
@@ -572,8 +573,8 @@
   "ability.superheroes.shockwave_pulse.desc": "Выпусти ближнюю круговую волну вокруг себя: урон, нокбек и тряска экрана. КД 6с.",
   "ability.superheroes.viltrumite_thunder_clap": "Громовой хлопок",
   "ability.superheroes.viltrumite_thunder_clap.desc": "Разрывает воздух перед тобой звуковым конусом: урон, замедление и подброс врагов. КД 9с.",
-  "ability.superheroes.guardians_breaker": "Крушитель Стражей",
-  "ability.superheroes.guardians_breaker.desc": "Ломает ближайшую цель впереди коротким бронебойным ударом. КД 8с.",
+  "ability.superheroes.guardians_breaker": "Ударный подлёт",
+  "ability.superheroes.guardians_breaker.desc": "На большой скорости подлетает к ближайшей цели в радиусе 20 блоков, проламывает траекторию и блоки в зоне удара, затем отбрасывает врага. КД 8с.",
   "hero.superheroes.invincible.passive.1": "Вилтрумитская прочность: +40 HP, +26 брони, +12 toughness, постоянный Resistance I",
   "hero.superheroes.invincible.passive.2": "Суперсила: +12 урона, +0.6 attack speed, полный иммунитет к нокбеку, лёгкий Iron Fists на melee",
   "hero.superheroes.invincible.passive.3": "Воздушный бой: инерционный полёт, нет урона от падения, шоквейвы при приземлении",
@@ -595,5 +596,7 @@
 
   "ability.superheroes.status.on": "ВКЛ",
   "ability.superheroes.status.off": "ВЫКЛ",
-  "ability.superheroes.status.ready": "ГОТОВ"
+  "ability.superheroes.status.ready": "ГОТОВ",
+  "commands.superheroes.debug.mob_targets.enabled": "Админский debug-режим целей-мобов включён.",
+  "commands.superheroes.debug.mob_targets.disabled": "Админский debug-режим целей-мобов выключен."
 }

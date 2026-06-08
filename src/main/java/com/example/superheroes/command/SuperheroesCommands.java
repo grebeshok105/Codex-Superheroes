@@ -1,6 +1,7 @@
 package com.example.superheroes.command;
 
 import com.example.superheroes.attachment.ModAttachments;
+import com.example.superheroes.debug.AdminAbilityDebug;
 import com.example.superheroes.effect.DoomsdayTierController;
 import com.example.superheroes.hero.DoomsdayHero;
 import com.example.superheroes.hero.Hero;
@@ -54,6 +55,15 @@ public final class SuperheroesCommands {
 										.then(Commands.argument("target", EntityArgument.player())
 												.then(Commands.argument("tier", IntegerArgumentType.integer(1, 7))
 														.executes(SuperheroesCommands::setDoomsdayTierForTarget)))))
+						.then(Commands.literal("debug")
+								.then(Commands.literal("mob-targets")
+										.executes(SuperheroesCommands::toggleMobTargets)
+										.then(Commands.literal("on")
+												.executes(ctx -> setMobTargets(ctx, true)))
+										.then(Commands.literal("off")
+												.executes(ctx -> setMobTargets(ctx, false)))
+										.then(Commands.literal("status")
+												.executes(SuperheroesCommands::mobTargetsStatus))))
 						.then(Commands.literal("abilities")
 								.executes(SuperheroesCommands::listAbilities))
 						.then(Commands.literal("info")
@@ -155,6 +165,30 @@ public final class SuperheroesCommands {
 		ctx.getSource().sendSuccess(() -> Component.translatable("commands.superheroes.doomsday.tier.set",
 				target.getScoreboardName(), String.valueOf(tier)), true);
 		return tier;
+	}
+
+	private static int toggleMobTargets(CommandContext<CommandSourceStack> ctx) {
+		boolean enabled = AdminAbilityDebug.togglePlayerOnlyAbilitiesTargetMobs();
+		sendMobTargetsStatus(ctx, enabled);
+		return enabled ? 1 : 0;
+	}
+
+	private static int setMobTargets(CommandContext<CommandSourceStack> ctx, boolean enabled) {
+		AdminAbilityDebug.setPlayerOnlyAbilitiesTargetMobs(enabled);
+		sendMobTargetsStatus(ctx, enabled);
+		return enabled ? 1 : 0;
+	}
+
+	private static int mobTargetsStatus(CommandContext<CommandSourceStack> ctx) {
+		boolean enabled = AdminAbilityDebug.playerOnlyAbilitiesTargetMobs();
+		sendMobTargetsStatus(ctx, enabled);
+		return enabled ? 1 : 0;
+	}
+
+	private static void sendMobTargetsStatus(CommandContext<CommandSourceStack> ctx, boolean enabled) {
+		ctx.getSource().sendSuccess(() -> Component.translatable(enabled
+				? "commands.superheroes.debug.mob_targets.enabled"
+				: "commands.superheroes.debug.mob_targets.disabled"), true);
 	}
 
 	private static int listAbilities(CommandContext<CommandSourceStack> ctx) {

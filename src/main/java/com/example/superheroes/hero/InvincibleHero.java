@@ -77,7 +77,7 @@ public final class InvincibleHero implements Hero {
 	public List<ResourceLocation> getAbilities() {
 		return List.of(
 				AbilityIds.FLIGHT,
-				AbilityIds.VILTRUMITE_THUNDER_CLAP,
+				AbilityIds.VILTRUMITE_CHARGE,
 				AbilityIds.SHOCKWAVE_PULSE,
 				AbilityIds.VILTRUMITE_RECOVERY,
 				AbilityIds.GUARDIANS_BREAKER);

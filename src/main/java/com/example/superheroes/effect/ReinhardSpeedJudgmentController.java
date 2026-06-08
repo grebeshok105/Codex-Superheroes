@@ -1,5 +1,7 @@
 package com.example.superheroes.effect;
 
+import com.example.superheroes.ability.AbilityIds;
+import com.example.superheroes.debug.AdminAbilityDebug;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.particles.ParticleTypes;
@@ -8,6 +10,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.Iterator;
@@ -27,8 +31,16 @@ public final class ReinhardSpeedJudgmentController {
 
 	public static void start(ServerPlayer attacker, ServerPlayer target, long delayMs, float damage) {
 		teleportBehind(attacker, target);
-		PENDING.put(attacker.getUUID(), new PendingStrike(target.getUUID(), System.currentTimeMillis() + delayMs, damage));
+		PENDING.put(attacker.getUUID(), new PendingStrike(target.getUUID(), System.currentTimeMillis() + delayMs, damage, false));
 		ReinhardTimeSlowController.triggerAbilitySlow(attacker);
+	}
+
+	public static boolean startDebugMob(ServerPlayer attacker, Mob target, long delayMs, float damage) {
+		if (!AdminAbilityDebug.canTargetMob(attacker, AbilityIds.REINHARD_SPEED_JUDGMENT, target)) return false;
+		teleportBehind(attacker, target);
+		PENDING.put(attacker.getUUID(), new PendingStrike(target.getUUID(), System.currentTimeMillis() + delayMs, damage, true));
+		ReinhardTimeSlowController.triggerAbilitySlow(attacker);
+		return true;
 	}
 
 	private static void tick(MinecraftServer server) {
@@ -37,18 +49,35 @@ public final class ReinhardSpeedJudgmentController {
 		Iterator<Map.Entry<UUID, PendingStrike>> it = PENDING.entrySet().iterator();
 		while (it.hasNext()) {
 			Map.Entry<UUID, PendingStrike> entry = it.next();
+			PendingStrike pending = entry.getValue();
 			ServerPlayer attacker = server.getPlayerList().getPlayer(entry.getKey());
-			ServerPlayer target = server.getPlayerList().getPlayer(entry.getValue().targetId());
+			if (pending.debugMobTarget()) {
+				Mob target = findDebugMobTarget(attacker, pending.targetId());
+				if (!isValidDebugMob(attacker, target)) {
+					it.remove();
+					continue;
+				}
+				if (now < pending.strikeAtMs()) {
+					teleportBehind(attacker, target);
+					continue;
+				}
+				teleportBehind(attacker, target);
+				strikeDebugMob(attacker, target, pending.damage());
+				it.remove();
+				continue;
+			}
+
+			ServerPlayer target = server.getPlayerList().getPlayer(pending.targetId());
 			if (!isValid(attacker, target)) {
 				it.remove();
 				continue;
 			}
-			if (now < entry.getValue().strikeAtMs()) {
+			if (now < pending.strikeAtMs()) {
 				teleportBehind(attacker, target);
 				continue;
 			}
 			teleportBehind(attacker, target);
-			strike(attacker, target, entry.getValue().damage());
+			strike(attacker, target, pending.damage());
 			it.remove();
 		}
 	}
@@ -60,7 +89,19 @@ public final class ReinhardSpeedJudgmentController {
 		return ReinhardController.isReinhard(attacker);
 	}
 
-	private static void teleportBehind(ServerPlayer attacker, ServerPlayer target) {
+	private static boolean isValidDebugMob(ServerPlayer attacker, Mob target) {
+		if (attacker == null || !attacker.isAlive()) return false;
+		if (!ReinhardController.isReinhard(attacker)) return false;
+		return AdminAbilityDebug.canTargetMob(attacker, AbilityIds.REINHARD_SPEED_JUDGMENT, target);
+	}
+
+	private static Mob findDebugMobTarget(ServerPlayer attacker, UUID targetId) {
+		if (attacker == null) return null;
+		if (!(attacker.serverLevel().getEntity(targetId) instanceof Mob target)) return null;
+		return target;
+	}
+
+	private static void teleportBehind(ServerPlayer attacker, LivingEntity target) {
 		Vec3 look = target.getViewVector(1f);
 		Vec3 behind = target.position().subtract(look.scale(1.6));
 		attacker.connection.teleport(behind.x, behind.y, behind.z, (target.getYRot() + 180f) % 360f, 0f);
@@ -86,6 +127,25 @@ public final class ReinhardSpeedJudgmentController {
 		ReinhardSwordDeathMarkController.hurtBypassingMark(target, level.damageSources().playerAttack(attacker), damage);
 	}
 
-	private record PendingStrike(UUID targetId, long strikeAtMs, float damage) {
+	private static void strikeDebugMob(ServerPlayer attacker, Mob target, float damage) {
+		ServerLevel level = attacker.serverLevel();
+		level.sendParticles(ParticleTypes.FLASH,
+				target.getX(), target.getY() + target.getBbHeight() * 0.5, target.getZ(),
+				1, 0, 0, 0, 0);
+		level.sendParticles(ParticleTypes.SWEEP_ATTACK,
+				target.getX(), target.getY() + target.getBbHeight() * 0.5, target.getZ(),
+				1, 0, 0, 0, 0);
+		level.sendParticles(ParticleTypes.END_ROD,
+				target.getX(), target.getY() + target.getBbHeight() * 0.5, target.getZ(),
+				40, 0.4, 0.6, 0.4, 0.1);
+		level.playSound(null, target.getX(), target.getY(), target.getZ(),
+				SoundEvents.PLAYER_ATTACK_CRIT, SoundSource.PLAYERS, 1.4f, 1.0f);
+		level.playSound(null, target.getX(), target.getY(), target.getZ(),
+				SoundEvents.NETHERITE_BLOCK_HIT, SoundSource.PLAYERS, 1.0f, 1.8f);
+		target.invulnerableTime = 0;
+		target.hurt(level.damageSources().playerAttack(attacker), damage);
+	}
+
+	private record PendingStrike(UUID targetId, long strikeAtMs, float damage, boolean debugMobTarget) {
 	}
 }

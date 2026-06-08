@@ -1,5 +1,8 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.attachment.ModAttachments;
+import com.example.superheroes.effect.FlightController;
+import com.example.superheroes.transform.HeroData;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.resources.ResourceLocation;
@@ -23,6 +26,7 @@ public final class ViltrumiteChargeAbility implements Ability {
 	private static final int DURATION_TICKS = 14;
 	private static final float DAMAGE = 28f;
 	private static final double DISTANCE = 22.0;
+	private static final double FLIGHT_DISTANCE_MULTIPLIER = 2.5;
 	private static final double KNOCKBACK = 4.8;
 	private static final WeakHashMap<UUID, ActiveCharge> ACTIVE = new WeakHashMap<>();
 
@@ -57,18 +61,19 @@ public final class ViltrumiteChargeAbility implements Ability {
 		if (look.lengthSqr() < 1.0e-4) {
 			look = new Vec3(0, 0, 1);
 		}
-		double speed = DISTANCE / DURATION_TICKS;
+		double distance = effectiveDistance(player);
+		double speed = distance / DURATION_TICKS;
 		Vec3 motion = look.scale(speed);
 		player.setDeltaMovement(motion);
 		player.hurtMarked = true;
 		player.fallDistance = 0f;
 		player.connection.send(new ClientboundSetEntityMotionPacket(player.getId(), motion));
 
-		ACTIVE.put(player.getUUID(), new ActiveCharge(DURATION_TICKS, look, new HashSet<>()));
+		ACTIVE.put(player.getUUID(), new ActiveCharge(DURATION_TICKS, look, distance, new HashSet<>()));
 
 		ServerLevel level = player.serverLevel();
 		level.playSound(null, player.getX(), player.getY(), player.getZ(),
-				SoundEvents.TRIDENT_RIPTIDE_3, SoundSource.PLAYERS, 1.5f, 0.65f);
+				SoundEvents.TRIDENT_RIPTIDE_3, SoundSource.PLAYERS, distance > DISTANCE ? 1.85f : 1.5f, distance > DISTANCE ? 0.52f : 0.65f);
 		level.playSound(null, player.getX(), player.getY(), player.getZ(),
 				SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 0.6f, 1.45f);
 		AbilityCooldowns.setCooldownTicks(player, getId(), COOLDOWN_TICKS);
@@ -79,7 +84,7 @@ public final class ViltrumiteChargeAbility implements Ability {
 		ActiveCharge charge = ACTIVE.get(player.getUUID());
 		if (charge == null) return;
 
-		Vec3 motion = charge.direction.scale(DISTANCE / DURATION_TICKS);
+		Vec3 motion = charge.direction.scale(charge.distance / DURATION_TICKS);
 		player.setDeltaMovement(motion);
 		player.hurtMarked = true;
 		player.fallDistance = 0f;
@@ -104,10 +109,10 @@ public final class ViltrumiteChargeAbility implements Ability {
 
 		level.sendParticles(ParticleTypes.CLOUD,
 				player.getX(), player.getY() + 0.8, player.getZ(),
-				5, 0.25, 0.25, 0.25, 0.04);
+				charge.distance > DISTANCE ? 9 : 5, 0.25, 0.25, 0.25, charge.distance > DISTANCE ? 0.08 : 0.04);
 		level.sendParticles(ParticleTypes.ELECTRIC_SPARK,
 				player.getX(), player.getY() + 0.9, player.getZ(),
-				2, 0.18, 0.18, 0.18, 0.03);
+				charge.distance > DISTANCE ? 4 : 2, 0.18, 0.18, 0.18, 0.03);
 
 		charge.ticksLeft--;
 		if (charge.ticksLeft <= 0 || player.horizontalCollision) {
@@ -119,14 +124,23 @@ public final class ViltrumiteChargeAbility implements Ability {
 		ACTIVE.remove(player.getUUID());
 	}
 
+	private static double effectiveDistance(ServerPlayer player) {
+		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
+		boolean flying = FlightController.isFlightActive(data)
+				&& (!player.onGround() || player.getAbilities().flying || player.isFallFlying());
+		return flying ? DISTANCE * FLIGHT_DISTANCE_MULTIPLIER : DISTANCE;
+	}
+
 	private static final class ActiveCharge {
 		int ticksLeft;
 		final Vec3 direction;
+		final double distance;
 		final Set<UUID> hits;
 
-		ActiveCharge(int ticksLeft, Vec3 direction, Set<UUID> hits) {
+		ActiveCharge(int ticksLeft, Vec3 direction, double distance, Set<UUID> hits) {
 			this.ticksLeft = ticksLeft;
 			this.direction = direction;
+			this.distance = distance;
 			this.hits = hits;
 		}
 	}

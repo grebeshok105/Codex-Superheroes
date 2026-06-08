@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.debug.AdminAbilityDebug;
 import com.example.superheroes.effect.ReinhardSpeedJudgmentController;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
@@ -8,6 +9,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
@@ -46,9 +49,17 @@ public final class ReinhardSpeedJudgmentAbility implements Ability {
 	@Override
 	public boolean tryActivate(ServerPlayer player) {
 		ServerLevel level = player.serverLevel();
-		ServerPlayer target = findFastestTarget(player, level);
+		ServerPlayer playerTarget = findFastestPlayerTarget(player, level);
+		Mob mobTarget = null;
+		LivingEntity target = playerTarget;
 		if (target == null) {
-			player.displayClientMessage(Component.translatable("ability.superheroes.reinhard_speed_judgment.no_target"), true);
+			mobTarget = findFastestDebugMobTarget(player, level);
+			target = mobTarget;
+		}
+		if (target == null) {
+			player.displayClientMessage(Component.translatable(AdminAbilityDebug.canPlayerOnlyAbilityTargetMobs(getId())
+					? "ability.superheroes.reinhard_speed_judgment.no_target_debug"
+					: "ability.superheroes.reinhard_speed_judgment.no_target"), true);
 			return false;
 		}
 
@@ -67,13 +78,23 @@ public final class ReinhardSpeedJudgmentAbility implements Ability {
 		level.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, end.x, end.y, end.z, 48, 0.5, 0.7, 0.5, 0.10);
 		level.playSound(null, player.getX(), player.getY(), player.getZ(),
 				SoundEvents.BEACON_POWER_SELECT, SoundSource.PLAYERS, 1.2f, 1.8f);
-		ReinhardSpeedJudgmentController.start(player, target, STRIKE_DELAY_MS, DAMAGE);
+		boolean started;
+		if (playerTarget != null) {
+			ReinhardSpeedJudgmentController.start(player, playerTarget, STRIKE_DELAY_MS, DAMAGE);
+			started = true;
+		} else {
+			started = ReinhardSpeedJudgmentController.startDebugMob(player, mobTarget, STRIKE_DELAY_MS, DAMAGE);
+		}
+		if (!started) {
+			player.displayClientMessage(Component.translatable("ability.superheroes.reinhard_speed_judgment.no_target"), true);
+			return false;
+		}
 
 		AbilityCooldowns.setCooldownTicks(player, getId(), COOLDOWN_TICKS);
 		return true;
 	}
 
-	private static ServerPlayer findFastestTarget(ServerPlayer player, ServerLevel level) {
+	private static ServerPlayer findFastestPlayerTarget(ServerPlayer player, ServerLevel level) {
 		AABB box = player.getBoundingBox().inflate(RADIUS);
 		ServerPlayer best = null;
 		double bestScore = MIN_SPEED_PER_TICK;
@@ -88,7 +109,23 @@ public final class ReinhardSpeedJudgmentAbility implements Ability {
 		return best;
 	}
 
-	private static double speedScore(ServerPlayer entity) {
+	private static Mob findFastestDebugMobTarget(ServerPlayer player, ServerLevel level) {
+		if (!AdminAbilityDebug.canPlayerOnlyAbilityTargetMobs(AbilityIds.REINHARD_SPEED_JUDGMENT)) return null;
+		AABB box = player.getBoundingBox().inflate(RADIUS);
+		Mob best = null;
+		double bestScore = MIN_SPEED_PER_TICK;
+		for (Mob candidate : level.getEntitiesOfClass(Mob.class, box,
+				e -> AdminAbilityDebug.canTargetMob(player, AbilityIds.REINHARD_SPEED_JUDGMENT, e))) {
+			double score = speedScore(candidate);
+			if (score > bestScore) {
+				bestScore = score;
+				best = candidate;
+			}
+		}
+		return best;
+	}
+
+	private static double speedScore(LivingEntity entity) {
 		Vec3 movement = entity.getDeltaMovement();
 		return Math.sqrt(movement.x * movement.x + movement.z * movement.z);
 	}

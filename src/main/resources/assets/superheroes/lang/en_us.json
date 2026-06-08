@@ -488,6 +488,7 @@
   "ability.superheroes.reinhard_speed_judgment": "Speed Judgment",
   "ability.superheroes.reinhard_speed_judgment.desc": "Finds a moving player within 50 blocks, blinks behind them, slows time, waits 3 seconds, then strikes for 50 damage. 8s cooldown.",
   "ability.superheroes.reinhard_speed_judgment.no_target": "No moving players nearby.",
+  "ability.superheroes.reinhard_speed_judgment.no_target_debug": "No moving players or debug-eligible mobs nearby.",
   "ability.superheroes.reinhard.phase_up": "Phase %s",
   "ability.superheroes.reinhard.phoenix": "Second Coming #%s — unbelievable might!",
   "ability.superheroes.reinhard.second_coming": "Second Coming — Reinhard rises",
@@ -562,7 +563,7 @@
   "item.superheroes.invincible_suit.lore.usage": "▶ Right-click — Transform",
   "item.superheroes.invincible_suit.lore.untransform": "▶ Shift + Right-click — Revert",
   "ability.superheroes.viltrumite_charge": "Viltrumite Charge",
-  "ability.superheroes.viltrumite_charge.desc": "Burst forward 22 blocks, smashing through enemies for 28 damage and heavy knockback. 8s cooldown.",
+  "ability.superheroes.viltrumite_charge.desc": "Burst forward 22 blocks, or about 55 blocks while flying, smashing through enemies for 28 damage and heavy knockback. 8s cooldown.",
   "ability.superheroes.meteor_slam": "Meteor Slam",
   "ability.superheroes.meteor_slam.desc": "Launch or dive into a ground-shaking impact. Airborne slams hit harder and wider. 11s cooldown.",
   "ability.superheroes.viltrumite_recovery": "Recover",
@@ -571,8 +572,8 @@
   "ability.superheroes.shockwave_pulse.desc": "Release a close-range radial shockwave around you for damage, knockback and screen shake. 6s cooldown.",
   "ability.superheroes.viltrumite_thunder_clap": "Thunder Clap",
   "ability.superheroes.viltrumite_thunder_clap.desc": "Crack the air in front of you with a sonic cone that damages, slows and launches enemies. 9s cooldown.",
-  "ability.superheroes.guardians_breaker": "Guardians Breaker",
-  "ability.superheroes.guardians_breaker.desc": "Shatter the nearest target ahead with a close-range armor-breaking punch. 8s cooldown.",
+  "ability.superheroes.guardians_breaker": "Impact Rush",
+  "ability.superheroes.guardians_breaker.desc": "Rush to the nearest target within 20 blocks at high speed, tearing through the path and impact zone before launching the victim. 8s cooldown.",
   "hero.superheroes.invincible.passive.1": "Viltrumite Durability: +40 HP, +26 armor, +12 toughness, permanent Resistance I",
   "hero.superheroes.invincible.passive.2": "Super Strength: +12 attack damage, +0.6 attack speed, full knockback resistance, lighter Iron Fists impacts on melee",
   "hero.superheroes.invincible.passive.3": "Aerial Combat: inertial flight, no fall damage, landing shockwaves",
@@ -594,5 +595,7 @@
 
   "ability.superheroes.status.on": "ON",
   "ability.superheroes.status.off": "OFF",
-  "ability.superheroes.status.ready": "READY"
+  "ability.superheroes.status.ready": "READY",
+  "commands.superheroes.debug.mob_targets.enabled": "Admin debug mob targets enabled.",
+  "commands.superheroes.debug.mob_targets.disabled": "Admin debug mob targets disabled."
 }

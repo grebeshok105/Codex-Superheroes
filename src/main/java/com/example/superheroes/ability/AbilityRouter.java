@@ -66,17 +66,15 @@ public final class AbilityRouter {
 		}
 		float cost = ability.costOnActivate();
 		if (cost > 0f) {
-			if (!abilityId.equals(AbilityIds.UNIBEAM) && hero.getAbilities().contains(AbilityIds.UNIBEAM)) {
-				if (binding == ResourceKind.ENERGY && data.energy() < cost + 100f) {
-					return;
-				}
-			}
-			if (!ResourceController.tryConsume(player, abilityId, cost)) {
+			if (!canPayActivationCost(player, data, hero, abilityId, binding, cost)) {
 				return;
 			}
 		}
 		boolean ok = ability.tryActivate(player);
 		if (!ok) {
+			return;
+		}
+		if (cost > 0f && !ResourceController.tryConsume(player, abilityId, cost)) {
 			return;
 		}
 		if (ability.isToggle()) {
@@ -113,5 +111,28 @@ public final class AbilityRouter {
 		HeroData updated = data.withBinding(abilityId, kind);
 		player.setAttached(ModAttachments.HERO_DATA, updated);
 		ModNetworking.syncHeroData(player, updated);
+	}
+
+	private static boolean canPayActivationCost(ServerPlayer player, HeroData data, Hero hero,
+			ResourceLocation abilityId, ResourceKind binding, float cost) {
+		if (cost <= 0f || ModEffects.isMadness(player)) {
+			return true;
+		}
+		if (!abilityId.equals(AbilityIds.UNIBEAM) && hero.getAbilities().contains(AbilityIds.UNIBEAM)
+				&& binding == ResourceKind.ENERGY && data.energy() < cost + 100f) {
+			return false;
+		}
+		float energy = data.energy();
+		float mana = data.mana();
+		if (binding == ResourceKind.ENERGY) {
+			if (energy >= cost) {
+				return true;
+			}
+			return mana >= cost - energy;
+		}
+		if (mana >= cost) {
+			return true;
+		}
+		return energy >= cost - mana;
 	}
 }
