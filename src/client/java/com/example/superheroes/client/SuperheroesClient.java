@@ -11,6 +11,7 @@ import com.example.superheroes.client.hud.ResourceBarHud;
 import com.example.superheroes.client.hud.ScreenFlashHud;
 import com.example.superheroes.client.hud.SunWindupHud;
 import com.example.superheroes.client.fx.ScreenShakeManager;
+import com.example.superheroes.client.fx.WallImpactDebrisManager;
 import com.example.superheroes.client.network.ClientNetworking;
 import com.example.superheroes.client.render.HomelanderBossRenderer;
 import com.example.superheroes.client.render.IronManEspRenderer;
@@ -24,6 +25,7 @@ import com.example.superheroes.client.render.RepulsorBeamRenderer;
 import com.example.superheroes.client.render.lightning.SuperheroLightningRenderer;
 import com.example.superheroes.client.screen.BindingsScreen;
 import com.example.superheroes.network.ActivateAbilityC2SPayload;
+import com.example.superheroes.network.HeroMeleeChargeC2SPayload;
 import com.example.superheroes.network.SuperJumpC2SPayload;
 import com.example.superheroes.particle.ModParticles;
 import net.fabricmc.api.ClientModInitializer;
@@ -34,6 +36,7 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.LivingEntityFeatureRendererRegistrationCallback;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.particle.EndRodParticle;
 import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraft.resources.ResourceLocation;
@@ -42,6 +45,8 @@ import net.minecraft.world.entity.EntityType;
 import java.util.List;
 
 public class SuperheroesClient implements ClientModInitializer {
+	private static boolean meleeChargeSent;
+
 	@Override
 	public void onInitializeClient() {
 		ModKeys.init();
@@ -133,8 +138,11 @@ public class SuperheroesClient implements ClientModInitializer {
 			com.example.superheroes.client.hud.ReinhardCeremonyOverlay.render(graphics, tracker);
 		});
 
+		ClientTickEvents.START_CLIENT_TICK.register(SuperheroesClient::tickHeroMeleeCharge);
+
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			ScreenShakeManager.tick();
+			WallImpactDebrisManager.tick(client.level);
 			AbilitiesTooltipHud.tick();
 			RadialMenuHud.clientTick(client);
 			if (ClientMadnessState.isReading() && client.screen instanceof net.minecraft.client.gui.screens.inventory.InventoryScreen) {
@@ -181,7 +189,31 @@ public class SuperheroesClient implements ClientModInitializer {
 		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
 			ClientFlightState.clearAll();
 			ClientRemDemonismState.clearAll();
+			meleeChargeSent = false;
 		});
 
+	}
+
+	private static void tickHeroMeleeCharge(Minecraft client) {
+		boolean shouldCharge = client.player != null
+				&& client.level != null
+				&& client.screen == null
+				&& ClientHeroState.data().hasHero()
+				&& client.options.keyAttack.isDown()
+				&& client.options.keyUse.isDown();
+		if (shouldCharge && !meleeChargeSent) {
+			ClientPlayNetworking.send(new HeroMeleeChargeC2SPayload(HeroMeleeChargeC2SPayload.ACTION_START));
+			meleeChargeSent = true;
+			return;
+		}
+		if (!shouldCharge && meleeChargeSent) {
+			boolean release = client.player != null
+					&& client.level != null
+					&& client.screen == null
+					&& ClientHeroState.data().hasHero();
+			int action = release ? HeroMeleeChargeC2SPayload.ACTION_RELEASE : HeroMeleeChargeC2SPayload.ACTION_CANCEL;
+			ClientPlayNetworking.send(new HeroMeleeChargeC2SPayload(action));
+			meleeChargeSent = false;
+		}
 	}
 }

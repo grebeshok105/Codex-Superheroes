@@ -9,7 +9,8 @@
 		"AbstractClientPlayerSkinMixin",
 		"GameRendererFovMixin",
 		"GuiVanillaGlitchMixin",
-		"SoundEngineMixin"
+		"SoundEngineMixin",
+		"MinecraftHeroMeleeChargeMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

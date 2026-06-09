@@ -3,7 +3,6 @@ package com.example.superheroes.ability;
 import com.example.superheroes.effect.ModEffects;
 import com.example.superheroes.effect.RemDemonismController;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -82,14 +81,7 @@ public final class RemMorningStarAbility implements Ability {
 		best.hurt(level.damageSources().playerAttack(player), DAMAGE);
 		best.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 10 * 20, 2, true, true, true));
 		best.addEffect(new MobEffectInstance(ModEffects.BLEEDING, 10 * 20, 0, false, true, true));
-		Vec3 pull = player.position().add(0.0, 0.35, 0.0).subtract(best.position());
-		double len = Math.max(0.001, pull.length());
-		Vec3 motion = pull.scale(Math.min(2.4, len * 0.28)).add(0.0, 0.18, 0.0);
-		best.setDeltaMovement(motion);
-		best.hurtMarked = true;
-		if (best instanceof ServerPlayer targetPlayer) {
-			targetPlayer.connection.send(new ClientboundSetEntityMotionPacket(targetPlayer));
-		}
+		RemDemonismController.startMorningStarPull(player, best);
 		for (int i = 0; i <= 14; i++) {
 			double t = i / 14.0;
 			Vec3 point = eye.lerp(center, t);

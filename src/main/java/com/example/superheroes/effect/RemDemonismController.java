@@ -16,6 +16,7 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.NonNullList;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.server.level.ServerLevel;
@@ -62,6 +63,10 @@ public final class RemDemonismController {
 	private static final double ICE_WAVE_RANGE = 22.0;
 	private static final double ICE_WAVE_MAX_WIDTH = 5.0;
 	private static final float ICE_SPIKE_DAMAGE = 13.0f;
+	private static final int MORNING_STAR_PULL_TICKS = 20;
+	private static final double MORNING_STAR_STOP_DISTANCE = 1.45;
+	private static final double MORNING_STAR_MAX_PULL_SPEED = 1.35;
+	private static final double MORNING_STAR_MAX_PULL_LIFT = 0.12;
 
 	private static final AttributeModifierSet DEMON_ATTRIBUTES = AttributeModifierSet.builder()
 			.add(Attributes.ATTACK_DAMAGE, ModId.of("modifiers/rem/demon_damage"), 10.0, AttributeModifier.Operation.ADD_VALUE)
@@ -75,7 +80,7 @@ public final class RemDemonismController {
 			.add(Attributes.ENTITY_INTERACTION_RANGE, ModId.of("modifiers/rem/demon_reach"), 1.0, AttributeModifier.Operation.ADD_VALUE)
 			.add(Attributes.BLOCK_INTERACTION_RANGE, ModId.of("modifiers/rem/demon_block_reach"), 0.8, AttributeModifier.Operation.ADD_VALUE)
 			.add(Attributes.STEP_HEIGHT, ModId.of("modifiers/rem/demon_step"), 0.6, AttributeModifier.Operation.ADD_VALUE)
-			.add(Attributes.JUMP_STRENGTH, ModId.of("modifiers/rem/demon_jump"), 0.3, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.JUMP_STRENGTH, ModId.of("modifiers/rem/demon_jump"), 0.08, AttributeModifier.Operation.ADD_VALUE)
 			.build();
 
 	private static final Map<UUID, Float> CHARGE = new HashMap<>();
@@ -83,6 +88,7 @@ public final class RemDemonismController {
 	private static final Set<UUID> PERMANENT = new HashSet<>();
 	private static final Map<UUID, CraterWindup> CRATER_WINDUPS = new HashMap<>();
 	private static final Map<UUID, IceSpikeWave> ICE_WAVES = new HashMap<>();
+	private static final Map<UUID, MorningStarPull> MORNING_STAR_PULLS = new HashMap<>();
 
 	private RemDemonismController() {
 	}
@@ -108,6 +114,26 @@ public final class RemDemonismController {
 		});
 
 		ServerTickEvents.END_SERVER_TICK.register(server -> {
+			Iterator<Map.Entry<UUID, MorningStarPull>> pullIt = MORNING_STAR_PULLS.entrySet().iterator();
+			while (pullIt.hasNext()) {
+				Map.Entry<UUID, MorningStarPull> entry = pullIt.next();
+				MorningStarPull pull = entry.getValue();
+				ServerPlayer player = server.getPlayerList().getPlayer(pull.ownerId);
+				if (player == null || !isRem(player) || !isActive(player)) {
+					pullIt.remove();
+					continue;
+				}
+				Entity entity = player.serverLevel().getEntity(entry.getKey());
+				if (!(entity instanceof LivingEntity target) || !isValidTarget(player, target)) {
+					pullIt.remove();
+					continue;
+				}
+				long elapsed = player.serverLevel().getGameTime() - pull.startTick;
+				if (tickMorningStarPull(player, target) || elapsed >= MORNING_STAR_PULL_TICKS) {
+					stopMorningStarPull(target);
+					pullIt.remove();
+				}
+			}
 			Iterator<Map.Entry<UUID, IceSpikeWave>> iceIt = ICE_WAVES.entrySet().iterator();
 			while (iceIt.hasNext()) {
 				Map.Entry<UUID, IceSpikeWave> entry = iceIt.next();
@@ -169,6 +195,7 @@ public final class RemDemonismController {
 		CHARGE.put(id, 0f);
 		CRATER_WINDUPS.remove(id);
 		ICE_WAVES.remove(id);
+		removeMorningStarPulls(id);
 		removeMace(player);
 		removeDemonEffects(player);
 		sync(player);
@@ -181,6 +208,7 @@ public final class RemDemonismController {
 		CHARGE.remove(id);
 		CRATER_WINDUPS.remove(id);
 		ICE_WAVES.remove(id);
+		removeMorningStarPulls(id);
 		removeMace(player);
 		removeDemonEffects(player);
 		sync(player);
@@ -256,8 +284,8 @@ public final class RemDemonismController {
 	}
 
 	public static void giveMace(ServerPlayer player) {
-		if (player.getMainHandItem().is(ModItems.REM_MORNING_STAR)) return;
-		if (player.getOffhandItem().is(ModItems.REM_MORNING_STAR)) return;
+		removeExtraMaces(player, true);
+		if (hasMace(player)) return;
 		ItemStack stack = new ItemStack(ModItems.REM_MORNING_STAR);
 		ItemStack mainHand = player.getMainHandItem();
 		if (mainHand.isEmpty()) {
@@ -269,13 +297,20 @@ public final class RemDemonismController {
 		}
 	}
 
-	public static void removeMace(ServerPlayer player) {
-		for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
-			ItemStack stack = player.getInventory().getItem(i);
-			if (stack.is(ModItems.REM_MORNING_STAR)) {
-				player.getInventory().setItem(i, ItemStack.EMPTY);
-			}
+	public static void startMorningStarPull(ServerPlayer player, LivingEntity target) {
+		if (player == null || target == null || !isActive(player) || !isValidTarget(player, target)) {
+			return;
 		}
+		MORNING_STAR_PULLS.put(target.getUUID(), new MorningStarPull(
+				player.getUUID(), player.serverLevel().getGameTime()));
+		if (tickMorningStarPull(player, target)) {
+			stopMorningStarPull(target);
+			MORNING_STAR_PULLS.remove(target.getUUID());
+		}
+	}
+
+	public static void removeMace(ServerPlayer player) {
+		removeExtraMaces(player, false);
 	}
 
 	private static void tickRem(ServerPlayer player) {
@@ -377,7 +412,7 @@ public final class RemDemonismController {
 			target.invulnerableTime = 0;
 			target.hurt(source, CRATER_DAMAGE * falloff);
 			target.addEffect(new MobEffectInstance(ModEffects.BLEEDING, 10 * 20, 0, false, true, true));
-			Vec3 push = target.position().subtract(player.position()).normalize().scale(1.6).add(0.0, 0.55, 0.0);
+			Vec3 push = target.position().subtract(player.position()).normalize().scale(1.6).add(0.0, 0.18, 0.0);
 			target.push(push.x, push.y, push.z);
 			target.hurtMarked = true;
 			if (target instanceof ServerPlayer targetPlayer) {
@@ -426,6 +461,36 @@ public final class RemDemonismController {
 			spawnIceBand(level, player, wave, wave.lastBand);
 		}
 		return wave.lastBand >= ICE_WAVE_BANDS && elapsed > ICE_WAVE_BANDS * 2L + 8L;
+	}
+
+	private static boolean tickMorningStarPull(ServerPlayer player, LivingEntity target) {
+		Vec3 playerPos = player.position();
+		Vec3 targetPos = target.position();
+		Vec3 horizontalToPlayer = new Vec3(playerPos.x - targetPos.x, 0.0, playerPos.z - targetPos.z);
+		double horizontalDistance = horizontalToPlayer.length();
+		if (horizontalDistance <= MORNING_STAR_STOP_DISTANCE) {
+			return true;
+		}
+		Vec3 direction = horizontalToPlayer.scale(1.0 / horizontalDistance);
+		double speed = Math.min(MORNING_STAR_MAX_PULL_SPEED,
+				(horizontalDistance - MORNING_STAR_STOP_DISTANCE) * 0.42);
+		double lift = Math.min(MORNING_STAR_MAX_PULL_LIFT,
+				Math.max(0.0, (playerPos.y - targetPos.y) * 0.08 + 0.035));
+		setMorningStarPullMotion(target, direction.scale(speed).add(0.0, lift, 0.0));
+		return false;
+	}
+
+	private static void stopMorningStarPull(LivingEntity target) {
+		Vec3 current = target.getDeltaMovement();
+		setMorningStarPullMotion(target, new Vec3(0.0, Math.min(current.y, MORNING_STAR_MAX_PULL_LIFT), 0.0));
+	}
+
+	private static void setMorningStarPullMotion(LivingEntity target, Vec3 motion) {
+		target.setDeltaMovement(motion);
+		target.hurtMarked = true;
+		if (target instanceof ServerPlayer targetPlayer) {
+			targetPlayer.connection.send(new ClientboundSetEntityMotionPacket(targetPlayer));
+		}
 	}
 
 	private static void spawnIceBand(ServerLevel level, ServerPlayer player, IceSpikeWave wave, int band) {
@@ -481,7 +546,7 @@ public final class RemDemonismController {
 			target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 140, 3, true, true, true));
 			target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 100, 0, true, true, true));
 			target.addEffect(new MobEffectInstance(MobEffects.DIG_SLOWDOWN, 100, 1, true, true, true));
-			Vec3 push = wave.forward.scale(0.45).add(0.0, 0.34, 0.0);
+			Vec3 push = wave.forward.scale(0.45).add(0.0, 0.12, 0.0);
 			target.push(push.x, push.y, push.z);
 			target.hurtMarked = true;
 			if (target instanceof ServerPlayer targetPlayer) {
@@ -598,6 +663,61 @@ public final class RemDemonismController {
 				&& !(target instanceof Player player && player.isCreative());
 	}
 
+	private static boolean hasMace(ServerPlayer player) {
+		return hasMace(player.getInventory().items)
+				|| hasMace(player.getInventory().offhand)
+				|| hasMace(player.getInventory().armor)
+				|| isMace(player.containerMenu.getCarried());
+	}
+
+	private static void removeExtraMaces(ServerPlayer player, boolean keepOne) {
+		boolean kept = !keepOne;
+		kept = removeExtraMaces(player.getInventory().items, kept);
+		kept = removeExtraMaces(player.getInventory().offhand, kept);
+		kept = removeExtraMaces(player.getInventory().armor, kept);
+		ItemStack carried = player.containerMenu.getCarried();
+		if (isMace(carried)) {
+			if (!kept) {
+				carried.setCount(1);
+			} else {
+				player.containerMenu.setCarried(ItemStack.EMPTY);
+			}
+		}
+	}
+
+	private static boolean hasMace(NonNullList<ItemStack> slots) {
+		for (ItemStack stack : slots) {
+			if (isMace(stack)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private static boolean removeExtraMaces(NonNullList<ItemStack> slots, boolean kept) {
+		for (int i = 0; i < slots.size(); i++) {
+			ItemStack stack = slots.get(i);
+			if (!isMace(stack)) {
+				continue;
+			}
+			if (!kept) {
+				stack.setCount(1);
+				kept = true;
+				continue;
+			}
+			slots.set(i, ItemStack.EMPTY);
+		}
+		return kept;
+	}
+
+	private static boolean isMace(ItemStack stack) {
+		return !stack.isEmpty() && stack.is(ModItems.REM_MORNING_STAR);
+	}
+
+	private static void removeMorningStarPulls(UUID ownerId) {
+		MORNING_STAR_PULLS.entrySet().removeIf(entry -> ownerId.equals(entry.getValue().ownerId));
+	}
+
 	private static void sync(ServerPlayer player) {
 		RemDemonismS2CPayload payload = new RemDemonismS2CPayload(
 				player.getUUID(), getCharge(player), isActive(player), isPermanent(player));
@@ -610,6 +730,9 @@ public final class RemDemonismController {
 	}
 
 	private record CraterWindup(Vec3 origin, Vec3 forward, long startTick) {
+	}
+
+	private record MorningStarPull(UUID ownerId, long startTick) {
 	}
 
 	private static final class IceSpikeWave {

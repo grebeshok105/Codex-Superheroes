@@ -2,6 +2,7 @@ package com.example.superheroes.network;
 
 import com.example.superheroes.ability.AbilityRouter;
 import com.example.superheroes.attachment.ModAttachments;
+import com.example.superheroes.effect.HeroMeleeImpactController;
 import com.example.superheroes.effect.SuperJumpController;
 import com.example.superheroes.hero.Hero;
 import com.example.superheroes.hero.Heroes;
@@ -25,6 +26,7 @@ public final class ModNetworking {
 		PayloadTypeRegistry.playC2S().register(BindAbilityResourceC2SPayload.TYPE, BindAbilityResourceC2SPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playC2S().register(SuperJumpC2SPayload.TYPE, SuperJumpC2SPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playC2S().register(ReinhardWishConfirmC2SPayload.TYPE, ReinhardWishConfirmC2SPayload.STREAM_CODEC);
+		PayloadTypeRegistry.playC2S().register(HeroMeleeChargeC2SPayload.TYPE, HeroMeleeChargeC2SPayload.STREAM_CODEC);
 
 		PayloadTypeRegistry.playS2C().register(ResourceUpdateS2CPayload.TYPE, ResourceUpdateS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(HeroDataSyncS2CPayload.TYPE, HeroDataSyncS2CPayload.STREAM_CODEC);
@@ -50,6 +52,7 @@ public final class ModNetworking {
 		PayloadTypeRegistry.playS2C().register(ReinhardSwordGateS2CPayload.TYPE, ReinhardSwordGateS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(ReinhardSwordKillS2CPayload.TYPE, ReinhardSwordKillS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(ReinhardTimeSlowS2CPayload.TYPE, ReinhardTimeSlowS2CPayload.STREAM_CODEC);
+		PayloadTypeRegistry.playS2C().register(WallImpactDebrisS2CPayload.TYPE, WallImpactDebrisS2CPayload.STREAM_CODEC);
 
 		ServerPlayNetworking.registerGlobalReceiver(ActivateAbilityC2SPayload.TYPE, (payload, context) -> {
 			ServerPlayer player = context.player();
@@ -70,6 +73,10 @@ public final class ModNetworking {
 		ServerPlayNetworking.registerGlobalReceiver(ReinhardWishConfirmC2SPayload.TYPE, (payload, context) -> {
 			ServerPlayer player = context.player();
 			context.server().execute(() -> com.example.superheroes.ability.ReinhardWishAbility.confirm(player, payload.damageTypeId()));
+		});
+		ServerPlayNetworking.registerGlobalReceiver(HeroMeleeChargeC2SPayload.TYPE, (payload, context) -> {
+			ServerPlayer player = context.player();
+			context.server().execute(() -> HeroMeleeImpactController.handleChargeInput(player, payload.action()));
 		});
 	}
 
