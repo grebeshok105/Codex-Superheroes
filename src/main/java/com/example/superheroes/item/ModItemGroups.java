@@ -67,7 +67,6 @@ public final class ModItemGroups {
 				output.accept(ModItems.SCARAMOUCHE_VISION);
 				output.accept(ModItems.BATTLE_BEAST_MEDALLION);
 				output.accept(ModItems.REM_ONI_HORN);
-				output.accept(ModItems.REM_MORNING_STAR);
 				output.accept(ModItems.A_TRAIN_SUIT);
 			})
 			.build();

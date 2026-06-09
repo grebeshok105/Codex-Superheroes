@@ -122,7 +122,7 @@ public final class RadialMenuHud {
 			if (!ClientMadnessState.isMadness() && AbilityIds.COUNTER_STRIKE.equals(id)) continue;
 			if (isDoomsday && !isDoomsdayUnlocked(id, doomsdayTier)) continue;
 			if (isThanos && !isThanosUnlocked(id)) continue;
-			if (isRem && isRemDemonOnly(id) && !remDemonism) continue;
+			if (isRem && !isRemVisible(id, remDemonism)) continue;
 			out.add(id);
 		}
 		return out;
@@ -157,6 +157,13 @@ public final class RadialMenuHud {
 				|| AbilityIds.REM_MACE_CRATER.equals(id)
 				|| AbilityIds.REM_ONI_KICK.equals(id)
 				|| AbilityIds.REM_HUMA_ICE_SPIKES.equals(id);
+	}
+
+	private static boolean isRemVisible(ResourceLocation id, boolean demonism) {
+		if (AbilityIds.REM_ONI_RAGE.equals(id) && demonism) {
+			return false;
+		}
+		return !isRemDemonOnly(id) || demonism;
 	}
 
 	public static void render(GuiGraphics graphics, DeltaTracker tracker) {

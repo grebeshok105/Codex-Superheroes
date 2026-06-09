@@ -30,6 +30,7 @@ public final class RemOniRageAbility implements Ability {
 	@Override
 	public boolean canActivate(ServerPlayer player) {
 		return !AbilityCooldowns.isOnCooldown(player, getId())
+				&& !RemDemonismController.isActive(player)
 				&& RemDemonismController.getCharge(player) >= RemDemonismController.MAX_DEMONISM - 0.001f;
 	}
 

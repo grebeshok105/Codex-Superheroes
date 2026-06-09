@@ -123,6 +123,7 @@ public final class AbilityRegistry {
 	public static final RemMorningStarAbility REM_MORNING_STAR = new RemMorningStarAbility();
 	public static final RemOniRageAbility REM_ONI_RAGE = new RemOniRageAbility();
 	public static final RemHealingMagicAbility REM_HEALING_MAGIC = new RemHealingMagicAbility();
+	public static final RemIceBurstAbility REM_ICE_BURST = new RemIceBurstAbility();
 	public static final RemHumaIceSpikesAbility REM_HUMA_ICE_SPIKES = new RemHumaIceSpikesAbility();
 	public static final RemMaceCraterAbility REM_MACE_CRATER = new RemMaceCraterAbility();
 	public static final RemOniKickAbility REM_ONI_KICK = new RemOniKickAbility();
@@ -234,6 +235,7 @@ public final class AbilityRegistry {
 		register(REM_MORNING_STAR);
 		register(REM_ONI_RAGE);
 		register(REM_HEALING_MAGIC);
+		register(REM_ICE_BURST);
 		register(REM_HUMA_ICE_SPIKES);
 		register(REM_MACE_CRATER);
 		register(REM_ONI_KICK);

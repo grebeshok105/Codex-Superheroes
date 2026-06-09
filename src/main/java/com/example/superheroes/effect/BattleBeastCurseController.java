@@ -25,7 +25,7 @@ import java.util.UUID;
 
 public final class BattleBeastCurseController {
 	private static final long STEP_TICKS = 30L * 20L;
-	private static final int MAX_STAGE = 10;
+	public static final int MAX_STAGE = 10;
 	private static final double BASE_ARMOR = 20.0;
 	private static final double BASE_TOUGHNESS = 8.0;
 	private static final double BASE_DAMAGE = 8.0;
@@ -64,8 +64,27 @@ public final class BattleBeastCurseController {
 
 	public static void clear(ServerPlayer player) {
 		removeCurse(player);
+		healAfterStageChange(player, 0);
 		START_TICKS.remove(player.getUUID());
 		STAGES.remove(player.getUUID());
+	}
+
+	public static int setStage(ServerPlayer player, int stage) {
+		int clamped = clampStage(stage);
+		UUID id = player.getUUID();
+		long now = player.serverLevel().getGameTime();
+		START_TICKS.put(id, now - clamped * STEP_TICKS);
+		removeCurse(player);
+		if (clamped > 0) {
+			buildCurseSet(clamped).apply(player);
+		}
+		STAGES.put(id, clamped);
+		healAfterStageChange(player, clamped);
+		refreshEffects(player, clamped);
+		if (clamped > 0) {
+			announceStage(player, clamped);
+		}
+		return clamped;
 	}
 
 	public static float scaleDamage(ServerPlayer player, float baseDamage) {
@@ -74,14 +93,10 @@ public final class BattleBeastCurseController {
 
 	public static float damageMultiplier(ServerPlayer player) {
 		int stage = STAGES.getOrDefault(player.getUUID(), 0);
-		return switch (stage) {
-			case 0 -> 1.0f;
-			case 1 -> 1.15f;
-			case 2 -> 1.30f;
-			case 3 -> 1.50f;
-			case 4 -> 2.0f;
-			default -> Math.min(4.8f, 2.35f + (stage - 5) * 0.35f);
-		};
+		if (stage <= 0) {
+			return 1.0f;
+		}
+		return Math.min(5.5f, 1.0f + stage * 0.34f + Math.max(0, stage - 4) * 0.18f);
 	}
 
 	private static void tick(ServerPlayer player) {
@@ -102,35 +117,43 @@ public final class BattleBeastCurseController {
 			if (stage > 0) {
 				announceStage(player, stage);
 			}
-			if (player.getHealth() < player.getMaxHealth()) {
-				player.setHealth(Math.min(player.getMaxHealth(), player.getHealth() + 4f + stage * 2f));
-			}
+			healAfterStageChange(player, stage);
 		}
 		refreshEffects(player, stage);
 		ambientFx(player, stage);
 	}
 
 	private static void refreshEffects(ServerPlayer player, int stage) {
-		if (stage >= 4 && player.tickCount % 40 == 0) {
-			player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 80, 1, true, false, true));
+		if (stage >= 2 && player.tickCount % 40 == 0) {
+			player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 90,
+					Math.min(2, stage / 4), true, false, true));
 		}
-		if (stage >= 5 && player.tickCount % 80 == 0) {
-			player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 100, 1, true, false, true));
+		if (stage >= 3 && player.tickCount % 40 == 0) {
+			player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 90,
+					Math.min(2, stage / 4), true, false, true));
+		}
+		if (stage >= 5 && player.tickCount % 60 == 0) {
+			player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 110,
+					Math.min(3, Math.max(1, stage / 4)), true, false, true));
+		}
+		if (stage >= 6 && player.tickCount % 80 == 0) {
+			player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 100,
+					Math.min(2, (stage - 4) / 3), true, false, true));
 		}
 	}
 
 	private static void ambientFx(ServerPlayer player, int stage) {
 		if (stage <= 0) return;
 		ServerLevel level = player.serverLevel();
-		if (player.tickCount % Math.max(4, 14 - stage) == 0) {
+		if (player.tickCount % Math.max(3, 12 - stage) == 0) {
 			level.sendParticles(ParticleTypes.CRIT,
 					player.getX(), player.getY() + 1.1, player.getZ(),
-					2 + stage, 0.35, 0.55, 0.35, 0.05);
+					4 + stage * 2, 0.45, 0.7, 0.45, 0.07);
 		}
-		if (stage >= 4 && player.tickCount % 10 == 0) {
+		if (stage >= 4 && player.tickCount % 8 == 0) {
 			level.sendParticles(ParticleTypes.DAMAGE_INDICATOR,
 					player.getX(), player.getY() + 1.2, player.getZ(),
-					2, 0.3, 0.5, 0.3, 0.03);
+					2 + stage / 2, 0.4, 0.65, 0.4, 0.04);
 		}
 	}
 
@@ -139,11 +162,11 @@ public final class BattleBeastCurseController {
 		double x = player.getX();
 		double y = player.getY() + 1.0;
 		double z = player.getZ();
-		int particles = 28 + stage * 10;
-		level.sendParticles(ParticleTypes.DAMAGE_INDICATOR, x, y, z, particles, 0.55, 0.9, 0.55, 0.12);
-		level.sendParticles(ParticleTypes.CRIT, x, y, z, particles, 0.55, 0.8, 0.55, 0.18);
+		int particles = 48 + stage * 16;
+		level.sendParticles(ParticleTypes.DAMAGE_INDICATOR, x, y, z, particles, 0.75, 1.1, 0.75, 0.14);
+		level.sendParticles(ParticleTypes.CRIT, x, y, z, particles, 0.75, 0.95, 0.75, 0.22);
 		level.playSound(null, x, y, z, SoundEvents.RAVAGER_ROAR, SoundSource.PLAYERS,
-				1.0f + stage * 0.12f, Math.max(0.45f, 1.05f - stage * 0.06f));
+				1.2f + stage * 0.15f, Math.max(0.35f, 1.05f - stage * 0.06f));
 		if (stage >= 4) {
 			level.playSound(null, x, y, z, SoundEvents.WITHER_SPAWN, SoundSource.PLAYERS, 0.8f, 1.4f);
 			level.sendParticles(ParticleTypes.FLASH, x, y, z, 1, 0, 0, 0, 0);
@@ -170,26 +193,28 @@ public final class BattleBeastCurseController {
 	}
 
 	private static Stats statsFor(int stage) {
-		int s = Math.max(0, Math.min(MAX_STAGE, stage));
-		return switch (s) {
-			case 0 -> new Stats(20.0, 8.0, 8.0, 0.4, 0.16, 30.0, 0.8, 0.5);
-			case 1 -> new Stats(22.0, 9.0, 9.5, 0.45, 0.18, 35.0, 0.8, 0.5);
-			case 2 -> new Stats(24.0, 10.0, 10.5, 0.55, 0.22, 38.0, 0.8, 0.55);
-			case 3 -> new Stats(26.0, 12.0, 12.0, 0.6, 0.25, 40.0, 0.8, 0.6);
-			case 4 -> new Stats(30.0, 16.0, 16.0, 0.8, 0.32, 60.0, 0.9, 0.65);
-			default -> {
-				int extra = s - 5;
-				yield new Stats(
-						Math.min(40.0, 32.0 + extra * 2.0),
-						Math.min(26.0, 18.0 + extra * 2.0),
-						Math.min(40.0, 20.0 + extra * 4.0),
-						Math.min(1.6, 1.0 + extra * 0.15),
-						Math.min(0.48, 0.36 + extra * 0.03),
-						Math.min(130.0, 70.0 + extra * 12.0),
-						Math.min(1.5, 1.1 + extra * 0.1),
-						Math.min(1.0, 0.8 + extra * 0.04));
-			}
-		};
+		int s = clampStage(stage);
+		return new Stats(
+				BASE_ARMOR + s * 4.0,
+				BASE_TOUGHNESS + s * 2.8,
+				BASE_DAMAGE + s * 4.5,
+				BASE_ATTACK_SPEED + s * 0.14,
+				BASE_SPEED + s * 0.05,
+				BASE_HEALTH + s * 15.0,
+				BASE_REACH + s * 0.18,
+				BASE_STEP + s * 0.1);
+	}
+
+	private static void healAfterStageChange(ServerPlayer player, int stage) {
+		float health = player.getHealth();
+		if (stage > 0 && health < player.getMaxHealth()) {
+			health += 8f + stage * 4f;
+		}
+		player.setHealth(Math.min(player.getMaxHealth(), health));
+	}
+
+	private static int clampStage(int stage) {
+		return Math.max(0, Math.min(MAX_STAGE, stage));
 	}
 
 	private static boolean isBattleBeast(Player player) {

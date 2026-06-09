@@ -2,11 +2,14 @@ package com.example.superheroes.client.hud;
 
 import com.example.superheroes.client.ClientHeroState;
 import com.example.superheroes.client.ClientKratosRageState;
+import com.example.superheroes.client.ClientRemDemonismState;
 import com.example.superheroes.hero.KratosHero;
+import com.example.superheroes.hero.RemHero;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 
 public final class SpartanRageHud {
 	private static final int BAR_WIDTH = 182;
@@ -27,13 +30,31 @@ public final class SpartanRageHud {
 
 	public static void render(GuiGraphics graphics, DeltaTracker tracker) {
 		if (!ClientHeroState.data().hasHero()) return;
-		if (!KratosHero.ID.equals(ClientHeroState.heroId())) return;
-
-		float rage = ClientKratosRageState.rage();
-		boolean active = ClientKratosRageState.active();
-		if (rage <= 0.001f && !active) return;
+		ResourceLocation heroId = ClientHeroState.heroId();
+		boolean kratos = KratosHero.ID.equals(heroId);
+		boolean rem = RemHero.ID.equals(heroId);
+		if (!kratos && !rem) return;
 
 		Minecraft mc = Minecraft.getInstance();
+		float rage;
+		boolean active;
+		String activeKey;
+		String readyKey;
+		if (kratos) {
+			rage = ClientKratosRageState.rage();
+			active = ClientKratosRageState.active();
+			activeKey = "hud.superheroes.spartan_rage.active";
+			readyKey = "hud.superheroes.spartan_rage.ready";
+		} else if (mc.player != null) {
+			rage = ClientRemDemonismState.charge(mc.player.getUUID());
+			active = ClientRemDemonismState.isActive(mc.player.getUUID());
+			activeKey = "hud.superheroes.rem_demonism.active";
+			readyKey = "hud.superheroes.rem_demonism.ready";
+		} else {
+			return;
+		}
+		if (rage <= 0.001f && !active) return;
+
 		int sw = mc.getWindow().getGuiScaledWidth();
 		int sh = mc.getWindow().getGuiScaledHeight();
 		int x = sw / 2 - BAR_WIDTH / 2;
@@ -50,7 +71,7 @@ public final class SpartanRageHud {
 		int innerX = x + 2;
 		int innerY = y + 2;
 
-		boolean full = ClientKratosRageState.isFull();
+		boolean full = rage >= 99.999f;
 		long t = mc.level == null ? 0L : mc.level.getGameTime();
 		float pulse = full ? (0.7f + 0.3f * (float) Math.sin(t * 0.35)) : 1f;
 
@@ -70,10 +91,10 @@ public final class SpartanRageHud {
 		String label;
 		int labelColor;
 		if (active) {
-			label = Component.translatable("hud.superheroes.spartan_rage.active").getString();
+			label = Component.translatable(activeKey).getString();
 			labelColor = LABEL_BRIGHT;
 		} else if (full) {
-			label = Component.translatable("hud.superheroes.spartan_rage.ready").getString();
+			label = Component.translatable(readyKey).getString();
 			labelColor = LABEL_BRIGHT;
 		} else {
 			label = (int) rage + "%";

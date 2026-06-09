@@ -48,7 +48,7 @@ public class RemMorningStarItem extends SwordItem {
 
 	@Override
 	public boolean isFoil(ItemStack stack) {
-		return true;
+		return false;
 	}
 
 	@Override

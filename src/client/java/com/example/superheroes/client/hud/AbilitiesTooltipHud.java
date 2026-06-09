@@ -390,10 +390,11 @@ public final class AbilitiesTooltipHud {
 			}
 			return out;
 		}
-		if (RemHero.ID.equals(heroId) && !isRemDemonismActive()) {
+		if (RemHero.ID.equals(heroId)) {
+			boolean demonism = isRemDemonismActive();
 			java.util.ArrayList<ResourceLocation> out = new java.util.ArrayList<>(base.size());
 			for (ResourceLocation id : base) {
-				if (!isRemDemonOnly(id)) out.add(id);
+				if (isRemVisible(id, demonism)) out.add(id);
 			}
 			return out;
 		}
@@ -429,5 +430,12 @@ public final class AbilitiesTooltipHud {
 				|| AbilityIds.REM_MACE_CRATER.equals(id)
 				|| AbilityIds.REM_ONI_KICK.equals(id)
 				|| AbilityIds.REM_HUMA_ICE_SPIKES.equals(id);
+	}
+
+	private static boolean isRemVisible(ResourceLocation id, boolean demonism) {
+		if (AbilityIds.REM_ONI_RAGE.equals(id) && demonism) {
+			return false;
+		}
+		return !isRemDemonOnly(id) || demonism;
 	}
 }

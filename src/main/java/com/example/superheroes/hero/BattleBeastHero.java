@@ -52,7 +52,7 @@ public final class BattleBeastHero implements Hero {
 			.add(Attributes.KNOCKBACK_RESISTANCE, ModId.of("modifiers/battle_beast/knockback_resistance"), 1.0, AttributeModifier.Operation.ADD_VALUE)
 			.add(Attributes.ENTITY_INTERACTION_RANGE, ModId.of("modifiers/battle_beast/reach"), 0.8, AttributeModifier.Operation.ADD_VALUE)
 			.add(Attributes.STEP_HEIGHT, ModId.of("modifiers/battle_beast/step_height"), 0.5, AttributeModifier.Operation.ADD_VALUE)
-			.add(Attributes.SCALE, ModId.of("modifiers/battle_beast/scale"), 0.15, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.SCALE, ModId.of("modifiers/battle_beast/scale"), 0.35, AttributeModifier.Operation.ADD_VALUE)
 			.build();
 
 	@Override
@@ -78,9 +78,9 @@ public final class BattleBeastHero implements Hero {
 	@Override
 	public EntityDimensions getDimensions(Pose pose) {
 		return switch (pose) {
-			case CROUCHING -> EntityDimensions.scalable(0.72f, 1.65f).withEyeHeight(1.4f);
-			case SWIMMING, FALL_FLYING, SPIN_ATTACK -> EntityDimensions.scalable(0.72f, 0.72f).withEyeHeight(0.48f);
-			default -> EntityDimensions.scalable(0.72f, 2.08f).withEyeHeight(1.86f);
+			case CROUCHING -> EntityDimensions.scalable(0.86f, 1.98f).withEyeHeight(1.68f);
+			case SWIMMING, FALL_FLYING, SPIN_ATTACK -> EntityDimensions.scalable(0.86f, 0.86f).withEyeHeight(0.58f);
+			default -> EntityDimensions.scalable(0.86f, 2.5f).withEyeHeight(2.23f);
 		};
 	}
 
