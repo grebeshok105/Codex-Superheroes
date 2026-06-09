@@ -79,7 +79,6 @@ public final class OmnimanHero implements Hero {
 				AbilityIds.FLIGHT,
 				AbilityIds.OMNIMAN_VILTRUMITE_RUSH,
 				AbilityIds.OMNIMAN_WORLD_BREAKER,
-				AbilityIds.SHOCKWAVE_PULSE,
 				AbilityIds.VILTRUMITE_RECOVERY);
 	}
 

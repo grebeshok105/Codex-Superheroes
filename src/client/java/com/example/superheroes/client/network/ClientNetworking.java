@@ -6,6 +6,7 @@ import com.example.superheroes.client.ClientFlightState;
 import com.example.superheroes.client.ClientHeroState;
 import com.example.superheroes.client.ClientMadnessState;
 import com.example.superheroes.client.ClientReactorState;
+import com.example.superheroes.client.ClientRemDemonismState;
 import com.example.superheroes.client.RemoteHeroSkins;
 import com.example.superheroes.client.fx.ScreenShakeManager;
 import com.example.superheroes.client.hud.BloodRainHud;
@@ -124,6 +125,10 @@ public final class ClientNetworking {
 
 		ClientPlayNetworking.registerGlobalReceiver(com.example.superheroes.network.KratosRageS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> com.example.superheroes.client.ClientKratosRageState.update(payload.rage(), payload.active())));
+
+		ClientPlayNetworking.registerGlobalReceiver(com.example.superheroes.network.RemDemonismS2CPayload.TYPE, (payload, context) ->
+				context.client().execute(() -> ClientRemDemonismState.update(
+						payload.playerId(), payload.charge(), payload.active(), payload.permanent())));
 
 		ClientPlayNetworking.registerGlobalReceiver(com.example.superheroes.network.ReinhardWishOptionsS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> {

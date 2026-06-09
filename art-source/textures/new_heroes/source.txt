@@ -1,0 +1,5 @@
+New hero source assets:
+- battle_beast.png: user-provided skin from C:/Users/stravvbery/Downloads/Telegram Desktop/f6667bc6a222154c.png.
+- rem.png: user-provided skin from C:/Users/stravvbery/Downloads/Telegram Desktop/bba9cee7e27e09a6.png.
+- a_train.png: user-provided skin from C:/Users/stravvbery/Downloads/Telegram Desktop/d6139fe46b52448f.png.
+- rem_morning_star_source_murasama_sheath.png: extracted from user-provided Blades-of-War-2_v1.9.zip as a temporary Rem weapon reference.

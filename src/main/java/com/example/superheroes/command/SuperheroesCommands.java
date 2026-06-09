@@ -1,7 +1,10 @@
 package com.example.superheroes.command;
 
 import com.example.superheroes.attachment.ModAttachments;
+import com.example.superheroes.debug.AdminAbilityDebug;
+import com.example.superheroes.effect.BattleBeastCurseController;
 import com.example.superheroes.effect.DoomsdayTierController;
+import com.example.superheroes.hero.BattleBeastHero;
 import com.example.superheroes.hero.DoomsdayHero;
 import com.example.superheroes.hero.Hero;
 import com.example.superheroes.hero.Heroes;
@@ -54,6 +57,30 @@ public final class SuperheroesCommands {
 										.then(Commands.argument("target", EntityArgument.player())
 												.then(Commands.argument("tier", IntegerArgumentType.integer(1, 7))
 														.executes(SuperheroesCommands::setDoomsdayTierForTarget)))))
+						.then(Commands.literal("battle_beast")
+								.then(Commands.literal("stage")
+										.then(Commands.argument("stage", IntegerArgumentType.integer(0, BattleBeastCurseController.MAX_STAGE))
+												.executes(ctx -> setBattleBeastStage(ctx, playerOrNull(ctx),
+														IntegerArgumentType.getInteger(ctx, "stage"))))
+										.then(Commands.argument("target", EntityArgument.player())
+												.then(Commands.argument("stage", IntegerArgumentType.integer(0, BattleBeastCurseController.MAX_STAGE))
+														.executes(SuperheroesCommands::setBattleBeastStageForTarget))))
+								.then(Commands.literal("tier")
+										.then(Commands.argument("tier", IntegerArgumentType.integer(0, BattleBeastCurseController.MAX_STAGE))
+												.executes(ctx -> setBattleBeastStage(ctx, playerOrNull(ctx),
+														IntegerArgumentType.getInteger(ctx, "tier"))))
+										.then(Commands.argument("target", EntityArgument.player())
+												.then(Commands.argument("tier", IntegerArgumentType.integer(0, BattleBeastCurseController.MAX_STAGE))
+														.executes(SuperheroesCommands::setBattleBeastTierForTarget)))))
+						.then(Commands.literal("debug")
+								.then(Commands.literal("mob-targets")
+										.executes(SuperheroesCommands::toggleMobTargets)
+										.then(Commands.literal("on")
+												.executes(ctx -> setMobTargets(ctx, true)))
+										.then(Commands.literal("off")
+												.executes(ctx -> setMobTargets(ctx, false)))
+										.then(Commands.literal("status")
+												.executes(SuperheroesCommands::mobTargetsStatus))))
 						.then(Commands.literal("abilities")
 								.executes(SuperheroesCommands::listAbilities))
 						.then(Commands.literal("info")
@@ -155,6 +182,56 @@ public final class SuperheroesCommands {
 		ctx.getSource().sendSuccess(() -> Component.translatable("commands.superheroes.doomsday.tier.set",
 				target.getScoreboardName(), String.valueOf(tier)), true);
 		return tier;
+	}
+
+	private static int setBattleBeastStageForTarget(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+		return setBattleBeastStage(ctx, EntityArgument.getPlayer(ctx, "target"),
+				IntegerArgumentType.getInteger(ctx, "stage"));
+	}
+
+	private static int setBattleBeastTierForTarget(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+		return setBattleBeastStage(ctx, EntityArgument.getPlayer(ctx, "target"),
+				IntegerArgumentType.getInteger(ctx, "tier"));
+	}
+
+	private static int setBattleBeastStage(CommandContext<CommandSourceStack> ctx, ServerPlayer target, int stage) {
+		if (target == null) {
+			return 0;
+		}
+		HeroData data = target.getAttachedOrCreate(ModAttachments.HERO_DATA);
+		if (!data.hasHero() || !BattleBeastHero.ID.equals(data.heroId())) {
+			ctx.getSource().sendFailure(Component.literal("Target is not Battle Beast: "
+					+ target.getScoreboardName()));
+			return 0;
+		}
+		int applied = BattleBeastCurseController.setStage(target, stage);
+		ctx.getSource().sendSuccess(() -> Component.literal("Set Battle Beast curse stage for "
+				+ target.getScoreboardName() + " to " + applied), true);
+		return applied;
+	}
+
+	private static int toggleMobTargets(CommandContext<CommandSourceStack> ctx) {
+		boolean enabled = AdminAbilityDebug.togglePlayerOnlyAbilitiesTargetMobs();
+		sendMobTargetsStatus(ctx, enabled);
+		return enabled ? 1 : 0;
+	}
+
+	private static int setMobTargets(CommandContext<CommandSourceStack> ctx, boolean enabled) {
+		AdminAbilityDebug.setPlayerOnlyAbilitiesTargetMobs(enabled);
+		sendMobTargetsStatus(ctx, enabled);
+		return enabled ? 1 : 0;
+	}
+
+	private static int mobTargetsStatus(CommandContext<CommandSourceStack> ctx) {
+		boolean enabled = AdminAbilityDebug.playerOnlyAbilitiesTargetMobs();
+		sendMobTargetsStatus(ctx, enabled);
+		return enabled ? 1 : 0;
+	}
+
+	private static void sendMobTargetsStatus(CommandContext<CommandSourceStack> ctx, boolean enabled) {
+		ctx.getSource().sendSuccess(() -> Component.translatable(enabled
+				? "commands.superheroes.debug.mob_targets.enabled"
+				: "commands.superheroes.debug.mob_targets.disabled"), true);
 	}
 
 	private static int listAbilities(CommandContext<CommandSourceStack> ctx) {

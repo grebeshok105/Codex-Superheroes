@@ -2,8 +2,10 @@ package com.example.superheroes.client;
 
 import com.example.superheroes.ModId;
 import com.example.superheroes.ability.AbilityIds;
+import com.example.superheroes.hero.RemHero;
 import com.example.superheroes.hero.ThanosHero;
 import com.example.superheroes.item.infinity.InfinityStoneType;
+import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.ArrayList;
@@ -16,12 +18,15 @@ public final class ClientAbilityFilter {
 	public static List<ResourceLocation> visibleFor(List<ResourceLocation> base, ResourceLocation heroId) {
 		boolean isDoomsday = ModId.of("doomsday").equals(heroId);
 		boolean isThanos = ThanosHero.ID.equals(heroId);
+		boolean isRem = RemHero.ID.equals(heroId);
 		int doomsdayTier = isDoomsday ? ClientDoomsdayState.tier() : 0;
+		boolean remDemonism = isRemDemonismActive();
 		ArrayList<ResourceLocation> out = new ArrayList<>(base.size());
 		for (ResourceLocation id : base) {
 			if (!ClientMadnessState.isMadness() && AbilityIds.COUNTER_STRIKE.equals(id)) continue;
 			if (isDoomsday && !isDoomsdayUnlocked(id, doomsdayTier)) continue;
 			if (isThanos && !isThanosUnlocked(id)) continue;
+			if (isRem && !isRemVisible(id, remDemonism)) continue;
 			out.add(id);
 		}
 		return out;
@@ -46,5 +51,26 @@ public final class ClientAbilityFilter {
 		if (AbilityIds.DOOMSDAY_BERSERK.equals(id)) return tier >= 6;
 		if (AbilityIds.DOOMSDAY_DOOM_GRIP.equals(id)) return tier >= 7;
 		return true;
+	}
+
+	private static boolean isRemDemonismActive() {
+		if (Minecraft.getInstance().player == null) {
+			return false;
+		}
+		return ClientRemDemonismState.isActive(Minecraft.getInstance().player.getUUID());
+	}
+
+	private static boolean isRemDemonOnly(ResourceLocation id) {
+		return AbilityIds.REM_MORNING_STAR.equals(id)
+				|| AbilityIds.REM_MACE_CRATER.equals(id)
+				|| AbilityIds.REM_ONI_KICK.equals(id)
+				|| AbilityIds.REM_HUMA_ICE_SPIKES.equals(id);
+	}
+
+	private static boolean isRemVisible(ResourceLocation id, boolean demonism) {
+		if (AbilityIds.REM_ONI_RAGE.equals(id) && demonism) {
+			return false;
+		}
+		return !isRemDemonOnly(id) || demonism;
 	}
 }

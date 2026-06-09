@@ -38,6 +38,11 @@ public final class ModEffects {
 			new HealBlockMobEffect(MobEffectCategory.HARMFUL, 0xFF7C0045)
 	);
 
+	public static final Holder<MobEffect> BLEEDING = Registry.registerForHolder(
+			BuiltInRegistries.MOB_EFFECT, ModId.of("bleeding"),
+			new BleedingMobEffect(MobEffectCategory.HARMFUL, 0xB3121D)
+	);
+
 	private ModEffects() {
 	}
 

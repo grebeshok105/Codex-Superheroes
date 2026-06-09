@@ -62,6 +62,12 @@ public final class ModItemGroups {
 
 				output.accept(ModItems.INVINCIBLE_SUIT);
 				output.accept(ModItems.OMNIMAN_SUIT);
+
+				output.accept(ModItems.KAZUHA_VISION);
+				output.accept(ModItems.SCARAMOUCHE_VISION);
+				output.accept(ModItems.BATTLE_BEAST_MEDALLION);
+				output.accept(ModItems.REM_ONI_HORN);
+				output.accept(ModItems.A_TRAIN_SUIT);
 			})
 			.build();
 

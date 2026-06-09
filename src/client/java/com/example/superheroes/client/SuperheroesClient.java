@@ -14,6 +14,7 @@ import com.example.superheroes.client.fx.ScreenShakeManager;
 import com.example.superheroes.client.network.ClientNetworking;
 import com.example.superheroes.client.render.HomelanderBossRenderer;
 import com.example.superheroes.client.render.IronManEspRenderer;
+import com.example.superheroes.client.render.RemOniHornFeatureRenderer;
 import com.example.superheroes.entity.ModEntities;
 import com.example.superheroes.item.ModItems;
 import com.example.superheroes.client.render.CosmicBeamRenderer;
@@ -32,7 +33,9 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
+import net.fabricmc.fabric.api.client.rendering.v1.LivingEntityFeatureRendererRegistrationCallback;
 import net.minecraft.client.particle.EndRodParticle;
+import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityType;
 
@@ -53,6 +56,11 @@ public class SuperheroesClient implements ClientModInitializer {
 		EntityRendererRegistry.register(ModEntities.SHADOW_SOLDIER, com.example.superheroes.client.render.ShadowSoldierRenderer::new);
 		EntityRendererRegistry.register(ModEntities.KAGE_BUNSHIN, com.example.superheroes.client.render.KageBunshinRenderer::new);
 		EntityRendererRegistry.register(ModEntities.SHIELD_PROJECTILE, com.example.superheroes.client.render.ShieldProjectileRenderer::new);
+		LivingEntityFeatureRendererRegistrationCallback.EVENT.register((entityType, entityRenderer, registrationHelper, context) -> {
+			if (entityRenderer instanceof PlayerRenderer playerRenderer) {
+				registrationHelper.register(new RemOniHornFeatureRenderer(playerRenderer));
+			}
+		});
 		ParticleFactoryRegistry.getInstance().register(ModParticles.TRANSFORM_SPARK, EndRodParticle.Provider::new);
 		ParticleFactoryRegistry.getInstance().register(ModParticles.LASER_SPARK, EndRodParticle.Provider::new);
 		ParticleFactoryRegistry.getInstance().register(ModParticles.REPULSOR_SPARK, EndRodParticle.Provider::new);
@@ -170,7 +178,10 @@ public class SuperheroesClient implements ClientModInitializer {
 			}
 		});
 
-		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> ClientFlightState.clearAll());
+		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+			ClientFlightState.clearAll();
+			ClientRemDemonismState.clearAll();
+		});
 
 	}
 }
