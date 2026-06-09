@@ -172,6 +172,36 @@ public final class ModItems {
 			new OmnimanSuitItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
 	);
 
+	public static final KazuhaVisionItem KAZUHA_VISION = register(
+			"kazuha_vision",
+			new KazuhaVisionItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
+	);
+
+	public static final ScaramoucheVisionItem SCARAMOUCHE_VISION = register(
+			"scaramouche_vision",
+			new ScaramoucheVisionItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
+	);
+
+	public static final BattleBeastMedallionItem BATTLE_BEAST_MEDALLION = register(
+			"battle_beast_medallion",
+			new BattleBeastMedallionItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
+	);
+
+	public static final RemOniHornItem REM_ONI_HORN = register(
+			"rem_oni_horn",
+			new RemOniHornItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
+	);
+
+	public static final RemMorningStarItem REM_MORNING_STAR = register(
+			"rem_morning_star",
+			new RemMorningStarItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
+	);
+
+	public static final ATrainSuitItem A_TRAIN_SUIT = register(
+			"a_train_suit",
+			new ATrainSuitItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
+	);
+
 	public static final MusouNoHitotachiItem MUSOU_NO_HITOTACHI = register(
 			"musou_no_hitotachi",
 			new MusouNoHitotachiItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))

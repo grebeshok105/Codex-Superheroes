@@ -12,7 +12,7 @@ public abstract class LivingEntityHealBlockMixin {
 	@Inject(method = "heal", at = @At("HEAD"), cancellable = true)
 	private void superheroes$blockHeal(float amount, CallbackInfo ci) {
 		LivingEntity self = (LivingEntity) (Object) this;
-		if (self.hasEffect(ModEffects.HEAL_BLOCK)) {
+		if (self.hasEffect(ModEffects.HEAL_BLOCK) || self.hasEffect(ModEffects.BLEEDING)) {
 			ci.cancel();
 		}
 	}

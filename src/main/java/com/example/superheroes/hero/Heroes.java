@@ -24,6 +24,11 @@ public final class Heroes {
 	public static final RaidenHero RAIDEN_SHOGUN = new RaidenHero();
 	public static final InvincibleHero INVINCIBLE = new InvincibleHero();
 	public static final OmnimanHero OMNIMAN = new OmnimanHero();
+	public static final KazuhaHero KAZUHA = new KazuhaHero();
+	public static final ScaramoucheHero SCARAMOUCHE = new ScaramoucheHero();
+	public static final BattleBeastHero BATTLE_BEAST = new BattleBeastHero();
+	public static final RemHero REM = new RemHero();
+	public static final ATrainHero A_TRAIN = new ATrainHero();
 
 	private Heroes() {
 	}
@@ -44,6 +49,11 @@ public final class Heroes {
 		register(RAIDEN_SHOGUN);
 		register(INVINCIBLE);
 		register(OMNIMAN);
+		register(KAZUHA);
+		register(SCARAMOUCHE);
+		register(BATTLE_BEAST);
+		register(REM);
+		register(A_TRAIN);
 	}
 
 	public static void register(Hero hero) {

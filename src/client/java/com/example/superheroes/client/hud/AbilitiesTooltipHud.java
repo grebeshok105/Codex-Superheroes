@@ -6,8 +6,10 @@ import com.example.superheroes.client.ClientAbilityCooldowns;
 import com.example.superheroes.client.ClientDoomsdayState;
 import com.example.superheroes.client.ClientHeroState;
 import com.example.superheroes.client.ClientMadnessState;
+import com.example.superheroes.client.ClientRemDemonismState;
 import com.example.superheroes.client.ClientThanosState;
 import com.example.superheroes.hero.HeroTheme;
+import com.example.superheroes.hero.RemHero;
 import com.example.superheroes.hero.ThanosHero;
 import com.example.superheroes.item.infinity.InfinityStoneType;
 import net.minecraft.ChatFormatting;
@@ -388,6 +390,13 @@ public final class AbilitiesTooltipHud {
 			}
 			return out;
 		}
+		if (RemHero.ID.equals(heroId) && !isRemDemonismActive()) {
+			java.util.ArrayList<ResourceLocation> out = new java.util.ArrayList<>(base.size());
+			for (ResourceLocation id : base) {
+				if (!isRemDemonOnly(id)) out.add(id);
+			}
+			return out;
+		}
 		return base;
 	}
 
@@ -406,5 +415,19 @@ public final class AbilitiesTooltipHud {
 		if (AbilityIds.DOOMSDAY_BERSERK.equals(id)) return tier >= 6;
 		if (AbilityIds.DOOMSDAY_DOOM_GRIP.equals(id)) return tier >= 7;
 		return true;
+	}
+
+	private static boolean isRemDemonismActive() {
+		if (Minecraft.getInstance().player == null) {
+			return false;
+		}
+		return ClientRemDemonismState.isActive(Minecraft.getInstance().player.getUUID());
+	}
+
+	private static boolean isRemDemonOnly(ResourceLocation id) {
+		return AbilityIds.REM_MORNING_STAR.equals(id)
+				|| AbilityIds.REM_MACE_CRATER.equals(id)
+				|| AbilityIds.REM_ONI_KICK.equals(id)
+				|| AbilityIds.REM_HUMA_ICE_SPIKES.equals(id);
 	}
 }

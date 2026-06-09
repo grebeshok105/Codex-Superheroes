@@ -106,6 +106,33 @@ public final class AbilityIds {
 	public static final ResourceLocation RAIDEN_TRANSCENDENCE = ModId.of("raiden_transcendence");
 	public static final ResourceLocation RAIDEN_MUSOU_ISSHIN = ModId.of("raiden_musou_isshin");
 
+	public static final ResourceLocation KAZUHA_CHIHAYABURU = ModId.of("kazuha_chihayaburu");
+	public static final ResourceLocation KAZUHA_MIDARE_RANZAN = ModId.of("kazuha_midare_ranzan");
+	public static final ResourceLocation KAZUHA_AUTUMN_WHIRLWIND = ModId.of("kazuha_autumn_whirlwind");
+	public static final ResourceLocation KAZUHA_MAPLE_STORM = ModId.of("kazuha_maple_storm");
+
+	public static final ResourceLocation SCARAMOUCHE_WINDSTEP = ModId.of("scaramouche_windstep");
+	public static final ResourceLocation SCARAMOUCHE_ELECTRO_SWIRL = ModId.of("scaramouche_electro_swirl");
+	public static final ResourceLocation SCARAMOUCHE_WIND_PRISON = ModId.of("scaramouche_wind_prison");
+	public static final ResourceLocation SCARAMOUCHE_SKYFALL_BURST = ModId.of("scaramouche_skyfall_burst");
+
+	public static final ResourceLocation BATTLE_BEAST_PREDATOR_LEAP = ModId.of("battle_beast_predator_leap");
+	public static final ResourceLocation BATTLE_BEAST_AXE_CLEAVE = ModId.of("battle_beast_axe_cleave");
+	public static final ResourceLocation BATTLE_BEAST_WAR_ROAR = ModId.of("battle_beast_war_roar");
+	public static final ResourceLocation BATTLE_BEAST_BLOODLUST = ModId.of("battle_beast_bloodlust");
+
+	public static final ResourceLocation REM_MORNING_STAR = ModId.of("rem_morning_star");
+	public static final ResourceLocation REM_ONI_RAGE = ModId.of("rem_oni_rage");
+	public static final ResourceLocation REM_HEALING_MAGIC = ModId.of("rem_healing_magic");
+	public static final ResourceLocation REM_HUMA_ICE_SPIKES = ModId.of("rem_huma_ice_spikes");
+	public static final ResourceLocation REM_MACE_CRATER = ModId.of("rem_mace_crater");
+	public static final ResourceLocation REM_ONI_KICK = ModId.of("rem_oni_kick");
+
+	public static final ResourceLocation A_TRAIN_MACH_DASH = ModId.of("a_train_mach_dash");
+	public static final ResourceLocation A_TRAIN_SONIC_BOOM = ModId.of("a_train_sonic_boom");
+	public static final ResourceLocation A_TRAIN_HYPERSPEED = ModId.of("a_train_hyperspeed");
+	public static final ResourceLocation A_TRAIN_ADRENALINE_RUSH = ModId.of("a_train_adrenaline_rush");
+
 
 	public static boolean isReinhardSwordOnly(ResourceLocation id) {
 		return REINHARD_AIR_SLASH.equals(id)

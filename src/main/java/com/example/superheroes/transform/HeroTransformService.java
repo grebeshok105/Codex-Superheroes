@@ -98,6 +98,7 @@ public final class HeroTransformService {
 		com.example.superheroes.effect.RegulusMadnessController.clearMadness(player);
 		com.example.superheroes.effect.ReinhardController.clearAdaptations(player);
 		com.example.superheroes.effect.RaidenLifecycleController.clearOnUntransform(player);
+		com.example.superheroes.effect.RemDemonismController.clear(player);
 		HeroData updated = data.withHero(null).withResources(0f, 0f).clearActive();
 		player.setAttached(ModAttachments.HERO_DATA, updated);
 		player.refreshDimensions();
@@ -183,6 +184,7 @@ public final class HeroTransformService {
 		java.util.UUID id = player.getUUID();
 		com.example.superheroes.ability.AbilityCooldowns.clear(id);
 		com.example.superheroes.resource.EnergyLocks.clear(id);
+		com.example.superheroes.effect.RemDemonismController.clear(player);
 	}
 
 	private static void deactivateAll(ServerPlayer player, HeroData data) {

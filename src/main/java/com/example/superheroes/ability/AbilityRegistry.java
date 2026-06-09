@@ -106,6 +106,32 @@ public final class AbilityRegistry {
 	public static final RaidenTranscendenceAbility RAIDEN_TRANSCENDENCE = new RaidenTranscendenceAbility();
 	public static final RaidenMusouIsshinAbility RAIDEN_MUSOU_ISSHIN = new RaidenMusouIsshinAbility();
 
+	public static final KazuhaChihayaburuAbility KAZUHA_CHIHAYABURU = new KazuhaChihayaburuAbility();
+	public static final KazuhaMidareRanzanAbility KAZUHA_MIDARE_RANZAN = new KazuhaMidareRanzanAbility();
+	public static final KazuhaAutumnWhirlwindAbility KAZUHA_AUTUMN_WHIRLWIND = new KazuhaAutumnWhirlwindAbility();
+	public static final KazuhaMapleStormAbility KAZUHA_MAPLE_STORM = new KazuhaMapleStormAbility();
+
+	public static final ScaramoucheWindstepAbility SCARAMOUCHE_WINDSTEP = new ScaramoucheWindstepAbility();
+	public static final ScaramoucheElectroSwirlAbility SCARAMOUCHE_ELECTRO_SWIRL = new ScaramoucheElectroSwirlAbility();
+	public static final ScaramoucheWindPrisonAbility SCARAMOUCHE_WIND_PRISON = new ScaramoucheWindPrisonAbility();
+	public static final ScaramoucheSkyfallBurstAbility SCARAMOUCHE_SKYFALL_BURST = new ScaramoucheSkyfallBurstAbility();
+
+	public static final BattleBeastPredatorLeapAbility BATTLE_BEAST_PREDATOR_LEAP = new BattleBeastPredatorLeapAbility();
+	public static final BattleBeastAxeCleaveAbility BATTLE_BEAST_AXE_CLEAVE = new BattleBeastAxeCleaveAbility();
+	public static final BattleBeastWarRoarAbility BATTLE_BEAST_WAR_ROAR = new BattleBeastWarRoarAbility();
+	public static final BattleBeastBloodlustAbility BATTLE_BEAST_BLOODLUST = new BattleBeastBloodlustAbility();
+
+	public static final RemMorningStarAbility REM_MORNING_STAR = new RemMorningStarAbility();
+	public static final RemOniRageAbility REM_ONI_RAGE = new RemOniRageAbility();
+	public static final RemHealingMagicAbility REM_HEALING_MAGIC = new RemHealingMagicAbility();
+	public static final RemHumaIceSpikesAbility REM_HUMA_ICE_SPIKES = new RemHumaIceSpikesAbility();
+	public static final RemMaceCraterAbility REM_MACE_CRATER = new RemMaceCraterAbility();
+	public static final RemOniKickAbility REM_ONI_KICK = new RemOniKickAbility();
+
+	public static final ATrainMachDashAbility A_TRAIN_MACH_DASH = new ATrainMachDashAbility();
+	public static final ATrainSonicBoomAbility A_TRAIN_SONIC_BOOM = new ATrainSonicBoomAbility();
+	public static final ATrainHyperspeedAbility A_TRAIN_HYPERSPEED = new ATrainHyperspeedAbility();
+	public static final ATrainAdrenalineRushAbility A_TRAIN_ADRENALINE_RUSH = new ATrainAdrenalineRushAbility();
 
 	private AbilityRegistry() {
 	}
@@ -195,6 +221,28 @@ public final class AbilityRegistry {
 		register(RAIDEN_PLUNGING_STRIKE);
 		register(RAIDEN_TRANSCENDENCE);
 		register(RAIDEN_MUSOU_ISSHIN);
+		register(KAZUHA_CHIHAYABURU);
+		register(KAZUHA_MIDARE_RANZAN);
+		register(KAZUHA_AUTUMN_WHIRLWIND);
+		register(KAZUHA_MAPLE_STORM);
+		register(SCARAMOUCHE_WINDSTEP);
+		register(SCARAMOUCHE_ELECTRO_SWIRL);
+		register(SCARAMOUCHE_WIND_PRISON);
+		register(SCARAMOUCHE_SKYFALL_BURST);
+		register(BATTLE_BEAST_PREDATOR_LEAP);
+		register(BATTLE_BEAST_AXE_CLEAVE);
+		register(BATTLE_BEAST_WAR_ROAR);
+		register(BATTLE_BEAST_BLOODLUST);
+		register(REM_MORNING_STAR);
+		register(REM_ONI_RAGE);
+		register(REM_HEALING_MAGIC);
+		register(REM_HUMA_ICE_SPIKES);
+		register(REM_MACE_CRATER);
+		register(REM_ONI_KICK);
+		register(A_TRAIN_MACH_DASH);
+		register(A_TRAIN_SONIC_BOOM);
+		register(A_TRAIN_HYPERSPEED);
+		register(A_TRAIN_ADRENALINE_RUSH);
 	}
 
 	public static void register(Ability ability) {

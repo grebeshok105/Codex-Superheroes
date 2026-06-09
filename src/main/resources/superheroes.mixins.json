@@ -13,7 +13,8 @@
 		"ThanosBlockBreakingMixin",
 		"KryptoniteShardPickupMixin",
 		"RoyalIcicleNoDropMixin",
-		"YamatoNoDropMixin"
+		"YamatoNoDropMixin",
+		"RemMorningStarNoDropMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
