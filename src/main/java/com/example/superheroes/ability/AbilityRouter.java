@@ -69,12 +69,15 @@ public final class AbilityRouter {
 			if (!canPayActivationCost(player, data, hero, abilityId, binding, cost)) {
 				return;
 			}
+			if (!ResourceController.tryConsume(player, abilityId, cost)) {
+				return;
+			}
 		}
 		boolean ok = ability.tryActivate(player);
 		if (!ok) {
-			return;
-		}
-		if (cost > 0f && !ResourceController.tryConsume(player, abilityId, cost)) {
+			if (cost > 0f) {
+				restoreActivationCost(player, data.energy(), data.mana());
+			}
 			return;
 		}
 		if (ability.isToggle()) {
@@ -134,5 +137,12 @@ public final class AbilityRouter {
 			return true;
 		}
 		return energy >= cost - mana;
+	}
+
+	private static void restoreActivationCost(ServerPlayer player, float energy, float mana) {
+		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
+		HeroData updated = data.withResources(energy, mana);
+		player.setAttached(ModAttachments.HERO_DATA, updated);
+		ModNetworking.syncResources(player, updated);
 	}
 }
