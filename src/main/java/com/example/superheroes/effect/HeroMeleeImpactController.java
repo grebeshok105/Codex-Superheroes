@@ -3,6 +3,7 @@ package com.example.superheroes.effect;
 import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.item.RoyalIcicleItem;
 import com.example.superheroes.network.HeroMeleeChargeC2SPayload;
+import com.example.superheroes.network.ScreenShakeS2CPayload;
 import com.example.superheroes.physics.CombatImpactEngine;
 import com.example.superheroes.physics.ImpactChargeRules;
 import com.example.superheroes.physics.ImpactProfile;
@@ -10,9 +11,9 @@ import com.example.superheroes.physics.ImpactTier;
 import com.example.superheroes.transform.HeroData;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -31,8 +32,10 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -46,6 +49,7 @@ import java.util.UUID;
 public final class HeroMeleeImpactController {
 	private static final double RELEASE_HIT_INFLATE = 0.3;
 	private static final Map<UUID, ChargeState> CHARGES = new HashMap<>();
+	private static final List<PendingPush> PENDING_PUSHES = new ArrayList<>();
 
 	private HeroMeleeImpactController() {
 	}
@@ -66,10 +70,15 @@ public final class HeroMeleeImpactController {
 				return InteractionResult.PASS;
 			}
 			spawnTierOneHitFx(attacker, data, target);
+			PENDING_PUSHES.add(new PendingPush(attacker, target,
+					CombatImpactEngine.heroPowerOf(data.heroId())));
 			return InteractionResult.PASS;
 		});
 
-		ServerTickEvents.END_SERVER_TICK.register(HeroMeleeImpactController::cleanup);
+		ServerTickEvents.END_SERVER_TICK.register(server -> {
+			processPendingPushes();
+			cleanup(server);
+		});
 	}
 
 	public static void handleChargeInput(ServerPlayer player, HeroMeleeChargeC2SPayload payload) {
@@ -151,6 +160,28 @@ public final class HeroMeleeImpactController {
 		return target;
 	}
 
+	private static void processPendingPushes() {
+		if (PENDING_PUSHES.isEmpty()) {
+			return;
+		}
+		for (PendingPush push : PENDING_PUSHES) {
+			LivingEntity target = push.target();
+			ServerPlayer attacker = push.attacker();
+			if (target == null || !target.isAlive() || attacker == null || attacker.isRemoved()
+					|| target.level() != attacker.level()) {
+				continue;
+			}
+			Vec3 away = target.position().subtract(attacker.position());
+			Vec3 direction = away.lengthSqr() > 1.0e-4
+					? new Vec3(away.x, 0.0, away.z).normalize()
+					: new Vec3(attacker.getViewVector(1f).x, 0.0, attacker.getViewVector(1f).z).normalize();
+			Vec3 motion = target.getDeltaMovement().add(direction.scale(0.32 * push.heroPower()));
+			target.setDeltaMovement(motion.x, Math.max(motion.y, 0.12), motion.z);
+			target.hurtMarked = true;
+		}
+		PENDING_PUSHES.clear();
+	}
+
 	private static void cleanup(MinecraftServer server) {
 		Iterator<Map.Entry<UUID, ChargeState>> it = CHARGES.entrySet().iterator();
 		while (it.hasNext()) {
@@ -180,8 +211,6 @@ public final class HeroMeleeImpactController {
 			level.playSound(null, player.getX(), player.getY(), player.getZ(),
 					max ? SoundEvents.BEACON_POWER_SELECT : SoundEvents.NOTE_BLOCK_BELL.value(),
 					SoundSource.PLAYERS, 0.9f, max ? 0.6f : 1.3f);
-			player.displayClientMessage(Component.translatable(
-					max ? "hud.superheroes.melee_tier.3" : "hud.superheroes.melee_tier.2"), true);
 		}
 		if (heldTicks % 5 != 0) {
 			return;
@@ -199,7 +228,12 @@ public final class HeroMeleeImpactController {
 	private static void spawnTierOneHitFx(ServerPlayer attacker, HeroData data, LivingEntity target) {
 		ServerLevel level = attacker.serverLevel();
 		Vec3 c = target.position().add(0.0, target.getBbHeight() * 0.55, 0.0);
-		level.sendParticles(styleParticle(data), c.x, c.y, c.z, 5, 0.3, 0.25, 0.3, 0.08);
+		level.sendParticles(styleParticle(data), c.x, c.y, c.z, 8, 0.32, 0.28, 0.32, 0.1);
+		level.sendParticles(ParticleTypes.CRIT, c.x, c.y, c.z, 4, 0.3, 0.25, 0.3, 0.15);
+		ServerPlayNetworking.send(attacker, new ScreenShakeS2CPayload(0.25f, 6));
+		if (target instanceof ServerPlayer victim) {
+			ServerPlayNetworking.send(victim, new ScreenShakeS2CPayload(0.3f, 6));
+		}
 	}
 
 	private static void spawnWhiffFx(ServerPlayer player) {
@@ -219,6 +253,9 @@ public final class HeroMeleeImpactController {
 			case WEAPON -> ParticleTypes.ENCHANTED_HIT;
 			default -> ParticleTypes.CRIT;
 		};
+	}
+
+	private record PendingPush(ServerPlayer attacker, LivingEntity target, double heroPower) {
 	}
 
 	private static final class ChargeState {
