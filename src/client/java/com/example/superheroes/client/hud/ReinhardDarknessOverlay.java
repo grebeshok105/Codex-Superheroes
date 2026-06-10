@@ -6,11 +6,14 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 
 /**
- * Мгновенная тьма от меча Рейнхарда: экран жертвы становится чёрным сразу,
- * без плавного появления, и быстро рассеивается в конце действия.
+ * Тьма от меча Рейнхарда: основную работу делает ванильная слепота,
+ * оверлей лишь добавляет лёгкую мгновенную виньетку по краям экрана,
+ * не заливая HUD чёрным, и быстро рассеивается в конце действия.
  */
 public final class ReinhardDarknessOverlay {
 	private static final long FADE_OUT_MS = 450L;
+	private static final int CORE_ALPHA = 60;
+	private static final int EDGE_ALPHA = 150;
 
 	private ReinhardDarknessOverlay() {
 	}
@@ -24,7 +27,11 @@ public final class ReinhardDarknessOverlay {
 
 		long remaining = ClientReinhardDarknessState.deadlineMs() - System.currentTimeMillis();
 		float strength = remaining >= FADE_OUT_MS ? 1f : Math.max(0f, remaining / (float) FADE_OUT_MS);
-		int alpha = (int) (250 * strength);
-		graphics.fill(0, 0, w, h, (alpha << 24));
+		int core = (int) (CORE_ALPHA * strength);
+		int edge = (int) (EDGE_ALPHA * strength);
+		int band = h / 3;
+		graphics.fill(0, 0, w, h, core << 24);
+		graphics.fillGradient(0, 0, w, band, edge << 24, 0);
+		graphics.fillGradient(0, h - band, w, h, 0, edge << 24);
 	}
 }

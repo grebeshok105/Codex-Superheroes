@@ -26,9 +26,10 @@ public final class GuardiansBreakerAbility implements Ability {
 	private static final double DASH_TICKS = 3.0;
 	private static final double MIN_DASH_SPEED = 4.4;
 	private static final double MAX_DASH_SPEED = 7.6;
-	private static final double PATH_RADIUS = 2.35;
-	private static final double IMPACT_RADIUS = 20.0;
-	private static final int MAX_BLOCKS_DESTROYED = 36000;
+	private static final double PATH_RADIUS = 1.7;
+	private static final double IMPACT_RADIUS = 12.0;
+	private static final double CRATER_RADIUS = 3.6;
+	private static final int MAX_BLOCKS_DESTROYED = 600;
 	private static final float HARDNESS_LIMIT = 60.0f;
 	private static final float DAMAGE = 32.0f;
 	private static final float SWEEP_DAMAGE = 18.0f;
@@ -77,7 +78,7 @@ public final class GuardiansBreakerAbility implements Ability {
 		Vec3 direction = distance > 0.001 ? toTarget.scale(1.0 / distance) : safeViewDirection(player);
 
 		int destroyed = breakFlightPath(level, player, playerCenter, direction, Math.min(distance, TARGET_RANGE));
-		destroyed += breakSphere(level, player, targetCenter, IMPACT_RADIUS, playerCenter, 0.0,
+		destroyed += breakSphere(level, player, targetCenter, CRATER_RADIUS, playerCenter, 0.0,
 				MAX_BLOCKS_DESTROYED - destroyed);
 
 		Vec3 motion = direction.scale(dashSpeed(distance));
@@ -110,7 +111,7 @@ public final class GuardiansBreakerAbility implements Ability {
 		}
 
 		level.sendParticles(ParticleTypes.EXPLOSION, targetCenter.x, targetCenter.y, targetCenter.z,
-				8 + Math.min(8, destroyed / 1800), 1.2, 1.0, 1.2, 0.0);
+				4 + Math.min(6, destroyed / 60), 1.2, 1.0, 1.2, 0.0);
 		level.sendParticles(ParticleTypes.EXPLOSION_EMITTER, targetCenter.x, targetCenter.y, targetCenter.z,
 				1, 0.0, 0.0, 0.0, 0.0);
 		level.sendParticles(ParticleTypes.CRIT, targetCenter.x, targetCenter.y, targetCenter.z,
@@ -118,9 +119,9 @@ public final class GuardiansBreakerAbility implements Ability {
 		level.sendParticles(ParticleTypes.DAMAGE_INDICATOR, targetCenter.x, targetCenter.y, targetCenter.z,
 				28 + swept * 2, 0.8, 0.75, 0.8, 0.0);
 		level.sendParticles(ParticleTypes.POOF, targetCenter.x, targetCenter.y, targetCenter.z,
-				120, 2.2, 1.2, 2.2, 0.16);
+				60, 2.2, 1.2, 2.2, 0.16);
 		level.sendParticles(ParticleTypes.CLOUD, targetCenter.x, targetCenter.y, targetCenter.z,
-				160, 3.6, 1.4, 3.6, 0.18);
+				80, 3.0, 1.3, 3.0, 0.16);
 
 		level.playSound(null, player.getX(), player.getY(), player.getZ(),
 				SoundEvents.TRIDENT_RIPTIDE_3, SoundSource.PLAYERS, 1.8f, 0.48f);
@@ -265,15 +266,15 @@ public final class GuardiansBreakerAbility implements Ability {
 	}
 
 	private static void shake(ServerLevel level, Vec3 center) {
-		for (ServerPlayer nearby : PlayerLookup.around(level, center, 72.0)) {
+		for (ServerPlayer nearby : PlayerLookup.around(level, center, 48.0)) {
 			double distance = nearby.position().distanceTo(center);
-			float intensity = (float) Math.max(0.08, 1.0 - distance / 72.0) * 2.6f;
-			ServerPlayNetworking.send(nearby, new ScreenShakeS2CPayload(intensity, 42));
+			float intensity = (float) Math.max(0.08, 1.0 - distance / 48.0) * 2.2f;
+			ServerPlayNetworking.send(nearby, new ScreenShakeS2CPayload(intensity, 28));
 		}
 	}
 
 	private static boolean canBreak(ServerLevel level, BlockPos pos, BlockState state) {
-		if (state.isAir() || state.liquid()) {
+		if (state.isAir() || !state.getFluidState().isEmpty()) {
 			return false;
 		}
 		float hardness = state.getDestroySpeed(level, pos);
