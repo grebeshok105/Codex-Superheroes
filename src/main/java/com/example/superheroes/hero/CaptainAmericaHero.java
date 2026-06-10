@@ -82,4 +82,9 @@ public final class CaptainAmericaHero implements Hero {
 	public HeroTheme getTheme() {
 		return HeroTheme.CAPTAIN_AMERICA;
 	}
+
+	@Override
+	public HeroHudConfig getHudConfig() {
+		return HeroHudConfig.CAPTAIN_AMERICA;
+	}
 }

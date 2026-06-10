@@ -118,4 +118,9 @@ public final class SungJinwooHero implements Hero {
 	public HeroTheme getTheme() {
 		return THEME;
 	}
+
+	@Override
+	public HeroHudConfig getHudConfig() {
+		return HeroHudConfig.SUNG_JINWOO;
+	}
 }

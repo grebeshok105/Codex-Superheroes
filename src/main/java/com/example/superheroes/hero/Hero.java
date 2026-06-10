@@ -43,4 +43,8 @@ public interface Hero {
 	default HeroTheme getTheme() {
 		return HeroTheme.DEFAULT;
 	}
+
+	default HeroHudConfig getHudConfig() {
+		return HeroHudConfig.DEFAULT;
+	}
 }

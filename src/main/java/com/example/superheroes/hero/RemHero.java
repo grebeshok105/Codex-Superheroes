@@ -123,4 +123,9 @@ public final class RemHero implements Hero {
 	public HeroTheme getTheme() {
 		return THEME;
 	}
+
+	@Override
+	public HeroHudConfig getHudConfig() {
+		return HeroHudConfig.REM;
+	}
 }

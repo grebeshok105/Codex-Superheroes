@@ -141,4 +141,9 @@ public final class OmnimanHero implements Hero {
 		level.sendParticles(ParticleTypes.LARGE_SMOKE, cx, cy + 0.15, cz, 70, radius * 0.55, 0.25, radius * 0.55, 0.1);
 		level.sendParticles(ParticleTypes.CRIT, cx, cy + 0.65, cz, 34, radius * 0.35, 0.2, radius * 0.35, 0.16);
 	}
+
+	@Override
+	public HeroHudConfig getHudConfig() {
+		return HeroHudConfig.OMNIMAN;
+	}
 }

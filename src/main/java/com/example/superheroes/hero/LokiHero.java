@@ -83,4 +83,9 @@ public final class LokiHero implements Hero {
 	public HeroTheme getTheme() {
 		return HeroTheme.LOKI;
 	}
+
+	@Override
+	public HeroHudConfig getHudConfig() {
+		return HeroHudConfig.LOKI;
+	}
 }

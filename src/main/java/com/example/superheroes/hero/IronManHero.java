@@ -135,4 +135,9 @@ public final class IronManHero implements Hero {
 			}
 		}
 	}
+
+	@Override
+	public HeroHudConfig getHudConfig() {
+		return HeroHudConfig.IRON_MAN;
+	}
 }

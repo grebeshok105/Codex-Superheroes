@@ -10,7 +10,8 @@
 		"GameRendererFovMixin",
 		"GuiVanillaGlitchMixin",
 		"SoundEngineMixin",
-		"MinecraftHeroMeleeChargeMixin"
+		"MinecraftHeroMeleeChargeMixin",
+		"GuiHotbarMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

@@ -144,4 +144,9 @@ public final class BattleBeastHero implements Hero {
 		level.playSound(null, player.getX(), player.getY(), player.getZ(),
 				SoundEvents.GENERIC_EXPLODE.value(), SoundSource.PLAYERS, 1.2f, 0.65f);
 	}
+
+	@Override
+	public HeroHudConfig getHudConfig() {
+		return HeroHudConfig.BATTLE_BEAST;
+	}
 }

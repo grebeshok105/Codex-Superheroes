@@ -1,13 +1,14 @@
 package com.example.superheroes.client;
 
-import com.example.superheroes.client.hud.AbilitiesTooltipHud;
+import com.example.superheroes.client.hud.AbilityBarHud;
+import com.example.superheroes.client.hud.HeroInfoPanelHud;
+import com.example.superheroes.client.hud.HotbarOverrideHud;
 import com.example.superheroes.client.hud.BloodRainHud;
 import com.example.superheroes.client.hud.EvangelionZoomHud;
 import com.example.superheroes.client.hud.JarvisOverlayHud;
 import com.example.superheroes.client.hud.MadnessHudOverlay;
 import com.example.superheroes.client.hud.RadialMenuHud;
 import com.example.superheroes.client.hud.ReactorOverlayHud;
-import com.example.superheroes.client.hud.ResourceBarHud;
 import com.example.superheroes.client.hud.ScreenFlashHud;
 import com.example.superheroes.client.hud.SunWindupHud;
 import com.example.superheroes.client.fx.ScreenShakeManager;
@@ -124,9 +125,10 @@ public class SuperheroesClient implements ClientModInitializer {
 
 		HudRenderCallback.EVENT.register((graphics, tracker) -> {
 			JarvisOverlayHud.render(graphics, tracker);
-			ResourceBarHud.render(graphics, tracker);
+			HeroInfoPanelHud.render(graphics, tracker);
+			HotbarOverrideHud.render(graphics, tracker);
+			AbilityBarHud.render(graphics, tracker);
 			com.example.superheroes.client.hud.SpartanRageHud.render(graphics, tracker);
-			AbilitiesTooltipHud.render(graphics, tracker);
 			RadialMenuHud.render(graphics, tracker);
 			ScreenFlashHud.render(graphics, tracker);
 			SunWindupHud.render(graphics, tracker);
@@ -144,12 +146,24 @@ public class SuperheroesClient implements ClientModInitializer {
 		});
 
 		ClientTickEvents.START_CLIENT_TICK.register(SuperheroesClient::tickHeroMeleeCharge);
+		ClientTickEvents.START_CLIENT_TICK.register(client -> {
+			// Hotbar lock: swallow 1-9 slot keys so vanilla can't switch slots (scroll wheel still works)
+			if (HotbarLockState.isLocked() && client.player != null && ClientHeroState.data().hasHero()) {
+				for (net.minecraft.client.KeyMapping key : client.options.keyHotbarSlots) {
+					while (key.consumeClick()) {
+						// consumed — hotbar is locked
+					}
+				}
+			}
+		});
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			ScreenShakeManager.tick();
 			WallImpactDebrisManager.tick(client.level);
 			com.example.superheroes.client.fx.FlightTrailManager.tick(client);
-			AbilitiesTooltipHud.tick();
+			HeroInfoPanelHud.tick();
+			AbilityBarHud.tick();
+			RadialMenuHud.animTick();
 			RadialMenuHud.clientTick(client);
 			if (ClientMadnessState.isReading() && client.screen instanceof net.minecraft.client.gui.screens.inventory.InventoryScreen) {
 				client.setScreen(null);
@@ -164,9 +178,7 @@ public class SuperheroesClient implements ClientModInitializer {
 					client.setScreen(new com.example.superheroes.client.screen.VfxSettingsScreen());
 				}
 			}
-			while (ModKeys.TOGGLE_TOOLTIPS.consumeClick()) {
-				AbilitiesTooltipHud.toggleVisible();
-			}
+
 			while (ModKeys.SUPER_JUMP.consumeClick()) {
 				if (client.player != null) {
 					ClientPlayNetworking.send(SuperJumpC2SPayload.INSTANCE);
@@ -177,6 +189,11 @@ public class SuperheroesClient implements ClientModInitializer {
 						&& com.example.superheroes.hero.RaidenHero.ID.equals(ClientHeroState.heroId())) {
 					ClientPlayNetworking.send(new ActivateAbilityC2SPayload(
 							com.example.superheroes.ability.AbilityIds.RAIDEN_SWORD_DRAW));
+				}
+			}
+			while (ModKeys.HOTBAR_LOCK.consumeClick()) {
+				if (client.player != null && ClientHeroState.data().hasHero()) {
+					HotbarLockState.toggle();
 				}
 			}
 			for (int i = 0; i < ModKeys.ABILITY_SLOTS.length; i++) {

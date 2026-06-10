@@ -87,4 +87,9 @@ public final class KratosHero implements Hero {
 	public HeroTheme getTheme() {
 		return HeroTheme.KRATOS;
 	}
+
+	@Override
+	public HeroHudConfig getHudConfig() {
+		return HeroHudConfig.KRATOS;
+	}
 }
