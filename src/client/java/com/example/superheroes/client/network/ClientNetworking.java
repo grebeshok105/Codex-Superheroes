@@ -9,6 +9,7 @@ import com.example.superheroes.client.ClientReactorState;
 import com.example.superheroes.client.ClientRemDemonismState;
 import com.example.superheroes.client.RemoteHeroSkins;
 import com.example.superheroes.client.fx.ScreenShakeManager;
+import com.example.superheroes.client.fx.WallImpactDebrisManager;
 import com.example.superheroes.client.hud.BloodRainHud;
 import com.example.superheroes.client.render.CosmicBeamRenderer;
 import com.example.superheroes.client.render.LaserBeamRenderer;
@@ -83,6 +84,11 @@ public final class ClientNetworking {
 
 		ClientPlayNetworking.registerGlobalReceiver(ScreenShakeS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> ScreenShakeManager.shake(payload.intensity(), payload.durationTicks())));
+
+		ClientPlayNetworking.registerGlobalReceiver(com.example.superheroes.network.WallImpactDebrisS2CPayload.TYPE, (payload, context) ->
+				context.client().execute(() -> WallImpactDebrisManager.spawn(
+						context.client().level, payload.position(), payload.direction(),
+						payload.intensity(), payload.blockStateIds())));
 
 		ClientPlayNetworking.registerGlobalReceiver(RemoteHeroSkinS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> RemoteHeroSkins.put(payload.playerId(), payload.heroId().orElse(null))));
