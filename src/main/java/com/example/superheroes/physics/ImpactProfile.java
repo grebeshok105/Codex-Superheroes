@@ -11,11 +11,8 @@ public record ImpactProfile(
 		float damage,
 		double knockback,
 		double upwardKnockback,
-		boolean breakBlocks,
-		boolean wallPierce,
-		double breakRadius,
-		int maxBlocks,
-		float maxHardness,
+		double launchPower,
+		float variance,
 		double shakeRadius,
 		float shakeIntensity,
 		float debrisIntensity

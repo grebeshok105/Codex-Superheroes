@@ -1,9 +1,9 @@
 package com.example.superheroes.physics;
 
 public final class ImpactChargeRules {
-	public static final int TIER_2_TICKS = 40;
-	public static final int TIER_3_TICKS = 100;
-	public static final int CAP_TICKS = 140;
+	public static final int TIER_2_TICKS = 30;
+	public static final int TIER_3_TICKS = 60;
+	public static final int CAP_TICKS = 80;
 
 	private ImpactChargeRules() {
 	}
