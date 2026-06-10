@@ -3,6 +3,7 @@ package com.example.superheroes.ability;
 import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.effect.FlightController;
 import com.example.superheroes.effect.OmnimanMomentumController;
+import com.example.superheroes.physics.RushTerrainBreaker;
 import com.example.superheroes.transform.HeroData;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
@@ -24,7 +25,7 @@ import java.util.WeakHashMap;
 
 public final class OmnimanViltrumiteRushAbility implements Ability {
 	private static final int COOLDOWN_TICKS = 140;
-	private static final int DURATION_TICKS = 12;
+	private static final int DURATION_TICKS = 4;
 	private static final float COST = 72f;
 	private static final float MOMENTUM_COST = 25f;
 	private static final float BASE_DAMAGE = 26f;
@@ -107,7 +108,19 @@ public final class OmnimanViltrumiteRushAbility implements Ability {
 		sendTrail(level, player, direction, rush.boosted, rush.airborneRush);
 
 		rush.ticksLeft--;
-		if (rush.ticksLeft <= 0 || player.horizontalCollision) {
+		if (player.horizontalCollision || player.verticalCollision || player.onGround()) {
+			Vec3 contact = player.position().add(0.0, player.getBbHeight() * 0.5, 0.0);
+			int broken = RushTerrainBreaker.breakContact(level, player, contact, direction, 2.2, 90);
+			if (broken == 0 && player.horizontalCollision) {
+				// Непробиваемая стена — натиск гасится.
+				ACTIVE.remove(player.getUUID());
+				level.playSound(null, player.getX(), player.getY(), player.getZ(),
+						SoundEvents.FIREWORK_ROCKET_BLAST, SoundSource.PLAYERS,
+						rush.airborneRush ? 1.6f : rush.boosted ? 1.35f : 1.05f, rush.airborneRush ? 0.55f : 0.75f);
+				return;
+			}
+		}
+		if (rush.ticksLeft <= 0) {
 			ACTIVE.remove(player.getUUID());
 			level.playSound(null, player.getX(), player.getY(), player.getZ(),
 					SoundEvents.FIREWORK_ROCKET_BLAST, SoundSource.PLAYERS,
