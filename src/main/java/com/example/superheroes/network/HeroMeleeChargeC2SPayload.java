@@ -6,7 +6,7 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 
-public record HeroMeleeChargeC2SPayload(int action) implements CustomPacketPayload {
+public record HeroMeleeChargeC2SPayload(int action, int heldTicks, int targetId) implements CustomPacketPayload {
 	public static final int ACTION_START = 0;
 	public static final int ACTION_RELEASE = 1;
 	public static final int ACTION_CANCEL = 2;
@@ -15,6 +15,8 @@ public record HeroMeleeChargeC2SPayload(int action) implements CustomPacketPaylo
 
 	public static final StreamCodec<ByteBuf, HeroMeleeChargeC2SPayload> STREAM_CODEC = StreamCodec.composite(
 			ByteBufCodecs.VAR_INT, HeroMeleeChargeC2SPayload::action,
+			ByteBufCodecs.VAR_INT, HeroMeleeChargeC2SPayload::heldTicks,
+			ByteBufCodecs.INT, HeroMeleeChargeC2SPayload::targetId,
 			HeroMeleeChargeC2SPayload::new
 	);
 

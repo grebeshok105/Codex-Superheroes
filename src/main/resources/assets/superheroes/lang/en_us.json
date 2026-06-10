@@ -682,5 +682,8 @@
   "ability.superheroes.status.off": "OFF",
   "ability.superheroes.status.ready": "READY",
   "commands.superheroes.debug.mob_targets.enabled": "Admin debug mob targets enabled.",
-  "commands.superheroes.debug.mob_targets.disabled": "Admin debug mob targets disabled."
+  "commands.superheroes.debug.mob_targets.disabled": "Admin debug mob targets disabled.",
+  "entity.superheroes.ram": "Ram",
+  "hud.superheroes.melee_tier.2": "Charged Strike: Tier II",
+  "hud.superheroes.melee_tier.3": "Charged Strike: Tier III (MAX)"
 }

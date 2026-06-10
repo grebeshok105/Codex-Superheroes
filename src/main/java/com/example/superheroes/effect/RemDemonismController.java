@@ -52,6 +52,7 @@ public final class RemDemonismController {
 	private static final float PASSIVE_GAIN_PER_SECOND = 0.45f;
 	private static final float MANUAL_DRAIN_PER_TICK = MAX_DEMONISM / (25f * 20f);
 	private static final int BUFF_TICKS = 80;
+	private static final int ABSORPTION_TICKS = 30 * 20;
 	private static final int CRATER_WINDUP_TICKS = 30;
 	private static final int CRATER_COOLDOWN_TICKS = 14 * 20;
 	private static final double CRATER_RANGE = 10.0;
@@ -73,8 +74,8 @@ public final class RemDemonismController {
 			.add(Attributes.ATTACK_DAMAGE, ModId.of("modifiers/rem/demon_damage_mult"), 0.45, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL)
 			.add(Attributes.ATTACK_SPEED, ModId.of("modifiers/rem/demon_attack_speed"), 1.2, AttributeModifier.Operation.ADD_VALUE)
 			.add(Attributes.MOVEMENT_SPEED, ModId.of("modifiers/rem/demon_speed"), 0.24, AttributeModifier.Operation.ADD_MULTIPLIED_BASE)
-			.add(Attributes.ARMOR, ModId.of("modifiers/rem/demon_armor"), 14.0, AttributeModifier.Operation.ADD_VALUE)
-			.add(Attributes.ARMOR_TOUGHNESS, ModId.of("modifiers/rem/demon_toughness"), 10.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ARMOR, ModId.of("modifiers/rem/demon_armor"), 22.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ARMOR_TOUGHNESS, ModId.of("modifiers/rem/demon_toughness"), 14.0, AttributeModifier.Operation.ADD_VALUE)
 			.add(Attributes.MAX_HEALTH, ModId.of("modifiers/rem/demon_health"), 38.0, AttributeModifier.Operation.ADD_VALUE)
 			.add(Attributes.KNOCKBACK_RESISTANCE, ModId.of("modifiers/rem/demon_kb"), 0.65, AttributeModifier.Operation.ADD_VALUE)
 			.add(Attributes.ENTITY_INTERACTION_RANGE, ModId.of("modifiers/rem/demon_reach"), 1.0, AttributeModifier.Operation.ADD_VALUE)
@@ -178,6 +179,7 @@ public final class RemDemonismController {
 		CHARGE.put(id, MAX_DEMONISM);
 		giveMace(player);
 		applyDemonEffects(player);
+		applyActivationAbsorption(player);
 		player.heal(18f);
 		playActivationFx(player, false);
 		sync(player);
@@ -582,6 +584,7 @@ public final class RemDemonismController {
 		player.setHealth(1f);
 		player.removeAllEffects();
 		applyDemonEffects(player);
+		applyActivationAbsorption(player);
 		player.setHealth(player.getMaxHealth());
 		giveMace(player);
 		ensureAbilityActive(player);
@@ -596,7 +599,12 @@ public final class RemDemonismController {
 		player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, BUFF_TICKS, 1, true, false, true));
 		player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, BUFF_TICKS, 1, true, false, true));
 		player.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, BUFF_TICKS, 0, true, false, true));
-		player.addEffect(new MobEffectInstance(MobEffects.ABSORPTION, BUFF_TICKS, 1, true, false, true));
+	}
+
+	private static void applyActivationAbsorption(ServerPlayer player) {
+		player.removeEffect(MobEffects.ABSORPTION);
+		player.setAbsorptionAmount(0f);
+		player.addEffect(new MobEffectInstance(MobEffects.ABSORPTION, ABSORPTION_TICKS, 1, true, false, true));
 	}
 
 	private static void removeDemonEffects(ServerPlayer player) {

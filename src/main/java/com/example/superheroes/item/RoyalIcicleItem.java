@@ -3,6 +3,7 @@ package com.example.superheroes.item;
 import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.effect.ReinhardState;
 import com.example.superheroes.hero.ReinhardHero;
+import com.example.superheroes.network.ReinhardDarknessS2CPayload;
 import com.example.superheroes.transform.HeroData;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.particles.ParticleTypes;
@@ -25,6 +26,7 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.Tool;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 
 import java.util.List;
 import java.util.UUID;
@@ -124,6 +126,9 @@ public class RoyalIcicleItem extends SwordItem {
 									&& e.position().add(0, e.getBbHeight() * 0.5, 0).distanceToSqr(origin) <= darkR2);
 					for (LivingEntity le : nearbyForDark) {
 						le.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, DARKNESS_DURATION_TICKS, 0, false, false, false));
+						if (le instanceof ServerPlayer affected) {
+							ServerPlayNetworking.send(affected, new ReinhardDarknessS2CPayload(DARKNESS_DURATION_TICKS));
+						}
 					}
 
 					level.sendParticles(ParticleTypes.SWEEP_ATTACK, origin.x, origin.y, origin.z, 1, 0, 0, 0, 0);

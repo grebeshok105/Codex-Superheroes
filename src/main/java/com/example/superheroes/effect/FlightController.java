@@ -225,7 +225,7 @@ public final class FlightController {
 			level.sendParticles(ModParticles.TRANSFORM_SPARK,
 					trail.x, trail.y, trail.z, 1, 0.05, 0.05, 0.05, 0.0);
 		}
-		level.sendParticles(ParticleTypes.FLAME,
+		level.sendParticles(ParticleTypes.ELECTRIC_SPARK,
 				pos.x, pos.y - 0.2, pos.z, 1, 0.1, 0.0, 0.1, 0.005);
 	}
 
@@ -234,10 +234,10 @@ public final class FlightController {
 		Vec3 pos = player.position();
 		Vec3 dir = player.getLookAngle();
 		Vec3 back = pos.add(dir.reverse().scale(0.5));
-		level.sendParticles(ParticleTypes.FLAME,
-				back.x, back.y + 0.3, back.z, 6, 0.15, 0.15, 0.15, 0.02);
-		level.sendParticles(ParticleTypes.LARGE_SMOKE,
-				back.x, back.y + 0.3, back.z, 2, 0.2, 0.2, 0.2, 0.01);
+		level.sendParticles(ParticleTypes.CLOUD,
+				back.x, back.y + 0.3, back.z, 4, 0.15, 0.15, 0.15, 0.02);
+		level.sendParticles(ParticleTypes.ELECTRIC_SPARK,
+				back.x, back.y + 0.3, back.z, 2, 0.15, 0.15, 0.15, 0.02);
 		level.sendParticles(ModParticles.LASER_SPARK,
 				back.x, back.y + 0.3, back.z, 3, 0.1, 0.1, 0.1, 0.0);
 		if (player.tickCount % 6 == 0) {
