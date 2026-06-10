@@ -24,7 +24,7 @@ import java.util.List;
 
 public class RemMorningStarItem extends SwordItem {
 	public RemMorningStarItem(Properties properties) {
-		super(Tiers.NETHERITE, properties.attributes(SwordItem.createAttributes(Tiers.NETHERITE, 8, -2.8f)));
+		super(Tiers.NETHERITE, properties.attributes(SwordItem.createAttributes(Tiers.NETHERITE, 0, -2.8f)));
 	}
 
 	@Override
@@ -34,7 +34,7 @@ public class RemMorningStarItem extends SwordItem {
 			if (RemHero.ID.equals(data.heroId()) && RemDemonismController.isActive(player)) {
 				ServerLevel level = player.serverLevel();
 				target.invulnerableTime = 0;
-				target.hurt(level.damageSources().playerAttack(player), 7.0f);
+				target.hurt(level.damageSources().playerAttack(player), 2.5f);
 				target.addEffect(new MobEffectInstance(ModEffects.BLEEDING, 10 * 20, 0, false, true, true));
 				level.sendParticles(ParticleTypes.DAMAGE_INDICATOR,
 						target.getX(), target.getY() + target.getBbHeight() * 0.55, target.getZ(),

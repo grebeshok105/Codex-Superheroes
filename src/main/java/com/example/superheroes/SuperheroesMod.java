@@ -57,6 +57,7 @@ public class SuperheroesMod implements ModInitializer {
 		com.example.superheroes.effect.HeroMeleeImpactController.init();
 		com.example.superheroes.effect.BattleBeastCurseController.init();
 		com.example.superheroes.effect.RemDemonismController.init();
+		com.example.superheroes.effect.RamCompanionController.init();
 		com.example.superheroes.effect.UraniumDefenseController.init();
 		com.example.superheroes.effect.UraniumOffhandController.init();
 		com.example.superheroes.effect.FlightController.init();

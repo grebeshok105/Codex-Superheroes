@@ -284,6 +284,10 @@ public final class CombatImpactEngine {
 		return view.lengthSqr() > 1.0e-4 ? view.normalize() : new Vec3(0.0, 0.0, 1.0);
 	}
 
+	public static ImpactStyle styleOf(ResourceLocation heroId) {
+		return styleFor(heroId);
+	}
+
 	private static ImpactStyle styleFor(ResourceLocation heroId) {
 		if (ATrainHero.ID.equals(heroId)) return ImpactStyle.SPEED;
 		if (IronManHero.ID.equals(heroId)) return ImpactStyle.ENERGY;

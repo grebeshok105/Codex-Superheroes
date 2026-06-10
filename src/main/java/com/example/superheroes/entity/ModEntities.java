@@ -47,6 +47,15 @@ public final class ModEntities {
 					.build("shield_projectile")
 	);
 
+	public static final EntityType<RamEntity> RAM = Registry.register(
+			BuiltInRegistries.ENTITY_TYPE,
+			ModId.of("ram"),
+			EntityType.Builder.of(RamEntity::new, MobCategory.CREATURE)
+					.sized(0.6f, 1.8f)
+					.clientTrackingRange(10)
+					.build("ram")
+	);
+
 	private ModEntities() {
 	}
 
@@ -54,5 +63,6 @@ public final class ModEntities {
 		FabricDefaultAttributeRegistry.register(HOMELANDER_BOSS, HomelanderBossEntity.createAttributes());
 		FabricDefaultAttributeRegistry.register(SHADOW_SOLDIER, ShadowSoldierEntity.createAttributes());
 		FabricDefaultAttributeRegistry.register(KAGE_BUNSHIN, KageBunshinEntity.createAttributes());
+		FabricDefaultAttributeRegistry.register(RAM, RamEntity.createAttributes());
 	}
 }

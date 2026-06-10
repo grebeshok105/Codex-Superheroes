@@ -46,6 +46,7 @@ import java.util.List;
 
 public class SuperheroesClient implements ClientModInitializer {
 	private static boolean meleeChargeSent;
+	private static int meleeChargeTicks;
 
 	@Override
 	public void onInitializeClient() {
@@ -61,6 +62,7 @@ public class SuperheroesClient implements ClientModInitializer {
 		EntityRendererRegistry.register(ModEntities.SHADOW_SOLDIER, com.example.superheroes.client.render.ShadowSoldierRenderer::new);
 		EntityRendererRegistry.register(ModEntities.KAGE_BUNSHIN, com.example.superheroes.client.render.KageBunshinRenderer::new);
 		EntityRendererRegistry.register(ModEntities.SHIELD_PROJECTILE, com.example.superheroes.client.render.ShieldProjectileRenderer::new);
+		EntityRendererRegistry.register(ModEntities.RAM, com.example.superheroes.client.render.RamRenderer::new);
 		LivingEntityFeatureRendererRegistrationCallback.EVENT.register((entityType, entityRenderer, registrationHelper, context) -> {
 			if (entityRenderer instanceof PlayerRenderer playerRenderer) {
 				registrationHelper.register(new RemOniHornFeatureRenderer(playerRenderer));
@@ -136,6 +138,9 @@ public class SuperheroesClient implements ClientModInitializer {
 			com.example.superheroes.client.hud.CracksOverlayHud.render(graphics, tracker);
 			com.example.superheroes.client.hud.DoomsdayGlitchHud.render(graphics, tracker);
 			com.example.superheroes.client.hud.ReinhardCeremonyOverlay.render(graphics, tracker);
+			com.example.superheroes.client.hud.MeleeChargeHud.render(graphics, tracker);
+			com.example.superheroes.client.hud.ReinhardSwordDeathOverlay.render(graphics, tracker);
+			com.example.superheroes.client.hud.ReinhardDarknessOverlay.render(graphics, tracker);
 		});
 
 		ClientTickEvents.START_CLIENT_TICK.register(SuperheroesClient::tickHeroMeleeCharge);
@@ -143,6 +148,7 @@ public class SuperheroesClient implements ClientModInitializer {
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			ScreenShakeManager.tick();
 			WallImpactDebrisManager.tick(client.level);
+			com.example.superheroes.client.fx.FlightTrailManager.tick(client);
 			AbilitiesTooltipHud.tick();
 			RadialMenuHud.clientTick(client);
 			if (ClientMadnessState.isReading() && client.screen instanceof net.minecraft.client.gui.screens.inventory.InventoryScreen) {
@@ -189,7 +195,10 @@ public class SuperheroesClient implements ClientModInitializer {
 		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
 			ClientFlightState.clearAll();
 			ClientRemDemonismState.clearAll();
+			ClientReinhardDarknessState.clearAll();
+			ClientMeleeChargeState.clearAll();
 			meleeChargeSent = false;
+			meleeChargeTicks = 0;
 		});
 
 	}
@@ -199,21 +208,56 @@ public class SuperheroesClient implements ClientModInitializer {
 				&& client.level != null
 				&& client.screen == null
 				&& ClientHeroState.data().hasHero()
-				&& client.options.keyAttack.isDown()
-				&& client.options.keyUse.isDown();
+				&& client.options.keyUse.isDown()
+				&& canChargeWithHands(client.player);
 		if (shouldCharge && !meleeChargeSent) {
-			ClientPlayNetworking.send(new HeroMeleeChargeC2SPayload(HeroMeleeChargeC2SPayload.ACTION_START));
+			ClientPlayNetworking.send(new HeroMeleeChargeC2SPayload(HeroMeleeChargeC2SPayload.ACTION_START, 0, -1));
 			meleeChargeSent = true;
+			meleeChargeTicks = 0;
+			ClientMeleeChargeState.update(true, 0);
 			return;
 		}
-		if (!shouldCharge && meleeChargeSent) {
+		if (shouldCharge) {
+			meleeChargeTicks = Math.min(com.example.superheroes.physics.ImpactChargeRules.CAP_TICKS, meleeChargeTicks + 1);
+			ClientMeleeChargeState.update(true, meleeChargeTicks);
+			return;
+		}
+		if (meleeChargeSent) {
 			boolean release = client.player != null
 					&& client.level != null
 					&& client.screen == null
 					&& ClientHeroState.data().hasHero();
 			int action = release ? HeroMeleeChargeC2SPayload.ACTION_RELEASE : HeroMeleeChargeC2SPayload.ACTION_CANCEL;
-			ClientPlayNetworking.send(new HeroMeleeChargeC2SPayload(action));
+			ClientPlayNetworking.send(new HeroMeleeChargeC2SPayload(action, meleeChargeTicks, hoveredEntityId(client)));
 			meleeChargeSent = false;
+			meleeChargeTicks = 0;
 		}
+		ClientMeleeChargeState.clearAll();
+	}
+
+	private static boolean canChargeWithHands(net.minecraft.world.entity.player.Player player) {
+		if (player.isUsingItem()) {
+			return false;
+		}
+		return chargeFriendly(player.getMainHandItem()) && chargeFriendly(player.getOffhandItem());
+	}
+
+	private static boolean chargeFriendly(net.minecraft.world.item.ItemStack stack) {
+		if (stack.isEmpty()) {
+			return true;
+		}
+		if (stack.getItem() instanceof net.minecraft.world.item.BlockItem
+				|| stack.getItem() instanceof com.example.superheroes.item.RoyalIcicleItem) {
+			return false;
+		}
+		return stack.getUseAnimation() == net.minecraft.world.item.UseAnim.NONE;
+	}
+
+	private static int hoveredEntityId(Minecraft client) {
+		if (client.hitResult != null && client.hitResult.getType() == net.minecraft.world.phys.HitResult.Type.ENTITY
+				&& client.hitResult instanceof net.minecraft.world.phys.EntityHitResult entityHit) {
+			return entityHit.getEntity().getId();
+		}
+		return -1;
 	}
 }

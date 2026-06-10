@@ -51,6 +51,7 @@ public final class ModNetworking {
 		PayloadTypeRegistry.playS2C().register(ReinhardCeremonyS2CPayload.TYPE, ReinhardCeremonyS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(ReinhardSwordGateS2CPayload.TYPE, ReinhardSwordGateS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(ReinhardSwordKillS2CPayload.TYPE, ReinhardSwordKillS2CPayload.STREAM_CODEC);
+		PayloadTypeRegistry.playS2C().register(ReinhardDarknessS2CPayload.TYPE, ReinhardDarknessS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(ReinhardTimeSlowS2CPayload.TYPE, ReinhardTimeSlowS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(WallImpactDebrisS2CPayload.TYPE, WallImpactDebrisS2CPayload.STREAM_CODEC);
 
@@ -76,7 +77,7 @@ public final class ModNetworking {
 		});
 		ServerPlayNetworking.registerGlobalReceiver(HeroMeleeChargeC2SPayload.TYPE, (payload, context) -> {
 			ServerPlayer player = context.player();
-			context.server().execute(() -> HeroMeleeImpactController.handleChargeInput(player, payload.action()));
+			context.server().execute(() -> HeroMeleeImpactController.handleChargeInput(player, payload));
 		});
 	}
 

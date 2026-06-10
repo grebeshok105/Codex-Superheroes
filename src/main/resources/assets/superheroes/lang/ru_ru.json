@@ -683,5 +683,8 @@
   "ability.superheroes.status.off": "ВЫКЛ",
   "ability.superheroes.status.ready": "ГОТОВ",
   "commands.superheroes.debug.mob_targets.enabled": "Админский debug-режим целей-мобов включён.",
-  "commands.superheroes.debug.mob_targets.disabled": "Админский debug-режим целей-мобов выключен."
+  "commands.superheroes.debug.mob_targets.disabled": "Админский debug-режим целей-мобов выключен.",
+  "entity.superheroes.ram": "Рам",
+  "hud.superheroes.melee_tier.2": "Заряженный удар: Tier II",
+  "hud.superheroes.melee_tier.3": "Заряженный удар: Tier III (МАКС)"
 }
