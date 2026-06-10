@@ -74,7 +74,7 @@ public final class CombatImpactEngine {
 			debrisIntensity = Math.min(1.5f, 0.85f * variance);
 		} else if (tier == ImpactTier.TIER_2) {
 			variance = 1.0f;
-			damage = (float) (baseDamage * 1.8 * heroPower * weaponBias * attackCooldown);
+			damage = (float) (baseDamage * 1.35 * heroPower * weaponBias * attackCooldown);
 			knockback = 2.6 * heroPower * speedBias;
 			upward = 0.4;
 			launchPower = 35.0 * heroPower;

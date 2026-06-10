@@ -239,7 +239,8 @@ public class SuperheroesClient implements ClientModInitializer {
 		if (player.isUsingItem()) {
 			return false;
 		}
-		return chargeFriendly(player.getMainHandItem()) && chargeFriendly(player.getOffhandItem());
+		// Заряженные удары только на пустых кулаках: предмет в основной руке полностью отключает тиры.
+		return player.getMainHandItem().isEmpty() && chargeFriendly(player.getOffhandItem());
 	}
 
 	private static boolean chargeFriendly(net.minecraft.world.item.ItemStack stack) {

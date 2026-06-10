@@ -1,7 +1,6 @@
 package com.example.superheroes.effect;
 
 import com.example.superheroes.attachment.ModAttachments;
-import com.example.superheroes.item.RoyalIcicleItem;
 import com.example.superheroes.network.HeroMeleeChargeC2SPayload;
 import com.example.superheroes.network.ScreenShakeS2CPayload;
 import com.example.superheroes.physics.CombatImpactEngine;
@@ -66,7 +65,8 @@ public final class HeroMeleeImpactController {
 			if (!data.hasHero()) {
 				return InteractionResult.PASS;
 			}
-			if (attacker.getMainHandItem().getItem() instanceof RoyalIcicleItem) {
+			if (!attacker.getMainHandItem().isEmpty()) {
+				// Тиры и их эффекты доступны только с пустой рукой: с предметом — чистая ваниль.
 				return InteractionResult.PASS;
 			}
 			spawnTierOneHitFx(attacker, data, target);
@@ -89,6 +89,9 @@ public final class HeroMeleeImpactController {
 		}
 		int action = payload.action();
 		if (action == HeroMeleeChargeC2SPayload.ACTION_START) {
+			if (!player.getMainHandItem().isEmpty()) {
+				return;
+			}
 			CHARGES.putIfAbsent(player.getUUID(), new ChargeState(player.level().getGameTime()));
 		} else if (action == HeroMeleeChargeC2SPayload.ACTION_RELEASE
 				|| action == HeroMeleeChargeC2SPayload.ACTION_CANCEL) {
@@ -100,6 +103,9 @@ public final class HeroMeleeImpactController {
 	}
 
 	private static void releaseChargedAttack(ServerPlayer player, HeroData data, HeroMeleeChargeC2SPayload payload) {
+		if (!player.getMainHandItem().isEmpty()) {
+			return;
+		}
 		int heldTicks = Math.min(heldTicks(player), ImpactChargeRules.cappedTicks(payload.heldTicks()));
 		if (ImpactChargeRules.tierFor(heldTicks) == ImpactTier.TIER_1) {
 			return;
