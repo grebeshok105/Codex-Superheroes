@@ -177,7 +177,7 @@ public class HudEditScreen extends Screen {
 		int sh = height;
 		int margin = HudScaler.scale(8);
 		int panelW = com.example.superheroes.client.hud.HeroInfoPanelHud.panelWidth();
-		int panelH = HudScaler.scale(130);
+		int panelH = HudScaler.scale(142);
 		int[] off = HudLayoutManager.offset(id);
 		switch (id) {
 			case HudLayoutManager.HERO_PANEL -> {

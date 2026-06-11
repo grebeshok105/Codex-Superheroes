@@ -47,6 +47,16 @@ public abstract class PlayerRendererMixin {
 		if (SungJinwooHero.ID.equals(hero.getId()) && ClientShadowArmyState.isPhase2(player.getUUID())) {
 			return SungJinwooHero.SKIN_PHASE_2;
 		}
+		// Iron Man: рука от первого лица обязана соответствовать выбранному варианту костюма
+		if (com.example.superheroes.hero.IronManHero.ID.equals(hero.getId())) {
+			int variant = com.example.superheroes.client.ClientSuitVariantState.variantFor(player.getUUID());
+			return com.example.superheroes.ability.ironman.IronManSuitVariant.get(variant).texture();
+		}
+		// Thanos: перчатка с собранными камнями и от первого лица
+		if (com.example.superheroes.hero.ThanosHero.ID.equals(hero.getId())) {
+			return com.example.superheroes.client.ThanosSkinTextures.textureFor(
+					com.example.superheroes.client.ClientThanosState.maskFor(player.getUUID()));
+		}
 		return hero.getSkinTexture();
 	}
 }

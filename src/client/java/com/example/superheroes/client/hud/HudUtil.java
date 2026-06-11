@@ -14,9 +14,9 @@ import net.minecraft.resources.ResourceLocation;
  * старую ступенчатую отрисовку через fill.
  */
 public final class HudUtil {
-	/** Шрифт HUD: ванильный uniform (Unifont) — чистый рендер и полная кириллица. */
-	public static final ResourceLocation HUD_FONT = ResourceLocation.withDefaultNamespace("uniform");
-	private static final Style HUD_STYLE = Style.EMPTY.withFont(HUD_FONT);
+	/** Шрифт HUD: дефолтный майнкрафтовский (по фидбеку игрока, round 8). */
+	public static final ResourceLocation HUD_FONT = ResourceLocation.withDefaultNamespace("default");
+	private static final Style HUD_STYLE = Style.EMPTY;
 
 	private HudUtil() {
 	}

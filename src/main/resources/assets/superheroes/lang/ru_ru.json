@@ -764,7 +764,9 @@
 	"item.superheroes.horde_crystal": "Кристалл Орды",
 
 	"ability.superheroes.iron_man_suit_switch": "Смена костюма",
+	"ability.superheroes.iron_man_suit_switch.desc": "Цикл вариантов брони Старка — костюм мгновенно перекрашивается, включая руку от первого лица.",
 	"ability.superheroes.iron_man_legion": "Железный Легион",
+	"ability.superheroes.iron_man_legion.desc": "Вызывает отряд дронов Железного Легиона: 30 секунд бешено носятся вокруг тебя в радиусе 35 блоков и рвут всё враждебное, после чего улетают.",
 
 	"subtitles.superheroes.ironman.jarvis_detect_excited": "ДЖАРВИС: критическая угроза!",
 	"subtitles.superheroes.ironman.jarvis_diagnostic": "ДЖАРВИС: диагностика",

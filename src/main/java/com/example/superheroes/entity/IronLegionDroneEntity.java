@@ -52,7 +52,7 @@ public class IronLegionDroneEntity extends PathfinderMob {
 
 	public IronLegionDroneEntity(EntityType<? extends IronLegionDroneEntity> type, Level level) {
 		super(type, level);
-		this.moveControl = new FlyingMoveControl(this, 30, true);
+		this.moveControl = new FlyingMoveControl(this, 85, true);
 		this.setNoGravity(true);
 		this.xpReward = 0;
 		this.lifeTicks = COMBAT_LIFETIME_TICKS + RETREAT_TICKS;
@@ -71,8 +71,8 @@ public class IronLegionDroneEntity extends PathfinderMob {
 		return PathfinderMob.createMobAttributes()
 				.add(Attributes.MAX_HEALTH, 40.0)
 				.add(Attributes.ARMOR, 8.0)
-				.add(Attributes.MOVEMENT_SPEED, 0.35)
-				.add(Attributes.FLYING_SPEED, 0.55)
+				.add(Attributes.MOVEMENT_SPEED, 0.5)
+				.add(Attributes.FLYING_SPEED, 1.5)
 				.add(Attributes.ATTACK_DAMAGE, 6.0)
 				.add(Attributes.FOLLOW_RANGE, 48.0)
 				.add(Attributes.KNOCKBACK_RESISTANCE, 0.4);
@@ -154,11 +154,30 @@ public class IronLegionDroneEntity extends PathfinderMob {
 
 	@Override
 	public boolean hurt(DamageSource source, float amount) {
+		// Летающая машина не бьётся об землю, стены и не давится в толпе —
+		// иначе на бешеной скорости дроны сами себя избивают со звуком голема.
+		if (source.is(net.minecraft.tags.DamageTypeTags.IS_FALL)
+				|| source.is(net.minecraft.world.damagesource.DamageTypes.FLY_INTO_WALL)
+				|| source.is(net.minecraft.world.damagesource.DamageTypes.IN_WALL)
+				|| source.is(net.minecraft.world.damagesource.DamageTypes.CRAMMING)) {
+			return false;
+		}
 		Entity attacker = source.getEntity();
 		if (attacker instanceof Player p && p.getUUID().equals(getOwnerUuid())) {
 			return false;
 		}
 		return super.hurt(source, amount);
+	}
+
+	@Override
+	public boolean causeFallDamage(float fallDistance, float multiplier, DamageSource source) {
+		return false;
+	}
+
+	@Override
+	protected void checkFallDamage(double y, boolean onGround, net.minecraft.world.level.block.state.BlockState state,
+			net.minecraft.core.BlockPos pos) {
+		// no-op: дроны не регистрируют падение вовсе
 	}
 
 	@Override
@@ -267,8 +286,8 @@ public class IronLegionDroneEntity extends PathfinderMob {
 			double distSq = distanceToSqr(target);
 			if (diving) {
 				// Пикируем прямо в цель
-				getNavigation().moveTo(target.getX(), target.getY() + target.getBbHeight() * 0.5, target.getZ(), 1.45);
-				if (distSq < 4.5) {
+				getNavigation().moveTo(target.getX(), target.getY() + target.getBbHeight() * 0.5, target.getZ(), 2.6);
+				if (distSq < 6.5) {
 					if (attackCooldown <= 0) {
 						doHurtTarget(target);
 						attackCooldown = 14;
@@ -280,21 +299,21 @@ public class IronLegionDroneEntity extends PathfinderMob {
 			}
 
 			if (repathCooldown-- > 0) return;
-			repathCooldown = 6 + random.nextInt(8);
+			repathCooldown = 3 + random.nextInt(5);
 
-			// Каждые ~0.5с — либо новый хаотичный виток вокруг врага, либо пике
-			if (random.nextFloat() < 0.4f) {
+			// Каждые ~0.2с — либо новый хаотичный виток вокруг врага, либо пике
+			if (random.nextFloat() < 0.45f) {
 				diving = true;
 				return;
 			}
 			double angle = random.nextDouble() * Math.PI * 2;
-			double dist = 2.0 + random.nextDouble() * 4.0;
-			double yOffset = 0.5 + random.nextDouble() * 3.5;
+			double dist = 2.0 + random.nextDouble() * 6.0;
+			double yOffset = 0.5 + random.nextDouble() * 5.0;
 			getNavigation().moveTo(
 					target.getX() + Math.cos(angle) * dist,
 					target.getY() + yOffset,
 					target.getZ() + Math.sin(angle) * dist,
-					1.3);
+					2.4);
 		}
 	}
 
@@ -322,18 +341,20 @@ public class IronLegionDroneEntity extends PathfinderMob {
 		@Override
 		public void tick() {
 			if (repathCooldown-- > 0) return;
-			repathCooldown = 8 + random.nextInt(10);
+			repathCooldown = 3 + random.nextInt(5);
 			Player owner = superheroes$owner();
 			double cx = owner != null ? owner.getX() : getX();
 			double cy = owner != null ? owner.getY() : getY();
 			double cz = owner != null ? owner.getZ() : getZ();
+			// Бешеный патруль: хаотичные точки в радиусе до 35 блоков от владельца,
+			// на любой высоте — дроны проносятся мимо как сорвавшиеся с цепи
 			double angle = random.nextDouble() * Math.PI * 2;
-			double dist = 3.0 + random.nextDouble() * 9.0;
+			double dist = 6.0 + random.nextDouble() * 29.0;
 			getNavigation().moveTo(
 					cx + Math.cos(angle) * dist,
-					cy + 1.0 + random.nextDouble() * 4.0,
+					cy + 1.0 + random.nextDouble() * 14.0,
 					cz + Math.sin(angle) * dist,
-					1.25);
+					2.8);
 		}
 	}
 }
