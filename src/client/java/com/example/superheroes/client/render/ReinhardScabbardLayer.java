@@ -55,7 +55,8 @@ public final class ReinhardScabbardLayer extends RenderLayer<AbstractClientPlaye
 			poseStack.pushPose();
 			poseStack.translate(0f, 0.02f, 0f);
 			poseStack.mulPose(Axis.YP.rotationDegrees(90f));
-			poseStack.mulPose(Axis.ZP.rotationDegrees(135f));
+			// -45 (not 135): hilt out the top, blade pointing DOWN inside the sheath
+			poseStack.mulPose(Axis.ZP.rotationDegrees(-45f));
 			poseStack.scale(0.85f, 0.85f, 0.85f);
 			ItemStack sword = new ItemStack(ModItems.ROYAL_ICICLE);
 			Minecraft.getInstance().getItemRenderer().renderStatic(sword, ItemDisplayContext.FIXED,
