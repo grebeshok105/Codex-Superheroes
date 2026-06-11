@@ -226,6 +226,7 @@ public class SuperheroesClient implements ClientModInitializer {
 		});
 
 		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+			com.example.superheroes.client.ClientThanosState.clear();
 			ClientFlightState.clearAll();
 			ClientRemDemonismState.clearAll();
 			ClientReinhardDarknessState.clearAll();
