@@ -52,6 +52,7 @@ public class SuperheroesClient implements ClientModInitializer {
 	public void onInitializeClient() {
 		ModKeys.init();
 		ClientNetworking.init();
+		com.example.superheroes.client.render.WildShaders.register();
 		LaserBeamRenderer.register();
 		RepulsorBeamRenderer.register();
 		CosmicBeamRenderer.register();

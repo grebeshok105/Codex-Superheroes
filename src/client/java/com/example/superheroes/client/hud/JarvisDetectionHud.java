@@ -100,14 +100,14 @@ public final class JarvisDetectionHud {
 		int threatColor = threatLabelColor(current.threatClass());
 		String threatDesc = threatDescription(current.threatClass());
 
-		Component title = Component.translatable("hud.superheroes.jarvis.detect.title");
-		Component line1 = Component.translatable("hud.superheroes.jarvis.detect.player", current.playerName());
+		Component title = HudUtil.text(Component.translatable("hud.superheroes.jarvis.detect.title"));
+		Component line1 = HudUtil.text(Component.translatable("hud.superheroes.jarvis.detect.player", current.playerName()));
 		Component heroName = Component.translatable("hero.superheroes." + current.heroId().getPath());
-		Component line2 = Component.literal("■ ")
+		Component line2 = HudUtil.text(Component.literal("■ ")
 				.append(heroName)
-				.append(" [" + current.threatClass() + "] — " + current.distance() + "m");
-		Component line3 = Component.literal(threatDesc);
-		Component line4 = Component.literal("\"" + current.jarvisQuote() + "\"");
+				.append(" [" + current.threatClass() + "] — " + current.distance() + "m"));
+		Component line3 = HudUtil.text(Component.literal(threatDesc));
+		Component line4 = HudUtil.text(Component.literal("\"" + current.jarvisQuote() + "\""));
 
 		int pad = HudScaler.scale(6);
 		int lineH = mc.font.lineHeight + HudScaler.scale(2);

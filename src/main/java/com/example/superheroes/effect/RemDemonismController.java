@@ -76,7 +76,7 @@ public final class RemDemonismController {
 			.add(Attributes.MOVEMENT_SPEED, ModId.of("modifiers/rem/demon_speed"), 0.24, AttributeModifier.Operation.ADD_MULTIPLIED_BASE)
 			.add(Attributes.ARMOR, ModId.of("modifiers/rem/demon_armor"), 22.0, AttributeModifier.Operation.ADD_VALUE)
 			.add(Attributes.ARMOR_TOUGHNESS, ModId.of("modifiers/rem/demon_toughness"), 14.0, AttributeModifier.Operation.ADD_VALUE)
-			// ХП: 80 в обеих формах (база уже 80, демонизм бонуса не даёт)
+			.add(Attributes.MAX_HEALTH, ModId.of("modifiers/rem/demon_health"), 38.0, AttributeModifier.Operation.ADD_VALUE)
 			.add(Attributes.KNOCKBACK_RESISTANCE, ModId.of("modifiers/rem/demon_kb"), 0.65, AttributeModifier.Operation.ADD_VALUE)
 			.add(Attributes.ENTITY_INTERACTION_RANGE, ModId.of("modifiers/rem/demon_reach"), 1.0, AttributeModifier.Operation.ADD_VALUE)
 			.add(Attributes.BLOCK_INTERACTION_RANGE, ModId.of("modifiers/rem/demon_block_reach"), 0.8, AttributeModifier.Operation.ADD_VALUE)

@@ -65,7 +65,7 @@ public final class MeleeChargeHud {
 			);
 			int labelX = gaugeX + GAUGE_W + 3;
 			int labelY = gaugeY + (GAUGE_H - mc.font.lineHeight) / 2;
-			graphics.drawString(mc.font, label, labelX, labelY, fillColor, true);
+			graphics.drawString(mc.font, HudUtil.text(label), labelX, labelY, fillColor, true);
 		}
 	}
 }

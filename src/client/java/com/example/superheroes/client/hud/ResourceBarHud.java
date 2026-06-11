@@ -1,6 +1,8 @@
 package com.example.superheroes.client.hud;
 
 import com.example.superheroes.client.ClientHeroState;
+import com.example.superheroes.client.render.WildRenderer;
+import com.example.superheroes.client.render.WildShaders;
 import com.example.superheroes.hero.HeroTheme;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.DeltaTracker;
@@ -79,7 +81,7 @@ public final class ResourceBarHud {
 
 		Minecraft mc = Minecraft.getInstance();
 		ResourceLocation heroId = ClientHeroState.data().heroId();
-		Component heroName = Component.translatable("hero." + heroId.getNamespace() + "." + heroId.getPath());
+		Component heroName = HudUtil.text(Component.translatable("hero." + heroId.getNamespace() + "." + heroId.getPath()).copy());
 
 		int panelHeight = showMana ? PANEL_HEIGHT_DUAL : PANEL_HEIGHT_SOLO;
 		HudUtil.neonPanel(graphics, X, Y, PANEL_WIDTH, panelHeight,
@@ -88,7 +90,7 @@ public final class ResourceBarHud {
 		graphics.fill(X + 3, Y + 2, X + PANEL_WIDTH - 3, Y + 3, themePanelHighlight);
 
 		graphics.drawString(mc.font, heroName, X + 12, Y + 6, themeHeroNameColor, true);
-		graphics.fill(X + 12, Y + 18, X + PANEL_WIDTH - 12, Y + 19, (themePanelBorder & 0x00FFFFFF) | 0x33000000);
+		HudUtil.neonAccentLine(graphics, X + 12, Y + 18, PANEL_WIDTH - 24, (themePanelBorder & 0x00FFFFFF) | 0x44000000);
 
 		int row1Y = Y + 26;
 		drawIcon(graphics, X + 12, row1Y - 4, themeEnergyIcon, "E");
@@ -122,17 +124,32 @@ public final class ResourceBarHud {
 	}
 
 	private static void drawIcon(GuiGraphics g, int x, int y, int color, String letter) {
-		HudUtil.roundedRectFill(g, x, y, ICON_SIZE, ICON_SIZE, 0xFF0A0B14);
-		HudUtil.roundedRectBorder(g, x, y, ICON_SIZE, ICON_SIZE, color);
-		g.drawCenteredString(Minecraft.getInstance().font, Component.literal(letter).withStyle(ChatFormatting.BOLD),
+		if (WildShaders.circleReady()) {
+			WildRenderer.orb(g, x + ICON_SIZE / 2f, y + ICON_SIZE / 2f, ICON_SIZE / 2f - 0.5f,
+					0xE60A0B14, color, 1.3f, ((0x55 << 24) | (color & 0x00FFFFFF)), 3.5f);
+		} else {
+			HudUtil.roundedRectFill(g, x, y, ICON_SIZE, ICON_SIZE, 0xFF0A0B14);
+			HudUtil.roundedRectBorder(g, x, y, ICON_SIZE, ICON_SIZE, color);
+		}
+		g.drawCenteredString(Minecraft.getInstance().font, HudUtil.text(letter).withStyle(ChatFormatting.BOLD),
 				x + ICON_SIZE / 2, y + (ICON_SIZE - 8) / 2, color);
 	}
 
 	private static void drawBar(GuiGraphics g, Minecraft mc, int x, int y, float pct, int dark, int bright, int glow) {
+		int filled = (int) (BAR_WIDTH * pct);
+		if (WildShaders.rectReady()) {
+			// тёмная стеклянная капсула-основа
+			WildRenderer.panel(g, x, y, BAR_WIDTH, BAR_HEIGHT, BAR_HEIGHT / 2f,
+					BAR_BG, BAR_BG, 0x55000000, 1f, 0, 0f);
+			if (filled > 2) {
+				// светящаяся заливка со скруглёнными концами
+				WildRenderer.panel(g, x + 1, y + 1, Math.max(filled - 2, BAR_HEIGHT - 2), BAR_HEIGHT - 2,
+						(BAR_HEIGHT - 2) / 2f, bright, dark, 0, 0f, glow, 4f);
+			}
+			return;
+		}
 		HudUtil.roundedRectFill(g, x, y, BAR_WIDTH, BAR_HEIGHT, BAR_BG);
 		g.fill(x + 1, y + 1, x + BAR_WIDTH - 1, y + 2, BAR_INNER_SHADOW);
-
-		int filled = (int) (BAR_WIDTH * pct);
 		if (filled >= 4) {
 			HudUtil.roundedRectGradient(g, x, y, filled, BAR_HEIGHT, bright, dark);
 			g.fill(x + 1, y + 1, x + filled - 1, y + 2, 0x55FFFFFF);
@@ -148,7 +165,7 @@ public final class ResourceBarHud {
 	private static void drawValue(GuiGraphics g, Minecraft mc, int x, int y, float value, float max) {
 		String cur = String.valueOf((int) value);
 		String tot = "/" + (int) max;
-		g.drawString(mc.font, cur, x, y, VALUE_COLOR, true);
-		g.drawString(mc.font, tot, x + mc.font.width(cur), y, VALUE_DIM, true);
+		g.drawString(mc.font, HudUtil.text(cur), x, y, VALUE_COLOR, true);
+		g.drawString(mc.font, HudUtil.text(tot), x + mc.font.width(HudUtil.text(cur)), y, VALUE_DIM, true);
 	}
 }

@@ -3,6 +3,8 @@ package com.example.superheroes.client.hud;
 import com.example.superheroes.client.ClientAbilityCooldowns;
 import com.example.superheroes.client.ClientAbilityFilter;
 import com.example.superheroes.client.ClientHeroState;
+import com.example.superheroes.client.render.WildRenderer;
+import com.example.superheroes.client.render.WildShaders;
 import com.example.superheroes.hero.Hero;
 import com.example.superheroes.hero.HeroHudConfig;
 import com.example.superheroes.hero.HeroTheme;
@@ -125,9 +127,22 @@ public final class HeroInfoPanelHud {
 		int cursorY = y + HudScaler.scale(6);
 
 		// Hero name (no caps-lock shouting, soft theme color)
-		Component nameComp = Component.translatable("hero.superheroes." + heroId.getPath())
-				.copy().withStyle(ChatFormatting.BOLD);
+		Component nameComp = HudUtil.text(Component.translatable("hero.superheroes." + heroId.getPath())
+				.copy()).withStyle(ChatFormatting.BOLD);
 		graphics.drawString(mc.font, nameComp, contentX, cursorY, theme.heroNameColor(), true);
+
+		// класс угрозы — акцент в правом углу строки имени
+		com.example.superheroes.jarvis.JarvisThreatClass threat =
+				com.example.superheroes.jarvis.JarvisThreatClass.forHero(heroId);
+		int threatColor = threatColor(threat);
+		Component threatComp = HudUtil.text("УГРОЗА: " + threat.label()).withStyle(ChatFormatting.BOLD);
+		int threatW = mc.font.width(threatComp);
+		int threatX = contentX + contentW - threatW;
+		if (threatX > contentX + mc.font.width(nameComp) + HudScaler.scale(6)) {
+			graphics.drawString(mc.font, threatComp, threatX, cursorY, threatColor, true);
+			HudUtil.neonAccentLine(graphics, threatX, cursorY + HudScaler.scale(9), threatW,
+					applyAlpha(threatColor, 170, 1f));
+		}
 
 		// Creative badge: a small gold star in the free top-left corner (above the bust)
 		if (mc.player.getAbilities().instabuild) {
@@ -153,22 +168,30 @@ public final class HeroInfoPanelHud {
 		float energyMax = ClientHeroState.energyMax();
 		int iconSize = HudScaler.scale(9);
 		HudIcons.drawEnergyIcon(graphics, contentX, cursorY, iconSize, hudConfig.energyIcon(), theme.energyIcon());
-		Component energyLabel = Component.translatable(hudConfig.energyName());
+		Component energyLabel = HudUtil.text(Component.translatable(hudConfig.energyName()).copy());
 		graphics.drawString(mc.font, energyLabel, contentX + iconSize + HudScaler.scale(3), cursorY,
 				soften(theme.energyIcon()), true);
 		int pct = energyMax > 0 ? (int) (energy / energyMax * 100f) : 0;
-		Component pctComp = Component.literal(pct + "%");
+		Component pctComp = HudUtil.text(pct + "%");
 		int pctW = mc.font.width(pctComp);
 		graphics.drawString(mc.font, pctComp, contentX + contentW - pctW, cursorY, 0xFFD8DCE8, true);
 		cursorY += HudScaler.scale(11);
 
 		// Thin 3px energy bar — same style as the HP bar
 		int energyBarH = HudScaler.scale(3);
-		graphics.fill(contentX, cursorY, contentX + contentW, cursorY + energyBarH, 0x44000000);
 		float energyPct = energyMax > 0 ? Math.min(1f, energy / energyMax) : 0f;
 		int energyFillW = (int) (contentW * energyPct);
-		if (energyFillW > 0) {
-			graphics.fill(contentX, cursorY, contentX + energyFillW, cursorY + energyBarH, theme.energyBright());
+		if (WildShaders.rectReady()) {
+			WildRenderer.fill(graphics, contentX, cursorY, contentW, energyBarH, energyBarH / 2f, 0x66000000);
+			if (energyFillW > 1) {
+				WildRenderer.bar(graphics, contentX, cursorY, energyFillW, energyBarH,
+						theme.energyBright(), applyAlpha(theme.energyGlow(), 150, 1f));
+			}
+		} else {
+			graphics.fill(contentX, cursorY, contentX + contentW, cursorY + energyBarH, 0x44000000);
+			if (energyFillW > 0) {
+				graphics.fill(contentX, cursorY, contentX + energyFillW, cursorY + energyBarH, theme.energyBright());
+			}
 		}
 		cursorY += HudScaler.scale(7);
 
@@ -181,7 +204,7 @@ public final class HeroInfoPanelHud {
 			int passiveY = y + panelH - HudScaler.scale(24);
 			int passiveSectionX = x + HudScaler.scale(2);
 
-			Component passivesLabel = Component.translatable("hud.superheroes.passives");
+			Component passivesLabel = HudUtil.text(Component.translatable("hud.superheroes.passives").copy());
 			graphics.drawString(mc.font, passivesLabel, passiveSectionX, passiveY,
 					applyAlpha(theme.heroNameColor(), 200, 0.8f), true);
 			passiveY += HudScaler.scale(10);
@@ -191,8 +214,14 @@ public final class HeroInfoPanelHud {
 			int gap = HudScaler.scale(passiveCount > 5 ? 2 : 4);
 			for (int i = 0; i < maxDisplay; i++) {
 				int ix = passiveSectionX + i * (iconSz + gap);
-				HudUtil.roundedRectFill(graphics, ix, passiveY, iconSz, iconSz, 0x44000000);
-				HudUtil.roundedRectBorder(graphics, ix, passiveY, iconSz, iconSz, applyAlpha(theme.energyIcon(), 180, 0.6f));
+				if (WildShaders.circleReady()) {
+					WildRenderer.orb(graphics, ix + iconSz / 2f, passiveY + iconSz / 2f, iconSz / 2f,
+							0x66000000, applyAlpha(theme.energyIcon(), 190, 0.7f), 1.1f,
+							applyAlpha(theme.energyIcon(), 70, 1f), 2.5f);
+				} else {
+					HudUtil.roundedRectFill(graphics, ix, passiveY, iconSz, iconSz, 0x44000000);
+					HudUtil.roundedRectBorder(graphics, ix, passiveY, iconSz, iconSz, applyAlpha(theme.energyIcon(), 180, 0.6f));
+				}
 				int inset = Math.max(1, iconSz / 5);
 				HudIcons.drawPassiveIcon(graphics, ix + inset, passiveY + inset, iconSz - inset * 2,
 						PassiveIcons.glyph(heroId, i), applyAlpha(theme.energyIcon(), 235, 1f));
@@ -255,18 +284,26 @@ public final class HeroInfoPanelHud {
 	private static void drawHpRow(GuiGraphics g, Minecraft mc, int x, int y, int w, float hp, float maxHp, HeroTheme theme) {
 		int iconSize = HudScaler.scale(8);
 		int textOffset = iconSize + HudScaler.scale(2);
-		g.drawString(mc.font, "\u2764", x, y, 0xFFFF5555, true);
+		g.drawString(mc.font, HudUtil.text("\u2764"), x, y, 0xFFFF5555, true);
 		String valText = formatValue(hp) + " / " + formatValue(maxHp);
-		g.drawString(mc.font, Component.literal(valText), x + textOffset, y, 0xFFD8DCE8, true);
+		g.drawString(mc.font, HudUtil.text(valText), x + textOffset, y, 0xFFD8DCE8, true);
 
 		int barY = y + HudScaler.scale(9);
 		int barW = w - textOffset - HudScaler.scale(2);
 		int barH = HudScaler.scale(3);
-		g.fill(x + textOffset, barY, x + textOffset + barW, barY + barH, 0x44000000);
 		float pctHp = maxHp > 0 ? Math.min(1f, hp / maxHp) : 0f;
 		int fillW = (int) (barW * pctHp);
-		if (fillW > 0) {
-			g.fill(x + textOffset, barY, x + textOffset + fillW, barY + barH, theme.energyBright());
+		if (WildShaders.rectReady()) {
+			WildRenderer.fill(g, x + textOffset, barY, barW, barH, barH / 2f, 0x66000000);
+			if (fillW > 1) {
+				WildRenderer.bar(g, x + textOffset, barY, fillW, barH,
+						theme.energyBright(), applyAlpha(theme.energyGlow(), 150, 1f));
+			}
+		} else {
+			g.fill(x + textOffset, barY, x + textOffset + barW, barY + barH, 0x44000000);
+			if (fillW > 0) {
+				g.fill(x + textOffset, barY, x + textOffset + fillW, barY + barH, theme.energyBright());
+			}
 		}
 	}
 
@@ -318,13 +355,13 @@ public final class HeroInfoPanelHud {
 				name = mc.font.plainSubstrByWidth(name, maxNameW - mc.font.width(ell)) + ell;
 			}
 			int nameColor = ready ? (isUlt ? 0xFFFFE9B0 : 0xFFCBD2E0) : 0xFF7C8499;
-			g.drawString(mc.font, Component.literal(name), ix + iconSz + HudScaler.scale(3), iy, nameColor, true);
+			g.drawString(mc.font, HudUtil.text(name), ix + iconSz + HudScaler.scale(3), iy, nameColor, true);
 
 			// cooldown seconds on the right of the column
 			if (!ready) {
 				String cdText = cdSeconds(cd);
-				int cdW = mc.font.width(cdText);
-				g.drawString(mc.font, Component.literal(cdText), ix + colW - cdW - HudScaler.scale(4), iy, 0xFFB99A6B, true);
+				int cdW = mc.font.width(HudUtil.text(cdText));
+				g.drawString(mc.font, HudUtil.text(cdText), ix + colW - cdW - HudScaler.scale(4), iy, 0xFFB99A6B, true);
 			}
 		}
 	}
@@ -359,6 +396,16 @@ public final class HeroInfoPanelHud {
 
 	private static int soften(int argb) {
 		return applyAlpha(argb, 235, 1f);
+	}
+
+	private static int threatColor(com.example.superheroes.jarvis.JarvisThreatClass threat) {
+		return switch (threat) {
+			case S -> 0xFFFF4A4A;
+			case A -> 0xFFFF7E4A;
+			case B -> 0xFFFFB23E;
+			case C -> 0xFFFFE07A;
+			case D -> 0xFF8CFF9C;
+		};
 	}
 
 	private static int applyAlpha(int argb, int alpha, float mult) {

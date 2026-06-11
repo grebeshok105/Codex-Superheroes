@@ -88,7 +88,7 @@ public class RamEntity extends PathfinderMob {
 
 	public static AttributeSupplier.Builder createAttributes() {
 		return PathfinderMob.createMobAttributes()
-				.add(Attributes.MAX_HEALTH, 24.0)
+				.add(Attributes.MAX_HEALTH, 80.0)
 				.add(Attributes.ARMOR, 4.0)
 				.add(Attributes.MOVEMENT_SPEED, 0.33)
 				.add(Attributes.ATTACK_DAMAGE, 4.5)

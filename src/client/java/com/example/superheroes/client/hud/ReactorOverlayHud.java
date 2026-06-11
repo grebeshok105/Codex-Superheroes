@@ -52,7 +52,7 @@ public final class ReactorOverlayHud {
 		double pulse = 0.7 + 0.3 * Math.abs(Math.sin(System.currentTimeMillis() / 280.0));
 		int alpha = (int) (255 * pulse);
 		int pulsedHead = (alpha << 24) | (headColor & 0x00FFFFFF);
-		graphics.drawCenteredString(font, headline, sw / 2, textY, pulsedHead);
+		graphics.drawCenteredString(font, HudUtil.text(headline), sw / 2, textY, pulsedHead);
 
 		int barX = panelX + PANEL_PADDING;
 		int barY = panelY + 22;
@@ -73,11 +73,11 @@ public final class ReactorOverlayHud {
 		}
 
 		if (!hint.isEmpty()) {
-			graphics.drawCenteredString(font, hint, sw / 2, panelY + panelH - 12, 0xFFCCCCCC);
+			graphics.drawCenteredString(font, HudUtil.text(hint), sw / 2, panelY + panelH - 12, 0xFFCCCCCC);
 		}
 
 		int seconds = (int) Math.ceil((total - progress) / 20.0);
 		String pctText = hasStock ? (seconds + "s") : "—";
-		graphics.drawString(font, pctText, panelX + panelW - PANEL_PADDING - font.width(pctText), barY + 3, 0xFFFFFFFF, false);
+		graphics.drawString(font, HudUtil.text(pctText), panelX + panelW - PANEL_PADDING - font.width(HudUtil.text(pctText)), barY + 3, 0xFFFFFFFF, false);
 	}
 }
