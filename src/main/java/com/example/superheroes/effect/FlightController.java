@@ -231,6 +231,8 @@ public final class FlightController {
 
 	private static void tickSupersonicEffects(ServerPlayer player) {
 		ServerLevel level = player.serverLevel();
+		com.example.superheroes.physics.BallisticBodyTracker.launch(
+				player, player.getDeltaMovement(), 50.0, player);
 		Vec3 pos = player.position();
 		Vec3 dir = player.getLookAngle();
 		Vec3 back = pos.add(dir.reverse().scale(0.5));

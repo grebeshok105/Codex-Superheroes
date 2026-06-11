@@ -7,22 +7,22 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ImpactChargeRulesTest {
 	@Test
-	void lessThanTwoSecondsIsTierOne() {
+	void lessThanOneAndAHalfSecondsIsTierOne() {
 		assertEquals(ImpactTier.TIER_1, ImpactChargeRules.tierFor(0));
-		assertEquals(ImpactTier.TIER_1, ImpactChargeRules.tierFor(39));
+		assertEquals(ImpactTier.TIER_1, ImpactChargeRules.tierFor(29));
 	}
 
 	@Test
-	void twoSecondsUnlocksTierTwoAndFiveSecondsUnlocksTierThree() {
-		assertEquals(ImpactTier.TIER_2, ImpactChargeRules.tierFor(40));
-		assertEquals(ImpactTier.TIER_2, ImpactChargeRules.tierFor(99));
-		assertEquals(ImpactTier.TIER_3, ImpactChargeRules.tierFor(100));
+	void oneAndAHalfSecondsUnlocksTierTwoAndThreeSecondsUnlocksTierThree() {
+		assertEquals(ImpactTier.TIER_2, ImpactChargeRules.tierFor(30));
+		assertEquals(ImpactTier.TIER_2, ImpactChargeRules.tierFor(59));
+		assertEquals(ImpactTier.TIER_3, ImpactChargeRules.tierFor(60));
 	}
 
 	@Test
-	void chargePowerCapsAfterSevenSeconds() {
-		assertEquals(140, ImpactChargeRules.cappedTicks(999));
+	void chargePowerCapsAfterFourSeconds() {
+		assertEquals(80, ImpactChargeRules.cappedTicks(999));
 		assertTrue(ImpactChargeRules.chargeScale(999) <= 1.0f);
-		assertEquals(ImpactChargeRules.chargeScale(140), ImpactChargeRules.chargeScale(999));
+		assertEquals(ImpactChargeRules.chargeScale(80), ImpactChargeRules.chargeScale(999));
 	}
 }

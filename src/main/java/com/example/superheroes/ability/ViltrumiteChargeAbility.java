@@ -2,6 +2,7 @@ package com.example.superheroes.ability;
 
 import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.effect.FlightController;
+import com.example.superheroes.physics.RushTerrainBreaker;
 import com.example.superheroes.transform.HeroData;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
@@ -23,7 +24,7 @@ import java.util.WeakHashMap;
 
 public final class ViltrumiteChargeAbility implements Ability {
 	private static final int COOLDOWN_TICKS = 160;
-	private static final int DURATION_TICKS = 14;
+	private static final int DURATION_TICKS = 4;
 	private static final float DAMAGE = 28f;
 	private static final double DISTANCE = 22.0;
 	private static final double FLIGHT_DISTANCE_MULTIPLIER = 2.5;
@@ -115,7 +116,16 @@ public final class ViltrumiteChargeAbility implements Ability {
 				charge.distance > DISTANCE ? 4 : 2, 0.18, 0.18, 0.18, 0.03);
 
 		charge.ticksLeft--;
-		if (charge.ticksLeft <= 0 || player.horizontalCollision) {
+		if (player.horizontalCollision || player.verticalCollision || player.onGround()) {
+			Vec3 contact = player.position().add(0.0, player.getBbHeight() * 0.5, 0.0);
+			int broken = RushTerrainBreaker.breakContact(level, player, contact, charge.direction, 2.2, 90);
+			if (broken == 0 && player.horizontalCollision) {
+				// Непробиваемая стена — рывок гасится.
+				ACTIVE.remove(player.getUUID());
+				return;
+			}
+		}
+		if (charge.ticksLeft <= 0) {
 			ACTIVE.remove(player.getUUID());
 		}
 	}

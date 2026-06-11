@@ -2,17 +2,20 @@ package com.example.superheroes.client.hud;
 
 import com.example.superheroes.client.ClientMeleeChargeState;
 import com.example.superheroes.physics.ImpactChargeRules;
+import net.minecraft.Util;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 
 /**
- * Индикатор заряда удара у прицела: полоса прогресса до Tier 3 и подпись текущего тира.
+ * Вертикальный индикатор заряда удара рядом с прицелом.
  */
 public final class MeleeChargeHud {
-	private static final int BAR_WIDTH = 62;
-	private static final int BAR_HEIGHT = 3;
+	private static final int GAUGE_W = 7;
+	private static final int GAUGE_H = 18;
+	private static final int INNER_W = 5;
+	private static final int INNER_H = 16;
 
 	private MeleeChargeHud() {
 	}
@@ -26,26 +29,43 @@ public final class MeleeChargeHud {
 
 		int w = mc.getWindow().getGuiScaledWidth();
 		int h = mc.getWindow().getGuiScaledHeight();
-		int x = (w - BAR_WIDTH) / 2;
-		int y = h / 2 + 14;
+		int gaugeX = w / 2 + 10;
+		int gaugeY = h / 2 - 9;
 
 		float progress = Math.min(1f, ticks / (float) ImpactChargeRules.CAP_TICKS);
 		boolean tier3 = ticks >= ImpactChargeRules.TIER_3_TICKS;
 		boolean tier2 = ticks >= ImpactChargeRules.TIER_2_TICKS;
 		int fillColor = tier3 ? 0xFFFF4D6A : tier2 ? 0xFF59D8FF : 0xFFE8E8E8;
 
-		graphics.fill(x - 1, y - 1, x + BAR_WIDTH + 1, y + BAR_HEIGHT + 1, 0x90000000);
-		graphics.fill(x, y, x + (int) (BAR_WIDTH * progress), y + BAR_HEIGHT, fillColor);
+		int borderColor = 0x90000000;
+		if (tier3) {
+			float pulse = (float) Math.sin(Util.getMillis() * (2.0 * Math.PI / 600.0));
+			int alpha = (int) (0x90 + 0x30 * pulse);
+			borderColor = alpha << 24;
+		}
 
-		int tier2X = x + (int) (BAR_WIDTH * (ImpactChargeRules.TIER_2_TICKS / (float) ImpactChargeRules.CAP_TICKS));
-		int tier3X = x + (int) (BAR_WIDTH * (ImpactChargeRules.TIER_3_TICKS / (float) ImpactChargeRules.CAP_TICKS));
-		graphics.fill(tier2X, y - 1, tier2X + 1, y + BAR_HEIGHT + 1, 0xFFFFFFFF);
-		graphics.fill(tier3X, y - 1, tier3X + 1, y + BAR_HEIGHT + 1, 0xFFFFFFFF);
+		graphics.fill(gaugeX, gaugeY, gaugeX + GAUGE_W, gaugeY + GAUGE_H, borderColor);
+
+		int innerX = gaugeX + 1;
+		int innerBottom = gaugeY + 1 + INNER_H;
+		int filledPixels = (int) (INNER_H * progress);
+		int fillTop = innerBottom - filledPixels;
+		graphics.fill(innerX, fillTop, innerX + INNER_W, innerBottom, fillColor);
+
+		float tier2Frac = ImpactChargeRules.TIER_2_TICKS / (float) ImpactChargeRules.CAP_TICKS;
+		float tier3Frac = ImpactChargeRules.TIER_3_TICKS / (float) ImpactChargeRules.CAP_TICKS;
+		int notch2Y = innerBottom - (int) (INNER_H * tier2Frac);
+		int notch3Y = innerBottom - (int) (INNER_H * tier3Frac);
+		graphics.fill(innerX, notch2Y, innerX + INNER_W, notch2Y + 1, 0xFFFFFFFF);
+		graphics.fill(innerX, notch3Y, innerX + INNER_W, notch3Y + 1, 0xFFFFFFFF);
 
 		if (tier2) {
-			Component label = Component.translatable(tier3 ? "hud.superheroes.melee_tier.3" : "hud.superheroes.melee_tier.2");
-			int textWidth = mc.font.width(label);
-			graphics.drawString(mc.font, label, (w - textWidth) / 2, y + BAR_HEIGHT + 4, fillColor, true);
+			Component label = Component.translatable(
+					tier3 ? "hud.superheroes.melee_tier.3" : "hud.superheroes.melee_tier.2"
+			);
+			int labelX = gaugeX + GAUGE_W + 3;
+			int labelY = gaugeY + (GAUGE_H - mc.font.lineHeight) / 2;
+			graphics.drawString(mc.font, label, labelX, labelY, fillColor, true);
 		}
 	}
 }

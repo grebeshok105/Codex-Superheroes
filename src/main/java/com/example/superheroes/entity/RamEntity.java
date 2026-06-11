@@ -18,6 +18,7 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.NeutralMob;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -27,6 +28,7 @@ import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
+import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -65,6 +67,14 @@ public class RamEntity extends PathfinderMob {
 	private Vec3 lastStuckCheckPos = Vec3.ZERO;
 	private int stuckStrikes;
 	private int frostNovaCooldown;
+	private CombatStyle combatStyle = CombatStyle.RANGED;
+	private int styleSwapTicks;
+	private boolean provokeAlternator;
+
+	/** Режим боя: автоматически переключается между ближним и дальним. */
+	enum CombatStyle {
+		MELEE, RANGED
+	}
 
 	public RamEntity(EntityType<? extends RamEntity> type, Level level) {
 		super(type, level);
@@ -174,6 +184,7 @@ public class RamEntity extends PathfinderMob {
 					this.setTarget(desired);
 				}
 			}
+			updateCombatStyle();
 		}
 		tryFrostNova();
 	}
@@ -231,17 +242,86 @@ public class RamEntity extends PathfinderMob {
 		}
 	}
 
-	/** Мобы должны видеть в Рам угрозу: ближайшие монстры без цели агрятся на неё. */
+	/**
+	 * Мобы должны видеть в Рам угрозу: враждебные мобы без цели агрятся на неё,
+	 * а мобы, дерущиеся с хозяйкой (включая нейтральных вроде големов), делят
+	 * агро между Рем и Рам по очереди.
+	 */
 	private void provokeNearbyMonsters(Player owner) {
 		AABB box = this.getBoundingBox().inflate(12.0, 6.0, 12.0);
-		List<Monster> monsters = this.level().getEntitiesOfClass(Monster.class, box,
-				monster -> monster.isAlive() && !monster.isNoAi());
-		for (Monster monster : monsters) {
-			LivingEntity monsterTarget = monster.getTarget();
-			if (monsterTarget == null || monsterTarget == owner) {
-				monster.setTarget(this);
+		List<Mob> mobs = this.level().getEntitiesOfClass(Mob.class, box,
+				mob -> mob.isAlive() && !mob.isNoAi() && mob != this
+						&& (mob instanceof Enemy || mob.getTarget() == owner));
+		for (Mob mob : mobs) {
+			LivingEntity mobTarget = mob.getTarget();
+			if (mobTarget == null) {
+				aggro(mob);
+			} else if (mobTarget == owner) {
+				provokeAlternator = !provokeAlternator;
+				if (provokeAlternator) {
+					aggro(mob);
+				}
 			}
 		}
+	}
+
+	/** Переагрить моба на Рам; нейтральным (голем, пчёлы и т.п.) ещё и ставится злость. */
+	private void aggro(Mob mob) {
+		mob.setTarget(this);
+		mob.setLastHurtByMob(this);
+		if (mob instanceof NeutralMob neutral) {
+			neutral.setPersistentAngerTarget(this.getUUID());
+			neutral.startPersistentAngerTimer();
+		}
+	}
+
+	/** Цель, которую Рам ударила, должна ответить ей, а не хозяйке. */
+	private void tauntOnHit(LivingEntity target) {
+		if (target instanceof Mob mob && mob.getTarget() != this) {
+			aggro(mob);
+		}
+	}
+
+	/** Автопереключение режима боя: летающий враг — только дальний, на земле — по ситуации. */
+	private void updateCombatStyle() {
+		LivingEntity target = this.getTarget();
+		if (target == null) {
+			return;
+		}
+		if (styleSwapTicks > 0) {
+			styleSwapTicks -= 10;
+		}
+		if (isAirborne(target)) {
+			combatStyle = CombatStyle.RANGED;
+			return;
+		}
+		double distSqr = this.distanceToSqr(target);
+		if (distSqr > 9.0 * 9.0) {
+			combatStyle = CombatStyle.RANGED;
+		} else if (distSqr < 3.5 * 3.5) {
+			combatStyle = CombatStyle.MELEE;
+		} else if (styleSwapTicks <= 0) {
+			combatStyle = combatStyle == CombatStyle.MELEE ? CombatStyle.RANGED : CombatStyle.MELEE;
+			styleSwapTicks = 120;
+		}
+	}
+
+	/** Летит ли цель: не на земле и под ней минимум 3 блока воздуха. */
+	private boolean isAirborne(LivingEntity target) {
+		if (target.onGround()) {
+			return false;
+		}
+		if (target.isFallFlying()) {
+			return true;
+		}
+		BlockPos.MutableBlockPos pos = target.blockPosition().mutable();
+		for (int i = 1; i <= 3; i++) {
+			pos.move(0, -1, 0);
+			if (!this.level().getBlockState(pos).isAir()) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	/** Морозная волна при окружении: урон, замедление и откидывание врагов вплотную. */
@@ -279,15 +359,16 @@ public class RamEntity extends PathfinderMob {
 		LivingEntity ownerTarget = owner.getLastHurtMob();
 		if (isValidTarget(ownerTarget)) return ownerTarget;
 		AABB box = owner.getBoundingBox().inflate(TARGET_SEARCH_AROUND_OWNER, 6.0, TARGET_SEARCH_AROUND_OWNER);
-		List<Monster> monsters = this.level().getEntitiesOfClass(Monster.class, box,
-				monster -> monster.isAlive() && monster.getTarget() == owner);
-		Monster closest = null;
+		List<Mob> mobs = this.level().getEntitiesOfClass(Mob.class, box,
+				mob -> mob.isAlive() && mob != this
+						&& (mob.getTarget() == owner || (mob instanceof Monster && mob.getTarget() == null)));
+		Mob closest = null;
 		double best = Double.MAX_VALUE;
-		for (Monster monster : monsters) {
-			double d = monster.distanceToSqr(this);
+		for (Mob mob : mobs) {
+			double d = mob.distanceToSqr(this);
 			if (d < best) {
 				best = d;
-				closest = monster;
+				closest = mob;
 			}
 		}
 		return closest;
@@ -371,13 +452,15 @@ public class RamEntity extends PathfinderMob {
 		@Override
 		public boolean canUse() {
 			LivingEntity target = ram.getTarget();
-			return target != null && ram.distanceToSqr(target) <= ENGAGE_RANGE * ENGAGE_RANGE && super.canUse();
+			return ram.combatStyle == CombatStyle.MELEE && target != null
+					&& ram.distanceToSqr(target) <= ENGAGE_RANGE * ENGAGE_RANGE && super.canUse();
 		}
 
 		@Override
 		public boolean canContinueToUse() {
 			LivingEntity target = ram.getTarget();
-			return target != null && ram.distanceToSqr(target) <= DISENGAGE_RANGE * DISENGAGE_RANGE
+			return ram.combatStyle == CombatStyle.MELEE && target != null
+					&& ram.distanceToSqr(target) <= DISENGAGE_RANGE * DISENGAGE_RANGE
 					&& super.canContinueToUse();
 		}
 
@@ -387,6 +470,7 @@ public class RamEntity extends PathfinderMob {
 				this.resetAttackCooldown();
 				this.mob.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
 				if (this.mob.doHurtTarget(target)) {
+					ram.tauntOnHit(target);
 					target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 40, 0, true, true, true));
 					if (ram.level() instanceof ServerLevel level) {
 						level.sendParticles(ParticleTypes.SNOWFLAKE,
@@ -416,7 +500,8 @@ public class RamEntity extends PathfinderMob {
 		@Override
 		public boolean canUse() {
 			LivingEntity target = ram.getTarget();
-			return target != null && target.isAlive() && ram.getHealth() > ram.getMaxHealth() * 0.3f;
+			return ram.combatStyle == CombatStyle.RANGED && target != null && target.isAlive()
+					&& ram.getHealth() > ram.getMaxHealth() * 0.3f;
 		}
 
 		@Override
@@ -467,6 +552,7 @@ public class RamEntity extends PathfinderMob {
 			}
 			ram.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
 			target.hurt(level.damageSources().mobAttack(ram), BOLT_DAMAGE);
+			ram.tauntOnHit(target);
 			target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 50, 1, true, true, true));
 			level.playSound(null, ram.getX(), ram.getY(), ram.getZ(),
 					SoundEvents.GLASS_BREAK, SoundSource.NEUTRAL, 0.8f, 1.7f);
