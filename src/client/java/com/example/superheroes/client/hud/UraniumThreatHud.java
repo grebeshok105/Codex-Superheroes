@@ -56,8 +56,8 @@ public final class UraniumThreatHud {
 		int countY = y + ICON_SIZE + 2;
 		Component label = Component.translatable("hud.superheroes.uranium_threat",
 				ClientUraniumThreatState.sourceCount());
-		int textW = mc.font.width(label);
-		graphics.drawString(mc.font, label, x + ICON_SIZE - textW, countY, 0xFFFF80, true);
+		int textW = mc.font.width(HudUtil.text(label));
+		graphics.drawString(mc.font, HudUtil.text(label), x + ICON_SIZE - textW, countY, 0xFFFF80, true);
 	}
 
 	private static void drawRadiationIcon(GuiGraphics g, int x, int y, int size, float pulse) {

@@ -70,8 +70,8 @@ public final class RemDemonismController {
 	private static final double MORNING_STAR_MAX_PULL_LIFT = 0.12;
 
 	private static final AttributeModifierSet DEMON_ATTRIBUTES = AttributeModifierSet.builder()
-			.add(Attributes.ATTACK_DAMAGE, ModId.of("modifiers/rem/demon_damage"), 10.0, AttributeModifier.Operation.ADD_VALUE)
-			.add(Attributes.ATTACK_DAMAGE, ModId.of("modifiers/rem/demon_damage_mult"), 0.45, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL)
+			// Баланс (round 5): кулак в демонизме ровно 7 урона (база 6 + 1)
+			.add(Attributes.ATTACK_DAMAGE, ModId.of("modifiers/rem/demon_damage"), 1.0, AttributeModifier.Operation.ADD_VALUE)
 			.add(Attributes.ATTACK_SPEED, ModId.of("modifiers/rem/demon_attack_speed"), 1.2, AttributeModifier.Operation.ADD_VALUE)
 			.add(Attributes.MOVEMENT_SPEED, ModId.of("modifiers/rem/demon_speed"), 0.24, AttributeModifier.Operation.ADD_MULTIPLIED_BASE)
 			.add(Attributes.ARMOR, ModId.of("modifiers/rem/demon_armor"), 22.0, AttributeModifier.Operation.ADD_VALUE)

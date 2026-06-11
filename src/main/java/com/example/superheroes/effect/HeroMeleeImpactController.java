@@ -181,9 +181,17 @@ public final class HeroMeleeImpactController {
 			Vec3 direction = away.lengthSqr() > 1.0e-4
 					? new Vec3(away.x, 0.0, away.z).normalize()
 					: new Vec3(attacker.getViewVector(1f).x, 0.0, attacker.getViewVector(1f).z).normalize();
-			Vec3 motion = target.getDeltaMovement().add(direction.scale(0.32 * push.heroPower()));
-			target.setDeltaMovement(motion.x, Math.max(motion.y, 0.12), motion.z);
+			boolean nanoHammer = attacker.getAttachedOrCreate(ModAttachments.NANO_FORM)
+					== com.example.superheroes.ability.ironman.IronManNanoForm.HAMMER.index();
+			double pushScale = nanoHammer ? 0.32 * 3.2 : 0.32;
+			Vec3 motion = target.getDeltaMovement().add(direction.scale(pushScale * push.heroPower()));
+			target.setDeltaMovement(motion.x, Math.max(motion.y, nanoHammer ? 0.45 : 0.12), motion.z);
 			target.hurtMarked = true;
+			if (nanoHammer) {
+				// Супермолот: даже обычный удар отправляет цель в баллистический полёт сквозь стены.
+				com.example.superheroes.physics.BallisticBodyTracker.launch(
+						target, target.getDeltaMovement(), 70.0, attacker);
+			}
 		}
 		PENDING_PUSHES.clear();
 	}
@@ -240,6 +248,12 @@ public final class HeroMeleeImpactController {
 		if (target instanceof ServerPlayer victim) {
 			ServerPlayNetworking.send(victim, new ScreenShakeS2CPayload(0.3f, 6));
 		}
+		HeroBleedingController.tryApplyBleeding(data.heroId(), target, getDoomsdayTier(attacker, data));
+	}
+
+	private static int getDoomsdayTier(ServerPlayer player, HeroData data) {
+		if (!com.example.superheroes.hero.DoomsdayHero.ID.equals(data.heroId())) return 0;
+		return player.getAttachedOrCreate(ModAttachments.DOOMSDAY_PROGRESS).tier();
 	}
 
 	private static void spawnWhiffFx(ServerPlayer player) {

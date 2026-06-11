@@ -27,7 +27,7 @@ public record HeroHudConfig(
 	}
 
 	public static final HeroHudConfig HOMELANDER = new HeroHudConfig("hud.superheroes.energy.laser_power", EnergyIconType.LIGHTNING, true, "STUNNING ROAR");
-	public static final HeroHudConfig IRON_MAN = new HeroHudConfig("hud.superheroes.energy.arc_reactor", EnergyIconType.REACTOR, true, "HULKBUSTER");
+	public static final HeroHudConfig IRON_MAN = new HeroHudConfig("hud.superheroes.energy.arc_reactor", EnergyIconType.REACTOR, true, "IRON LEGION");
 	public static final HeroHudConfig GOKU = new HeroHudConfig("hud.superheroes.energy.ki", EnergyIconType.SUN, true, "SPIRIT BOMB");
 	public static final HeroHudConfig NARUTO = new HeroHudConfig("hud.superheroes.energy.chakra", EnergyIconType.SPIRAL, true, "BIJUUDAMA");
 	public static final HeroHudConfig KRATOS = new HeroHudConfig("hud.superheroes.energy.spartan_rage", EnergyIconType.FLAME, true, "GOD SLAYER");

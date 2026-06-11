@@ -1,0 +1,154 @@
+{
+  "format_version": "1.12.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.projectparasites.infected_zombie",
+        "texture_width": 64,
+        "texture_height": 64,
+        "visible_bounds_width": 2,
+        "visible_bounds_height": 3,
+        "visible_bounds_offset": [0, 1, 0]
+      },
+      "bones": [
+        {
+          "name": "root",
+          "pivot": [0, 0, 0]
+        },
+        {
+          "name": "body",
+          "parent": "root",
+          "pivot": [0, 24, 0],
+          "cubes": [
+            {
+              "origin": [-4, 12, -2],
+              "size": [8, 12, 4],
+              "uv": [16, 16]
+            }
+          ]
+        },
+        {
+          "name": "head",
+          "parent": "body",
+          "pivot": [0, 24, 0],
+          "cubes": [
+            {
+              "origin": [-4, 24, -4],
+              "size": [8, 8, 8],
+              "uv": [0, 0]
+            }
+          ]
+        },
+        {
+          "name": "glowing_eyes",
+          "parent": "head",
+          "pivot": [0, 28, -4],
+          "cubes": [
+            {
+              "origin": [-3, 28, -4.5],
+              "size": [2, 1, 0.5],
+              "uv": [32, 0]
+            },
+            {
+              "origin": [1, 28, -4.5],
+              "size": [2, 1, 0.5],
+              "uv": [32, 2]
+            }
+          ]
+        },
+        {
+          "name": "left_arm",
+          "parent": "body",
+          "pivot": [5, 22, 0],
+          "cubes": [
+            {
+              "origin": [4, 12, -2],
+              "size": [4, 12, 4],
+              "uv": [40, 16]
+            }
+          ]
+        },
+        {
+          "name": "right_arm",
+          "parent": "body",
+          "pivot": [-5, 22, 0],
+          "cubes": [
+            {
+              "origin": [-8, 12, -2],
+              "size": [4, 12, 4],
+              "uv": [40, 16]
+            }
+          ]
+        },
+        {
+          "name": "left_leg",
+          "parent": "root",
+          "pivot": [2, 12, 0],
+          "cubes": [
+            {
+              "origin": [0, 0, -2],
+              "size": [4, 12, 4],
+              "uv": [0, 16]
+            }
+          ]
+        },
+        {
+          "name": "right_leg",
+          "parent": "root",
+          "pivot": [-2, 12, 0],
+          "cubes": [
+            {
+              "origin": [-4, 0, -2],
+              "size": [4, 12, 4],
+              "uv": [0, 16]
+            }
+          ]
+        },
+        {
+          "name": "parasitic_growth",
+          "parent": "body",
+          "pivot": [0, 20, 2],
+          "cubes": [
+            {
+              "origin": [-3, 17, 2],
+              "size": [6, 6, 4],
+              "uv": [0, 32]
+            },
+            {
+              "origin": [-2, 23, 2.5],
+              "size": [4, 3, 3],
+              "uv": [20, 32]
+            },
+            {
+              "origin": [2, 19, 3],
+              "size": [2, 3, 2],
+              "uv": [0, 42]
+            },
+            {
+              "origin": [-4, 18, 3],
+              "size": [2, 2, 2],
+              "uv": [8, 42]
+            }
+          ]
+        },
+        {
+          "name": "infection_veins",
+          "parent": "body",
+          "pivot": [0, 16, 0],
+          "cubes": [
+            {
+              "origin": [-4.5, 14, -1],
+              "size": [1, 6, 2],
+              "uv": [16, 42]
+            },
+            {
+              "origin": [3.5, 15, -1],
+              "size": [1, 5, 2],
+              "uv": [22, 42]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

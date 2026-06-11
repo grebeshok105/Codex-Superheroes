@@ -32,8 +32,8 @@ import java.util.UUID;
  * Трекер баллистических тел — сущности, пробивающие стены по инерции
  */
 public final class BallisticBodyTracker {
-	private static final int MAX_LIFE_TICKS = 60;
-	private static final double MIN_SPEED = 0.55;
+	private static final int MAX_LIFE_TICKS = 90;
+	private static final double MIN_SPEED = 0.4;
 	private static final float MAX_HARDNESS = 12.0f;
 	private static final int MAX_BLOCKS_PER_TICK = 64;
 	private static final int DEBRIS_STATE_LIMIT = 8;
@@ -146,7 +146,7 @@ public final class BallisticBodyTracker {
 							}
 							layerBrokeAny = true;
 						} else {
-							float dmg = (float) (speed * 4.0);
+							float dmg = (float) (speed * 1.8);
 							body.hurt(level.damageSources().flyIntoWall(), dmg);
 							body.setDeltaMovement(0, body.getDeltaMovement().y, 0);
 							body.hurtMarked = true;
@@ -163,17 +163,17 @@ public final class BallisticBodyTracker {
 			if (hardStop) return false;
 
 			if (layerBrokeAny) {
-				state.power -= 6.0 + maxHardnessBroken;
+				state.power -= 2.5 + 0.4 * maxHardnessBroken;
 
 				Vec3 vel = body.getDeltaMovement();
-				body.setDeltaMovement(vel.scale(0.78));
+				body.setDeltaMovement(vel.scale(0.93));
 				body.hurtMarked = true;
 				if (body instanceof ServerPlayer player) {
 					player.connection.send(new ClientboundSetEntityMotionPacket(player));
 				}
 
 				body.invulnerableTime = 0;
-				body.hurt(level.damageSources().flyIntoWall(), (float) (2.0 + 0.6 * maxHardnessBroken));
+				body.hurt(level.damageSources().flyIntoWall(), (float) (0.8 + 0.25 * maxHardnessBroken));
 
 				sendWallFx(level, stepPos, dir, speed, layerIds);
 

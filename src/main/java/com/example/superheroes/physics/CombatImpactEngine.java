@@ -63,33 +63,48 @@ public final class CombatImpactEngine {
 		float shakeIntensity;
 		float debrisIntensity;
 
+		// Баланс: урон всех tier-атак снижен в ~2.2 раза, зато цели отлетают
+		// заметно дальше и пробивают несколько стен (см. BallisticBodyTracker)
 		if (tier == ImpactTier.TIER_3) {
 			variance = 0.7f + attacker.getRandom().nextFloat() * 0.7f;
-			damage = (float) (baseDamage * 3.0 * heroPower * weaponBias * attackCooldown * variance);
-			knockback = 4.5 * heroPower * speedBias * variance;
-			upward = Math.min(0.5, 0.32 + 0.13 * variance);
-			launchPower = 90.0 * heroPower * variance;
+			damage = (float) (baseDamage * 1.35 * heroPower * weaponBias * attackCooldown * variance);
+			knockback = 6.5 * heroPower * speedBias * variance;
+			upward = Math.min(0.7, 0.42 + 0.16 * variance);
+			launchPower = 150.0 * heroPower * variance;
 			shakeRadius = 38.0;
 			shakeIntensity = (float) Math.min(3.2, 1.75 * heroPower * speedBias * variance);
 			debrisIntensity = Math.min(1.5f, 0.85f * variance);
 		} else if (tier == ImpactTier.TIER_2) {
 			variance = 1.0f;
-			damage = (float) (baseDamage * 1.35 * heroPower * weaponBias * attackCooldown);
-			knockback = 2.6 * heroPower * speedBias;
-			upward = 0.4;
-			launchPower = 35.0 * heroPower;
+			damage = (float) (baseDamage * 0.6 * heroPower * weaponBias * attackCooldown);
+			knockback = 3.8 * heroPower * speedBias;
+			upward = 0.5;
+			launchPower = 70.0 * heroPower;
 			shakeRadius = 24.0;
 			shakeIntensity = (float) Math.min(2.0, 0.95 * heroPower * speedBias);
 			debrisIntensity = 0.55f;
 		} else {
 			variance = 1.0f;
-			damage = (float) (baseDamage * 0.95 * heroPower * attackCooldown);
-			knockback = 0.9 * heroPower * speedBias;
-			upward = 0.12;
+			damage = (float) (baseDamage * 0.45 * heroPower * attackCooldown);
+			knockback = 1.3 * heroPower * speedBias;
+			upward = 0.15;
 			launchPower = 0.0;
 			shakeRadius = 12.0;
 			shakeIntensity = 0.32f;
 			debrisIntensity = 0.0f;
+		}
+
+		// Нано-супермолот Mark 85: урон НЕ растёт, зато цель улетает как из пушки
+		// и пробивает стены телом (ballistic launch) даже с незаряженного удара.
+		if (com.example.superheroes.hero.IronManHero.ID.equals(heroId)
+				&& attacker.getAttachedOrCreate(com.example.superheroes.attachment.ModAttachments.NANO_FORM)
+						== com.example.superheroes.ability.ironman.IronManNanoForm.HAMMER.index()) {
+			knockback *= 2.4;
+			upward = Math.min(0.9, upward + 0.25);
+			launchPower = Math.max(launchPower * 2.0, 110.0);
+			shakeRadius = Math.max(shakeRadius, 26.0);
+			shakeIntensity = Math.max(shakeIntensity, 1.4f);
+			debrisIntensity = Math.max(debrisIntensity, 0.9f);
 		}
 
 		return new ImpactProfile(heroId, tier, style, direction, damage, knockback, upward,

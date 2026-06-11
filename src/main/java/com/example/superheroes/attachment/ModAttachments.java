@@ -45,6 +45,25 @@ public final class ModAttachments {
 			.initializer(() -> RaidenState.EMPTY)
 			.buildAndRegister(ModId.of("raiden_state"));
 
+	public static final AttachmentType<Boolean> ADMIN_BUILD = AttachmentRegistry.<Boolean>builder()
+			.initializer(() -> Boolean.FALSE)
+			.persistent(Codec.BOOL)
+			.copyOnDeath()
+			.buildAndRegister(ModId.of("admin_build"));
+
+	public static final AttachmentType<Integer> SUIT_VARIANT = AttachmentRegistry.<Integer>builder()
+			.initializer(() -> 0)
+			.persistent(Codec.INT)
+			.copyOnDeath()
+			.buildAndRegister(ModId.of("suit_variant"));
+
+	/** Текущая нано-форма Железного Человека: 0 — нет, 1 — клинок, 2 — супермолот, 3 — щит. */
+	public static final AttachmentType<Integer> NANO_FORM = AttachmentRegistry.<Integer>builder()
+			.initializer(() -> 0)
+			.persistent(Codec.INT)
+			.copyOnDeath()
+			.buildAndRegister(ModId.of("nano_form"));
+
 	private ModAttachments() {
 	}
 

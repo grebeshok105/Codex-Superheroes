@@ -16,22 +16,39 @@ import java.util.Map;
  */
 public final class AbilityIcons {
 	private static final int TEX_SIZE = 64;
-	private static final Map<ResourceLocation, ResourceLocation> CACHE = new HashMap<>();
+	private static final Map<String, ResourceLocation> CACHE = new HashMap<>();
 	private static final ResourceLocation MISSING = ResourceLocation.fromNamespaceAndPath("superheroes", "__missing__");
 
 	private AbilityIcons() {
 	}
 
 	public static ResourceLocation texture(ResourceLocation abilityId) {
-		ResourceLocation cached = CACHE.get(abilityId);
+		// Сначала ищем геройскую версию иконки (abilities/{hero}/{ability}.png) —
+		// общие способности вроде flight могут иметь уникальный арт под героя
+		ResourceLocation heroId = com.example.superheroes.client.ClientHeroState.heroId();
+		String heroPath = heroId == null ? "" : heroId.getPath();
+		String key = heroPath + ":" + abilityId.getPath();
+		ResourceLocation cached = CACHE.get(key);
 		if (cached != null) {
 			return cached == MISSING ? null : cached;
 		}
-		ResourceLocation tex = ResourceLocation.fromNamespaceAndPath("superheroes",
-				"textures/gui/abilities/" + abilityId.getPath() + ".png");
-		boolean exists = Minecraft.getInstance().getResourceManager().getResource(tex).isPresent();
-		CACHE.put(abilityId, exists ? tex : MISSING);
-		return exists ? tex : null;
+		ResourceLocation resolved = null;
+		if (!heroPath.isEmpty()) {
+			ResourceLocation heroTex = ResourceLocation.fromNamespaceAndPath("superheroes",
+					"textures/gui/abilities/" + heroPath + "/" + abilityId.getPath() + ".png");
+			if (Minecraft.getInstance().getResourceManager().getResource(heroTex).isPresent()) {
+				resolved = heroTex;
+			}
+		}
+		if (resolved == null) {
+			ResourceLocation tex = ResourceLocation.fromNamespaceAndPath("superheroes",
+					"textures/gui/abilities/" + abilityId.getPath() + ".png");
+			if (Minecraft.getInstance().getResourceManager().getResource(tex).isPresent()) {
+				resolved = tex;
+			}
+		}
+		CACHE.put(key, resolved == null ? MISSING : resolved);
+		return resolved;
 	}
 
 	/** Draws the icon texture if present, otherwise a kind badge letter. */

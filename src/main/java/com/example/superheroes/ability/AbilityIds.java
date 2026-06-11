@@ -18,14 +18,17 @@ public final class AbilityIds {
 	public static final ResourceLocation GUARDIANS_BREAKER = ModId.of("guardians_breaker");
 	public static final ResourceLocation OMNIMAN_VILTRUMITE_RUSH = ModId.of("omniman_viltrumite_rush");
 	public static final ResourceLocation OMNIMAN_WORLD_BREAKER = ModId.of("omniman_world_breaker");
+	public static final ResourceLocation OMNIMAN_THINK_MARK = ModId.of("omniman_think_mark");
 
 	public static final ResourceLocation IRON_MAN_FLIGHT = ModId.of("iron_man_flight");
 	public static final ResourceLocation SUPERSONIC = ModId.of("supersonic");
 	public static final ResourceLocation REPULSOR = ModId.of("repulsor");
 	public static final ResourceLocation UNIBEAM = ModId.of("unibeam");
-	public static final ResourceLocation IRON_MAN_HULKBUSTER = ModId.of("iron_man_hulkbuster");
+	public static final ResourceLocation IRON_MAN_NANO_FORM = ModId.of("iron_man_nano_form");
 	public static final ResourceLocation IRON_MAN_NANO_REPAIR = ModId.of("iron_man_nano_repair");
 	public static final ResourceLocation IRON_MAN_SMART_MISSILE = ModId.of("iron_man_smart_missile");
+	public static final ResourceLocation IRON_MAN_SUIT_SWITCH = ModId.of("iron_man_suit_switch");
+	public static final ResourceLocation IRON_MAN_LEGION = ModId.of("iron_man_legion");
 
 	public static final ResourceLocation LION_HEART = ModId.of("lion_heart");
 	public static final ResourceLocation MANIA_OF_GREED = ModId.of("mania_of_greed");

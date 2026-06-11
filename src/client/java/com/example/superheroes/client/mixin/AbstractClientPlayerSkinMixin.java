@@ -28,6 +28,11 @@ public abstract class AbstractClientPlayerSkinMixin {
 	@Inject(method = "getSkin", at = @At("RETURN"), cancellable = true)
 	private void superheroes$forceHeroSkin(CallbackInfoReturnable<PlayerSkin> cir) {
 		AbstractClientPlayer self = (AbstractClientPlayer) (Object) this;
+		// Пока идёт нано-сборка костюма, геройский скин не подменяется:
+		// броня постепенно проявляется слоем NanoSuitUpLayer поверх игрока.
+		if (com.example.superheroes.client.ClientNanoSuitUpState.suppressHeroSkin(self.getUUID())) {
+			return;
+		}
 		ResourceLocation heroId = superheroes$heroIdFor(self);
 		if (heroId == null) {
 			return;
@@ -44,6 +49,11 @@ public abstract class AbstractClientPlayerSkinMixin {
 		if (com.example.superheroes.hero.ThanosHero.ID.equals(heroId)) {
 			heroTexture = com.example.superheroes.client.ThanosSkinTextures.textureFor(
 					com.example.superheroes.client.ClientThanosState.maskFor(self.getUUID()));
+		}
+		// Iron Man: текущий вариант костюма синхронизирован со всеми клиентами
+		if (com.example.superheroes.hero.IronManHero.ID.equals(heroId)) {
+			int variant = com.example.superheroes.client.ClientSuitVariantState.variantFor(self.getUUID());
+			heroTexture = com.example.superheroes.ability.ironman.IronManSuitVariant.get(variant).texture();
 		}
 		PlayerSkin orig = cir.getReturnValue();
 		cir.setReturnValue(new PlayerSkin(

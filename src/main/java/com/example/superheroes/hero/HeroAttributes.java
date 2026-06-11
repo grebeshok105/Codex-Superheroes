@@ -159,25 +159,22 @@ public final class HeroAttributes {
 			.add(Attributes.KNOCKBACK_RESISTANCE, IRON_MAN_KNOCKBACK, 0.6, AttributeModifier.Operation.ADD_VALUE)
 			.build();
 
-	/** Hulkbuster mode: больший масштаб, грубая прочность, экстра-урон, движение чуть медленнее. */
-	public static final ResourceLocation HULKBUSTER_ARMOR = ModId.of("modifiers/iron_man/hulkbuster_armor");
-	public static final ResourceLocation HULKBUSTER_TOUGHNESS = ModId.of("modifiers/iron_man/hulkbuster_toughness");
-	public static final ResourceLocation HULKBUSTER_DAMAGE = ModId.of("modifiers/iron_man/hulkbuster_damage");
-	public static final ResourceLocation HULKBUSTER_SPEED = ModId.of("modifiers/iron_man/hulkbuster_speed");
-	public static final ResourceLocation HULKBUSTER_HP = ModId.of("modifiers/iron_man/hulkbuster_max_health");
-	public static final ResourceLocation HULKBUSTER_SCALE = ModId.of("modifiers/iron_man/hulkbuster_scale");
-	public static final ResourceLocation HULKBUSTER_REACH = ModId.of("modifiers/iron_man/hulkbuster_reach");
-	public static final ResourceLocation HULKBUSTER_STEP = ModId.of("modifiers/iron_man/hulkbuster_step");
+	/** Нано-клинок: чистый бонус к урону ближнего боя, пока активна форма клинка. */
+	public static final ResourceLocation NANO_BLADE_DAMAGE = ModId.of("modifiers/iron_man/nano_blade_damage");
 
-	public static final AttributeModifierSet HULKBUSTER = AttributeModifierSet.builder()
-			.add(Attributes.ARMOR, HULKBUSTER_ARMOR, 25.0, AttributeModifier.Operation.ADD_VALUE)
-			.add(Attributes.ARMOR_TOUGHNESS, HULKBUSTER_TOUGHNESS, 10.0, AttributeModifier.Operation.ADD_VALUE)
-			.add(Attributes.ATTACK_DAMAGE, HULKBUSTER_DAMAGE, 6.0, AttributeModifier.Operation.ADD_VALUE)
-			.add(Attributes.MOVEMENT_SPEED, HULKBUSTER_SPEED, -0.10, AttributeModifier.Operation.ADD_MULTIPLIED_BASE)
-			.add(Attributes.MAX_HEALTH, HULKBUSTER_HP, 20.0, AttributeModifier.Operation.ADD_VALUE)
-			.add(Attributes.SCALE, HULKBUSTER_SCALE, 0.20, AttributeModifier.Operation.ADD_VALUE)
-			.add(Attributes.ENTITY_INTERACTION_RANGE, HULKBUSTER_REACH, 0.6, AttributeModifier.Operation.ADD_VALUE)
-			.add(Attributes.STEP_HEIGHT, HULKBUSTER_STEP, 0.5, AttributeModifier.Operation.ADD_VALUE)
+	public static final AttributeModifierSet NANO_BLADE = AttributeModifierSet.builder()
+			.add(Attributes.ATTACK_DAMAGE, NANO_BLADE_DAMAGE, 7.0, AttributeModifier.Operation.ADD_VALUE)
+			.build();
+
+	/** Нано-щит: жёсткая стойкость, пока активна форма щита. */
+	public static final ResourceLocation NANO_SHIELD_ARMOR = ModId.of("modifiers/iron_man/nano_shield_armor");
+	public static final ResourceLocation NANO_SHIELD_TOUGHNESS = ModId.of("modifiers/iron_man/nano_shield_toughness");
+	public static final ResourceLocation NANO_SHIELD_KNOCKBACK = ModId.of("modifiers/iron_man/nano_shield_knockback");
+
+	public static final AttributeModifierSet NANO_SHIELD = AttributeModifierSet.builder()
+			.add(Attributes.ARMOR, NANO_SHIELD_ARMOR, 12.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ARMOR_TOUGHNESS, NANO_SHIELD_TOUGHNESS, 6.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.KNOCKBACK_RESISTANCE, NANO_SHIELD_KNOCKBACK, 0.4, AttributeModifier.Operation.ADD_VALUE)
 			.build();
 
 	public static final AttributeModifierSet REGULUS = AttributeModifierSet.builder()

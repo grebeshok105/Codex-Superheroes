@@ -38,7 +38,7 @@ public final class RemHero implements Hero {
 	private static final AttributeModifierSet PASSIVES = AttributeModifierSet.builder()
 			.add(Attributes.ARMOR, ModId.of("modifiers/rem/armor"), 16.0, AttributeModifier.Operation.ADD_VALUE)
 			.add(Attributes.ARMOR_TOUGHNESS, ModId.of("modifiers/rem/toughness"), 6.0, AttributeModifier.Operation.ADD_VALUE)
-			.add(Attributes.ATTACK_DAMAGE, ModId.of("modifiers/rem/damage"), 7.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ATTACK_DAMAGE, ModId.of("modifiers/rem/damage"), 5.0, AttributeModifier.Operation.ADD_VALUE)
 			.add(Attributes.ATTACK_SPEED, ModId.of("modifiers/rem/attack_speed"), 1.0, AttributeModifier.Operation.ADD_VALUE)
 			.add(Attributes.MOVEMENT_SPEED, ModId.of("modifiers/rem/speed"), 0.16, AttributeModifier.Operation.ADD_MULTIPLIED_BASE)
 			.add(Attributes.MAX_HEALTH, ModId.of("modifiers/rem/max_health"), 22.0, AttributeModifier.Operation.ADD_VALUE)

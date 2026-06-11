@@ -16,15 +16,15 @@ import java.util.Deque;
 /**
  * Джарвис: голосовой доклад об обнаруженном герое + инфопанель.
  * Звук запускается на клиенте, инфопанель появляется СТРОГО после его
- * окончания (длительность реплики ~10.4 c => 212 тиков с запасом).
- * Несколько обнаружений выстраиваются в очередь.
+ * окончания. S-tier угрозы используют excited звук.
  */
 public final class JarvisDetectionHud {
 	private static final int SOUND_TICKS = 212;
 	private static final int INFO_TICKS = 160;
 	private static final int INFO_FADE_TICKS = 12;
 
-	private record Detection(String playerName, ResourceLocation heroId, int distance) {
+	private record Detection(String playerName, ResourceLocation heroId, int distance,
+			String threatClass, String jarvisQuote) {
 	}
 
 	private enum Phase {
@@ -39,13 +39,13 @@ public final class JarvisDetectionHud {
 	private JarvisDetectionHud() {
 	}
 
-	public static void onDetection(String playerName, ResourceLocation heroId, int distance) {
-		QUEUE.addLast(new Detection(playerName, heroId, distance));
+	public static void onDetection(String playerName, ResourceLocation heroId, int distance,
+			String threatClass, String jarvisQuote) {
+		QUEUE.addLast(new Detection(playerName, heroId, distance, threatClass, jarvisQuote));
 	}
 
 	public static void tick(Minecraft mc) {
 		if (mc.player == null || !IronManHero.ID.equals(ClientHeroState.data().heroId())) {
-			// снял костюм/вышел из мира — сбрасываем всё
 			QUEUE.clear();
 			phase = Phase.IDLE;
 			current = null;
@@ -57,7 +57,11 @@ public final class JarvisDetectionHud {
 					current = QUEUE.pollFirst();
 					phase = Phase.SOUND;
 					timer = SOUND_TICKS;
-					mc.getSoundManager().play(SimpleSoundInstance.forUI(ModSounds.IRONMAN_JARVIS_DETECT, 1.0f, 1.0f));
+					if ("S".equals(current.threatClass())) {
+						mc.getSoundManager().play(SimpleSoundInstance.forUI(ModSounds.IRONMAN_JARVIS_DETECT_EXCITED, 1.0f, 1.0f));
+					} else {
+						mc.getSoundManager().play(SimpleSoundInstance.forUI(ModSounds.IRONMAN_JARVIS_DETECT, 1.0f, 1.0f));
+					}
 				}
 			}
 			case SOUND -> {
@@ -93,11 +97,17 @@ public final class JarvisDetectionHud {
 			alpha = (INFO_TICKS - timer) / (float) INFO_FADE_TICKS;
 		}
 
-		Component title = Component.translatable("hud.superheroes.jarvis.detect.title");
-		Component line1 = Component.translatable("hud.superheroes.jarvis.detect.player", current.playerName());
-		Component line2 = Component.translatable("hud.superheroes.jarvis.detect.hero",
-				Component.translatable("hero.superheroes." + current.heroId().getPath()));
-		Component line3 = Component.translatable("hud.superheroes.jarvis.detect.distance", current.distance());
+		int threatColor = threatLabelColor(current.threatClass());
+		String threatDesc = threatDescription(current.threatClass());
+
+		Component title = HudUtil.text(Component.translatable("hud.superheroes.jarvis.detect.title"));
+		Component line1 = HudUtil.text(Component.translatable("hud.superheroes.jarvis.detect.player", current.playerName()));
+		Component heroName = Component.translatable("hero.superheroes." + current.heroId().getPath());
+		Component line2 = HudUtil.text(Component.literal("■ ")
+				.append(heroName)
+				.append(" [" + current.threatClass() + "] — " + current.distance() + "m"));
+		Component line3 = HudUtil.text(Component.literal(threatDesc));
+		Component line4 = HudUtil.text(Component.literal("\"" + current.jarvisQuote() + "\""));
 
 		int pad = HudScaler.scale(6);
 		int lineH = mc.font.lineHeight + HudScaler.scale(2);
@@ -105,19 +115,22 @@ public final class JarvisDetectionHud {
 		w = Math.max(w, mc.font.width(line1));
 		w = Math.max(w, mc.font.width(line2));
 		w = Math.max(w, mc.font.width(line3));
+		w = Math.max(w, Math.min(mc.font.width(line4), 200));
 		w += pad * 2;
-		int h = pad * 2 + lineH * 4 + HudScaler.scale(3);
+		int h = pad * 2 + lineH * 5 + HudScaler.scale(3);
 
 		int sw = mc.getWindow().getGuiScaledWidth();
 		int x = sw - w - HudScaler.scale(10);
 		int y = HudScaler.scale(40);
 
 		int a = (int) (alpha * 255);
+		int borderCol = "S".equals(current.threatClass()) ? 0xFF2020 : 0xFFC400;
+		int glowCol = "S".equals(current.threatClass()) ? 0xFF2020 : 0xFFC400;
 		HudUtil.neonPanel(g, x, y, w, h,
 				withAlpha(0x181C2A, (int) (a * 0.88)),
 				withAlpha(0x080A14, (int) (a * 0.82)),
-				withAlpha(0xFFC400, (int) (a * 0.65)),
-				withAlpha(0xFFC400, (int) (a * 0.22)));
+				withAlpha(borderCol, (int) (a * 0.65)),
+				withAlpha(glowCol, (int) (a * 0.22)));
 
 		int tx = x + pad;
 		int ty = y + pad;
@@ -125,9 +138,33 @@ public final class JarvisDetectionHud {
 		ty += lineH + HudScaler.scale(3);
 		g.drawString(mc.font, line1, tx, ty, withAlpha(0xD8DCE8, a), true);
 		ty += lineH;
-		g.drawString(mc.font, line2, tx, ty, withAlpha(0xD8DCE8, a), true);
+		g.drawString(mc.font, line2, tx, ty, withAlpha(threatColor, a), true);
 		ty += lineH;
-		g.drawString(mc.font, line3, tx, ty, withAlpha(0x9AA4B8, a), true);
+		g.drawString(mc.font, line3, tx, ty, withAlpha(threatColor, a), true);
+		ty += lineH;
+		g.drawString(mc.font, line4, tx, ty, withAlpha(0x8890A8, a), true);
+	}
+
+	private static int threatLabelColor(String threatClass) {
+		return switch (threatClass) {
+			case "S" -> 0xFF4444;
+			case "A" -> 0xFF6666;
+			case "B" -> 0xFFAA00;
+			case "C" -> 0xFFFF55;
+			case "D" -> 0x55FF55;
+			default -> 0xD8DCE8;
+		};
+	}
+
+	private static String threatDescription(String threatClass) {
+		return switch (threatClass) {
+			case "S" -> "ЗАПРЕДЕЛЬНАЯ УГРОЗА";
+			case "A" -> "ВЫСОКАЯ УГРОЗА";
+			case "B" -> "СРЕДНЯЯ УГРОЗА";
+			case "C" -> "НИЗКАЯ УГРОЗА";
+			case "D" -> "МИНИМАЛЬНАЯ УГРОЗА";
+			default -> "НЕИЗВЕСТНО";
+		};
 	}
 
 	private static int withAlpha(int rgb, int alpha) {

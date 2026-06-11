@@ -234,11 +234,10 @@ public final class AbilitiesTooltipHud {
 
 		int border = applyAlpha(ClientHudGlitch.tintColor(theme.panelBorder()), alpha, 0.9f);
 		HudUtil.roundedRectBorder(g, x, y, w, h, border);
-		int glow = applyAlpha(ClientHudGlitch.tintColor(theme.panelBorder()), alpha / 4, 1.0f);
+		int glow = applyAlpha(ClientHudGlitch.tintColor(theme.panelBorder()), alpha / 3, 1.0f);
 		HudUtil.roundedRectBorder(g, x - 1, y - 1, w + 2, h + 2, glow);
-
-		int hi = applyAlpha(ClientHudGlitch.tintColor(theme.panelHighlight()), alpha, 1.0f);
-		g.fill(x + 3, y + 2, x + w - 3, y + 3, hi);
+		int glow2 = applyAlpha(ClientHudGlitch.tintColor(theme.panelBorder()), alpha / 6, 1.0f);
+		HudUtil.roundedRectBorder(g, x - 2, y - 2, w + 4, h + 4, glow2);
 	}
 
 	/** v4 refresh: hero name on its own plaque with a soft accent underline. */
@@ -246,7 +245,7 @@ public final class AbilitiesTooltipHud {
 			HeroTheme theme, int alpha) {
 		int x = panelX + PADDING_X;
 		Component name = ClientHudGlitch.maybeObfuscate(
-				Component.translatable("hero.superheroes." + heroId.getPath()).copy().withStyle(ChatFormatting.BOLD));
+				HudUtil.text(Component.translatable("hero.superheroes." + heroId.getPath())).withStyle(ChatFormatting.BOLD));
 		int color = applyAlpha(ClientHudGlitch.tintColor(theme.heroNameColor()), alpha, 1.0f);
 		g.drawString(mc.font, name, x, y + 1, color, true);
 		// accent underline: bright near the name, fading to the right
@@ -264,7 +263,7 @@ public final class AbilitiesTooltipHud {
 		int stripe = applyAlpha(ClientHudGlitch.tintColor(theme.energyIcon()), alpha, 0.9f);
 		g.fill(x, y, x + 2, y + 9, stripe);
 		Component shown = ClientHudGlitch.maybeObfuscate(
-				Component.empty().append(label).withStyle(ChatFormatting.BOLD));
+				HudUtil.text(Component.empty().append(label)).withStyle(ChatFormatting.BOLD));
 		g.drawString(mc.font, shown, x + 6, y, color, true);
 		int line = applyAlpha(ClientHudGlitch.tintColor(theme.panelBorder()), alpha, 0.35f);
 		g.fill(x, y + 10, x + width, y + 11, line);
@@ -273,9 +272,9 @@ public final class AbilitiesTooltipHud {
 	private static void drawPassiveRow(GuiGraphics g, Minecraft mc, int x, int y, Component name, int maxTextWidth, HeroTheme theme, int alpha) {
 		int nameColor = applyAlpha(ClientHudGlitch.tintColor(0xFFE8E9F2), alpha, 1.0f);
 		int bulletColor = applyAlpha(ClientHudGlitch.tintColor(theme.energyIcon()), alpha, 1.0f);
-		g.drawString(mc.font, Component.literal("▸ ").withStyle(ChatFormatting.BOLD), x, y + NAME_Y_OFFSET, bulletColor, true);
+		g.drawString(mc.font, HudUtil.text("▸ ").withStyle(ChatFormatting.BOLD), x, y + NAME_Y_OFFSET, bulletColor, true);
 
-		Component shown = ClientHudGlitch.maybeObfuscate(name);
+		Component shown = ClientHudGlitch.maybeObfuscate(HudUtil.text(name));
 		List<FormattedCharSequence> lines = mc.font.split(shown, maxTextWidth);
 		int count = Math.min(MAX_PASSIVE_LINES, lines.size());
 		for (int i = 0; i < count; i++) {
@@ -324,13 +323,13 @@ public final class AbilitiesTooltipHud {
 				statusText = Component.literal(seconds + "с").withStyle(ChatFormatting.BOLD);
 				statusColor = applyAlpha(ClientHudGlitch.tintColor(0xFFFF9D6E), alpha, 1.0f);
 			} else if (isActive && kind == AbilityDescriptions.Kind.TOGGLE) {
-				statusText = Component.translatable("ability.superheroes.status.on").withStyle(ChatFormatting.BOLD);
+				statusText = HudUtil.text(Component.translatable("ability.superheroes.status.on")).withStyle(ChatFormatting.BOLD);
 				statusColor = applyAlpha(ClientHudGlitch.tintColor(0xFF6BFF8C), alpha, 1.0f);
 			} else if (kind == AbilityDescriptions.Kind.TOGGLE) {
-				statusText = Component.translatable("ability.superheroes.status.off").withStyle(ChatFormatting.BOLD);
+				statusText = HudUtil.text(Component.translatable("ability.superheroes.status.off")).withStyle(ChatFormatting.BOLD);
 				statusColor = applyAlpha(ClientHudGlitch.tintColor(0xFF8E94A8), alpha, 1.0f);
 			} else if (kind == AbilityDescriptions.Kind.ACTIVE) {
-				statusText = Component.translatable("ability.superheroes.status.ready").withStyle(ChatFormatting.BOLD);
+				statusText = HudUtil.text(Component.translatable("ability.superheroes.status.ready")).withStyle(ChatFormatting.BOLD);
 				statusColor = applyAlpha(ClientHudGlitch.tintColor(0xFFB6D4FF), alpha, 1.0f);
 			}
 		}
@@ -346,14 +345,14 @@ public final class AbilitiesTooltipHud {
 		int nameColor = applyAlpha(ClientHudGlitch.tintColor(baseNameColor), alpha, 1.0f);
 		Component name = glitchSecret
 				? Component.literal("????????").withStyle(ChatFormatting.OBFUSCATED, ChatFormatting.BOLD)
-				: Component.translatable(AbilityDescriptions.nameKey(abilityId)).withStyle(ChatFormatting.BOLD);
+				: HudUtil.text(Component.translatable(AbilityDescriptions.nameKey(abilityId))).withStyle(ChatFormatting.BOLD);
 		Component nameShown = glitchSecret ? name : ClientHudGlitch.maybeObfuscate(ellipsize(mc, name, maxTextWidth));
 		g.drawString(mc.font, glitchSecret ? ellipsize(mc, name, maxTextWidth) : nameShown, textX, y + NAME_Y_OFFSET, nameColor, true);
 
 		int descColor = applyAlpha(ClientHudGlitch.tintColor(0xFFA2A6B8), alpha, 1.0f);
 		Component desc = glitchSecret
 				? Component.literal("????????????????????").withStyle(ChatFormatting.OBFUSCATED)
-				: ClientHudGlitch.maybeObfuscate(Component.translatable(AbilityDescriptions.descKey(abilityId)));
+				: ClientHudGlitch.maybeObfuscate(HudUtil.text(Component.translatable(AbilityDescriptions.descKey(abilityId))));
 
 		List<FormattedCharSequence> descLines = mc.font.split(desc, maxTextWidth);
 		int lineCount = Math.min(MAX_DESC_LINES, descLines.size());

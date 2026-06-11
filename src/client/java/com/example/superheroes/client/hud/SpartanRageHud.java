@@ -100,9 +100,9 @@ public final class SpartanRageHud {
 			label = (int) rage + "%";
 			labelColor = LABEL_DIM;
 		}
-		int textW = mc.font.width(label);
+		int textW = mc.font.width(HudUtil.text(label));
 		int textY = y - 9;
-		graphics.drawString(mc.font, label, x + (BAR_WIDTH - textW) / 2, textY, labelColor, true);
+		graphics.drawString(mc.font, HudUtil.text(label), x + (BAR_WIDTH - textW) / 2, textY, labelColor, true);
 	}
 
 	private static int mix(int a, int b, float t) {

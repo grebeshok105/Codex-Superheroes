@@ -30,6 +30,7 @@ public class SuperheroesMod implements ModInitializer {
 		Heroes.init();
 		AbilityRegistry.init();
 		com.example.superheroes.entity.ModEntities.init();
+		com.example.superheroes.horde.entity.HordeEntities.init();
 		ModItems.init();
 		ModItemGroups.init();
 		ModParticles.init();
@@ -44,6 +45,7 @@ public class SuperheroesMod implements ModInitializer {
 		com.example.superheroes.effect.IronManReactorTracker.init();
 		com.example.superheroes.effect.IronManAutoEjectController.init();
 		com.example.superheroes.effect.IronManJarvisController.init();
+		com.example.superheroes.ability.ironman.IronManNanoFormController.init();
 		com.example.superheroes.effect.RegulusTotemController.init();
 		com.example.superheroes.effect.RegulusGreedController.init();
 		com.example.superheroes.effect.GreedCageController.init();
@@ -73,6 +75,8 @@ public class SuperheroesMod implements ModInitializer {
 		com.example.superheroes.effect.NarutoWallRunController.init();
 		com.example.superheroes.effect.KawarimiController.init();
 		com.example.superheroes.effect.ThanosGauntletStateController.init();
+		com.example.superheroes.ability.ironman.IronManSuitSyncController.init();
+		com.example.superheroes.command.AdminBuildSyncController.init();
 		com.example.superheroes.effect.KratosRageController.init();
 		com.example.superheroes.effect.KratosHandStrikeFxController.init();
 		com.example.superheroes.effect.DoomsdayKryptoniteController.init();
@@ -93,11 +97,16 @@ public class SuperheroesMod implements ModInitializer {
 
 		net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents.END_SERVER_TICK.register(server -> {
 			com.example.superheroes.effect.DoomGripController.serverTick();
+			for (net.minecraft.server.level.ServerLevel sl : server.getAllLevels()) {
+				com.example.superheroes.horde.HordeManager.tick(sl);
+			}
 			for (ServerPlayer p : server.getPlayerList().getPlayers()) {
 				com.example.superheroes.ability.ChargeTackleAbility.serverTick(p);
 				com.example.superheroes.ability.ViltrumiteChargeAbility.serverTick(p);
 				com.example.superheroes.ability.MeteorSlamAbility.serverTick(p);
 				com.example.superheroes.ability.OmnimanViltrumiteRushAbility.serverTick(p);
+				com.example.superheroes.ability.OmnimanThinkMarkAbility.serverTick(p);
+				com.example.superheroes.ability.ironman.IronManNanoFormController.serverTick(p);
 				com.example.superheroes.ability.GokuKamehamehaAbility.serverTick(p);
 				com.example.superheroes.ability.GokuSpiritBombAbility.serverTick(p);
 				com.example.superheroes.ability.NarutoRasenganAbility.serverTick(p);
