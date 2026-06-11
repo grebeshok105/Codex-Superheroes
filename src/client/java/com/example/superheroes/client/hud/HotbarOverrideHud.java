@@ -33,8 +33,9 @@ public final class HotbarOverrideHud {
 		int gap = HudScaler.scale(BASE_GAP);
 		int panelH = HudScaler.scale(130);
 
-		int hotbarY = screenH - panelH - margin - slotSize - HudScaler.scale(4);
-		int hotbarX = margin;
+		int[] off = HudLayoutManager.offset(HudLayoutManager.HOTBAR);
+		int hotbarY = screenH - panelH - margin - slotSize - HudScaler.scale(4) + off[1];
+		int hotbarX = margin + off[0];
 
 		Inventory inv = mc.player.getInventory();
 		int selected = inv.selected;

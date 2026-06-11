@@ -23,4 +23,11 @@ public class GuiHotbarMixin {
 			ci.cancel();
 		}
 	}
+
+	@Inject(method = "renderCrosshair", at = @At("HEAD"), cancellable = true)
+	private void superheroes$hideCrosshairInRadial(GuiGraphics graphics, DeltaTracker tracker, CallbackInfo ci) {
+		if (com.example.superheroes.client.hud.RadialMenuHud.isOpen()) {
+			ci.cancel();
+		}
+	}
 }

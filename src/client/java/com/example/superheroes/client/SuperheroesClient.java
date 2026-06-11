@@ -140,20 +140,29 @@ public class SuperheroesClient implements ClientModInitializer {
 			com.example.superheroes.client.hud.CracksOverlayHud.render(graphics, tracker);
 			com.example.superheroes.client.hud.DoomsdayGlitchHud.render(graphics, tracker);
 			com.example.superheroes.client.hud.ReinhardCeremonyOverlay.render(graphics, tracker);
-			com.example.superheroes.client.hud.MeleeChargeHud.render(graphics, tracker);
+			{
+				int[] mcOff = com.example.superheroes.client.hud.HudLayoutManager.offset(
+						com.example.superheroes.client.hud.HudLayoutManager.MELEE_CHARGE);
+				graphics.pose().pushPose();
+				graphics.pose().translate(mcOff[0], mcOff[1], 0);
+				com.example.superheroes.client.hud.MeleeChargeHud.render(graphics, tracker);
+				graphics.pose().popPose();
+			}
 			com.example.superheroes.client.hud.ReinhardSwordDeathOverlay.render(graphics, tracker);
 			com.example.superheroes.client.hud.ReinhardDarknessOverlay.render(graphics, tracker);
 		});
 
 		ClientTickEvents.START_CLIENT_TICK.register(SuperheroesClient::tickHeroMeleeCharge);
-		ClientTickEvents.START_CLIENT_TICK.register(client -> {
-			// Hotbar lock: swallow 1-9 slot keys so vanilla can't switch slots (scroll wheel still works)
-			if (HotbarLockState.isLocked() && client.player != null && ClientHeroState.data().hasHero()) {
-				for (net.minecraft.client.KeyMapping key : client.options.keyHotbarSlots) {
-					while (key.consumeClick()) {
-						// consumed — hotbar is locked
-					}
-				}
+
+		// "HUD" button in the pause menu -> drag editor for all HUD elements
+		net.fabricmc.fabric.api.client.screen.v1.ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
+			if (screen instanceof net.minecraft.client.gui.screens.PauseScreen) {
+				net.fabricmc.fabric.api.client.screen.v1.Screens.getButtons(screen).add(
+						net.minecraft.client.gui.components.Button.builder(
+								net.minecraft.network.chat.Component.translatable("hud.superheroes.edit.open"),
+								b -> client.setScreen(new com.example.superheroes.client.screen.HudEditScreen()))
+								.bounds(scaledWidth - 78, 8, 70, 20)
+								.build());
 			}
 		});
 
@@ -191,16 +200,17 @@ public class SuperheroesClient implements ClientModInitializer {
 							com.example.superheroes.ability.AbilityIds.RAIDEN_SWORD_DRAW));
 				}
 			}
-			while (ModKeys.HOTBAR_LOCK.consumeClick()) {
-				if (client.player != null && ClientHeroState.data().hasHero()) {
-					HotbarLockState.toggle();
-				}
+			// Raw GLFW polling: vanilla KeyMapping.MAP allows one mapping per key, so our
+			// L / 3 / 4 / 5 binds conflict with vanilla and consumeClick() is unreliable.
+			RawKeys.drain(ModKeys.HOTBAR_LOCK);
+			if (RawKeys.pressed(ModKeys.HOTBAR_LOCK)
+					&& client.player != null && ClientHeroState.data().hasHero()) {
+				HotbarLockState.toggle();
 			}
 			for (int i = 0; i < ModKeys.ABILITY_SLOTS.length; i++) {
-				while (ModKeys.ABILITY_SLOTS[i].consumeClick()) {
-					if (client.player == null || !ClientHeroState.data().hasHero()) {
-						continue;
-					}
+				RawKeys.drain(ModKeys.ABILITY_SLOTS[i]);
+				if (RawKeys.pressed(ModKeys.ABILITY_SLOTS[i])
+						&& client.player != null && ClientHeroState.data().hasHero()) {
 					List<ResourceLocation> abilities = ClientAbilityFilter.visible();
 					if (i < abilities.size()) {
 						ClientPlayNetworking.send(new ActivateAbilityC2SPayload(abilities.get(i)));

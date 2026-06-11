@@ -64,7 +64,7 @@ public final class HomelanderHero implements Hero {
 
 	@Override
 	public ResourceKind getDefaultBinding(ResourceLocation abilityId) {
-		return abilityId.equals(AbilityIds.X_RAY) ? ResourceKind.MANA : ResourceKind.ENERGY;
+		return ResourceKind.ENERGY;
 	}
 
 	@Override
