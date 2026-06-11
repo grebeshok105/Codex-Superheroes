@@ -1,12 +1,9 @@
 package com.example.superheroes.client.hud;
 
 import com.example.superheroes.client.ClientHeroState;
-import com.example.superheroes.client.HotbarLockState;
-import net.minecraft.ChatFormatting;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 
@@ -59,16 +56,6 @@ public final class HotbarOverrideHud {
 				graphics.renderItem(stack, itemX, itemY);
 				graphics.renderItemDecorations(mc.font, stack, itemX, itemY);
 			}
-		}
-
-		// Lock indicator
-		if (HotbarLockState.showIndicator() || HotbarLockState.isLocked()) {
-			int lockX = hotbarX + 9 * (slotSize + gap) + HudScaler.scale(4);
-			String icon = HotbarLockState.isLocked() ? "\uD83D\uDD12" : "\uD83D\uDD13";
-			int lockColor = HotbarLockState.isLocked() ? 0xFFFF6666 : 0xFF66FF66;
-			Component lockComp = Component.literal(HotbarLockState.isLocked() ? "LOCKED" : "OPEN")
-					.withStyle(ChatFormatting.BOLD);
-			graphics.drawString(mc.font, lockComp, lockX, hotbarY + (slotSize - 8) / 2, lockColor, true);
 		}
 	}
 

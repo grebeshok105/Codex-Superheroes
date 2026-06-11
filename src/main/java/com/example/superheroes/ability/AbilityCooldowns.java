@@ -46,4 +46,15 @@ public final class AbilityCooldowns {
 	public static void clear(UUID id) {
 		MAP.remove(id);
 	}
+
+	/** Drops all cooldowns for the player and tells the client each one is over. */
+	public static void clearAndSync(ServerPlayer player) {
+		Map<ResourceLocation, Long> m = MAP.remove(player.getUUID());
+		if (m == null) {
+			return;
+		}
+		for (ResourceLocation abilityId : m.keySet()) {
+			ServerPlayNetworking.send(player, new AbilityCooldownS2CPayload(abilityId, 0));
+		}
+	}
 }

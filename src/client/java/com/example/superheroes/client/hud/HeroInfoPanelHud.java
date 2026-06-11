@@ -1,6 +1,7 @@
 package com.example.superheroes.client.hud;
 
 import com.example.superheroes.client.ClientAbilityCooldowns;
+import com.example.superheroes.client.ClientAbilityFilter;
 import com.example.superheroes.client.ClientHeroState;
 import com.example.superheroes.hero.Hero;
 import com.example.superheroes.hero.HeroHudConfig;
@@ -132,7 +133,7 @@ public final class HeroInfoPanelHud {
 		// HP row: heart + numbers + thin bar
 		float hp = lastDisplayedHp + (displayedHp - lastDisplayedHp) * partial;
 		float maxHp = mc.player.getMaxHealth();
-		drawHpRow(graphics, mc, contentX, cursorY, contentW, hp, maxHp);
+		drawHpRow(graphics, mc, contentX, cursorY, contentW, hp, maxHp, theme);
 		cursorY += HudScaler.scale(15);
 
 		// Energy: single themed row — icon + label + percent, segmented bar below
@@ -173,13 +174,16 @@ public final class HeroInfoPanelHud {
 					applyAlpha(theme.heroNameColor(), 200, 0.8f), true);
 			passiveY += HudScaler.scale(10);
 
-			int maxDisplay = Math.min(passiveCount, 5);
+			int maxDisplay = Math.min(passiveCount, 6);
 			int iconSz = HudScaler.scale(passiveCount > 5 ? 8 : 10);
 			int gap = HudScaler.scale(passiveCount > 5 ? 2 : 4);
 			for (int i = 0; i < maxDisplay; i++) {
 				int ix = passiveSectionX + i * (iconSz + gap + HudScaler.scale(2));
 				HudUtil.roundedRectFill(graphics, ix, passiveY, iconSz, iconSz, 0x44000000);
 				HudUtil.roundedRectBorder(graphics, ix, passiveY, iconSz, iconSz, applyAlpha(theme.energyIcon(), 180, 0.6f));
+				int inset = Math.max(1, iconSz / 5);
+				HudIcons.drawPassiveIcon(graphics, ix + inset, passiveY + inset, iconSz - inset * 2,
+						PassiveIcons.glyph(heroId, i), applyAlpha(theme.energyIcon(), 235, 1f));
 			}
 		}
 	}
@@ -236,7 +240,7 @@ public final class HeroInfoPanelHud {
 		graphics.disableScissor();
 	}
 
-	private static void drawHpRow(GuiGraphics g, Minecraft mc, int x, int y, int w, float hp, float maxHp) {
+	private static void drawHpRow(GuiGraphics g, Minecraft mc, int x, int y, int w, float hp, float maxHp, HeroTheme theme) {
 		int iconSize = HudScaler.scale(8);
 		int textOffset = iconSize + HudScaler.scale(2);
 		g.drawString(mc.font, "\u2764", x, y, 0xFFFF5555, true);
@@ -250,13 +254,13 @@ public final class HeroInfoPanelHud {
 		float pctHp = maxHp > 0 ? Math.min(1f, hp / maxHp) : 0f;
 		int fillW = (int) (barW * pctHp);
 		if (fillW > 0) {
-			g.fill(x + textOffset, barY, x + textOffset + fillW, barY + barH, 0xFFFF4444);
+			g.fill(x + textOffset, barY, x + textOffset + fillW, barY + barH, theme.energyBright());
 		}
 	}
 
 	private static void drawReadyList(GuiGraphics g, Minecraft mc, int x, int y, int w,
 			ResourceLocation heroId, HeroHudConfig hudConfig, HeroTheme theme) {
-		List<ResourceLocation> abilities = ClientHeroState.abilities();
+		List<ResourceLocation> abilities = ClientAbilityFilter.visibleFor(ClientHeroState.abilities(), heroId);
 		if (abilities.isEmpty()) {
 			return;
 		}
@@ -274,6 +278,13 @@ public final class HeroInfoPanelHud {
 			int cd = ClientAbilityCooldowns.remainingTicks(aid);
 			boolean ready = cd <= 0;
 			boolean isUlt = hudConfig.hasUltimate() && i == abilities.size() - 1;
+			boolean active = ClientHeroState.data().activeAbilities().contains(aid);
+
+			// soft theme-tinted highlight behind currently active (toggled-on) abilities
+			if (active) {
+				HudUtil.roundedRectFill(g, ix - HudScaler.scale(2), iy - HudScaler.scale(1),
+						colW - HudScaler.scale(2), lineH, applyAlpha(theme.energyBright(), 70, 1f));
+			}
 
 			// ability icon (replaces the old status dot); greyed out while on cooldown
 			int iconSz = HudScaler.scale(8);

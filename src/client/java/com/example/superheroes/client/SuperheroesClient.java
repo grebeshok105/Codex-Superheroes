@@ -15,7 +15,6 @@ import com.example.superheroes.client.fx.ScreenShakeManager;
 import com.example.superheroes.client.fx.WallImpactDebrisManager;
 import com.example.superheroes.client.network.ClientNetworking;
 import com.example.superheroes.client.render.HomelanderBossRenderer;
-import com.example.superheroes.client.render.IronManEspRenderer;
 import com.example.superheroes.client.render.RemOniHornFeatureRenderer;
 import com.example.superheroes.entity.ModEntities;
 import com.example.superheroes.item.ModItems;
@@ -57,7 +56,6 @@ public class SuperheroesClient implements ClientModInitializer {
 		RepulsorBeamRenderer.register();
 		CosmicBeamRenderer.register();
 		LocalLaserOverlay.register();
-		IronManEspRenderer.register();
 		EntityRendererRegistry.register(EntityType.LIGHTNING_BOLT, SuperheroLightningRenderer::new);
 		EntityRendererRegistry.register(ModEntities.HOMELANDER_BOSS, HomelanderBossRenderer::new);
 		EntityRendererRegistry.register(ModEntities.SHADOW_SOLDIER, com.example.superheroes.client.render.ShadowSoldierRenderer::new);
@@ -209,16 +207,10 @@ public class SuperheroesClient implements ClientModInitializer {
 					com.example.superheroes.client.hud.AbilitiesTooltipHud.toggleVisible();
 				}
 			}
-			RawKeys.drain(ModKeys.HOTBAR_LOCK);
-			if (RawKeys.pressed(ModKeys.HOTBAR_LOCK)
-					&& client.player != null && ClientHeroState.data().hasHero()) {
-				HotbarLockState.toggle();
-			}
 			for (int i = 0; i < ModKeys.ABILITY_SLOTS.length; i++) {
 				RawKeys.drain(ModKeys.ABILITY_SLOTS[i]);
-				// Ability digits work ONLY in lock mode; without the lock 3/4/5 are plain hotbar slots.
+				// Ability keys always fire; 3/4/5 also switch hotbar slots — intended.
 				if (RawKeys.pressed(ModKeys.ABILITY_SLOTS[i])
-						&& HotbarLockState.isLocked()
 						&& client.player != null && ClientHeroState.data().hasHero()) {
 					List<ResourceLocation> abilities = ClientAbilityFilter.visible();
 					if (i < abilities.size()) {

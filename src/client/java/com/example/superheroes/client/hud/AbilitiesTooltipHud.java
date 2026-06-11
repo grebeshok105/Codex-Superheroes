@@ -1,17 +1,11 @@
 package com.example.superheroes.client.hud;
 
-import com.example.superheroes.ModId;
 import com.example.superheroes.ability.AbilityIds;
 import com.example.superheroes.client.ClientAbilityCooldowns;
-import com.example.superheroes.client.ClientDoomsdayState;
+import com.example.superheroes.client.ClientAbilityFilter;
 import com.example.superheroes.client.ClientHeroState;
 import com.example.superheroes.client.ClientMadnessState;
-import com.example.superheroes.client.ClientRemDemonismState;
-import com.example.superheroes.client.ClientThanosState;
 import com.example.superheroes.hero.HeroTheme;
-import com.example.superheroes.hero.RemHero;
-import com.example.superheroes.hero.ThanosHero;
-import com.example.superheroes.item.infinity.InfinityStoneType;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
@@ -107,7 +101,7 @@ public final class AbilitiesTooltipHud {
 		if (heroId == null) {
 			return;
 		}
-		List<ResourceLocation> abilities = filterByTier(ClientHeroState.abilities(), heroId);
+		List<ResourceLocation> abilities = ClientAbilityFilter.visibleFor(ClientHeroState.abilities(), heroId);
 		int passiveCount = AbilityDescriptions.passiveCount(heroId);
 
 		int togglesCount = 0;
@@ -401,70 +395,5 @@ public final class AbilitiesTooltipHud {
 	private static float smoothstep(float x) {
 		float c = Math.max(0f, Math.min(1f, x));
 		return c * c * (3f - 2f * c);
-	}
-
-	private static List<ResourceLocation> filterByTier(List<ResourceLocation> base, ResourceLocation heroId) {
-		if (ModId.of("doomsday").equals(heroId)) {
-			int tier = ClientDoomsdayState.tier();
-			java.util.ArrayList<ResourceLocation> out = new java.util.ArrayList<>(base.size());
-			for (ResourceLocation id : base) {
-				if (isDoomsdayUnlocked(id, tier)) out.add(id);
-			}
-			return out;
-		}
-		if (ThanosHero.ID.equals(heroId)) {
-			java.util.ArrayList<ResourceLocation> out = new java.util.ArrayList<>(base.size());
-			for (ResourceLocation id : base) {
-				if (isThanosUnlocked(id)) out.add(id);
-			}
-			return out;
-		}
-		if (RemHero.ID.equals(heroId)) {
-			boolean demonism = isRemDemonismActive();
-			java.util.ArrayList<ResourceLocation> out = new java.util.ArrayList<>(base.size());
-			for (ResourceLocation id : base) {
-				if (isRemVisible(id, demonism)) out.add(id);
-			}
-			return out;
-		}
-		return base;
-	}
-
-	private static boolean isThanosUnlocked(ResourceLocation id) {
-		if (ThanosHero.isSnapAbility(id)) return ClientThanosState.hasAllStones();
-		InfinityStoneType req = ThanosHero.getRequiredStoneFor(id);
-		if (req == null) return true;
-		return ClientThanosState.hasStone(req);
-	}
-
-	private static boolean isDoomsdayUnlocked(ResourceLocation id, int tier) {
-		if (AbilityIds.DOOMSDAY_SMASH.equals(id)) return tier >= 2;
-		if (AbilityIds.DOOMSDAY_ROAR.equals(id)) return tier >= 3;
-		if (AbilityIds.DOOMSDAY_BONE_SPIKE.equals(id)) return tier >= 4;
-		if (AbilityIds.DOOMSDAY_CHARGE_TACKLE.equals(id)) return tier >= 5;
-		if (AbilityIds.DOOMSDAY_BERSERK.equals(id)) return tier >= 6;
-		if (AbilityIds.DOOMSDAY_DOOM_GRIP.equals(id)) return tier >= 7;
-		return true;
-	}
-
-	private static boolean isRemDemonismActive() {
-		if (Minecraft.getInstance().player == null) {
-			return false;
-		}
-		return ClientRemDemonismState.isActive(Minecraft.getInstance().player.getUUID());
-	}
-
-	private static boolean isRemDemonOnly(ResourceLocation id) {
-		return AbilityIds.REM_MORNING_STAR.equals(id)
-				|| AbilityIds.REM_MACE_CRATER.equals(id)
-				|| AbilityIds.REM_ONI_KICK.equals(id)
-				|| AbilityIds.REM_HUMA_ICE_SPIKES.equals(id);
-	}
-
-	private static boolean isRemVisible(ResourceLocation id, boolean demonism) {
-		if (AbilityIds.REM_ONI_RAGE.equals(id) && demonism) {
-			return false;
-		}
-		return !isRemDemonOnly(id) || demonism;
 	}
 }

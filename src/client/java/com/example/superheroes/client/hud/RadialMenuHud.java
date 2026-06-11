@@ -1,15 +1,11 @@
 package com.example.superheroes.client.hud;
 
-import com.example.superheroes.ModId;
 import com.example.superheroes.ability.AbilityIds;
 import com.example.superheroes.client.ClientAbilityCooldowns;
-import com.example.superheroes.client.ClientDoomsdayState;
+import com.example.superheroes.client.ClientAbilityFilter;
 import com.example.superheroes.client.ClientHeroState;
-import com.example.superheroes.client.ClientMadnessState;
-import com.example.superheroes.client.ClientRemDemonismState;
 import com.example.superheroes.client.ClientThanosState;
 import com.example.superheroes.client.ModKeys;
-import com.example.superheroes.hero.RemHero;
 import com.example.superheroes.hero.ThanosHero;
 import com.example.superheroes.item.ModItems;
 import com.example.superheroes.item.infinity.InfinityStoneType;
@@ -147,59 +143,7 @@ public final class RadialMenuHud {
 	}
 
 	private static List<ResourceLocation> visibleAbilities() {
-		List<ResourceLocation> base = ClientHeroState.abilities();
-		boolean isDoomsday = ModId.of("doomsday").equals(ClientHeroState.heroId());
-		boolean isThanos = ThanosHero.ID.equals(ClientHeroState.heroId());
-		boolean isRem = RemHero.ID.equals(ClientHeroState.heroId());
-		int doomsdayTier = isDoomsday ? ClientDoomsdayState.tier() : 0;
-		boolean remDemonism = isRemDemonismActive();
-		java.util.ArrayList<ResourceLocation> out = new java.util.ArrayList<>(base.size());
-		for (ResourceLocation id : base) {
-			if (!ClientMadnessState.isMadness() && AbilityIds.COUNTER_STRIKE.equals(id)) continue;
-			if (isDoomsday && !isDoomsdayUnlocked(id, doomsdayTier)) continue;
-			if (isThanos && !isThanosUnlocked(id)) continue;
-			if (isRem && !isRemVisible(id, remDemonism)) continue;
-			out.add(id);
-		}
-		return out;
-	}
-
-	private static boolean isThanosUnlocked(ResourceLocation id) {
-		if (ThanosHero.isSnapAbility(id)) return ClientThanosState.hasAllStones();
-		InfinityStoneType req = ThanosHero.getRequiredStoneFor(id);
-		if (req == null) return true;
-		return ClientThanosState.hasStone(req);
-	}
-
-	private static boolean isDoomsdayUnlocked(ResourceLocation id, int tier) {
-		if (AbilityIds.DOOMSDAY_SMASH.equals(id)) return tier >= 2;
-		if (AbilityIds.DOOMSDAY_ROAR.equals(id)) return tier >= 3;
-		if (AbilityIds.DOOMSDAY_BONE_SPIKE.equals(id)) return tier >= 4;
-		if (AbilityIds.DOOMSDAY_CHARGE_TACKLE.equals(id)) return tier >= 5;
-		if (AbilityIds.DOOMSDAY_BERSERK.equals(id)) return tier >= 6;
-		if (AbilityIds.DOOMSDAY_DOOM_GRIP.equals(id)) return tier >= 7;
-		return true;
-	}
-
-	private static boolean isRemDemonismActive() {
-		if (Minecraft.getInstance().player == null) {
-			return false;
-		}
-		return ClientRemDemonismState.isActive(Minecraft.getInstance().player.getUUID());
-	}
-
-	private static boolean isRemDemonOnly(ResourceLocation id) {
-		return AbilityIds.REM_MORNING_STAR.equals(id)
-				|| AbilityIds.REM_MACE_CRATER.equals(id)
-				|| AbilityIds.REM_ONI_KICK.equals(id)
-				|| AbilityIds.REM_HUMA_ICE_SPIKES.equals(id);
-	}
-
-	private static boolean isRemVisible(ResourceLocation id, boolean demonism) {
-		if (AbilityIds.REM_ONI_RAGE.equals(id) && demonism) {
-			return false;
-		}
-		return !isRemDemonOnly(id) || demonism;
+		return ClientAbilityFilter.visibleFor(ClientHeroState.abilities(), ClientHeroState.heroId());
 	}
 
 	// Animation state
@@ -250,12 +194,6 @@ public final class RadialMenuHud {
 		float openScale = 0.86f + 0.14f * eased;
 		graphics.pose().scale(openScale, openScale, 1f);
 		graphics.pose().translate(-cx, -cy, 0);
-
-		// Soft vignette behind the wheel
-		int vigR = OUTER_R + 46;
-		int vigA = (int) (0x55 * eased);
-		graphics.fillGradient(cx - vigR, cy - vigR, cx + vigR, cy + vigR,
-				(vigA << 24) | 0x05070F, 0x00040610);
 
 		float per = (float) (2 * Math.PI / n);
 		// angular gap between segments so arcs read as separate "petals"
@@ -312,7 +250,7 @@ public final class RadialMenuHud {
 			boolean isSel = i == selected;
 			int cdTicks = ClientAbilityCooldowns.remainingTicks(aid);
 
-			int iconSize = 16 + Math.round(hover * 6f);
+			int iconSize = 20 + Math.round(hover * 6f);
 			int half = iconSize / 2;
 			int accent = isSel ? theme.radialTextActive() : applyAlpha(theme.energyIcon(), 230, 0.9f);
 			AbilityIcons.draw(graphics, aid, ix - half, iy - half - 4, iconSize, accent);
@@ -558,8 +496,8 @@ public final class RadialMenuHud {
 	}
 
 	private static Component keyForSlot(int index) {
-		if (ModKeys.ABILITY_SLOTS != null && index < ModKeys.ABILITY_SLOTS.length) {
-			return ModKeys.ABILITY_SLOTS[index].getTranslatedKeyMessage();
+		if (index < ModKeys.SLOT_LABELS.length) {
+			return Component.literal(ModKeys.SLOT_LABELS[index]);
 		}
 		return Component.literal(String.valueOf(index + 1));
 	}
