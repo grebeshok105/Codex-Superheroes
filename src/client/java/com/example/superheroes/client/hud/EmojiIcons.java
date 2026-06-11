@@ -11,9 +11,10 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * iOS-стиль эмодзи (официальные Apple-ассеты 64x64 в assets/superheroes/textures/gui/emoji/)
- * для худа: пассивки и иконки статов рисуются настоящими эмодзи вместо векторных глифов.
- * Текстурам включается линейная фильтрация — при любом размере края гладкие, без «рваных» пикселей.
+ * iOS-стиль эмодзи (официальные Apple-ассеты 64x64 в assets/superheroes/textures/gui/emoji/,
+ * извлечены из шрифта Apple Color Emoji — samuelngs/apple-emoji-ttf) для худа: пассивки и
+ * иконки статов рисуются настоящими эмодзи вместо векторных глифов. В текстурах гарантирован
+ * прозрачный отступ 3px по краям, чтобы линейная фильтрация не «резала» и не грязнила края.
  */
 public final class EmojiIcons {
 	private static final int TEX_SIZE = 64;
