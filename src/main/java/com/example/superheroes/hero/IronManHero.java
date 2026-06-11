@@ -52,7 +52,7 @@ public final class IronManHero implements Hero {
 	@Override
 	public List<ResourceLocation> getAbilities() {
 		return List.of(AbilityIds.IRON_MAN_FLIGHT, AbilityIds.SUPERSONIC, AbilityIds.REPULSOR, AbilityIds.UNIBEAM,
-				AbilityIds.IRON_MAN_HULKBUSTER, AbilityIds.IRON_MAN_SUIT_SWITCH, AbilityIds.IRON_MAN_LEGION);
+				AbilityIds.IRON_MAN_NANO_FORM, AbilityIds.IRON_MAN_SUIT_SWITCH, AbilityIds.IRON_MAN_LEGION);
 	}
 
 	@Override
@@ -70,6 +70,9 @@ public final class IronManHero implements Hero {
 	public void removePassives(Player player) {
 		HeroAttributes.IRON_MAN.remove(player);
 		com.example.superheroes.ability.ironman.IronManSuitStats.clear(player);
+		if (player instanceof ServerPlayer sp) {
+			com.example.superheroes.ability.ironman.IronManNanoFormController.clear(sp);
+		}
 	}
 
 	@Override

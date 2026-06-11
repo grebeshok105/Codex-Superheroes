@@ -89,6 +89,8 @@ public class SuperheroesClient implements ClientModInitializer {
 			if (entityRenderer instanceof PlayerRenderer playerRenderer) {
 				registrationHelper.register(new RemOniHornFeatureRenderer(playerRenderer));
 				registrationHelper.register(new com.example.superheroes.client.render.ReinhardScabbardLayer(playerRenderer));
+				registrationHelper.register(new com.example.superheroes.client.render.IronManNanoFormLayer(playerRenderer));
+				registrationHelper.register(new com.example.superheroes.client.render.NanoSuitUpLayer(playerRenderer));
 			}
 		});
 		ParticleFactoryRegistry.getInstance().register(ModParticles.TRANSFORM_SPARK, EndRodParticle.Provider::new);
@@ -182,6 +184,7 @@ public class SuperheroesClient implements ClientModInitializer {
 		});
 
 		ClientTickEvents.START_CLIENT_TICK.register(SuperheroesClient::tickHeroMeleeCharge);
+		ClientTickEvents.END_CLIENT_TICK.register(com.example.superheroes.client.ClientNanoSuitUpState::clientTick);
 		ClientTickEvents.END_CLIENT_TICK.register(com.example.superheroes.client.hud.JarvisDetectionHud::tick);
 
 		// "HUD" button in the pause menu -> drag editor for all HUD elements
@@ -252,6 +255,8 @@ public class SuperheroesClient implements ClientModInitializer {
 
 		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
 			com.example.superheroes.client.ClientThanosState.clear();
+			com.example.superheroes.client.ClientNanoFormState.clear();
+			com.example.superheroes.client.ClientThinkMarkState.clear();
 			com.example.superheroes.client.hud.JarvisDetectionHud.clear();
 			ClientFlightState.clearAll();
 			ClientRemDemonismState.clearAll();

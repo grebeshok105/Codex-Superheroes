@@ -28,6 +28,11 @@ public abstract class AbstractClientPlayerSkinMixin {
 	@Inject(method = "getSkin", at = @At("RETURN"), cancellable = true)
 	private void superheroes$forceHeroSkin(CallbackInfoReturnable<PlayerSkin> cir) {
 		AbstractClientPlayer self = (AbstractClientPlayer) (Object) this;
+		// Пока идёт нано-сборка костюма, геройский скин не подменяется:
+		// броня постепенно проявляется слоем NanoSuitUpLayer поверх игрока.
+		if (com.example.superheroes.client.ClientNanoSuitUpState.suppressHeroSkin(self.getUUID())) {
+			return;
+		}
 		ResourceLocation heroId = superheroes$heroIdFor(self);
 		if (heroId == null) {
 			return;

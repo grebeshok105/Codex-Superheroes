@@ -35,6 +35,10 @@ public abstract class PlayerRendererMixin {
 		if (player != Minecraft.getInstance().player) {
 			return null;
 		}
+		// Во время нано-сборки рука от первого лица остаётся «голой» — броня ещё материализуется.
+		if (com.example.superheroes.client.ClientNanoSuitUpState.suppressHeroSkin(player.getUUID())) {
+			return null;
+		}
 		if (!ClientHeroState.data().hasHero()) {
 			return null;
 		}

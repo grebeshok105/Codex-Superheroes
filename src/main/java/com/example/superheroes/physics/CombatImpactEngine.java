@@ -94,6 +94,19 @@ public final class CombatImpactEngine {
 			debrisIntensity = 0.0f;
 		}
 
+		// Нано-супермолот Mark 85: урон НЕ растёт, зато цель улетает как из пушки
+		// и пробивает стены телом (ballistic launch) даже с незаряженного удара.
+		if (com.example.superheroes.hero.IronManHero.ID.equals(heroId)
+				&& attacker.getAttachedOrCreate(com.example.superheroes.attachment.ModAttachments.NANO_FORM)
+						== com.example.superheroes.ability.ironman.IronManNanoForm.HAMMER.index()) {
+			knockback *= 2.4;
+			upward = Math.min(0.9, upward + 0.25);
+			launchPower = Math.max(launchPower * 2.0, 110.0);
+			shakeRadius = Math.max(shakeRadius, 26.0);
+			shakeIntensity = Math.max(shakeIntensity, 1.4f);
+			debrisIntensity = Math.max(debrisIntensity, 0.9f);
+		}
+
 		return new ImpactProfile(heroId, tier, style, direction, damage, knockback, upward,
 				launchPower, variance, shakeRadius, shakeIntensity, debrisIntensity);
 	}

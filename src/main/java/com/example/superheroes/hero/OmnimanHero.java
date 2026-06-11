@@ -78,6 +78,7 @@ public final class OmnimanHero implements Hero {
 		return List.of(
 				AbilityIds.FLIGHT,
 				AbilityIds.OMNIMAN_VILTRUMITE_RUSH,
+				AbilityIds.OMNIMAN_THINK_MARK,
 				AbilityIds.OMNIMAN_WORLD_BREAKER,
 				AbilityIds.VILTRUMITE_RECOVERY);
 	}
@@ -104,6 +105,7 @@ public final class OmnimanHero implements Hero {
 		if (player instanceof ServerPlayer sp) {
 			OmnimanMomentumController.clear(sp);
 			OmnimanViltrumiteRushAbility.clear(sp);
+			com.example.superheroes.ability.OmnimanThinkMarkAbility.clear(sp);
 		}
 	}
 

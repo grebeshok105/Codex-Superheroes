@@ -57,6 +57,13 @@ public final class ModAttachments {
 			.copyOnDeath()
 			.buildAndRegister(ModId.of("suit_variant"));
 
+	/** Текущая нано-форма Железного Человека: 0 — нет, 1 — клинок, 2 — супермолот, 3 — щит. */
+	public static final AttachmentType<Integer> NANO_FORM = AttachmentRegistry.<Integer>builder()
+			.initializer(() -> 0)
+			.persistent(Codec.INT)
+			.copyOnDeath()
+			.buildAndRegister(ModId.of("nano_form"));
+
 	private ModAttachments() {
 	}
 

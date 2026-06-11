@@ -23,11 +23,12 @@ public final class AbilityRegistry {
 	public static final GuardiansBreakerAbility GUARDIANS_BREAKER = new GuardiansBreakerAbility();
 	public static final OmnimanViltrumiteRushAbility OMNIMAN_VILTRUMITE_RUSH = new OmnimanViltrumiteRushAbility();
 	public static final OmnimanWorldBreakerAbility OMNIMAN_WORLD_BREAKER = new OmnimanWorldBreakerAbility();
+	public static final OmnimanThinkMarkAbility OMNIMAN_THINK_MARK = new OmnimanThinkMarkAbility();
 	public static final IronManFlightAbility IRON_MAN_FLIGHT = new IronManFlightAbility();
 	public static final SupersonicAbility SUPERSONIC = new SupersonicAbility();
 	public static final RepulsorAbility REPULSOR = new RepulsorAbility();
 	public static final UnibeamAbility UNIBEAM = new UnibeamAbility();
-	public static final IronManHulkbusterAbility IRON_MAN_HULKBUSTER = new IronManHulkbusterAbility();
+	public static final com.example.superheroes.ability.ironman.IronManNanoFormAbility IRON_MAN_NANO_FORM = new com.example.superheroes.ability.ironman.IronManNanoFormAbility();
 	public static final com.example.superheroes.ability.ironman.IronManSuitSwitchAbility IRON_MAN_SUIT_SWITCH = new com.example.superheroes.ability.ironman.IronManSuitSwitchAbility();
 	public static final com.example.superheroes.ability.ironman.IronManLegionAbility IRON_MAN_LEGION = new com.example.superheroes.ability.ironman.IronManLegionAbility();
 
@@ -151,11 +152,12 @@ public final class AbilityRegistry {
 		register(GUARDIANS_BREAKER);
 		register(OMNIMAN_VILTRUMITE_RUSH);
 		register(OMNIMAN_WORLD_BREAKER);
+		register(OMNIMAN_THINK_MARK);
 		register(IRON_MAN_FLIGHT);
 		register(SUPERSONIC);
 		register(REPULSOR);
 		register(UNIBEAM);
-		register(IRON_MAN_HULKBUSTER);
+		register(IRON_MAN_NANO_FORM);
 		register(IRON_MAN_SUIT_SWITCH);
 		register(IRON_MAN_LEGION);
 		register(LION_HEART);
