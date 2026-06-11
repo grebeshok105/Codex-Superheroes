@@ -738,7 +738,6 @@
 	"hud.superheroes.jarvis.detect.player": "Player: %s",
 	"hud.superheroes.jarvis.detect.hero": "Hero: %s",
 	"hud.superheroes.jarvis.detect.distance": "Distance: ~%s m",
-
 	"entity.superheroes.horde_crawler": "Crawler",
 	"entity.superheroes.horde_lurker": "Lurker",
 	"entity.superheroes.horde_spitter": "Spitter",
@@ -759,16 +758,14 @@
 	"entity.superheroes.horde_leviathan": "Leviathan",
 	"entity.superheroes.horde_infected_homelander": "Infected Homelander",
 	"entity.superheroes.iron_legion_drone": "Iron Legionnaire",
-
 	"item.superheroes.horde_crystal": "Horde Crystal",
-
 	"ability.superheroes.iron_man_suit_switch": "Suit Switch",
 	"ability.superheroes.iron_man_suit_switch.desc": "Cycle Stark armor variants — the suit repaints instantly, including your first-person hand.",
 	"ability.superheroes.iron_man_legion": "Iron Legion",
 	"ability.superheroes.iron_man_legion.desc": "Call in a squad of Iron Legion drones that scream around you at breakneck speed within 35 blocks and shred anything hostile for 30 seconds, then fly away.",
-
 	"subtitles.superheroes.ironman.jarvis_detect_excited": "JARVIS: Critical threat!",
 	"subtitles.superheroes.ironman.jarvis_diagnostic": "JARVIS: Diagnostic",
 	"subtitles.superheroes.ironman.jarvis_outdated_suit": "JARVIS: Outdated suit",
-	"subtitles.superheroes.ironman.jarvis_mark85_preset": "JARVIS: Mark 85 preset"
+	"subtitles.superheroes.ironman.jarvis_mark85_preset": "JARVIS: Mark 85 preset",
+	"subtitles.superheroes.ironman.jarvis_legion_launch": "JARVIS: Legion deployed"
 }
