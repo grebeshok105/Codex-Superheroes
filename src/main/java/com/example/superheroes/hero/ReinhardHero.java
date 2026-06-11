@@ -90,4 +90,9 @@ public final class ReinhardHero implements Hero {
 	public HeroTheme getTheme() {
 		return HeroTheme.REINHARD;
 	}
+
+	@Override
+	public HeroHudConfig getHudConfig() {
+		return HeroHudConfig.REINHARD;
+	}
 }

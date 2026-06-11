@@ -141,4 +141,9 @@ public final class InvincibleHero implements Hero {
 			level.playSound(null, cx, cy, cz, SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 0.8f, 1.2f);
 		}
 	}
+
+	@Override
+	public HeroHudConfig getHudConfig() {
+		return HeroHudConfig.INVINCIBLE;
+	}
 }

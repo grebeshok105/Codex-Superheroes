@@ -122,4 +122,9 @@ public final class ScaramoucheHero implements Hero {
 	public HeroTheme getTheme() {
 		return THEME;
 	}
+
+	@Override
+	public HeroHudConfig getHudConfig() {
+		return HeroHudConfig.SCARAMOUCHE;
+	}
 }

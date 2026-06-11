@@ -85,4 +85,9 @@ public final class RaidenHero implements Hero {
 	public HeroTheme getTheme() {
 		return HeroTheme.RAIDEN;
 	}
+
+	@Override
+	public HeroHudConfig getHudConfig() {
+		return HeroHudConfig.RAIDEN;
+	}
 }

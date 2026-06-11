@@ -84,4 +84,9 @@ public final class GokuHero implements Hero {
 	public HeroTheme getTheme() {
 		return HeroTheme.GOKU;
 	}
+
+	@Override
+	public HeroHudConfig getHudConfig() {
+		return HeroHudConfig.GOKU;
+	}
 }

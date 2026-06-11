@@ -117,4 +117,9 @@ public final class ATrainHero implements Hero {
 	public HeroTheme getTheme() {
 		return THEME;
 	}
+
+	@Override
+	public HeroHudConfig getHudConfig() {
+		return HeroHudConfig.A_TRAIN;
+	}
 }

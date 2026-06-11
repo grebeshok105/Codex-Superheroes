@@ -83,4 +83,9 @@ public final class NarutoHero implements Hero {
 	public HeroTheme getTheme() {
 		return HeroTheme.NARUTO;
 	}
+
+	@Override
+	public HeroHudConfig getHudConfig() {
+		return HeroHudConfig.NARUTO;
+	}
 }

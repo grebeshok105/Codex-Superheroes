@@ -140,4 +140,9 @@ public final class HomelanderHero implements Hero {
 			}
 		}
 	}
+
+	@Override
+	public HeroHudConfig getHudConfig() {
+		return HeroHudConfig.HOMELANDER;
+	}
 }

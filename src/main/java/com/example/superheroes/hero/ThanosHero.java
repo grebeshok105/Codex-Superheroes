@@ -140,4 +140,9 @@ public final class ThanosHero implements Hero {
 	public HeroTheme getTheme() {
 		return HeroTheme.THANOS;
 	}
+
+	@Override
+	public HeroHudConfig getHudConfig() {
+		return HeroHudConfig.THANOS;
+	}
 }

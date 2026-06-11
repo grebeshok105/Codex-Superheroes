@@ -166,8 +166,24 @@ public final class RadialMenuHud {
 		return !isRemDemonOnly(id) || demonism;
 	}
 
+	// Redesign: animation state
+	private static float openProgress = 0f;
+	private static float lastOpenProgress = 0f;
+	private static final int OPEN_ANIM_TICKS = 5;
+
+	public static void animTick() {
+		lastOpenProgress = openProgress;
+		if (open) {
+			openProgress = Math.min(1f, openProgress + 1f / OPEN_ANIM_TICKS);
+		} else {
+			openProgress = Math.max(0f, openProgress - 1f / (OPEN_ANIM_TICKS / 2f));
+		}
+	}
+
 	public static void render(GuiGraphics graphics, DeltaTracker tracker) {
-		if (!open) {
+		float partial = tracker.getGameTimeDeltaPartialTick(false);
+		float anim = lastOpenProgress + (openProgress - lastOpenProgress) * partial;
+		if (anim <= 0.001f) {
 			return;
 		}
 		List<ResourceLocation> abilities = visibleAbilities();
@@ -180,9 +196,33 @@ public final class RadialMenuHud {
 		int n = abilities.size();
 		HeroTheme theme = ClientHeroState.theme();
 		boolean isThanos = ThanosHero.ID.equals(ClientHeroState.heroId());
-		drawBackplate(graphics, cx, cy);
+
+		float eased = HudAnimator.smoothstep(anim);
+
+		// Scale transform for open animation
+		graphics.pose().pushPose();
+		graphics.pose().translate(cx, cy, 0);
+		graphics.pose().scale(eased, eased, 1f);
+		graphics.pose().translate(-cx, -cy, 0);
+
+		// Background: layered dark circles
+		int alphaOuter = (int) (0x44 * eased);
+		int alphaInner = (int) (0x88 * eased);
+		int outer = BACKPLATE_RADIUS + 40;
+		graphics.fillGradient(cx - outer, cy - outer, cx + outer, cy + outer,
+				(alphaOuter << 24) | 0x060814, 0x00040614);
+		graphics.fillGradient(cx - BACKPLATE_RADIUS, cy - BACKPLATE_RADIUS,
+				cx + BACKPLATE_RADIUS, cy + BACKPLATE_RADIUS,
+				(alphaInner << 24) | 0x101422, (alphaOuter << 24) | 0x050710);
+
+		// Thin ring around backplate
+		int ringColor = applyAlpha(theme.radialBorderIdle(), (int) (200 * eased), 0.4f);
+		drawRing(graphics, cx, cy, BACKPLATE_RADIUS - 2, 1, ringColor);
+
+		// Cursor line + dot
 		drawCursor(graphics, mc, cx, cy, theme);
-		drawHub(graphics, cx, cy, theme);
+
+		// Sector-style slots
 		for (int i = 0; i < n; i++) {
 			double angle = (i * 2 * Math.PI / n) - Math.PI / 2;
 			int x = cx + (int) (Math.cos(angle) * ITEM_RADIUS);
@@ -196,21 +236,109 @@ public final class RadialMenuHud {
 			int slotWidth = Math.max(SLOT_MIN_WIDTH, textWidth + SLOT_PADDING_X * 2);
 			int slotX = x - slotWidth / 2;
 			int slotY = y - SLOT_HEIGHT / 2;
+
+			// Ready halo for Reinhard sword draw
 			boolean swordDrawReady = AbilityIds.REINHARD_SWORD_DRAW.equals(aid)
 					&& !ClientHeroState.data().isActive(AbilityIds.REINHARD_SWORD_DRAW)
 					&& com.example.superheroes.client.ClientReinhardSwordGateState.ready();
 			if (swordDrawReady) {
 				drawReadyHalo(graphics, slotX, slotY, slotWidth, SLOT_HEIGHT);
 			}
-			drawSlot(graphics, slotX, slotY, slotWidth, SLOT_HEIGHT, active, cooldownTicks > 0, theme);
-			graphics.drawCenteredString(mc.font, name, x, y - 9,
-					cooldownTicks > 0 ? 0xFFA7AAB8 : (active ? theme.radialTextActive() : COLOR_TEXT_IDLE));
+
+			// Sector slot with glass effect
+			drawSectorSlot(graphics, slotX, slotY, slotWidth, SLOT_HEIGHT, active, cooldownTicks > 0, theme);
+
+			// Ability name
+			int nameColor = cooldownTicks > 0 ? 0xFFA7AAB8 : (active ? theme.radialTextActive() : COLOR_TEXT_IDLE);
+			graphics.drawCenteredString(mc.font, name, x, y - 9, nameColor);
+
+			// Key / cooldown
 			graphics.drawCenteredString(mc.font, cooldownTicks > 0 ? cooldownText(cooldownTicks) : key, x, y + 3,
 					cooldownTicks > 0 ? COLOR_COOLDOWN : (active ? theme.radialKeyActive() : COLOR_KEY_IDLE));
+
+			// Thanos stone badge
 			if (isThanos) {
 				drawThanosStoneBadge(graphics, mc, aid, x, slotY);
 			}
 		}
+
+		// Hub (center) with hero name
+		drawHubRedesigned(graphics, mc, cx, cy, theme);
+
+		graphics.pose().popPose();
+	}
+
+	private static void drawHubRedesigned(GuiGraphics graphics, Minecraft mc, int cx, int cy, HeroTheme theme) {
+		int hubSize = 28;
+		// Glass background
+		HudUtil.roundedRectGradient(graphics, cx - hubSize, cy - hubSize, hubSize * 2, hubSize * 2,
+				0xDD101628, 0xCC0A0E1E);
+		// Accent border
+		HudUtil.roundedRectBorder(graphics, cx - hubSize, cy - hubSize, hubSize * 2, hubSize * 2,
+				theme.radialBorderActive());
+		// Top highlight (glass effect)
+		graphics.fill(cx - hubSize + 3, cy - hubSize + 2, cx + hubSize - 3, cy - hubSize + 3, 0x44FFFFFF);
+		// Hero name in center
+		ResourceLocation heroId = ClientHeroState.heroId();
+		if (heroId != null) {
+			Component heroName = Component.translatable("hero.superheroes." + heroId.getPath());
+			graphics.drawCenteredString(mc.font, heroName, cx, cy - 4, theme.heroNameColor());
+		}
+		// "R" key hint below
+		graphics.drawCenteredString(mc.font, Component.literal("\u2B29"), cx, cy + 8, 0x66FFFFFF);
+	}
+
+	private static void drawSectorSlot(GuiGraphics graphics, int x, int y, int width, int height,
+			boolean selectedSlot, boolean onCooldown, HeroTheme theme) {
+		// Drop shadow
+		HudUtil.dropShadow(graphics, x, y, width, height, 3, 0x66000000);
+		// Selection glow
+		if (selectedSlot) {
+			int glowColor = theme.radialGlow();
+			HudUtil.roundedRectFill(graphics, x - 4, y - 4, width + 8, height + 8, glowColor);
+		}
+		// Glass background gradient
+		int top, bottom;
+		if (onCooldown) {
+			top = 0xF0141418;
+			bottom = 0xE00A0A10;
+		} else if (selectedSlot) {
+			top = applyAlpha(theme.panelTop(), 240, 1.2f);
+			bottom = applyAlpha(theme.panelBottom(), 230, 1.1f);
+		} else {
+			top = 0xEE0E1020;
+			bottom = 0xDD080A16;
+		}
+		HudUtil.roundedRectGradient(graphics, x, y, width, height, top, bottom);
+		// Border
+		int border = selectedSlot ? theme.radialBorderActive() : theme.radialBorderIdle();
+		HudUtil.roundedRectBorder(graphics, x, y, width, height, border);
+		// Glass highlight line
+		graphics.fill(x + 3, y + 1, x + width - 3, y + 2, selectedSlot ? 0x55FFFFFF : 0x22FFFFFF);
+	}
+
+	private static void drawRing(GuiGraphics graphics, int cx, int cy, int radius, int thickness, int color) {
+		// Approximate circle ring using horizontal fill lines
+		for (int dy = -radius - thickness; dy <= radius + thickness; dy++) {
+			int distSq = dy * dy;
+			int outerR = radius + thickness;
+			int innerR = radius;
+			if (distSq > outerR * outerR) continue;
+			int outerX = (int) Math.sqrt(outerR * outerR - distSq);
+			if (distSq < innerR * innerR) {
+				int innerX = (int) Math.sqrt(innerR * innerR - distSq);
+				graphics.fill(cx - outerX, cy + dy, cx - innerX, cy + dy + 1, color);
+				graphics.fill(cx + innerX, cy + dy, cx + outerX, cy + dy + 1, color);
+			} else {
+				graphics.fill(cx - outerX, cy + dy, cx + outerX, cy + dy + 1, color);
+			}
+		}
+	}
+
+	private static int applyAlpha(int argb, int alpha, float mult) {
+		int originalA = (argb >>> 24) & 0xFF;
+		int finalA = Math.min(255, Math.max(0, (int) (originalA * (alpha / 255f) * mult)));
+		return (finalA << 24) | (argb & 0x00FFFFFF);
 	}
 
 	private static void drawThanosStoneBadge(GuiGraphics graphics, Minecraft mc, ResourceLocation aid,
@@ -267,19 +395,6 @@ public final class RadialMenuHud {
 		};
 	}
 
-	private static void drawHub(GuiGraphics graphics, int cx, int cy, HeroTheme theme) {
-		HudUtil.roundedRectFill(graphics, cx - 24, cy - 24, 48, 48, 0xCC080A14);
-		HudUtil.roundedRectBorder(graphics, cx - 24, cy - 24, 48, 48, theme.radialBorderIdle());
-		graphics.fill(cx - 18, cy - 22, cx + 18, cy - 21, 0x44FFFFFF);
-	}
-
-	private static void drawBackplate(GuiGraphics graphics, int cx, int cy) {
-		int outer = BACKPLATE_RADIUS + 36;
-		graphics.fillGradient(cx - outer, cy - outer, cx + outer, cy + outer, 0x44060814, 0x00040614);
-		graphics.fillGradient(cx - BACKPLATE_RADIUS, cy - BACKPLATE_RADIUS,
-				cx + BACKPLATE_RADIUS, cy + BACKPLATE_RADIUS, 0x88101422, 0x44050710);
-	}
-
 	private static void drawCursor(GuiGraphics graphics, Minecraft mc, int cx, int cy, HeroTheme theme) {
 		if (mc.player == null) {
 			return;
@@ -325,20 +440,6 @@ public final class RadialMenuHud {
 		int outer = (Math.max(40, alpha / 2) << 24) | 0x00FFB23A;
 		HudUtil.roundedRectFill(graphics, x - 6, y - 6, width + 12, height + 12, outer);
 		HudUtil.roundedRectFill(graphics, x - 3, y - 3, width + 6, height + 6, glow);
-	}
-
-	private static void drawSlot(GuiGraphics graphics, int x, int y, int width, int height,
-			boolean selectedSlot, boolean onCooldown, HeroTheme theme) {
-		HudUtil.dropShadow(graphics, x, y, width, height, 2, COLOR_SHADOW);
-		if (selectedSlot) {
-			HudUtil.roundedRectFill(graphics, x - 3, y - 3, width + 6, height + 6, theme.radialGlow());
-		}
-		int top = onCooldown ? 0xF0121218 : (selectedSlot ? 0xF02A1A14 : theme.panelTop());
-		int bottom = onCooldown ? 0xE008080D : (selectedSlot ? 0xE01A0F0A : theme.panelBottom());
-		int border = selectedSlot ? theme.radialBorderActive() : theme.radialBorderIdle();
-		HudUtil.roundedRectGradient(graphics, x, y, width, height, top, bottom);
-		HudUtil.roundedRectBorder(graphics, x, y, width, height, border);
-		graphics.fill(x + 3, y + 1, x + width - 3, y + 2, 0x33FFFFFF);
 	}
 
 	private static Component cooldownText(int ticks) {

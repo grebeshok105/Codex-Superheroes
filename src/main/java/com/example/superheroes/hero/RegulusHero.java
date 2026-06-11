@@ -157,4 +157,9 @@ public final class RegulusHero implements Hero {
 	public HeroTheme getTheme() {
 		return THEME;
 	}
+
+	@Override
+	public HeroHudConfig getHudConfig() {
+		return HeroHudConfig.REGULUS;
+	}
 }

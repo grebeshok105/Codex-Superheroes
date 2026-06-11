@@ -203,4 +203,9 @@ public final class DoomsdayHero implements Hero {
                         }
                 }
         }
+
+	@Override
+	public HeroHudConfig getHudConfig() {
+		return HeroHudConfig.DOOMSDAY;
+	}
 }
