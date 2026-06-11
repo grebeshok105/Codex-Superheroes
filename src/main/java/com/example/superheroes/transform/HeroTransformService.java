@@ -60,6 +60,7 @@ public final class HeroTransformService {
 				java.util.Set.of()
 		);
 		player.setAttached(ModAttachments.HERO_DATA, updated);
+		com.example.superheroes.ability.AbilityCooldowns.clearAndSync(player);
 		com.example.superheroes.effect.RegulusTotemController.clear(player.getUUID());
 		com.example.superheroes.effect.RegulusMadnessController.clearMadness(player);
 		hero.applyPassives(player);
@@ -101,6 +102,7 @@ public final class HeroTransformService {
 		com.example.superheroes.effect.RemDemonismController.clear(player);
 		HeroData updated = data.withHero(null).withResources(0f, 0f).clearActive();
 		player.setAttached(ModAttachments.HERO_DATA, updated);
+		com.example.superheroes.ability.AbilityCooldowns.clearAndSync(player);
 		player.refreshDimensions();
 		ModNetworking.syncHeroData(player, updated);
 		ModNetworking.broadcastRemoteHeroSkin(player);

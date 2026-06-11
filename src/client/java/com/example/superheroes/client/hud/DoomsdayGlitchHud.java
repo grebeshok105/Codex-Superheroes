@@ -36,9 +36,9 @@ public final class DoomsdayGlitchHud {
 		Font font = mc.font;
 		int tier = ClientDoomsdayState.tier();
 
-		// Tier badge top-center with chromatic aberration scaled by pct
+		// Tier badge top-right with chromatic aberration scaled by pct
 		String label = "T" + tier + "/7";
-		int tx = w / 2 - font.width(label) / 2;
+		int tx = w - font.width(label) - 8;
 		int ty = 6;
 		drawAberrated(graphics, font, label, tx, ty, 0xFFD83A1A, pct);
 
@@ -66,9 +66,9 @@ public final class DoomsdayGlitchHud {
 			}
 		}
 
-		// Tier description bottom-left
+		// Tier description bottom-right (keeps the hero panel in the bottom-left clear)
 		String tierName = Component.translatable("hero.superheroes.doomsday.tier." + tier).getString();
-		int dx = 8;
+		int dx = w - font.width(tierName) - 8;
 		int dy = h - 22;
 		drawAberrated(graphics, font, tierName, dx, dy, 0xFFE7C7A8, pct * 0.5f);
 	}

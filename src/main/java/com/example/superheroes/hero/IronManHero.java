@@ -51,7 +51,7 @@ public final class IronManHero implements Hero {
 
 	@Override
 	public List<ResourceLocation> getAbilities() {
-		return List.of(AbilityIds.IRON_MAN_FLIGHT, AbilityIds.SUPERSONIC, AbilityIds.REPULSOR, AbilityIds.BOX_ESP, AbilityIds.UNIBEAM, AbilityIds.IRON_MAN_HULKBUSTER);
+		return List.of(AbilityIds.IRON_MAN_FLIGHT, AbilityIds.SUPERSONIC, AbilityIds.REPULSOR, AbilityIds.UNIBEAM, AbilityIds.IRON_MAN_HULKBUSTER);
 	}
 
 	@Override
