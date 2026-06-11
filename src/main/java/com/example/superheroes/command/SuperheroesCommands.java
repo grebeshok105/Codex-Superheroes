@@ -295,8 +295,9 @@ public final class SuperheroesCommands {
 		ServerPlayer player = playerOrNull(ctx);
 		if (player == null) return 0;
 		player.setAttached(ModAttachments.ADMIN_BUILD, enabled);
+		AdminBuildSyncController.send(player);
 		if (enabled) {
-			ctx.getSource().sendSuccess(() -> Component.literal("§6[ADMIN BUILD: ON] §fАдмин-контент разблокирован. Используй /superheroes admin give для получения предметов."), false);
+			ctx.getSource().sendSuccess(() -> Component.literal("§6[ADMIN BUILD: ON] §fАдмин-предметы теперь видны в креатив-вкладке Superheroes."), false);
 		} else {
 			ctx.getSource().sendSuccess(() -> Component.literal("§7[ADMIN BUILD: OFF] §fАдмин-контент скрыт."), false);
 		}

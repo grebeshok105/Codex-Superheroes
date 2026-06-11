@@ -6,9 +6,27 @@ public final class HudUtil {
 	private HudUtil() {
 	}
 
+	/**
+	 * Мелкие элементы (например иконки пассивок) с 3px-скруглением превращаются
+	 * в рваные кляксы — для них используем аккуратные 2px-углы старого стиля.
+	 */
+	private static boolean isSmall(int w, int h) {
+		return Math.min(w, h) < 14;
+	}
+
 	public static void roundedRectFill(GuiGraphics g, int x, int y, int w, int h, int color) {
 		if (w < 6 || h < 6) {
 			g.fill(x, y, x + w, y + h, color);
+			return;
+		}
+		if (isSmall(w, h)) {
+			g.fill(x + 2, y, x + w - 2, y + h, color);
+			g.fill(x, y + 2, x + 2, y + h - 2, color);
+			g.fill(x + w - 2, y + 2, x + w, y + h - 2, color);
+			g.fill(x + 1, y + 1, x + 2, y + 2, color);
+			g.fill(x + w - 2, y + 1, x + w - 1, y + 2, color);
+			g.fill(x + 1, y + h - 2, x + 2, y + h - 1, color);
+			g.fill(x + w - 2, y + h - 2, x + w - 1, y + h - 1, color);
 			return;
 		}
 		g.fill(x + 3, y, x + w - 3, y + h, color);
@@ -29,6 +47,16 @@ public final class HudUtil {
 			g.fillGradient(x, y, x + w, y + h, topColor, bottomColor);
 			return;
 		}
+		if (isSmall(w, h)) {
+			g.fillGradient(x + 2, y, x + w - 2, y + h, topColor, bottomColor);
+			g.fillGradient(x, y + 2, x + 2, y + h - 2, topColor, bottomColor);
+			g.fillGradient(x + w - 2, y + 2, x + w, y + h - 2, topColor, bottomColor);
+			g.fillGradient(x + 1, y + 1, x + 2, y + 2, topColor, bottomColor);
+			g.fillGradient(x + w - 2, y + 1, x + w - 1, y + 2, topColor, bottomColor);
+			g.fillGradient(x + 1, y + h - 2, x + 2, y + h - 1, topColor, bottomColor);
+			g.fillGradient(x + w - 2, y + h - 2, x + w - 1, y + h - 1, topColor, bottomColor);
+			return;
+		}
 		g.fillGradient(x + 3, y, x + w - 3, y + h, topColor, bottomColor);
 		g.fillGradient(x, y + 3, x + 3, y + h - 3, topColor, bottomColor);
 		g.fillGradient(x + w - 3, y + 3, x + w, y + h - 3, topColor, bottomColor);
@@ -44,6 +72,17 @@ public final class HudUtil {
 			g.fill(x, y + h - 1, x + w, y + h, color);
 			g.fill(x, y, x + 1, y + h, color);
 			g.fill(x + w - 1, y, x + w, y + h, color);
+			return;
+		}
+		if (isSmall(w, h)) {
+			g.fill(x + 2, y, x + w - 2, y + 1, color);
+			g.fill(x + 2, y + h - 1, x + w - 2, y + h, color);
+			g.fill(x, y + 2, x + 1, y + h - 2, color);
+			g.fill(x + w - 1, y + 2, x + w, y + h - 2, color);
+			g.fill(x + 1, y + 1, x + 2, y + 2, color);
+			g.fill(x + w - 2, y + 1, x + w - 1, y + 2, color);
+			g.fill(x + 1, y + h - 2, x + 2, y + h - 1, color);
+			g.fill(x + w - 2, y + h - 2, x + w - 1, y + h - 1, color);
 			return;
 		}
 		g.fill(x + 3, y, x + w - 3, y + 1, color);

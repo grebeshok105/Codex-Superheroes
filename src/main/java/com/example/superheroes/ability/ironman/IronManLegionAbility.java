@@ -62,7 +62,7 @@ public final class IronManLegionAbility implements Ability {
 			double dist = 3.0 + rng.nextDouble() * 2.0;
 			double spawnX = player.getX() + Math.cos(angle) * dist;
 			double spawnZ = player.getZ() + Math.sin(angle) * dist;
-			double spawnY = player.getY() + 30.0; // fly down from above
+			double spawnY = player.getY() + 6.0 + rng.nextDouble() * 3.0; // hover in view, descend to fight
 
 			drone.moveTo(spawnX, spawnY, spawnZ, rng.nextFloat() * 360f - 180f, 0);
 			drone.setSuitVariant(variant.index());
@@ -77,7 +77,7 @@ public final class IronManLegionAbility implements Ability {
 		}
 
 		level.playSound(null, player.getX(), player.getY(), player.getZ(),
-				ModSounds.IRONMAN_JARVIS_DIAGNOSTIC, SoundSource.PLAYERS, 1.0f, 0.8f);
+				ModSounds.IRONMAN_JARVIS_MARK85_PRESET, SoundSource.PLAYERS, 1.0f, 1.0f);
 
 		String quote = JarvisQuotes.randomLegionDeploy();
 		player.sendSystemMessage(net.minecraft.network.chat.Component.literal(

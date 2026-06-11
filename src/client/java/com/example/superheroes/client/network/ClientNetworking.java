@@ -134,6 +134,15 @@ public final class ClientNetworking {
 		ClientPlayNetworking.registerGlobalReceiver(com.example.superheroes.network.ThanosStonesS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> com.example.superheroes.client.ClientThanosState.update(payload.playerId(), payload.bitmask())));
 
+		ClientPlayNetworking.registerGlobalReceiver(com.example.superheroes.network.SuitVariantS2CPayload.TYPE, (payload, context) ->
+				context.client().execute(() -> com.example.superheroes.client.ClientSuitVariantState.update(payload.playerId(), payload.variant())));
+
+		ClientPlayNetworking.registerGlobalReceiver(com.example.superheroes.network.AdminBuildS2CPayload.TYPE, (payload, context) ->
+				context.client().execute(() -> {
+					com.example.superheroes.item.AdminBuildVisibility.setClientVisible(payload.enabled());
+					superheroes$rebuildSuperheroesTab(context.client());
+				}));
+
 		ClientPlayNetworking.registerGlobalReceiver(com.example.superheroes.network.KratosRageS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> com.example.superheroes.client.ClientKratosRageState.update(payload.rage(), payload.active())));
 
@@ -164,5 +173,18 @@ public final class ClientNetworking {
 
 		ClientPlayNetworking.registerGlobalReceiver(com.example.superheroes.network.ReinhardTimeSlowS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> com.example.superheroes.client.ClientReinhardTimeSlowState.update(payload.active())));
+	}
+
+	/**
+	 * Пересобирает содержимое креатив-вкладки Superheroes после смены
+	 * состояния админ-билда (vanilla кэширует вкладки и сам не обновит).
+	 */
+	private static void superheroes$rebuildSuperheroesTab(Minecraft mc) {
+		if (mc.player == null || mc.level == null) return;
+		var parameters = new net.minecraft.world.item.CreativeModeTab.ItemDisplayParameters(
+				mc.player.connection.enabledFeatures(),
+				mc.player.canUseGameMasterBlocks() && mc.options.operatorItemsTab().get(),
+				mc.level.registryAccess());
+		com.example.superheroes.item.ModItemGroups.SUPERHEROES_TAB.buildContents(parameters);
 	}
 }

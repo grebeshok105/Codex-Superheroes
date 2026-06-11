@@ -18,7 +18,6 @@ import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.control.FlyingMoveControl;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
-import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
@@ -90,7 +89,8 @@ public class IronLegionDroneEntity extends PathfinderMob {
 	@Override
 	protected void registerGoals() {
 		this.goalSelector.addGoal(0, new FloatGoal(this));
-		this.goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.2D, true));
+		this.goalSelector.addGoal(2, new SwarmAttackGoal());
+		this.goalSelector.addGoal(4, new WildRoamGoal());
 		this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
 		this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Monster.class, true));
 	}
@@ -99,6 +99,15 @@ public class IronLegionDroneEntity extends PathfinderMob {
 	public void tick() {
 		super.tick();
 		if (level().isClientSide()) return;
+
+		// Inherit the owner's fights: attack whoever hurts the owner or whoever the owner attacks
+		if (!isRetreating() && tickCount % 10 == 0 && getTarget() == null) {
+			LivingEntity ownerTarget = superheroes$ownerCombatTarget();
+			if (ownerTarget != null && ownerTarget.isAlive() && distanceTo(ownerTarget) < 48
+					&& !(ownerTarget instanceof IronLegionDroneEntity)) {
+				setTarget(ownerTarget);
+			}
+		}
 
 		lifeTicks--;
 		if (lifeTicks <= RETREAT_TICKS && !isRetreating()) {
@@ -191,5 +200,140 @@ public class IronLegionDroneEntity extends PathfinderMob {
 	@Override
 	public boolean removeWhenFarAway(double distSq) {
 		return false;
+	}
+
+	@Nullable
+	private Player superheroes$owner() {
+		UUID uuid = getOwnerUuid();
+		return uuid == null ? null : level().getPlayerByUUID(uuid);
+	}
+
+	@Nullable
+	private LivingEntity superheroes$ownerCombatTarget() {
+		Player owner = superheroes$owner();
+		if (owner == null) return null;
+		LivingEntity hurtBy = owner.getLastHurtByMob();
+		if (hurtBy != null && hurtBy.isAlive() && !hurtBy.getUUID().equals(owner.getUUID())) {
+			return hurtBy;
+		}
+		LivingEntity hurt = owner.getLastHurtMob();
+		if (hurt != null && hurt.isAlive() && !hurt.getUUID().equals(owner.getUUID())) {
+			return hurt;
+		}
+		return null;
+	}
+
+	/**
+	 * Рой-атака: дроны хаотично носятся ВОКРУГ ВРАГА на разных высотах и
+	 * постоянно пикируют на него с ударами — изводят цель со всех сторон.
+	 */
+	private class SwarmAttackGoal extends net.minecraft.world.entity.ai.goal.Goal {
+		private int repathCooldown;
+		private int attackCooldown;
+		private boolean diving;
+
+		SwarmAttackGoal() {
+			setFlags(java.util.EnumSet.of(Flag.MOVE, Flag.LOOK));
+		}
+
+		@Override
+		public boolean canUse() {
+			LivingEntity target = getTarget();
+			return !isRetreating() && target != null && target.isAlive();
+		}
+
+		@Override
+		public boolean canContinueToUse() {
+			return canUse();
+		}
+
+		@Override
+		public void stop() {
+			diving = false;
+		}
+
+		@Override
+		public boolean requiresUpdateEveryTick() {
+			return true;
+		}
+
+		@Override
+		public void tick() {
+			LivingEntity target = getTarget();
+			if (target == null) return;
+			getLookControl().setLookAt(target, 30.0f, 30.0f);
+			if (attackCooldown > 0) attackCooldown--;
+
+			double distSq = distanceToSqr(target);
+			if (diving) {
+				// Пикируем прямо в цель
+				getNavigation().moveTo(target.getX(), target.getY() + target.getBbHeight() * 0.5, target.getZ(), 1.45);
+				if (distSq < 4.5) {
+					if (attackCooldown <= 0) {
+						doHurtTarget(target);
+						attackCooldown = 14;
+					}
+					diving = false;
+					repathCooldown = 0;
+				}
+				return;
+			}
+
+			if (repathCooldown-- > 0) return;
+			repathCooldown = 6 + random.nextInt(8);
+
+			// Каждые ~0.5с — либо новый хаотичный виток вокруг врага, либо пике
+			if (random.nextFloat() < 0.4f) {
+				diving = true;
+				return;
+			}
+			double angle = random.nextDouble() * Math.PI * 2;
+			double dist = 2.0 + random.nextDouble() * 4.0;
+			double yOffset = 0.5 + random.nextDouble() * 3.5;
+			getNavigation().moveTo(
+					target.getX() + Math.cos(angle) * dist,
+					target.getY() + yOffset,
+					target.getZ() + Math.sin(angle) * dist,
+					1.3);
+		}
+	}
+
+	/**
+	 * Без цели дроны не висят на месте, а бешено носятся по округе в поисках
+	 * драки (хаотичные точки в радиусе от владельца).
+	 */
+	private class WildRoamGoal extends net.minecraft.world.entity.ai.goal.Goal {
+		private int repathCooldown;
+
+		WildRoamGoal() {
+			setFlags(java.util.EnumSet.of(Flag.MOVE));
+		}
+
+		@Override
+		public boolean canUse() {
+			return !isRetreating() && getTarget() == null;
+		}
+
+		@Override
+		public boolean canContinueToUse() {
+			return canUse();
+		}
+
+		@Override
+		public void tick() {
+			if (repathCooldown-- > 0) return;
+			repathCooldown = 8 + random.nextInt(10);
+			Player owner = superheroes$owner();
+			double cx = owner != null ? owner.getX() : getX();
+			double cy = owner != null ? owner.getY() : getY();
+			double cz = owner != null ? owner.getZ() : getZ();
+			double angle = random.nextDouble() * Math.PI * 2;
+			double dist = 3.0 + random.nextDouble() * 9.0;
+			getNavigation().moveTo(
+					cx + Math.cos(angle) * dist,
+					cy + 1.0 + random.nextDouble() * 4.0,
+					cz + Math.sin(angle) * dist,
+					1.25);
+		}
 	}
 }

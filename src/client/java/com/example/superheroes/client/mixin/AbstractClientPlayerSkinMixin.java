@@ -45,6 +45,11 @@ public abstract class AbstractClientPlayerSkinMixin {
 			heroTexture = com.example.superheroes.client.ThanosSkinTextures.textureFor(
 					com.example.superheroes.client.ClientThanosState.maskFor(self.getUUID()));
 		}
+		// Iron Man: текущий вариант костюма синхронизирован со всеми клиентами
+		if (com.example.superheroes.hero.IronManHero.ID.equals(heroId)) {
+			int variant = com.example.superheroes.client.ClientSuitVariantState.variantFor(self.getUUID());
+			heroTexture = com.example.superheroes.ability.ironman.IronManSuitVariant.get(variant).texture();
+		}
 		PlayerSkin orig = cir.getReturnValue();
 		cir.setReturnValue(new PlayerSkin(
 				heroTexture != null ? heroTexture : DefaultPlayerSkin.getDefaultTexture(),

@@ -74,6 +74,8 @@ public class SuperheroesMod implements ModInitializer {
 		com.example.superheroes.effect.NarutoWallRunController.init();
 		com.example.superheroes.effect.KawarimiController.init();
 		com.example.superheroes.effect.ThanosGauntletStateController.init();
+		com.example.superheroes.ability.ironman.IronManSuitSyncController.init();
+		com.example.superheroes.command.AdminBuildSyncController.init();
 		com.example.superheroes.effect.KratosRageController.init();
 		com.example.superheroes.effect.KratosHandStrikeFxController.init();
 		com.example.superheroes.effect.DoomsdayKryptoniteController.init();

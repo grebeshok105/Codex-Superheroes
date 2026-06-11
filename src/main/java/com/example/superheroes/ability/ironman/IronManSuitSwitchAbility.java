@@ -46,6 +46,8 @@ public final class IronManSuitSwitchAbility implements Ability {
 		int current = player.getAttachedOrCreate(ModAttachments.SUIT_VARIANT);
 		int next = IronManSuitVariant.nextIndex(current);
 		player.setAttached(ModAttachments.SUIT_VARIANT, next);
+		IronManSuitSyncController.broadcast(player);
+		IronManSuitStats.apply(player);
 
 		IronManSuitVariant variant = IronManSuitVariant.get(next);
 
