@@ -102,20 +102,20 @@ public final class AbilityBarHud {
 		float glowR;
 		if (isActive) {
 			ringColor = ACTIVE_GREEN;
-			glowColor = (0x88 << 24) | (ACTIVE_GREEN & 0x00FFFFFF);
-			glowR = 6f;
+			glowColor = (0xC0 << 24) | (ACTIVE_GREEN & 0x00FFFFFF);
+			glowR = 10f;
 		} else if (isUlt) {
 			ringColor = ULT_GOLD;
 			float pulse = onCd ? 0f : HudAnimator.pulse(1.2f);
-			int a = 0x70 + (int) (0x48 * pulse);
-			glowColor = (a << 24) | (ULT_GOLD & 0x00FFFFFF);
-			glowR = 8f;
+			int a = 0x90 + (int) (0x58 * pulse);
+			glowColor = (Math.min(0xFF, a) << 24) | (ULT_GOLD & 0x00FFFFFF);
+			glowR = 12f;
 		} else {
 			ringColor = onCd ? 0x99E8C170 : theme.energyIcon();
 			float pulse = onCd ? 0f : HudAnimator.pulse(1.5f);
-			int a = onCd ? 0x28 : 0x48 + (int) (0x30 * pulse);
+			int a = onCd ? 0x34 : 0x60 + (int) (0x40 * pulse);
 			glowColor = (a << 24) | (theme.energyIcon() & 0x00FFFFFF);
-			glowR = 5f;
+			glowR = 8f;
 		}
 
 		if (WildShaders.circleReady()) {
@@ -160,21 +160,6 @@ public final class AbilityBarHud {
 				int cdW = mc.font.width(cdText);
 				g.drawString(mc.font, HudUtil.text(cdText), x + (size - cdW) / 2, y + size + 2, 0xFFFF9D6E, true);
 			}
-		}
-
-		// АКТИВНО над орбом
-		if (isActive) {
-			Component activeComp = HudUtil.text("АКТИВНО");
-			int aw = mc.font.width(activeComp);
-			g.drawString(mc.font, activeComp, (int) (cx - aw / 2f), y - HudScaler.scale(10), ACTIVE_GREEN, true);
-		}
-
-		// звезда-бейдж у ульты (вверху справа)
-		if (isUlt) {
-			Component star = HudUtil.text("\u2605");
-			int starX = (int) (cx + radius * 0.55f);
-			int starY = (int) (cy - radius - 2);
-			g.drawString(mc.font, star, starX, starY, ULT_GOLD, true);
 		}
 
 		// клавиша под орбом

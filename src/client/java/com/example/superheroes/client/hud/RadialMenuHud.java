@@ -4,8 +4,6 @@ import com.example.superheroes.ability.AbilityIds;
 import com.example.superheroes.client.ClientAbilityCooldowns;
 import com.example.superheroes.client.ClientAbilityFilter;
 import com.example.superheroes.client.ClientHeroState;
-import com.example.superheroes.client.render.WildRenderer;
-import com.example.superheroes.client.render.WildShaders;
 import com.example.superheroes.client.ClientThanosState;
 import com.example.superheroes.client.ModKeys;
 import com.example.superheroes.hero.ThanosHero;
@@ -234,12 +232,7 @@ public final class RadialMenuHud {
 			drawWedge(graphics, cx, cy, r1, r1 + 2, a0, a1, rim);
 			if (hover > 0.01f) {
 				int glowA = (int) (70 * hover * petal * eased);
-				if (WildShaders.sectorReady()) {
-					WildRenderer.sector(graphics, cx, cy, r1 + 2, r1 + 2.5f, a0, a1,
-							0, 0, 0f, applyAlpha(theme.radialBorderActive(), (int) (150 * hover * petal * eased), 1f), 6f);
-				} else {
-					drawWedge(graphics, cx, cy, r1 + 2, r1 + 4, a0, a1, applyAlpha(theme.radialBorderActive(), glowA, 1f));
-				}
+				drawWedge(graphics, cx, cy, r1 + 2, r1 + 4, a0, a1, applyAlpha(theme.radialBorderActive(), glowA, 1f));
 				int innerRimA = (int) (110 * hover * petal * eased);
 				drawWedge(graphics, cx, cy, r0, r0 + 1, a0, a1, applyAlpha(theme.radialBorderActive(), innerRimA, 0.8f));
 			}
@@ -344,8 +337,8 @@ public final class RadialMenuHud {
 		int bgA = (int) (0xD8 * eased);
 		HudUtil.roundedRectFill(graphics, px, py, w, h, (bgA << 24) | 0x0A0D18);
 		HudUtil.roundedRectBorder(graphics, px, py, w, h, applyAlpha(theme.radialBorderActive(), (int) (200 * eased), 0.9f));
-		graphics.drawCenteredString(mc.font, HudUtil.text(name.copy()), cx, py + 4, theme.radialTextActive());
-		graphics.drawCenteredString(mc.font, HudUtil.text(status.copy()), cx, py + 15, statusColor);
+		graphics.drawCenteredString(mc.font, name, cx, py + 4, theme.radialTextActive());
+		graphics.drawCenteredString(mc.font, status, cx, py + 15, statusColor);
 	}
 
 	private static void drawCursor(GuiGraphics graphics, int cx, int cy, HeroTheme theme, float eased, float partial) {
@@ -372,24 +365,16 @@ public final class RadialMenuHud {
 		drawDisk(graphics, tipX, tipY, 2, core);
 	}
 
-	/** Filled circle: SDF-шейдер с гладкой кромкой, fallback — scanlines. */
+	/** Filled circle via horizontal scanlines. */
 	private static void drawDisk(GuiGraphics g, int cx, int cy, int r, int color) {
-		if (WildShaders.circleReady()) {
-			WildRenderer.orb(g, cx, cy, r, color, 0, 0f, 0, 0f);
-			return;
-		}
 		for (int dy = -r; dy <= r; dy++) {
 			int span = (int) Math.sqrt((double) r * r - (double) dy * dy);
 			g.fill(cx - span, cy + dy, cx + span, cy + dy + 1, color);
 		}
 	}
 
-	/** Filled ring (annulus): SDF-шейдер, fallback — scanlines. */
+	/** Filled ring (annulus) via horizontal scanlines. */
 	private static void drawAnnulus(GuiGraphics g, int cx, int cy, int r0, int r1, int color) {
-		if (WildShaders.circleReady()) {
-			WildRenderer.ring(g, cx, cy, r1, r1 - r0, color, 0, 0f);
-			return;
-		}
 		for (int dy = -r1; dy <= r1; dy++) {
 			long d2 = (long) dy * dy;
 			int xOut = (int) Math.sqrt((double) r1 * r1 - d2);
@@ -409,10 +394,6 @@ public final class RadialMenuHud {
 	 * full-disk scan did hundreds of thousands of atan2 calls per frame and lagged.
 	 */
 	private static void drawWedge(GuiGraphics g, int cx, int cy, int r0, int r1, float a0, float a1, int color) {
-		if (WildShaders.sectorReady()) {
-			WildRenderer.sector(g, cx, cy, r0, r1, a0, a1, color, 0, 0f, 0, 0f);
-			return;
-		}
 		// Bounding box of the sector: corners at a0/a1 (r0 and r1) plus axis
 		// crossings (0, 90, 180, 270 deg) at r1 when inside the angular range.
 		int minX = Integer.MAX_VALUE, maxX = Integer.MIN_VALUE;

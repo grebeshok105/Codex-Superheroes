@@ -198,35 +198,6 @@ public final class HeroInfoPanelHud {
 		// Ability readiness list: every visible ability with its status, two columns
 		drawReadyList(graphics, mc, contentX, cursorY, contentW, heroId, hudConfig, theme);
 
-		// Passives section
-		int passiveCount = AbilityDescriptions.passiveCount(heroId);
-		if (passiveCount > 0) {
-			int passiveY = y + panelH - HudScaler.scale(24);
-			int passiveSectionX = x + HudScaler.scale(2);
-
-			Component passivesLabel = HudUtil.text(Component.translatable("hud.superheroes.passives").copy());
-			graphics.drawString(mc.font, passivesLabel, passiveSectionX, passiveY,
-					applyAlpha(theme.heroNameColor(), 200, 0.8f), true);
-			passiveY += HudScaler.scale(10);
-
-			int maxDisplay = Math.min(passiveCount, 6);
-			int iconSz = HudScaler.scale(passiveCount > 5 ? 8 : 10);
-			int gap = HudScaler.scale(passiveCount > 5 ? 2 : 4);
-			for (int i = 0; i < maxDisplay; i++) {
-				int ix = passiveSectionX + i * (iconSz + gap);
-				if (WildShaders.circleReady()) {
-					WildRenderer.orb(graphics, ix + iconSz / 2f, passiveY + iconSz / 2f, iconSz / 2f,
-							0x66000000, applyAlpha(theme.energyIcon(), 190, 0.7f), 1.1f,
-							applyAlpha(theme.energyIcon(), 70, 1f), 2.5f);
-				} else {
-					HudUtil.roundedRectFill(graphics, ix, passiveY, iconSz, iconSz, 0x44000000);
-					HudUtil.roundedRectBorder(graphics, ix, passiveY, iconSz, iconSz, applyAlpha(theme.energyIcon(), 180, 0.6f));
-				}
-				int inset = Math.max(1, iconSz / 5);
-				HudIcons.drawPassiveIcon(graphics, ix + inset, passiveY + inset, iconSz - inset * 2,
-						PassiveIcons.glyph(heroId, i), applyAlpha(theme.energyIcon(), 235, 1f));
-			}
-		}
 	}
 
 
@@ -380,7 +351,6 @@ public final class HeroInfoPanelHud {
 				applyAlpha(theme.panelBottom(), 226, 0.8f),
 				applyAlpha(theme.panelBorder(), 235, 1.0f),
 				applyAlpha(theme.panelBorder(), 70, 1.0f));
-		g.fill(x + 3, y + 2, x + w - 3, y + 3, applyAlpha(theme.panelHighlight(), 200, 0.7f));
 	}
 
 

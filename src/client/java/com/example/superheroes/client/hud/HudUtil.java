@@ -1,6 +1,5 @@
 package com.example.superheroes.client.hud;
 
-import com.example.superheroes.ModId;
 import com.example.superheroes.client.render.WildRenderer;
 import com.example.superheroes.client.render.WildShaders;
 import net.minecraft.client.gui.GuiGraphics;
@@ -15,8 +14,8 @@ import net.minecraft.resources.ResourceLocation;
  * старую ступенчатую отрисовку через fill.
  */
 public final class HudUtil {
-	/** Кастомный векторный шрифт HUD (Monocraft, провайдер superheroes:hud). */
-	public static final ResourceLocation HUD_FONT = ModId.of("hud");
+	/** Шрифт HUD: ванильный uniform (Unifont) — чистый рендер и полная кириллица. */
+	public static final ResourceLocation HUD_FONT = ResourceLocation.withDefaultNamespace("uniform");
 	private static final Style HUD_STYLE = Style.EMPTY.withFont(HUD_FONT);
 
 	private HudUtil() {
@@ -78,10 +77,10 @@ public final class HudUtil {
 	public static void neonPanel(GuiGraphics g, int x, int y, int w, int h,
 			int topColor, int bottomColor, int borderColor, int glowColor) {
 		if (WildShaders.rectReady()) {
-			int glowA = Math.min(255, ((glowColor >>> 24) & 0xFF) * 2);
+			int glowA = Math.min(255, ((glowColor >>> 24) & 0xFF) * 3);
 			int glow = (glowA << 24) | (glowColor & 0x00FFFFFF);
 			WildRenderer.panel(g, x, y, w, h, wildRadius(w, h),
-					topColor, bottomColor, borderColor, 1.1f, glow, 9f);
+					topColor, bottomColor, borderColor, 1.1f, glow, 15f);
 			return;
 		}
 		legacyNeonPanel(g, x, y, w, h, topColor, bottomColor, borderColor, glowColor);

@@ -234,11 +234,10 @@ public final class AbilitiesTooltipHud {
 
 		int border = applyAlpha(ClientHudGlitch.tintColor(theme.panelBorder()), alpha, 0.9f);
 		HudUtil.roundedRectBorder(g, x, y, w, h, border);
-		int glow = applyAlpha(ClientHudGlitch.tintColor(theme.panelBorder()), alpha / 4, 1.0f);
+		int glow = applyAlpha(ClientHudGlitch.tintColor(theme.panelBorder()), alpha / 3, 1.0f);
 		HudUtil.roundedRectBorder(g, x - 1, y - 1, w + 2, h + 2, glow);
-
-		int hi = applyAlpha(ClientHudGlitch.tintColor(theme.panelHighlight()), alpha, 1.0f);
-		g.fill(x + 3, y + 2, x + w - 3, y + 3, hi);
+		int glow2 = applyAlpha(ClientHudGlitch.tintColor(theme.panelBorder()), alpha / 6, 1.0f);
+		HudUtil.roundedRectBorder(g, x - 2, y - 2, w + 4, h + 4, glow2);
 	}
 
 	/** v4 refresh: hero name on its own plaque with a soft accent underline. */

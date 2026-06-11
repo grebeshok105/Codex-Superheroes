@@ -86,8 +86,7 @@ public final class ResourceBarHud {
 		int panelHeight = showMana ? PANEL_HEIGHT_DUAL : PANEL_HEIGHT_SOLO;
 		HudUtil.neonPanel(graphics, X, Y, PANEL_WIDTH, panelHeight,
 				themePanelTop, themePanelBottom, themePanelBorder,
-				(0x46 << 24) | (themePanelBorder & 0x00FFFFFF));
-		graphics.fill(X + 3, Y + 2, X + PANEL_WIDTH - 3, Y + 3, themePanelHighlight);
+				(0x6A << 24) | (themePanelBorder & 0x00FFFFFF));
 
 		graphics.drawString(mc.font, heroName, X + 12, Y + 6, themeHeroNameColor, true);
 		HudUtil.neonAccentLine(graphics, X + 12, Y + 18, PANEL_WIDTH - 24, (themePanelBorder & 0x00FFFFFF) | 0x44000000);
