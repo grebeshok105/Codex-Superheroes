@@ -1,0 +1,1 @@
+import{j as e,R as t,a as s,N as a}from"./index-Ci2PFh6y.js";import{P as r,a as i}from"./PublicLandingPage-oF5Kz3E6.js";import"./zap-Bq92CGrm.js";function u(){return e.jsxs(e.Fragment,{children:[e.jsx(r,{}),e.jsxs(t,{children:[e.jsx(s,{path:"/",element:e.jsx(i,{})}),e.jsx(s,{path:"*",element:e.jsx(a,{to:"/",replace:!0})})]})]})}export{u as PublicAppRoutes};
