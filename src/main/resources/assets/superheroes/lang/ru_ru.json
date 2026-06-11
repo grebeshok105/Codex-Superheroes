@@ -727,6 +727,5 @@
 	"hud.superheroes.edit.effects": "Эффекты",
 	"hud.superheroes.edit.melee_charge": "Шкала заряда",
 	"hud.superheroes.edit.tooltips": "Подсказка способностей",
-	"hud.superheroes.radial.ready": "Готово",
-	"hud.superheroes.radial.hint": "Смотри по сторонам для выбора"
+	"hud.superheroes.radial.ready": "Готово"
 }
