@@ -51,6 +51,12 @@ public final class ModAttachments {
 			.copyOnDeath()
 			.buildAndRegister(ModId.of("admin_build"));
 
+	public static final AttachmentType<Integer> SUIT_VARIANT = AttachmentRegistry.<Integer>builder()
+			.initializer(() -> 0)
+			.persistent(Codec.INT)
+			.copyOnDeath()
+			.buildAndRegister(ModId.of("suit_variant"));
+
 	private ModAttachments() {
 	}
 

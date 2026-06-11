@@ -9,14 +9,24 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.concurrent.ThreadLocalRandom;
+
 public final class NarutoShadowClonesAbility implements Ability {
 	private static final int COOLDOWN_TICKS = 240;
-	private static final int CLONE_LIFETIME = 120;
+	private static final int CLONE_COUNT = 15;
+	private static final double SPAWN_RADIUS = 10.0;
+	private static final int CLONE_LIFETIME = 500; // 25 seconds
+	private static final int DARKNESS_DURATION = 100; // 5 seconds
+	private static final double DARKNESS_RANGE = 15.0;
 
 	@Override
 	public ResourceLocation getId() {
@@ -47,29 +57,35 @@ public final class NarutoShadowClonesAbility implements Ability {
 	public boolean tryActivate(ServerPlayer player) {
 		ServerLevel level = player.serverLevel();
 		Vec3 pos = player.position();
+		ThreadLocalRandom rng = ThreadLocalRandom.current();
 
-		for (int i = 0; i < 2; i++) {
-			double angle = (i == 0 ? -Math.PI / 4 : Math.PI / 4);
-			Vec3 rot = rotate(player.getLookAngle(), angle);
-			Vec3 spawn = pos.add(rot.x * 1.5, 0, rot.z * 1.5);
+		for (int i = 0; i < CLONE_COUNT; i++) {
+			double angle = rng.nextDouble() * Math.PI * 2;
+			double dist = 1.5 + rng.nextDouble() * (SPAWN_RADIUS - 1.5);
+			double spawnX = pos.x + Math.cos(angle) * dist;
+			double spawnZ = pos.z + Math.sin(angle) * dist;
+			double spawnY = pos.y;
+
 			KageBunshinEntity clone = ModEntities.KAGE_BUNSHIN.create(level);
 			if (clone == null) continue;
-			clone.moveTo(spawn.x, spawn.y, spawn.z, player.getYRot() + (i == 0 ? -30f : 30f), 0);
+
+			float randomYaw = rng.nextFloat() * 360f - 180f;
+			clone.moveTo(spawnX, spawnY, spawnZ, randomYaw, 0);
 			clone.setOwnerUuid(player.getUUID());
 			clone.setLifetimeTicks(CLONE_LIFETIME);
+			clone.setCustomNameVisible(false);
 			clone.finalizeSpawn(level, level.getCurrentDifficultyAt(clone.blockPosition()),
 					MobSpawnType.MOB_SUMMONED, null);
 			level.addFreshEntity(clone);
 
 			level.sendParticles(ModParticles.NARUTO_CLONE_POOF,
-					spawn.x, spawn.y + 1.0, spawn.z, 20, 0.4, 0.6, 0.4, 0.05);
+					spawnX, spawnY + 1.0, spawnZ, 20, 0.4, 0.6, 0.4, 0.05);
 			level.sendParticles(ParticleTypes.CLOUD,
-					spawn.x, spawn.y + 1.0, spawn.z, 24, 0.4, 0.6, 0.4, 0.05);
-			level.sendParticles(ParticleTypes.WHITE_ASH,
-					spawn.x, spawn.y + 0.5, spawn.z, 18, 0.5, 0.5, 0.5, 0.05);
-
-			retargetNearbyHostiles(level, player, clone);
+					spawnX, spawnY + 1.0, spawnZ, 24, 0.4, 0.6, 0.4, 0.05);
 		}
+
+		applyDarknessToEnemies(level, player);
+		retargetNearbyHostiles(level, player);
 
 		level.playSound(null, pos.x, pos.y, pos.z,
 				SoundEvents.ALLAY_HURT, SoundSource.PLAYERS, 1.2f, 0.9f);
@@ -80,17 +96,25 @@ public final class NarutoShadowClonesAbility implements Ability {
 		return true;
 	}
 
-	private static Vec3 rotate(Vec3 v, double angle) {
-		double cos = Math.cos(angle);
-		double sin = Math.sin(angle);
-		return new Vec3(v.x * cos - v.z * sin, v.y, v.x * sin + v.z * cos);
+	private static void applyDarknessToEnemies(ServerLevel level, ServerPlayer owner) {
+		AABB area = owner.getBoundingBox().inflate(DARKNESS_RANGE);
+		for (LivingEntity entity : level.getEntitiesOfClass(LivingEntity.class, area)) {
+			if (entity == owner) continue;
+			if (entity instanceof Player p && p.getUUID().equals(owner.getUUID())) continue;
+			if (entity instanceof KageBunshinEntity clone && owner.getUUID().equals(clone.getOwnerUuid())) continue;
+			entity.addEffect(new MobEffectInstance(MobEffects.DARKNESS, DARKNESS_DURATION, 0, false, false, true));
+		}
 	}
 
-	private static void retargetNearbyHostiles(ServerLevel level, ServerPlayer owner, KageBunshinEntity clone) {
-		AABB area = owner.getBoundingBox().inflate(16.0);
+	private static void retargetNearbyHostiles(ServerLevel level, ServerPlayer owner) {
+		AABB area = owner.getBoundingBox().inflate(20.0);
+		var clones = level.getEntitiesOfClass(KageBunshinEntity.class, area,
+				c -> owner.getUUID().equals(c.getOwnerUuid()));
+		if (clones.isEmpty()) return;
+		ThreadLocalRandom rng = ThreadLocalRandom.current();
 		for (Mob mob : level.getEntitiesOfClass(Mob.class, area,
 				m -> m.getTarget() == owner)) {
-			mob.setTarget(clone);
+			mob.setTarget(clones.get(rng.nextInt(clones.size())));
 		}
 	}
 }

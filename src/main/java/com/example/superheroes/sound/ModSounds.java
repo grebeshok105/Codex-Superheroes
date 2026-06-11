@@ -28,6 +28,7 @@ public final class ModSounds {
 	public static final SoundEvent IRONMAN_JARVIS_DETECT_EXCITED = register("ironman.jarvis_detect_excited");
 	public static final SoundEvent IRONMAN_JARVIS_DIAGNOSTIC = register("ironman.jarvis_diagnostic");
 	public static final SoundEvent IRONMAN_JARVIS_OUTDATED_SUIT = register("ironman.jarvis_outdated_suit");
+	public static final SoundEvent IRONMAN_JARVIS_MARK85_PRESET = register("ironman.jarvis_mark85_preset");
 
 	private ModSounds() {
 	}

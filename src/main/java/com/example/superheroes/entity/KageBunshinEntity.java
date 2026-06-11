@@ -34,7 +34,7 @@ public class KageBunshinEntity extends PathfinderMob {
 	private static final EntityDataAccessor<Optional<UUID>> DATA_OWNER =
 			SynchedEntityData.defineId(KageBunshinEntity.class, EntityDataSerializers.OPTIONAL_UUID);
 
-	private int lifeTicks = 120;
+	private int lifeTicks = 500;
 
 	public KageBunshinEntity(EntityType<? extends KageBunshinEntity> type, Level level) {
 		super(type, level);

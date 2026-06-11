@@ -56,6 +56,16 @@ public final class ModEntities {
 					.build("ram")
 	);
 
+	public static final EntityType<IronLegionDroneEntity> IRON_LEGION_DRONE = Registry.register(
+			BuiltInRegistries.ENTITY_TYPE,
+			ModId.of("iron_legion_drone"),
+			EntityType.Builder.of(IronLegionDroneEntity::new, MobCategory.CREATURE)
+					.sized(0.6f, 1.85f)
+					.clientTrackingRange(10)
+					.fireImmune()
+					.build("iron_legion_drone")
+	);
+
 	private ModEntities() {
 	}
 
@@ -64,5 +74,6 @@ public final class ModEntities {
 		FabricDefaultAttributeRegistry.register(SHADOW_SOLDIER, ShadowSoldierEntity.createAttributes());
 		FabricDefaultAttributeRegistry.register(KAGE_BUNSHIN, KageBunshinEntity.createAttributes());
 		FabricDefaultAttributeRegistry.register(RAM, RamEntity.createAttributes());
+		FabricDefaultAttributeRegistry.register(IRON_LEGION_DRONE, IronLegionDroneEntity.createAttributes());
 	}
 }

@@ -128,7 +128,8 @@ public final class ClientNetworking {
 
 		ClientPlayNetworking.registerGlobalReceiver(com.example.superheroes.network.JarvisDetectionS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> com.example.superheroes.client.hud.JarvisDetectionHud.onDetection(
-						payload.playerName(), payload.heroId(), payload.distance())));
+						payload.playerName(), payload.heroId(), payload.distance(),
+						payload.threatClass(), payload.jarvisQuote())));
 
 		ClientPlayNetworking.registerGlobalReceiver(com.example.superheroes.network.ThanosStonesS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> com.example.superheroes.client.ClientThanosState.update(payload.playerId(), payload.bitmask())));

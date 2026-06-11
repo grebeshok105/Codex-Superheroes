@@ -39,6 +39,12 @@ public final class IronManFlightAbility implements Ability {
 		ServerLevel level = player.serverLevel();
 		level.playSound(null, player.getX(), player.getY(), player.getZ(),
 				SoundEvents.IRON_GOLEM_REPAIR, SoundSource.PLAYERS, 0.6f, 1.4f);
+		int suitVariant = player.getAttachedOrCreate(com.example.superheroes.attachment.ModAttachments.SUIT_VARIANT);
+		if (suitVariant == 1) { // Mark 85
+			level.playSound(null, player.getX(), player.getY(), player.getZ(),
+					com.example.superheroes.sound.ModSounds.IRONMAN_JARVIS_MARK85_PRESET,
+					SoundSource.PLAYERS, 0.9f, 1.0f);
+		}
 		return true;
 	}
 

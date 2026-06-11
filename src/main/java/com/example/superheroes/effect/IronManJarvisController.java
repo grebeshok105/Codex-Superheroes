@@ -2,6 +2,8 @@ package com.example.superheroes.effect;
 
 import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.hero.IronManHero;
+import com.example.superheroes.jarvis.JarvisQuotes;
+import com.example.superheroes.jarvis.JarvisThreatClass;
 import com.example.superheroes.network.JarvisDetectionS2CPayload;
 import com.example.superheroes.transform.HeroData;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
@@ -110,8 +112,11 @@ public final class IronManJarvisController {
 				ANNOUNCED.computeIfAbsent(entry.getKey(), id -> new HashMap<>())
 						.put(pe.getKey(), heroId);
 				int distance = (int) Math.round(ironman.position().distanceTo(target.position()));
+				JarvisThreatClass threat = JarvisThreatClass.forHero(heroId);
+				String quote = JarvisQuotes.randomDetect(threat);
 				ServerPlayNetworking.send(ironman, new JarvisDetectionS2CPayload(
-						target.getGameProfile().getName(), heroId, distance));
+						target.getGameProfile().getName(), heroId, distance,
+						threat.label(), quote));
 			}
 			if (entry.getValue().isEmpty()) {
 				it.remove();

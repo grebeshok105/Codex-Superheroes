@@ -78,7 +78,8 @@ public final class ModItemGroups {
 	public static final List<Item> ADMIN_ONLY_ITEMS = List.of(
 			ModItems.KAZUHA_VISION,
 			ModItems.SCARAMOUCHE_VISION,
-			ModItems.HOMELANDER_BOSS_SPAWN_EGG
+			ModItems.HOMELANDER_BOSS_SPAWN_EGG,
+			ModItems.HORDE_CRYSTAL
 	);
 
 	private ModItemGroups() {

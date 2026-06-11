@@ -26,6 +26,8 @@ public final class AbilityIds {
 	public static final ResourceLocation IRON_MAN_HULKBUSTER = ModId.of("iron_man_hulkbuster");
 	public static final ResourceLocation IRON_MAN_NANO_REPAIR = ModId.of("iron_man_nano_repair");
 	public static final ResourceLocation IRON_MAN_SMART_MISSILE = ModId.of("iron_man_smart_missile");
+	public static final ResourceLocation IRON_MAN_SUIT_SWITCH = ModId.of("iron_man_suit_switch");
+	public static final ResourceLocation IRON_MAN_LEGION = ModId.of("iron_man_legion");
 
 	public static final ResourceLocation LION_HEART = ModId.of("lion_heart");
 	public static final ResourceLocation MANIA_OF_GREED = ModId.of("mania_of_greed");

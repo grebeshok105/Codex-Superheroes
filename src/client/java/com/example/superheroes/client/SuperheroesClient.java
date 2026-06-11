@@ -62,6 +62,28 @@ public class SuperheroesClient implements ClientModInitializer {
 		EntityRendererRegistry.register(ModEntities.KAGE_BUNSHIN, com.example.superheroes.client.render.KageBunshinRenderer::new);
 		EntityRendererRegistry.register(ModEntities.SHIELD_PROJECTILE, com.example.superheroes.client.render.ShieldProjectileRenderer::new);
 		EntityRendererRegistry.register(ModEntities.RAM, com.example.superheroes.client.render.RamRenderer::new);
+		EntityRendererRegistry.register(ModEntities.IRON_LEGION_DRONE, com.example.superheroes.client.render.IronLegionDroneRenderer::new);
+		// Horde entity renderers
+		com.example.superheroes.horde.entity.HordeEntities hordeRef = null; // static init trigger
+		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.CRAWLER, com.example.superheroes.client.render.horde.GenericHordeRenderer.factory("crawler", 0.4f));
+		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.LURKER, com.example.superheroes.client.render.horde.GenericHordeRenderer.factory("lurker", 0.5f));
+		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.SPITTER, com.example.superheroes.client.render.horde.GenericHordeRenderer.factory("spitter", 0.4f));
+		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.SWOOPER, com.example.superheroes.client.render.horde.GenericHordeRenderer.factory("swooper", 0.3f));
+		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.STALKER, com.example.superheroes.client.render.horde.GenericHordeRenderer.factory("stalker", 0.4f));
+		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.INFECTOR, com.example.superheroes.client.render.horde.GenericHordeRenderer.factory("infector", 0.4f));
+		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.PARASITIC_HOUND, com.example.superheroes.client.render.horde.GenericHordeRenderer.factory("parasitic_hound", 0.4f));
+		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.INFECTED_ZOMBIE, com.example.superheroes.client.render.horde.GenericHordeRenderer.factory("infected_zombie", 0.5f));
+		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.INFECTED_SKELETON, com.example.superheroes.client.render.horde.GenericHordeRenderer.factory("infected_skeleton", 0.5f));
+		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.INFECTED_SPIDER, com.example.superheroes.client.render.horde.GenericHordeRenderer.factory("infected_spider", 0.5f));
+		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.INFECTED_CREEPER, com.example.superheroes.client.render.horde.GenericHordeRenderer.factory("infected_creeper", 0.5f));
+		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.VOID_PARASITE, com.example.superheroes.client.render.horde.GenericHordeRenderer.factory("void_parasite", 0.4f));
+		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.HOLLOW_VILLAGER, com.example.superheroes.client.render.horde.GenericHordeRenderer.factory("hollow_villager", 0.5f));
+		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.INFECTED_CATTLE, com.example.superheroes.client.render.horde.GenericHordeRenderer.factory("infected_cattle", 0.5f));
+		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.BROODMOTHER, com.example.superheroes.client.render.horde.GenericHordeRenderer.factory("broodmother", 0.6f));
+		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.CORRUPTED_GOLEM, com.example.superheroes.client.render.horde.GenericHordeRenderer.factory("corrupted_golem", 0.7f));
+		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.HIVEMIND, com.example.superheroes.client.render.horde.GenericHordeRenderer.factory("hivemind", 0.6f));
+		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.LEVIATHAN, com.example.superheroes.client.render.horde.GenericHordeRenderer.factory("leviathan", 0.8f));
+		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.INFECTED_HOMELANDER, com.example.superheroes.client.render.horde.InfectedHomelanderRenderer::new);
 		LivingEntityFeatureRendererRegistrationCallback.EVENT.register((entityType, entityRenderer, registrationHelper, context) -> {
 			if (entityRenderer instanceof PlayerRenderer playerRenderer) {
 				registrationHelper.register(new RemOniHornFeatureRenderer(playerRenderer));

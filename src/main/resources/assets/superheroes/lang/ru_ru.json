@@ -730,5 +730,36 @@
 	"hud.superheroes.jarvis.detect.title": "ДЖАРВИС // ЦЕЛЬ ОБНАРУЖЕНА",
 	"hud.superheroes.jarvis.detect.player": "Игрок: %s",
 	"hud.superheroes.jarvis.detect.hero": "Герой: %s",
-	"hud.superheroes.jarvis.detect.distance": "Дистанция: ~%s м"
+	"hud.superheroes.jarvis.detect.distance": "Дистанция: ~%s м",
+
+	"entity.superheroes.horde_crawler": "Ползун",
+	"entity.superheroes.horde_lurker": "Лурк",
+	"entity.superheroes.horde_spitter": "Плеватель",
+	"entity.superheroes.horde_swooper": "Ястреб",
+	"entity.superheroes.horde_stalker": "Охотник",
+	"entity.superheroes.horde_infector": "Инфектор",
+	"entity.superheroes.horde_parasitic_hound": "Паразитический пёс",
+	"entity.superheroes.horde_infected_zombie": "Заражённый зомби",
+	"entity.superheroes.horde_infected_skeleton": "Заражённый скелет",
+	"entity.superheroes.horde_infected_spider": "Заражённый паук",
+	"entity.superheroes.horde_infected_creeper": "Заражённый крипер",
+	"entity.superheroes.horde_void_parasite": "Паразит пустоты",
+	"entity.superheroes.horde_hollow_villager": "Пустой житель",
+	"entity.superheroes.horde_infected_cattle": "Заражённый скот",
+	"entity.superheroes.horde_broodmother": "Праматерь",
+	"entity.superheroes.horde_corrupted_golem": "Искажённый голем",
+	"entity.superheroes.horde_hivemind": "Разум улья",
+	"entity.superheroes.horde_leviathan": "Левиафан",
+	"entity.superheroes.horde_infected_homelander": "Заражённый Хоумлендер",
+	"entity.superheroes.iron_legion_drone": "Легионер",
+
+	"item.superheroes.horde_crystal": "Кристалл Орды",
+
+	"ability.superheroes.iron_man_suit_switch": "Смена костюма",
+	"ability.superheroes.iron_man_legion": "Железный Легион",
+
+	"subtitles.superheroes.ironman.jarvis_detect_excited": "ДЖАРВИС: критическая угроза!",
+	"subtitles.superheroes.ironman.jarvis_diagnostic": "ДЖАРВИС: диагностика",
+	"subtitles.superheroes.ironman.jarvis_outdated_suit": "ДЖАРВИС: устаревший костюм",
+	"subtitles.superheroes.ironman.jarvis_mark85_preset": "ДЖАРВИС: пресет Mark 85"
 }

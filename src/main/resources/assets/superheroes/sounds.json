@@ -171,5 +171,14 @@
 				"stream": true
 			}
 		]
+	},
+	"ironman.jarvis_mark85_preset": {
+		"subtitle": "subtitles.superheroes.ironman.jarvis_mark85_preset",
+		"sounds": [
+			{
+				"name": "superheroes:ironman/jarvis_mark85_preset",
+				"stream": true
+			}
+		]
 	}
 }
