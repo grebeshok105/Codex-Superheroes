@@ -70,14 +70,13 @@ public final class RemDemonismController {
 	private static final double MORNING_STAR_MAX_PULL_LIFT = 0.12;
 
 	private static final AttributeModifierSet DEMON_ATTRIBUTES = AttributeModifierSet.builder()
-			// Баланс: кулаки в демонизме били ~26 (голем за 3-4 удара) — снижено вдвое
-			.add(Attributes.ATTACK_DAMAGE, ModId.of("modifiers/rem/demon_damage"), 4.0, AttributeModifier.Operation.ADD_VALUE)
-			.add(Attributes.ATTACK_DAMAGE, ModId.of("modifiers/rem/demon_damage_mult"), 0.15, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL)
+			// Баланс (round 5): кулак в демонизме ровно 7 урона (база 6 + 1)
+			.add(Attributes.ATTACK_DAMAGE, ModId.of("modifiers/rem/demon_damage"), 1.0, AttributeModifier.Operation.ADD_VALUE)
 			.add(Attributes.ATTACK_SPEED, ModId.of("modifiers/rem/demon_attack_speed"), 1.2, AttributeModifier.Operation.ADD_VALUE)
 			.add(Attributes.MOVEMENT_SPEED, ModId.of("modifiers/rem/demon_speed"), 0.24, AttributeModifier.Operation.ADD_MULTIPLIED_BASE)
 			.add(Attributes.ARMOR, ModId.of("modifiers/rem/demon_armor"), 22.0, AttributeModifier.Operation.ADD_VALUE)
 			.add(Attributes.ARMOR_TOUGHNESS, ModId.of("modifiers/rem/demon_toughness"), 14.0, AttributeModifier.Operation.ADD_VALUE)
-			.add(Attributes.MAX_HEALTH, ModId.of("modifiers/rem/demon_health"), 38.0, AttributeModifier.Operation.ADD_VALUE)
+			// ХП: 80 в обеих формах (база уже 80, демонизм бонуса не даёт)
 			.add(Attributes.KNOCKBACK_RESISTANCE, ModId.of("modifiers/rem/demon_kb"), 0.65, AttributeModifier.Operation.ADD_VALUE)
 			.add(Attributes.ENTITY_INTERACTION_RANGE, ModId.of("modifiers/rem/demon_reach"), 1.0, AttributeModifier.Operation.ADD_VALUE)
 			.add(Attributes.BLOCK_INTERACTION_RANGE, ModId.of("modifiers/rem/demon_block_reach"), 0.8, AttributeModifier.Operation.ADD_VALUE)
