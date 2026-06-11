@@ -234,6 +234,8 @@ public final class AbilitiesTooltipHud {
 
 		int border = applyAlpha(ClientHudGlitch.tintColor(theme.panelBorder()), alpha, 0.9f);
 		HudUtil.roundedRectBorder(g, x, y, w, h, border);
+		int glow = applyAlpha(ClientHudGlitch.tintColor(theme.panelBorder()), alpha / 4, 1.0f);
+		HudUtil.roundedRectBorder(g, x - 1, y - 1, w + 2, h + 2, glow);
 
 		int hi = applyAlpha(ClientHudGlitch.tintColor(theme.panelHighlight()), alpha, 1.0f);
 		g.fill(x + 3, y + 2, x + w - 3, y + 3, hi);

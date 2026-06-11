@@ -129,6 +129,7 @@ public class SuperheroesClient implements ClientModInitializer {
 				return;
 			}
 			JarvisOverlayHud.render(graphics, tracker);
+			com.example.superheroes.client.hud.JarvisDetectionHud.render(graphics, tracker);
 			HeroInfoPanelHud.render(graphics, tracker);
 			HotbarOverrideHud.render(graphics, tracker);
 			AbilityBarHud.render(graphics, tracker);
@@ -158,6 +159,7 @@ public class SuperheroesClient implements ClientModInitializer {
 		});
 
 		ClientTickEvents.START_CLIENT_TICK.register(SuperheroesClient::tickHeroMeleeCharge);
+		ClientTickEvents.END_CLIENT_TICK.register(com.example.superheroes.client.hud.JarvisDetectionHud::tick);
 
 		// "HUD" button in the pause menu -> drag editor for all HUD elements
 		net.fabricmc.fabric.api.client.screen.v1.ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
@@ -227,6 +229,7 @@ public class SuperheroesClient implements ClientModInitializer {
 
 		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
 			com.example.superheroes.client.ClientThanosState.clear();
+			com.example.superheroes.client.hud.JarvisDetectionHud.clear();
 			ClientFlightState.clearAll();
 			ClientRemDemonismState.clearAll();
 			ClientReinhardDarknessState.clearAll();

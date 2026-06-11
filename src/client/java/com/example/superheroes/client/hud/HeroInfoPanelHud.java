@@ -338,9 +338,11 @@ public final class HeroInfoPanelHud {
 	}
 
 	private static void drawPanelBg(GuiGraphics g, int x, int y, int w, int h, HeroTheme theme) {
-		HudUtil.dropShadow(g, x, y, w, h, 3, 0x44000000);
-		HudUtil.roundedRectGradient(g, x, y, w, h, applyAlpha(theme.panelTop(), 230, 0.85f), applyAlpha(theme.panelBottom(), 230, 0.85f));
-		HudUtil.roundedRectBorder(g, x, y, w, h, applyAlpha(theme.panelBorder(), 220, 0.9f));
+		HudUtil.neonPanel(g, x, y, w, h,
+				applyAlpha(theme.panelTop(), 222, 0.78f),
+				applyAlpha(theme.panelBottom(), 226, 0.8f),
+				applyAlpha(theme.panelBorder(), 235, 1.0f),
+				applyAlpha(theme.panelBorder(), 70, 1.0f));
 		g.fill(x + 3, y + 2, x + w - 3, y + 3, applyAlpha(theme.panelHighlight(), 200, 0.7f));
 	}
 

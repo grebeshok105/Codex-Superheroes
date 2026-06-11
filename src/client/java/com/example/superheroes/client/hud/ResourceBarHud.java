@@ -82,9 +82,9 @@ public final class ResourceBarHud {
 		Component heroName = Component.translatable("hero." + heroId.getNamespace() + "." + heroId.getPath());
 
 		int panelHeight = showMana ? PANEL_HEIGHT_DUAL : PANEL_HEIGHT_SOLO;
-		HudUtil.dropShadow(graphics, X, Y, PANEL_WIDTH, panelHeight, 3, SHADOW);
-		HudUtil.roundedRectGradient(graphics, X, Y, PANEL_WIDTH, panelHeight, themePanelTop, themePanelBottom);
-		HudUtil.roundedRectBorder(graphics, X, Y, PANEL_WIDTH, panelHeight, themePanelBorder);
+		HudUtil.neonPanel(graphics, X, Y, PANEL_WIDTH, panelHeight,
+				themePanelTop, themePanelBottom, themePanelBorder,
+				(0x46 << 24) | (themePanelBorder & 0x00FFFFFF));
 		graphics.fill(X + 3, Y + 2, X + PANEL_WIDTH - 3, Y + 3, themePanelHighlight);
 
 		graphics.drawString(mc.font, heroName, X + 12, Y + 6, themeHeroNameColor, true);

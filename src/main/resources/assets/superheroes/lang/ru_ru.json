@@ -724,5 +724,11 @@
 	"hud.superheroes.edit.effects": "Эффекты",
 	"hud.superheroes.edit.melee_charge": "Шкала заряда",
 	"hud.superheroes.edit.tooltips": "Подсказка способностей",
-	"hud.superheroes.radial.ready": "Готово"
+	"hud.superheroes.radial.ready": "Готово",
+	"subtitles.superheroes.homelander.omniman_react": "Хоумлендер реагирует на Омни-Мэна",
+	"subtitles.superheroes.ironman.jarvis_detect": "ДЖАРВИС: обнаружен герой",
+	"hud.superheroes.jarvis.detect.title": "ДЖАРВИС // ЦЕЛЬ ОБНАРУЖЕНА",
+	"hud.superheroes.jarvis.detect.player": "Игрок: %s",
+	"hud.superheroes.jarvis.detect.hero": "Герой: %s",
+	"hud.superheroes.jarvis.detect.distance": "Дистанция: ~%s м"
 }
