@@ -76,8 +76,11 @@ public final class IronManLegionAbility implements Ability {
 					spawnX, player.getY() + 2.0, spawnZ, 15, 0.3, 0.5, 0.3, 0.08);
 		}
 
-		level.playSound(null, player.getX(), player.getY(), player.getZ(),
-				ModSounds.IRONMAN_JARVIS_MARK85_PRESET, SoundSource.PLAYERS, 1.0f, 1.0f);
+		// Голос Джарвиса привязан к самому Железному Человеку (entity-bound:
+		// сервер шлёт ClientboundSoundEntityPacket → звук летит вместе с игроком,
+		// а не висит в точке запуска) и слышен всем игрокам вокруг.
+		level.playSound(null, player, ModSounds.IRONMAN_JARVIS_LEGION_LAUNCH,
+				SoundSource.PLAYERS, 2.0f, 1.0f);
 
 		String quote = JarvisQuotes.randomLegionDeploy();
 		player.sendSystemMessage(net.minecraft.network.chat.Component.literal(

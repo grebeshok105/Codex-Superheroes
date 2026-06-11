@@ -180,5 +180,14 @@
 				"stream": true
 			}
 		]
+	},
+	"ironman.jarvis_legion_launch": {
+		"subtitle": "subtitles.superheroes.ironman.jarvis_legion_launch",
+		"sounds": [
+			{
+				"name": "superheroes:ironman/jarvis_legion_launch",
+				"stream": true
+			}
+		]
 	}
 }

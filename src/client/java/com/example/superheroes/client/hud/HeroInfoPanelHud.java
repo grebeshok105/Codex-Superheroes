@@ -233,17 +233,27 @@ public final class HeroInfoPanelHud {
 		int count = AbilityDescriptions.passiveCount(heroId);
 		if (count <= 0) return;
 		Component label = HudUtil.text("ПАССИВКИ");
-		g.drawString(mc.font, label, x, y - HudScaler.scale(1), 0xFF8B8FA3, true);
+		// label по центру высоты чипов
+		g.drawString(mc.font, label, x, y - HudScaler.scale(3) + (HudScaler.scale(14) - 8) / 2,
+				0xFF8B8FA3, true);
 		int chip = HudScaler.scale(14);
 		int gap = HudScaler.scale(4);
 		int cx = x + mc.font.width(label) + HudScaler.scale(8);
+		int chipY = y - HudScaler.scale(3);
 		for (int i = 0; i < count && cx + chip <= x + w; i++) {
-			HudUtil.roundedRectFill(g, cx, y - HudScaler.scale(3), chip, chip, 0x96070810);
-			HudUtil.roundedRectBorder(g, cx, y - HudScaler.scale(3), chip, chip,
-					applyAlpha(theme.panelBorder(), 110, 1f));
-			int emojiSz = chip - HudScaler.scale(3);
-			EmojiIcons.draw(g, PassiveIcons.glyph(heroId, i),
-					cx + (chip - emojiSz) / 2, y - HudScaler.scale(3) + (chip - emojiSz) / 2, emojiSz);
+			// квадратный чип; обводка тонкая, иконка с РАВНЫМИ отступами со всех
+			// сторон (раньше chip-3 давал 1px слева и 2px справа — чипы стояли криво)
+			if (WildShaders.rectReady()) {
+				WildRenderer.panel(g, cx, chipY, chip, chip, HudScaler.scale(3) * 0.45f,
+						0xA8141A28, 0xC808090F, applyAlpha(theme.panelBorder(), 110, 1f), 0.7f, 0, 0f);
+			} else {
+				HudUtil.roundedRectFill(g, cx, chipY, chip, chip, 0x96070810);
+				HudUtil.roundedRectBorder(g, cx, chipY, chip, chip,
+						applyAlpha(theme.panelBorder(), 110, 1f));
+			}
+			int inset = Math.max(1, HudScaler.scale(1));
+			int emojiSz = chip - inset * 2;
+			EmojiIcons.draw(g, PassiveIcons.glyph(heroId, i), cx + inset, chipY + inset, emojiSz);
 			cx += chip + gap;
 		}
 	}
@@ -315,7 +325,7 @@ public final class HeroInfoPanelHud {
 		int colW = w / cols;
 		int rowH = HudScaler.scale(17);
 		int chip = HudScaler.scale(14);
-		float chipR = HudScaler.scale(3);
+		float chipR = HudScaler.scale(3) * 0.45f; // почти квадрат, лишь чуть смягчённые углы
 		int maxRows = 4;
 		int shown = Math.min(abilities.size(), cols * maxRows);
 		for (int i = 0; i < shown; i++) {
@@ -336,15 +346,15 @@ public final class HeroInfoPanelHud {
 				int glow = ready ? applyAlpha(isUlt ? 0xFFFFD24A : theme.panelBorder(),
 						(int) (60 + 60 * pulse), 1f) : 0;
 				WildRenderer.panel(g, ix, iy, chip, chip, chipR,
-						0xA8141A28, 0xC808090F, neon, 1.1f, glow, ready ? 3.5f : 0f);
+						0xA8141A28, 0xC808090F, neon, 0.7f, glow, ready ? 3.0f : 0f);
 			} else {
 				HudUtil.roundedRectFill(g, ix, iy, chip, chip, 0xC00B0D14);
 				HudUtil.roundedRectBorder(g, ix, iy, chip, chip, neon);
 			}
 
-			// иконка строго по центру чипа, с равным отступом со всех сторон
-			int iconSz = chip - HudScaler.scale(4);
-			int inset = (chip - iconSz) / 2;
+			// иконка-квадрат: заполняет чип почти целиком, строго по центру
+			int inset = Math.max(1, HudScaler.scale(1));
+			int iconSz = chip - inset * 2;
 			int fallback = ready ? (isUlt ? 0xFFFFD24A : 0xFF6BFF8C) : 0xFF8A8FA0;
 			AbilityIcons.draw(g, aid, ix + inset, iy + inset, iconSz, fallback);
 			if (!ready) {
