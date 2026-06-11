@@ -149,7 +149,7 @@ public final class RadialMenuHud {
 	// Animation state
 	private static float openProgress = 0f;
 	private static float lastOpenProgress = 0f;
-	private static final int OPEN_ANIM_TICKS = 3;
+	private static final int OPEN_ANIM_TICKS = 5;
 
 	public static void animTick() {
 		lastOpenProgress = openProgress;
@@ -184,10 +184,6 @@ public final class RadialMenuHud {
 		int cx = mc.getWindow().getGuiScaledWidth() / 2;
 		int cy = mc.getWindow().getGuiScaledHeight() / 2;
 		int n = abilities.size();
-		// Per-frame cursor/selection update (the 20 Hz tick-only update felt laggy)
-		if (open && mc.player != null) {
-			updateSelection(mc, n);
-		}
 		HeroTheme theme = ClientHeroState.theme();
 		boolean isThanos = ThanosHero.ID.equals(ClientHeroState.heroId());
 
@@ -195,7 +191,7 @@ public final class RadialMenuHud {
 
 		graphics.pose().pushPose();
 		graphics.pose().translate(cx, cy, 0);
-		float openScale = 0.92f + 0.08f * eased;
+		float openScale = 0.86f + 0.14f * eased;
 		graphics.pose().scale(openScale, openScale, 1f);
 		graphics.pose().translate(-cx, -cy, 0);
 
@@ -206,8 +202,8 @@ public final class RadialMenuHud {
 		for (int i = 0; i < n; i++) {
 			float mid = i * per - (float) Math.PI / 2f;
 			// staggered bloom-in: each petal fades/slides in clockwise
-			float stagger = n <= 1 ? 0f : (0.18f * i) / n;
-			float petal = HudAnimator.smoothstep(clamp01((anim - stagger) / Math.max(0.001f, 1f - 0.18f)));
+			float stagger = n <= 1 ? 0f : (0.35f * i) / n;
+			float petal = HudAnimator.smoothstep(clamp01((anim - stagger) / Math.max(0.001f, 1f - 0.35f)));
 			if (petal <= 0.01f) {
 				continue;
 			}
@@ -240,8 +236,8 @@ public final class RadialMenuHud {
 
 		// Icons + key labels at petal centroids (drawn after all petals)
 		for (int i = 0; i < n; i++) {
-			float stagger = n <= 1 ? 0f : (0.18f * i) / n;
-			float petal = HudAnimator.smoothstep(clamp01((anim - stagger) / Math.max(0.001f, 1f - 0.18f)));
+			float stagger = n <= 1 ? 0f : (0.35f * i) / n;
+			float petal = HudAnimator.smoothstep(clamp01((anim - stagger) / Math.max(0.001f, 1f - 0.35f)));
 			if (petal <= 0.05f) {
 				continue;
 			}
@@ -388,45 +384,13 @@ public final class RadialMenuHud {
 		}
 	}
 
-	/**
-	 * Filled annular sector between angles a0..a1 (radians, screen coords, y-down).
-	 * Scans only the sector's bounding box instead of the whole disk — the old
-	 * full-disk scan did hundreds of thousands of atan2 calls per frame and lagged.
-	 */
+	/** Filled annular sector between angles a0..a1 (radians, screen coords, y-down). */
 	private static void drawWedge(GuiGraphics g, int cx, int cy, int r0, int r1, float a0, float a1, int color) {
-		// Bounding box of the sector: corners at a0/a1 (r0 and r1) plus axis
-		// crossings (0, 90, 180, 270 deg) at r1 when inside the angular range.
-		int minX = Integer.MAX_VALUE, maxX = Integer.MIN_VALUE;
-		int minY = Integer.MAX_VALUE, maxY = Integer.MIN_VALUE;
-		float[] angles = {a0, a1};
-		for (float ang : angles) {
-			double c = Math.cos(ang), s = Math.sin(ang);
-			for (int r : new int[]{r0, r1}) {
-				int px = (int) Math.round(c * r);
-				int py = (int) Math.round(s * r);
-				minX = Math.min(minX, px); maxX = Math.max(maxX, px);
-				minY = Math.min(minY, py); maxY = Math.max(maxY, py);
-			}
-		}
-		for (int k = 0; k < 4; k++) {
-			double axis = k * Math.PI / 2;
-			if (angleInRange(axis, a0, a1) || angleInRange(axis - 2 * Math.PI, a0, a1)) {
-				int px = (int) Math.round(Math.cos(axis) * r1);
-				int py = (int) Math.round(Math.sin(axis) * r1);
-				minX = Math.min(minX, px); maxX = Math.max(maxX, px);
-				minY = Math.min(minY, py); maxY = Math.max(maxY, py);
-			}
-		}
-		minX -= 2; maxX += 2; minY -= 2; maxY += 2;
-		int yFrom = Math.max(-r1, minY);
-		int yTo = Math.min(r1, maxY);
-		for (int dy = yFrom; dy <= yTo; dy++) {
+		for (int dy = -r1; dy <= r1; dy++) {
 			long d2 = (long) dy * dy;
 			int xOut = (int) Math.sqrt((double) r1 * r1 - d2);
-			int xFrom = Math.max(-xOut, minX);
-			int xTo = Math.min(xOut, maxX);
 			int runStart = Integer.MIN_VALUE;
-			for (int dx = xFrom; dx <= xTo; dx++) {
+			for (int dx = -xOut; dx <= xOut; dx++) {
 				boolean inside = false;
 				long dist2 = (long) dx * dx + d2;
 				if (dist2 >= (long) r0 * r0 && dist2 <= (long) r1 * r1) {

@@ -763,7 +763,9 @@
 	"item.superheroes.horde_crystal": "Horde Crystal",
 
 	"ability.superheroes.iron_man_suit_switch": "Suit Switch",
+	"ability.superheroes.iron_man_suit_switch.desc": "Cycle Stark armor variants — the suit repaints instantly, including your first-person hand.",
 	"ability.superheroes.iron_man_legion": "Iron Legion",
+	"ability.superheroes.iron_man_legion.desc": "Call in a squad of Iron Legion drones that scream around you at breakneck speed within 35 blocks and shred anything hostile for 30 seconds, then fly away.",
 
 	"subtitles.superheroes.ironman.jarvis_detect_excited": "JARVIS: Critical threat!",
 	"subtitles.superheroes.ironman.jarvis_diagnostic": "JARVIS: Diagnostic",
