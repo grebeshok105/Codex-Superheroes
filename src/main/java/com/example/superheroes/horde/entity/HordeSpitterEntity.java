@@ -46,7 +46,7 @@ public class HordeSpitterEntity extends BaseHordeEntity implements RangedAttackM
 	@Override
 	public void performRangedAttack(LivingEntity target, float velocity) {
 		Vec3 dir = target.position().subtract(position()).normalize();
-		SmallFireball fireball = new SmallFireball(level(), this, dir.x, dir.y + 0.1, dir.z);
+		SmallFireball fireball = new SmallFireball(level(), this, new Vec3(dir.x, dir.y + 0.1, dir.z));
 		fireball.setPos(getX() + dir.x, getEyeY(), getZ() + dir.z);
 		level().addFreshEntity(fireball);
 		playSound(SoundEvents.BLAZE_SHOOT, 0.8f, 0.6f);

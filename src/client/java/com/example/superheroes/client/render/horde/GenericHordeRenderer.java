@@ -1,7 +1,7 @@
 package com.example.superheroes.client.render.horde;
 
 import com.example.superheroes.ModId;
-import net.minecraft.client.model.ZombieModel;
+import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelLayers;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
@@ -9,15 +9,15 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.monster.Monster;
 
 /**
- * Generic renderer for horde entities using zombie model with custom texture.
+ * Generic renderer for horde entities using humanoid model with custom texture.
  * The GeckoLib models/animations are imported for future upgrade, but for now
  * we use simple vanilla models to stay consistent with the codebase.
  */
-public class GenericHordeRenderer<T extends Monster> extends MobRenderer<T, ZombieModel<T>> {
+public class GenericHordeRenderer<T extends Monster> extends MobRenderer<T, HumanoidModel<T>> {
 	private final ResourceLocation texture;
 
 	public GenericHordeRenderer(EntityRendererProvider.Context ctx, String textureName, float shadow) {
-		super(ctx, new ZombieModel<>(ctx.bakeLayer(ModelLayers.ZOMBIE)), shadow);
+		super(ctx, new HumanoidModel<>(ctx.bakeLayer(ModelLayers.ZOMBIE)), shadow);
 		this.texture = ModId.of("textures/entity/horde/" + textureName + ".png");
 	}
 

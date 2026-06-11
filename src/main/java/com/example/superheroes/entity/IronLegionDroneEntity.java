@@ -153,7 +153,7 @@ public class IronLegionDroneEntity extends PathfinderMob {
 	}
 
 	@Override
-	protected boolean shouldShowName() {
+	public boolean shouldShowName() {
 		return false;
 	}
 
