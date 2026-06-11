@@ -14,8 +14,10 @@ public final class ModKeys {
 	public static KeyMapping SUPER_JUMP;
 	public static KeyMapping VFX_SETTINGS;
 	public static KeyMapping RAIDEN_SWORD_DRAW;
-	public static KeyMapping HOTBAR_LOCK;
 	public static KeyMapping[] ABILITY_SLOTS;
+
+	/** Fixed physical-key labels for ability slots, independent of keyboard layout. */
+	public static final String[] SLOT_LABELS = {"Z", "X", "C", "V", "B", "3", "4", "5"};
 
 	private static final int[] DEFAULT_SLOT_KEYS = {
 			GLFW.GLFW_KEY_Z,
@@ -61,11 +63,6 @@ public final class ModKeys {
 				"key.superheroes.raiden_sword_draw",
 				InputConstants.Type.KEYSYM,
 				GLFW.GLFW_KEY_F,
-				CATEGORY));
-		HOTBAR_LOCK = KeyBindingHelper.registerKeyBinding(new KeyMapping(
-				"key.superheroes.hotbar_lock",
-				InputConstants.Type.KEYSYM,
-				GLFW.GLFW_KEY_L,
 				CATEGORY));
 		ABILITY_SLOTS = new KeyMapping[DEFAULT_SLOT_KEYS.length];
 		for (int i = 0; i < DEFAULT_SLOT_KEYS.length; i++) {

@@ -39,6 +39,12 @@ public abstract class AbstractClientPlayerSkinMixin {
 		if (SungJinwooHero.ID.equals(heroId) && ClientShadowArmyState.hasShadows(self.getUUID())) {
 			heroTexture = SungJinwooHero.SKIN_PHASE_2;
 		}
+		// Thanos: gauntlet on the skin only shows stones actually collected
+		// (stone masks of every Thanos are synced to all clients)
+		if (com.example.superheroes.hero.ThanosHero.ID.equals(heroId)) {
+			heroTexture = com.example.superheroes.client.ThanosSkinTextures.textureFor(
+					com.example.superheroes.client.ClientThanosState.maskFor(self.getUUID()));
+		}
 		PlayerSkin orig = cir.getReturnValue();
 		cir.setReturnValue(new PlayerSkin(
 				heroTexture != null ? heroTexture : DefaultPlayerSkin.getDefaultTexture(),

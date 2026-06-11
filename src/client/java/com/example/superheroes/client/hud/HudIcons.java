@@ -193,4 +193,72 @@ public final class HudIcons {
 		g.fill(x + u, y + 2 * u, x + 7 * u, y + 6 * u, c);
 		g.fill(x + 2 * u, y + 6 * u, x + 6 * u, y + 7 * u, c);
 	}
+
+	/** Mini vector-style glyphs for hero passive slots in the info panel. */
+	public enum PassiveGlyph {
+		HEART, FEATHER, STAR, EYE,
+		SHIELD, FLAME, BOLT, FIST, SWORD, MAGIC,
+		LEAF, SPIRAL, ICE, BEAST, SKULL, SHADOW, REACTOR, COSMIC, GENERIC
+	}
+
+	public static void drawPassiveIcon(GuiGraphics g, int x, int y, int size, PassiveGlyph glyph, int color) {
+		switch (glyph) {
+			case HEART -> drawHeart(g, x, y, size, color);
+			case FEATHER -> drawFeather(g, x, y, size, color);
+			case STAR -> drawStar(g, x, y, size, color);
+			case EYE -> drawEye(g, x, y, size, color);
+			case SHIELD -> drawShield(g, x, y, size, color);
+			case FLAME -> drawFlame(g, x, y, size, color);
+			case BOLT -> drawLightning(g, x, y, size, color);
+			case FIST -> drawFist(g, x, y, size, color);
+			case SWORD -> drawSword(g, x, y, size, color);
+			case MAGIC -> drawMagic(g, x, y, size, color);
+			case LEAF -> drawLeaf(g, x, y, size, color);
+			case SPIRAL -> drawSpiral(g, x, y, size, color);
+			case ICE -> drawIce(g, x, y, size, color);
+			case BEAST -> drawBeast(g, x, y, size, color);
+			case SKULL -> drawSkull(g, x, y, size, color);
+			case SHADOW -> drawShadow(g, x, y, size, color);
+			case REACTOR -> drawReactor(g, x, y, size, color);
+			case COSMIC -> drawCosmic(g, x, y, size, color);
+			default -> drawGeneric(g, x, y, size, color);
+		}
+	}
+
+	private static void drawHeart(GuiGraphics g, int x, int y, int s, int c) {
+		int u = Math.max(1, s / 8);
+		g.fill(x + u, y + u, x + 3 * u, y + 2 * u, c);
+		g.fill(x + 5 * u, y + u, x + 7 * u, y + 2 * u, c);
+		g.fill(x, y + 2 * u, x + 8 * u, y + 4 * u, c);
+		g.fill(x + u, y + 4 * u, x + 7 * u, y + 5 * u, c);
+		g.fill(x + 2 * u, y + 5 * u, x + 6 * u, y + 6 * u, c);
+		g.fill(x + 3 * u, y + 6 * u, x + 5 * u, y + 7 * u, c);
+	}
+
+	private static void drawFeather(GuiGraphics g, int x, int y, int s, int c) {
+		int u = Math.max(1, s / 8);
+		g.fill(x + 5 * u, y, x + 7 * u, y + u, c);
+		g.fill(x + 4 * u, y + u, x + 7 * u, y + 3 * u, c);
+		g.fill(x + 3 * u, y + 2 * u, x + 6 * u, y + 4 * u, c);
+		g.fill(x + 2 * u, y + 3 * u, x + 5 * u, y + 5 * u, c);
+		g.fill(x + u, y + 4 * u, x + 4 * u, y + 6 * u, c);
+		g.fill(x + u, y + 6 * u, x + 2 * u, y + 8 * u, c);
+	}
+
+	private static void drawStar(GuiGraphics g, int x, int y, int s, int c) {
+		int u = Math.max(1, s / 8);
+		g.fill(x + 2 * u, y + 2 * u, x + 6 * u, y + 6 * u, c);
+		g.fill(x + 3 * u, y, x + 5 * u, y + 2 * u, c);
+		g.fill(x + 3 * u, y + 6 * u, x + 5 * u, y + 8 * u, c);
+		g.fill(x, y + 3 * u, x + 2 * u, y + 5 * u, c);
+		g.fill(x + 6 * u, y + 3 * u, x + 8 * u, y + 5 * u, c);
+	}
+
+	private static void drawEye(GuiGraphics g, int x, int y, int s, int c) {
+		int u = Math.max(1, s / 8);
+		g.fill(x + 2 * u, y + 2 * u, x + 6 * u, y + 3 * u, c);
+		g.fill(x + u, y + 3 * u, x + 7 * u, y + 5 * u, c);
+		g.fill(x + 2 * u, y + 5 * u, x + 6 * u, y + 6 * u, c);
+		g.fill(x + 3 * u, y + 3 * u, x + 5 * u, y + 5 * u, (c & 0xFF000000));
+	}
 }

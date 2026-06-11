@@ -84,8 +84,19 @@ public final class LokiTesseractBlinkAbility implements Ability {
 			}
 		}
 
-		player.teleportTo(dest.x, dest.y, dest.z);
-		player.connection.resetPosition();
+		// Single clean teleport: keep client rotation relative (no forced camera
+		// snap — the old teleport + setYRot + double resetPosition desynced the
+		// client camera and flipped/stuck the screen).
+		if (target != null) {
+			float yawTo = (float) Math.toDegrees(Math.atan2(
+					target.getZ() - dest.z, target.getX() - dest.x)) - 90f;
+			player.teleportTo(level, dest.x, dest.y, dest.z,
+					java.util.Set.of(net.minecraft.world.entity.RelativeMovement.X_ROT), yawTo, 0f);
+		} else {
+			player.teleportTo(level, dest.x, dest.y, dest.z,
+					java.util.Set.of(net.minecraft.world.entity.RelativeMovement.Y_ROT,
+							net.minecraft.world.entity.RelativeMovement.X_ROT), 0f, 0f);
+		}
 
 		level.sendParticles(ParticleTypes.PORTAL,
 				dest.x, dest.y + 1, dest.z, 80, 0.6, 1.0, 0.6, 0.7);
@@ -93,11 +104,6 @@ public final class LokiTesseractBlinkAbility implements Ability {
 				dest.x, dest.y + 1, dest.z, 40, 0.5, 1.0, 0.5, 0.06);
 
 		if (target != null) {
-			float yawTo = (float) Math.toDegrees(Math.atan2(
-					target.getZ() - dest.z, target.getX() - dest.x)) - 90f;
-			player.setYRot(yawTo);
-			player.connection.resetPosition();
-
 			target.hurt(ModDamageTypes.lokiChaos(level, player), BACKSTAB_DAMAGE);
 			target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 120, 1, false, true, true));
 			target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 80, 2, false, true, true));

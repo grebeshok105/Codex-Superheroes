@@ -22,7 +22,6 @@ public final class AbilityIds {
 	public static final ResourceLocation IRON_MAN_FLIGHT = ModId.of("iron_man_flight");
 	public static final ResourceLocation SUPERSONIC = ModId.of("supersonic");
 	public static final ResourceLocation REPULSOR = ModId.of("repulsor");
-	public static final ResourceLocation BOX_ESP = ModId.of("box_esp");
 	public static final ResourceLocation UNIBEAM = ModId.of("unibeam");
 	public static final ResourceLocation IRON_MAN_HULKBUSTER = ModId.of("iron_man_hulkbuster");
 	public static final ResourceLocation IRON_MAN_NANO_REPAIR = ModId.of("iron_man_nano_repair");

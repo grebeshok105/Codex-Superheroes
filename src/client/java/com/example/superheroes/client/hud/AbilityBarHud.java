@@ -1,20 +1,13 @@
 package com.example.superheroes.client.hud;
 
-import com.example.superheroes.ModId;
-import com.example.superheroes.ability.AbilityIds;
 import com.example.superheroes.client.ClientAbilityCooldowns;
-import com.example.superheroes.client.ClientDoomsdayState;
+import com.example.superheroes.client.ClientAbilityFilter;
 import com.example.superheroes.client.ClientHeroState;
-import com.example.superheroes.client.ClientRemDemonismState;
-import com.example.superheroes.client.ClientThanosState;
 import com.example.superheroes.client.ModKeys;
 import com.example.superheroes.hero.Hero;
 import com.example.superheroes.hero.HeroHudConfig;
 import com.example.superheroes.hero.HeroTheme;
 import com.example.superheroes.hero.Heroes;
-import com.example.superheroes.hero.RemHero;
-import com.example.superheroes.hero.ThanosHero;
-import com.example.superheroes.item.infinity.InfinityStoneType;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
@@ -22,7 +15,6 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public final class AbilityBarHud {
@@ -55,7 +47,7 @@ public final class AbilityBarHud {
 
 		HeroTheme theme = ClientHeroState.theme();
 		HeroHudConfig hudConfig = hero.getHudConfig();
-		List<ResourceLocation> abilities = filterByState(ClientHeroState.abilities(), heroId);
+		List<ResourceLocation> abilities = ClientAbilityFilter.visibleFor(ClientHeroState.abilities(), heroId);
 		int n = abilities.size();
 		if (n == 0) {
 			return;
@@ -96,7 +88,7 @@ public final class AbilityBarHud {
 		if (isActive) {
 			borderColor = 0xFF6BFF8C;
 		} else if (cdRemaining > 0) {
-			borderColor = 0xFFFF8866;
+			borderColor = 0xFFE8C170;
 		} else {
 			borderColor = theme.energyIcon();
 		}
@@ -152,7 +144,7 @@ public final class AbilityBarHud {
 
 	private static void drawCooldownArc(GuiGraphics g, int x, int y, int size, float progress, int color) {
 		int arcColor = (0xCC << 24) | (color & 0x00FFFFFF);
-		int thickness = Math.max(1, HudScaler.scale(2));
+		int thickness = Math.max(1, HudScaler.scale(1));
 
 		// Top edge
 		int topFillW = (int) (size * Math.min(1f, progress * 4f));
@@ -176,56 +168,4 @@ public final class AbilityBarHud {
 		}
 	}
 
-	private static List<ResourceLocation> filterByState(List<ResourceLocation> base, ResourceLocation heroId) {
-		if (ModId.of("doomsday").equals(heroId)) {
-			int tier = ClientDoomsdayState.tier();
-			ArrayList<ResourceLocation> out = new ArrayList<>(base.size());
-			for (ResourceLocation id : base) {
-				if (isDoomsdayUnlocked(id, tier)) out.add(id);
-			}
-			return out;
-		}
-		if (ThanosHero.ID.equals(heroId)) {
-			ArrayList<ResourceLocation> out = new ArrayList<>(base.size());
-			for (ResourceLocation id : base) {
-				if (isThanosUnlocked(id)) out.add(id);
-			}
-			return out;
-		}
-		if (RemHero.ID.equals(heroId)) {
-			boolean demonism = Minecraft.getInstance().player != null && ClientRemDemonismState.isActive(Minecraft.getInstance().player.getUUID());
-			ArrayList<ResourceLocation> out = new ArrayList<>(base.size());
-			for (ResourceLocation id : base) {
-				if (isRemVisible(id, demonism)) out.add(id);
-			}
-			return out;
-		}
-		return base;
-	}
-
-	private static boolean isThanosUnlocked(ResourceLocation id) {
-		if (ThanosHero.isSnapAbility(id)) return ClientThanosState.hasAllStones();
-		InfinityStoneType req = ThanosHero.getRequiredStoneFor(id);
-		if (req == null) return true;
-		return ClientThanosState.hasStone(req);
-	}
-
-	private static boolean isDoomsdayUnlocked(ResourceLocation id, int tier) {
-		if (AbilityIds.DOOMSDAY_SMASH.equals(id)) return tier >= 2;
-		if (AbilityIds.DOOMSDAY_ROAR.equals(id)) return tier >= 3;
-		if (AbilityIds.DOOMSDAY_BONE_SPIKE.equals(id)) return tier >= 4;
-		if (AbilityIds.DOOMSDAY_CHARGE_TACKLE.equals(id)) return tier >= 5;
-		if (AbilityIds.DOOMSDAY_BERSERK.equals(id)) return tier >= 6;
-		if (AbilityIds.DOOMSDAY_DOOM_GRIP.equals(id)) return tier >= 7;
-		return true;
-	}
-
-	private static boolean isRemVisible(ResourceLocation id, boolean demonism) {
-		if (AbilityIds.REM_ONI_RAGE.equals(id) && demonism) return false;
-		boolean demonOnly = AbilityIds.REM_MORNING_STAR.equals(id)
-				|| AbilityIds.REM_MACE_CRATER.equals(id)
-				|| AbilityIds.REM_ONI_KICK.equals(id)
-				|| AbilityIds.REM_HUMA_ICE_SPIKES.equals(id);
-		return !demonOnly || demonism;
-	}
 }

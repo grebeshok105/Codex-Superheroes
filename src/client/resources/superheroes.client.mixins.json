@@ -12,7 +12,6 @@
 		"SoundEngineMixin",
 		"MinecraftHeroMeleeChargeMixin",
 		"GuiHotbarMixin",
-		"MinecraftHandleKeybindsMixin",
 		"ChatComponentMixin",
 		"GuiEffectsMixin",
 		"GameRendererBlurMixin"

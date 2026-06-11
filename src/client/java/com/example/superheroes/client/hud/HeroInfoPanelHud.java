@@ -1,6 +1,7 @@
 package com.example.superheroes.client.hud;
 
 import com.example.superheroes.client.ClientAbilityCooldowns;
+import com.example.superheroes.client.ClientAbilityFilter;
 import com.example.superheroes.client.ClientHeroState;
 import com.example.superheroes.hero.Hero;
 import com.example.superheroes.hero.HeroHudConfig;
@@ -114,11 +115,7 @@ public final class HeroInfoPanelHud {
 		int modelY2 = y + panelH - HudScaler.scale(28);
 		int modelScale = HudScaler.scale(MODEL_SCALE);
 		try {
-			int mouseX = (int) mc.mouseHandler.xpos();
-			int mouseY = (int) mc.mouseHandler.ypos();
-			InventoryScreen.renderEntityInInventoryFollowsMouse(
-					graphics, modelX1, modelY1, modelX2, modelY2,
-					modelScale, MODEL_Y_OFFSET, mouseX, mouseY, mc.player);
+			drawLiveBust(graphics, modelX1, modelY1, modelX2, modelY2, modelScale, mc.player);
 		} catch (Exception ignored) {
 		}
 
@@ -131,12 +128,24 @@ public final class HeroInfoPanelHud {
 		Component nameComp = Component.translatable("hero.superheroes." + heroId.getPath())
 				.copy().withStyle(ChatFormatting.BOLD);
 		graphics.drawString(mc.font, nameComp, contentX, cursorY, theme.heroNameColor(), true);
+
+		// Creative badge: a small gold star in the free top-left corner (above the bust)
+		if (mc.player.getAbilities().instabuild) {
+			int starSize = HudScaler.scale(9);
+			int starX = x + (modelW - starSize) / 2 + 2;
+			int starY = cursorY - HudScaler.scale(1);
+			// soft glow behind + bright core
+			HudIcons.drawPassiveIcon(graphics, starX - 1, starY - 1, starSize + 2,
+					HudIcons.PassiveGlyph.STAR, applyAlpha(0xFFFFD24A, 90, 1f));
+			HudIcons.drawPassiveIcon(graphics, starX, starY, starSize,
+					HudIcons.PassiveGlyph.STAR, 0xFFFFE07A);
+		}
 		cursorY += HudScaler.scale(12);
 
 		// HP row: heart + numbers + thin bar
 		float hp = lastDisplayedHp + (displayedHp - lastDisplayedHp) * partial;
 		float maxHp = mc.player.getMaxHealth();
-		drawHpRow(graphics, mc, contentX, cursorY, contentW, hp, maxHp);
+		drawHpRow(graphics, mc, contentX, cursorY, contentW, hp, maxHp, theme);
 		cursorY += HudScaler.scale(15);
 
 		// Energy: single themed row — icon + label + percent, segmented bar below
@@ -153,9 +162,15 @@ public final class HeroInfoPanelHud {
 		graphics.drawString(mc.font, pctComp, contentX + contentW - pctW, cursorY, 0xFFD8DCE8, true);
 		cursorY += HudScaler.scale(11);
 
-		drawSegmentedBar(graphics, contentX, cursorY, contentW, HudScaler.scale(5),
-				energy / Math.max(1f, energyMax), theme.energyBright(), 10);
-		cursorY += HudScaler.scale(9);
+		// Thin 3px energy bar — same style as the HP bar
+		int energyBarH = HudScaler.scale(3);
+		graphics.fill(contentX, cursorY, contentX + contentW, cursorY + energyBarH, 0x44000000);
+		float energyPct = energyMax > 0 ? Math.min(1f, energy / energyMax) : 0f;
+		int energyFillW = (int) (contentW * energyPct);
+		if (energyFillW > 0) {
+			graphics.fill(contentX, cursorY, contentX + energyFillW, cursorY + energyBarH, theme.energyBright());
+		}
+		cursorY += HudScaler.scale(7);
 
 		// Ability readiness list: every visible ability with its status, two columns
 		drawReadyList(graphics, mc, contentX, cursorY, contentW, heroId, hudConfig, theme);
@@ -164,25 +179,80 @@ public final class HeroInfoPanelHud {
 		int passiveCount = AbilityDescriptions.passiveCount(heroId);
 		if (passiveCount > 0) {
 			int passiveY = y + panelH - HudScaler.scale(24);
-			int passiveSectionX = x + HudScaler.scale(4);
+			int passiveSectionX = x + HudScaler.scale(2);
 
 			Component passivesLabel = Component.translatable("hud.superheroes.passives");
 			graphics.drawString(mc.font, passivesLabel, passiveSectionX, passiveY,
 					applyAlpha(theme.heroNameColor(), 200, 0.8f), true);
 			passiveY += HudScaler.scale(10);
 
-			int maxDisplay = Math.min(passiveCount, 5);
+			int maxDisplay = Math.min(passiveCount, 6);
 			int iconSz = HudScaler.scale(passiveCount > 5 ? 8 : 10);
 			int gap = HudScaler.scale(passiveCount > 5 ? 2 : 4);
 			for (int i = 0; i < maxDisplay; i++) {
-				int ix = passiveSectionX + i * (iconSz + gap + HudScaler.scale(2));
+				int ix = passiveSectionX + i * (iconSz + gap);
 				HudUtil.roundedRectFill(graphics, ix, passiveY, iconSz, iconSz, 0x44000000);
 				HudUtil.roundedRectBorder(graphics, ix, passiveY, iconSz, iconSz, applyAlpha(theme.energyIcon(), 180, 0.6f));
+				int inset = Math.max(1, iconSz / 5);
+				HudIcons.drawPassiveIcon(graphics, ix + inset, passiveY + inset, iconSz - inset * 2,
+						PassiveIcons.glyph(heroId, i), applyAlpha(theme.energyIcon(), 235, 1f));
 			}
 		}
 	}
 
-	private static void drawHpRow(GuiGraphics g, Minecraft mc, int x, int y, int w, float hp, float maxHp) {
+
+	/**
+	 * Live "mirror" bust: renders the player with their REAL pose — actual head
+	 * yaw/pitch relative to the body, sneaking, swinging, flying — instead of the
+	 * vanilla follows-mouse gimmick. The body always faces the viewer; everything
+	 * else mirrors what the hero is doing in the world right now.
+	 */
+	private static void drawLiveBust(GuiGraphics graphics, int x1, int y1, int x2, int y2,
+			int scale, net.minecraft.world.entity.LivingEntity entity) {
+		float centerX = (x1 + x2) / 2f;
+		float centerY = (y1 + y2) / 2f;
+		graphics.enableScissor(x1, y1, x2, y2);
+
+		// real head offset relative to the body (clamped so the face stays visible)
+		float headDelta = net.minecraft.util.Mth.clamp(
+				net.minecraft.util.Mth.wrapDegrees(entity.yHeadRot - entity.yBodyRot), -50f, 50f);
+		float headDeltaO = net.minecraft.util.Mth.clamp(
+				net.minecraft.util.Mth.wrapDegrees(entity.yHeadRotO - entity.yBodyRotO), -50f, 50f);
+		float realPitch = net.minecraft.util.Mth.clamp(entity.getXRot(), -45f, 45f);
+
+		float bodyRot = entity.yBodyRot;
+		float bodyRotO = entity.yBodyRotO;
+		float yRot = entity.getYRot();
+		float xRot = entity.getXRot();
+		float headRotO = entity.yHeadRotO;
+		float headRot = entity.yHeadRot;
+
+		entity.yBodyRot = 180.0f;
+		entity.yBodyRotO = 180.0f;
+		entity.setYRot(180.0f + headDelta);
+		entity.setXRot(realPitch);
+		entity.yHeadRot = 180.0f + headDelta;
+		entity.yHeadRotO = 180.0f + headDeltaO;
+
+		org.joml.Quaternionf pose = new org.joml.Quaternionf().rotateZ((float) Math.PI);
+		org.joml.Quaternionf camera = new org.joml.Quaternionf().rotateX(8.0f * ((float) Math.PI / 180f));
+		pose.mul(camera);
+		float entityScale = entity.getScale();
+		org.joml.Vector3f translate = new org.joml.Vector3f(0.0f,
+				entity.getBbHeight() / 2.0f + MODEL_Y_OFFSET * entityScale, 0.0f);
+		InventoryScreen.renderEntityInInventory(graphics, centerX, centerY,
+				(float) scale / entityScale, translate, pose, camera, entity);
+
+		entity.yBodyRot = bodyRot;
+		entity.yBodyRotO = bodyRotO;
+		entity.setYRot(yRot);
+		entity.setXRot(xRot);
+		entity.yHeadRotO = headRotO;
+		entity.yHeadRot = headRot;
+		graphics.disableScissor();
+	}
+
+	private static void drawHpRow(GuiGraphics g, Minecraft mc, int x, int y, int w, float hp, float maxHp, HeroTheme theme) {
 		int iconSize = HudScaler.scale(8);
 		int textOffset = iconSize + HudScaler.scale(2);
 		g.drawString(mc.font, "\u2764", x, y, 0xFFFF5555, true);
@@ -196,13 +266,13 @@ public final class HeroInfoPanelHud {
 		float pctHp = maxHp > 0 ? Math.min(1f, hp / maxHp) : 0f;
 		int fillW = (int) (barW * pctHp);
 		if (fillW > 0) {
-			g.fill(x + textOffset, barY, x + textOffset + fillW, barY + barH, 0xFFFF4444);
+			g.fill(x + textOffset, barY, x + textOffset + fillW, barY + barH, theme.energyBright());
 		}
 	}
 
 	private static void drawReadyList(GuiGraphics g, Minecraft mc, int x, int y, int w,
 			ResourceLocation heroId, HeroHudConfig hudConfig, HeroTheme theme) {
-		List<ResourceLocation> abilities = ClientHeroState.abilities();
+		List<ResourceLocation> abilities = ClientAbilityFilter.visibleFor(ClientHeroState.abilities(), heroId);
 		if (abilities.isEmpty()) {
 			return;
 		}
@@ -220,15 +290,25 @@ public final class HeroInfoPanelHud {
 			int cd = ClientAbilityCooldowns.remainingTicks(aid);
 			boolean ready = cd <= 0;
 			boolean isUlt = hudConfig.hasUltimate() && i == abilities.size() - 1;
+			boolean active = ClientHeroState.data().activeAbilities().contains(aid);
 
-			// status dot
-			int dotSize = HudScaler.scale(3);
-			int dotColor = ready ? (isUlt ? 0xFFFFD24A : 0xFF6BFF8C) : 0xFF8A8FA0;
-			if (ready && isUlt) {
-				float pulse = HudAnimator.pulse(1.2f);
-				dotColor = ((int) (170 + 85 * pulse) << 24) | 0x00FFD24A;
+			// soft theme-tinted highlight behind currently active (toggled-on) abilities
+			if (active) {
+				HudUtil.roundedRectFill(g, ix - HudScaler.scale(2), iy - HudScaler.scale(1),
+						colW - HudScaler.scale(2), lineH, applyAlpha(theme.energyBright(), 70, 1f));
 			}
-			g.fill(ix, iy + HudScaler.scale(2), ix + dotSize, iy + HudScaler.scale(2) + dotSize, dotColor);
+
+			// ability icon (replaces the old status dot); greyed out while on cooldown
+			int iconSz = HudScaler.scale(8);
+			int fallback = ready ? (isUlt ? 0xFFFFD24A : 0xFF6BFF8C) : 0xFF8A8FA0;
+			AbilityIcons.draw(g, aid, ix, iy, iconSz, fallback);
+			if (!ready) {
+				g.fill(ix, iy, ix + iconSz, iy + iconSz, 0x88000000);
+			} else if (isUlt) {
+				float pulse = HudAnimator.pulse(1.2f);
+				int haloA = (int) (110 + 90 * pulse);
+				HudUtil.roundedRectBorder(g, ix - 1, iy - 1, iconSz + 2, iconSz + 2, (haloA << 24) | 0x00FFD24A);
+			}
 
 			// name (truncated)
 			String name = Component.translatable(AbilityDescriptions.nameKey(aid)).getString();
@@ -238,7 +318,7 @@ public final class HeroInfoPanelHud {
 				name = mc.font.plainSubstrByWidth(name, maxNameW - mc.font.width(ell)) + ell;
 			}
 			int nameColor = ready ? (isUlt ? 0xFFFFE9B0 : 0xFFCBD2E0) : 0xFF7C8499;
-			g.drawString(mc.font, Component.literal(name), ix + dotSize + HudScaler.scale(3), iy, nameColor, true);
+			g.drawString(mc.font, Component.literal(name), ix + iconSz + HudScaler.scale(3), iy, nameColor, true);
 
 			// cooldown seconds on the right of the column
 			if (!ready) {
@@ -264,23 +344,6 @@ public final class HeroInfoPanelHud {
 		g.fill(x + 3, y + 2, x + w - 3, y + 3, applyAlpha(theme.panelHighlight(), 200, 0.7f));
 	}
 
-	private static void drawSegmentedBar(GuiGraphics g, int x, int y, int w, int h, float pct, int color, int segments) {
-		int segW = (w - (segments - 1)) / segments;
-		for (int i = 0; i < segments; i++) {
-			int sx = x + i * (segW + 1);
-			float segStart = (float) i / segments;
-			float segEnd = (float) (i + 1) / segments;
-			if (pct >= segEnd) {
-				g.fill(sx, y, sx + segW, y + h, color);
-			} else if (pct > segStart) {
-				float segPct = (pct - segStart) / (segEnd - segStart);
-				g.fill(sx, y, sx + (int) (segW * segPct), y + h, color);
-				g.fill(sx + (int) (segW * segPct), y, sx + segW, y + h, 0x33FFFFFF);
-			} else {
-				g.fill(sx, y, sx + segW, y + h, 0x33FFFFFF);
-			}
-		}
-	}
 
 	private static String formatValue(float v) {
 		if (v >= 1000f) {

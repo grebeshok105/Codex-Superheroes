@@ -24,6 +24,18 @@ public class GuiHotbarMixin {
 		}
 	}
 
+	/**
+	 * In 1.21 the green XP level number is drawn by a separate layer
+	 * (renderExperienceLevel), not by renderHotbarAndDecorations — without this
+	 * it kept floating alone after the vanilla hotbar was hidden.
+	 */
+	@Inject(method = "renderExperienceLevel", at = @At("HEAD"), cancellable = true)
+	private void superheroes$hideXpLevel(GuiGraphics graphics, DeltaTracker tracker, CallbackInfo ci) {
+		if (HotbarOverrideHud.shouldSuppressVanillaHotbar()) {
+			ci.cancel();
+		}
+	}
+
 	@Inject(method = "renderCrosshair", at = @At("HEAD"), cancellable = true)
 	private void superheroes$hideCrosshairInRadial(GuiGraphics graphics, DeltaTracker tracker, CallbackInfo ci) {
 		if (com.example.superheroes.client.hud.RadialMenuHud.isOpen()) {

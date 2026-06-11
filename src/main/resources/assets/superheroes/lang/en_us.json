@@ -57,7 +57,6 @@
 	"ability.superheroes.iron_man_flight": "Repulsor Flight",
 	"ability.superheroes.supersonic": "Supersonic Boost",
 	"ability.superheroes.repulsor": "Repulsor Blast",
-	"ability.superheroes.box_esp": "Targeting HUD",
 	"ability.superheroes.unibeam": "✦ Unibeam — Chest Cannon",
 	"ability.superheroes.flight.desc": "Full inertial flight with strafe control",
 	"ability.superheroes.eye_lasers.desc": "Sears what you look at",
@@ -65,7 +64,6 @@
 	"ability.superheroes.iron_man_flight.desc": "Thrust-vectored repulsor flight",
 	"ability.superheroes.supersonic.desc": "Afterburner boost — drains while held",
 	"ability.superheroes.repulsor.desc": "Palm blast — pure kinetic damage",
-	"ability.superheroes.box_esp.desc": "Targeting HUD — tags hostiles",
 	"ability.superheroes.unibeam.desc": "Chest-mounted finisher cannon",
 	"hud.superheroes.abilities.passives": "Passives",
 	"hud.superheroes.abilities.active": "Active",
@@ -690,7 +688,6 @@
 	"key.superheroes.ability_6": "Ability Slot 6",
 	"key.superheroes.ability_7": "Ability Slot 7",
 	"key.superheroes.ability_8": "Ability Slot 8",
-	"key.superheroes.hotbar_lock": "Lock/Unlock Hotbar",
 	"hud.superheroes.passives": "PASSIVES",
 	"hud.superheroes.hotbar.locked": "LOCKED",
 	"hud.superheroes.hotbar.open": "OPEN",
@@ -726,6 +723,5 @@
 	"hud.superheroes.edit.effects": "Effects",
 	"hud.superheroes.edit.melee_charge": "Charge gauge",
 	"hud.superheroes.edit.tooltips": "Abilities help",
-	"hud.superheroes.radial.ready": "Ready",
-	"hud.superheroes.radial.hint": "Look around to select"
+	"hud.superheroes.radial.ready": "Ready"
 }

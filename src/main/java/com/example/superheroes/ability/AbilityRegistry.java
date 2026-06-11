@@ -26,7 +26,6 @@ public final class AbilityRegistry {
 	public static final IronManFlightAbility IRON_MAN_FLIGHT = new IronManFlightAbility();
 	public static final SupersonicAbility SUPERSONIC = new SupersonicAbility();
 	public static final RepulsorAbility REPULSOR = new RepulsorAbility();
-	public static final BoxEspAbility BOX_ESP = new BoxEspAbility();
 	public static final UnibeamAbility UNIBEAM = new UnibeamAbility();
 	public static final IronManHulkbusterAbility IRON_MAN_HULKBUSTER = new IronManHulkbusterAbility();
 
@@ -153,7 +152,6 @@ public final class AbilityRegistry {
 		register(IRON_MAN_FLIGHT);
 		register(SUPERSONIC);
 		register(REPULSOR);
-		register(BOX_ESP);
 		register(UNIBEAM);
 		register(IRON_MAN_HULKBUSTER);
 		register(LION_HEART);
