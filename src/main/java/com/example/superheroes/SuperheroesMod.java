@@ -30,6 +30,7 @@ public class SuperheroesMod implements ModInitializer {
 		Heroes.init();
 		AbilityRegistry.init();
 		com.example.superheroes.entity.ModEntities.init();
+		com.example.superheroes.horde.entity.HordeEntities.init();
 		ModItems.init();
 		ModItemGroups.init();
 		ModParticles.init();
@@ -93,6 +94,9 @@ public class SuperheroesMod implements ModInitializer {
 
 		net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents.END_SERVER_TICK.register(server -> {
 			com.example.superheroes.effect.DoomGripController.serverTick();
+			for (net.minecraft.server.level.ServerLevel sl : server.getAllLevels()) {
+				com.example.superheroes.horde.HordeManager.tick(sl);
+			}
 			for (ServerPlayer p : server.getPlayerList().getPlayers()) {
 				com.example.superheroes.ability.ChargeTackleAbility.serverTick(p);
 				com.example.superheroes.ability.ViltrumiteChargeAbility.serverTick(p);

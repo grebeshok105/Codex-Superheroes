@@ -729,5 +729,36 @@
 	"hud.superheroes.jarvis.detect.title": "JARVIS // TARGET DETECTED",
 	"hud.superheroes.jarvis.detect.player": "Player: %s",
 	"hud.superheroes.jarvis.detect.hero": "Hero: %s",
-	"hud.superheroes.jarvis.detect.distance": "Distance: ~%s m"
+	"hud.superheroes.jarvis.detect.distance": "Distance: ~%s m",
+
+	"entity.superheroes.horde_crawler": "Crawler",
+	"entity.superheroes.horde_lurker": "Lurker",
+	"entity.superheroes.horde_spitter": "Spitter",
+	"entity.superheroes.horde_swooper": "Swooper",
+	"entity.superheroes.horde_stalker": "Stalker",
+	"entity.superheroes.horde_infector": "Infector",
+	"entity.superheroes.horde_parasitic_hound": "Parasitic Hound",
+	"entity.superheroes.horde_infected_zombie": "Infected Zombie",
+	"entity.superheroes.horde_infected_skeleton": "Infected Skeleton",
+	"entity.superheroes.horde_infected_spider": "Infected Spider",
+	"entity.superheroes.horde_infected_creeper": "Infected Creeper",
+	"entity.superheroes.horde_void_parasite": "Void Parasite",
+	"entity.superheroes.horde_hollow_villager": "Hollow Villager",
+	"entity.superheroes.horde_infected_cattle": "Infected Cattle",
+	"entity.superheroes.horde_broodmother": "Broodmother",
+	"entity.superheroes.horde_corrupted_golem": "Corrupted Golem",
+	"entity.superheroes.horde_hivemind": "Hivemind",
+	"entity.superheroes.horde_leviathan": "Leviathan",
+	"entity.superheroes.horde_infected_homelander": "Infected Homelander",
+	"entity.superheroes.iron_legion_drone": "Iron Legionnaire",
+
+	"item.superheroes.horde_crystal": "Horde Crystal",
+
+	"ability.superheroes.iron_man_suit_switch": "Suit Switch",
+	"ability.superheroes.iron_man_legion": "Iron Legion",
+
+	"subtitles.superheroes.ironman.jarvis_detect_excited": "JARVIS: Critical threat!",
+	"subtitles.superheroes.ironman.jarvis_diagnostic": "JARVIS: Diagnostic",
+	"subtitles.superheroes.ironman.jarvis_outdated_suit": "JARVIS: Outdated suit",
+	"subtitles.superheroes.ironman.jarvis_mark85_preset": "JARVIS: Mark 85 preset"
 }

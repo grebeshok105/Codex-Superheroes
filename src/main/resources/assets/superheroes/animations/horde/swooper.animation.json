@@ -1,0 +1,190 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.swooper.idle": {
+      "animation_length": 1.0,
+      "loop": true,
+      "bones": {
+        "body": {
+          "position": {
+            "0.0":    { "vector": [0, 0, 0] },
+            "0.25":   { "vector": [0, 0.5, 0] },
+            "0.5":    { "vector": [0, 0, 0] },
+            "0.75":   { "vector": [0, -0.5, 0] },
+            "1.0":    { "vector": [0, 0, 0] }
+          }
+        },
+        "left_wing": {
+          "rotation": {
+            "0.0":    { "vector": [0, 0, -5] },
+            "0.125":  { "vector": [0, 0, -15] },
+            "0.25":   { "vector": [0, 0, -5] },
+            "0.375":  { "vector": [0, 0, 5] },
+            "0.5":    { "vector": [0, 0, -5] },
+            "0.625":  { "vector": [0, 0, -15] },
+            "0.75":   { "vector": [0, 0, -5] },
+            "0.875":  { "vector": [0, 0, 5] },
+            "1.0":    { "vector": [0, 0, -5] }
+          }
+        },
+        "right_wing": {
+          "rotation": {
+            "0.0":    { "vector": [0, 0, 5] },
+            "0.125":  { "vector": [0, 0, 15] },
+            "0.25":   { "vector": [0, 0, 5] },
+            "0.375":  { "vector": [0, 0, -5] },
+            "0.5":    { "vector": [0, 0, 5] },
+            "0.625":  { "vector": [0, 0, 15] },
+            "0.75":   { "vector": [0, 0, 5] },
+            "0.875":  { "vector": [0, 0, -5] },
+            "1.0":    { "vector": [0, 0, 5] }
+          }
+        },
+        "tail": {
+          "rotation": {
+            "0.0":    { "vector": [-5, 0, 0] },
+            "0.5":    { "vector": [5, 0, 0] },
+            "1.0":    { "vector": [-5, 0, 0] }
+          }
+        }
+      }
+    },
+    "animation.swooper.fly": {
+      "animation_length": 0.4,
+      "loop": true,
+      "bones": {
+        "body": {
+          "rotation": {
+            "0.0":    { "vector": [-10, 0, 0] },
+            "0.2":    { "vector": [-5, 0, 0] },
+            "0.4":    { "vector": [-10, 0, 0] }
+          }
+        },
+        "left_wing": {
+          "rotation": {
+            "0.0":    { "vector": [0, 0, -30] },
+            "0.1":    { "vector": [10, 0, 10] },
+            "0.2":    { "vector": [0, 0, -30] },
+            "0.3":    { "vector": [10, 0, 10] },
+            "0.4":    { "vector": [0, 0, -30] }
+          }
+        },
+        "right_wing": {
+          "rotation": {
+            "0.0":    { "vector": [0, 0, 30] },
+            "0.1":    { "vector": [10, 0, -10] },
+            "0.2":    { "vector": [0, 0, 30] },
+            "0.3":    { "vector": [10, 0, -10] },
+            "0.4":    { "vector": [0, 0, 30] }
+          }
+        },
+        "tail": {
+          "rotation": {
+            "0.0":    { "vector": [10, 0, 0] },
+            "0.2":    { "vector": [-5, 0, 0] },
+            "0.4":    { "vector": [10, 0, 0] }
+          }
+        },
+        "left_claw": {
+          "rotation": {
+            "0.0":    { "vector": [15, 0, 0] },
+            "0.2":    { "vector": [30, 0, 0] },
+            "0.4":    { "vector": [15, 0, 0] }
+          }
+        },
+        "right_claw": {
+          "rotation": {
+            "0.0":    { "vector": [15, 0, 0] },
+            "0.2":    { "vector": [30, 0, 0] },
+            "0.4":    { "vector": [15, 0, 0] }
+          }
+        }
+      }
+    },
+    "animation.swooper.attack": {
+      "animation_length": 0.5,
+      "loop": false,
+      "bones": {
+        "body": {
+          "rotation": {
+            "0.0":    { "vector": [0, 0, 0] },
+            "0.15":   { "vector": [-35, 0, 0] },
+            "0.3":    { "vector": [15, 0, 0] },
+            "0.5":    { "vector": [0, 0, 0] }
+          },
+          "position": {
+            "0.0":    { "vector": [0, 0, 0] },
+            "0.15":   { "vector": [0, -2, -3] },
+            "0.3":    { "vector": [0, 1, 0] },
+            "0.5":    { "vector": [0, 0, 0] }
+          }
+        },
+        "left_wing": {
+          "rotation": {
+            "0.0":    { "vector": [0, 0, -10] },
+            "0.15":   { "vector": [0, 0, 40] },
+            "0.3":    { "vector": [0, 0, -30] },
+            "0.5":    { "vector": [0, 0, -10] }
+          }
+        },
+        "right_wing": {
+          "rotation": {
+            "0.0":    { "vector": [0, 0, 10] },
+            "0.15":   { "vector": [0, 0, -40] },
+            "0.3":    { "vector": [0, 0, 30] },
+            "0.5":    { "vector": [0, 0, 10] }
+          }
+        },
+        "left_claw": {
+          "rotation": {
+            "0.0":    { "vector": [0, 0, 0] },
+            "0.15":   { "vector": [-30, -10, 0] },
+            "0.3":    { "vector": [10, 0, 0] },
+            "0.5":    { "vector": [0, 0, 0] }
+          }
+        },
+        "right_claw": {
+          "rotation": {
+            "0.0":    { "vector": [0, 0, 0] },
+            "0.15":   { "vector": [-30, 10, 0] },
+            "0.3":    { "vector": [10, 0, 0] },
+            "0.5":    { "vector": [0, 0, 0] }
+          }
+        }
+      }
+    },
+    "animation.swooper.walk": {
+      "animation_length": 1.0,
+      "loop": true,
+      "bones": {
+        "body": {
+          "position": {
+            "0.0":    { "vector": [0, 0, 0] },
+            "0.25":   { "vector": [0, 0.5, 0] },
+            "0.5":    { "vector": [0, 0, 0] },
+            "0.75":   { "vector": [0, -0.5, 0] },
+            "1.0":    { "vector": [0, 0, 0] }
+          }
+        },
+        "left_wing": {
+          "rotation": {
+            "0.0":    { "vector": [0, 0, -5] },
+            "0.25":   { "vector": [0, 0, -15] },
+            "0.5":    { "vector": [0, 0, -5] },
+            "0.75":   { "vector": [0, 0, 5] },
+            "1.0":    { "vector": [0, 0, -5] }
+          }
+        },
+        "right_wing": {
+          "rotation": {
+            "0.0":    { "vector": [0, 0, 5] },
+            "0.25":   { "vector": [0, 0, 15] },
+            "0.5":    { "vector": [0, 0, 5] },
+            "0.75":   { "vector": [0, 0, -5] },
+            "1.0":    { "vector": [0, 0, 5] }
+          }
+        }
+      }
+    }
+  }
+}

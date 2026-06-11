@@ -240,6 +240,12 @@ public final class HeroMeleeImpactController {
 		if (target instanceof ServerPlayer victim) {
 			ServerPlayNetworking.send(victim, new ScreenShakeS2CPayload(0.3f, 6));
 		}
+		HeroBleedingController.tryApplyBleeding(data.heroId(), target, getDoomsdayTier(attacker, data));
+	}
+
+	private static int getDoomsdayTier(ServerPlayer player, HeroData data) {
+		if (!com.example.superheroes.hero.DoomsdayHero.ID.equals(data.heroId())) return 0;
+		return player.getAttachedOrCreate(ModAttachments.DOOMSDAY_PROGRESS).tier();
 	}
 
 	private static void spawnWhiffFx(ServerPlayer player) {

@@ -1,0 +1,120 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.infected_cattle.idle": {
+      "animation_length": 2.0,
+      "loop": true,
+      "bones": {
+        "body": {
+          "rotation": {
+            "0.0": {"vector": [0, 0, 0]},
+            "0.5": {"vector": [0.5, 0, 0]},
+            "1.0": {"vector": [0, 0, 0]},
+            "1.5": {"vector": [-0.5, 0, 0]},
+            "2.0": {"vector": [0, 0, 0]}
+          }
+        },
+        "head": {
+          "rotation": {
+            "0.0": {"vector": [5, 0, 0]},
+            "0.7": {"vector": [3, 5, 0]},
+            "1.4": {"vector": [7, -3, 0]},
+            "2.0": {"vector": [5, 0, 0]}
+          }
+        },
+        "mutation_hump": {
+          "scale": {
+            "0.0": {"vector": [1, 1, 1]},
+            "0.5": {"vector": [1.06, 1.1, 1.06]},
+            "1.0": {"vector": [1, 1, 1]},
+            "1.5": {"vector": [1.03, 1.05, 1.03]},
+            "2.0": {"vector": [1, 1, 1]}
+          }
+        }
+      }
+    },
+    "animation.infected_cattle.walk": {
+      "animation_length": 0.8,
+      "loop": true,
+      "bones": {
+        "body": {
+          "rotation": {
+            "0.0": {"vector": [0, -1, 0]},
+            "0.4": {"vector": [0, 1, 0]},
+            "0.8": {"vector": [0, -1, 0]}
+          }
+        },
+        "head": {
+          "rotation": {
+            "0.0": {"vector": [5, 2, 0]},
+            "0.4": {"vector": [5, -2, 0]},
+            "0.8": {"vector": [5, 2, 0]}
+          }
+        },
+        "left_front_leg": {
+          "rotation": {
+            "0.0": {"vector": [-20, 0, 0]},
+            "0.2": {"vector": [0, 0, 0]},
+            "0.4": {"vector": [20, 0, 0]},
+            "0.6": {"vector": [0, 0, 0]},
+            "0.8": {"vector": [-20, 0, 0]}
+          }
+        },
+        "right_front_leg": {
+          "rotation": {
+            "0.0": {"vector": [20, 0, 0]},
+            "0.2": {"vector": [0, 0, 0]},
+            "0.4": {"vector": [-20, 0, 0]},
+            "0.6": {"vector": [0, 0, 0]},
+            "0.8": {"vector": [20, 0, 0]}
+          }
+        },
+        "left_back_leg": {
+          "rotation": {
+            "0.0": {"vector": [20, 0, 0]},
+            "0.2": {"vector": [0, 0, 0]},
+            "0.4": {"vector": [-20, 0, 0]},
+            "0.6": {"vector": [0, 0, 0]},
+            "0.8": {"vector": [20, 0, 0]}
+          }
+        },
+        "right_back_leg": {
+          "rotation": {
+            "0.0": {"vector": [-20, 0, 0]},
+            "0.2": {"vector": [0, 0, 0]},
+            "0.4": {"vector": [20, 0, 0]},
+            "0.6": {"vector": [0, 0, 0]},
+            "0.8": {"vector": [-20, 0, 0]}
+          }
+        }
+      }
+    },
+    "animation.infected_cattle.attack": {
+      "animation_length": 0.4,
+      "loop": false,
+      "bones": {
+        "body": {
+          "rotation": {
+            "0.0": {"vector": [0, 0, 0]},
+            "0.1": {"vector": [-8, 0, 0]},
+            "0.2": {"vector": [12, 0, 0]},
+            "0.4": {"vector": [0, 0, 0]}
+          },
+          "position": {
+            "0.0": {"vector": [0, 0, 0]},
+            "0.15": {"vector": [0, 0, -3]},
+            "0.3": {"vector": [0, 0, 0]}
+          }
+        },
+        "head": {
+          "rotation": {
+            "0.0": {"vector": [5, 0, 0]},
+            "0.1": {"vector": [-20, 0, 0]},
+            "0.2": {"vector": [30, 0, 0]},
+            "0.4": {"vector": [5, 0, 0]}
+          }
+        }
+      }
+    }
+  }
+}

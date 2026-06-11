@@ -207,6 +207,11 @@ public final class ModItems {
 			new MusouNoHitotachiItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
 	);
 
+	public static final com.example.superheroes.horde.HordeCrystalItem HORDE_CRYSTAL = register(
+			"horde_crystal",
+			new com.example.superheroes.horde.HordeCrystalItem()
+	);
+
 	private ModItems() {
 	}
 

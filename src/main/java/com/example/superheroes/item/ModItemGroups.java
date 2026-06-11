@@ -8,7 +8,10 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+
+import java.util.List;
 
 public final class ModItemGroups {
 	public static final ResourceKey<CreativeModeTab> SUPERHEROES_TAB_KEY = ResourceKey.create(
@@ -22,7 +25,6 @@ public final class ModItemGroups {
 				output.accept(ModItems.COMPOUND_V);
 				output.accept(ModItems.MILK_BOTTLE);
 				output.accept(ModItems.VOUGHT_SIGNAL);
-				output.accept(ModItems.HOMELANDER_BOSS_SPAWN_EGG);
 
 				output.accept(ModItems.IRON_MAN_SUIT);
 				output.accept(ModItems.IRON_MAN_REACTOR);
@@ -63,13 +65,22 @@ public final class ModItemGroups {
 				output.accept(ModItems.INVINCIBLE_SUIT);
 				output.accept(ModItems.OMNIMAN_SUIT);
 
-				output.accept(ModItems.KAZUHA_VISION);
-				output.accept(ModItems.SCARAMOUCHE_VISION);
 				output.accept(ModItems.BATTLE_BEAST_MEDALLION);
 				output.accept(ModItems.REM_ONI_HORN);
 				output.accept(ModItems.A_TRAIN_SUIT);
 			})
 			.build();
+
+	/**
+	 * Предметы, доступные только через админ-билд ({@code /superheroes admin}).
+	 * Не появляются в обычном креативе.
+	 */
+	public static final List<Item> ADMIN_ONLY_ITEMS = List.of(
+			ModItems.KAZUHA_VISION,
+			ModItems.SCARAMOUCHE_VISION,
+			ModItems.HOMELANDER_BOSS_SPAWN_EGG,
+			ModItems.HORDE_CRYSTAL
+	);
 
 	private ModItemGroups() {
 	}

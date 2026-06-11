@@ -50,7 +50,8 @@ public final class NarutoHero implements Hero {
 				AbilityIds.NARUTO_OODAMA_RASENGAN,
 				AbilityIds.NARUTO_RASENSHURIKEN,
 				AbilityIds.NARUTO_SAGE_MODE,
-				AbilityIds.NARUTO_BIJUUDAMA
+				AbilityIds.NARUTO_BIJUUDAMA,
+				AbilityIds.NARUTO_SHADOW_CLONES
 		);
 	}
 

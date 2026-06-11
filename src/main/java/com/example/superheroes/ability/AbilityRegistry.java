@@ -28,6 +28,8 @@ public final class AbilityRegistry {
 	public static final RepulsorAbility REPULSOR = new RepulsorAbility();
 	public static final UnibeamAbility UNIBEAM = new UnibeamAbility();
 	public static final IronManHulkbusterAbility IRON_MAN_HULKBUSTER = new IronManHulkbusterAbility();
+	public static final com.example.superheroes.ability.ironman.IronManSuitSwitchAbility IRON_MAN_SUIT_SWITCH = new com.example.superheroes.ability.ironman.IronManSuitSwitchAbility();
+	public static final com.example.superheroes.ability.ironman.IronManLegionAbility IRON_MAN_LEGION = new com.example.superheroes.ability.ironman.IronManLegionAbility();
 
 	public static final LionHeartAbility LION_HEART = new LionHeartAbility();
 	public static final ManiaOfGreedAbility MANIA_OF_GREED = new ManiaOfGreedAbility();
@@ -154,6 +156,8 @@ public final class AbilityRegistry {
 		register(REPULSOR);
 		register(UNIBEAM);
 		register(IRON_MAN_HULKBUSTER);
+		register(IRON_MAN_SUIT_SWITCH);
+		register(IRON_MAN_LEGION);
 		register(LION_HEART);
 		register(MANIA_OF_GREED);
 		register(GREEDS_EMBRACE);
