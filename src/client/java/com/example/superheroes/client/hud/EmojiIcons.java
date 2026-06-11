@@ -11,11 +11,12 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * iOS-стиль эмодзи (48x48 PNG в assets/superheroes/textures/gui/emoji/) для худа:
- * пассивки и иконки статов рисуются настоящими эмодзи вместо векторных глифов.
+ * iOS-стиль эмодзи (официальные Apple-ассеты 64x64 в assets/superheroes/textures/gui/emoji/)
+ * для худа: пассивки и иконки статов рисуются настоящими эмодзи вместо векторных глифов.
+ * Текстурам включается линейная фильтрация — при любом размере края гладкие, без «рваных» пикселей.
  */
 public final class EmojiIcons {
-	private static final int TEX_SIZE = 48;
+	private static final int TEX_SIZE = 64;
 	private static final Map<HudIcons.PassiveGlyph, ResourceLocation> CACHE =
 			new EnumMap<>(HudIcons.PassiveGlyph.class);
 
@@ -23,8 +24,13 @@ public final class EmojiIcons {
 	}
 
 	public static ResourceLocation texture(HudIcons.PassiveGlyph glyph) {
-		return CACHE.computeIfAbsent(glyph,
-				g -> ModId.of("textures/gui/emoji/" + g.name().toLowerCase(Locale.ROOT) + ".png"));
+		return CACHE.computeIfAbsent(glyph, g -> {
+			ResourceLocation loc = ModId.of("textures/gui/emoji/" + g.name().toLowerCase(Locale.ROOT) + ".png");
+			// плавное масштабирование вместо nearest — иначе эмодзи выглядят обрезанными
+			net.minecraft.client.Minecraft.getInstance().getTextureManager()
+					.getTexture(loc).setFilter(true, false);
+			return loc;
+		});
 	}
 
 	public static void draw(GuiGraphics g, HudIcons.PassiveGlyph glyph, int x, int y, int size) {
