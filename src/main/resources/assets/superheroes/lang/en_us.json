@@ -723,5 +723,11 @@
 	"hud.superheroes.edit.effects": "Effects",
 	"hud.superheroes.edit.melee_charge": "Charge gauge",
 	"hud.superheroes.edit.tooltips": "Abilities help",
-	"hud.superheroes.radial.ready": "Ready"
+	"hud.superheroes.radial.ready": "Ready",
+	"subtitles.superheroes.homelander.omniman_react": "Homelander reacts to Omni-Man",
+	"subtitles.superheroes.ironman.jarvis_detect": "JARVIS: hero detected",
+	"hud.superheroes.jarvis.detect.title": "JARVIS // TARGET DETECTED",
+	"hud.superheroes.jarvis.detect.player": "Player: %s",
+	"hud.superheroes.jarvis.detect.hero": "Hero: %s",
+	"hud.superheroes.jarvis.detect.distance": "Distance: ~%s m"
 }

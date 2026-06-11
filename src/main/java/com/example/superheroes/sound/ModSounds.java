@@ -23,6 +23,8 @@ public final class ModSounds {
 	public static final SoundEvent THANOS_SNAP_VOICE = register("thanos.snap.voice");
 	public static final SoundEvent REINHARD_SWORD_STRIKE_VOICE = register("reinhard.sword_strike.voice");
 	public static final SoundEvent REINHARD_SWORD_DRAW_CEREMONY = register("reinhard.sword_draw.ceremony");
+	public static final SoundEvent HOMELANDER_OMNIMAN_REACT = register("homelander.omniman_react");
+	public static final SoundEvent IRONMAN_JARVIS_DETECT = register("ironman.jarvis_detect");
 
 	private ModSounds() {
 	}

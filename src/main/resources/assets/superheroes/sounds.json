@@ -126,5 +126,23 @@
 				"stream": true
 			}
 		]
+	},
+	"homelander.omniman_react": {
+		"subtitle": "subtitles.superheroes.homelander.omniman_react",
+		"sounds": [
+			{
+				"name": "superheroes:homelander/omniman_react",
+				"stream": true
+			}
+		]
+	},
+	"ironman.jarvis_detect": {
+		"subtitle": "subtitles.superheroes.ironman.jarvis_detect",
+		"sounds": [
+			{
+				"name": "superheroes:ironman/jarvis_detect",
+				"stream": true
+			}
+		]
 	}
 }

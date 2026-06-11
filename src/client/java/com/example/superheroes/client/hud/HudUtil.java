@@ -55,4 +55,24 @@ public final class HudUtil {
 	public static void dropShadow(GuiGraphics g, int x, int y, int w, int h, int offset, int color) {
 		roundedRectFill(g, x + offset, y + offset, w, h, color);
 	}
+
+	/**
+	 * Неоновая стеклянная панель: тень, градиентный фон, рамка, мягкое
+	 * внешнее свечение в два прохода и тонкий световой блик сверху.
+	 * Раскладку не меняет — рисует ровно в тех же границах, что и
+	 * roundedRectGradient + roundedRectBorder.
+	 */
+	public static void neonPanel(GuiGraphics g, int x, int y, int w, int h,
+			int topColor, int bottomColor, int borderColor, int glowColor) {
+		// внешнее свечение (от дальнего слоя к ближнему)
+		int glowFar = (Math.max(8, ((glowColor >>> 24) / 3)) << 24) | (glowColor & 0x00FFFFFF);
+		roundedRectBorder(g, x - 2, y - 2, w + 4, h + 4, glowFar);
+		roundedRectBorder(g, x - 1, y - 1, w + 2, h + 2, glowColor);
+		dropShadow(g, x, y, w, h, 3, 0x44000000);
+		roundedRectGradient(g, x, y, w, h, topColor, bottomColor);
+		roundedRectBorder(g, x, y, w, h, borderColor);
+		// стеклянный блик по верхней кромке
+		int hl = (Math.max(10, ((borderColor >>> 24) / 4)) << 24) | 0x00FFFFFF;
+		g.fill(x + 3, y + 1, x + w - 3, y + 2, hl);
+	}
 }

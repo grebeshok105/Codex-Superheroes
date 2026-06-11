@@ -69,6 +69,7 @@ public final class HeroTransformService {
 		ModNetworking.syncHeroData(player, updated);
 		ModNetworking.broadcastRemoteHeroSkin(player);
 		playTransformFx(player, true);
+		com.example.superheroes.effect.HeroReactionController.onTransformed(player, heroId);
 		markTransformed(player);
 		return true;
 	}
