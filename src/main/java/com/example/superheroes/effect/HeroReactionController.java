@@ -11,9 +11,9 @@ import net.minecraft.sounds.SoundSource;
 
 /**
  * Голосовые реакции героев на появление других героев.
- * Хоумлендер слышит свою реплику, когда кто-то превращается в Омни-Мэна
- * (и наоборот — свежетрансформированный Хоумлендер реагирует на уже
- * присутствующего Омни-Мэна).
+ * Кто-то превращается в Омни-Мэна при живом Хоумлендере (или наоборот,
+ * в Хоумлендера при живом Омни-Мэне) — реплику Хоумлендера слышат
+ * ВСЕ игроки на сервере.
  */
 public final class HeroReactionController {
 
@@ -22,22 +22,23 @@ public final class HeroReactionController {
 
 	public static void onTransformed(ServerPlayer player, ResourceLocation heroId) {
 		if (OmnimanHero.ID.equals(heroId)) {
-			for (ServerPlayer p : player.server.getPlayerList().getPlayers()) {
-				if (p == player) {
-					continue;
-				}
-				if (HomelanderHero.ID.equals(heroIdOf(p))) {
-					playReaction(p);
-				}
+			if (anyOtherWithHero(player, HomelanderHero.ID)) {
+				broadcastReaction(player);
 			}
 		} else if (HomelanderHero.ID.equals(heroId)) {
-			for (ServerPlayer p : player.server.getPlayerList().getPlayers()) {
-				if (p != player && OmnimanHero.ID.equals(heroIdOf(p))) {
-					playReaction(player);
-					return;
-				}
+			if (anyOtherWithHero(player, OmnimanHero.ID)) {
+				broadcastReaction(player);
 			}
 		}
+	}
+
+	private static boolean anyOtherWithHero(ServerPlayer player, ResourceLocation heroId) {
+		for (ServerPlayer p : player.server.getPlayerList().getPlayers()) {
+			if (p != player && heroId.equals(heroIdOf(p))) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private static ResourceLocation heroIdOf(ServerPlayer player) {
@@ -45,7 +46,9 @@ public final class HeroReactionController {
 		return data.heroId();
 	}
 
-	private static void playReaction(ServerPlayer homelander) {
-		homelander.playNotifySound(ModSounds.HOMELANDER_OMNIMAN_REACT, SoundSource.PLAYERS, 1.0f, 1.0f);
+	private static void broadcastReaction(ServerPlayer trigger) {
+		for (ServerPlayer p : trigger.server.getPlayerList().getPlayers()) {
+			p.playNotifySound(ModSounds.HOMELANDER_OMNIMAN_REACT, SoundSource.PLAYERS, 1.0f, 1.0f);
+		}
 	}
 }
