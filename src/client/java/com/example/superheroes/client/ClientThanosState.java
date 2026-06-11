@@ -27,6 +27,14 @@ public final class ClientThanosState {
 		return STONES.size();
 	}
 
+	public static synchronized int mask() {
+		int mask = 0;
+		for (InfinityStoneType t : STONES) {
+			mask |= (1 << t.ordinal());
+		}
+		return mask;
+	}
+
 	public static synchronized boolean hasAllStones() {
 		return STONES.size() >= InfinityStoneType.values().length;
 	}

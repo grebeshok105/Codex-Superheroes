@@ -128,6 +128,18 @@ public final class HeroInfoPanelHud {
 		Component nameComp = Component.translatable("hero.superheroes." + heroId.getPath())
 				.copy().withStyle(ChatFormatting.BOLD);
 		graphics.drawString(mc.font, nameComp, contentX, cursorY, theme.heroNameColor(), true);
+
+		// Creative badge: a small gold star in the free top-left corner (above the bust)
+		if (mc.player.getAbilities().instabuild) {
+			int starSize = HudScaler.scale(9);
+			int starX = x + (modelW - starSize) / 2 + 2;
+			int starY = cursorY - HudScaler.scale(1);
+			// soft glow behind + bright core
+			HudIcons.drawPassiveIcon(graphics, starX - 1, starY - 1, starSize + 2,
+					HudIcons.PassiveGlyph.STAR, applyAlpha(0xFFFFD24A, 90, 1f));
+			HudIcons.drawPassiveIcon(graphics, starX, starY, starSize,
+					HudIcons.PassiveGlyph.STAR, 0xFFFFE07A);
+		}
 		cursorY += HudScaler.scale(12);
 
 		// HP row: heart + numbers + thin bar
@@ -167,7 +179,7 @@ public final class HeroInfoPanelHud {
 		int passiveCount = AbilityDescriptions.passiveCount(heroId);
 		if (passiveCount > 0) {
 			int passiveY = y + panelH - HudScaler.scale(24);
-			int passiveSectionX = x + HudScaler.scale(4);
+			int passiveSectionX = x + HudScaler.scale(2);
 
 			Component passivesLabel = Component.translatable("hud.superheroes.passives");
 			graphics.drawString(mc.font, passivesLabel, passiveSectionX, passiveY,
@@ -178,7 +190,7 @@ public final class HeroInfoPanelHud {
 			int iconSz = HudScaler.scale(passiveCount > 5 ? 8 : 10);
 			int gap = HudScaler.scale(passiveCount > 5 ? 2 : 4);
 			for (int i = 0; i < maxDisplay; i++) {
-				int ix = passiveSectionX + i * (iconSz + gap + HudScaler.scale(2));
+				int ix = passiveSectionX + i * (iconSz + gap);
 				HudUtil.roundedRectFill(graphics, ix, passiveY, iconSz, iconSz, 0x44000000);
 				HudUtil.roundedRectBorder(graphics, ix, passiveY, iconSz, iconSz, applyAlpha(theme.energyIcon(), 180, 0.6f));
 				int inset = Math.max(1, iconSz / 5);

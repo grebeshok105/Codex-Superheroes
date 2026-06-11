@@ -123,6 +123,11 @@ public class SuperheroesClient implements ClientModInitializer {
 		com.example.superheroes.client.config.SuperheroesClientConfig.load();
 
 		HudRenderCallback.EVENT.register((graphics, tracker) -> {
+			// Spectator mode: hide the entire mod HUD
+			net.minecraft.client.Minecraft hudMc = net.minecraft.client.Minecraft.getInstance();
+			if (hudMc.player != null && hudMc.player.isSpectator()) {
+				return;
+			}
 			JarvisOverlayHud.render(graphics, tracker);
 			HeroInfoPanelHud.render(graphics, tracker);
 			HotbarOverrideHud.render(graphics, tracker);

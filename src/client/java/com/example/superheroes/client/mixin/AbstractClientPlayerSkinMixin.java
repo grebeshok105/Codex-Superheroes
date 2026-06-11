@@ -39,6 +39,14 @@ public abstract class AbstractClientPlayerSkinMixin {
 		if (SungJinwooHero.ID.equals(heroId) && ClientShadowArmyState.hasShadows(self.getUUID())) {
 			heroTexture = SungJinwooHero.SKIN_PHASE_2;
 		}
+		// Thanos: gauntlet on the skin only shows stones actually collected (local player —
+		// remote players keep the full-gauntlet skin since their stones aren't synced here)
+		Minecraft mcThanos = Minecraft.getInstance();
+		if (com.example.superheroes.hero.ThanosHero.ID.equals(heroId)
+				&& mcThanos.player != null && self.getUUID().equals(mcThanos.player.getUUID())) {
+			heroTexture = com.example.superheroes.client.ThanosSkinTextures.textureFor(
+					com.example.superheroes.client.ClientThanosState.mask());
+		}
 		PlayerSkin orig = cir.getReturnValue();
 		cir.setReturnValue(new PlayerSkin(
 				heroTexture != null ? heroTexture : DefaultPlayerSkin.getDefaultTexture(),
