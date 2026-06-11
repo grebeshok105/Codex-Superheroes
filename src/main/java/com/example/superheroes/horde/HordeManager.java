@@ -126,7 +126,15 @@ public final class HordeManager {
 			return;
 		}
 		HordeWaveDefinition wave = HordeWaves.WAVES.get(inst.currentWave - 1);
-		inst.totalMobsThisWave = wave.totalMobCount();
+		// Орда давит числом: рядовых тварей в волне в ~1.6 раза больше базы
+		int scaledTotal = 0;
+		for (HordeWaveDefinition.MobEntry entry : wave.mobs()) {
+			scaledTotal += scaledCount(entry.count());
+		}
+		if (wave.boss() != null) {
+			scaledTotal += wave.boss().count();
+		}
+		inst.totalMobsThisWave = scaledTotal;
 		inst.mobsAlive = inst.totalMobsThisWave;
 
 		broadcastMessage(inst.level, inst.center,
@@ -136,7 +144,8 @@ public final class HordeManager {
 				SoundEvents.RAID_HORN.value(), SoundSource.HOSTILE, 2.0f, 0.6f);
 
 		for (HordeWaveDefinition.MobEntry entry : wave.mobs()) {
-			for (int i = 0; i < entry.count(); i++) {
+			int n = scaledCount(entry.count());
+			for (int i = 0; i < n; i++) {
 				spawnMob(inst, entry);
 			}
 		}
@@ -145,6 +154,10 @@ public final class HordeManager {
 				spawnMob(inst, wave.boss());
 			}
 		}
+	}
+
+	private static int scaledCount(int base) {
+		return Math.max(base + 1, (int) Math.ceil(base * 1.6));
 	}
 
 	private static void spawnMob(HordeInstance inst, HordeWaveDefinition.MobEntry entry) {
@@ -173,6 +186,14 @@ public final class HordeManager {
 		}
 
 		inst.level.addFreshEntity(entity);
+		// сразу в бой: агримся на ближайшего игрока ещё при спавне
+		if (entity instanceof BaseHordeEntity hordeMob) {
+			net.minecraft.world.entity.player.Player nearest =
+					inst.level.getNearestPlayer(entity, 80.0);
+			if (nearest != null && !nearest.isCreative() && !nearest.isSpectator()) {
+				hordeMob.setTarget(nearest);
+			}
+		}
 		inst.level.sendParticles(ParticleTypes.LARGE_SMOKE, spawnX, spawnY + 0.5, spawnZ,
 				8, 0.5, 0.3, 0.5, 0.05);
 	}

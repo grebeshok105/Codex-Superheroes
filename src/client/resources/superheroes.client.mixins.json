@@ -13,6 +13,7 @@
 		"SoundEngineMixin",
 		"MinecraftHeroMeleeChargeMixin",
 		"GuiHotbarMixin",
+		"GuiOverlayMessageMixin",
 		"ChatComponentMixin",
 		"GuiEffectsMixin",
 		"GameRendererBlurMixin"

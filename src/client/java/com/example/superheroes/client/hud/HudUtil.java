@@ -77,10 +77,11 @@ public final class HudUtil {
 	public static void neonPanel(GuiGraphics g, int x, int y, int w, int h,
 			int topColor, int bottomColor, int borderColor, int glowColor) {
 		if (WildShaders.rectReady()) {
-			int glowA = Math.min(255, ((glowColor >>> 24) & 0xFF) * 3);
+			// «расплывчатый» неон: широкий и мягкий ореол, еле заметная тонкая обводка
+			int glowA = Math.min(255, ((glowColor >>> 24) & 0xFF) * 2);
 			int glow = (glowA << 24) | (glowColor & 0x00FFFFFF);
 			WildRenderer.panel(g, x, y, w, h, wildRadius(w, h),
-					topColor, bottomColor, borderColor, 1.1f, glow, 15f);
+					topColor, bottomColor, borderColor, 0.7f, glow, 34f);
 			return;
 		}
 		legacyNeonPanel(g, x, y, w, h, topColor, bottomColor, borderColor, glowColor);

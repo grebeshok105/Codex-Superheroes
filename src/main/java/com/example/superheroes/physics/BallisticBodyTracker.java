@@ -111,9 +111,8 @@ public final class BallisticBodyTracker {
 		Vec3 dir = delta.normalize();
 		double totalDist = speed;
 		int steps = Math.max(1, (int) Math.ceil(totalDist / STEP_SIZE));
-		int blocksDestroyed = 0;
 
-		for (int step = 0; step < steps && blocksDestroyed < MAX_BLOCKS_PER_TICK; step++) {
+		for (int step = 0; step < steps; step++) {
 			double t = Math.min((step + 1) * STEP_SIZE, totalDist);
 			Vec3 stepPos = start.add(dir.scale(t));
 			AABB box = body.getBoundingBox().move(stepPos.subtract(body.position())).inflate(INFLATE, 0.0, INFLATE);
@@ -121,8 +120,6 @@ public final class BallisticBodyTracker {
 			BlockPos min = BlockPos.containing(box.minX, box.minY, box.minZ);
 			BlockPos max = BlockPos.containing(box.maxX, box.maxY, box.maxZ);
 
-			boolean layerBrokeAny = false;
-			float maxHardnessBroken = 0f;
 			List<Integer> layerIds = new ArrayList<>();
 			boolean hardStop = false;
 
@@ -134,52 +131,25 @@ public final class BallisticBodyTracker {
 						BlockState blockState = level.getBlockState(mpos);
 						if (blockState.isAir() || !blockState.getFluidState().isEmpty()) continue;
 
-						if (BlockBreakPolicy.canImpactBreak(level, mpos, blockState, MAX_HARDNESS)) {
-							if (blocksDestroyed >= MAX_BLOCKS_PER_TICK) continue;
-							if (layerIds.size() < DEBRIS_STATE_LIMIT) {
-								layerIds.add(Block.getId(blockState));
-							}
-							float hardness = blockState.getDestroySpeed(level, mpos);
-							if (hardness > maxHardnessBroken) maxHardnessBroken = hardness;
-							if (level.destroyBlock(mpos.immutable(), false, state.source != null ? state.source : body)) {
-								blocksDestroyed++;
-							}
-							layerBrokeAny = true;
-						} else {
-							float dmg = (float) (speed * 1.8);
-							body.hurt(level.damageSources().flyIntoWall(), dmg);
-							body.setDeltaMovement(0, body.getDeltaMovement().y, 0);
-							body.hurtMarked = true;
-							if (body instanceof ServerPlayer player) {
-								player.connection.send(new ClientboundSetEntityMotionPacket(player));
-							}
-							sendWallFx(level, stepPos, dir, speed, layerIds);
-							hardStop = true;
+						// Земля и блоки неприкосновенны: тело просто врезается, получает
+						// урон от удара о стену и останавливается с визуальными эффектами.
+						if (layerIds.size() < DEBRIS_STATE_LIMIT) {
+							layerIds.add(Block.getId(blockState));
 						}
+						float dmg = (float) (speed * 1.8);
+						body.hurt(level.damageSources().flyIntoWall(), dmg);
+						body.setDeltaMovement(0, body.getDeltaMovement().y, 0);
+						body.hurtMarked = true;
+						if (body instanceof ServerPlayer player) {
+							player.connection.send(new ClientboundSetEntityMotionPacket(player));
+						}
+						sendWallFx(level, stepPos, dir, speed, layerIds);
+						hardStop = true;
 					}
 				}
 			}
 
 			if (hardStop) return false;
-
-			if (layerBrokeAny) {
-				state.power -= 2.5 + 0.4 * maxHardnessBroken;
-
-				Vec3 vel = body.getDeltaMovement();
-				body.setDeltaMovement(vel.scale(0.93));
-				body.hurtMarked = true;
-				if (body instanceof ServerPlayer player) {
-					player.connection.send(new ClientboundSetEntityMotionPacket(player));
-				}
-
-				body.invulnerableTime = 0;
-				body.hurt(level.damageSources().flyIntoWall(), (float) (0.8 + 0.25 * maxHardnessBroken));
-
-				sendWallFx(level, stepPos, dir, speed, layerIds);
-
-				speed = body.getDeltaMovement().length();
-				if (speed < MIN_SPEED || state.power <= 0) return false;
-			}
 		}
 
 		return true;

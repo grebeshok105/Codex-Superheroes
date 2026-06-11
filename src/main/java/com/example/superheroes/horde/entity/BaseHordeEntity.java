@@ -25,8 +25,78 @@ public abstract class BaseHordeEntity extends Monster {
 
 	public static AttributeSupplier.Builder createBaseHordeAttributes() {
 		return Monster.createMonsterAttributes()
-				.add(Attributes.FOLLOW_RANGE, 48.0)
+				.add(Attributes.FOLLOW_RANGE, 64.0)
+				.add(Attributes.STEP_HEIGHT, 1.0)
 				.add(Attributes.KNOCKBACK_RESISTANCE, 0.2);
+	}
+
+	private net.minecraft.world.phys.Vec3 lastStuckCheckPos;
+	private int stuckTicks;
+
+	@Override
+	public void tick() {
+		super.tick();
+		if (!level().isClientSide()) {
+			tickAntiStuck();
+		}
+	}
+
+	/**
+	 * Анти-застревание: если тварь с целью почти не двигается ~3 секунды,
+	 * сначала пробует прыжок-рывок к цели, затем телепортируется поближе.
+	 */
+	private void tickAntiStuck() {
+		var target = getTarget();
+		if (target == null || !target.isAlive()) {
+			stuckTicks = 0;
+			lastStuckCheckPos = null;
+			return;
+		}
+		double distSq = distanceToSqr(target);
+		if (distSq < 9.0) {
+			stuckTicks = 0;
+			lastStuckCheckPos = position();
+			return;
+		}
+		if (lastStuckCheckPos == null) {
+			lastStuckCheckPos = position();
+			return;
+		}
+		if (position().distanceToSqr(lastStuckCheckPos) > 0.6) {
+			stuckTicks = 0;
+			lastStuckCheckPos = position();
+			return;
+		}
+		stuckTicks++;
+		if (stuckTicks == 30) {
+			// рывок: прыжок в сторону цели
+			net.minecraft.world.phys.Vec3 dir = target.position().subtract(position()).normalize();
+			setDeltaMovement(dir.x * 0.7, 0.55, dir.z * 0.7);
+			hurtMarked = true;
+		} else if (stuckTicks >= 60) {
+			stuckTicks = 0;
+			lastStuckCheckPos = null;
+			teleportNear(target);
+		}
+	}
+
+	private void teleportNear(net.minecraft.world.entity.LivingEntity target) {
+		if (!(level() instanceof net.minecraft.server.level.ServerLevel server)) return;
+		for (int attempt = 0; attempt < 12; attempt++) {
+			double ang = random.nextDouble() * Math.PI * 2;
+			double dist = 5.0 + random.nextDouble() * 5.0;
+			double tx = target.getX() + Math.cos(ang) * dist;
+			double tz = target.getZ() + Math.sin(ang) * dist;
+			int ty = server.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+					(int) Math.floor(tx), (int) Math.floor(tz));
+			if (Math.abs(ty - target.getY()) > 12) continue;
+			if (randomTeleport(tx, ty, tz, false)) {
+				server.sendParticles(net.minecraft.core.particles.ParticleTypes.PORTAL,
+						getX(), getY() + 0.8, getZ(), 14, 0.3, 0.5, 0.3, 0.05);
+				getNavigation().stop();
+				return;
+			}
+		}
 	}
 
 	public void setHordeId(UUID hordeId) {
