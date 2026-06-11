@@ -8,6 +8,7 @@ import com.example.superheroes.hero.BattleBeastHero;
 import com.example.superheroes.hero.DoomsdayHero;
 import com.example.superheroes.hero.Hero;
 import com.example.superheroes.hero.Heroes;
+import com.example.superheroes.item.ModItemGroups;
 import com.example.superheroes.network.ModNetworking;
 import com.example.superheroes.transform.HeroData;
 import com.example.superheroes.transform.HeroTransformService;
@@ -23,8 +24,11 @@ import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.ResourceLocationArgument;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 
 public final class SuperheroesCommands {
 	private static final SuggestionProvider<CommandSourceStack> HERO_SUGGESTIONS =
@@ -72,6 +76,14 @@ public final class SuperheroesCommands {
 										.then(Commands.argument("target", EntityArgument.player())
 												.then(Commands.argument("tier", IntegerArgumentType.integer(0, BattleBeastCurseController.MAX_STAGE))
 														.executes(SuperheroesCommands::setBattleBeastTierForTarget)))))
+						.then(Commands.literal("admin")
+								.executes(SuperheroesCommands::toggleAdminBuild)
+								.then(Commands.literal("on")
+										.executes(ctx -> setAdminBuild(ctx, true)))
+								.then(Commands.literal("off")
+										.executes(ctx -> setAdminBuild(ctx, false)))
+								.then(Commands.literal("give")
+										.executes(SuperheroesCommands::giveAllAdminItems)))
 						.then(Commands.literal("debug")
 								.then(Commands.literal("mob-targets")
 										.executes(SuperheroesCommands::toggleMobTargets)
@@ -270,6 +282,46 @@ public final class SuperheroesCommands {
 				heroId, String.format("%.1f", data.energy()), String.format("%.1f", data.mana()),
 				data.activeAbilities().size()), false);
 		return 1;
+	}
+
+	private static int toggleAdminBuild(CommandContext<CommandSourceStack> ctx) {
+		ServerPlayer player = playerOrNull(ctx);
+		if (player == null) return 0;
+		boolean current = player.getAttachedOrCreate(ModAttachments.ADMIN_BUILD);
+		return setAdminBuild(ctx, !current);
+	}
+
+	private static int setAdminBuild(CommandContext<CommandSourceStack> ctx, boolean enabled) {
+		ServerPlayer player = playerOrNull(ctx);
+		if (player == null) return 0;
+		player.setAttached(ModAttachments.ADMIN_BUILD, enabled);
+		if (enabled) {
+			ctx.getSource().sendSuccess(() -> Component.literal("§6[ADMIN BUILD: ON] §fАдмин-контент разблокирован. Используй /superheroes admin give для получения предметов."), false);
+		} else {
+			ctx.getSource().sendSuccess(() -> Component.literal("§7[ADMIN BUILD: OFF] §fАдмин-контент скрыт."), false);
+		}
+		return enabled ? 1 : 0;
+	}
+
+	private static int giveAllAdminItems(CommandContext<CommandSourceStack> ctx) {
+		ServerPlayer player = playerOrNull(ctx);
+		if (player == null) return 0;
+		boolean adminEnabled = player.getAttachedOrCreate(ModAttachments.ADMIN_BUILD);
+		if (!adminEnabled) {
+			ctx.getSource().sendFailure(Component.literal("§cАдмин-билд выключен. Сначала включи: /superheroes admin on"));
+			return 0;
+		}
+		int count = 0;
+		for (Item item : ModItemGroups.ADMIN_ONLY_ITEMS) {
+			ItemStack stack = new ItemStack(item);
+			if (!player.getInventory().add(stack)) {
+				player.drop(stack, false);
+			}
+			count++;
+		}
+		int finalCount = count;
+		ctx.getSource().sendSuccess(() -> Component.literal("§6[ADMIN] §fВыдано " + finalCount + " админ-предметов."), false);
+		return count;
 	}
 
 	private static ServerPlayer playerOrNull(CommandContext<CommandSourceStack> ctx) {

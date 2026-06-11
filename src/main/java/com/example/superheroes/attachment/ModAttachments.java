@@ -45,6 +45,12 @@ public final class ModAttachments {
 			.initializer(() -> RaidenState.EMPTY)
 			.buildAndRegister(ModId.of("raiden_state"));
 
+	public static final AttachmentType<Boolean> ADMIN_BUILD = AttachmentRegistry.<Boolean>builder()
+			.initializer(() -> Boolean.FALSE)
+			.persistent(Codec.BOOL)
+			.copyOnDeath()
+			.buildAndRegister(ModId.of("admin_build"));
+
 	private ModAttachments() {
 	}
 

@@ -1,0 +1,50 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.hazmat_armor.idle": {
+      "animation_length": 3.0,
+      "loop": true,
+      "bones": {
+        "armorBody": {
+          "scale": {
+            "0.0": {
+              "vector": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "0.75": {
+              "vector": [
+                1.02,
+                1.03,
+                1.02
+              ]
+            },
+            "1.5": {
+              "vector": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            },
+            "2.25": {
+              "vector": [
+                1.02,
+                1.03,
+                1.02
+              ]
+            },
+            "3.0": {
+              "vector": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}

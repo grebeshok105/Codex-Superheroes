@@ -144,5 +144,32 @@
 				"stream": true
 			}
 		]
+	},
+	"ironman.jarvis_detect_excited": {
+		"subtitle": "subtitles.superheroes.ironman.jarvis_detect",
+		"sounds": [
+			{
+				"name": "superheroes:ironman/jarvis_detect_excited",
+				"stream": true
+			}
+		]
+	},
+	"ironman.jarvis_diagnostic": {
+		"subtitle": "subtitles.superheroes.ironman.jarvis_diagnostic",
+		"sounds": [
+			{
+				"name": "superheroes:ironman/jarvis_diagnostic",
+				"stream": true
+			}
+		]
+	},
+	"ironman.jarvis_outdated_suit": {
+		"subtitle": "subtitles.superheroes.ironman.jarvis_outdated_suit",
+		"sounds": [
+			{
+				"name": "superheroes:ironman/jarvis_outdated_suit",
+				"stream": true
+			}
+		]
 	}
 }

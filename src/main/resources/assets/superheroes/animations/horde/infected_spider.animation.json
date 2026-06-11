@@ -1,0 +1,208 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.infected_spider.idle": {
+      "animation_length": 2.0,
+      "loop": true,
+      "bones": {
+        "body": {
+          "rotation": {
+            "0.0": {"vector": [0, 0, 0]},
+            "0.5": {"vector": [0.5, 0, 0.5]},
+            "1.0": {"vector": [0, 0, 0]},
+            "1.5": {"vector": [-0.5, 0, -0.5]},
+            "2.0": {"vector": [0, 0, 0]}
+          },
+          "position": {
+            "0.0": {"vector": [0, 0, 0]},
+            "1.0": {"vector": [0, -0.3, 0]},
+            "2.0": {"vector": [0, 0, 0]}
+          }
+        },
+        "abdomen": {
+          "rotation": {
+            "0.0": {"vector": [0, 0, 0]},
+            "1.0": {"vector": [2, 0, 0]},
+            "2.0": {"vector": [0, 0, 0]}
+          }
+        },
+        "leg_left_0": {
+          "rotation": {
+            "0.0": {"vector": [0, 0, 0]},
+            "1.0": {"vector": [2, 0, -2]},
+            "2.0": {"vector": [0, 0, 0]}
+          }
+        },
+        "leg_right_0": {
+          "rotation": {
+            "0.0": {"vector": [0, 0, 0]},
+            "1.0": {"vector": [2, 0, 2]},
+            "2.0": {"vector": [0, 0, 0]}
+          }
+        },
+        "leg_left_1": {
+          "rotation": {
+            "0.0": {"vector": [0, 0, 0]},
+            "1.0": {"vector": [-2, 0, -2]},
+            "2.0": {"vector": [0, 0, 0]}
+          }
+        },
+        "leg_right_1": {
+          "rotation": {
+            "0.0": {"vector": [0, 0, 0]},
+            "1.0": {"vector": [-2, 0, 2]},
+            "2.0": {"vector": [0, 0, 0]}
+          }
+        },
+        "leg_left_2": {
+          "rotation": {
+            "0.0": {"vector": [0, 0, 0]},
+            "1.0": {"vector": [2, 0, -2]},
+            "2.0": {"vector": [0, 0, 0]}
+          }
+        },
+        "leg_right_2": {
+          "rotation": {
+            "0.0": {"vector": [0, 0, 0]},
+            "1.0": {"vector": [2, 0, 2]},
+            "2.0": {"vector": [0, 0, 0]}
+          }
+        },
+        "leg_left_3": {
+          "rotation": {
+            "0.0": {"vector": [0, 0, 0]},
+            "1.0": {"vector": [-2, 0, -2]},
+            "2.0": {"vector": [0, 0, 0]}
+          }
+        },
+        "leg_right_3": {
+          "rotation": {
+            "0.0": {"vector": [0, 0, 0]},
+            "1.0": {"vector": [-2, 0, 2]},
+            "2.0": {"vector": [0, 0, 0]}
+          }
+        },
+        "egg_sac": {
+          "scale": {
+            "0.0": {"vector": [1, 1, 1]},
+            "1.0": {"vector": [1.05, 1.08, 1.05]},
+            "2.0": {"vector": [1, 1, 1]}
+          }
+        }
+      }
+    },
+    "animation.infected_spider.walk": {
+      "animation_length": 0.8,
+      "loop": true,
+      "bones": {
+        "body": {
+          "rotation": {
+            "0.0": {"vector": [0, -1, 0]},
+            "0.4": {"vector": [0, 1, 0]},
+            "0.8": {"vector": [0, -1, 0]}
+          }
+        },
+        "leg_left_0": {
+          "rotation": {
+            "0.0": {"vector": [15, 0, -10]},
+            "0.2": {"vector": [-15, 0, -20]},
+            "0.4": {"vector": [15, 0, -10]},
+            "0.6": {"vector": [-15, 0, -20]},
+            "0.8": {"vector": [15, 0, -10]}
+          }
+        },
+        "leg_right_0": {
+          "rotation": {
+            "0.0": {"vector": [-15, 0, 10]},
+            "0.2": {"vector": [15, 0, 20]},
+            "0.4": {"vector": [-15, 0, 10]},
+            "0.6": {"vector": [15, 0, 20]},
+            "0.8": {"vector": [-15, 0, 10]}
+          }
+        },
+        "leg_left_1": {
+          "rotation": {
+            "0.0": {"vector": [-15, 0, -20]},
+            "0.2": {"vector": [15, 0, -10]},
+            "0.4": {"vector": [-15, 0, -20]},
+            "0.6": {"vector": [15, 0, -10]},
+            "0.8": {"vector": [-15, 0, -20]}
+          }
+        },
+        "leg_right_1": {
+          "rotation": {
+            "0.0": {"vector": [15, 0, 20]},
+            "0.2": {"vector": [-15, 0, 10]},
+            "0.4": {"vector": [15, 0, 20]},
+            "0.6": {"vector": [-15, 0, 10]},
+            "0.8": {"vector": [15, 0, 20]}
+          }
+        },
+        "leg_left_2": {
+          "rotation": {
+            "0.0": {"vector": [15, 0, -10]},
+            "0.2": {"vector": [-15, 0, -20]},
+            "0.4": {"vector": [15, 0, -10]},
+            "0.6": {"vector": [-15, 0, -20]},
+            "0.8": {"vector": [15, 0, -10]}
+          }
+        },
+        "leg_right_2": {
+          "rotation": {
+            "0.0": {"vector": [-15, 0, 10]},
+            "0.2": {"vector": [15, 0, 20]},
+            "0.4": {"vector": [-15, 0, 10]},
+            "0.6": {"vector": [15, 0, 20]},
+            "0.8": {"vector": [-15, 0, 10]}
+          }
+        },
+        "leg_left_3": {
+          "rotation": {
+            "0.0": {"vector": [-15, 0, -20]},
+            "0.2": {"vector": [15, 0, -10]},
+            "0.4": {"vector": [-15, 0, -20]},
+            "0.6": {"vector": [15, 0, -10]},
+            "0.8": {"vector": [-15, 0, -20]}
+          }
+        },
+        "leg_right_3": {
+          "rotation": {
+            "0.0": {"vector": [15, 0, 20]},
+            "0.2": {"vector": [-15, 0, 10]},
+            "0.4": {"vector": [15, 0, 20]},
+            "0.6": {"vector": [-15, 0, 10]},
+            "0.8": {"vector": [15, 0, 20]}
+          }
+        }
+      }
+    },
+    "animation.infected_spider.attack": {
+      "animation_length": 0.4,
+      "loop": false,
+      "bones": {
+        "body": {
+          "rotation": {
+            "0.0": {"vector": [0, 0, 0]},
+            "0.1": {"vector": [-15, 0, 0]},
+            "0.25": {"vector": [10, 0, 0]},
+            "0.4": {"vector": [0, 0, 0]}
+          },
+          "position": {
+            "0.0": {"vector": [0, 0, 0]},
+            "0.1": {"vector": [0, 2, 0]},
+            "0.2": {"vector": [0, 0, -3]},
+            "0.4": {"vector": [0, 0, 0]}
+          }
+        },
+        "head": {
+          "rotation": {
+            "0.0": {"vector": [0, 0, 0]},
+            "0.1": {"vector": [-20, 0, 0]},
+            "0.2": {"vector": [15, 0, 0]},
+            "0.4": {"vector": [0, 0, 0]}
+          }
+        }
+      }
+    }
+  }
+}
