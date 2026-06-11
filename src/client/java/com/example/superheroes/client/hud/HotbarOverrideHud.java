@@ -28,7 +28,7 @@ public final class HotbarOverrideHud {
 		int margin = HudScaler.scale(BASE_MARGIN);
 		int slotSize = HudScaler.scale(BASE_SLOT_SIZE);
 		int gap = HudScaler.scale(BASE_GAP);
-		int panelH = HudScaler.scale(142);
+		int panelH = HudScaler.scale(156);
 
 		int[] off = HudLayoutManager.offset(HudLayoutManager.HOTBAR);
 		int hotbarY = screenH - panelH - margin - slotSize - HudScaler.scale(4) + off[1];
