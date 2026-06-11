@@ -9,9 +9,10 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * Blocks vanilla hotbar slot switching while a hero is active:
- * - keys 3/4/5 are ability binds, so their hotbar clicks are always consumed;
- * - with hotbar lock enabled, all 1-9 keys are consumed.
+ * LOCKED semantics (v3.19): the lock is an "ability mode" switch.
+ * - Lock OFF: number keys 1-9 switch hotbar slots as vanilla; ability keys do nothing.
+ * - Lock ON: ALL 1-9 hotbar clicks are consumed (slots can't switch via digits);
+ *   3/4/5 trigger abilities instead. The mouse wheel always switches slots.
  * Runs at HEAD of handleKeybinds, before vanilla reads the clicks — deterministic,
  * unlike tick-event ordering.
  */
@@ -23,13 +24,12 @@ public class MinecraftHandleKeybindsMixin {
 		if (mc.player == null || !ClientHeroState.data().hasHero()) {
 			return;
 		}
-		boolean locked = HotbarLockState.isLocked();
+		if (!HotbarLockState.isLocked()) {
+			return; // lock off: vanilla slot switching untouched
+		}
 		for (int i = 0; i < mc.options.keyHotbarSlots.length; i++) {
-			boolean abilityKey = i == 2 || i == 3 || i == 4; // 3, 4, 5 are ability hotkeys
-			if (locked || abilityKey) {
-				while (mc.options.keyHotbarSlots[i].consumeClick()) {
-					// consumed
-				}
+			while (mc.options.keyHotbarSlots[i].consumeClick()) {
+				// lock on: digits never switch slots
 			}
 		}
 	}

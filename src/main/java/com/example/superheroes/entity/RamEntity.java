@@ -15,7 +15,9 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.NeutralMob;
@@ -31,6 +33,8 @@ import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -56,7 +60,6 @@ public class RamEntity extends PathfinderMob {
 			SynchedEntityData.defineId(RamEntity.class, EntityDataSerializers.OPTIONAL_UUID);
 
 	private static final double TELEPORT_DISTANCE = 20.0;
-	private static final double COMBAT_LEASH_DISTANCE = 14.0;
 	private static final double TARGET_SEARCH_AROUND_OWNER = 14.0;
 	private static final int STUCK_CHECK_INTERVAL = 40;
 	private static final double STUCK_MOVE_THRESHOLD_SQR = 0.5 * 0.5;
@@ -70,6 +73,8 @@ public class RamEntity extends PathfinderMob {
 	private CombatStyle combatStyle = CombatStyle.RANGED;
 	private int styleSwapTicks;
 	private boolean provokeAlternator;
+	/** Timestamp of the owner's last melee hit we already reacted to (priority order). */
+	private int ownerOrderStamp = Integer.MIN_VALUE;
 
 	/** Режим боя: автоматически переключается между ближним и дальним. */
 	enum CombatStyle {
@@ -175,39 +180,78 @@ public class RamEntity extends PathfinderMob {
 			keepNearOwner(owner);
 		}
 		if (this.tickCount % 10 == 0) {
-			LivingEntity current = this.getTarget();
-			boolean keepingHurtTarget = current != null && current.isAlive()
-					&& current == this.getLastHurtByMob();
-			if (!keepingHurtTarget) {
-				LivingEntity desired = chooseTarget(owner);
-				if (desired != current) {
-					this.setTarget(desired);
-				}
-			}
+			updateTargeting(owner);
 			updateCombatStyle();
+			updateHeldWand();
 		}
 		tryFrostNova();
 	}
 
-	/** Держит Рам рядом с хозяйкой: телепорт при застревании или большой дистанции, сброс цели при отрыве. */
-	private void keepNearOwner(Player owner) {
-		double distSqr = this.distanceToSqr(owner);
-		if (distSqr > TELEPORT_DISTANCE * TELEPORT_DISTANCE) {
-			teleportToOwner(owner);
-			return;
+	/**
+	 * Жёсткая логика цели (по приказу хозяйки):
+	 * 1. Кого хозяйка ударила последним — это новый приказ, Рам переключается на него.
+	 * 2. Пока приказ/цель жив — Рам добивает его БЕЗ смены приоритетов,
+	 *    даже если хозяйка ушла далеко.
+	 * 3. Только когда цели нет — защитный режим: те, кто бьёт её или хозяйку,
+	 *    иначе монстры рядом с хозяйкой.
+	 */
+	private void updateTargeting(@Nullable Player owner) {
+		LivingEntity current = this.getTarget();
+		if (owner != null) {
+			LivingEntity ordered = owner.getLastHurtMob();
+			int stamp = owner.getLastHurtMobTimestamp();
+			if (ordered != null && stamp != ownerOrderStamp && isValidTarget(ordered)) {
+				ownerOrderStamp = stamp;
+				if (ordered != current) {
+					this.setTarget(ordered);
+				}
+				return;
+			}
 		}
-		if (distSqr > COMBAT_LEASH_DISTANCE * COMBAT_LEASH_DISTANCE && this.getTarget() != null) {
-			this.setTarget(null);
-			this.getNavigation().moveTo(owner, 1.25);
+		if (current != null && isValidTarget(current)) {
+			return; // цель жива — никаких переключений
+		}
+		LivingEntity fallback = chooseTarget(owner);
+		if (fallback != current) {
+			this.setTarget(fallback);
+		}
+	}
+
+	/** В дальнем режиме Рам держит «жезл» — зачарованную палочку; в ближнем руки свободны. */
+	private void updateHeldWand() {
+		boolean wantWand = this.getTarget() != null && combatStyle == CombatStyle.RANGED;
+		boolean hasWand = !this.getMainHandItem().isEmpty();
+		if (wantWand && !hasWand) {
+			ItemStack wand = new ItemStack(Items.STICK);
+			wand.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true);
+			this.setItemSlot(EquipmentSlot.MAINHAND, wand);
+			this.setDropChance(EquipmentSlot.MAINHAND, 0f);
+		} else if (!wantWand && hasWand) {
+			this.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
+		}
+	}
+
+	/**
+	 * Держит Рам рядом с хозяйкой ТОЛЬКО вне боя: пока есть живая цель — никаких
+	 * телепортов к хозяйке и сбросов цели (Рам обязана добить приказ). При
+	 * застревании в бою телепортируется к цели, вне боя — к хозяйке.
+	 */
+	private void keepNearOwner(Player owner) {
+		LivingEntity target = this.getTarget();
+		boolean fighting = target != null && target.isAlive();
+		double distSqr = this.distanceToSqr(owner);
+		if (!fighting && distSqr > TELEPORT_DISTANCE * TELEPORT_DISTANCE) {
+			teleportNear(owner);
+			return;
 		}
 		if (this.tickCount % STUCK_CHECK_INTERVAL == 0) {
 			boolean wantsToMove = this.getNavigation().isInProgress()
-					|| (this.getTarget() == null && distSqr > 7.0 * 7.0);
+					|| (!fighting && distSqr > 7.0 * 7.0);
 			boolean barelyMoved = this.position().distanceToSqr(lastStuckCheckPos) < STUCK_MOVE_THRESHOLD_SQR;
 			if (wantsToMove && barelyMoved) {
 				stuckStrikes++;
 				if (stuckStrikes >= 2) {
-					teleportToOwner(owner);
+					teleportNear(fighting ? target : owner);
 				}
 			} else {
 				stuckStrikes = 0;
@@ -216,14 +260,14 @@ public class RamEntity extends PathfinderMob {
 		}
 	}
 
-	private void teleportToOwner(Player owner) {
+	private void teleportNear(LivingEntity anchor) {
 		if (!(this.level() instanceof ServerLevel level)) {
 			return;
 		}
 		for (int attempt = 0; attempt < 12; attempt++) {
-			double dx = owner.getX() + (this.random.nextDouble() - 0.5) * 4.0;
-			double dz = owner.getZ() + (this.random.nextDouble() - 0.5) * 4.0;
-			double dy = owner.getY() + this.random.nextInt(2);
+			double dx = anchor.getX() + (this.random.nextDouble() - 0.5) * 4.0;
+			double dz = anchor.getZ() + (this.random.nextDouble() - 0.5) * 4.0;
+			double dy = anchor.getY() + this.random.nextInt(2);
 			BlockPos pos = BlockPos.containing(dx, dy, dz);
 			AABB box = this.getDimensions(this.getPose()).makeBoundingBox(Vec3.atBottomCenterOf(pos));
 			if (level.noCollision(this, box) && !level.getBlockState(pos.below()).isAir()) {
@@ -330,7 +374,7 @@ public class RamEntity extends PathfinderMob {
 			return;
 		}
 		AABB box = this.getBoundingBox().inflate(FROST_NOVA_RADIUS, 1.5, FROST_NOVA_RADIUS);
-		List<LivingEntity> threats = level.getEntitiesOfClass(LivingEntity.class, box, this::isValidTarget);
+		List<LivingEntity> threats = level.getEntitiesOfClass(LivingEntity.class, box, this::isThreat);
 		if (threats.size() < 2) {
 			return;
 		}
@@ -381,9 +425,19 @@ public class RamEntity extends PathfinderMob {
 		if (target instanceof Player player && (player.isCreative() || player.isSpectator())) {
 			return false;
 		}
+		return target.level() == this.level();
+	}
+
+	/** Угроза для морозной волны: текущая цель, враждебные мобы и те, кто целится в Рам/хозяйку. */
+	private boolean isThreat(LivingEntity entity) {
+		if (!isValidTarget(entity)) {
+			return false;
+		}
+		if (entity == this.getTarget() || entity instanceof Enemy) {
+			return true;
+		}
 		Player owner = getOwner();
-		Vec3 anchor = owner != null ? owner.position() : this.position();
-		return target.position().distanceToSqr(anchor) < TARGET_SEARCH_AROUND_OWNER * TARGET_SEARCH_AROUND_OWNER * 2.0;
+		return entity instanceof Mob mob && (mob.getTarget() == this || (owner != null && mob.getTarget() == owner));
 	}
 
 	public void dismiss() {

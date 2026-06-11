@@ -23,12 +23,10 @@ import net.minecraft.util.FormattedCharSequence;
 import java.util.List;
 
 public final class AbilitiesTooltipHud {
-	private static final int ANCHOR_X = 12;
-	private static final int ANCHOR_Y = 12;
-	private static final int RESOURCE_PANEL_HEIGHT_DUAL = 70;
-	private static final int RESOURCE_PANEL_HEIGHT_SOLO = 48;
-	private static final int GAP_BELOW_RESOURCE = 4;
-	private static final int PANEL_WIDTH = 320;
+	// Anchored to the RIGHT edge since the v2 HUD redesign; draggable via HUD editor.
+	private static final int ANCHOR_RIGHT = 10;
+	private static final int ANCHOR_TOP = 70;
+	private static final int PANEL_WIDTH = 250;
 
 	private static final int PADDING_X = 12;
 	private static final int PADDING_TOP = 8;
@@ -157,11 +155,10 @@ public final class AbilitiesTooltipHud {
 			return;
 		}
 
-		int resourcePanelHeight = ClientHeroState.manaMax() > 0f ? RESOURCE_PANEL_HEIGHT_DUAL : RESOURCE_PANEL_HEIGHT_SOLO;
-		int baseY = ANCHOR_Y + resourcePanelHeight + GAP_BELOW_RESOURCE;
-		int yOffset = (int) ((1f - eased) * -SLIDE_DISTANCE);
-		int x = ANCHOR_X;
-		int y = baseY + yOffset;
+		int[] off = HudLayoutManager.offset(HudLayoutManager.TOOLTIPS);
+		int xSlide = (int) ((1f - eased) * SLIDE_DISTANCE);
+		int x = graphics.guiWidth() - PANEL_WIDTH - ANCHOR_RIGHT + off[0] + xSlide;
+		int y = ANCHOR_TOP + off[1];
 
 		int alpha = (int) (eased * 255f);
 		if (alpha <= 2) {
