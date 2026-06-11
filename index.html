@@ -1,14 +1,280 @@
 <!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/favicon.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
-    <title>My App</title>
-    <script type="module" crossorigin src="/assets/index-Ci2PFh6y.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-CUkEmDFe.css">
-  </head>
-  <body>
-    <div id="root"></div>
-  </body>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Codex Superheroes — мод на супергероев для Minecraft 1.21</title>
+  <meta name="description" content="Стань супергероем в Minecraft: 20 героев, заряженные удары, пробивание стен, орды паразитов, Iron Man с нанотехом и Jarvis AI. Fabric 1.21, Java 21." />
+  <meta property="og:title" content="Codex Superheroes — SuperHeroes: Reborn" />
+  <meta property="og:description" content="Мы вернулись! Огромное обновление: новая боёвка, полёт, Омни-Мэн, Iron Man 2.0, орда паразитов и полностью новый HUD." />
+  <meta property="og:image" content="https://grebeshok.eu.cc/images/hero-banner.webp" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="backdrop"></div>
+  <div class="grain"></div>
+
+  <!-- ───────── NAV ───────── -->
+  <nav class="nav" id="nav">
+    <div class="container nav-inner">
+      <a class="nav-logo" href="#">
+        <img src="/favicon.png" alt="Codex Superheroes" />
+        <span class="t">CODEX <em>SUPERHEROES</em></span>
+      </a>
+      <div class="nav-links">
+        <a href="#reborn" class="hide-m">Обновление</a>
+        <a href="#heroes" class="hide-m">Герои</a>
+        <a href="#horde" class="hide-m">Орда</a>
+        <a href="https://github.com/grebeshok105/Codex-Superheroes" target="_blank" rel="noopener noreferrer" class="hide-m">GitHub</a>
+        <a href="https://github.com/grebeshok105/Codex-Superheroes/releases/latest" target="_blank" rel="noopener noreferrer" class="btn btn-red btn-sm">⬇ Скачать</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ───────── HERO ───────── -->
+  <header class="hero">
+    <div class="hero-bg"><img src="images/hero-banner.webp" alt="Герои над миром Minecraft" fetchpriority="high" /></div>
+    <div class="container hero-inner">
+      <div class="hero-badge"><img src="img/emoji/bolt.png" alt="" /> SuperHeroes: Reborn — мы вернулись</div>
+      <h1><span class="l1">CODEX</span><span class="l2">SUPERHEROES</span></h1>
+      <p class="hero-sub">Стань супергероем в Minecraft. 20 героев с уникальными способностями, заряженные удары, пробивание стен, орды паразитов и Jarvis AI.</p>
+      <div class="hero-ctas">
+        <a class="btn btn-red" href="https://github.com/grebeshok105/Codex-Superheroes/releases/latest" target="_blank" rel="noopener noreferrer">⬇ Скачать v3.29.0</a>
+        <a class="btn btn-ghost" href="#reborn">Что нового?</a>
+      </div>
+      <div class="hero-stats">
+        <div class="stat"><div class="num" data-count="20">0</div><div class="lbl">Героев</div></div>
+        <div class="stat"><div class="num" data-count="105" data-suffix="+">0</div><div class="lbl">Способностей</div></div>
+        <div class="stat"><div class="num" data-count="10">0</div><div class="lbl">Волн орды</div></div>
+        <div class="stat"><div class="num" data-count="6">0</div><div class="lbl">Костюмов Iron Man</div></div>
+      </div>
+    </div>
+    <div class="hero-scroll">▾</div>
+  </header>
+
+  <!-- ───────── ABILITY MARQUEE ───────── -->
+  <div class="marquee-wrap" aria-hidden="true">
+    <div class="marquee m1" id="mq1"></div>
+    <div class="marquee m2" id="mq2"></div>
+  </div>
+  <div class="marquee-note">105+ способностей — каждая со своей авторской иконкой прямо из мода</div>
+
+  <!-- ───────── REBORN ───────── -->
+  <section class="block" id="reborn">
+    <div class="container">
+      <div class="center rv">
+        <div class="kicker" style="color: var(--gold)">Обновление</div>
+        <h2 class="h2">⚡ SuperHeroes: Reborn — <span class="grad-rg">мы вернулись!</span></h2>
+        <p class="lead">Мод пережил огромное обновление — это фактически новая игра. Вот что вас ждёт:</p>
+      </div>
+      <div class="cards7">
+        <div class="card rv" style="--ac: var(--red)">
+          <div class="ic"><img src="img/emoji/fist.png" alt="" /></div>
+          <h3>Новая боёвка</h3>
+          <p>Зажми ПКМ с пустой рукой — заряди удар и отправь врага в полёт сквозь стены. Чем сильнее герой, тем мощнее удар. У монстров теперь идёт кровь, а вилтрумиты проламывают рывком всё на своём пути.</p>
+        </div>
+        <div class="card rv" style="--ac: var(--blue)">
+          <div class="ic"><img src="img/emoji/feather.png" alt="" /></div>
+          <h3>Полёт переделан с нуля</h3>
+          <p>Взлёт, зависание, круиз, сверхзвук — всё ощущается по-новому, быстрее и плавнее. На сверхзвуке можно пробивать стены собственным телом.</p>
+        </div>
+        <div class="card rv" style="--ac: var(--red)">
+          <div class="ic"><img src="img/emoji/bolt.png" alt="" /></div>
+          <h3>Омни-Мэн</h3>
+          <p>Новый герой с фирменной фишкой «Подумай, Марк!» — хватаешь врага, взлетаешь в небо и впечатываешь его в землю через половину карты.</p>
+        </div>
+        <div class="card rv" style="--ac: var(--gold)">
+          <div class="ic"><img src="img/emoji/reactor.png" alt="" /></div>
+          <h3>Железный Человек 2.0</h3>
+          <p>Шесть костюмов с нано-одеванием как в кино, нано-оружие (клинок, молот, щит), личный Железный Легион дронов и Джарвис, который докладывает об угрозах поблизости.</p>
+        </div>
+        <div class="card rv" style="--ac: var(--purple)">
+          <div class="ic"><img src="img/emoji/skull.png" alt="" /></div>
+          <h3>Орда паразитов</h3>
+          <p>Новый режим выживания: 10 волн заражённых тварей, мини-боссы и финальный босс — Заражённый Хоумлендер с тремя фазами.</p>
+        </div>
+        <div class="card rv" style="--ac: var(--blue)">
+          <div class="ic"><img src="img/emoji/star.png" alt="" /></div>
+          <h3>Полностью новый интерфейс</h3>
+          <p>Карточка героя с 3D-моделькой, панель способностей с авторскими иконками на каждую абилку, быстрая радиалка и редактор — расставь HUD как тебе удобно.</p>
+        </div>
+        <div class="card wide rv" style="--ac: var(--gold)">
+          <div class="ic"><img src="img/emoji/sword.png" alt="" /></div>
+          <div>
+            <h3>Герои прокачаны</h3>
+            <p>Рем с демонизмом и верной Рам, Рейнхард с ножнами и Судом Скорости, Танос с камнями прямо на скине, Наруто с 15 клонами, растущий Battle Beast и многое другое. Заходи, выбирай героя и проверяй на прочность. Мы вернулись. 🔥</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───────── COMBAT ───────── -->
+  <section class="block" id="combat">
+    <div class="container split" style="--ac: rgba(255,59,59,.35)">
+      <div class="media rv">
+        <div class="frame"><img src="images/combat-punch.webp" alt="Заряженный удар пробивает стену" loading="lazy" /></div>
+        <div class="tag" style="color: var(--red)">Боевая система</div>
+      </div>
+      <div class="rv">
+        <div class="kicker" style="color: var(--red)">Боёвка</div>
+        <h2 class="h2">Каждый удар <span class="grad-rg">имеет вес</span></h2>
+        <p class="lead">Баллистическая система: тела врагов реально летят, пробивают стены и оставляют след разрушений.</p>
+        <div class="feat-list" style="--ac: var(--red)">
+          <div class="row"><div class="dot"><img src="img/emoji/fist.png" alt="" /></div><div><b>Заряженный удар.</b> <span>Дольше держишь — мощнее тир. На максимуме враг улетает сквозь дома.</span></div></div>
+          <div class="row"><div class="dot"><img src="img/emoji/flame.png" alt="" /></div><div><b>Пробивание стен.</b> <span>Камень ломается, обсидиан держит. Никаких воронок — только честные разрушения.</span></div></div>
+          <div class="row"><div class="dot"><img src="img/emoji/heart.png" alt="" /></div><div><b>Кровотечение.</b> <span>Удары сильнейших героев оставляют кровоточащие раны.</span></div></div>
+          <div class="row"><div class="dot"><img src="img/emoji/spiral.png" alt="" /></div><div><b>Сила героя решает.</b> <span>Думсдей и Омни-Мэн бьют как грузовик, Капитан — как человек.</span></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───────── OMNIMAN ───────── -->
+  <section class="block" id="omniman">
+    <div class="container split flip" style="--ac: rgba(255,59,59,.3)">
+      <div class="media rv">
+        <div class="frame"><img src="images/omniman-flight.webp" alt="Омни-Мэн на сверхзвуке" loading="lazy" /></div>
+        <div class="tag" style="color: var(--red)">Новый герой</div>
+      </div>
+      <div class="rv">
+        <div class="kicker" style="color: var(--red)">Омни-Мэн</div>
+        <h2 class="h2">«Подумай, <span class="grad-rg">Марк!</span>»</h2>
+        <p class="lead">Вилтрумит во всей мощи: импульс копится от скорости и превращается в разрушительные удары.</p>
+        <div class="feat-list" style="--ac: var(--red)">
+          <div class="row"><div class="dot"><img src="img/abilities/omniman_think_mark.png" alt="" /></div><div><b>«Подумай, Марк!»</b> <span>Хватай врага, взлетай на 50 блоков и впечатывай его в землю сквозь всё, что попадётся.</span></div></div>
+          <div class="row"><div class="dot"><img src="img/abilities/omniman_viltrumite_rush.png" alt="" /></div><div><b>Вилтрумитский рывок.</b> <span>Тройная скорость, крушит породу и летит дальше.</span></div></div>
+          <div class="row"><div class="dot"><img src="img/abilities/omniman_world_breaker.png" alt="" /></div><div><b>World Breaker.</b> <span>Финишер, после которого ландшафт уже не тот.</span></div></div>
+          <div class="row"><div class="dot"><img src="img/abilities/omniman_flight.png" alt="" /></div><div><b>Momentum.</b> <span>Скорость и полёт копят импульс — удары становятся сильнее.</span></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───────── IRON MAN ───────── -->
+  <section class="block" id="ironman">
+    <div class="container split" style="--ac: rgba(255,201,64,.3)">
+      <div class="media rv">
+        <div class="frame"><img src="images/ironman-nano.webp" alt="Нано-одевание Железного Человека" loading="lazy" /></div>
+        <div class="tag" style="color: var(--gold)">Iron Man 2.0</div>
+      </div>
+      <div class="rv">
+        <div class="kicker" style="color: var(--gold)">Железный Человек</div>
+        <h2 class="h2">Нанотех. Легион. <span class="grad-bg">Jarvis на связи.</span></h2>
+        <p class="lead">Полностью переработанный Iron Man: костюм собирается потоком наночастиц прямо из реактора.</p>
+        <div class="feat-list" style="--ac: var(--gold)">
+          <div class="row"><div class="dot"><img src="img/abilities/iron_man_suit_switch.png" alt="" /></div><div><b>6 костюмов.</b> <span>Default, Mark 85, Mark 1, Stealth, Rescue, War Machine — со своими статами.</span></div></div>
+          <div class="row"><div class="dot"><img src="img/abilities/iron_man_nano_form.png" alt="" /></div><div><b>Нано-оружие.</b> <span>Клинок, супермолот с диким отбросом, энергощит — прямо на руке.</span></div></div>
+          <div class="row"><div class="dot"><img src="img/abilities/iron_man_legion.png" alt="" /></div><div><b>Железный Легион.</b> <span>Дроны из свободных костюмов прикрывают тебя в бою.</span></div></div>
+          <div class="row"><div class="dot"><img src="img/emoji/eye.png" alt="" /></div><div><b>Jarvis AI.</b> <span>Голосовые доклады об угрозах: классы D→S, реальные дистанции, очередь докладов.</span></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───────── HORDE ───────── -->
+  <section class="block" id="horde">
+    <div class="container split flip" style="--ac: rgba(180,101,255,.3)">
+      <div class="media rv">
+        <div class="frame"><img src="images/horde-wave.webp" alt="Орда паразитов" loading="lazy" /></div>
+        <div class="tag" style="color: var(--purple)">Режим орды</div>
+      </div>
+      <div class="rv">
+        <div class="kicker" style="color: var(--purple)">Орда паразитов</div>
+        <h2 class="h2">10 волн. <span class="grad-pb">Один шанс.</span></h2>
+        <p class="lead">Орды атакуют волна за волной: 19 типов тварей, мини-боссы и новые механики. На финале — Заражённый Хоумлендер: 800 HP, 3 фазы, беспощадный AI.</p>
+        <div class="waves">
+          <div class="wave rv" style="--wc: #4ade80"><span class="wn">Волны 1–3</span><span class="bar"></span><span class="wd">Crawlers, Lurkers — разведка</span></div>
+          <div class="wave rv" style="--wc: #facc15"><span class="wn">Волны 4–6</span><span class="bar"></span><span class="wd">Stalkers, Brutes — давление</span></div>
+          <div class="wave rv" style="--wc: #fb923c"><span class="wn">Волны 7–9</span><span class="bar"></span><span class="wd">Reapers, Queens — хаос</span></div>
+          <div class="wave rv" style="--wc: #f87171"><span class="wn">Волна 10</span><span class="bar"></span><span class="wd">Заражённый Хоумлендер — финал</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───────── ROSTER ───────── -->
+  <section class="block" id="heroes">
+    <div class="container">
+      <div class="center rv">
+        <div class="kicker" style="color: var(--blue)">Ростер</div>
+        <h2 class="h2">20 героев. <span class="grad-pb">Классы угрозы от Jarvis.</span></h2>
+        <p class="lead">Каждый герой — уникальный набор способностей. Классы угрозы — настоящие, прямо из кода Jarvis AI.</p>
+      </div>
+      <div class="roster">
+        <div class="hcard rv" style="--tc: #ff4d4d"><div class="top"><div class="hic"><img src="img/abilities/omniman_flight.png" alt="" loading="lazy" /></div><span class="tier">S</span></div><h3>Омни-Мэн</h3><p>Momentum, вилтрумитский рывок и «Подумай, Марк!»</p></div>
+        <div class="hcard rv" style="--tc: #ff4d4d"><div class="top"><div class="hic"><img src="img/abilities/thanos_snap.png" alt="" loading="lazy" /></div><span class="tier">S</span></div><h3>Танос</h3><p>Перчатка бесконечности: щелчок, порталы, перемотка времени.</p></div>
+        <div class="hcard rv" style="--tc: #ff4d4d"><div class="top"><div class="hic"><img src="img/abilities/doomsday_smash.png" alt="" loading="lazy" /></div><span class="tier">S</span></div><h3>Думсдей</h3><p>Неостановимая машина разрушения: рывки, шипы, берсерк.</p></div>
+        <div class="hcard rv" style="--tc: #ff4d4d"><div class="top"><div class="hic"><img src="img/abilities/battle_beast_axe_cleave.png" alt="" loading="lazy" /></div><span class="tier">S</span></div><h3>Battle Beast</h3><p>Жажда крови: чем дольше бой, тем сильнее зверь.</p></div>
+        <div class="hcard rv" style="--tc: #ff4d4d"><div class="top"><div class="hic"><img src="img/abilities/reinhard_speed_judgment.png" alt="" loading="lazy" /></div><span class="tier">S</span></div><h3>Рейнхард</h3><p>Божественная защита, Суд Скорости, отражение атак.</p></div>
+        <div class="hcard rv" style="--tc: #ff4d4d"><div class="top"><div class="hic"><img src="img/abilities/lion_heart.png" alt="" loading="lazy" /></div><span class="tier">S</span></div><h3>Регулус</h3><p>Авторитет Жадности: неуязвимость льва и контрудары.</p></div>
+        <div class="hcard rv" style="--tc: #ff8585"><div class="top"><div class="hic"><img src="img/abilities/eye_lasers.png" alt="" loading="lazy" /></div><span class="tier">A</span></div><h3>Хоумлендер</h3><p>Лазеры из глаз, сверхзвук, абсолютная самоуверенность.</p></div>
+        <div class="hcard rv" style="--tc: #ff8585"><div class="top"><div class="hic"><img src="img/abilities/guardians_breaker.png" alt="" loading="lazy" /></div><span class="tier">A</span></div><h3>Непобедимый</h3><p>Молодой вилтрумит: хлопок-разрушитель и упорство.</p></div>
+        <div class="hcard rv" style="--tc: #ff8585"><div class="top"><div class="hic"><img src="img/abilities/arise.png" alt="" loading="lazy" /></div><span class="tier">A</span></div><h3>Сон Джин-Ву</h3><p>«Восстань!» — армия теней из поверженных врагов.</p></div>
+        <div class="hcard rv" style="--tc: #ff8585"><div class="top"><div class="hic"><img src="img/abilities/goku_kamehameha.png" alt="" loading="lazy" /></div><span class="tier">A</span></div><h3>Гоку</h3><p>Камехамеха, Genkidama и аура супер-сайяна.</p></div>
+        <div class="hcard rv" style="--tc: #ffc940"><div class="top"><div class="hic"><img src="img/abilities/iron_man_nano_form.png" alt="" loading="lazy" /></div><span class="tier">B</span></div><h3>Железный Человек</h3><p>6 костюмов, нанотех, Железный Легион и Jarvis AI.</p></div>
+        <div class="hcard rv" style="--tc: #ffc940"><div class="top"><div class="hic"><img src="img/abilities/naruto_rasengan.png" alt="" loading="lazy" /></div><span class="tier">B</span></div><h3>Наруто</h3><p>Расенган, режим мудреца и 15 теневых клонов.</p></div>
+        <div class="hcard rv" style="--tc: #ffc940"><div class="top"><div class="hic"><img src="img/abilities/cap_shield_throw.png" alt="" loading="lazy" /></div><span class="tier">B</span></div><h3>Капитан Америка</h3><p>Бросок щита с рикошетом и контратакующая стойка.</p></div>
+        <div class="hcard rv" style="--tc: #ffe066"><div class="top"><div class="hic"><img src="img/abilities/kratos_blade_storm.png" alt="" loading="lazy" /></div><span class="tier">C</span></div><h3>Кратос</h3><p>Клинки Хаоса, Левиафан и спартанская ярость.</p></div>
+        <div class="hcard rv" style="--tc: #ffe066"><div class="top"><div class="hic"><img src="img/abilities/rem_morning_star.png" alt="" loading="lazy" /></div><span class="tier">C</span></div><h3>Рем</h3><p>Демонизм, моргенштерн и верная сестра Рам.</p></div>
+        <div class="hcard rv" style="--tc: #ffe066"><div class="top"><div class="hic"><img src="img/abilities/raiden_musou_isshin.png" alt="" loading="lazy" /></div><span class="tier">C</span></div><h3>Райден</h3><p>Мусо Иссин: молниеносные рассечения катаной.</p></div>
+        <div class="hcard rv" style="--tc: #ffe066"><div class="top"><div class="hic"><img src="img/abilities/a_train_hyperspeed.png" alt="" loading="lazy" /></div><span class="tier">C</span></div><h3>A-Train</h3><p>Гиперскорость, звуковой удар и адреналин.</p></div>
+        <div class="hcard rv" style="--tc: #7be495"><div class="top"><div class="hic"><img src="img/abilities/kazuha_chihayaburu.png" alt="" loading="lazy" /></div><span class="tier">D</span></div><h3>Кадзуха</h3><p>Мастер ветра: вихри, взлёты и кленовый шторм.</p></div>
+        <div class="hcard rv" style="--tc: #7be495"><div class="top"><div class="hic"><img src="img/abilities/scaramouche_electro_swirl.png" alt="" loading="lazy" /></div><span class="tier">D</span></div><h3>Скарамучча</h3><p>Электро-вихри, воздушная тюрьма и шаг ветра.</p></div>
+        <div class="hcard rv" style="--tc: #7be495"><div class="top"><div class="hic"><img src="img/abilities/loki_tesseract_blink.png" alt="" loading="lazy" /></div><span class="tier">D</span></div><h3>Локи</h3><p>Иллюзии, астральные клоны и блинк Тессеракта.</p></div>
+      </div>
+      <div class="tier-legend rv">
+        <span><b style="color:#ff4d4d">S</b> Запредельная угроза</span>
+        <span><b style="color:#ff8585">A</b> Высокая</span>
+        <span><b style="color:#ffc940">B</b> Средняя</span>
+        <span><b style="color:#ffe066">C</b> Низкая</span>
+        <span><b style="color:#7be495">D</b> Минимальная</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───────── DOWNLOAD ───────── -->
+  <section class="block" id="download">
+    <div class="container">
+      <div class="dl rv">
+        <div class="bgimg"><img src="images/hero-cape.webp" alt="" loading="lazy" /></div>
+        <div class="dl-inner">
+          <div class="kicker" style="color: var(--gold)">Скачать</div>
+          <h2 class="h2">Готов проверить мир <span class="grad-rg">на прочность?</span></h2>
+          <p class="lead" style="color:#c9c9d6">Скачивай последнюю версию, закидывай jar в папку mods — и выбирай героя командой <code style="background:rgba(255,255,255,.1); padding:2px 8px; border-radius:6px; font-size:15px">/hero</code>.</p>
+          <div class="hero-ctas" style="justify-content:flex-start; margin-top:34px">
+            <a class="btn btn-red" href="https://github.com/grebeshok105/Codex-Superheroes/releases/latest" target="_blank" rel="noopener noreferrer">⬇ Скачать v3.29.0</a>
+            <a class="btn btn-ghost" href="https://github.com/grebeshok105/Codex-Superheroes" target="_blank" rel="noopener noreferrer">GitHub</a>
+          </div>
+          <div class="specs">
+            <div class="spec"><div class="k">Minecraft</div><div class="v">1.21</div></div>
+            <div class="spec"><div class="k">Загрузчик</div><div class="v">Fabric</div></div>
+            <div class="spec"><div class="k">Java</div><div class="v">21</div></div>
+            <div class="spec"><div class="k">Версия</div><div class="v">v3.29.0</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───────── FOOTER ───────── -->
+  <footer>
+    <div class="container foot">
+      <div class="meta">
+        <span>© 2026 Codex Superheroes · v3.29.0</span>
+        <a href="https://github.com/grebeshok105/Codex-Superheroes" target="_blank" rel="noopener noreferrer">GitHub</a>
+        <a href="https://github.com/grebeshok105/Codex-Superheroes/releases" target="_blank" rel="noopener noreferrer">Все релизы</a>
+      </div>
+      <div class="emjs" aria-hidden="true">
+        <img src="img/emoji/fist.png" alt="" /><img src="img/emoji/bolt.png" alt="" /><img src="img/emoji/reactor.png" alt="" /><img src="img/emoji/skull.png" alt="" /><img src="img/emoji/star.png" alt="" /><img src="img/emoji/sword.png" alt="" /><img src="img/emoji/flame.png" alt="" /><img src="img/emoji/shield.png" alt="" />
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+</body>
 </html>
