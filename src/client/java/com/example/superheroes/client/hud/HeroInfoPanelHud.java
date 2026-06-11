@@ -60,8 +60,8 @@ public final class HeroInfoPanelHud {
 			cachedWidthHero = heroId;
 			cachedMaxNameW = maxW;
 		}
-		// column = dot + gap + name + gap + cooldown text ("9.9s")
-		int colW = HudScaler.scale(3 + 3) + cachedMaxNameW + HudScaler.scale(6) + mc.font.width("9.9s");
+		// column = icon chip + gap + name + gap + cooldown text ("9.9s")
+		int colW = HudScaler.scale(14 + 4) + cachedMaxNameW + HudScaler.scale(6) + mc.font.width("9.9s");
 		int needed = HudScaler.scale(MODEL_W) + HudScaler.scale(8) + colW * 2 + HudScaler.scale(4);
 		return Math.max(base, Math.min(needed, HudScaler.scale(330)));
 	}
@@ -239,6 +239,8 @@ public final class HeroInfoPanelHud {
 		int cx = x + mc.font.width(label) + HudScaler.scale(8);
 		for (int i = 0; i < count && cx + chip <= x + w; i++) {
 			HudUtil.roundedRectFill(g, cx, y - HudScaler.scale(3), chip, chip, 0x96070810);
+			HudUtil.roundedRectBorder(g, cx, y - HudScaler.scale(3), chip, chip,
+					applyAlpha(theme.panelBorder(), 110, 1f));
 			int emojiSz = chip - HudScaler.scale(3);
 			EmojiIcons.draw(g, PassiveIcons.glyph(heroId, i),
 					cx + (chip - emojiSz) / 2, y - HudScaler.scale(3) + (chip - emojiSz) / 2, emojiSz);
@@ -298,6 +300,11 @@ public final class HeroInfoPanelHud {
 		graphics.disableScissor();
 	}
 
+	/**
+	 * Список способностей: крупные строки на всю свободную высоту карточки.
+	 * Каждая иконка сидит РОВНО в квадратном чипе с лёгкой неоновой обводкой
+	 * цвета героя — обводка прячет неровные края арта, чипы выравнивают ряд.
+	 */
 	private static void drawReadyList(GuiGraphics g, Minecraft mc, int x, int y, int w,
 			ResourceLocation heroId, HeroHudConfig hudConfig, HeroTheme theme) {
 		List<ResourceLocation> abilities = ClientAbilityFilter.visibleFor(ClientHeroState.abilities(), heroId);
@@ -306,7 +313,9 @@ public final class HeroInfoPanelHud {
 		}
 		int cols = 2;
 		int colW = w / cols;
-		int lineH = HudScaler.scale(9);
+		int rowH = HudScaler.scale(17);
+		int chip = HudScaler.scale(14);
+		float chipR = HudScaler.scale(3);
 		int maxRows = 4;
 		int shown = Math.min(abilities.size(), cols * maxRows);
 		for (int i = 0; i < shown; i++) {
@@ -314,43 +323,58 @@ public final class HeroInfoPanelHud {
 			int col = i % cols;
 			int row = i / cols;
 			int ix = x + col * colW;
-			int iy = y + row * lineH;
+			int iy = y + row * rowH;
 			int cd = ClientAbilityCooldowns.remainingTicks(aid);
 			boolean ready = cd <= 0;
 			boolean isUlt = hudConfig.hasUltimate() && i == abilities.size() - 1;
 			boolean active = ClientHeroState.data().activeAbilities().contains(aid);
 
-			// ability icon (replaces the old status dot); greyed out while on cooldown
-			int iconSz = HudScaler.scale(8);
-			int fallback = ready ? (isUlt ? 0xFFFFD24A : 0xFF6BFF8C) : 0xFF8A8FA0;
-			AbilityIcons.draw(g, aid, ix, iy, iconSz, fallback);
-			if (!ready) {
-				g.fill(ix, iy, ix + iconSz, iy + iconSz, 0x88000000);
-			} else if (isUlt) {
-				float pulse = HudAnimator.pulse(1.2f);
-				int haloA = (int) (110 + 90 * pulse);
-				HudUtil.roundedRectBorder(g, ix - 1, iy - 1, iconSz + 2, iconSz + 2, (haloA << 24) | 0x00FFD24A);
+			// квадратный чип: тёмное стекло + неоновая обводка цвета героя
+			int neon = applyAlpha(isUlt && ready ? 0xFFFFD24A : theme.panelBorder(), ready ? 160 : 70, 1f);
+			if (WildShaders.rectReady()) {
+				float pulse = isUlt && ready ? HudAnimator.pulse(1.2f) : 0f;
+				int glow = ready ? applyAlpha(isUlt ? 0xFFFFD24A : theme.panelBorder(),
+						(int) (60 + 60 * pulse), 1f) : 0;
+				WildRenderer.panel(g, ix, iy, chip, chip, chipR,
+						0xA8141A28, 0xC808090F, neon, 1.1f, glow, ready ? 3.5f : 0f);
+			} else {
+				HudUtil.roundedRectFill(g, ix, iy, chip, chip, 0xC00B0D14);
+				HudUtil.roundedRectBorder(g, ix, iy, chip, chip, neon);
 			}
 
-			// name (truncated)
+			// иконка строго по центру чипа, с равным отступом со всех сторон
+			int iconSz = chip - HudScaler.scale(4);
+			int inset = (chip - iconSz) / 2;
+			int fallback = ready ? (isUlt ? 0xFFFFD24A : 0xFF6BFF8C) : 0xFF8A8FA0;
+			AbilityIcons.draw(g, aid, ix + inset, iy + inset, iconSz, fallback);
+			if (!ready) {
+				if (WildShaders.rectReady()) {
+					WildRenderer.fill(g, ix + 1, iy + 1, chip - 2, chip - 2, chipR, 0x8C000000);
+				} else {
+					g.fill(ix + 1, iy + 1, ix + chip - 1, iy + chip - 1, 0x8C000000);
+				}
+			}
+
+			// текст по вертикали — по центру чипа
+			int textY = iy + (chip - 8) / 2;
 			String name = Component.translatable(AbilityDescriptions.nameKey(aid)).getString();
-			int maxNameW = colW - HudScaler.scale(24);
+			int maxNameW = colW - chip - HudScaler.scale(10);
 			if (mc.font.width(name) > maxNameW) {
 				String ell = "\u2026";
 				name = mc.font.plainSubstrByWidth(name, maxNameW - mc.font.width(ell)) + ell;
 			}
 			int nameColor = ready ? (isUlt ? 0xFFFFE9B0 : 0xFFCBD2E0) : 0xFF7C8499;
-			g.drawString(mc.font, HudUtil.text(name), ix + iconSz + HudScaler.scale(3), iy, nameColor, true);
+			g.drawString(mc.font, HudUtil.text(name), ix + chip + HudScaler.scale(4), textY, nameColor, true);
 
 			// справа в колонке: секунды кулдауна, либо зелёная точка у активного тумблера
 			if (!ready) {
 				String cdText = cdSeconds(cd);
 				int cdW = mc.font.width(HudUtil.text(cdText));
-				g.drawString(mc.font, HudUtil.text(cdText), ix + colW - cdW - HudScaler.scale(4), iy, 0xFFB99A6B, true);
+				g.drawString(mc.font, HudUtil.text(cdText), ix + colW - cdW - HudScaler.scale(4), textY, 0xFFB99A6B, true);
 			} else if (active) {
 				int dotSz = HudScaler.scale(4);
 				int dotX = ix + colW - dotSz - HudScaler.scale(5);
-				int dotY = iy + HudScaler.scale(2);
+				int dotY = iy + (chip - dotSz) / 2;
 				if (WildShaders.rectReady()) {
 					WildRenderer.fill(g, dotX - 1, dotY - 1, dotSz + 2, dotSz + 2, (dotSz + 2) / 2f, 0x5532FF7A);
 					WildRenderer.fill(g, dotX, dotY, dotSz, dotSz, dotSz / 2f, 0xFF4CFF8C);

@@ -8,21 +8,14 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.ai.control.FlyingMoveControl;
-import net.minecraft.world.entity.ai.goal.FloatGoal;
-import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
-import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
-import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
-import net.minecraft.world.entity.ai.navigation.PathNavigation;
-import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
@@ -33,13 +26,32 @@ import java.util.UUID;
 
 /**
  * Iron Legion — дроны-бойцы Железного Человека.
- * Каждый носит уникальный скин костюма, атакует враждебных мобов,
- * через 30 секунд улетает вверх и деспавнится.
+ *
+ * Логика написана с нуля, без ванильных goal'ов и flying-навигации:
+ * каждый тик дрон сам управляет своей скоростью (прямое steering-движение).
+ *
+ * Правила боя:
+ *  - цель ВСЕГДА наследуется от владельца: кого владелец ударил последним
+ *    (или кто ударил владельца) — того бьёт весь легион. Никаких «самовольных»
+ *    целей вроде ближайшего крипера: своих целей дроны не выбирают вообще;
+ *  - смена цели мгновенная: владелец ударил нового моба — дроны переключились;
+ *  - высота под контролем: в бою дрон держится не выше ~3 блоков над целью,
+ *    в патруле — не выше ~6 блоков над владельцем; вниз дрон идёт быстро
+ *    (резкое пике), вверх — умеренно, поэтому «улететь в небо» он не может.
  */
 public class IronLegionDroneEntity extends PathfinderMob {
 	private static final int COMBAT_LIFETIME_TICKS = 600; // 30 seconds
 	private static final int RETREAT_TICKS = 80;          // 4 seconds to fly away
 	private static final double RETREAT_SPEED_Y = 0.8;
+
+	// steering
+	private static final double COMBAT_SPEED = 0.45;   // блоков/тик к точке боя
+	private static final double ESCORT_SPEED = 0.33;   // блоков/тик в патруле
+	private static final double MAX_RISE = 0.30;       // вверх — умеренно
+	private static final double MAX_FALL = -0.75;      // вниз — стремительно
+	private static final double COMBAT_CEILING = 3.0;  // не выше стольких блоков над целью
+	private static final double ESCORT_CEILING = 6.0;  // не выше стольких блоков над владельцем
+	private static final double TARGET_RANGE = 48.0;
 
 	private static final EntityDataAccessor<Integer> DATA_SUIT_VARIANT =
 			SynchedEntityData.defineId(IronLegionDroneEntity.class, EntityDataSerializers.INT);
@@ -49,22 +61,16 @@ public class IronLegionDroneEntity extends PathfinderMob {
 			SynchedEntityData.defineId(IronLegionDroneEntity.class, EntityDataSerializers.BOOLEAN);
 
 	private int lifeTicks;
+	private int attackCooldown;
+	private int repathTicks;
+	private int diveTicks;
+	private Vec3 waypoint = Vec3.ZERO;
 
 	public IronLegionDroneEntity(EntityType<? extends IronLegionDroneEntity> type, Level level) {
 		super(type, level);
-		this.moveControl = new FlyingMoveControl(this, 85, true);
 		this.setNoGravity(true);
 		this.xpReward = 0;
 		this.lifeTicks = COMBAT_LIFETIME_TICKS + RETREAT_TICKS;
-	}
-
-	@Override
-	protected PathNavigation createNavigation(Level level) {
-		FlyingPathNavigation nav = new FlyingPathNavigation(this, level);
-		nav.setCanOpenDoors(false);
-		nav.setCanFloat(true);
-		nav.setCanPassDoors(true);
-		return nav;
 	}
 
 	public static AttributeSupplier.Builder createAttributes() {
@@ -88,30 +94,23 @@ public class IronLegionDroneEntity extends PathfinderMob {
 
 	@Override
 	protected void registerGoals() {
-		this.goalSelector.addGoal(0, new FloatGoal(this));
-		this.goalSelector.addGoal(2, new SwarmAttackGoal());
-		this.goalSelector.addGoal(4, new WildRoamGoal());
-		this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
-		this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Monster.class, true));
+		// Никаких ванильных goal'ов: всё движение и выбор цели — в tick().
 	}
 
 	@Override
 	public void tick() {
 		super.tick();
-		if (level().isClientSide()) return;
-
-		// Inherit the owner's fights: attack whoever hurts the owner or whoever the owner attacks
-		if (!isRetreating() && tickCount % 10 == 0 && getTarget() == null) {
-			LivingEntity ownerTarget = superheroes$ownerCombatTarget();
-			if (ownerTarget != null && ownerTarget.isAlive() && distanceTo(ownerTarget) < 48
-					&& !(ownerTarget instanceof IronLegionDroneEntity)) {
-				setTarget(ownerTarget);
-			}
+		if (level().isClientSide()) {
+			return;
 		}
 
 		lifeTicks--;
 		if (lifeTicks <= RETREAT_TICKS && !isRetreating()) {
 			startRetreat();
+		}
+		if (lifeTicks <= 0) {
+			discard();
+			return;
 		}
 		if (isRetreating()) {
 			setDeltaMovement(getDeltaMovement().x * 0.5, RETREAT_SPEED_Y, getDeltaMovement().z * 0.5);
@@ -119,16 +118,147 @@ public class IronLegionDroneEntity extends PathfinderMob {
 				sl.sendParticles(ParticleTypes.ELECTRIC_SPARK,
 						getX(), getY() + 0.5, getZ(), 3, 0.2, 0.3, 0.2, 0.02);
 			}
+			return;
 		}
-		if (lifeTicks <= 0) {
-			discard();
+
+		Player owner = superheroes$owner();
+		LivingEntity target = superheroes$resolveTarget(owner);
+		setTarget(target);
+		if (attackCooldown > 0) {
+			attackCooldown--;
+		}
+
+		if (target != null) {
+			superheroes$combatTick(target);
+		} else {
+			superheroes$escortTick(owner);
+		}
+	}
+
+	/**
+	 * Единственный источник целей — бой владельца: кто ударил владельца или кого
+	 * владелец ударил последним. Если владельца не трогают — добиваем того, кто
+	 * посмел ударить самого дрона. Ближайших мобов дроны НЕ выбирают сами.
+	 */
+	@Nullable
+	private LivingEntity superheroes$resolveTarget(@Nullable Player owner) {
+		if (owner != null) {
+			LivingEntity hurtBy = owner.getLastHurtByMob();
+			if (superheroes$validTarget(hurtBy, owner)) {
+				return hurtBy;
+			}
+			LivingEntity hurt = owner.getLastHurtMob();
+			if (superheroes$validTarget(hurt, owner)) {
+				return hurt;
+			}
+		}
+		LivingEntity revenge = getLastHurtByMob();
+		if (superheroes$validTarget(revenge, owner)) {
+			return revenge;
+		}
+		return null;
+	}
+
+	private boolean superheroes$validTarget(@Nullable LivingEntity candidate, @Nullable Player owner) {
+		return candidate != null && candidate.isAlive()
+				&& !(candidate instanceof IronLegionDroneEntity)
+				&& (owner == null || !candidate.getUUID().equals(owner.getUUID()))
+				&& distanceTo(candidate) <= TARGET_RANGE;
+	}
+
+	/** Бой: хаотичные витки вокруг цели на малой высоте + резкие пике с ударом. */
+	private void superheroes$combatTick(LivingEntity target) {
+		getLookControl().setLookAt(target, 30.0f, 30.0f);
+
+		if (diveTicks > 0) {
+			diveTicks--;
+			superheroes$steer(target.position().add(0, target.getBbHeight() * 0.5, 0), COMBAT_SPEED * 1.25);
+		} else {
+			if (--repathTicks <= 0) {
+				repathTicks = 4 + random.nextInt(5);
+				if (random.nextFloat() < 0.45f) {
+					diveTicks = 14;
+				} else {
+					double angle = random.nextDouble() * Math.PI * 2;
+					double dist = 2.0 + random.nextDouble() * 5.0;
+					double yOff = 0.5 + random.nextDouble() * 2.0;
+					waypoint = new Vec3(
+							target.getX() + Math.cos(angle) * dist,
+							target.getY() + yOff,
+							target.getZ() + Math.sin(angle) * dist);
+				}
+			}
+			if (waypoint != Vec3.ZERO) {
+				superheroes$steer(waypoint, COMBAT_SPEED);
+			}
+		}
+
+		superheroes$enforceCeiling(target.getY() + COMBAT_CEILING);
+
+		if (attackCooldown <= 0 && distanceToSqr(target) < 6.5) {
+			doHurtTarget(target);
+			attackCooldown = 14;
+			diveTicks = 0;
+			repathTicks = 0;
+		}
+	}
+
+	/** Патруль: шустрые броски вокруг владельца на небольшой высоте. */
+	private void superheroes$escortTick(@Nullable Player owner) {
+		if (owner == null) {
+			// владельца нет — мягко зависаем и медленно снижаемся
+			Vec3 v = getDeltaMovement();
+			setDeltaMovement(v.x * 0.8, Math.max(v.y * 0.8, -0.08), v.z * 0.8);
+			return;
+		}
+		if (--repathTicks <= 0 || waypoint == Vec3.ZERO) {
+			repathTicks = 6 + random.nextInt(8);
+			double angle = random.nextDouble() * Math.PI * 2;
+			double dist = 4.0 + random.nextDouble() * 12.0;
+			double yOff = 1.0 + random.nextDouble() * 3.5;
+			waypoint = new Vec3(
+					owner.getX() + Math.cos(angle) * dist,
+					owner.getY() + yOff,
+					owner.getZ() + Math.sin(angle) * dist);
+		}
+		superheroes$steer(waypoint, ESCORT_SPEED);
+		superheroes$enforceCeiling(owner.getY() + ESCORT_CEILING);
+	}
+
+	/** Прямое управление скоростью: плавный доворот к точке, без pathfinding'а. */
+	private void superheroes$steer(Vec3 desired, double speed) {
+		Vec3 dir = desired.subtract(position());
+		double len = dir.length();
+		if (len < 0.2) {
+			return;
+		}
+		Vec3 want = dir.scale(speed / len);
+		Vec3 v = getDeltaMovement().scale(0.55).add(want.scale(0.6));
+		double vy = Mth.clamp(v.y, MAX_FALL, MAX_RISE);
+		setDeltaMovement(v.x, vy, v.z);
+		// корпус — по направлению движения
+		if (v.horizontalDistanceSqr() > 1.0e-4) {
+			float yaw = (float) (Mth.atan2(v.z, v.x) * Mth.RAD_TO_DEG) - 90.0f;
+			setYRot(yaw);
+			yBodyRot = yaw;
+		}
+	}
+
+	/** Жёсткий потолок: выше нельзя — мгновенно идём в снижение. */
+	private void superheroes$enforceCeiling(double maxY) {
+		if (getY() > maxY) {
+			Vec3 v = getDeltaMovement();
+			setDeltaMovement(v.x, Math.min(v.y, -0.5), v.z);
+			// и точку назначения тоже опускаем, чтобы не тянуло обратно вверх
+			if (waypoint != Vec3.ZERO && waypoint.y > maxY) {
+				waypoint = new Vec3(waypoint.x, maxY - 1.0, waypoint.z);
+			}
 		}
 	}
 
 	private void startRetreat() {
 		entityData.set(DATA_RETREATING, true);
 		setTarget(null);
-		getNavigation().stop();
 	}
 
 	public boolean isRetreating() {
@@ -225,136 +355,5 @@ public class IronLegionDroneEntity extends PathfinderMob {
 	private Player superheroes$owner() {
 		UUID uuid = getOwnerUuid();
 		return uuid == null ? null : level().getPlayerByUUID(uuid);
-	}
-
-	@Nullable
-	private LivingEntity superheroes$ownerCombatTarget() {
-		Player owner = superheroes$owner();
-		if (owner == null) return null;
-		LivingEntity hurtBy = owner.getLastHurtByMob();
-		if (hurtBy != null && hurtBy.isAlive() && !hurtBy.getUUID().equals(owner.getUUID())) {
-			return hurtBy;
-		}
-		LivingEntity hurt = owner.getLastHurtMob();
-		if (hurt != null && hurt.isAlive() && !hurt.getUUID().equals(owner.getUUID())) {
-			return hurt;
-		}
-		return null;
-	}
-
-	/**
-	 * Рой-атака: дроны хаотично носятся ВОКРУГ ВРАГА на разных высотах и
-	 * постоянно пикируют на него с ударами — изводят цель со всех сторон.
-	 */
-	private class SwarmAttackGoal extends net.minecraft.world.entity.ai.goal.Goal {
-		private int repathCooldown;
-		private int attackCooldown;
-		private boolean diving;
-
-		SwarmAttackGoal() {
-			setFlags(java.util.EnumSet.of(Flag.MOVE, Flag.LOOK));
-		}
-
-		@Override
-		public boolean canUse() {
-			LivingEntity target = getTarget();
-			return !isRetreating() && target != null && target.isAlive();
-		}
-
-		@Override
-		public boolean canContinueToUse() {
-			return canUse();
-		}
-
-		@Override
-		public void stop() {
-			diving = false;
-		}
-
-		@Override
-		public boolean requiresUpdateEveryTick() {
-			return true;
-		}
-
-		@Override
-		public void tick() {
-			LivingEntity target = getTarget();
-			if (target == null) return;
-			getLookControl().setLookAt(target, 30.0f, 30.0f);
-			if (attackCooldown > 0) attackCooldown--;
-
-			double distSq = distanceToSqr(target);
-			if (diving) {
-				// Пикируем прямо в цель
-				getNavigation().moveTo(target.getX(), target.getY() + target.getBbHeight() * 0.5, target.getZ(), 2.6);
-				if (distSq < 6.5) {
-					if (attackCooldown <= 0) {
-						doHurtTarget(target);
-						attackCooldown = 14;
-					}
-					diving = false;
-					repathCooldown = 0;
-				}
-				return;
-			}
-
-			if (repathCooldown-- > 0) return;
-			repathCooldown = 3 + random.nextInt(5);
-
-			// Каждые ~0.2с — либо новый хаотичный виток вокруг врага, либо пике
-			if (random.nextFloat() < 0.45f) {
-				diving = true;
-				return;
-			}
-			double angle = random.nextDouble() * Math.PI * 2;
-			double dist = 2.0 + random.nextDouble() * 6.0;
-			double yOffset = 0.5 + random.nextDouble() * 5.0;
-			getNavigation().moveTo(
-					target.getX() + Math.cos(angle) * dist,
-					target.getY() + yOffset,
-					target.getZ() + Math.sin(angle) * dist,
-					2.4);
-		}
-	}
-
-	/**
-	 * Без цели дроны не висят на месте, а бешено носятся по округе в поисках
-	 * драки (хаотичные точки в радиусе от владельца).
-	 */
-	private class WildRoamGoal extends net.minecraft.world.entity.ai.goal.Goal {
-		private int repathCooldown;
-
-		WildRoamGoal() {
-			setFlags(java.util.EnumSet.of(Flag.MOVE));
-		}
-
-		@Override
-		public boolean canUse() {
-			return !isRetreating() && getTarget() == null;
-		}
-
-		@Override
-		public boolean canContinueToUse() {
-			return canUse();
-		}
-
-		@Override
-		public void tick() {
-			if (repathCooldown-- > 0) return;
-			repathCooldown = 3 + random.nextInt(5);
-			Player owner = superheroes$owner();
-			double cx = owner != null ? owner.getX() : getX();
-			double cy = owner != null ? owner.getY() : getY();
-			double cz = owner != null ? owner.getZ() : getZ();
-			// Бешеный патруль: хаотичные точки в радиусе до 35 блоков от владельца,
-			// на любой высоте — дроны проносятся мимо как сорвавшиеся с цепи
-			double angle = random.nextDouble() * Math.PI * 2;
-			double dist = 6.0 + random.nextDouble() * 29.0;
-			getNavigation().moveTo(
-					cx + Math.cos(angle) * dist,
-					cy + 1.0 + random.nextDouble() * 14.0,
-					cz + Math.sin(angle) * dist,
-					2.8);
-		}
 	}
 }

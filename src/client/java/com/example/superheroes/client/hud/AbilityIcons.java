@@ -47,6 +47,11 @@ public final class AbilityIcons {
 				resolved = tex;
 			}
 		}
+		if (resolved != null) {
+			// плавное масштабирование: на маленьких размерах без него иконки
+			// выглядят рваными и «вырезанными»
+			Minecraft.getInstance().getTextureManager().getTexture(resolved).setFilter(true, false);
+		}
 		CACHE.put(key, resolved == null ? MISSING : resolved);
 		return resolved;
 	}
