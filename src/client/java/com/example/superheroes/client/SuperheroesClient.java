@@ -67,6 +67,7 @@ public class SuperheroesClient implements ClientModInitializer {
 		LivingEntityFeatureRendererRegistrationCallback.EVENT.register((entityType, entityRenderer, registrationHelper, context) -> {
 			if (entityRenderer instanceof PlayerRenderer playerRenderer) {
 				registrationHelper.register(new RemOniHornFeatureRenderer(playerRenderer));
+				registrationHelper.register(new com.example.superheroes.client.render.ReinhardScabbardLayer(playerRenderer));
 			}
 		});
 		ParticleFactoryRegistry.getInstance().register(ModParticles.TRANSFORM_SPARK, EndRodParticle.Provider::new);
@@ -140,6 +141,7 @@ public class SuperheroesClient implements ClientModInitializer {
 			com.example.superheroes.client.hud.CracksOverlayHud.render(graphics, tracker);
 			com.example.superheroes.client.hud.DoomsdayGlitchHud.render(graphics, tracker);
 			com.example.superheroes.client.hud.ReinhardCeremonyOverlay.render(graphics, tracker);
+			com.example.superheroes.client.hud.AbilitiesTooltipHud.render(graphics, tracker);
 			{
 				int[] mcOff = com.example.superheroes.client.hud.HudLayoutManager.offset(
 						com.example.superheroes.client.hud.HudLayoutManager.MELEE_CHARGE);
@@ -158,11 +160,10 @@ public class SuperheroesClient implements ClientModInitializer {
 		net.fabricmc.fabric.api.client.screen.v1.ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
 			if (screen instanceof net.minecraft.client.gui.screens.PauseScreen) {
 				net.fabricmc.fabric.api.client.screen.v1.Screens.getButtons(screen).add(
-						net.minecraft.client.gui.components.Button.builder(
+						new com.example.superheroes.client.screen.NeonButton(scaledWidth - 92, 8, 84, 20,
 								net.minecraft.network.chat.Component.translatable("hud.superheroes.edit.open"),
-								b -> client.setScreen(new com.example.superheroes.client.screen.HudEditScreen()))
-								.bounds(scaledWidth - 78, 8, 70, 20)
-								.build());
+								b -> client.setScreen(new com.example.superheroes.client.screen.HudEditScreen()),
+								0xFF8E7BFF, true));
 			}
 		});
 
@@ -172,6 +173,7 @@ public class SuperheroesClient implements ClientModInitializer {
 			com.example.superheroes.client.fx.FlightTrailManager.tick(client);
 			HeroInfoPanelHud.tick();
 			AbilityBarHud.tick();
+			com.example.superheroes.client.hud.AbilitiesTooltipHud.tick();
 			RadialMenuHud.animTick();
 			RadialMenuHud.clientTick(client);
 			if (ClientMadnessState.isReading() && client.screen instanceof net.minecraft.client.gui.screens.inventory.InventoryScreen) {
@@ -202,6 +204,11 @@ public class SuperheroesClient implements ClientModInitializer {
 			}
 			// Raw GLFW polling: vanilla KeyMapping.MAP allows one mapping per key, so our
 			// L / 3 / 4 / 5 binds conflict with vanilla and consumeClick() is unreliable.
+			while (ModKeys.TOGGLE_TOOLTIPS.consumeClick()) {
+				if (client.player != null && ClientHeroState.data().hasHero()) {
+					com.example.superheroes.client.hud.AbilitiesTooltipHud.toggleVisible();
+				}
+			}
 			RawKeys.drain(ModKeys.HOTBAR_LOCK);
 			if (RawKeys.pressed(ModKeys.HOTBAR_LOCK)
 					&& client.player != null && ClientHeroState.data().hasHero()) {
@@ -209,7 +216,9 @@ public class SuperheroesClient implements ClientModInitializer {
 			}
 			for (int i = 0; i < ModKeys.ABILITY_SLOTS.length; i++) {
 				RawKeys.drain(ModKeys.ABILITY_SLOTS[i]);
+				// Ability digits work ONLY in lock mode; without the lock 3/4/5 are plain hotbar slots.
 				if (RawKeys.pressed(ModKeys.ABILITY_SLOTS[i])
+						&& HotbarLockState.isLocked()
 						&& client.player != null && ClientHeroState.data().hasHero()) {
 					List<ResourceLocation> abilities = ClientAbilityFilter.visible();
 					if (i < abilities.size()) {

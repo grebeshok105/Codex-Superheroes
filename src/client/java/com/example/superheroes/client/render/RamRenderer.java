@@ -13,6 +13,8 @@ public class RamRenderer extends MobRenderer<RamEntity, PlayerModel<RamEntity>> 
 
 	public RamRenderer(EntityRendererProvider.Context ctx) {
 		super(ctx, new PlayerModel<>(ctx.bakeLayer(ModelLayers.PLAYER), false), 0.5f);
+		// renders the enchanted "wand" stick in ranged mode
+		this.addLayer(new net.minecraft.client.renderer.entity.layers.ItemInHandLayer<>(this, ctx.getItemInHandRenderer()));
 	}
 
 	@Override

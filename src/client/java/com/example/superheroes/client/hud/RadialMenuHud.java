@@ -40,10 +40,15 @@ public final class RadialMenuHud {
 
 	private static final int COLOR_COOLDOWN = 0xFFFFB45C;
 
+	/** Degrees of mouse-look mapped to on-screen pixels for the virtual cursor. */
+	private static final float PX_PER_DEG = INNER_R / DEAD_ZONE;
+
 	private static boolean open;
 	private static float startYaw;
 	private static float startPitch;
 	private static int selected = -1;
+	private static float cursorDx;
+	private static float cursorDy;
 
 	private RadialMenuHud() {
 	}
@@ -63,6 +68,8 @@ public final class RadialMenuHud {
 			startYaw = mc.player.getYRot();
 			startPitch = mc.player.getXRot();
 			selected = -1;
+			cursorDx = 0f;
+			cursorDy = 0f;
 			return;
 		}
 		if (!down && open) {
@@ -81,8 +88,20 @@ public final class RadialMenuHud {
 		}
 		float dyaw = mc.player.getYRot() - startYaw;
 		float dpitch = mc.player.getXRot() - startPitch;
+		// virtual cursor position (px), clamped to just past the outer rim
+		float px = dyaw * PX_PER_DEG;
+		float py = dpitch * PX_PER_DEG;
+		float mag = (float) Math.sqrt(px * px + py * py);
+		float maxR = OUTER_R + 6;
+		if (mag > maxR) {
+			px *= maxR / mag;
+			py *= maxR / mag;
+		}
+		cursorDx = px;
+		cursorDy = py;
 		float magSq = dyaw * dyaw + dpitch * dpitch;
 		if (magSq < DEAD_ZONE * DEAD_ZONE) {
+			// cursor returned to the hub: selection is dropped, release does nothing
 			selected = -1;
 			return;
 		}
@@ -280,7 +299,33 @@ public final class RadialMenuHud {
 		// 6) Center hub
 		drawHub(graphics, mc, cx, cy, theme, abilities, eased);
 
+		// 7) Virtual cursor: thin ray from center + glowing dot, so you always
+		// see where your mouse-look is pointing and how to cancel (drag to hub).
+		drawCursor(graphics, cx, cy, theme, eased);
+
 		graphics.pose().popPose();
+	}
+
+	private static void drawCursor(GuiGraphics graphics, int cx, int cy, HeroTheme theme, float eased) {
+		float mag = (float) Math.sqrt(cursorDx * cursorDx + cursorDy * cursorDy);
+		if (mag < 2f) {
+			return;
+		}
+		int tipX = cx + Math.round(cursorDx);
+		int tipY = cy + Math.round(cursorDy);
+		double angle = Math.atan2(cursorDy, cursorDx);
+		boolean inHub = mag < INNER_R;
+		int rayColor = applyAlpha(inHub ? 0xFF7C8499 : theme.radialBorderActive(), (int) (170 * eased), 1f);
+		// ray from hub edge (or center while inside) to the dot
+		int rayStart = inHub ? 2 : Math.min((int) mag, HUB_R);
+		drawRadialLine(graphics, cx, cy, rayStart, (int) mag - 3, angle, rayColor);
+		// glowing dot
+		long now = System.currentTimeMillis();
+		float pulse = 0.7f + 0.3f * (float) Math.sin(now / 180.0);
+		int core = applyAlpha(inHub ? 0xFFB9BECF : theme.radialTextActive(), (int) (255 * eased), 1f);
+		int halo = applyAlpha(inHub ? 0xFFB9BECF : theme.radialBorderActive(), (int) (110 * pulse * eased), 1f);
+		drawDisk(graphics, tipX, tipY, 4, halo);
+		drawDisk(graphics, tipX, tipY, 2, core);
 	}
 
 	private static void drawHub(GuiGraphics graphics, Minecraft mc, int cx, int cy, HeroTheme theme,
@@ -296,19 +341,64 @@ public final class RadialMenuHud {
 		if (selected >= 0 && selected < abilities.size()) {
 			ResourceLocation aid = abilities.get(selected);
 			Component name = Component.translatable(AbilityDescriptions.nameKey(aid));
-			String shortName = mc.font.plainSubstrByWidth(name.getString(), HUB_R * 2 - 8);
-			graphics.drawCenteredString(mc.font, Component.literal(shortName), cx, cy - 2, theme.radialTextActive());
+			int statusY = drawHubName(graphics, mc, name.getString(), cx, cy, theme);
 			int cd = ClientAbilityCooldowns.remainingTicks(aid);
 			if (cd > 0) {
-				graphics.drawCenteredString(mc.font, cooldownText(cd), cx, cy + 10, COLOR_COOLDOWN);
+				graphics.drawCenteredString(mc.font, cooldownText(cd), cx, statusY, COLOR_COOLDOWN);
 			} else {
 				graphics.drawCenteredString(mc.font, Component.translatable("hud.superheroes.radial.ready"),
-						cx, cy + 10, 0xFF6BFF8C);
+						cx, statusY, 0xFF6BFF8C);
 			}
 		} else {
 			graphics.drawCenteredString(mc.font, Component.translatable("hud.superheroes.radial.hint"),
 					cx, cy + 2, 0x887C8499);
 		}
+	}
+
+	/**
+	 * Ability name in the hub: tries one line, then a 2-line wrap, then shrinks
+	 * the font so the full name ALWAYS fits inside the hub. Returns the y for
+	 * the status line below the name.
+	 */
+	private static int drawHubName(GuiGraphics graphics, Minecraft mc, String name, int cx, int cy, HeroTheme theme) {
+		int maxW = HUB_R * 2 - 10;
+		int color = theme.radialTextActive();
+		if (mc.font.width(name) <= maxW) {
+			graphics.drawCenteredString(mc.font, Component.literal(name), cx, cy - 2, color);
+			return cy + 10;
+		}
+		// 2-line wrap at the most central space
+		String l1 = name;
+		String l2 = "";
+		int bestSplit = -1;
+		int bestScore = Integer.MAX_VALUE;
+		for (int i = name.indexOf(' '); i >= 0; i = name.indexOf(' ', i + 1)) {
+			int score = Math.abs(mc.font.width(name.substring(0, i)) - mc.font.width(name.substring(i + 1)));
+			if (score < bestScore) {
+				bestScore = score;
+				bestSplit = i;
+			}
+		}
+		if (bestSplit > 0) {
+			l1 = name.substring(0, bestSplit);
+			l2 = name.substring(bestSplit + 1);
+		}
+		float scale = 1f;
+		int widest = Math.max(mc.font.width(l1), mc.font.width(l2));
+		if (widest > maxW) {
+			scale = Math.max(0.6f, (float) maxW / widest);
+		}
+		graphics.pose().pushPose();
+		graphics.pose().translate(cx, cy - 2, 0);
+		graphics.pose().scale(scale, scale, 1f);
+		if (l2.isEmpty()) {
+			graphics.drawCenteredString(mc.font, Component.literal(l1), 0, -4, color);
+		} else {
+			graphics.drawCenteredString(mc.font, Component.literal(l1), 0, -9, color);
+			graphics.drawCenteredString(mc.font, Component.literal(l2), 0, 1, color);
+		}
+		graphics.pose().popPose();
+		return cy + 12;
 	}
 
 	/** Filled circle via horizontal scanlines. */

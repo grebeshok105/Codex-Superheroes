@@ -14,7 +14,8 @@
 		"GuiHotbarMixin",
 		"MinecraftHandleKeybindsMixin",
 		"ChatComponentMixin",
-		"GuiEffectsMixin"
+		"GuiEffectsMixin",
+		"GameRendererBlurMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

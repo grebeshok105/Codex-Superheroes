@@ -25,12 +25,42 @@ public final class HeroInfoPanelHud {
 	private static final int MODEL_SCALE = 62;
 	private static final float MODEL_Y_OFFSET = 0.62f;
 
+	/** Cache: widest ability name per hero (font widths are stable per session). */
+	private static ResourceLocation cachedWidthHero = null;
+	private static int cachedMaxNameW = 0;
+
 	private static float displayedHp = 0f;
 	private static float displayedEnergy = 0f;
 	private static float lastDisplayedHp = 0f;
 	private static float lastDisplayedEnergy = 0f;
 
 	private HeroInfoPanelHud() {
+	}
+
+	/**
+	 * Panel width auto-fits the longest ability name of the current hero so the
+	 * two-column ready-list never clips text. Mirrored by HudEditScreen.bounds().
+	 */
+	public static int panelWidth() {
+		int base = HudScaler.scale(BASE_PANEL_W);
+		Minecraft mc = Minecraft.getInstance();
+		if (mc.player == null || !ClientHeroState.data().hasHero()) {
+			return base;
+		}
+		ResourceLocation heroId = ClientHeroState.data().heroId();
+		if (!heroId.equals(cachedWidthHero)) {
+			int maxW = 0;
+			for (ResourceLocation aid : ClientHeroState.abilities()) {
+				String name = Component.translatable(AbilityDescriptions.nameKey(aid)).getString();
+				maxW = Math.max(maxW, mc.font.width(name));
+			}
+			cachedWidthHero = heroId;
+			cachedMaxNameW = maxW;
+		}
+		// column = dot + gap + name + gap + cooldown text ("9.9s")
+		int colW = HudScaler.scale(3 + 3) + cachedMaxNameW + HudScaler.scale(6) + mc.font.width("9.9s");
+		int needed = HudScaler.scale(MODEL_W) + HudScaler.scale(8) + colW * 2 + HudScaler.scale(4);
+		return Math.max(base, Math.min(needed, HudScaler.scale(330)));
 	}
 
 	public static void tick() {
@@ -67,7 +97,7 @@ public final class HeroInfoPanelHud {
 
 		int screenH = HudScaler.screenHeight();
 		int margin = HudScaler.scale(BASE_MARGIN);
-		int panelW = HudScaler.scale(BASE_PANEL_W);
+		int panelW = panelWidth();
 		int panelH = HudScaler.scale(BASE_PANEL_H);
 		int[] off = HudLayoutManager.offset(HudLayoutManager.HERO_PANEL);
 		int x = margin + off[0];
@@ -203,7 +233,10 @@ public final class HeroInfoPanelHud {
 			// name (truncated)
 			String name = Component.translatable(AbilityDescriptions.nameKey(aid)).getString();
 			int maxNameW = colW - HudScaler.scale(24);
-			name = mc.font.plainSubstrByWidth(name, maxNameW);
+			if (mc.font.width(name) > maxNameW) {
+				String ell = "\u2026";
+				name = mc.font.plainSubstrByWidth(name, maxNameW - mc.font.width(ell)) + ell;
+			}
 			int nameColor = ready ? (isUlt ? 0xFFFFE9B0 : 0xFFCBD2E0) : 0xFF7C8499;
 			g.drawString(mc.font, Component.literal(name), ix + dotSize + HudScaler.scale(3), iy, nameColor, true);
 

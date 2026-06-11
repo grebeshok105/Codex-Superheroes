@@ -6,7 +6,6 @@ import com.example.superheroes.client.hud.HudScaler;
 import com.example.superheroes.client.hud.HudUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -28,7 +27,8 @@ public class HudEditScreen extends Screen {
 			new Element(HudLayoutManager.ABILITY_BAR, "hud.superheroes.edit.ability_bar", 0xFF8E7BFF),
 			new Element(HudLayoutManager.CHAT, "hud.superheroes.edit.chat", 0xFF6BFFB4),
 			new Element(HudLayoutManager.EFFECTS, "hud.superheroes.edit.effects", 0xFF4ADBD2),
-			new Element(HudLayoutManager.MELEE_CHARGE, "hud.superheroes.edit.melee_charge", 0xFFFF8BD8));
+			new Element(HudLayoutManager.MELEE_CHARGE, "hud.superheroes.edit.melee_charge", 0xFFFF8BD8),
+			new Element(HudLayoutManager.TOOLTIPS, "hud.superheroes.edit.tooltips", 0xFF6BD9FF));
 
 	private String dragging = null;
 	private double grabDx;
@@ -42,17 +42,18 @@ public class HudEditScreen extends Screen {
 	@Override
 	protected void init() {
 		int bw = 90;
-		addRenderableWidget(Button.builder(Component.translatable("hud.superheroes.edit.reset"), b -> {
-			HudLayoutManager.resetAll();
-		}).bounds(width / 2 - bw - 4, height - 28, bw, 20).build());
-		addRenderableWidget(Button.builder(Component.translatable("hud.superheroes.edit.done"), b -> onClose())
-				.bounds(width / 2 + 4, height - 28, bw, 20).build());
+		addRenderableWidget(new NeonButton(width / 2 - bw - 4, height - 28, bw, 20,
+				Component.translatable("hud.superheroes.edit.reset"),
+				b -> HudLayoutManager.resetAll(), 0xFFFF7A6B, false));
+		addRenderableWidget(new NeonButton(width / 2 + 4, height - 28, bw, 20,
+				Component.translatable("hud.superheroes.edit.done"),
+				b -> onClose(), 0xFF6BFF8C, false));
 	}
 
 	@Override
 	public void render(GuiGraphics graphics, int mouseX, int mouseY, float partial) {
-		// Dark dim, no blur-heavy default background
-		graphics.fillGradient(0, 0, width, height, 0x99060410, 0xB30A0616);
+		// Light dim only — the world stays crisp (blur is cancelled by GameRendererBlurMixin)
+		graphics.fillGradient(0, 0, width, height, 0x55060410, 0x770A0616);
 
 		hovered = elementAt(mouseX, mouseY);
 
@@ -175,7 +176,7 @@ public class HudEditScreen extends Screen {
 		int sw = width;
 		int sh = height;
 		int margin = HudScaler.scale(8);
-		int panelW = HudScaler.scale(220);
+		int panelW = com.example.superheroes.client.hud.HeroInfoPanelHud.panelWidth();
 		int panelH = HudScaler.scale(130);
 		int[] off = HudLayoutManager.offset(id);
 		switch (id) {
@@ -208,6 +209,12 @@ public class HudEditScreen extends Screen {
 			}
 			case HudLayoutManager.MELEE_CHARGE -> {
 				return new int[]{sw / 2 + 10 + off[0], sh / 2 - 9 + off[1], 14, 24};
+			}
+			case HudLayoutManager.TOOLTIPS -> {
+				// mirrors AbilitiesTooltipHud (raw gui px: right edge, below effects)
+				int w = 250;
+				int h = 140;
+				return new int[]{sw - w - 10 + off[0], 70 + off[1], w, h};
 			}
 			default -> {
 				return new int[]{0, 0, 10, 10};
