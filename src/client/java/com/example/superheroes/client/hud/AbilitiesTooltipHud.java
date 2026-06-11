@@ -31,14 +31,16 @@ public final class AbilitiesTooltipHud {
 	private static final int PADDING_X = 12;
 	private static final int PADDING_TOP = 8;
 	private static final int PADDING_BOTTOM = 10;
-	private static final int SECTION_SPACING = 6;
+	private static final int SECTION_SPACING = 8;
 	private static final int ICON_SIZE = 16;
-	private static final int SECTION_HEADER_HEIGHT = 12;
+	private static final int SECTION_HEADER_HEIGHT = 13;
+	/** Hero-name header plaque at the top of the panel (v4 refresh). */
+	private static final int HEADER_HEIGHT = 17;
 
 	private static final int LINE_HEIGHT = 9;
 	private static final int NAME_Y_OFFSET = 1;
 	private static final int DESC_Y_OFFSET = 11;
-	private static final int ABILITY_ROW_BOTTOM_PAD = 2;
+	private static final int ABILITY_ROW_BOTTOM_PAD = 3;
 	private static final int PASSIVE_ROW_BOTTOM_PAD = 5;
 	private static final int MAX_DESC_LINES = 2;
 	private static final int MAX_PASSIVE_LINES = 2;
@@ -124,7 +126,7 @@ public final class AbilitiesTooltipHud {
 		int abilityTextWidth = contentWidth - ICON_SIZE - 6;
 		int passiveTextWidth = contentWidth - 10;
 
-		int panelHeight = PADDING_TOP;
+		int panelHeight = PADDING_TOP + HEADER_HEIGHT;
 		if (passiveCount > 0) {
 			panelHeight += SECTION_HEADER_HEIGHT;
 			for (int i = 1; i <= passiveCount; i++) {
@@ -169,6 +171,8 @@ public final class AbilitiesTooltipHud {
 		drawPanel(graphics, x, y, PANEL_WIDTH, panelHeight, theme, alpha);
 
 		int cursorY = y + PADDING_TOP;
+		drawHeroHeader(graphics, mc, x, cursorY, heroId, theme, alpha);
+		cursorY += HEADER_HEIGHT;
 
 		if (passiveCount > 0) {
 			drawSectionHeader(graphics, mc, x + PADDING_X, cursorY, contentWidth,
@@ -241,11 +245,31 @@ public final class AbilitiesTooltipHud {
 		g.fill(x + 3, y + 2, x + w - 3, y + 3, hi);
 	}
 
+	/** v4 refresh: hero name on its own plaque with a soft accent underline. */
+	private static void drawHeroHeader(GuiGraphics g, Minecraft mc, int panelX, int y, ResourceLocation heroId,
+			HeroTheme theme, int alpha) {
+		int x = panelX + PADDING_X;
+		Component name = ClientHudGlitch.maybeObfuscate(
+				Component.translatable("hero.superheroes." + heroId.getPath()).copy().withStyle(ChatFormatting.BOLD));
+		int color = applyAlpha(ClientHudGlitch.tintColor(theme.heroNameColor()), alpha, 1.0f);
+		g.drawString(mc.font, name, x, y + 1, color, true);
+		// accent underline: bright near the name, fading to the right
+		int lineY = y + 12;
+		int bright = applyAlpha(ClientHudGlitch.tintColor(theme.heroNameColor()), alpha, 0.85f);
+		int faint = applyAlpha(ClientHudGlitch.tintColor(theme.panelBorder()), alpha, 0.25f);
+		int nameW = Math.min(mc.font.width(name) + 8, PANEL_WIDTH - PADDING_X * 2);
+		g.fill(x, lineY, x + nameW, lineY + 1, bright);
+		g.fill(x + nameW, lineY, panelX + PANEL_WIDTH - PADDING_X, lineY + 1, faint);
+	}
+
 	private static void drawSectionHeader(GuiGraphics g, Minecraft mc, int x, int y, int width, Component label, HeroTheme theme, int alpha) {
 		int color = applyAlpha(ClientHudGlitch.tintColor(theme.heroNameColor()), alpha, 1.0f);
+		// vertical accent stripe to the left of the section title (v4 refresh)
+		int stripe = applyAlpha(ClientHudGlitch.tintColor(theme.energyIcon()), alpha, 0.9f);
+		g.fill(x, y, x + 2, y + 9, stripe);
 		Component shown = ClientHudGlitch.maybeObfuscate(
 				Component.empty().append(label).withStyle(ChatFormatting.BOLD));
-		g.drawString(mc.font, shown, x, y, color, true);
+		g.drawString(mc.font, shown, x + 6, y, color, true);
 		int line = applyAlpha(ClientHudGlitch.tintColor(theme.panelBorder()), alpha, 0.35f);
 		g.fill(x, y + 10, x + width, y + 11, line);
 	}
@@ -281,10 +305,18 @@ public final class AbilitiesTooltipHud {
 		int badgeY = y + ClientHudGlitch.badgeJitterY();
 		HudUtil.roundedRectFill(g, badgeX, badgeY, ICON_SIZE, ICON_SIZE, iconBg);
 		HudUtil.roundedRectBorder(g, badgeX, badgeY, ICON_SIZE, ICON_SIZE, iconBorder);
-		Component badge = glitchSecret
-				? Component.literal("?").withStyle(ChatFormatting.OBFUSCATED, ChatFormatting.BOLD)
-				: Component.literal(kind.badge()).withStyle(ChatFormatting.BOLD);
-		g.drawCenteredString(mc.font, badge, badgeX + ICON_SIZE / 2, badgeY + (ICON_SIZE - 8) / 2, iconBorder);
+		if (glitchSecret) {
+			Component badge = Component.literal("?").withStyle(ChatFormatting.OBFUSCATED, ChatFormatting.BOLD);
+			g.drawCenteredString(mc.font, badge, badgeX + ICON_SIZE / 2, badgeY + (ICON_SIZE - 8) / 2, iconBorder);
+		} else {
+			// real ability icon inside the tile; tiny A/T marker in the corner
+			AbilityIcons.draw(g, abilityId, badgeX + 1, badgeY + 1, ICON_SIZE - 2, iconBorder);
+			g.pose().pushPose();
+			g.pose().translate(badgeX + ICON_SIZE - 3.5f, badgeY + ICON_SIZE - 4.5f, 0f);
+			g.pose().scale(0.6f, 0.6f, 1f);
+			g.drawCenteredString(mc.font, Component.literal(kind.badge()).withStyle(ChatFormatting.BOLD), 0, 0, iconBorder);
+			g.pose().popPose();
+		}
 
 		int statusBadgeX = x + width;
 		int statusBadgeY = y + NAME_Y_OFFSET;

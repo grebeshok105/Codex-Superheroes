@@ -27,10 +27,11 @@ import net.minecraft.world.item.ItemStack;
 import java.util.List;
 
 /**
- * Radial ability wheel: a true donut/pie design.
- * Dark glass annulus split into sectors, hovered sector fills with the hero theme color,
- * ability icons sit at sector centroids, the center hub shows hero + hovered ability info.
- * Selection logic (mouse-look) is unchanged.
+ * Radial ability wheel v2: separated arc segments with gaps, staggered bloom-in,
+ * smooth hover growth with a neon rim, a clean EMPTY glass hub (no text), and an
+ * info plaque BELOW the ring with the hovered ability name + cooldown.
+ * The virtual cursor accumulates mouse-look INCREMENTALLY and is hard-clamped to
+ * the wheel radius, so it never "banks up" off-screen distance.
  */
 public final class RadialMenuHud {
 	private static final float DEAD_ZONE = 5f;
@@ -44,11 +45,18 @@ public final class RadialMenuHud {
 	private static final float PX_PER_DEG = INNER_R / DEAD_ZONE;
 
 	private static boolean open;
-	private static float startYaw;
-	private static float startPitch;
+	private static float lastYaw;
+	private static float lastPitch;
 	private static int selected = -1;
 	private static float cursorDx;
 	private static float cursorDy;
+	private static float prevCursorDx;
+	private static float prevCursorDy;
+
+	/** Per-sector hover grow progress (0..1), tick-stepped + partial-interpolated. */
+	private static final int MAX_SECTORS = 12;
+	private static final float[] hoverProgress = new float[MAX_SECTORS];
+	private static final float[] lastHoverProgress = new float[MAX_SECTORS];
 
 	private RadialMenuHud() {
 	}
@@ -65,11 +73,15 @@ public final class RadialMenuHud {
 				return;
 			}
 			open = true;
-			startYaw = mc.player.getYRot();
-			startPitch = mc.player.getXRot();
+			lastYaw = mc.player.getYRot();
+			lastPitch = mc.player.getXRot();
 			selected = -1;
 			cursorDx = 0f;
 			cursorDy = 0f;
+			prevCursorDx = 0f;
+			prevCursorDy = 0f;
+			java.util.Arrays.fill(hoverProgress, 0f);
+			java.util.Arrays.fill(lastHoverProgress, 0f);
 			return;
 		}
 		if (!down && open) {
@@ -86,27 +98,32 @@ public final class RadialMenuHud {
 			selected = -1;
 			return;
 		}
-		float dyaw = mc.player.getYRot() - startYaw;
-		float dpitch = mc.player.getXRot() - startPitch;
-		// virtual cursor position (px), clamped to just past the outer rim
-		float px = dyaw * PX_PER_DEG;
-		float py = dpitch * PX_PER_DEG;
-		float mag = (float) Math.sqrt(px * px + py * py);
+		// INCREMENTAL mouse-look delta since last tick — no accumulation:
+		// the cursor itself is clamped to the wheel, so swinging far left never
+		// requires swinging just as far right to come back.
+		float dyaw = net.minecraft.util.Mth.wrapDegrees(mc.player.getYRot() - lastYaw);
+		float dpitch = mc.player.getXRot() - lastPitch;
+		lastYaw = mc.player.getYRot();
+		lastPitch = mc.player.getXRot();
+
+		prevCursorDx = cursorDx;
+		prevCursorDy = cursorDy;
+		cursorDx += dyaw * PX_PER_DEG;
+		cursorDy += dpitch * PX_PER_DEG;
+		float mag = (float) Math.sqrt(cursorDx * cursorDx + cursorDy * cursorDy);
 		float maxR = OUTER_R + 6;
 		if (mag > maxR) {
-			px *= maxR / mag;
-			py *= maxR / mag;
+			cursorDx *= maxR / mag;
+			cursorDy *= maxR / mag;
+			mag = maxR;
 		}
-		cursorDx = px;
-		cursorDy = py;
-		float magSq = dyaw * dyaw + dpitch * dpitch;
-		if (magSq < DEAD_ZONE * DEAD_ZONE) {
+		if (mag < HUB_R) {
 			// cursor returned to the hub: selection is dropped, release does nothing
 			selected = -1;
 			return;
 		}
 		float per = 360f / n;
-		double angle = Math.toDegrees(Math.atan2(dpitch, dyaw)) + 90.0 + per / 2.0;
+		double angle = Math.toDegrees(Math.atan2(cursorDy, cursorDx)) + 90.0 + per / 2.0;
 		angle = ((angle % 360.0) + 360.0) % 360.0;
 		selected = ((int) Math.floor(angle / per)) % n;
 	}
@@ -197,6 +214,16 @@ public final class RadialMenuHud {
 		} else {
 			openProgress = Math.max(0f, openProgress - 1f / (OPEN_ANIM_TICKS / 2f));
 		}
+		for (int i = 0; i < MAX_SECTORS; i++) {
+			lastHoverProgress[i] = hoverProgress[i];
+			float target = (open && i == selected) ? 1f : 0f;
+			float step = 0.34f;
+			if (hoverProgress[i] < target) {
+				hoverProgress[i] = Math.min(target, hoverProgress[i] + step);
+			} else if (hoverProgress[i] > target) {
+				hoverProgress[i] = Math.max(target, hoverProgress[i] - step);
+			}
+		}
 	}
 
 	public static void render(GuiGraphics graphics, DeltaTracker tracker) {
@@ -220,7 +247,8 @@ public final class RadialMenuHud {
 
 		graphics.pose().pushPose();
 		graphics.pose().translate(cx, cy, 0);
-		graphics.pose().scale(eased, eased, 1f);
+		float openScale = 0.86f + 0.14f * eased;
+		graphics.pose().scale(openScale, openScale, 1f);
 		graphics.pose().translate(-cx, -cy, 0);
 
 		// Soft vignette behind the wheel
@@ -229,46 +257,62 @@ public final class RadialMenuHud {
 		graphics.fillGradient(cx - vigR, cy - vigR, cx + vigR, cy + vigR,
 				(vigA << 24) | 0x05070F, 0x00040610);
 
-		// Sector geometry: sector i is centered at angle (i / n) * 2PI - PI/2
 		float per = (float) (2 * Math.PI / n);
+		// angular gap between segments so arcs read as separate "petals"
+		float gap = Math.min(per * 0.16f, (float) Math.toRadians(5.0));
 
-		// 1) Donut base (dark glass)
-		drawAnnulus(graphics, cx, cy, INNER_R, OUTER_R, (int) (0xC8 * eased) << 24 | 0x0A0D18);
+		for (int i = 0; i < n; i++) {
+			float mid = i * per - (float) Math.PI / 2f;
+			// staggered bloom-in: each petal fades/slides in clockwise
+			float stagger = n <= 1 ? 0f : (0.35f * i) / n;
+			float petal = HudAnimator.smoothstep(clamp01((anim - stagger) / Math.max(0.001f, 1f - 0.35f)));
+			if (petal <= 0.01f) {
+				continue;
+			}
+			float hover = hoverFor(i, partial);
+			// hovered petal grows outward; idle petals breathe in slightly while opening
+			int grow = Math.round(hover * 7f);
+			int r0 = INNER_R + 1 - Math.round(hover * 2f);
+			int r1 = OUTER_R - 4 + Math.round((petal - 1f) * 8f) + grow;
+			float a0 = mid - per / 2f + gap / 2f;
+			float a1 = mid + per / 2f - gap / 2f;
 
-		// 2) Hovered wedge in hero color
-		if (selected >= 0 && selected < n) {
-			float mid = selected * per - (float) Math.PI / 2f;
-			int wedgeColor = applyAlpha(theme.panelTop(), (int) (235 * eased), 1.35f);
-			drawWedge(graphics, cx, cy, INNER_R + 1, OUTER_R - 1, mid - per / 2f, mid + per / 2f, wedgeColor);
-			int rimColor = applyAlpha(theme.radialBorderActive(), (int) (255 * eased), 1f);
-			drawWedge(graphics, cx, cy, OUTER_R - 1, OUTER_R + 2, mid - per / 2f, mid + per / 2f, rimColor);
-		}
+			// petal body: dark glass -> hero color as hover rises
+			int bodyA = (int) ((0xB6 + 0x30 * hover) * petal * eased);
+			int bodyColor = hover > 0.01f
+					? blend(0xFF0A0D18, applyAlpha(theme.panelTop(), 255, 1.35f), hover * 0.85f)
+					: 0xFF0A0D18;
+			drawWedge(graphics, cx, cy, r0, r1, a0, a1, (bodyA << 24) | (bodyColor & 0xFFFFFF));
 
-		// 3) Rings
-		int ringColor = applyAlpha(theme.radialBorderIdle(), (int) (190 * eased), 0.55f);
-		drawAnnulus(graphics, cx, cy, OUTER_R, OUTER_R + 1, ringColor);
-		drawAnnulus(graphics, cx, cy, INNER_R - 1, INNER_R, ringColor);
-
-		// 4) Sector dividers
-		if (n > 1) {
-			int divColor = (int) (0x2E * eased) << 24 | 0xFFFFFF;
-			for (int i = 0; i < n; i++) {
-				double b = i * per - Math.PI / 2 - per / 2;
-				drawRadialLine(graphics, cx, cy, INNER_R, OUTER_R, b, divColor);
+			// neon outer rim: idle = faint theme line, hover = bright + glow layer
+			int rimA = (int) ((90 + 165 * hover) * petal * eased);
+			int rim = applyAlpha(theme.radialBorderActive(), rimA, 1f);
+			drawWedge(graphics, cx, cy, r1, r1 + 2, a0, a1, rim);
+			if (hover > 0.01f) {
+				int glowA = (int) (70 * hover * petal * eased);
+				drawWedge(graphics, cx, cy, r1 + 2, r1 + 4, a0, a1, applyAlpha(theme.radialBorderActive(), glowA, 1f));
+				int innerRimA = (int) (110 * hover * petal * eased);
+				drawWedge(graphics, cx, cy, r0, r0 + 1, a0, a1, applyAlpha(theme.radialBorderActive(), innerRimA, 0.8f));
 			}
 		}
 
-		// 5) Icons + key labels at sector centroids
-		int iconRadius = (INNER_R + OUTER_R) / 2;
+		// Icons + key labels at petal centroids (drawn after all petals)
 		for (int i = 0; i < n; i++) {
+			float stagger = n <= 1 ? 0f : (0.35f * i) / n;
+			float petal = HudAnimator.smoothstep(clamp01((anim - stagger) / Math.max(0.001f, 1f - 0.35f)));
+			if (petal <= 0.05f) {
+				continue;
+			}
+			float hover = hoverFor(i, partial);
 			double mid = i * per - Math.PI / 2;
+			int iconRadius = (INNER_R + OUTER_R) / 2 + Math.round(hover * 4f);
 			int ix = cx + (int) Math.round(Math.cos(mid) * iconRadius);
 			int iy = cy + (int) Math.round(Math.sin(mid) * iconRadius);
 			ResourceLocation aid = abilities.get(i);
 			boolean isSel = i == selected;
 			int cdTicks = ClientAbilityCooldowns.remainingTicks(aid);
 
-			int iconSize = isSel ? 20 : 16;
+			int iconSize = 16 + Math.round(hover * 6f);
 			int half = iconSize / 2;
 			int accent = isSel ? theme.radialTextActive() : applyAlpha(theme.energyIcon(), 230, 0.9f);
 			AbilityIcons.draw(graphics, aid, ix - half, iy - half - 4, iconSize, accent);
@@ -296,24 +340,75 @@ public final class RadialMenuHud {
 			}
 		}
 
-		// 6) Center hub
-		drawHub(graphics, mc, cx, cy, theme, abilities, eased);
+		// Clean empty glass hub — deliberately NO text inside
+		drawDisk(graphics, cx, cy, HUB_R, (int) (0xC2 * eased) << 24 | 0x0C101E);
+		drawAnnulus(graphics, cx, cy, HUB_R - 1, HUB_R, applyAlpha(theme.radialBorderActive(), (int) (180 * eased), 0.8f));
 
-		// 7) Virtual cursor: thin ray from center + glowing dot, so you always
-		// see where your mouse-look is pointing and how to cancel (drag to hub).
-		drawCursor(graphics, cx, cy, theme, eased);
+		// Info plaque BELOW the ring: hovered ability name + status
+		drawInfoPlaque(graphics, mc, cx, cy, theme, abilities, eased);
+
+		// Virtual cursor: thin ray from center + glowing dot
+		drawCursor(graphics, cx, cy, theme, eased, partial);
 
 		graphics.pose().popPose();
 	}
 
-	private static void drawCursor(GuiGraphics graphics, int cx, int cy, HeroTheme theme, float eased) {
-		float mag = (float) Math.sqrt(cursorDx * cursorDx + cursorDy * cursorDy);
+	private static float hoverFor(int i, float partial) {
+		if (i < 0 || i >= MAX_SECTORS) {
+			return 0f;
+		}
+		float h = lastHoverProgress[i] + (hoverProgress[i] - lastHoverProgress[i]) * partial;
+		return HudAnimator.smoothstep(clamp01(h));
+	}
+
+	private static float clamp01(float v) {
+		return v < 0f ? 0f : Math.min(v, 1f);
+	}
+
+	/** Linear ARGB blend (alpha from a). */
+	private static int blend(int a, int b, float t) {
+		int ar = (a >> 16) & 0xFF, ag = (a >> 8) & 0xFF, ab = a & 0xFF;
+		int br = (b >> 16) & 0xFF, bg = (b >> 8) & 0xFF, bb = b & 0xFF;
+		int r = (int) (ar + (br - ar) * t);
+		int g = (int) (ag + (bg - ag) * t);
+		int bl = (int) (ab + (bb - ab) * t);
+		return (a & 0xFF000000) | (r << 16) | (g << 8) | bl;
+	}
+
+	private static void drawInfoPlaque(GuiGraphics graphics, Minecraft mc, int cx, int cy, HeroTheme theme,
+			List<ResourceLocation> abilities, float eased) {
+		if (selected < 0 || selected >= abilities.size()) {
+			return;
+		}
+		ResourceLocation aid = abilities.get(selected);
+		Component name = Component.translatable(AbilityDescriptions.nameKey(aid));
+		int cd = ClientAbilityCooldowns.remainingTicks(aid);
+		Component status = cd > 0 ? cooldownText(cd) : Component.translatable("hud.superheroes.radial.ready");
+		int statusColor = cd > 0 ? COLOR_COOLDOWN : 0xFF6BFF8C;
+
+		int nameW = mc.font.width(name);
+		int statusW = mc.font.width(status);
+		int w = Math.max(nameW, statusW) + 18;
+		int h = 26;
+		int px = cx - w / 2;
+		int py = cy + OUTER_R + 14;
+		int bgA = (int) (0xD8 * eased);
+		HudUtil.roundedRectFill(graphics, px, py, w, h, (bgA << 24) | 0x0A0D18);
+		HudUtil.roundedRectBorder(graphics, px, py, w, h, applyAlpha(theme.radialBorderActive(), (int) (200 * eased), 0.9f));
+		graphics.drawCenteredString(mc.font, name, cx, py + 4, theme.radialTextActive());
+		graphics.drawCenteredString(mc.font, status, cx, py + 15, statusColor);
+	}
+
+	private static void drawCursor(GuiGraphics graphics, int cx, int cy, HeroTheme theme, float eased, float partial) {
+		float dx = prevCursorDx + (cursorDx - prevCursorDx) * partial;
+		float dy = prevCursorDy + (cursorDy - prevCursorDy) * partial;
+		float mag = (float) Math.sqrt(dx * dx + dy * dy);
 		if (mag < 2f) {
 			return;
 		}
-		int tipX = cx + Math.round(cursorDx);
-		int tipY = cy + Math.round(cursorDy);
-		double angle = Math.atan2(cursorDy, cursorDx);
+		int tipX = cx + Math.round(dx);
+		int tipY = cy + Math.round(dy);
+		double angle = Math.atan2(dy, dx);
 		boolean inHub = mag < INNER_R;
 		int rayColor = applyAlpha(inHub ? 0xFF7C8499 : theme.radialBorderActive(), (int) (170 * eased), 1f);
 		// ray from hub edge (or center while inside) to the dot
@@ -326,79 +421,6 @@ public final class RadialMenuHud {
 		int halo = applyAlpha(inHub ? 0xFFB9BECF : theme.radialBorderActive(), (int) (110 * pulse * eased), 1f);
 		drawDisk(graphics, tipX, tipY, 4, halo);
 		drawDisk(graphics, tipX, tipY, 2, core);
-	}
-
-	private static void drawHub(GuiGraphics graphics, Minecraft mc, int cx, int cy, HeroTheme theme,
-			List<ResourceLocation> abilities, float eased) {
-		drawDisk(graphics, cx, cy, HUB_R, (int) (0xE0 * eased) << 24 | 0x0C101E);
-		drawAnnulus(graphics, cx, cy, HUB_R - 1, HUB_R, applyAlpha(theme.radialBorderActive(), (int) (220 * eased), 0.9f));
-
-		ResourceLocation heroId = ClientHeroState.heroId();
-		if (heroId != null) {
-			Component heroName = Component.translatable("hero.superheroes." + heroId.getPath());
-			graphics.drawCenteredString(mc.font, heroName, cx, cy - 14, applyAlpha(theme.heroNameColor(), 220, 0.9f));
-		}
-		if (selected >= 0 && selected < abilities.size()) {
-			ResourceLocation aid = abilities.get(selected);
-			Component name = Component.translatable(AbilityDescriptions.nameKey(aid));
-			int statusY = drawHubName(graphics, mc, name.getString(), cx, cy, theme);
-			int cd = ClientAbilityCooldowns.remainingTicks(aid);
-			if (cd > 0) {
-				graphics.drawCenteredString(mc.font, cooldownText(cd), cx, statusY, COLOR_COOLDOWN);
-			} else {
-				graphics.drawCenteredString(mc.font, Component.translatable("hud.superheroes.radial.ready"),
-						cx, statusY, 0xFF6BFF8C);
-			}
-		} else {
-			graphics.drawCenteredString(mc.font, Component.translatable("hud.superheroes.radial.hint"),
-					cx, cy + 2, 0x887C8499);
-		}
-	}
-
-	/**
-	 * Ability name in the hub: tries one line, then a 2-line wrap, then shrinks
-	 * the font so the full name ALWAYS fits inside the hub. Returns the y for
-	 * the status line below the name.
-	 */
-	private static int drawHubName(GuiGraphics graphics, Minecraft mc, String name, int cx, int cy, HeroTheme theme) {
-		int maxW = HUB_R * 2 - 10;
-		int color = theme.radialTextActive();
-		if (mc.font.width(name) <= maxW) {
-			graphics.drawCenteredString(mc.font, Component.literal(name), cx, cy - 2, color);
-			return cy + 10;
-		}
-		// 2-line wrap at the most central space
-		String l1 = name;
-		String l2 = "";
-		int bestSplit = -1;
-		int bestScore = Integer.MAX_VALUE;
-		for (int i = name.indexOf(' '); i >= 0; i = name.indexOf(' ', i + 1)) {
-			int score = Math.abs(mc.font.width(name.substring(0, i)) - mc.font.width(name.substring(i + 1)));
-			if (score < bestScore) {
-				bestScore = score;
-				bestSplit = i;
-			}
-		}
-		if (bestSplit > 0) {
-			l1 = name.substring(0, bestSplit);
-			l2 = name.substring(bestSplit + 1);
-		}
-		float scale = 1f;
-		int widest = Math.max(mc.font.width(l1), mc.font.width(l2));
-		if (widest > maxW) {
-			scale = Math.max(0.6f, (float) maxW / widest);
-		}
-		graphics.pose().pushPose();
-		graphics.pose().translate(cx, cy - 2, 0);
-		graphics.pose().scale(scale, scale, 1f);
-		if (l2.isEmpty()) {
-			graphics.drawCenteredString(mc.font, Component.literal(l1), 0, -4, color);
-		} else {
-			graphics.drawCenteredString(mc.font, Component.literal(l1), 0, -9, color);
-			graphics.drawCenteredString(mc.font, Component.literal(l2), 0, 1, color);
-		}
-		graphics.pose().popPose();
-		return cy + 12;
 	}
 
 	/** Filled circle via horizontal scanlines. */

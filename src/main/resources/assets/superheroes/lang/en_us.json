@@ -726,6 +726,5 @@
 	"hud.superheroes.edit.effects": "Effects",
 	"hud.superheroes.edit.melee_charge": "Charge gauge",
 	"hud.superheroes.edit.tooltips": "Abilities help",
-	"hud.superheroes.radial.ready": "Ready",
-	"hud.superheroes.radial.hint": "Look around to select"
+	"hud.superheroes.radial.ready": "Ready"
 }
