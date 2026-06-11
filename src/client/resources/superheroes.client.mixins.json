@@ -11,7 +11,10 @@
 		"GuiVanillaGlitchMixin",
 		"SoundEngineMixin",
 		"MinecraftHeroMeleeChargeMixin",
-		"GuiHotbarMixin"
+		"GuiHotbarMixin",
+		"MinecraftHandleKeybindsMixin",
+		"ChatComponentMixin",
+		"GuiEffectsMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

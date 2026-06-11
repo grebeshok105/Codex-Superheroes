@@ -82,7 +82,7 @@ public final class SungJinwooHero implements Hero {
 	public ResourceKind getDefaultBinding(ResourceLocation abilityId) {
 		// Все способности на ENERGY (Shadow Charges) по дефолту,
 		// MONARCHS_DOMAIN жрёт MANA (символично — глубокий резерв монарха).
-		return abilityId.equals(AbilityIds.MONARCHS_DOMAIN) ? ResourceKind.MANA : ResourceKind.ENERGY;
+		return ResourceKind.ENERGY;
 	}
 
 	@Override

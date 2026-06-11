@@ -66,8 +66,9 @@ public final class AbilityBarHud {
 		int slotSize = HudScaler.scale(Math.max(28, Math.min(44, BASE_SLOT_SIZE + (6 - n) * 2)));
 		int gap = HudScaler.scale(BASE_GAP);
 		int totalWidth = n * slotSize + (n - 1) * gap;
-		int startX = (screenW - totalWidth) / 2;
-		int startY = screenH - HudScaler.scale(BASE_BOTTOM_OFFSET) - slotSize;
+		int[] off = HudLayoutManager.offset(HudLayoutManager.ABILITY_BAR);
+		int startX = (screenW - totalWidth) / 2 + off[0];
+		int startY = screenH - HudScaler.scale(BASE_BOTTOM_OFFSET) - slotSize + off[1];
 
 		for (int i = 0; i < n; i++) {
 			ResourceLocation abilityId = abilities.get(i);
@@ -101,12 +102,16 @@ public final class AbilityBarHud {
 		}
 		HudUtil.roundedRectBorder(g, x, y, size, size, borderColor);
 
-		// Ability icon in center (badge letter for now)
-		AbilityDescriptions.Kind kind = AbilityDescriptions.kindOf(abilityId);
-		String badge = isUlt ? "\u2605" : kind.badge();
-		Component badgeComp = Component.literal(badge).withStyle(ChatFormatting.BOLD);
-		int badgeW = mc.font.width(badgeComp);
-		g.drawString(mc.font, badgeComp, x + (size - badgeW) / 2, y + (size - 8) / 2 - 2, borderColor, true);
+		// Ability icon: generated texture if present, fallback to badge letter
+		int pad = Math.max(2, HudScaler.scale(2));
+		if (AbilityIcons.texture(abilityId) != null) {
+			AbilityIcons.draw(g, abilityId, x + pad, y + pad, size - pad * 2, borderColor);
+		} else {
+			String badge = isUlt ? "\u2605" : AbilityDescriptions.kindOf(abilityId).badge();
+			Component badgeComp = Component.literal(badge).withStyle(ChatFormatting.BOLD);
+			int badgeW = mc.font.width(badgeComp);
+			g.drawString(mc.font, badgeComp, x + (size - badgeW) / 2, y + (size - 8) / 2 - 2, borderColor, true);
+		}
 
 		// Cooldown overlay
 		if (cdRemaining > 0) {
@@ -117,7 +122,7 @@ public final class AbilityBarHud {
 			// CD text
 			float cdSeconds = cdRemaining / 20f;
 			String cdText = String.format(java.util.Locale.ROOT, "%.1f", cdSeconds);
-			Component cdComp = Component.literal(cdText).withStyle(ChatFormatting.BOLD);
+			Component cdComp = Component.literal(cdText);
 			int cdW = mc.font.width(cdComp);
 			g.drawString(mc.font, cdComp, x + (size - cdW) / 2, y + size + 2, 0xFFFF9D6E, true);
 
@@ -143,15 +148,6 @@ public final class AbilityBarHud {
 		int keyY = y + size + (cdRemaining > 0 ? 12 : 2);
 		g.drawString(mc.font, keyComp, x + (size - keyW) / 2, keyY, 0x99FFFFFF, true);
 
-		// Ability name below keybind
-		Component name = Component.translatable(AbilityDescriptions.nameKey(abilityId));
-		String nameStr = name.getString();
-		if (nameStr.length() > 10) {
-			nameStr = nameStr.substring(0, 9) + "\u2026";
-		}
-		Component shortName = Component.literal(nameStr);
-		int nameW = mc.font.width(shortName);
-		g.drawString(mc.font, shortName, x + (size - nameW) / 2, keyY + 9, 0x77FFFFFF, true);
 	}
 
 	private static void drawCooldownArc(GuiGraphics g, int x, int y, int size, float progress, int color) {
