@@ -85,6 +85,19 @@ public final class ClientNetworking {
 
 		ClientPlayNetworking.registerGlobalReceiver(com.example.superheroes.network.ScorpionFxS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> ClientScorpionFx.play(payload)));
+		ClientPlayNetworking.registerGlobalReceiver(com.example.superheroes.network.MirrorDimensionS2CPayload.TYPE, (payload, context) ->
+				context.client().execute(() -> {
+					switch (payload.action()) {
+						case com.example.superheroes.network.MirrorDimensionS2CPayload.ACTION_ON ->
+								com.example.superheroes.client.ClientMirrorDimensionState.activate(payload.mode(), payload.scale());
+						case com.example.superheroes.network.MirrorDimensionS2CPayload.ACTION_OFF ->
+								com.example.superheroes.client.ClientMirrorDimensionState.deactivate(true);
+						case com.example.superheroes.network.MirrorDimensionS2CPayload.ACTION_KEEPALIVE ->
+								com.example.superheroes.client.ClientMirrorDimensionState.keepalive();
+						default -> {
+						}
+					}
+				}));
 
 		ClientPlayNetworking.registerGlobalReceiver(ScreenShakeS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> ScreenShakeManager.shake(payload.intensity(), payload.durationTicks())));

@@ -427,6 +427,8 @@ public final class HeroAttributes {
 			.add(Attributes.ENTITY_INTERACTION_RANGE, OMNIMAN_REACH, 0.8, AttributeModifier.Operation.ADD_VALUE)
 			.build();
 
+	public static final ResourceLocation STRANGE_HP = ModId.of("modifiers/doctor_strange/max_health");
+
 	public static final AttributeModifierSet SCORPION = AttributeModifierSet.builder()
 			.add(Attributes.ARMOR, SCORPION_ARMOR, 14.0, AttributeModifier.Operation.ADD_VALUE)
 			.add(Attributes.ARMOR_TOUGHNESS, SCORPION_TOUGHNESS, 6.0, AttributeModifier.Operation.ADD_VALUE)
@@ -434,6 +436,10 @@ public final class HeroAttributes {
 			.add(Attributes.MOVEMENT_SPEED, SCORPION_SPEED, 0.10, AttributeModifier.Operation.ADD_MULTIPLIED_BASE)
 			.add(Attributes.MAX_HEALTH, SCORPION_HP, 4.0, AttributeModifier.Operation.ADD_VALUE)
 			.add(Attributes.KNOCKBACK_RESISTANCE, SCORPION_KNOCKBACK, 0.3, AttributeModifier.Operation.ADD_VALUE)
+			.build();
+
+	public static final AttributeModifierSet DOCTOR_STRANGE = AttributeModifierSet.builder()
+			.add(Attributes.MAX_HEALTH, STRANGE_HP, 10.0, AttributeModifier.Operation.ADD_VALUE)
 			.build();
 
 	public static void thanosClearStoneModifiers(net.minecraft.world.entity.LivingEntity entity) {

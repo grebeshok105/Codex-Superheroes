@@ -141,6 +141,9 @@ public final class AbilityIds {
 	public static final ResourceLocation SCORPION_FIRE_TELEPORT = ModId.of("scorpion_fire_teleport");
 	public static final ResourceLocation SCORPION_HELL_BREATH = ModId.of("scorpion_hell_breath");
 
+	// Doctor Strange
+	public static final ResourceLocation MIRROR_DIMENSION = ModId.of("mirror_dimension");
+
 
 	public static boolean isReinhardSwordOnly(ResourceLocation id) {
 		return REINHARD_AIR_SLASH.equals(id)

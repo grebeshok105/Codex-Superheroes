@@ -52,6 +52,8 @@ public class SuperheroesClient implements ClientModInitializer {
 	public void onInitializeClient() {
 		ModKeys.init();
 		ClientNetworking.init();
+		com.example.superheroes.client.iris.IrisShaderBridge.restoreAfterCrashIfNeeded();
+		ClientTickEvents.END_CLIENT_TICK.register(com.example.superheroes.client.ClientMirrorDimensionState::tick);
 		com.example.superheroes.client.render.WildShaders.register();
 		LaserBeamRenderer.register();
 		RepulsorBeamRenderer.register();
@@ -267,6 +269,7 @@ public class SuperheroesClient implements ClientModInitializer {
 		});
 
 		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+			com.example.superheroes.client.ClientMirrorDimensionState.onDisconnect();
 			com.example.superheroes.client.ClientThanosState.clear();
 			com.example.superheroes.client.ClientNanoFormState.clear();
 			com.example.superheroes.client.ClientThinkMarkState.clear();

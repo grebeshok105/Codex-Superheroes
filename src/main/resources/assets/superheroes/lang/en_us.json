@@ -797,5 +797,20 @@
   "hud.superheroes.esp.mode": "J.A.R.V.I.S. Scan: %s",
   "hud.superheroes.esp.mode.off": "OFF",
   "hud.superheroes.esp.mode.corners": "TARGET LOCK",
-  "hud.superheroes.esp.mode.box": "FULL BOX"
+  "hud.superheroes.esp.mode.box": "FULL BOX",
+  "hero.superheroes.doctor_strange": "Doctor Strange",
+  "item.superheroes.doctor_strange_suit": "Cloak of Levitation",
+  "item.superheroes.doctor_strange_suit.lore.line1": "A relic of the Masters of the Mystic Arts.",
+  "item.superheroes.doctor_strange_suit.lore.line2": "Marvel - Stephen Strange",
+  "item.superheroes.doctor_strange_suit.lore.usage": "▶ Right-click - Transform",
+  "item.superheroes.doctor_strange_suit.lore.untransform": "▶ Shift + Right-click - Revert",
+  "ability.superheroes.mirror_dimension": "Mirror Dimension",
+  "ability.superheroes.mirror_dimension.desc": "Trap the aimed player (or yourself if nobody is aimed at) in the Mirror Dimension: their world curls into a warped sphere until the toggle ends. Requires Iris + Acid Shaders on the victim's client. 10s cooldown.",
+  "ability.superheroes.mirror_dimension.busy": "This player is already trapped in someone else's Mirror Dimension",
+  "ability.superheroes.mirror_dimension.released": "The Mirror Dimension collapses",
+  "ability.superheroes.mirror_dimension.no_mod": "%s cannot be trapped: no Codex-Superheroes mod on their client",
+  "ability.superheroes.mirror_dimension.applied": "%s is trapped in the Mirror Dimension",
+  "ability.superheroes.mirror_dimension.no_iris": "%s has no Iris installed — the Mirror Dimension cannot manifest",
+  "ability.superheroes.mirror_dimension.no_pack": "%s has no Acid Shaders pack in their shaderpacks folder",
+  "ability.superheroes.mirror_dimension.iris_fail": "The Mirror Dimension failed to manifest on %s's client (Iris error)"
 }

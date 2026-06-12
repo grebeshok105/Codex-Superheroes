@@ -9,6 +9,19 @@ group = project.maven_group
 repositories {
 	mavenCentral()
 
+	// Modrinth maven — Iris (compile-only bridge for the Mirror Dimension ability)
+	exclusiveContent {
+		forRepository {
+			maven {
+				name = 'Modrinth'
+				url = 'https://api.modrinth.com/maven'
+			}
+		}
+		filter {
+			includeGroup('maven.modrinth')
+		}
+	}
+
 	// Veil (Foundry) — render framework for the experimental shader layer
 	maven {
 		name = 'BlameJared'
@@ -78,6 +91,10 @@ dependencies {
 	// Veil — render framework powering Scorpion's shader FX (Quasar particles, bloom, dynamic light).
 	// Optional at runtime: code is guarded by FabricLoader.isModLoaded("veil").
 	modImplementation "foundry.veil:veil-fabric-1.21.1:${project.veil_version}"
+
+	// Iris — compile-only: Mirror Dimension toggles the victim's Acid shaderpack.
+	// NOT bundled, NOT required at runtime; guarded by FabricLoader.isModLoaded("iris").
+	modCompileOnly "maven.modrinth:iris:1.8.8+1.21.1-fabric"
 
 	testImplementation platform("org.junit:junit-bom:5.10.2")
 	testImplementation "org.junit.jupiter:junit-jupiter"
