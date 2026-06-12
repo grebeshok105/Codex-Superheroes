@@ -68,6 +68,7 @@ public final class ModItemGroups {
 				output.accept(ModItems.BATTLE_BEAST_MEDALLION);
 				output.accept(ModItems.REM_ONI_HORN);
 				output.accept(ModItems.A_TRAIN_SUIT);
+				output.accept(ModItems.SCORPION_KUNAI);
 
 				// Админ-предметы показываются в этой же вкладке, когда у игрока
 				// включён /superheroes admin (клиент пересобирает вкладку по пакету)

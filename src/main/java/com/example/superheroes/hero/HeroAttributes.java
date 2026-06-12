@@ -395,6 +395,12 @@ public final class HeroAttributes {
 	public static final ResourceLocation OMNIMAN_JUMP = ModId.of("modifiers/omniman/jump_strength");
 	public static final ResourceLocation OMNIMAN_STEP = ModId.of("modifiers/omniman/step_height");
 	public static final ResourceLocation OMNIMAN_REACH = ModId.of("modifiers/omniman/entity_reach");
+	public static final ResourceLocation SCORPION_ARMOR = ModId.of("modifiers/scorpion/armor");
+	public static final ResourceLocation SCORPION_TOUGHNESS = ModId.of("modifiers/scorpion/toughness");
+	public static final ResourceLocation SCORPION_DAMAGE = ModId.of("modifiers/scorpion/damage");
+	public static final ResourceLocation SCORPION_SPEED = ModId.of("modifiers/scorpion/speed");
+	public static final ResourceLocation SCORPION_HP = ModId.of("modifiers/scorpion/max_health");
+	public static final ResourceLocation SCORPION_KNOCKBACK = ModId.of("modifiers/scorpion/knockback_resistance");
 
 	public static final AttributeModifierSet INVINCIBLE = AttributeModifierSet.builder()
 			.add(Attributes.ARMOR, INVINCIBLE_ARMOR, 26.0, AttributeModifier.Operation.ADD_VALUE)
@@ -419,6 +425,15 @@ public final class HeroAttributes {
 			.add(Attributes.JUMP_STRENGTH, OMNIMAN_JUMP, 0.35, AttributeModifier.Operation.ADD_VALUE)
 			.add(Attributes.STEP_HEIGHT, OMNIMAN_STEP, 0.6, AttributeModifier.Operation.ADD_VALUE)
 			.add(Attributes.ENTITY_INTERACTION_RANGE, OMNIMAN_REACH, 0.8, AttributeModifier.Operation.ADD_VALUE)
+			.build();
+
+	public static final AttributeModifierSet SCORPION = AttributeModifierSet.builder()
+			.add(Attributes.ARMOR, SCORPION_ARMOR, 14.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ARMOR_TOUGHNESS, SCORPION_TOUGHNESS, 6.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ATTACK_DAMAGE, SCORPION_DAMAGE, 3.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.MOVEMENT_SPEED, SCORPION_SPEED, 0.10, AttributeModifier.Operation.ADD_MULTIPLIED_BASE)
+			.add(Attributes.MAX_HEALTH, SCORPION_HP, 4.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.KNOCKBACK_RESISTANCE, SCORPION_KNOCKBACK, 0.3, AttributeModifier.Operation.ADD_VALUE)
 			.build();
 
 	public static void thanosClearStoneModifiers(net.minecraft.world.entity.LivingEntity entity) {
