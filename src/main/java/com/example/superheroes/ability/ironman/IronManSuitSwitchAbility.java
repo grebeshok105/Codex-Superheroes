@@ -53,7 +53,9 @@ public final class IronManSuitSwitchAbility implements Ability {
 
 		level.sendParticles(ParticleTypes.ELECTRIC_SPARK,
 				player.getX(), player.getY() + 1.0, player.getZ(), 30, 0.5, 0.8, 0.5, 0.1);
-		level.playSound(null, player.getX(), player.getY(), player.getZ(),
+		// entity overload → ClientboundSoundEntityPacket: голос ДЖАРВИСа летит вместе
+		// с Железным человеком, а не висит в точке активации
+		level.playSound(null, player,
 				ModSounds.IRONMAN_JARVIS_DIAGNOSTIC, SoundSource.PLAYERS, 0.8f, 1.0f);
 
 		String quote = JarvisQuotes.randomSuitSwitch();

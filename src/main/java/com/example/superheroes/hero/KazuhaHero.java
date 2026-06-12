@@ -47,6 +47,11 @@ public final class KazuhaHero implements Hero {
 			.build();
 
 	@Override
+	public ResourceLocation getSkinTexture() {
+		return ModId.of("textures/entity/hero/kazuha.png");
+	}
+
+	@Override
 	public ResourceLocation getId() {
 		return ID;
 	}

@@ -1,0 +1,17 @@
+{
+  "sprite_data": {
+    "sprite": "superheroes:textures/particle/scorpion_ember.png"
+  },
+  "render_style": "billboard",
+  "additive": true,
+  "init_modules": [],
+  "update_modules": [],
+  "collision_modules": [],
+  "forces": [],
+  "render_modules": [
+    "superheroes:color/hellfire"
+  ],
+  "face_velocity": false,
+  "velocity_stretch_factor": 0.0,
+  "should_collide": false
+}

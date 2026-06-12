@@ -8,6 +8,7 @@ import com.example.superheroes.client.ClientMadnessState;
 import com.example.superheroes.client.ClientReactorState;
 import com.example.superheroes.client.ClientRemDemonismState;
 import com.example.superheroes.client.RemoteHeroSkins;
+import com.example.superheroes.client.fx.ClientScorpionFx;
 import com.example.superheroes.client.fx.ScreenShakeManager;
 import com.example.superheroes.client.fx.WallImpactDebrisManager;
 import com.example.superheroes.client.hud.BloodRainHud;
@@ -82,6 +83,9 @@ public final class ClientNetworking {
 		ClientPlayNetworking.registerGlobalReceiver(ThanosCosmicBeamS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> CosmicBeamRenderer.add(payload.start(), payload.end())));
 
+		ClientPlayNetworking.registerGlobalReceiver(com.example.superheroes.network.ScorpionFxS2CPayload.TYPE, (payload, context) ->
+				context.client().execute(() -> ClientScorpionFx.play(payload)));
+
 		ClientPlayNetworking.registerGlobalReceiver(ScreenShakeS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> ScreenShakeManager.shake(payload.intensity(), payload.durationTicks())));
 
@@ -142,6 +146,9 @@ public final class ClientNetworking {
 
 		ClientPlayNetworking.registerGlobalReceiver(com.example.superheroes.network.ThinkMarkS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> com.example.superheroes.client.ClientThinkMarkState.update(payload.playerId(), payload.active())));
+
+		ClientPlayNetworking.registerGlobalReceiver(com.example.superheroes.network.HordeDebugS2CPayload.TYPE, (payload, context) ->
+				context.client().execute(() -> com.example.superheroes.client.hud.HordeDebugOverlay.update(payload.text())));
 
 		ClientPlayNetworking.registerGlobalReceiver(com.example.superheroes.network.AdminBuildS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> {

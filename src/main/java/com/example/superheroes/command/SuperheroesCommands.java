@@ -34,6 +34,10 @@ public final class SuperheroesCommands {
 	private static final SuggestionProvider<CommandSourceStack> HERO_SUGGESTIONS =
 			(ctx, builder) -> SharedSuggestionProvider.suggestResource(Heroes.all().keySet(), builder);
 
+	private static final SuggestionProvider<CommandSourceStack> HORDE_TYPE_SUGGESTIONS =
+			(ctx, builder) -> SharedSuggestionProvider.suggest(
+					com.example.superheroes.horde.entity.HordeEntities.SPAWNABLE.keySet(), builder);
+
 	private SuperheroesCommands() {
 	}
 
@@ -93,10 +97,111 @@ public final class SuperheroesCommands {
 												.executes(ctx -> setMobTargets(ctx, false)))
 										.then(Commands.literal("status")
 												.executes(SuperheroesCommands::mobTargetsStatus))))
+						.then(Commands.literal("horde")
+								.then(Commands.literal("start")
+										.executes(SuperheroesCommands::hordeStart))
+								.then(Commands.literal("stop")
+										.executes(SuperheroesCommands::hordeStop))
+								.then(Commands.literal("clear")
+										.executes(SuperheroesCommands::hordeClear))
+								.then(Commands.literal("next")
+										.executes(SuperheroesCommands::hordeNext))
+								.then(Commands.literal("status")
+										.executes(SuperheroesCommands::hordeStatus))
+								.then(Commands.literal("overlay")
+										.executes(SuperheroesCommands::hordeOverlayToggle)
+										.then(Commands.literal("on")
+												.executes(ctx -> hordeOverlaySet(ctx, true)))
+										.then(Commands.literal("off")
+												.executes(ctx -> hordeOverlaySet(ctx, false))))
+								.then(Commands.literal("spawn")
+										.then(Commands.argument("type", com.mojang.brigadier.arguments.StringArgumentType.word())
+												.suggests(HORDE_TYPE_SUGGESTIONS)
+												.executes(ctx -> hordeSpawn(ctx, 1))
+												.then(Commands.argument("count", IntegerArgumentType.integer(1, 50))
+														.executes(ctx -> hordeSpawn(ctx, IntegerArgumentType.getInteger(ctx, "count")))))))
 						.then(Commands.literal("abilities")
 								.executes(SuperheroesCommands::listAbilities))
 						.then(Commands.literal("info")
 								.executes(SuperheroesCommands::info))));
+	}
+
+	// ─────────────────────────────────────────── horde commands ───────────
+
+	private static int hordeStart(CommandContext<CommandSourceStack> ctx) {
+		ServerPlayer player = playerOrNull(ctx);
+		if (player == null) {
+			ctx.getSource().sendFailure(Component.literal("Команда доступна только игроку."));
+			return 0;
+		}
+		net.minecraft.server.level.ServerLevel level = player.serverLevel();
+		com.example.superheroes.horde.HordeManager.startHorde(level, player.position(), player);
+		ctx.getSource().sendSuccess(() -> Component.literal("§cОрда запущена."), true);
+		return 1;
+	}
+
+	private static int hordeStop(CommandContext<CommandSourceStack> ctx) {
+		ServerPlayer player = playerOrNull(ctx);
+		if (player == null) return 0;
+		boolean ok = com.example.superheroes.horde.HordeManager.stopHorde(player.serverLevel());
+		ctx.getSource().sendSuccess(() -> Component.literal(ok ? "§7Орда остановлена." : "§7Активной орды нет."), true);
+		return ok ? 1 : 0;
+	}
+
+	private static int hordeClear(CommandContext<CommandSourceStack> ctx) {
+		ServerPlayer player = playerOrNull(ctx);
+		if (player == null) return 0;
+		int n = com.example.superheroes.horde.HordeManager.clearMobs(player.serverLevel());
+		ctx.getSource().sendSuccess(() -> Component.literal("§7Удалено мобов: §e" + n), true);
+		return n;
+	}
+
+	private static int hordeNext(CommandContext<CommandSourceStack> ctx) {
+		ServerPlayer player = playerOrNull(ctx);
+		if (player == null) return 0;
+		boolean ok = com.example.superheroes.horde.HordeManager.forceNextWave(player.serverLevel());
+		ctx.getSource().sendSuccess(() -> Component.literal(ok ? "§eСледующая волна запущена." : "§7Активной орды нет."), true);
+		return ok ? 1 : 0;
+	}
+
+	private static int hordeStatus(CommandContext<CommandSourceStack> ctx) {
+		ServerPlayer player = playerOrNull(ctx);
+		if (player == null) return 0;
+		String status = com.example.superheroes.horde.HordeManager.getDebugStatus(player.serverLevel());
+		ctx.getSource().sendSuccess(() -> Component.literal(status), false);
+		return 1;
+	}
+
+	private static int hordeOverlayToggle(CommandContext<CommandSourceStack> ctx) {
+		ServerPlayer player = playerOrNull(ctx);
+		if (player == null) return 0;
+		boolean on = com.example.superheroes.horde.HordeManager.toggleOverlay(player);
+		ctx.getSource().sendSuccess(() -> Component.literal("§7Отладочный оверлей орды: " + (on ? "§aВКЛ" : "§cВЫКЛ")), false);
+		return 1;
+	}
+
+	private static int hordeOverlaySet(CommandContext<CommandSourceStack> ctx, boolean enabled) {
+		ServerPlayer player = playerOrNull(ctx);
+		if (player == null) return 0;
+		com.example.superheroes.horde.HordeManager.setOverlay(player, enabled);
+		ctx.getSource().sendSuccess(() -> Component.literal("§7Отладочный оверлей орды: " + (enabled ? "§aВКЛ" : "§cВЫКЛ")), false);
+		return 1;
+	}
+
+	private static int hordeSpawn(CommandContext<CommandSourceStack> ctx, int count) {
+		ServerPlayer player = playerOrNull(ctx);
+		if (player == null) return 0;
+		String type = com.mojang.brigadier.arguments.StringArgumentType.getString(ctx, "type");
+		net.minecraft.world.entity.EntityType<?> entityType =
+				com.example.superheroes.horde.entity.HordeEntities.SPAWNABLE.get(type);
+		if (entityType == null) {
+			ctx.getSource().sendFailure(Component.literal("§cНеизвестный тип: " + type));
+			return 0;
+		}
+		int n = com.example.superheroes.horde.HordeManager.spawnSingle(
+				player.serverLevel(), entityType, player.position(), count);
+		ctx.getSource().sendSuccess(() -> Component.literal("§aЗаспавнено §e" + n + " §a×§f" + type), true);
+		return n;
 	}
 
 	private static int setHero(CommandContext<CommandSourceStack> ctx) {

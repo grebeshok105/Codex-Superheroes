@@ -8,15 +8,29 @@ import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.level.Level;
+import software.bernie.geckolib.animatable.GeoEntity;
+import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.animation.AnimatableManager;
+import software.bernie.geckolib.animation.AnimationController;
+import software.bernie.geckolib.animation.AnimationState;
+import software.bernie.geckolib.animation.PlayState;
+import software.bernie.geckolib.animation.RawAnimation;
+import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.util.UUID;
 
 /**
  * Base class for all horde entities. Tracks the horde instance they belong to
- * and notifies the HordeManager on death.
+ * and notifies the HordeManager on death. Renders via GeckoLib using the
+ * per-mob geo/animation assets resolved by {@link HordeGeoAssets}.
  */
-public abstract class BaseHordeEntity extends Monster {
+public abstract class BaseHordeEntity extends Monster implements GeoEntity {
 	private UUID hordeId;
+	private final AnimatableInstanceCache geoCache = GeckoLibUtil.createInstanceCache(this);
+	private RawAnimation idleAnim;
+	private RawAnimation walkAnim;
+	private RawAnimation attackAnim;
+	private boolean animsResolved;
 
 	protected BaseHordeEntity(EntityType<? extends Monster> type, Level level) {
 		super(type, level);
@@ -111,7 +125,7 @@ public abstract class BaseHordeEntity extends Monster {
 	public void die(DamageSource source) {
 		super.die(source);
 		if (!level().isClientSide() && hordeId != null) {
-			HordeManager.onMobKilled(hordeId);
+			HordeManager.onMobDied(hordeId, getUUID());
 		}
 	}
 
@@ -125,6 +139,52 @@ public abstract class BaseHordeEntity extends Monster {
 	public void readAdditionalSaveData(CompoundTag tag) {
 		super.readAdditionalSaveData(tag);
 		if (tag.hasUUID("HordeId")) hordeId = tag.getUUID("HordeId");
+	}
+
+	// ─────────────────────────────────────────── GeckoLib ─────────────────
+
+	private void resolveAnims() {
+		if (animsResolved) {
+			return;
+		}
+		animsResolved = true;
+		HordeGeoAssets.Anims a = HordeGeoAssets.anims(HordeGeoAssets.geoName(getType()));
+		if (a == null) {
+			return;
+		}
+		if (a.idle() != null) {
+			idleAnim = RawAnimation.begin().thenLoop(a.idle());
+		}
+		if (a.walk() != null) {
+			walkAnim = RawAnimation.begin().thenLoop(a.walk());
+		}
+		if (a.attack() != null) {
+			attackAnim = RawAnimation.begin().thenPlay(a.attack());
+		}
+	}
+
+	private PlayState animState(AnimationState<BaseHordeEntity> state) {
+		resolveAnims();
+		if (idleAnim == null) {
+			return PlayState.STOP;
+		}
+		if (attackAnim != null && this.swinging) {
+			return state.setAndContinue(attackAnim);
+		}
+		if (walkAnim != null && state.isMoving()) {
+			return state.setAndContinue(walkAnim);
+		}
+		return state.setAndContinue(idleAnim);
+	}
+
+	@Override
+	public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
+		controllers.add(new AnimationController<>(this, "main", 4, this::animState));
+	}
+
+	@Override
+	public AnimatableInstanceCache getAnimatableInstanceCache() {
+		return geoCache;
 	}
 
 	@Override

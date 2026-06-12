@@ -1,0 +1,11 @@
+{
+  "max_lifetime": 4,
+  "loop": false,
+  "rate": 1,
+  "count": 20,
+  "emitter_settings": {
+    "shape": "superheroes:scorpion_breath",
+    "particle_settings": "superheroes:scorpion_breath"
+  },
+  "particle_data": "superheroes:scorpion_breath"
+}

@@ -114,6 +114,7 @@ public class SuperheroesMod implements ModInitializer {
 				com.example.superheroes.ability.NarutoOodamaRasenganAbility.serverTick(p);
 				com.example.superheroes.ability.NarutoRasenshurikenAbility.serverTick(p);
 				com.example.superheroes.ability.CapShieldSlamAbility.serverTick(p);
+				com.example.superheroes.ability.RepulsorChargeController.serverTick(p);
 				com.example.superheroes.transform.HeroData data = p
 						.getAttachedOrCreate(com.example.superheroes.attachment.ModAttachments.HERO_DATA);
 				if (data.isActive(com.example.superheroes.ability.AbilityIds.NARUTO_SAGE_MODE)) {

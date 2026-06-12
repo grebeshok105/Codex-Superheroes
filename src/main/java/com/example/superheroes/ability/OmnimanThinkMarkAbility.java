@@ -12,6 +12,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -21,13 +22,15 @@ import java.util.UUID;
 import java.util.WeakHashMap;
 
 /**
- * «Think, Mark!» — фирменный захват Омнимена.
+ * «Think, Mark!» — фирменный захват Омнимена (жёсткий грэб-лок).
  *
  * Фазы:
- *  LIFT  — хватает цель и взмывает с ней вертикально на ~50 блоков (2 секунды);
- *  HOVER — пара секунд зависания: жертва прижата вытянутыми руками, игрок целится;
- *  DASH  — рывок на бешеной скорости в направлении взгляда, цель в руках,
- *          всё на пути проламывается; финал — удар о землю с шоквейвом.
+ *  GRAB  — цель схвачена и ПОЛНОСТЬЮ обездвижена: моб теряет ИИ, гравитацию и
+ *          физику, игрок-цель якорится телепортом каждый тик. Омнимен свободно
+ *          двигается/летает, держа жертву вытянутыми руками. Никакого
+ *          авто-подъёма — захват держится на месте, где взяли.
+ *  DASH  — по нажатию ПКМ (use) Омнимен срывается в рывок в направлении взгляда,
+ *          жертва в руках, всё на пути проламывается; финал — удар с шоквейвом.
  *
  * Урон умышленно небольшой: это зрелище, а не экзекуция.
  */
@@ -35,10 +38,8 @@ public final class OmnimanThinkMarkAbility implements Ability {
 	private static final int COOLDOWN_TICKS = 400;
 	private static final float COST = 85f;
 	private static final double GRAB_RANGE = 6.0;
-	private static final int LIFT_TICKS = 40;
-	private static final double LIFT_HEIGHT = 50.0;
-	private static final int HOVER_TICKS = 50;
-	private static final int DASH_MAX_TICKS = 60;
+	private static final int MAX_HOLD_TICKS = 200; // 10s максимум удержания без рывка
+	private static final int DASH_MAX_TICKS = 60;  // ~3s рывок
 	private static final double DASH_SPEED = 4.2;
 	private static final float DASH_TICK_DAMAGE = 1.5f;
 	private static final float SLAM_DAMAGE = 6.0f;
@@ -78,7 +79,9 @@ public final class OmnimanThinkMarkAbility implements Ability {
 			return false;
 		}
 
-		ACTIVE.put(player.getUUID(), new State(target));
+		State state = new State(target);
+		lockTarget(state);
+		ACTIVE.put(player.getUUID(), state);
 		setPose(player, true);
 
 		ServerLevel level = player.serverLevel();
@@ -87,9 +90,26 @@ public final class OmnimanThinkMarkAbility implements Ability {
 		level.sendParticles(ParticleTypes.EXPLOSION,
 				target.getX(), target.getY() + target.getBbHeight() * 0.5, target.getZ(),
 				1, 0.0, 0.0, 0.0, 0.0);
+		player.displayClientMessage(
+				Component.literal("§c§lThink, Mark! §7— ПКМ чтобы метнуть"), true);
 
 		AbilityCooldowns.setCooldownTicks(player, getId(), COOLDOWN_TICKS);
 		return true;
+	}
+
+	/** Triggered by RMB (use) from the client while the grab is active. */
+	public static void triggerDash(ServerPlayer player) {
+		State state = ACTIVE.get(player.getUUID());
+		if (state == null || state.phase != Phase.GRAB) {
+			return;
+		}
+		state.phase = Phase.DASH;
+		state.ticks = 0;
+		ServerLevel level = player.serverLevel();
+		Vec3 c = player.position();
+		level.playSound(null, c.x, c.y, c.z,
+				SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 1.6f, 0.7f);
+		level.sendParticles(ParticleTypes.SONIC_BOOM, c.x, c.y + 1.0, c.z, 1, 0.0, 0.0, 0.0, 0.0);
 	}
 
 	public static void serverTick(ServerPlayer player) {
@@ -109,49 +129,27 @@ public final class OmnimanThinkMarkAbility implements Ability {
 		target.fallDistance = 0f;
 
 		switch (state.phase) {
-			case LIFT -> tickLift(player, target, state, level);
-			case HOVER -> tickHover(player, target, state, level);
+			case GRAB -> tickGrab(player, target, state, level);
 			case DASH -> tickDash(player, target, state, level);
 		}
 	}
 
-	private static void tickLift(ServerPlayer player, LivingEntity target, State state, ServerLevel level) {
-		Vec3 up = new Vec3(0.0, LIFT_HEIGHT / LIFT_TICKS, 0.0);
-		applyMotion(player, up);
+	private static void tickGrab(ServerPlayer player, LivingEntity target, State state, ServerLevel level) {
+		// Омнимен двигается свободно; жертва жёстко прижата к рукам.
 		holdTarget(player, target);
 
-		Vec3 c = player.position();
-		level.sendParticles(ParticleTypes.CLOUD, c.x, c.y - 0.4, c.z, 6, 0.3, 0.2, 0.3, 0.06);
-		level.sendParticles(ParticleTypes.ELECTRIC_SPARK, c.x, c.y + 1.0, c.z, 3, 0.4, 0.6, 0.4, 0.03);
-
-		if (state.ticks >= LIFT_TICKS) {
-			state.phase = Phase.HOVER;
-			state.ticks = 0;
-			level.playSound(null, c.x, c.y, c.z,
-					SoundEvents.WARDEN_HEARTBEAT, SoundSource.PLAYERS, 2.0f, 0.8f);
+		Vec3 c = player.getEyePosition().add(player.getViewVector(1f).normalize().scale(1.1));
+		if (state.ticks % 8 == 0) {
+			level.sendParticles(ParticleTypes.END_ROD, c.x, c.y, c.z, 3, 0.4, 0.3, 0.4, 0.01);
+			level.sendParticles(ParticleTypes.ELECTRIC_SPARK, c.x, c.y, c.z, 2, 0.3, 0.3, 0.3, 0.02);
 		}
-	}
-
-	private static void tickHover(ServerPlayer player, LivingEntity target, State state, ServerLevel level) {
-		applyMotion(player, Vec3.ZERO);
-		holdTarget(player, target);
-
-		Vec3 c = player.position();
-		if (state.ticks % 10 == 0) {
-			level.sendParticles(ParticleTypes.END_ROD, c.x, c.y + 1.2, c.z, 4, 0.8, 0.5, 0.8, 0.01);
-		}
-		if (state.ticks == HOVER_TICKS / 2) {
-			// Драматическая пауза: «Think, Mark!»
+		if (state.ticks == 25) {
 			level.playSound(null, c.x, c.y, c.z,
 					SoundEvents.ELDER_GUARDIAN_CURSE, SoundSource.PLAYERS, 1.1f, 1.6f);
 		}
 
-		if (state.ticks >= HOVER_TICKS) {
-			state.phase = Phase.DASH;
-			state.ticks = 0;
-			level.playSound(null, c.x, c.y, c.z,
-					SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 1.6f, 0.7f);
-			level.sendParticles(ParticleTypes.SONIC_BOOM, c.x, c.y + 1.0, c.z, 1, 0.0, 0.0, 0.0, 0.0);
+		if (state.ticks >= MAX_HOLD_TICKS) {
+			finish(player, target);
 		}
 	}
 
@@ -163,7 +161,6 @@ public final class OmnimanThinkMarkAbility implements Ability {
 		applyMotion(player, direction.scale(DASH_SPEED));
 		holdTarget(player, target);
 
-		// Небольшой периодический урон цели — телом о воздух и обломки.
 		if (state.ticks % 10 == 0) {
 			target.hurt(level.damageSources().playerAttack(player), DASH_TICK_DAMAGE);
 		}
@@ -178,20 +175,23 @@ public final class OmnimanThinkMarkAbility implements Ability {
 		}
 
 		boolean hitWall = false;
-		if (player.horizontalCollision || player.verticalCollision || player.onGround()) {
+		if (player.horizontalCollision || player.verticalCollision) {
 			Vec3 contact = player.position().add(direction.scale(0.6)).add(0.0, player.getBbHeight() * 0.5, 0.0);
 			int broken = RushTerrainBreaker.breakContact(level, player, contact, direction, 2.4, 120);
 			hitWall = broken == 0;
 		}
 
-		if (hitWall || state.ticks >= DASH_MAX_TICKS || (state.ticks > 8 && player.onGround())) {
+		if (hitWall || state.ticks >= DASH_MAX_TICKS) {
 			finish(player, target);
 		}
 	}
 
 	private static void finish(ServerPlayer player, LivingEntity target) {
-		ACTIVE.remove(player.getUUID());
+		State state = ACTIVE.remove(player.getUUID());
 		setPose(player, false);
+		if (state != null) {
+			unlockTarget(state);
+		}
 		ServerLevel level = player.serverLevel();
 		Vec3 c = player.position();
 		if (target != null && target.isAlive()) {
@@ -207,7 +207,9 @@ public final class OmnimanThinkMarkAbility implements Ability {
 	}
 
 	public static void clear(ServerPlayer player) {
-		if (ACTIVE.remove(player.getUUID()) != null) {
+		State state = ACTIVE.remove(player.getUUID());
+		if (state != null) {
+			unlockTarget(state);
 			setPose(player, false);
 		}
 	}
@@ -216,7 +218,35 @@ public final class OmnimanThinkMarkAbility implements Ability {
 		return ACTIVE.containsKey(player.getUUID());
 	}
 
-	/** Прижимаем цель к груди перед вытянутыми руками. */
+	// ─────────────────────────────────────────── grab-lock ────────────────
+
+	/** Hard-lock the victim: kill its AI / gravity / physics so it cannot act or fall. */
+	private static void lockTarget(State state) {
+		LivingEntity target = state.target;
+		state.wasNoGravity = target.isNoGravity();
+		target.setNoGravity(true);
+		if (target instanceof Mob mob) {
+			state.wasNoAi = mob.isNoAi();
+			mob.setNoAi(true);
+			mob.setTarget(null);
+			mob.noPhysics = true; // протаскиваем сквозь блоки, не застревая
+		}
+		target.setDeltaMovement(Vec3.ZERO);
+	}
+
+	private static void unlockTarget(State state) {
+		LivingEntity target = state.target;
+		if (target == null) {
+			return;
+		}
+		target.setNoGravity(state.wasNoGravity);
+		if (target instanceof Mob mob) {
+			mob.setNoAi(state.wasNoAi);
+			mob.noPhysics = false;
+		}
+	}
+
+	/** Прижимаем цель к груди перед вытянутыми руками и держим намертво. */
 	private static void holdTarget(ServerPlayer player, LivingEntity target) {
 		Vec3 look = player.getViewVector(1f).normalize();
 		Vec3 hold = player.getEyePosition()
@@ -224,7 +254,13 @@ public final class OmnimanThinkMarkAbility implements Ability {
 				.subtract(0.0, target.getBbHeight() * 0.5, 0.0);
 		target.teleportTo(hold.x, hold.y, hold.z);
 		target.setDeltaMovement(Vec3.ZERO);
+		target.setNoGravity(true);
 		target.hurtMarked = true;
+		// Игрока-жертву дополнительно «осаживаем» нулевым импульсом на клиенте.
+		if (target instanceof ServerPlayer victim) {
+			victim.connection.send(new ClientboundSetEntityMotionPacket(victim.getId(), Vec3.ZERO));
+			victim.hurtMarked = true;
+		}
 	}
 
 	private static void applyMotion(ServerPlayer player, Vec3 motion) {
@@ -269,15 +305,16 @@ public final class OmnimanThinkMarkAbility implements Ability {
 	}
 
 	private enum Phase {
-		LIFT,
-		HOVER,
+		GRAB,
 		DASH
 	}
 
 	private static final class State {
 		final LivingEntity target;
-		Phase phase = Phase.LIFT;
+		Phase phase = Phase.GRAB;
 		int ticks;
+		boolean wasNoAi;
+		boolean wasNoGravity;
 
 		State(LivingEntity target) {
 			this.target = target;

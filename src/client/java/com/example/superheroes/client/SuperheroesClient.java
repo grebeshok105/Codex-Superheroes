@@ -55,6 +55,7 @@ public class SuperheroesClient implements ClientModInitializer {
 		com.example.superheroes.client.render.WildShaders.register();
 		LaserBeamRenderer.register();
 		RepulsorBeamRenderer.register();
+		com.example.superheroes.client.render.IronManEspRenderer.register();
 		CosmicBeamRenderer.register();
 		LocalLaserOverlay.register();
 		EntityRendererRegistry.register(EntityType.LIGHTNING_BOLT, SuperheroLightningRenderer::new);
@@ -62,9 +63,11 @@ public class SuperheroesClient implements ClientModInitializer {
 		EntityRendererRegistry.register(ModEntities.SHADOW_SOLDIER, com.example.superheroes.client.render.ShadowSoldierRenderer::new);
 		EntityRendererRegistry.register(ModEntities.KAGE_BUNSHIN, com.example.superheroes.client.render.KageBunshinRenderer::new);
 		EntityRendererRegistry.register(ModEntities.SHIELD_PROJECTILE, com.example.superheroes.client.render.ShieldProjectileRenderer::new);
+		EntityRendererRegistry.register(ModEntities.SMART_MISSILE, com.example.superheroes.client.render.SmartMissileRenderer::new);
 		EntityRendererRegistry.register(ModEntities.RAM, com.example.superheroes.client.render.RamRenderer::new);
 		EntityRendererRegistry.register(ModEntities.IRON_LEGION_DRONE, com.example.superheroes.client.render.IronLegionDroneRenderer::new);
-		// Horde entity renderers
+		// Horde entity renderers — vanilla models matched to each mob's texture UV
+		// (custom geo/textures are mismatched imports → garbled UVs, deferred to a proper import PR).
 		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.CRAWLER, com.example.superheroes.client.render.horde.GenericHordeRenderer.spider("crawler", 0.4f, 0.55f));
 		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.LURKER, com.example.superheroes.client.render.horde.GenericHordeRenderer.humanoid("lurker", 0.4f, 0.72f));
 		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.SPITTER, com.example.superheroes.client.render.horde.GenericHordeRenderer.humanoid("spitter", 0.35f, 0.62f));
@@ -85,6 +88,11 @@ public class SuperheroesClient implements ClientModInitializer {
 		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.LEVIATHAN, com.example.superheroes.client.render.horde.GenericHordeRenderer.humanoid("leviathan", 1.0f, 1.54f));
 		com.example.superheroes.horde.entity.HordeEntities hordeRef = null; // static init trigger
 		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.INFECTED_HOMELANDER, com.example.superheroes.client.render.horde.InfectedHomelanderRenderer::new);
+		// Horde bomb projectiles render as thrown items.
+		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.ACID_BOMB,
+				ctx -> new net.minecraft.client.renderer.entity.ThrownItemRenderer<>(ctx, 1.0f, false));
+		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.FIRE_BOMB,
+				ctx -> new net.minecraft.client.renderer.entity.ThrownItemRenderer<>(ctx, 1.0f, false));
 		LivingEntityFeatureRendererRegistrationCallback.EVENT.register((entityType, entityRenderer, registrationHelper, context) -> {
 			if (entityRenderer instanceof PlayerRenderer playerRenderer) {
 				registrationHelper.register(new RemOniHornFeatureRenderer(playerRenderer));
@@ -171,6 +179,7 @@ public class SuperheroesClient implements ClientModInitializer {
 			com.example.superheroes.client.hud.DoomsdayGlitchHud.render(graphics, tracker);
 			com.example.superheroes.client.hud.ReinhardCeremonyOverlay.render(graphics, tracker);
 			com.example.superheroes.client.hud.AbilitiesTooltipHud.render(graphics, tracker);
+			com.example.superheroes.client.hud.HordeDebugOverlay.render(graphics, tracker);
 			{
 				int[] mcOff = com.example.superheroes.client.hud.HudLayoutManager.offset(
 						com.example.superheroes.client.hud.HudLayoutManager.MELEE_CHARGE);
@@ -184,8 +193,12 @@ public class SuperheroesClient implements ClientModInitializer {
 		});
 
 		ClientTickEvents.START_CLIENT_TICK.register(SuperheroesClient::tickHeroMeleeCharge);
+		ClientTickEvents.START_CLIENT_TICK.register(SuperheroesClient::tickThinkMarkDash);
 		ClientTickEvents.END_CLIENT_TICK.register(com.example.superheroes.client.ClientNanoSuitUpState::clientTick);
 		ClientTickEvents.END_CLIENT_TICK.register(com.example.superheroes.client.hud.JarvisDetectionHud::tick);
+		ClientTickEvents.END_CLIENT_TICK.register(SuperheroesClient::tickNanoWeaponSelect);
+		ClientTickEvents.END_CLIENT_TICK.register(SuperheroesClient::tickEspToggle);
+		ClientTickEvents.END_CLIENT_TICK.register(SuperheroesClient::tickRepulsorCharge);
 
 		// "HUD" button in the pause menu -> drag editor for all HUD elements
 		net.fabricmc.fabric.api.client.screen.v1.ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
@@ -266,6 +279,49 @@ public class SuperheroesClient implements ClientModInitializer {
 			meleeChargeTicks = 0;
 		});
 
+	}
+
+	private static boolean thinkMarkUseWasDown = false;
+
+	/** While the Omni-Man grab is active, RMB (use) launches the dash/slam. */
+	private static void tickNanoWeaponSelect(Minecraft client) {
+		if (client.player == null || !ClientHeroState.data().hasHero()
+				|| !com.example.superheroes.hero.IronManHero.ID.equals(ClientHeroState.data().heroId())) {
+			return;
+		}
+		while (ModKeys.NANO_WEAPON.consumeClick()) {
+			com.example.superheroes.client.ClientNanoWeaponState.cycle(1);
+		}
+	}
+
+	private static void tickEspToggle(Minecraft client) {
+		if (client.player == null || !ClientHeroState.data().hasHero()
+				|| !com.example.superheroes.hero.IronManHero.ID.equals(ClientHeroState.data().heroId())) {
+			return;
+		}
+		while (ModKeys.ESP_TOGGLE.consumeClick()) {
+			com.example.superheroes.client.render.IronManEspRenderer.cycleMode();
+		}
+	}
+
+	private static void tickRepulsorCharge(Minecraft client) {
+		boolean ironMan = client.player != null && ClientHeroState.data().hasHero()
+				&& com.example.superheroes.hero.IronManHero.ID.equals(ClientHeroState.data().heroId());
+		boolean sneaking = client.player != null && client.player.isShiftKeyDown();
+		com.example.superheroes.client.ClientRepulsorChargeState.clientTick(ironMan, sneaking);
+	}
+
+	private static void tickThinkMarkDash(Minecraft client) {
+		if (client.player == null || client.level == null) {
+			thinkMarkUseWasDown = false;
+			return;
+		}
+		boolean grabbing = com.example.superheroes.client.ClientThinkMarkState.isActive(client.player.getUUID());
+		boolean useDown = client.screen == null && client.options.keyUse.isDown();
+		if (grabbing && useDown && !thinkMarkUseWasDown) {
+			ClientPlayNetworking.send(new com.example.superheroes.network.ThinkMarkDashC2SPayload());
+		}
+		thinkMarkUseWasDown = useDown;
 	}
 
 	private static void tickHeroMeleeCharge(Minecraft client) {

@@ -9,6 +9,12 @@ group = project.maven_group
 repositories {
 	mavenCentral()
 
+	// Veil (Foundry) — render framework for the experimental shader layer
+	maven {
+		name = 'BlameJared'
+		url = 'https://maven.blamejared.com'
+	}
+
 	exclusiveContent {
 		forRepository {
 			maven {
@@ -63,8 +69,15 @@ dependencies {
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 
-	// GeckoLib — 3D animated models (used by Slenderman hero)
+	// GeckoLib — 3D animated models (horde mobs render via GeckoLib geo/animations).
+	// Bundled (jar-in-jar) so the shipped jar is self-contained: the mod now
+	// HARD-requires GeckoLib at runtime (BaseHordeEntity implements GeoEntity).
 	modImplementation "software.bernie.geckolib:geckolib-fabric-1.21:4.5.8"
+	include "software.bernie.geckolib:geckolib-fabric-1.21:4.5.8"
+
+	// Veil — render framework powering Scorpion's shader FX (Quasar particles, bloom, dynamic light).
+	// Optional at runtime: code is guarded by FabricLoader.isModLoaded("veil").
+	modImplementation "foundry.veil:veil-fabric-1.21.1:${project.veil_version}"
 
 	testImplementation platform("org.junit:junit-bom:5.10.2")
 	testImplementation "org.junit.jupiter:junit-jupiter"

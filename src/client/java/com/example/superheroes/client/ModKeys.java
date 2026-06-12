@@ -14,6 +14,8 @@ public final class ModKeys {
 	public static KeyMapping SUPER_JUMP;
 	public static KeyMapping VFX_SETTINGS;
 	public static KeyMapping RAIDEN_SWORD_DRAW;
+	public static KeyMapping NANO_WEAPON;
+	public static KeyMapping ESP_TOGGLE;
 	public static KeyMapping[] ABILITY_SLOTS;
 
 	/** Fixed physical-key labels for ability slots, independent of keyboard layout. */
@@ -63,6 +65,16 @@ public final class ModKeys {
 				"key.superheroes.raiden_sword_draw",
 				InputConstants.Type.KEYSYM,
 				GLFW.GLFW_KEY_F,
+				CATEGORY));
+		NANO_WEAPON = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+				"key.superheroes.nano_weapon",
+				InputConstants.Type.KEYSYM,
+				GLFW.GLFW_KEY_N,
+				CATEGORY));
+		ESP_TOGGLE = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+				"key.superheroes.esp_toggle",
+				InputConstants.Type.KEYSYM,
+				GLFW.GLFW_KEY_K,
 				CATEGORY));
 		ABILITY_SLOTS = new KeyMapping[DEFAULT_SLOT_KEYS.length];
 		for (int i = 0; i < DEFAULT_SLOT_KEYS.length; i++) {

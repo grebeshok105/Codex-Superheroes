@@ -1,0 +1,14 @@
+{
+  "shape": "cylinder",
+  "dimensions": [
+    0.9,
+    3.5,
+    0.9
+  ],
+  "rotation": [
+    0,
+    0,
+    0
+  ],
+  "from_surface": false
+}

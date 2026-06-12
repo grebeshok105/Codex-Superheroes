@@ -265,7 +265,7 @@ public class InfectedHomelanderBossEntity extends Monster {
 		super.die(source);
 		bossEvent.removeAllPlayers();
 		if (!level().isClientSide() && hordeId != null) {
-			HordeManager.onMobKilled(hordeId);
+			HordeManager.onMobDied(hordeId, getUUID());
 		}
 		broadcastDeathMessage();
 	}

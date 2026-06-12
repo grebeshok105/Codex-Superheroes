@@ -40,6 +40,14 @@ public class GuiHotbarMixin {
 	private void superheroes$hideCrosshairInRadial(GuiGraphics graphics, DeltaTracker tracker, CallbackInfo ci) {
 		if (com.example.superheroes.client.hud.RadialMenuHud.isOpen()) {
 			ci.cancel();
+			return;
+		}
+		// Железный Человек: у него собственный арк-реактор-прицел J.A.R.V.I.S.,
+		// ванильный крестик прячем, чтобы не дублировался по центру.
+		var data = com.example.superheroes.client.ClientHeroState.data();
+		if (data.hasHero() && com.example.superheroes.hero.IronManHero.ID.equals(data.heroId())
+				&& !net.minecraft.client.Minecraft.getInstance().options.hideGui) {
+			ci.cancel();
 		}
 	}
 }

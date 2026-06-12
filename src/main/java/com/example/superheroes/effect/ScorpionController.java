@@ -40,8 +40,6 @@ public final class ScorpionController {
 	private static final float BREATH_DAMAGE_PER_HIT = 2.0f;
 
 	private static final int PASSIVE_REFRESH_INTERVAL = 20;
-	private static final int AURA_INTERVAL = 40;
-	private static final double AURA_RADIUS = 2.6;
 
 	private record SpearPull(UUID owner, long startedAt) {
 	}
@@ -207,6 +205,9 @@ public final class ScorpionController {
 			level.playSound(null, player.getX(), player.getY(), player.getZ(),
 					SoundEvents.BLAZE_BURN, SoundSource.PLAYERS, 1.1f, 0.75f);
 		}
+		if (player.tickCount % 8 == 0) {
+			ScorpionFx.breath(level, eye.add(forward.scale(0.8)), forward);
+		}
 		player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 8, 0, true, false, false));
 
 		if (player.tickCount % 4 != 0) {
@@ -250,19 +251,6 @@ public final class ScorpionController {
 				level.sendParticles(ParticleTypes.SMALL_FLAME,
 						player.getX(), player.getY() + 0.15, player.getZ(),
 						2, 0.30, 0.05, 0.30, 0.01);
-			}
-			if (tick % AURA_INTERVAL == 0) {
-				boolean burned = false;
-				AABB aura = player.getBoundingBox().inflate(AURA_RADIUS);
-				for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, aura,
-						t -> isValidTarget(player, t))) {
-					target.igniteForSeconds(2f);
-					burned = true;
-				}
-				if (burned) {
-					level.playSound(null, player.getX(), player.getY(), player.getZ(),
-							SoundEvents.FIRECHARGE_USE, SoundSource.PLAYERS, 0.45f, 1.4f);
-				}
 			}
 		}
 	}

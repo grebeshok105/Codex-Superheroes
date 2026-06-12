@@ -6,6 +6,8 @@ import com.example.superheroes.client.ClientAbilityFilter;
 import com.example.superheroes.client.ClientHeroState;
 import com.example.superheroes.client.ClientThanosState;
 import com.example.superheroes.client.ModKeys;
+import com.example.superheroes.client.render.WildRenderer;
+import com.example.superheroes.client.render.WildShaders;
 import com.example.superheroes.hero.ThanosHero;
 import com.example.superheroes.item.ModItems;
 import com.example.superheroes.item.infinity.InfinityStoneType;
@@ -365,16 +367,25 @@ public final class RadialMenuHud {
 		drawDisk(graphics, tipX, tipY, 2, core);
 	}
 
-	/** Filled circle via horizontal scanlines. */
+	/** Filled circle — gladkij GLSL-disk, fallback na scanlines. */
 	private static void drawDisk(GuiGraphics g, int cx, int cy, int r, int color) {
+		if (WildShaders.circleReady()) {
+			WildRenderer.orb(g, cx, cy, r, color, 0, 0f, 0, 0f);
+			return;
+		}
 		for (int dy = -r; dy <= r; dy++) {
 			int span = (int) Math.sqrt((double) r * r - (double) dy * dy);
 			g.fill(cx - span, cy + dy, cx + span, cy + dy + 1, color);
 		}
 	}
 
-	/** Filled ring (annulus) via horizontal scanlines. */
+	/** Filled ring (annulus) — gladkoe GLSL-kolco, fallback na scanlines. */
 	private static void drawAnnulus(GuiGraphics g, int cx, int cy, int r0, int r1, int color) {
+		if (WildShaders.circleReady()) {
+			float w = Math.max(1f, r1 - r0);
+			WildRenderer.ring(g, cx, cy, (r0 + r1) / 2f, w, color, 0, 0f);
+			return;
+		}
 		for (int dy = -r1; dy <= r1; dy++) {
 			long d2 = (long) dy * dy;
 			int xOut = (int) Math.sqrt((double) r1 * r1 - d2);
@@ -394,6 +405,12 @@ public final class RadialMenuHud {
 	 * full-disk scan did hundreds of thousands of atan2 calls per frame and lagged.
 	 */
 	private static void drawWedge(GuiGraphics g, int cx, int cy, int r0, int r1, float a0, float a1, int color) {
+		// GLSL: gladkij kolcevoj sektor s AA-kromkami (shejder sam konvertiruet
+		// ekrannye ugly -> matematicheskie). Geometrija ta zhe, fallback nizhe.
+		if (WildShaders.sectorReady()) {
+			WildRenderer.sector(g, cx, cy, r0, r1, a0, a1, color, 0, 0f, 0, 0f);
+			return;
+		}
 		// Bounding box of the sector: corners at a0/a1 (r0 and r1) plus axis
 		// crossings (0, 90, 180, 270 deg) at r1 when inside the angular range.
 		int minX = Integer.MAX_VALUE, maxX = Integer.MIN_VALUE;

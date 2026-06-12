@@ -16,9 +16,8 @@ import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.monster.RangedAttackMob;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.projectile.SmallFireball;
+import com.example.superheroes.horde.entity.projectile.HordeFireBombEntity;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.Vec3;
 
 public class HordeSpitterEntity extends BaseHordeEntity implements RangedAttackMob {
 	public HordeSpitterEntity(EntityType<? extends HordeSpitterEntity> type, Level level) {
@@ -45,13 +44,17 @@ public class HordeSpitterEntity extends BaseHordeEntity implements RangedAttackM
 
 	@Override
 	public void performRangedAttack(LivingEntity target, float velocity) {
-		Vec3 dir = target.position().subtract(position()).normalize();
-		SmallFireball fireball = new SmallFireball(level(), this, new Vec3(dir.x, dir.y + 0.1, dir.z));
-		fireball.setPos(getX() + dir.x, getEyeY(), getZ() + dir.z);
-		level().addFreshEntity(fireball);
+		// Lob an arcing fire bomb (ignite blast on impact, no block damage).
+		HordeFireBombEntity bomb = new HordeFireBombEntity(this, level());
+		double dx = target.getX() - getX();
+		double dy = target.getY(0.5) - bomb.getY();
+		double dz = target.getZ() - getZ();
+		double horiz = Math.sqrt(dx * dx + dz * dz);
+		bomb.shoot(dx, dy + horiz * 0.18, dz, 1.05f, 4.0f);
+		level().addFreshEntity(bomb);
 		playSound(SoundEvents.BLAZE_SHOOT, 0.8f, 0.6f);
 		if (level() instanceof ServerLevel sl) {
-			sl.sendParticles(ParticleTypes.ITEM_SLIME, getX(), getEyeY(), getZ(), 6, 0.2, 0.2, 0.2, 0.05);
+			sl.sendParticles(ParticleTypes.FLAME, getX(), getEyeY(), getZ(), 6, 0.2, 0.2, 0.2, 0.02);
 		}
 	}
 }

@@ -13,6 +13,9 @@ import java.nio.file.Path;
 public final class SuperheroesClientConfig {
 	public enum VfxMode { CUSTOM, LEGACY }
 
+	/** Форма иконок способностей в HUD: круглые орбы или квадратные чипы. */
+	public enum IconStyle { ROUND, SQUARE }
+
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 	private static final Path PATH = FabricLoader.getInstance().getConfigDir().resolve("superheroes-client.json");
 	private static Data DATA = new Data();
@@ -27,6 +30,19 @@ public final class SuperheroesClientConfig {
 	public static void setVfxMode(VfxMode mode) {
 		DATA.vfxMode = mode;
 		save();
+	}
+
+	public static IconStyle iconStyle() {
+		return DATA.iconStyle == null ? IconStyle.ROUND : DATA.iconStyle;
+	}
+
+	public static void setIconStyle(IconStyle style) {
+		DATA.iconStyle = style;
+		save();
+	}
+
+	public static void toggleIconStyle() {
+		setIconStyle(iconStyle() == IconStyle.ROUND ? IconStyle.SQUARE : IconStyle.ROUND);
 	}
 
 	public static void load() {
@@ -56,5 +72,6 @@ public final class SuperheroesClientConfig {
 
 	private static final class Data {
 		VfxMode vfxMode = VfxMode.CUSTOM;
+		IconStyle iconStyle = IconStyle.ROUND;
 	}
 }

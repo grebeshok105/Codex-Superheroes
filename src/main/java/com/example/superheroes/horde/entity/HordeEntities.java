@@ -66,6 +66,45 @@ public final class HordeEntities {
 			EntityType.Builder.of(InfectedHomelanderBossEntity::new, MobCategory.MONSTER)
 					.sized(0.6f, 1.95f).clientTrackingRange(16).fireImmune());
 
+	// Ranged "bomb" projectiles thrown by horde mobs (acid = poison cloud, fire = ignite blast).
+	public static final EntityType<com.example.superheroes.horde.entity.projectile.HordeAcidBombEntity> ACID_BOMB =
+			register("horde_acid_bomb",
+					EntityType.Builder.<com.example.superheroes.horde.entity.projectile.HordeAcidBombEntity>of(
+									com.example.superheroes.horde.entity.projectile.HordeAcidBombEntity::new, MobCategory.MISC)
+							.sized(0.35f, 0.35f).clientTrackingRange(8).updateInterval(4));
+	public static final EntityType<com.example.superheroes.horde.entity.projectile.HordeFireBombEntity> FIRE_BOMB =
+			register("horde_fire_bomb",
+					EntityType.Builder.<com.example.superheroes.horde.entity.projectile.HordeFireBombEntity>of(
+									com.example.superheroes.horde.entity.projectile.HordeFireBombEntity::new, MobCategory.MISC)
+							.sized(0.35f, 0.35f).clientTrackingRange(8).updateInterval(4));
+
+	/** Short name → entity type, for the {@code /superheroes horde spawn} command (excludes bomb projectiles). */
+	public static final java.util.Map<String, EntityType<?>> SPAWNABLE = buildSpawnable();
+
+	private static java.util.Map<String, EntityType<?>> buildSpawnable() {
+		java.util.LinkedHashMap<String, EntityType<?>> m = new java.util.LinkedHashMap<>();
+		m.put("crawler", CRAWLER);
+		m.put("lurker", LURKER);
+		m.put("spitter", SPITTER);
+		m.put("swooper", SWOOPER);
+		m.put("stalker", STALKER);
+		m.put("infector", INFECTOR);
+		m.put("parasitic_hound", PARASITIC_HOUND);
+		m.put("infected_zombie", INFECTED_ZOMBIE);
+		m.put("infected_skeleton", INFECTED_SKELETON);
+		m.put("infected_spider", INFECTED_SPIDER);
+		m.put("infected_creeper", INFECTED_CREEPER);
+		m.put("void_parasite", VOID_PARASITE);
+		m.put("hollow_villager", HOLLOW_VILLAGER);
+		m.put("infected_cattle", INFECTED_CATTLE);
+		m.put("broodmother", BROODMOTHER);
+		m.put("corrupted_golem", CORRUPTED_GOLEM);
+		m.put("hivemind", HIVEMIND);
+		m.put("leviathan", LEVIATHAN);
+		m.put("infected_homelander", INFECTED_HOMELANDER);
+		return java.util.Collections.unmodifiableMap(m);
+	}
+
 	private static <T extends net.minecraft.world.entity.Entity> EntityType<T> register(
 			String name, EntityType.Builder<T> builder) {
 		return Registry.register(BuiltInRegistries.ENTITY_TYPE, ModId.of(name), builder.build(name));
