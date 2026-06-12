@@ -198,6 +198,7 @@ public class SuperheroesClient implements ClientModInitializer {
 		ClientTickEvents.END_CLIENT_TICK.register(com.example.superheroes.client.hud.JarvisDetectionHud::tick);
 		ClientTickEvents.END_CLIENT_TICK.register(SuperheroesClient::tickNanoWeaponSelect);
 		ClientTickEvents.END_CLIENT_TICK.register(SuperheroesClient::tickEspToggle);
+		ClientTickEvents.END_CLIENT_TICK.register(SuperheroesClient::tickRepulsorCharge);
 
 		// "HUD" button in the pause menu -> drag editor for all HUD elements
 		net.fabricmc.fabric.api.client.screen.v1.ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
@@ -301,6 +302,13 @@ public class SuperheroesClient implements ClientModInitializer {
 		while (ModKeys.ESP_TOGGLE.consumeClick()) {
 			com.example.superheroes.client.render.IronManEspRenderer.cycleMode();
 		}
+	}
+
+	private static void tickRepulsorCharge(Minecraft client) {
+		boolean ironMan = client.player != null && ClientHeroState.data().hasHero()
+				&& com.example.superheroes.hero.IronManHero.ID.equals(ClientHeroState.data().heroId());
+		boolean sneaking = client.player != null && client.player.isShiftKeyDown();
+		com.example.superheroes.client.ClientRepulsorChargeState.clientTick(ironMan, sneaking);
 	}
 
 	private static void tickThinkMarkDash(Minecraft client) {

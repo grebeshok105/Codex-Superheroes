@@ -1,6 +1,7 @@
 package com.example.superheroes.client.render;
 
 import com.example.superheroes.client.ClientHeroState;
+import com.example.superheroes.client.RemoteHeroSkins;
 import com.example.superheroes.hero.IronManHero;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
@@ -15,21 +16,35 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.animal.IronGolem;
+import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Target-ESP Железного Человека (J.A.R.V.I.S. tactical scan). Подсвечивает живые
- * цели сквозь стены (wallhack) уголковыми скобами «захвата» или полным боксом,
- * с HP-полосой и подписью (имя/класс/дистанция). Цвет — по здоровью цели
- * (зелёный→красный), игроки выделяются cyan-акцентом. Рисуется только когда
- * локальный игрок — Железный Человек. Чистый клиентский ре-имплемент.
+ * Target-ESP Железного Человека (J.A.R.V.I.S. tactical scan), радиус 50 блоков.
+ *
+ * <p>Логика целей по запросу:
+ * <ul>
+ *   <li><b>Игроки-герои</b> (трансформированные) — всегда, сквозь стены (wallhack).</li>
+ *   <li><b>Враждебные мобы</b> — только в поле зрения и при прямой видимости
+ *       (raycast), БЕЗ просвечивания сквозь стены.</li>
+ *   <li><b>Железный голем</b> — только если он агрессивен (есть цель/атаковал),
+ *       по тем же правилам видимости, что и мобы.</li>
+ *   <li>Обычные игроки и мирные мобы — не подсвечиваются.</li>
+ * </ul>
+ * Акцент — красный (J.A.R.V.I.S. combat), с кратким описанием цели у бокса.
  */
 public final class IronManEspRenderer {
 	public enum Mode {
@@ -37,10 +52,22 @@ public final class IronManEspRenderer {
 	}
 
 	private static Mode mode = Mode.CORNERS;
-	private static final double RANGE = 72.0;
-	private static final int CYAN = 0x46D8FF;
+	private static final double RANGE = 50.0;
+	private static final int RED = 0xE2342B;
+	private static final int RED_BRIGHT = 0xFF5A4A;
+	private static final int GOLD = 0xFFC400;
+	// поле зрения для мобов: dot(look, toTarget) должен быть выше порога
+	private static final double FOV_DOT = 0.40;
 
 	private IronManEspRenderer() {
+	}
+
+	/** Категория цели для ESP. */
+	private enum Kind {
+		HERO, MOB
+	}
+
+	private record Target(LivingEntity entity, Kind kind) {
 	}
 
 	public static void register() {
@@ -78,10 +105,50 @@ public final class IronManEspRenderer {
 		}
 		float partial = ctx.tickCounter().getGameTimeDeltaPartialTick(true);
 		Vec3 cam = ctx.camera().getPosition();
-		List<LivingEntity> targets = mc.level.getEntitiesOfClass(LivingEntity.class,
+		Vec3 eye = self.getEyePosition(partial);
+		Vec3 look = self.getViewVector(partial).normalize();
+
+		List<LivingEntity> raw = mc.level.getEntitiesOfClass(LivingEntity.class,
 				self.getBoundingBox().inflate(RANGE),
 				e -> e != self && e.isAlive() && !e.isSpectator());
-		if (targets.isEmpty()) {
+		if (raw.isEmpty()) {
+			return;
+		}
+
+		List<Target> heroes = new ArrayList<>();
+		List<Target> mobs = new ArrayList<>();
+		for (LivingEntity e : raw) {
+			double ex = Mth.lerp(partial, e.xOld, e.getX());
+			double ey = Mth.lerp(partial, e.yOld, e.getY());
+			double ez = Mth.lerp(partial, e.zOld, e.getZ());
+			if (e instanceof Player p) {
+				// только трансформированные игроки-герои; обычные — нет
+				if (RemoteHeroSkins.get(p.getUUID()) != null) {
+					heroes.add(new Target(e, Kind.HERO));
+				}
+				continue;
+			}
+			boolean hostile = e instanceof Enemy;
+			boolean angryGolem = e instanceof IronGolem golem && golem.getTarget() != null;
+			if (!hostile && !angryGolem) {
+				continue;
+			}
+			// мобы/голем — только в поле зрения И при прямой видимости (без wallhack)
+			Vec3 center = new Vec3(ex, ey + e.getBbHeight() * 0.5, ez);
+			Vec3 toE = center.subtract(eye);
+			double d = toE.length();
+			if (d < 1e-3 || d > RANGE) {
+				continue;
+			}
+			if (look.dot(toE.scale(1.0 / d)) < FOV_DOT) {
+				continue;
+			}
+			if (!hasLineOfSight(mc, self, eye, center)) {
+				continue;
+			}
+			mobs.add(new Target(e, Kind.MOB));
+		}
+		if (heroes.isEmpty() && mobs.isEmpty()) {
 			return;
 		}
 
@@ -90,48 +157,74 @@ public final class IronManEspRenderer {
 		ps.translate(-cam.x, -cam.y, -cam.z);
 		Matrix4f matrix = ps.last().pose();
 
-		RenderSystem.disableDepthTest();
 		RenderSystem.enableBlend();
 		RenderSystem.defaultBlendFunc();
 		RenderSystem.disableCull();
 		RenderSystem.setShader(GameRenderer::getPositionColorShader);
 		RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
-		BufferBuilder bb = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
 
-		for (LivingEntity e : targets) {
-			double ex = Mth.lerp(partial, e.xOld, e.getX());
-			double ey = Mth.lerp(partial, e.yOld, e.getY());
-			double ez = Mth.lerp(partial, e.zOld, e.getZ());
-			AABB box = new AABB(
-					ex - e.getBbWidth() / 2.0, ey, ez - e.getBbWidth() / 2.0,
-					ex + e.getBbWidth() / 2.0, ey + e.getBbHeight(), ez + e.getBbWidth() / 2.0)
-					.inflate(0.08);
-
-			float hpFrac = Mth.clamp(e.getHealth() / Math.max(1f, e.getMaxHealth()), 0f, 1f);
-			int baseColor = e instanceof Player ? CYAN : healthColor(hpFrac);
-			float boxA = 0.85f;
-			if (mode == Mode.BOX) {
-				drawBoxEdges(bb, matrix, box, cam, 0.018, baseColor, boxA);
-			} else {
-				drawCorners(bb, matrix, box, cam, 0.022, baseColor, boxA);
+		// --- проход 1: мобы/голем — С тестом глубины (прячутся за стенами) ---
+		if (!mobs.isEmpty()) {
+			RenderSystem.enableDepthTest();
+			BufferBuilder bb = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+			for (Target t : mobs) {
+				emitBox(ctx, bb, matrix, t.entity(), cam, partial);
 			}
-			drawHealthBar(bb, matrix, ctx, box, hpFrac);
+			BufferUploader.drawWithShader(bb.buildOrThrow());
 		}
 
-		BufferUploader.drawWithShader(bb.buildOrThrow());
+		// --- проход 2: игроки-герои — БЕЗ теста глубины (сквозь стены) ---
+		if (!heroes.isEmpty()) {
+			RenderSystem.disableDepthTest();
+			BufferBuilder bb = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+			for (Target t : heroes) {
+				emitBox(ctx, bb, matrix, t.entity(), cam, partial);
+			}
+			BufferUploader.drawWithShader(bb.buildOrThrow());
+		}
+
 		RenderSystem.enableCull();
 		RenderSystem.disableBlend();
 		RenderSystem.enableDepthTest();
 		RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
 		ps.popPose();
 
-		drawLabels(ctx, targets, cam, partial, mc.font);
+		drawLabels(ctx, heroes, cam, partial, mc.font);
+		drawLabels(ctx, mobs, cam, partial, mc.font);
 	}
 
-	// ===================== labels =====================
-	private static void drawLabels(WorldRenderContext ctx, List<LivingEntity> targets, Vec3 cam, float partial, Font font) {
+	/** Прямая видимость до точки (raycast по блокам-коллайдерам). */
+	private static boolean hasLineOfSight(Minecraft mc, Player self, Vec3 eye, Vec3 target) {
+		BlockHitResult hit = mc.level.clip(new ClipContext(eye, target,
+				ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, self));
+		return hit.getType() == HitResult.Type.MISS
+				|| hit.getLocation().distanceToSqr(target) < 1.0;
+	}
+
+	/** Рисует рамку (углы/бокс) + HP-полосу для одной цели, акцент — красный. */
+	private static void emitBox(WorldRenderContext ctx, BufferBuilder bb, Matrix4f matrix, LivingEntity e, Vec3 cam, float partial) {
+		double ex = Mth.lerp(partial, e.xOld, e.getX());
+		double ey = Mth.lerp(partial, e.yOld, e.getY());
+		double ez = Mth.lerp(partial, e.zOld, e.getZ());
+		AABB box = new AABB(
+				ex - e.getBbWidth() / 2.0, ey, ez - e.getBbWidth() / 2.0,
+				ex + e.getBbWidth() / 2.0, ey + e.getBbHeight(), ez + e.getBbWidth() / 2.0)
+				.inflate(0.08);
+		float hpFrac = Mth.clamp(e.getHealth() / Math.max(1f, e.getMaxHealth()), 0f, 1f);
+		if (mode == Mode.BOX) {
+			drawBoxEdges(bb, matrix, box, cam, 0.018, RED_BRIGHT, 0.9f);
+		} else {
+			drawCorners(bb, matrix, box, cam, 0.024, RED_BRIGHT, 0.95f);
+		}
+		drawHealthBar(bb, matrix, ctx, box, hpFrac);
+	}
+
+	// ===================== labels (J.A.R.V.I.S. описание цели) ===========
+	private static void drawLabels(WorldRenderContext ctx, List<Target> targets, Vec3 cam, float partial, Font font) {
 		PoseStack ps = ctx.matrixStack();
-		for (LivingEntity e : targets) {
+		Font.DisplayMode seeThrough = Font.DisplayMode.SEE_THROUGH;
+		for (Target t : targets) {
+			LivingEntity e = t.entity();
 			double ex = Mth.lerp(partial, e.xOld, e.getX());
 			double ey = Mth.lerp(partial, e.yOld, e.getY());
 			double ez = Mth.lerp(partial, e.zOld, e.getZ());
@@ -140,20 +233,51 @@ public final class IronManEspRenderer {
 				continue;
 			}
 			float hpFrac = Mth.clamp(e.getHealth() / Math.max(1f, e.getMaxHealth()), 0f, 1f);
-			int col = e instanceof Player ? CYAN : healthColor(hpFrac);
-			String name = e.getName().getString();
-			String line = name + "  " + (int) dist + "m  " + Math.round(hpFrac * 100f) + "%";
+			// верхняя строка — имя (для героя: имя героя), нижняя — дескриптор J.A.R.V.I.S.
+			String name = displayName(e).toUpperCase(java.util.Locale.ROOT);
+			String desc = descriptor(e, t.kind()) + "  //  " + (int) dist + "M  "
+					+ Math.round(hpFrac * 100f) + "%";
 
 			ps.pushPose();
-			ps.translate(ex - cam.x, ey + e.getBbHeight() + 0.55 - cam.y, ez - cam.z);
+			ps.translate(ex - cam.x, ey + e.getBbHeight() + 0.6 - cam.y, ez - cam.z);
 			ps.mulPose(ctx.camera().rotation());
 			ps.scale(-0.025f, -0.025f, 0.025f);
 			Matrix4f m = ps.last().pose();
-			int w = font.width(line);
-			font.drawInBatch(Component.literal(line), -w / 2f, 0f, 0xFF000000 | (col & 0xFFFFFF), false,
-					m, ctx.consumers(), Font.DisplayMode.SEE_THROUGH, 0x80000000, 0xF000F0);
+			int wName = font.width(name);
+			int wDesc = font.width(desc);
+			// имя — ярко-красное
+			font.drawInBatch(Component.literal(name), -wName / 2f, -10f, 0xFF000000 | (RED_BRIGHT & 0xFFFFFF), false,
+					m, ctx.consumers(), seeThrough, 0x90000000, 0xF000F0);
+			// дескриптор — золотой, мельче по смыслу (J.A.R.V.I.S. readout)
+			font.drawInBatch(Component.literal(desc), -wDesc / 2f, 1f, 0xFF000000 | (GOLD & 0xFFFFFF), false,
+					m, ctx.consumers(), seeThrough, 0x90000000, 0xF000F0);
 			ps.popPose();
 		}
+	}
+
+	private static String displayName(LivingEntity e) {
+		if (e instanceof Player p) {
+			ResourceLocation heroId = RemoteHeroSkins.get(p.getUUID());
+			if (heroId != null) {
+				String key = "hero.superheroes." + heroId.getPath();
+				Component c = Component.translatable(key);
+				String s = c.getString();
+				if (!s.equals(key)) {
+					return p.getName().getString() + " / " + s;
+				}
+			}
+		}
+		return e.getName().getString();
+	}
+
+	private static String descriptor(LivingEntity e, Kind kind) {
+		if (kind == Kind.HERO) {
+			return "HERO UNIT";
+		}
+		if (e instanceof IronGolem) {
+			return "SENTRY // HOSTILE";
+		}
+		return "HOSTILE";
 	}
 
 	// ===================== geometry =====================

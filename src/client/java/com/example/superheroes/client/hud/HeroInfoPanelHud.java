@@ -149,24 +149,32 @@ public final class HeroInfoPanelHud {
 		drawDivider(graphics, contentX, cursorY, contentW, theme);
 		cursorY += HudScaler.scale(5);
 
-		// HP row: ❤ + толстая полоска с плавным градиентом + значение справа
-		float hp = lastDisplayedHp + (displayedHp - lastDisplayedHp) * partial;
-		float maxHp = mc.player.getMaxHealth();
-		int hpPct = maxHp > 0 ? Math.round(hp / maxHp * 100f) : 0;
-		drawStatRow(graphics, mc, contentX, cursorY, contentW, HudIcons.PassiveGlyph.HEART,
-				maxHp > 0 ? Math.min(1f, hp / maxHp) : 0f,
-				0xFFFF8C96, 0xFF9E1428, 0x55FF4455, hpPct + "%");
-		cursorY += HudScaler.scale(14);
+		boolean isIronMan = com.example.superheroes.hero.IronManHero.ID.equals(heroId);
+		if (isIronMan) {
+			// Железный Человек: HP/энергия живут в J.A.R.V.I.S.-оверлее, поэтому
+			// тут вместо полосок — тематический статус костюма и дуг-реактора.
+			drawIronManStatus(graphics, mc, contentX, cursorY, contentW, theme, mc.player);
+			cursorY += HudScaler.scale(29);
+		} else {
+			// HP row: ❤ + толстая полоска с плавным градиентом + значение справа
+			float hp = lastDisplayedHp + (displayedHp - lastDisplayedHp) * partial;
+			float maxHp = mc.player.getMaxHealth();
+			int hpPct = maxHp > 0 ? Math.round(hp / maxHp * 100f) : 0;
+			drawStatRow(graphics, mc, contentX, cursorY, contentW, HudIcons.PassiveGlyph.HEART,
+					maxHp > 0 ? Math.min(1f, hp / maxHp) : 0f,
+					0xFFFF8C96, 0xFF9E1428, 0x55FF4455, hpPct + "%");
+			cursorY += HudScaler.scale(14);
 
-		// Energy row: иконка + золотая градиентная полоска + процент справа
-		float energy = lastDisplayedEnergy + (displayedEnergy - lastDisplayedEnergy) * partial;
-		float energyMax = ClientHeroState.energyMax();
-		int pct = energyMax > 0 ? (int) (energy / energyMax * 100f) : 0;
-		drawStatRow(graphics, mc, contentX, cursorY, contentW, HudIcons.PassiveGlyph.BOLT,
-				energyMax > 0 ? Math.min(1f, energy / energyMax) : 0f,
-				theme.energyBright(), theme.energyDark(), applyAlpha(theme.energyGlow(), 90, 1f),
-				pct + "%");
-		cursorY += HudScaler.scale(15);
+			// Energy row: иконка + золотая градиентная полоска + процент справа
+			float energy = lastDisplayedEnergy + (displayedEnergy - lastDisplayedEnergy) * partial;
+			float energyMax = ClientHeroState.energyMax();
+			int pct = energyMax > 0 ? (int) (energy / energyMax * 100f) : 0;
+			drawStatRow(graphics, mc, contentX, cursorY, contentW, HudIcons.PassiveGlyph.BOLT,
+					energyMax > 0 ? Math.min(1f, energy / energyMax) : 0f,
+					theme.energyBright(), theme.energyDark(), applyAlpha(theme.energyGlow(), 90, 1f),
+					pct + "%");
+			cursorY += HudScaler.scale(15);
+		}
 		drawDivider(graphics, contentX, cursorY, contentW, theme);
 		cursorY += HudScaler.scale(5);
 
@@ -210,6 +218,56 @@ public final class HeroInfoPanelHud {
 			}
 		}
 		g.drawString(mc.font, valComp, x + w - valW, y, 0xFFE6EAF5, true);
+	}
+
+	/**
+	 * Iron-Man-блок вместо HP/энергии: дуг-реактор + название костюма + строка
+	 * статуса с анимированной полоской мощности. Только для Железного Человека.
+	 */
+	private static void drawIronManStatus(GuiGraphics g, Minecraft mc, int x, int y, int w,
+			HeroTheme theme, net.minecraft.world.entity.player.Player player) {
+		int gold = 0xFFFFC400;
+		int cyan = 0xFF46D8FF;
+		// строка 1: реактор + название костюма + индикатор «online»
+		int icon = HudScaler.scale(11);
+		EmojiIcons.draw(g, HudIcons.PassiveGlyph.REACTOR, x, y - HudScaler.scale(1), icon);
+		int suitIdx = com.example.superheroes.client.ClientSuitVariantState.variantFor(player.getUUID());
+		String suitName = com.example.superheroes.ability.ironman.IronManSuitVariant.get(suitIdx)
+				.name().toUpperCase(java.util.Locale.ROOT);
+		g.drawString(mc.font, HudUtil.text(suitName).copy()
+				.withStyle(ChatFormatting.BOLD), x + icon + HudScaler.scale(4), y, gold, true);
+		// «online» точка справа
+		int dotSz = HudScaler.scale(4);
+		int dotX = x + w - dotSz - HudScaler.scale(2);
+		int dotY = y + HudScaler.scale(1);
+		float pulse = HudAnimator.pulse(1.3f);
+		if (WildShaders.rectReady()) {
+			WildRenderer.fill(g, dotX - 1, dotY - 1, dotSz + 2, dotSz + 2, (dotSz + 2) / 2f,
+					applyAlpha(0xFF4CFF8C, (int) (60 + 80 * pulse), 1f));
+			WildRenderer.fill(g, dotX, dotY, dotSz, dotSz, dotSz / 2f, 0xFF4CFF8C);
+		} else {
+			g.fill(dotX, dotY, dotX + dotSz, dotY + dotSz, 0xFF4CFF8C);
+		}
+
+		// строка 2: лейбл ARC REACTOR + анимированная полоска мощности
+		int row2 = y + HudScaler.scale(14);
+		Component label = HudUtil.text("ARC REACTOR");
+		g.drawString(mc.font, label, x, row2, 0xFF8FB7C8, true);
+		int barX = x + mc.font.width(label) + HudScaler.scale(6);
+		int barW = x + w - barX;
+		int barH = HudScaler.scale(4);
+		int barY = row2 + HudScaler.scale(1);
+		float power = 0.78f + 0.18f * (0.5f + 0.5f * (float) Math.sin(System.currentTimeMillis() / 240.0));
+		if (barW > 4) {
+			if (WildShaders.rectReady()) {
+				WildRenderer.panel(g, barX, barY, barW, barH, barH / 2f, 0x70000000, 0xA8000000, 0, 0f, 0, 0f);
+				WildRenderer.panel(g, barX, barY, (int) (barW * power), barH, barH / 2f,
+						cyan, 0xFF1C6E8C, 0, 0f, applyAlpha(cyan, 90, 1f), 6f);
+			} else {
+				g.fill(barX, barY, barX + barW, barY + barH, 0x99000000);
+				g.fillGradient(barX, barY, barX + (int) (barW * power), barY + barH, cyan, 0xFF1C6E8C);
+			}
+		}
 	}
 
 	/** Тонкая полоска-разделитель между секциями карточки. */
