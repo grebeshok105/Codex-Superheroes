@@ -4,9 +4,7 @@
   },
   "render_style": "BILLBOARD",
   "additive": true,
-  "init_modules": [
-    "superheroes:hellfire_light"
-  ],
+  "init_modules": [],
   "update_modules": [],
   "collision_modules": [],
   "forces": [],

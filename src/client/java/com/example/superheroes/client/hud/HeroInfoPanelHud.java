@@ -135,14 +135,7 @@ public final class HeroInfoPanelHud {
 		graphics.drawString(mc.font, nameComp, 0, 0, theme.heroNameColor(), true);
 		graphics.pose().popPose();
 
-		// класс угрозы — маленькая буква в правом верхнем углу карточки
-		com.example.superheroes.jarvis.JarvisThreatClass threat =
-				com.example.superheroes.jarvis.JarvisThreatClass.forHero(heroId);
-		int threatColor = threatColor(threat);
-		Component threatComp = HudUtil.text(threat.label());
-		int threatW = mc.font.width(threatComp);
-		graphics.drawString(mc.font, threatComp, x + panelW - threatW - HudScaler.scale(7),
-				y + HudScaler.scale(5), applyAlpha(threatColor, 175, 1f), true);
+		// (Класс угрозы A/B/C убран с карточки по запросу.)
 
 		// Creative badge: a small gold star in the free top-left corner (above the bust)
 		if (mc.player.getAbilities().instabuild) {

@@ -30,6 +30,8 @@ public final class AbilitiesTooltipHud {
 	private static final int SECTION_HEADER_HEIGHT = 13;
 	/** Hero-name header plaque at the top of the panel (v4 refresh). */
 	private static final int HEADER_HEIGHT = 17;
+	/** Breathing room between the hero plaque and the first ability row (v5 flat list). */
+	private static final int HEADER_GAP = 4;
 
 	private static final int LINE_HEIGHT = 9;
 	private static final int NAME_Y_OFFSET = 1;
@@ -102,50 +104,17 @@ public final class AbilitiesTooltipHud {
 			return;
 		}
 		List<ResourceLocation> abilities = ClientAbilityFilter.visibleFor(ClientHeroState.abilities(), heroId);
-		int passiveCount = AbilityDescriptions.passiveCount(heroId);
-
-		int togglesCount = 0;
-		int activesCount = 0;
-		for (ResourceLocation id : abilities) {
-			AbilityDescriptions.Kind kind = AbilityDescriptions.kindOf(id);
-			if (kind == AbilityDescriptions.Kind.TOGGLE) {
-				togglesCount++;
-			} else {
-				activesCount++;
-			}
-		}
 
 		Minecraft mc = Minecraft.getInstance();
 		int contentWidth = PANEL_WIDTH - PADDING_X * 2;
 		int abilityTextWidth = contentWidth - ICON_SIZE - 6;
-		int passiveTextWidth = contentWidth - 10;
 
-		int panelHeight = PADDING_TOP + HEADER_HEIGHT;
-		if (passiveCount > 0) {
-			panelHeight += SECTION_HEADER_HEIGHT;
-			for (int i = 1; i <= passiveCount; i++) {
-				Component name = Component.translatable(AbilityDescriptions.passiveKey(heroId, i));
-				panelHeight += passiveRowHeight(mc, name, passiveTextWidth);
-			}
-			panelHeight += SECTION_SPACING;
+		// v5: flat list of usable abilities only — no passive section, no category headers.
+		int panelHeight = PADDING_TOP + HEADER_HEIGHT + HEADER_GAP;
+		for (ResourceLocation id : abilities) {
+			panelHeight += abilityRowHeight(mc, id, abilityTextWidth);
 		}
-		if (activesCount > 0) {
-			panelHeight += SECTION_HEADER_HEIGHT;
-			for (ResourceLocation id : abilities) {
-				if (AbilityDescriptions.kindOf(id) != AbilityDescriptions.Kind.ACTIVE) continue;
-				panelHeight += abilityRowHeight(mc, id, abilityTextWidth);
-			}
-			panelHeight += SECTION_SPACING;
-		}
-		if (togglesCount > 0) {
-			panelHeight += SECTION_HEADER_HEIGHT;
-			for (ResourceLocation id : abilities) {
-				if (AbilityDescriptions.kindOf(id) != AbilityDescriptions.Kind.TOGGLE) continue;
-				panelHeight += abilityRowHeight(mc, id, abilityTextWidth);
-			}
-			panelHeight += SECTION_SPACING;
-		}
-		panelHeight = Math.max(panelHeight - SECTION_SPACING, 0) + PADDING_BOTTOM;
+		panelHeight += PADDING_BOTTOM;
 
 		if (panelHeight < 16) {
 			return;
@@ -166,48 +135,12 @@ public final class AbilitiesTooltipHud {
 
 		int cursorY = y + PADDING_TOP;
 		drawHeroHeader(graphics, mc, x, cursorY, heroId, theme, alpha);
-		cursorY += HEADER_HEIGHT;
+		cursorY += HEADER_HEIGHT + HEADER_GAP;
 
-		if (passiveCount > 0) {
-			drawSectionHeader(graphics, mc, x + PADDING_X, cursorY, contentWidth,
-					Component.translatable("hud.superheroes.abilities.passives"), theme, alpha);
-			cursorY += SECTION_HEADER_HEIGHT;
-			for (int i = 1; i <= passiveCount; i++) {
-				Component name = Component.translatable(AbilityDescriptions.passiveKey(heroId, i));
-				int rowHeight = passiveRowHeight(mc, name, passiveTextWidth);
-				drawPassiveRow(graphics, mc, x + PADDING_X, cursorY, name, passiveTextWidth, theme, alpha);
-				cursorY += rowHeight;
-			}
-			cursorY += SECTION_SPACING;
-		}
-
-		if (activesCount > 0) {
-			drawSectionHeader(graphics, mc, x + PADDING_X, cursorY, contentWidth,
-					Component.translatable("hud.superheroes.abilities.active"), theme, alpha);
-			cursorY += SECTION_HEADER_HEIGHT;
-			for (ResourceLocation id : abilities) {
-				if (AbilityDescriptions.kindOf(id) != AbilityDescriptions.Kind.ACTIVE) {
-					continue;
-				}
-				int rowHeight = abilityRowHeight(mc, id, abilityTextWidth);
-				drawAbilityRow(graphics, mc, x + PADDING_X, cursorY, contentWidth, id, theme, alpha);
-				cursorY += rowHeight;
-			}
-			cursorY += SECTION_SPACING;
-		}
-
-		if (togglesCount > 0) {
-			drawSectionHeader(graphics, mc, x + PADDING_X, cursorY, contentWidth,
-					Component.translatable("hud.superheroes.abilities.toggle"), theme, alpha);
-			cursorY += SECTION_HEADER_HEIGHT;
-			for (ResourceLocation id : abilities) {
-				if (AbilityDescriptions.kindOf(id) != AbilityDescriptions.Kind.TOGGLE) {
-					continue;
-				}
-				int rowHeight = abilityRowHeight(mc, id, abilityTextWidth);
-				drawAbilityRow(graphics, mc, x + PADDING_X, cursorY, contentWidth, id, theme, alpha);
-				cursorY += rowHeight;
-			}
+		for (ResourceLocation id : abilities) {
+			int rowHeight = abilityRowHeight(mc, id, abilityTextWidth);
+			drawAbilityRow(graphics, mc, x + PADDING_X, cursorY, contentWidth, id, theme, alpha);
+			cursorY += rowHeight;
 		}
 	}
 
@@ -329,8 +262,9 @@ public final class AbilitiesTooltipHud {
 				statusText = HudUtil.text(Component.translatable("ability.superheroes.status.off")).withStyle(ChatFormatting.BOLD);
 				statusColor = applyAlpha(ClientHudGlitch.tintColor(0xFF8E94A8), alpha, 1.0f);
 			} else if (kind == AbilityDescriptions.Kind.ACTIVE) {
+				// "ГОТОВ" badge tinted to the hero's own theme colour (per request).
 				statusText = HudUtil.text(Component.translatable("ability.superheroes.status.ready")).withStyle(ChatFormatting.BOLD);
-				statusColor = applyAlpha(ClientHudGlitch.tintColor(0xFFB6D4FF), alpha, 1.0f);
+				statusColor = applyAlpha(ClientHudGlitch.tintColor(theme.heroNameColor()), alpha, 1.0f);
 			}
 		}
 		int statusWidth = statusText == null ? 0 : (mc.font.width(statusText) + 4);
