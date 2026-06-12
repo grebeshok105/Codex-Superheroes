@@ -228,13 +228,10 @@ public final class HeroInfoPanelHud {
 			HeroTheme theme, net.minecraft.world.entity.player.Player player) {
 		int gold = 0xFFFFC400;
 		int cyan = 0xFF46D8FF;
-		// строка 1: реактор + название костюма + индикатор «online»
+		// строка 1: реактор + статус брони (без названия костюма — оно в ENV справа)
 		int icon = HudScaler.scale(11);
 		EmojiIcons.draw(g, HudIcons.PassiveGlyph.REACTOR, x, y - HudScaler.scale(1), icon);
-		int suitIdx = com.example.superheroes.client.ClientSuitVariantState.variantFor(player.getUUID());
-		String suitName = com.example.superheroes.ability.ironman.IronManSuitVariant.get(suitIdx)
-				.name().toUpperCase(java.util.Locale.ROOT);
-		g.drawString(mc.font, HudUtil.text(suitName).copy()
+		g.drawString(mc.font, HudUtil.text("ARMOR ONLINE").copy()
 				.withStyle(ChatFormatting.BOLD), x + icon + HudScaler.scale(4), y, gold, true);
 		// «online» точка справа
 		int dotSz = HudScaler.scale(4);

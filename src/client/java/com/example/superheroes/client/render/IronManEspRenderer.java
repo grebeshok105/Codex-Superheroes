@@ -160,28 +160,22 @@ public final class IronManEspRenderer {
 		RenderSystem.enableBlend();
 		RenderSystem.defaultBlendFunc();
 		RenderSystem.disableCull();
+		// Депт-тест ВЫКЛ для всех боксов: иначе плоские квадры HP-полосы z-файтятся с
+		// моделью моба и мерцают. «Сквозь стены не светить» уже обеспечено FOV+LOS
+		// фильтром выше (мобы добавляются только при прямой видимости), поэтому
+		// GPU-окклюзия не нужна и лишь вызывает мерцание.
+		RenderSystem.disableDepthTest();
 		RenderSystem.setShader(GameRenderer::getPositionColorShader);
 		RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
 
-		// --- проход 1: мобы/голем — С тестом глубины (прячутся за стенами) ---
-		if (!mobs.isEmpty()) {
-			RenderSystem.enableDepthTest();
-			BufferBuilder bb = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-			for (Target t : mobs) {
-				emitBox(ctx, bb, matrix, t.entity(), cam, partial);
-			}
-			BufferUploader.drawWithShader(bb.buildOrThrow());
+		BufferBuilder bb = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+		for (Target t : mobs) {
+			emitBox(ctx, bb, matrix, t.entity(), cam, partial);
 		}
-
-		// --- проход 2: игроки-герои — БЕЗ теста глубины (сквозь стены) ---
-		if (!heroes.isEmpty()) {
-			RenderSystem.disableDepthTest();
-			BufferBuilder bb = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-			for (Target t : heroes) {
-				emitBox(ctx, bb, matrix, t.entity(), cam, partial);
-			}
-			BufferUploader.drawWithShader(bb.buildOrThrow());
+		for (Target t : heroes) {
+			emitBox(ctx, bb, matrix, t.entity(), cam, partial);
 		}
+		BufferUploader.drawWithShader(bb.buildOrThrow());
 
 		RenderSystem.enableCull();
 		RenderSystem.disableBlend();

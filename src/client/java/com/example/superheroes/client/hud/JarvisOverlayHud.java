@@ -78,7 +78,16 @@ public final class JarvisOverlayHud {
 			dispEnergy = clamp01(ClientHeroState.data().energy() / Math.max(1f, ClientHeroState.energyMax()));
 			dispHp = clamp01(player.getHealth() / Math.max(1f, player.getMaxHealth()));
 		}
-		float boot = ease(clamp01((now - bootMs) / 650f));
+		// «Загорание экрана» при активации костюма: плавное проявление за ~850мс
+		// с лёгким CRT-мерцанием/просадками яркости в начале (эффект включения HUD).
+		long bootAge = now - bootMs;
+		float bootRaw = clamp01(bootAge / 850f);
+		float boot = ease(bootRaw);
+		if (bootRaw < 0.40f) {
+			float flicker = 0.72f + 0.28f * (float) Math.sin(bootAge * 0.055f);
+			float dip = (bootAge % 140L) < 26L ? 0.5f : 1f; // редкие короткие «провалы»
+			boot = clamp01(boot * flicker * dip);
+		}
 		float dt = lastFrameMs == 0L ? 0.016f : Math.min(0.1f, (now - lastFrameMs) / 1000f);
 		lastFrameMs = now;
 
@@ -229,32 +238,27 @@ public final class JarvisOverlayHud {
 		float slide = (1f - boot) * 24f;
 		int segs = 16;
 		int lit = (int) Math.ceil(hp * segs);
+		// РОВНАЯ полоска: одинаковая ширина, единый правый край, скруглённые концы
 		float segW = 26f;
-		float segH = 3.2f;
-		float gap = 3.4f;
-		float totalH = segs * (segH + gap);
-		float baseX = sw - 14f + slide;
+		float segH = 3.4f;
+		float gap = 3.2f;
+		float totalH = segs * (segH + gap) - gap;
+		float rightX = sw - 12f + slide;       // общий правый край
+		float x = rightX - segW;               // общий левый край (все сегменты выровнены)
 		float topY = sh / 2f - totalH / 2f;
 		int hpCol = hp > 0.5f ? lerpColor(0xFFD34A, 0x6BFF6B, (hp - 0.5f) * 2f)
 				: lerpColor(RED, 0xFFD34A, hp * 2f);
 		boolean low = hp <= 0.3f;
 		float blink = low ? (0.45f + 0.55f * (float) Math.abs(Math.sin(tt * 4f))) : 1f;
 		for (int i = 0; i < segs; i++) {
-			int idxFromBottom = i;
 			float y = topY + (segs - 1 - i) * (segH + gap);
-			float curve = (float) Math.sin((i / (float) (segs - 1) - 0.5f) * Math.PI) * 4f;
-			float w = segW - Math.abs(curve) * 0.4f;
-			float x = baseX - w + curve;
-			if (idxFromBottom < lit) {
+			if (i < lit) {
 				int c = col(hpCol, 0.92f * a * blink);
-				WildRenderer.bar(g, x, y, w, segH, c, col(hpCol, 0.5f * a * blink));
+				WildRenderer.bar(g, x, y, segW, segH, c, col(hpCol, 0.5f * a * blink));
 			} else {
-				WildRenderer.fill(g, x, y, w, segH, segH / 2f, col(GOLD_DIM, 0.22f * a));
+				WildRenderer.fill(g, x, y, segW, segH, segH / 2f, col(GOLD_DIM, 0.22f * a));
 			}
 		}
-		int hpVal = Math.round(hp * 100f);
-		String label = "INTEGRITY " + hpVal + "%";
-		drawJarvis(g, font, label, baseX - segW - jw(font, label) - 6f, sh / 2f - 4f, col(hpCol, 0.9f * a));
 	}
 
 	// ===================== низ: костюмы (без подписи) =====================
