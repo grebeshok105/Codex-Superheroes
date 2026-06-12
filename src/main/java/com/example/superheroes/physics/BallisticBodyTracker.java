@@ -36,8 +36,16 @@ public final class BallisticBodyTracker {
 	private static final double MIN_SPEED = 0.4;
 	private static final float MAX_HARDNESS = 2.6f;
 	private static final int MAX_BLOCKS_PER_TICK = 14;
-	/** Жёсткий лимит блоков на один запуск тела — никаких глубоких воронок. */
-	private static final int MAX_BLOCKS_PER_LAUNCH = 22;
+	/** Жёсткий лимит блоков на один обычный запуск тела (TIER-3 и т.п.). */
+	private static final int MAX_BLOCKS_PER_LAUNCH = 30;
+	/** Лимит для нано-молота Mark 85 — тело пробивает стены десятками блоков. */
+	private static final int SUPER_MAX_BLOCKS_PER_LAUNCH = 52;
+	/** Гашение скорости за пробитый слой: обычное / для нано-молота (почти не тормозит). */
+	private static final double VELOCITY_KEEP = 0.86;
+	private static final double SUPER_VELOCITY_KEEP = 0.99;
+	/** Расход «энергии» полёта за слой: обычный / для нано-молота. */
+	private static final double POWER_COST_PER_LAYER = 5.0;
+	private static final double SUPER_POWER_COST_PER_LAYER = 2.0;
 	/** При крутом пикировании вниз землю не сверлим — тело просто врезается. */
 	private static final double STEEP_DOWN_DIR = -0.55;
 	private static final int DEBRIS_STATE_LIMIT = 8;
@@ -56,6 +64,11 @@ public final class BallisticBodyTracker {
 	}
 
 	public static void launch(LivingEntity body, Vec3 velocity, double power, @Nullable ServerPlayer source) {
+		launch(body, velocity, power, source, false);
+	}
+
+	/** superPierce=true — режим нано-молота: тело пробивает до {@link #SUPER_MAX_BLOCKS_PER_LAUNCH} блоков. */
+	public static void launch(LivingEntity body, Vec3 velocity, double power, @Nullable ServerPlayer source, boolean superPierce) {
 		if (body == null || body.isRemoved() || body.isSpectator() || power <= 0) return;
 		if (!(body.level() instanceof ServerLevel level)) return;
 		UUID id = body.getUUID();
@@ -63,9 +76,10 @@ public final class BallisticBodyTracker {
 		if (existing != null) {
 			existing.power = Math.max(power, existing.power);
 			existing.lifeTicks = 0;
+			existing.superPierce = existing.superPierce || superPierce;
 			return;
 		}
-		TrackedState state = new TrackedState(body, level, power, source);
+		TrackedState state = new TrackedState(body, level, power, source, superPierce);
 		tracked.put(id, state);
 		try {
 			if (!tickBody(state)) {
@@ -138,8 +152,10 @@ public final class BallisticBodyTracker {
 						BlockState blockState = level.getBlockState(mpos);
 						if (blockState.isAir() || !blockState.getFluidState().isEmpty()) continue;
 
+						int maxBlocksPerLaunch = state.superPierce
+								? SUPER_MAX_BLOCKS_PER_LAUNCH : MAX_BLOCKS_PER_LAUNCH;
 						boolean steepDive = dir.y < STEEP_DOWN_DIR;
-						if (!steepDive && state.brokenTotal < MAX_BLOCKS_PER_LAUNCH
+						if (!steepDive && state.brokenTotal < maxBlocksPerLaunch
 								&& BlockBreakPolicy.canImpactBreak(level, mpos, blockState, MAX_HARDNESS)) {
 							if (blocksDestroyed >= MAX_BLOCKS_PER_TICK) continue;
 							if (layerIds.size() < DEBRIS_STATE_LIMIT) {
@@ -170,17 +186,20 @@ public final class BallisticBodyTracker {
 			if (hardStop) return false;
 
 			if (layerBrokeAny) {
-				state.power -= 5.0 + 0.8 * maxHardnessBroken;
+				double powerCost = state.superPierce ? SUPER_POWER_COST_PER_LAYER : POWER_COST_PER_LAYER;
+				state.power -= powerCost + 0.8 * maxHardnessBroken;
 
 				Vec3 vel = body.getDeltaMovement();
-				body.setDeltaMovement(vel.scale(0.86));
+				double velocityKeep = state.superPierce ? SUPER_VELOCITY_KEEP : VELOCITY_KEEP;
+				body.setDeltaMovement(vel.scale(velocityKeep));
 				body.hurtMarked = true;
 				if (body instanceof ServerPlayer player) {
 					player.connection.send(new ClientboundSetEntityMotionPacket(player));
 				}
 
+				// 2 сердца (4 HP) урона за каждую пробитую телом стену + добавка за крепость блока
 				body.invulnerableTime = 0;
-				body.hurt(level.damageSources().flyIntoWall(), (float) (0.8 + 0.25 * maxHardnessBroken));
+				body.hurt(level.damageSources().flyIntoWall(), (float) (4.0 + 0.3 * maxHardnessBroken));
 
 				sendWallFx(level, stepPos, dir, speed, layerIds);
 
@@ -226,14 +245,16 @@ public final class BallisticBodyTracker {
 		double power;
 		int lifeTicks;
 		int brokenTotal;
+		boolean superPierce;
 		@Nullable
 		final ServerPlayer source;
 
-		TrackedState(LivingEntity body, ServerLevel level, double power, @Nullable ServerPlayer source) {
+		TrackedState(LivingEntity body, ServerLevel level, double power, @Nullable ServerPlayer source, boolean superPierce) {
 			this.body = body;
 			this.level = level;
 			this.power = power;
 			this.lifeTicks = 0;
+			this.superPierce = superPierce;
 			this.source = source;
 		}
 	}

@@ -172,8 +172,9 @@ public final class HeroInfoPanelHud {
 
 		// Ability readiness list: every visible ability with its status, two columns
 		drawReadyList(graphics, mc, contentX, cursorY, contentW, heroId, hudConfig, theme);
-
-		// (Ряд «ПАССИВКИ» убран со ВСЕХ героев по запросу.)
+		// Оставляем ТОЛЬКО полоску внизу — ряд «ПАССИВКИ» с иконками убран со всех героев.
+		drawDivider(graphics, x + HudScaler.scale(8), y + panelH - HudScaler.scale(25),
+				panelW - HudScaler.scale(16), theme);
 	}
 
 	/**

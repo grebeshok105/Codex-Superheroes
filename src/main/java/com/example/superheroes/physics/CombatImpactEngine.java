@@ -68,9 +68,9 @@ public final class CombatImpactEngine {
 		if (tier == ImpactTier.TIER_3) {
 			variance = 0.7f + attacker.getRandom().nextFloat() * 0.7f;
 			damage = (float) (baseDamage * 1.35 * heroPower * weaponBias * attackCooldown * variance);
-			knockback = 6.5 * heroPower * speedBias * variance;
-			upward = Math.min(0.7, 0.42 + 0.16 * variance);
-			launchPower = 150.0 * heroPower * variance;
+			knockback = 9.5 * heroPower * speedBias * variance;
+			upward = Math.min(0.8, 0.48 + 0.16 * variance);
+			launchPower = 260.0 * heroPower * variance;
 			shakeRadius = 38.0;
 			shakeIntensity = (float) Math.min(3.2, 1.75 * heroPower * speedBias * variance);
 			debrisIntensity = Math.min(1.5f, 0.85f * variance);
@@ -99,9 +99,9 @@ public final class CombatImpactEngine {
 		if (com.example.superheroes.hero.IronManHero.ID.equals(heroId)
 				&& attacker.getAttachedOrCreate(com.example.superheroes.attachment.ModAttachments.NANO_FORM)
 						== com.example.superheroes.ability.ironman.IronManNanoForm.HAMMER.index()) {
-			knockback *= 2.4;
-			upward = Math.min(0.9, upward + 0.25);
-			launchPower = Math.max(launchPower * 2.0, 110.0);
+			knockback *= 3.6;
+			upward = Math.min(0.95, upward + 0.3);
+			launchPower = Math.max(launchPower * 2.6, 340.0);
 			shakeRadius = Math.max(shakeRadius, 26.0);
 			shakeIntensity = Math.max(shakeIntensity, 1.4f);
 			debrisIntensity = Math.max(debrisIntensity, 0.9f);
@@ -120,7 +120,10 @@ public final class CombatImpactEngine {
 		Vec3 direction = profile.direction();
 		applyKnockback(target, direction, profile.knockback(), profile.upwardKnockback());
 		if (profile.launchPower() > 0.0) {
-			BallisticBodyTracker.launch(target, target.getDeltaMovement(), profile.launchPower(), attacker);
+			// нано-молот → режим супер-пробития (десятки блоков сквозь стены)
+			boolean nanoHammer = attacker.getAttachedOrCreate(com.example.superheroes.attachment.ModAttachments.NANO_FORM)
+					== com.example.superheroes.ability.ironman.IronManNanoForm.HAMMER.index();
+			BallisticBodyTracker.launch(target, target.getDeltaMovement(), profile.launchPower(), attacker, nanoHammer);
 		}
 		sweepNearby(level, attacker, target, centerOf(target), profile);
 		spawnServerFeedback(level, target, profile);
