@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Что нового — Codex Superheroes: Reborn</title>
+  <meta name="description" content="SuperHeroes: Reborn — огромное обновление Codex Superheroes: новая боёвка, переработанный полёт, режим орды и полностью новый интерфейс." />
+  <meta property="og:title" content="Что нового — Codex Superheroes: Reborn" />
+  <meta property="og:description" content="Новая боёвка, полёт с нуля, режим орды и новый HUD. Мы вернулись." />
+  <meta property="og:image" content="https://grebeshok.eu.cc/images/combat-punch.webp" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="backdrop"></div>
+  <div class="grain"></div>
+
+  <nav class="nav" id="nav">
+    <div class="container nav-inner">
+      <a class="nav-logo" href="index.html">
+        <img src="/favicon.png" alt="Codex Superheroes" />
+        <span class="t">CODEX <em>SUPERHEROES</em></span>
+      </a>
+      <div class="nav-links">
+        <a href="index.html" class="hide-m">Главная</a>
+        <a href="heroes.html" class="hide-m">Герои</a>
+        <a href="update.html" class="hide-m active">Что нового</a>
+        <a href="download.html" class="hide-m">Скачать</a>
+        <a href="https://github.com/grebeshok105/Codex-Superheroes" target="_blank" rel="noopener noreferrer" class="hide-m">GitHub</a>
+        <a href="download.html" class="btn btn-red btn-sm">⬇ Скачать</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- SUBHERO -->
+  <header class="subhero">
+    <div class="sh-bg"><img src="images/hero-cape.webp" alt="" /></div>
+    <div class="container inner">
+      <div class="crumbs"><a href="index.html">Главная</a> / Что нового</div>
+      <div class="hero-badge" style="margin-bottom:18px"><img src="img/emoji/bolt.png" alt="" /> SuperHeroes: Reborn</div>
+      <h1>Мы <span class="grad">вернулись.</span></h1>
+      <p class="lead">Мод пережил огромное обновление — фактически новую игру. Боёвка, полёт, режим орды и интерфейс переработаны с нуля. Вот главное — без спойлеров, остальное проверишь сам.</p>
+    </div>
+  </header>
+
+  <!-- COMBAT -->
+  <section class="block" style="padding-top: clamp(60px,8vw,100px)">
+    <div class="container split" style="--ac: rgba(255,59,59,.35)">
+      <div class="media rv">
+        <div class="frame"><img src="images/combat-punch.webp" alt="Заряженный удар" loading="lazy" /></div>
+        <div class="tag" style="color: var(--red)">Боевая система</div>
+      </div>
+      <div class="rv">
+        <div class="kicker" style="color: var(--red)">Боёвка</div>
+        <h2 class="h2">Каждый удар <span class="grad-rg">имеет вес</span></h2>
+        <p class="lead">Новая боевая система: удары стали тяжёлыми и зрелищными. Заряди силу — и почувствуй разницу. Чем мощнее герой, тем серьёзнее последствия.</p>
+        <div class="feat-list" style="--ac: var(--red)">
+          <div class="row"><div class="dot"><img src="img/emoji/fist.png" alt="" /></div><div><b>Заряженный удар.</b> <span>Держишь дольше — бьёшь сильнее.</span></div></div>
+          <div class="row"><div class="dot"><img src="img/emoji/flame.png" alt="" /></div><div><b>Честные разрушения.</b> <span>Бой ощущается, а не просто считает цифры.</span></div></div>
+          <div class="row"><div class="dot"><img src="img/emoji/spiral.png" alt="" /></div><div><b>Сила героя решает.</b> <span>У каждого своя «весовая категория».</span></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FLIGHT -->
+  <section class="block" style="padding-top:0">
+    <div class="container split flip" style="--ac: rgba(77,166,255,.3)">
+      <div class="media rv">
+        <div class="frame"><img src="images/omniman-flight.webp" alt="Полёт" loading="lazy" /></div>
+        <div class="tag" style="color: var(--blue)">Полёт</div>
+      </div>
+      <div class="rv">
+        <div class="kicker" style="color: var(--blue)">Небо</div>
+        <h2 class="h2">Полёт <span class="grad-bg">переделан с нуля</span></h2>
+        <p class="lead">Взлёт, зависание, круиз и сверхзвук ощущаются совершенно иначе — быстрее, плавнее и приятнее, чем раньше.</p>
+        <div class="feat-list" style="--ac: var(--blue)">
+          <div class="row"><div class="dot"><img src="img/emoji/feather.png" alt="" /></div><div><b>Плавное управление.</b> <span>От лёгкого парения до сверхзвука.</span></div></div>
+          <div class="row"><div class="dot"><img src="img/emoji/bolt.png" alt="" /></div><div><b>Скорость = сила.</b> <span>Разгон копит импульс для удара.</span></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HORDE -->
+  <section class="block" style="padding-top:0">
+    <div class="container split" style="--ac: rgba(180,101,255,.3)">
+      <div class="media rv">
+        <div class="frame"><img src="images/horde-wave.webp" alt="Орда паразитов" loading="lazy" /></div>
+        <div class="tag" style="color: var(--purple)">Режим орды</div>
+      </div>
+      <div class="rv">
+        <div class="kicker" style="color: var(--purple)">Выживание</div>
+        <h2 class="h2">Орда. <span class="grad-pb">Волна за волной.</span></h2>
+        <p class="lead">Новый режим выживания: толпы заражённых тварей идут волна за волной, по пути встречаются мини-боссы, а в конце ждёт грозный финальный босс. Сколько продержишься?</p>
+        <div class="feat-list" style="--ac: var(--purple)">
+          <div class="row"><div class="dot"><img src="img/emoji/skull.png" alt="" /></div><div><b>10 волн.</b> <span>Напряжение растёт с каждой.</span></div></div>
+          <div class="row"><div class="dot"><img src="img/emoji/flame.png" alt="" /></div><div><b>Боссы.</b> <span>Мини-боссы по ходу и финальный — в конце.</span></div></div>
+          <div class="row"><div class="dot"><img src="img/emoji/heart.png" alt="" /></div><div><b>Один шанс.</b> <span>Зови друзей — в компании веселее.</span></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HUD / INTERFACE -->
+  <section class="block" id="hud" style="padding-top:0">
+    <div class="container split flip" style="--ac: rgba(255,201,64,.3)">
+      <div class="media rv">
+        <div class="frame"><img src="images/armor-helmet.webp" alt="Новый интерфейс" loading="lazy" /></div>
+        <div class="tag" style="color: var(--gold)">Интерфейс</div>
+      </div>
+      <div class="rv">
+        <div class="kicker" style="color: var(--gold)">HUD</div>
+        <h2 class="h2">Полностью <span class="grad-rg">новый интерфейс</span></h2>
+        <p class="lead">HUD перерисован с нуля: карточка героя, аккуратная панель способностей и быстрая радиалка. Всё читается с первого взгляда и настраивается под себя.</p>
+        <div class="feat-list" style="--ac: var(--gold)">
+          <div class="row"><div class="dot"><img src="img/emoji/star.png" alt="" /></div><div><b>Карточка героя.</b> <span>Имя, способности и состояние — всегда перед глазами.</span></div></div>
+          <div class="row"><div class="dot"><img src="img/emoji/reactor.png" alt="" /></div><div><b>Авторские иконки.</b> <span>У каждой способности — своя иконка.</span></div></div>
+          <div class="row"><div class="dot"><img src="img/emoji/magic.png" alt="" /></div><div><b>Радиалка и настройка.</b> <span>Быстрый выбор и свободная расстановка элементов.</span></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="ctaband">
+    <div class="container center rv">
+      <div class="kicker" style="color: var(--gold); justify-content:center">Готов?</div>
+      <h2 class="h2">Проверь Reborn <span class="grad-rg">в деле</span></h2>
+      <div class="hero-ctas" style="margin-top:26px">
+        <a class="btn btn-red" href="download.html">⬇ Скачать v3.31.0</a>
+        <a class="btn btn-ghost" href="heroes.html">Все 20 героев</a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container foot">
+      <div class="meta">
+        <span>© 2026 Codex Superheroes · v3.31.0</span>
+        <a href="index.html">Главная</a>
+        <a href="heroes.html">Герои</a>
+        <a href="https://github.com/grebeshok105/Codex-Superheroes/releases" target="_blank" rel="noopener noreferrer">Все релизы</a>
+      </div>
+      <div class="emjs" aria-hidden="true">
+        <img src="img/emoji/fist.png" alt="" /><img src="img/emoji/feather.png" alt="" /><img src="img/emoji/skull.png" alt="" /><img src="img/emoji/star.png" alt="" /><img src="img/emoji/reactor.png" alt="" /><img src="img/emoji/bolt.png" alt="" />
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+</body>
+</html>
