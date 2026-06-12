@@ -68,6 +68,10 @@ public final class JarvisOverlayHud {
 		if (mc.options.hideGui) {
 			return;
 		}
+		// HUD Железного Человека рисуется ТОЛЬКО от 1-го лица; в 3-м лице (F5) убираем.
+		if (!mc.options.getCameraType().isFirstPerson()) {
+			return;
+		}
 		if (!WildShaders.circleReady() || !WildShaders.rectReady()) {
 			return;
 		}

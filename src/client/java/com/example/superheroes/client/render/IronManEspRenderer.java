@@ -99,6 +99,10 @@ public final class IronManEspRenderer {
 			return;
 		}
 		Minecraft mc = Minecraft.getInstance();
+		// ESP-линии/боксы Железного Человека рисуются ТОЛЬКО от 1-го лица; в 3-м лице (F5) убираем.
+		if (!mc.options.getCameraType().isFirstPerson()) {
+			return;
+		}
 		Player self = mc.player;
 		if (self == null || mc.level == null) {
 			return;

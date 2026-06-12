@@ -93,6 +93,11 @@ public final class HeroInfoPanelHud {
 		if (hero == null) {
 			return;
 		}
+		// Панель Железного Человека показывается ТОЛЬКО от 1-го лица; в 3-м лице (F5) убираем.
+		if (com.example.superheroes.hero.IronManHero.ID.equals(heroId)
+				&& !mc.options.getCameraType().isFirstPerson()) {
+			return;
+		}
 
 		HeroTheme theme = ClientHeroState.theme();
 		HeroHudConfig hudConfig = hero.getHudConfig();

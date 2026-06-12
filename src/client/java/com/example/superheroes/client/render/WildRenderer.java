@@ -175,10 +175,6 @@ public final class WildRenderer {
 		sh.safeGetUniform("Darken").set(darken);
 		RenderSystem.enableBlend();
 		RenderSystem.defaultBlendFunc();
-		// ВАЖНО: глубину выключаем явно. Иначе в 3-м лице (где ванильный crosshair
-		// не рисуется и не сбрасывает depth-стейт) эти SDF-квады проваливают depth-тест
-		// и весь HUD пропадает. Гарантируем отрисовку во всех ракурсах камеры.
-		RenderSystem.disableDepthTest();
 		RenderSystem.setShader(() -> sh);
 		Matrix4f mat = g.pose().last().pose();
 		float half = size / 2f;
@@ -189,7 +185,6 @@ public final class WildRenderer {
 		buf.addVertex(mat, cx + half, cy - half, 0f).setUv(1f, 0f);
 		BufferUploader.drawWithShader(buf.buildOrThrow());
 		RenderSystem.disableBlend();
-		RenderSystem.enableDepthTest();
 	}
 
 	// ===================== internals =====================
@@ -202,8 +197,6 @@ public final class WildRenderer {
 		flushBatched(g);
 		RenderSystem.enableBlend();
 		RenderSystem.defaultBlendFunc();
-		// глубину выключаем явно — гарантирует отрисовку HUD в 3-м лице (см. iconCircle)
-		RenderSystem.disableDepthTest();
 		RenderSystem.setShader(() -> sh);
 		Matrix4f mat = g.pose().last().pose();
 		BufferBuilder buf = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
@@ -213,7 +206,6 @@ public final class WildRenderer {
 		buf.addVertex(mat, cx + hw, cy - hh, 0f).setUv(hw, -hh);
 		BufferUploader.drawWithShader(buf.buildOrThrow());
 		RenderSystem.disableBlend();
-		RenderSystem.enableDepthTest();
 	}
 
 	/** Сбрасывает отложенные батчи GuiGraphics, чтобы сохранить порядок слоёв. */
