@@ -1,6 +1,7 @@
 package com.example.superheroes.ability;
 
 import com.example.superheroes.effect.ScorpionController;
+import com.example.superheroes.effect.ScorpionFx;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -93,6 +94,9 @@ public final class ScorpionSpearAbility implements Ability {
 		best.igniteForSeconds(3f);
 		best.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 6 * 20, 2, true, true, true));
 		ScorpionController.startSpearPull(player, best);
+		ScorpionFx.harpoon(level, eye, center);
+		level.playSound(null, player.getX(), player.getY(), player.getZ(),
+				com.example.superheroes.sound.ModSounds.SCORPION_GET_OVER_HERE, SoundSource.PLAYERS, 1.6f, 1.0f);
 
 		for (int i = 0; i <= 16; i++) {
 			Vec3 point = eye.lerp(center, i / 16.0);

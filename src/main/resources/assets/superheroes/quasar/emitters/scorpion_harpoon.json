@@ -1,0 +1,11 @@
+{
+  "max_lifetime": 2,
+  "loop": false,
+  "rate": 1,
+  "count": 4,
+  "emitter_settings": {
+    "shape": "superheroes:scorpion_harpoon",
+    "particle_settings": "superheroes:scorpion_harpoon"
+  },
+  "particle_data": "superheroes:scorpion_harpoon"
+}

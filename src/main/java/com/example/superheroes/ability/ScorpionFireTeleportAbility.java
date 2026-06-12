@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.effect.ScorpionFx;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -64,6 +65,7 @@ public final class ScorpionFireTeleportAbility implements Ability {
 
 		Vec3 origin = player.position();
 		spawnFlameBurst(level, origin);
+		ScorpionFx.teleport(level, origin.add(0.0, 1.0, 0.0));
 		level.playSound(null, origin.x, origin.y, origin.z,
 				SoundEvents.BLAZE_SHOOT, SoundSource.PLAYERS, 1.0f, 0.55f);
 
@@ -93,6 +95,7 @@ public final class ScorpionFireTeleportAbility implements Ability {
 		}
 
 		spawnFlameBurst(level, dest);
+		ScorpionFx.teleport(level, dest.add(0.0, 1.0, 0.0));
 		level.playSound(null, dest.x, dest.y, dest.z,
 				SoundEvents.FIRECHARGE_USE, SoundSource.PLAYERS, 1.1f, 0.8f);
 		level.playSound(null, dest.x, dest.y, dest.z,

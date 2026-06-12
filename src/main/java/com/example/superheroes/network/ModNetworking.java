@@ -52,6 +52,7 @@ public final class ModNetworking {
 		PayloadTypeRegistry.playS2C().register(AdminBuildS2CPayload.TYPE, AdminBuildS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(KratosRageS2CPayload.TYPE, KratosRageS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(RemDemonismS2CPayload.TYPE, RemDemonismS2CPayload.STREAM_CODEC);
+		PayloadTypeRegistry.playS2C().register(ScorpionFxS2CPayload.TYPE, ScorpionFxS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(ReinhardWishOptionsS2CPayload.TYPE, ReinhardWishOptionsS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(ReinhardCeremonyS2CPayload.TYPE, ReinhardCeremonyS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(ReinhardSwordGateS2CPayload.TYPE, ReinhardSwordGateS2CPayload.STREAM_CODEC);

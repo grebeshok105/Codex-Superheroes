@@ -9,6 +9,12 @@ group = project.maven_group
 repositories {
 	mavenCentral()
 
+	// Veil (Foundry) — render framework for the experimental shader layer
+	maven {
+		name = 'BlameJared'
+		url = 'https://maven.blamejared.com'
+	}
+
 	exclusiveContent {
 		forRepository {
 			maven {
@@ -65,6 +71,10 @@ dependencies {
 
 	// GeckoLib — 3D animated models (used by Slenderman hero)
 	modImplementation "software.bernie.geckolib:geckolib-fabric-1.21:4.5.8"
+
+	// Veil — render framework powering Scorpion's shader FX (Quasar particles, bloom, dynamic light).
+	// Optional at runtime: code is guarded by FabricLoader.isModLoaded("veil").
+	modImplementation "foundry.veil:veil-fabric-1.21.1:${project.veil_version}"
 
 	testImplementation platform("org.junit:junit-bom:5.10.2")
 	testImplementation "org.junit.jupiter:junit-jupiter"

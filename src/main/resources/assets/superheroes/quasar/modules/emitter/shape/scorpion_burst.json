@@ -1,0 +1,14 @@
+{
+  "shape": "sphere",
+  "dimensions": [
+    0.6,
+    0.6,
+    0.6
+  ],
+  "rotation": [
+    0,
+    0,
+    0
+  ],
+  "from_surface": true
+}

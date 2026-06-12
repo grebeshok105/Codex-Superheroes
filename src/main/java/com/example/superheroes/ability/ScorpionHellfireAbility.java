@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.effect.ScorpionFx;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -67,6 +68,7 @@ public final class ScorpionHellfireAbility implements Ability {
 		}
 
 		spawnPillarFx(level, center);
+		ScorpionFx.pillar(level, center);
 		level.playSound(null, center.x, center.y, center.z,
 				SoundEvents.BLAZE_SHOOT, SoundSource.PLAYERS, 1.4f, 0.6f);
 		level.playSound(null, center.x, center.y, center.z,

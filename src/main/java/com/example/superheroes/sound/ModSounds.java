@@ -30,6 +30,7 @@ public final class ModSounds {
 	public static final SoundEvent IRONMAN_JARVIS_OUTDATED_SUIT = register("ironman.jarvis_outdated_suit");
 	public static final SoundEvent IRONMAN_JARVIS_MARK85_PRESET = register("ironman.jarvis_mark85_preset");
 	public static final SoundEvent IRONMAN_JARVIS_LEGION_LAUNCH = register("ironman.jarvis_legion_launch");
+	public static final SoundEvent SCORPION_GET_OVER_HERE = register("scorpion.get_over_here");
 
 	private ModSounds() {
 	}
