@@ -66,6 +66,16 @@ public final class ModEntities {
 					.build("iron_legion_drone")
 	);
 
+	public static final EntityType<SmartMissileEntity> SMART_MISSILE = Registry.register(
+			BuiltInRegistries.ENTITY_TYPE,
+			ModId.of("smart_missile"),
+			EntityType.Builder.<SmartMissileEntity>of(SmartMissileEntity::new, MobCategory.MISC)
+					.sized(0.4f, 0.4f)
+					.clientTrackingRange(8)
+					.updateInterval(1)
+					.build("smart_missile")
+	);
+
 	private ModEntities() {
 	}
 

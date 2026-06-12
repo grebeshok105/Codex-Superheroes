@@ -55,6 +55,7 @@ public class SuperheroesClient implements ClientModInitializer {
 		com.example.superheroes.client.render.WildShaders.register();
 		LaserBeamRenderer.register();
 		RepulsorBeamRenderer.register();
+		com.example.superheroes.client.render.IronManEspRenderer.register();
 		CosmicBeamRenderer.register();
 		LocalLaserOverlay.register();
 		EntityRendererRegistry.register(EntityType.LIGHTNING_BOLT, SuperheroLightningRenderer::new);
@@ -62,6 +63,7 @@ public class SuperheroesClient implements ClientModInitializer {
 		EntityRendererRegistry.register(ModEntities.SHADOW_SOLDIER, com.example.superheroes.client.render.ShadowSoldierRenderer::new);
 		EntityRendererRegistry.register(ModEntities.KAGE_BUNSHIN, com.example.superheroes.client.render.KageBunshinRenderer::new);
 		EntityRendererRegistry.register(ModEntities.SHIELD_PROJECTILE, com.example.superheroes.client.render.ShieldProjectileRenderer::new);
+		EntityRendererRegistry.register(ModEntities.SMART_MISSILE, com.example.superheroes.client.render.SmartMissileRenderer::new);
 		EntityRendererRegistry.register(ModEntities.RAM, com.example.superheroes.client.render.RamRenderer::new);
 		EntityRendererRegistry.register(ModEntities.IRON_LEGION_DRONE, com.example.superheroes.client.render.IronLegionDroneRenderer::new);
 		// Horde entity renderers — vanilla models matched to each mob's texture UV
@@ -194,6 +196,8 @@ public class SuperheroesClient implements ClientModInitializer {
 		ClientTickEvents.START_CLIENT_TICK.register(SuperheroesClient::tickThinkMarkDash);
 		ClientTickEvents.END_CLIENT_TICK.register(com.example.superheroes.client.ClientNanoSuitUpState::clientTick);
 		ClientTickEvents.END_CLIENT_TICK.register(com.example.superheroes.client.hud.JarvisDetectionHud::tick);
+		ClientTickEvents.END_CLIENT_TICK.register(SuperheroesClient::tickNanoWeaponSelect);
+		ClientTickEvents.END_CLIENT_TICK.register(SuperheroesClient::tickEspToggle);
 
 		// "HUD" button in the pause menu -> drag editor for all HUD elements
 		net.fabricmc.fabric.api.client.screen.v1.ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
@@ -279,6 +283,26 @@ public class SuperheroesClient implements ClientModInitializer {
 	private static boolean thinkMarkUseWasDown = false;
 
 	/** While the Omni-Man grab is active, RMB (use) launches the dash/slam. */
+	private static void tickNanoWeaponSelect(Minecraft client) {
+		if (client.player == null || !ClientHeroState.data().hasHero()
+				|| !com.example.superheroes.hero.IronManHero.ID.equals(ClientHeroState.data().heroId())) {
+			return;
+		}
+		while (ModKeys.NANO_WEAPON.consumeClick()) {
+			com.example.superheroes.client.ClientNanoWeaponState.cycle(1);
+		}
+	}
+
+	private static void tickEspToggle(Minecraft client) {
+		if (client.player == null || !ClientHeroState.data().hasHero()
+				|| !com.example.superheroes.hero.IronManHero.ID.equals(ClientHeroState.data().heroId())) {
+			return;
+		}
+		while (ModKeys.ESP_TOGGLE.consumeClick()) {
+			com.example.superheroes.client.render.IronManEspRenderer.cycleMode();
+		}
+	}
+
 	private static void tickThinkMarkDash(Minecraft client) {
 		if (client.player == null || client.level == null) {
 			thinkMarkUseWasDown = false;

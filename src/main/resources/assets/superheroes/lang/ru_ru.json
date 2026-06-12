@@ -63,7 +63,7 @@
   "ability.superheroes.x_ray.desc": "Подсвечивает живых сквозь стены",
   "ability.superheroes.iron_man_flight.desc": "Репульсорный полёт с векторной тягой",
   "ability.superheroes.supersonic.desc": "Форсаж — жрёт, пока зажато",
-  "ability.superheroes.repulsor.desc": "Залп с ладони — чистый кинетический урон",
+  "ability.superheroes.repulsor.desc": "Залп из ладони — в присяде заряженный импульс с ударной волной",
   "ability.superheroes.unibeam.desc": "Грудная пушка — добивание",
   "hud.superheroes.abilities.passives": "Пассивные",
   "hud.superheroes.abilities.active": "Активные",
@@ -790,5 +790,13 @@
   "subtitles.superheroes.ironman.jarvis_outdated_suit": "ДЖАРВИС: устаревший костюм",
   "subtitles.superheroes.ironman.jarvis_mark85_preset": "ДЖАРВИС: пресет Mark 85",
   "subtitles.superheroes.ironman.jarvis_legion_launch": "ДЖАРВИС: легион запущен",
-  "subtitles.superheroes.scorpion.get_over_here": "Скорпион: ИДИ СЮДА!"
+  "subtitles.superheroes.scorpion.get_over_here": "Скорпион: ИДИ СЮДА!",
+  "key.superheroes.nano_weapon": "Железный Человек: смена нано-оружия",
+  "ability.superheroes.iron_man_smart_missile": "✦ Умные ракеты — самонаводящийся залп",
+  "ability.superheroes.iron_man_smart_missile.desc": "Захват цели и залп из 3 самонаводящихся ракет с уроном по площади",
+  "key.superheroes.esp_toggle": "Железный Человек: скан J.A.R.V.I.S. (ESP)",
+  "hud.superheroes.esp.mode": "Скан J.A.R.V.I.S.: %s",
+  "hud.superheroes.esp.mode.off": "ВЫКЛ",
+  "hud.superheroes.esp.mode.corners": "ЗАХВАТ ЦЕЛИ",
+  "hud.superheroes.esp.mode.box": "ПОЛНЫЙ БОКС"
 }

@@ -28,6 +28,7 @@ public final class AbilityRegistry {
 	public static final SupersonicAbility SUPERSONIC = new SupersonicAbility();
 	public static final RepulsorAbility REPULSOR = new RepulsorAbility();
 	public static final UnibeamAbility UNIBEAM = new UnibeamAbility();
+	public static final SmartMissileAbility IRON_MAN_SMART_MISSILE = new SmartMissileAbility();
 	public static final com.example.superheroes.ability.ironman.IronManNanoFormAbility IRON_MAN_NANO_FORM = new com.example.superheroes.ability.ironman.IronManNanoFormAbility();
 	public static final com.example.superheroes.ability.ironman.IronManSuitSwitchAbility IRON_MAN_SUIT_SWITCH = new com.example.superheroes.ability.ironman.IronManSuitSwitchAbility();
 	public static final com.example.superheroes.ability.ironman.IronManLegionAbility IRON_MAN_LEGION = new com.example.superheroes.ability.ironman.IronManLegionAbility();
@@ -162,6 +163,7 @@ public final class AbilityRegistry {
 		register(SUPERSONIC);
 		register(REPULSOR);
 		register(UNIBEAM);
+		register(IRON_MAN_SMART_MISSILE);
 		register(IRON_MAN_NANO_FORM);
 		register(IRON_MAN_SUIT_SWITCH);
 		register(IRON_MAN_LEGION);

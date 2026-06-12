@@ -50,6 +50,11 @@ public final class ScaramoucheHero implements Hero {
 			.build();
 
 	@Override
+	public ResourceLocation getSkinTexture() {
+		return ModId.of("textures/entity/hero/scaramouche.png");
+	}
+
+	@Override
 	public ResourceLocation getId() {
 		return ID;
 	}

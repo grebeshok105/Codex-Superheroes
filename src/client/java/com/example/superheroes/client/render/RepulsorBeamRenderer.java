@@ -28,6 +28,7 @@ public final class RepulsorBeamRenderer {
 	}
 
 	public static void add(Vec3 start, Vec3 end) {
+		com.example.superheroes.client.ClientRepulsorChargeState.flash();
 		TRACERS.add(new Tracer(start, end, System.currentTimeMillis()));
 	}
 

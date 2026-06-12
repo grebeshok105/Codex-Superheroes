@@ -63,7 +63,7 @@
   "ability.superheroes.x_ray.desc": "Highlights every living thing through walls",
   "ability.superheroes.iron_man_flight.desc": "Thrust-vectored repulsor flight",
   "ability.superheroes.supersonic.desc": "Afterburner boost — drains while held",
-  "ability.superheroes.repulsor.desc": "Palm blast — pure kinetic damage",
+  "ability.superheroes.repulsor.desc": "Palm blast — sneak for a charged shockwave blast",
   "ability.superheroes.unibeam.desc": "Chest-mounted finisher cannon",
   "hud.superheroes.abilities.passives": "Passives",
   "hud.superheroes.abilities.active": "Active",
@@ -789,5 +789,13 @@
   "subtitles.superheroes.ironman.jarvis_outdated_suit": "JARVIS: Outdated suit",
   "subtitles.superheroes.ironman.jarvis_mark85_preset": "JARVIS: Mark 85 preset",
   "subtitles.superheroes.ironman.jarvis_legion_launch": "JARVIS: Legion deployed",
-  "subtitles.superheroes.scorpion.get_over_here": "Scorpion: GET OVER HERE!"
+  "subtitles.superheroes.scorpion.get_over_here": "Scorpion: GET OVER HERE!",
+  "key.superheroes.nano_weapon": "Iron Man: Cycle Nano-Weapon",
+  "ability.superheroes.iron_man_smart_missile": "✦ Smart Missiles — Homing Volley",
+  "ability.superheroes.iron_man_smart_missile.desc": "Locks a target and fires a 3-missile homing volley with AoE detonation",
+  "key.superheroes.esp_toggle": "Iron Man: J.A.R.V.I.S. Scan (ESP)",
+  "hud.superheroes.esp.mode": "J.A.R.V.I.S. Scan: %s",
+  "hud.superheroes.esp.mode.off": "OFF",
+  "hud.superheroes.esp.mode.corners": "TARGET LOCK",
+  "hud.superheroes.esp.mode.box": "FULL BOX"
 }
