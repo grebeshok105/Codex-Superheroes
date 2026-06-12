@@ -147,6 +147,9 @@ public final class ClientNetworking {
 		ClientPlayNetworking.registerGlobalReceiver(com.example.superheroes.network.ThinkMarkS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> com.example.superheroes.client.ClientThinkMarkState.update(payload.playerId(), payload.active())));
 
+		ClientPlayNetworking.registerGlobalReceiver(com.example.superheroes.network.HordeDebugS2CPayload.TYPE, (payload, context) ->
+				context.client().execute(() -> com.example.superheroes.client.hud.HordeDebugOverlay.update(payload.text())));
+
 		ClientPlayNetworking.registerGlobalReceiver(com.example.superheroes.network.AdminBuildS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> {
 					com.example.superheroes.item.AdminBuildVisibility.setClientVisible(payload.enabled());

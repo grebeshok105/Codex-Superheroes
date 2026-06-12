@@ -65,26 +65,31 @@ public class SuperheroesClient implements ClientModInitializer {
 		EntityRendererRegistry.register(ModEntities.RAM, com.example.superheroes.client.render.RamRenderer::new);
 		EntityRendererRegistry.register(ModEntities.IRON_LEGION_DRONE, com.example.superheroes.client.render.IronLegionDroneRenderer::new);
 		// Horde entity renderers
-		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.CRAWLER, com.example.superheroes.client.render.horde.GenericHordeRenderer.spider("crawler", 0.4f, 0.55f));
-		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.LURKER, com.example.superheroes.client.render.horde.GenericHordeRenderer.humanoid("lurker", 0.4f, 0.72f));
-		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.SPITTER, com.example.superheroes.client.render.horde.GenericHordeRenderer.humanoid("spitter", 0.35f, 0.62f));
-		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.SWOOPER, com.example.superheroes.client.render.horde.GenericHordeRenderer.ghast("swooper", 0.4f, 0.8f));
-		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.STALKER, com.example.superheroes.client.render.horde.GenericHordeRenderer.humanoid("stalker", 0.4f, 0.82f));
-		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.INFECTOR, com.example.superheroes.client.render.horde.GenericHordeRenderer.humanoid("infector", 0.3f, 0.51f));
-		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.PARASITIC_HOUND, com.example.superheroes.client.render.horde.GenericHordeRenderer.cow("parasitic_hound", 0.35f, 0.5f));
-		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.INFECTED_ZOMBIE, com.example.superheroes.client.render.horde.GenericHordeRenderer.humanoid("infected_zombie", 0.5f, 1.0f));
-		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.INFECTED_SKELETON, com.example.superheroes.client.render.horde.GenericHordeRenderer.humanoid("infected_skeleton", 0.5f, 1.0f));
-		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.INFECTED_SPIDER, com.example.superheroes.client.render.horde.GenericHordeRenderer.spider("infected_spider", 0.7f, 1.0f));
-		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.INFECTED_CREEPER, com.example.superheroes.client.render.horde.GenericHordeRenderer.creeper("infected_creeper", 0.5f, 1.0f));
-		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.VOID_PARASITE, com.example.superheroes.client.render.horde.GenericHordeRenderer.humanoid("void_parasite", 0.35f, 0.67f));
-		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.HOLLOW_VILLAGER, com.example.superheroes.client.render.horde.GenericHordeRenderer.villager("hollow_villager", 0.5f, 1.0f));
-		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.INFECTED_CATTLE, com.example.superheroes.client.render.horde.GenericHordeRenderer.cow("infected_cattle", 0.5f, 1.0f));
-		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.BROODMOTHER, com.example.superheroes.client.render.horde.GenericHordeRenderer.spider("broodmother", 0.9f, 1.25f));
-		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.CORRUPTED_GOLEM, com.example.superheroes.client.render.horde.GenericHordeRenderer.humanoid("corrupted_golem", 0.8f, 1.38f));
-		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.HIVEMIND, com.example.superheroes.client.render.horde.GenericHordeRenderer.humanoid("hivemind", 0.6f, 1.03f));
-		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.LEVIATHAN, com.example.superheroes.client.render.horde.GenericHordeRenderer.humanoid("leviathan", 1.0f, 1.54f));
+		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.CRAWLER, com.example.superheroes.client.render.horde.HordeGeoRenderer::new);
+		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.LURKER, com.example.superheroes.client.render.horde.HordeGeoRenderer::new);
+		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.SPITTER, com.example.superheroes.client.render.horde.HordeGeoRenderer::new);
+		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.SWOOPER, com.example.superheroes.client.render.horde.HordeGeoRenderer::new);
+		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.STALKER, com.example.superheroes.client.render.horde.HordeGeoRenderer::new);
+		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.INFECTOR, com.example.superheroes.client.render.horde.HordeGeoRenderer::new);
+		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.PARASITIC_HOUND, com.example.superheroes.client.render.horde.HordeGeoRenderer::new);
+		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.INFECTED_ZOMBIE, com.example.superheroes.client.render.horde.HordeGeoRenderer::new);
+		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.INFECTED_SKELETON, com.example.superheroes.client.render.horde.HordeGeoRenderer::new);
+		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.INFECTED_SPIDER, com.example.superheroes.client.render.horde.HordeGeoRenderer::new);
+		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.INFECTED_CREEPER, com.example.superheroes.client.render.horde.HordeGeoRenderer::new);
+		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.VOID_PARASITE, com.example.superheroes.client.render.horde.HordeGeoRenderer::new);
+		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.HOLLOW_VILLAGER, com.example.superheroes.client.render.horde.HordeGeoRenderer::new);
+		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.INFECTED_CATTLE, com.example.superheroes.client.render.horde.HordeGeoRenderer::new);
+		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.BROODMOTHER, com.example.superheroes.client.render.horde.HordeGeoRenderer::new);
+		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.CORRUPTED_GOLEM, com.example.superheroes.client.render.horde.HordeGeoRenderer::new);
+		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.HIVEMIND, com.example.superheroes.client.render.horde.HordeGeoRenderer::new);
+		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.LEVIATHAN, com.example.superheroes.client.render.horde.HordeGeoRenderer::new);
 		com.example.superheroes.horde.entity.HordeEntities hordeRef = null; // static init trigger
 		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.INFECTED_HOMELANDER, com.example.superheroes.client.render.horde.InfectedHomelanderRenderer::new);
+		// Horde bomb projectiles render as thrown items.
+		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.ACID_BOMB,
+				ctx -> new net.minecraft.client.renderer.entity.ThrownItemRenderer<>(ctx, 1.0f, false));
+		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.FIRE_BOMB,
+				ctx -> new net.minecraft.client.renderer.entity.ThrownItemRenderer<>(ctx, 1.0f, false));
 		LivingEntityFeatureRendererRegistrationCallback.EVENT.register((entityType, entityRenderer, registrationHelper, context) -> {
 			if (entityRenderer instanceof PlayerRenderer playerRenderer) {
 				registrationHelper.register(new RemOniHornFeatureRenderer(playerRenderer));
@@ -171,6 +176,7 @@ public class SuperheroesClient implements ClientModInitializer {
 			com.example.superheroes.client.hud.DoomsdayGlitchHud.render(graphics, tracker);
 			com.example.superheroes.client.hud.ReinhardCeremonyOverlay.render(graphics, tracker);
 			com.example.superheroes.client.hud.AbilitiesTooltipHud.render(graphics, tracker);
+			com.example.superheroes.client.hud.HordeDebugOverlay.render(graphics, tracker);
 			{
 				int[] mcOff = com.example.superheroes.client.hud.HudLayoutManager.offset(
 						com.example.superheroes.client.hud.HudLayoutManager.MELEE_CHARGE);
@@ -184,6 +190,7 @@ public class SuperheroesClient implements ClientModInitializer {
 		});
 
 		ClientTickEvents.START_CLIENT_TICK.register(SuperheroesClient::tickHeroMeleeCharge);
+		ClientTickEvents.START_CLIENT_TICK.register(SuperheroesClient::tickThinkMarkDash);
 		ClientTickEvents.END_CLIENT_TICK.register(com.example.superheroes.client.ClientNanoSuitUpState::clientTick);
 		ClientTickEvents.END_CLIENT_TICK.register(com.example.superheroes.client.hud.JarvisDetectionHud::tick);
 
@@ -266,6 +273,22 @@ public class SuperheroesClient implements ClientModInitializer {
 			meleeChargeTicks = 0;
 		});
 
+	}
+
+	private static boolean thinkMarkUseWasDown = false;
+
+	/** While the Omni-Man grab is active, RMB (use) launches the dash/slam. */
+	private static void tickThinkMarkDash(Minecraft client) {
+		if (client.player == null || client.level == null) {
+			thinkMarkUseWasDown = false;
+			return;
+		}
+		boolean grabbing = com.example.superheroes.client.ClientThinkMarkState.isActive(client.player.getUUID());
+		boolean useDown = client.screen == null && client.options.keyUse.isDown();
+		if (grabbing && useDown && !thinkMarkUseWasDown) {
+			ClientPlayNetworking.send(new com.example.superheroes.network.ThinkMarkDashC2SPayload());
+		}
+		thinkMarkUseWasDown = useDown;
 	}
 
 	private static void tickHeroMeleeCharge(Minecraft client) {
