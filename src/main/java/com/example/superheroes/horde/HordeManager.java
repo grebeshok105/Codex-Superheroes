@@ -202,6 +202,15 @@ public final class HordeManager {
 			if (e == null || e.isRemoved() || !e.isAlive()) {
 				return true;
 			}
+			// Keep them relentless: if a mob lost its target (or never had one,
+			// e.g. a creative-mode player it can't auto-aggro), re-point it at the
+			// nearest player. This prevents idle strays counting as "X осталось".
+			if (e instanceof net.minecraft.world.entity.Mob mob) {
+				net.minecraft.world.entity.LivingEntity tgt = mob.getTarget();
+				if (tgt == null || !tgt.isAlive() || tgt.isSpectator()) {
+					forceAggroNearestPlayer(inst, mob);
+				}
+			}
 			// Leash: too far out or fell into the void -> teleport near the centre.
 			double dx = e.getX() - inst.center.x;
 			double dz = e.getZ() - inst.center.z;
@@ -212,6 +221,27 @@ public final class HordeManager {
 			}
 			return false;
 		});
+	}
+
+	/**
+	 * Force a mob to target the nearest non-spectator player, ignoring creative
+	 * immunity. Set directly (no goal) so the target persists for pathing/attack
+	 * even when vanilla targeting would reject a creative player.
+	 */
+	private static void forceAggroNearestPlayer(HordeInstance inst, net.minecraft.world.entity.Mob mob) {
+		net.minecraft.world.entity.player.Player nearest = null;
+		double best = Double.MAX_VALUE;
+		for (ServerPlayer p : inst.level.getServer().getPlayerList().getPlayers()) {
+			if (p.level() != inst.level || p.isSpectator()) continue;
+			double d = p.distanceToSqr(mob);
+			if (d < best) {
+				best = d;
+				nearest = p;
+			}
+		}
+		if (nearest != null) {
+			mob.setTarget(nearest);
+		}
 	}
 
 	private static void snapToRing(HordeInstance inst, Entity e) {
@@ -326,12 +356,12 @@ public final class HordeManager {
 		inst.level.addFreshEntity(entity);
 		inst.liveMobIds.add(entity.getUUID());
 
-		// Straight into the fight: aggro the nearest valid player at spawn.
+		// Straight into the fight: force-aggro the nearest player at spawn.
+		// NOTE: done via setTarget (not a target goal) so it works even when the
+		// player is in CREATIVE — vanilla NearestAttackableTargetGoal can't see
+		// creative players, which otherwise leaves mobs idle and never engaging.
 		if (entity instanceof net.minecraft.world.entity.Mob mob) {
-			net.minecraft.world.entity.player.Player nearest = inst.level.getNearestPlayer(entity, 80.0);
-			if (nearest != null && !nearest.isCreative() && !nearest.isSpectator()) {
-				mob.setTarget(nearest);
-			}
+			forceAggroNearestPlayer(inst, mob);
 		}
 
 		if (elite) {
