@@ -2,7 +2,7 @@
   "sprite_data": {
     "sprite": "superheroes:textures/particle/scorpion_ember.png"
   },
-  "render_style": "BILLBOARD",
+  "render_style": "billboard",
   "additive": true,
   "init_modules": [],
   "update_modules": [],

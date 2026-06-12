@@ -103,7 +103,10 @@ public final class AbilitiesTooltipHud {
 		if (heroId == null) {
 			return;
 		}
-		List<ResourceLocation> abilities = ClientAbilityFilter.visibleFor(ClientHeroState.abilities(), heroId);
+		List<ResourceLocation> abilities = ClientAbilityFilter.visibleFor(ClientHeroState.abilities(), heroId)
+				.stream()
+				.filter(id -> AbilityDescriptions.kindOf(id) != AbilityDescriptions.Kind.PASSIVE)
+				.toList();
 
 		Minecraft mc = Minecraft.getInstance();
 		int contentWidth = PANEL_WIDTH - PADDING_X * 2;
