@@ -46,6 +46,7 @@ public record HeroHudConfig(
 	public static final HeroHudConfig BATTLE_BEAST = new HeroHudConfig("hud.superheroes.energy.blood_curse", EnergyIconType.BEAST, true, "BLOODLUST");
 	public static final HeroHudConfig REM = new HeroHudConfig("hud.superheroes.energy.oni_power", EnergyIconType.ICE, true, "ONI RAGE");
 	public static final HeroHudConfig A_TRAIN = new HeroHudConfig("hud.superheroes.energy.compound_v", EnergyIconType.LIGHTNING, true, "HYPERSPEED");
+	public static final HeroHudConfig SCORPION = new HeroHudConfig("hud.superheroes.energy.hellfire", EnergyIconType.FLAME, false, null);
 
 	public static final HeroHudConfig DEFAULT = new HeroHudConfig("hud.superheroes.energy.generic", EnergyIconType.GENERIC, false, null);
 }

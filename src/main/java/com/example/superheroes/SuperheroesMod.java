@@ -35,6 +35,7 @@ public class SuperheroesMod implements ModInitializer {
 		ModItemGroups.init();
 		ModParticles.init();
 		ModSounds.init();
+		com.example.superheroes.effect.ScorpionController.init();
 		ModNetworking.init();
 		ResourceController.init();
 		com.example.superheroes.effect.MadnessFlightController.init();

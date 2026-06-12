@@ -230,5 +230,26 @@ public record HeroTheme(
 			0x66C8A0FF
 	);
 
+	public static final HeroTheme SCORPION = new HeroTheme(
+			0xE01A0A02,
+			0xD00A0301,
+			0x88FF6A14,
+			0x33FFB060,
+			0xFFFF8A2A,
+			0xFF6A1E00,
+			0xFFFFB048,
+			0x55FF8A30,
+			0xFFFFB048,
+			0xFF200800,
+			0xFFFF9A30,
+			0x55FFCC80,
+			0xFFFF9A30,
+			0x55FF6A14,
+			0xFFFFB048,
+			0xFFFFB048,
+			0xFFFFF0E0,
+			0x55FF8A30
+	);
+
 	public static final HeroTheme DEFAULT = HOMELANDER;
 }

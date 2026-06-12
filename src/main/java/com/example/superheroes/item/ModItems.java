@@ -202,6 +202,11 @@ public final class ModItems {
 			new ATrainSuitItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
 	);
 
+	public static final ScorpionKunaiItem SCORPION_KUNAI = register(
+			"scorpion_kunai",
+			new ScorpionKunaiItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
+	);
+
 	public static final MusouNoHitotachiItem MUSOU_NO_HITOTACHI = register(
 			"musou_no_hitotachi",
 			new MusouNoHitotachiItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))

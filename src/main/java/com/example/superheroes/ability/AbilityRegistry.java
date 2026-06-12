@@ -135,6 +135,11 @@ public final class AbilityRegistry {
 	public static final ATrainHyperspeedAbility A_TRAIN_HYPERSPEED = new ATrainHyperspeedAbility();
 	public static final ATrainAdrenalineRushAbility A_TRAIN_ADRENALINE_RUSH = new ATrainAdrenalineRushAbility();
 
+	public static final ScorpionSpearAbility SCORPION_SPEAR = new ScorpionSpearAbility();
+	public static final ScorpionHellfireAbility SCORPION_HELLFIRE = new ScorpionHellfireAbility();
+	public static final ScorpionFireTeleportAbility SCORPION_FIRE_TELEPORT = new ScorpionFireTeleportAbility();
+	public static final ScorpionHellBreathAbility SCORPION_HELL_BREATH = new ScorpionHellBreathAbility();
+
 	private AbilityRegistry() {
 	}
 
@@ -247,6 +252,10 @@ public final class AbilityRegistry {
 		register(A_TRAIN_SONIC_BOOM);
 		register(A_TRAIN_HYPERSPEED);
 		register(A_TRAIN_ADRENALINE_RUSH);
+		register(SCORPION_SPEAR);
+		register(SCORPION_HELLFIRE);
+		register(SCORPION_FIRE_TELEPORT);
+		register(SCORPION_HELL_BREATH);
 	}
 
 	public static void register(Ability ability) {
