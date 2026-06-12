@@ -3,6 +3,7 @@ package com.example.superheroes.client.hud;
 import com.example.superheroes.client.ClientAbilityCooldowns;
 import com.example.superheroes.client.ClientAbilityFilter;
 import com.example.superheroes.client.ClientHeroState;
+import com.example.superheroes.client.config.SuperheroesClientConfig;
 import com.example.superheroes.client.render.WildRenderer;
 import com.example.superheroes.client.render.WildShaders;
 import com.example.superheroes.hero.Hero;
@@ -118,7 +119,12 @@ public final class AbilityBarHud {
 			glowR = 8f;
 		}
 
-		if (WildShaders.circleReady()) {
+		boolean squareStyle = SuperheroesClientConfig.iconStyle() == SuperheroesClientConfig.IconStyle.SQUARE;
+		if (squareStyle && WildShaders.rectReady()) {
+			// квадратный стиль: тот же цвет/кольцо/глоу, только скруглённый чип вместо орба
+			drawSquareChip(g, mc, x, y, size, cx, cy, abilityId, isUlt, onCd, cdRemaining, cdTotal,
+					ringColor, glowColor, glowR, ringW);
+		} else if (!squareStyle && WildShaders.circleReady()) {
 			// базовый орб: тёмное стекло + кольцо + глоу
 			WildRenderer.orb(g, cx, cy, radius, ORB_FILL, ringColor, ringW, glowColor, glowR);
 
@@ -167,5 +173,49 @@ public final class AbilityBarHud {
 		Component keyComp = HudUtil.text(key);
 		int keyW = mc.font.width(keyComp);
 		g.drawString(mc.font, keyComp, (int) (cx - keyW / 2f), y + size + HudScaler.scale(3), 0xCCE8ECF8, true);
+	}
+
+	/**
+	 * Квадратный стиль иконки: скруглённый чип (тот же fill/кольцо/глоу, что и у орба),
+	 * квадратная иконка и кулдаун вертикальной шторкой + секунды. Геометрия слота та же.
+	 */
+	private static void drawSquareChip(GuiGraphics g, Minecraft mc, int x, int y, int size,
+			float cx, float cy, ResourceLocation abilityId, boolean isUlt, boolean onCd,
+			int cdRemaining, int cdTotal, int ringColor, int glowColor, float glowR, float ringW) {
+		float inset = isUlt ? 0.5f : 2f;
+		float px = x + inset;
+		float py = y + inset;
+		float pw = size - inset * 2f;
+		float ph = size - inset * 2f;
+		float rad = HudScaler.scale(isUlt ? 5f : 4f);
+
+		// чип: тёмное стекло + неоновая обводка + глоу (как у орба)
+		WildRenderer.panel(g, px, py, pw, ph, rad, ORB_FILL, ORB_FILL, ringColor, ringW, glowColor, glowR);
+
+		// квадратная иконка (большая маска => без круговой обрезки), затемняется на кд
+		float iconSize = pw - ringW * 2f - 1f;
+		ResourceLocation tex = AbilityIcons.texture(abilityId);
+		if (tex != null && WildShaders.iconCircleReady()) {
+			WildRenderer.iconCircle(g, tex, cx, cy, iconSize, iconSize, onCd ? 0.55f : 0f);
+		} else {
+			String badge = isUlt ? "\u2605" : AbilityDescriptions.kindOf(abilityId).badge();
+			Component badgeComp = HudUtil.text(badge).withStyle(ChatFormatting.BOLD);
+			int badgeW = mc.font.width(badgeComp);
+			int badgeColor = onCd ? 0xFF8A8FA0 : ringColor;
+			g.drawString(mc.font, badgeComp, (int) (cx - badgeW / 2f), (int) (cy - 4), badgeColor, true);
+		}
+
+		// кулдаун: вертикальная шторка сверху + секунды по центру
+		if (onCd) {
+			float pct = cdTotal > 0 ? (float) cdRemaining / cdTotal : 0f;
+			int wipeH = (int) (ph * pct);
+			if (wipeH > 0) {
+				WildRenderer.fill(g, px, py, pw, wipeH, rad, (0x88 << 24));
+			}
+			String cdText = String.format(java.util.Locale.ROOT, "%.1f", cdRemaining / 20f);
+			Component cdComp = HudUtil.text(cdText).withStyle(ChatFormatting.BOLD);
+			int cdW = mc.font.width(cdComp);
+			g.drawString(mc.font, cdComp, (int) (cx - cdW / 2f), (int) (cy - 4), 0xFFFFCB8E, true);
+		}
 	}
 }

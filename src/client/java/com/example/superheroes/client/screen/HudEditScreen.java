@@ -1,6 +1,7 @@
 package com.example.superheroes.client.screen;
 
 import com.example.superheroes.client.ClientHeroState;
+import com.example.superheroes.client.config.SuperheroesClientConfig;
 import com.example.superheroes.client.hud.HudLayoutManager;
 import com.example.superheroes.client.hud.HudScaler;
 import com.example.superheroes.client.hud.HudUtil;
@@ -34,6 +35,7 @@ public class HudEditScreen extends Screen {
 	private double grabDx;
 	private double grabDy;
 	private String hovered = null;
+	private NeonButton iconStyleBtn;
 
 	public HudEditScreen() {
 		super(Component.translatable("hud.superheroes.edit.title"));
@@ -48,6 +50,23 @@ public class HudEditScreen extends Screen {
 		addRenderableWidget(new NeonButton(width / 2 + 4, height - 28, bw, 20,
 				Component.translatable("hud.superheroes.edit.done"),
 				b -> onClose(), 0xFF6BFF8C, false));
+
+		// Переключатель формы иконок способностей: круглые <-> квадратные
+		iconStyleBtn = new NeonButton(width / 2 - 90, height - 54, 180, 20,
+				iconStyleLabel(), b -> {
+					SuperheroesClientConfig.toggleIconStyle();
+					iconStyleBtn.setMessage(iconStyleLabel());
+				}, 0xFF8E7BFF, false);
+		addRenderableWidget(iconStyleBtn);
+	}
+
+	private static Component iconStyleLabel() {
+		boolean square = SuperheroesClientConfig.iconStyle() == SuperheroesClientConfig.IconStyle.SQUARE;
+		return Component.translatable("hud.superheroes.edit.icon_style")
+				.append(Component.literal(": "))
+				.append(Component.translatable(square
+						? "hud.superheroes.edit.icon_style.square"
+						: "hud.superheroes.edit.icon_style.round"));
 	}
 
 	@Override
