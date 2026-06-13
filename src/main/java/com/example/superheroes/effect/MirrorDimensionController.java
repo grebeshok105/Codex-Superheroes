@@ -188,6 +188,7 @@ public final class MirrorDimensionController {
 			return;
 		}
 		SpatialBindController.releaseAllOf(caster.getUUID());
+		VanityAuthority.clear(caster);
 		for (UUID victimId : session.victims.keySet()) {
 			VICTIM_TO_CASTER.remove(victimId);
 			ServerPlayer victim = caster.server.getPlayerList().getPlayer(victimId);
@@ -284,10 +285,13 @@ public final class MirrorDimensionController {
 				SpatialBindController.releaseAllOf(entry.getKey());
 				it.remove();
 				if (caster != null) {
+					VanityAuthority.clear(caster);
 					AbilityRouter.deactivate(caster, AbilityIds.MIRROR_DIMENSION);
 				}
 				continue;
 			}
+			// Pandora's Vanity Authority: flight + immunity while the House is open.
+			VanityAuthority.applyToCaster(caster);
 			// Continuously drag in any new players who entered the radius.
 			if (keepalive) {
 				absorbNearby(caster, session);
@@ -315,6 +319,7 @@ public final class MirrorDimensionController {
 				enforceZone(victim, session, ve.getValue());
 			}
 			if (keepalive) {
+				VanityAuthority.applyToVictim(victim);
 				ServerPlayNetworking.send(victim,
 						new MirrorDimensionS2CPayload(MirrorDimensionS2CPayload.ACTION_KEEPALIVE, 0, 0));
 			}
