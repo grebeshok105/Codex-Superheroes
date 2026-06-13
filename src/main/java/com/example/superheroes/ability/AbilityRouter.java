@@ -25,6 +25,11 @@ public final class AbilityRouter {
 					"ability.superheroes.disabled_by_snap").withStyle(net.minecraft.ChatFormatting.DARK_PURPLE), true);
 			return;
 		}
+		if (player.hasEffect(ModEffects.VANITY_STRIPPED)) {
+			player.displayClientMessage(net.minecraft.network.chat.Component.translatable(
+					"ability.superheroes.vanity_stripped").withStyle(net.minecraft.ChatFormatting.DARK_PURPLE), true);
+			return;
+		}
 		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
 		if (!data.hasHero()) {
 			return;
@@ -40,6 +45,14 @@ public final class AbilityRouter {
 		if (hero instanceof com.example.superheroes.hero.ThanosHero th
 				&& !th.isAbilityUnlocked(player, abilityId)) {
 			com.example.superheroes.hero.ThanosHero.notifyMissingStone(player, abilityId);
+			return;
+		}
+		// Pandora's dimension-only powers exist only while her House of Vanity is open.
+		if (hero instanceof com.example.superheroes.hero.PandoraHero
+				&& com.example.superheroes.hero.PandoraHero.isDimensionOnly(abilityId)
+				&& !com.example.superheroes.effect.MirrorDimensionController.hasActiveHouse(player)) {
+			player.displayClientMessage(net.minecraft.network.chat.Component.translatable(
+					"ability.superheroes.pandora.not_in_house").withStyle(net.minecraft.ChatFormatting.DARK_GRAY), true);
 			return;
 		}
 		Ability ability = AbilityRegistry.get(abilityId);

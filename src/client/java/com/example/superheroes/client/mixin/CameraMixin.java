@@ -24,6 +24,8 @@ public abstract class CameraMixin {
 	@Inject(method = "setup", at = @At("TAIL"))
 	private void superheroes$applyShake(BlockGetter area, Entity focused, boolean thirdPerson,
 			boolean inverseView, float tickDelta, CallbackInfo ci) {
+		// Pandora's death cinematic camera lock is handled by the input mixins (mouse/keyboard
+		// are frozen) and her POV swap is server-side via ServerPlayer#setCamera — nothing to do here.
 		if (ScreenShakeManager.isActive()) {
 			float[] off = ScreenShakeManager.sample();
 			this.setRotation(this.getYRot() + off[0], this.getXRot() + off[1]);

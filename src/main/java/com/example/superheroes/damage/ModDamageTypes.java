@@ -47,6 +47,7 @@ public final class ModDamageTypes {
 	public static final ResourceKey<DamageType> HOMELANDER_LIGHTNING_CALL = key("homelander_lightning_call");
 	public static final ResourceKey<DamageType> HOMELANDER_ROAR_BOSS = key("homelander_roar_boss");
 	public static final ResourceKey<DamageType> HOMELANDER_MELEE = key("homelander_melee");
+	public static final ResourceKey<DamageType> SPACE_CRUSH = key("space_crush");
 
 	private ModDamageTypes() {
 	}
@@ -90,6 +91,7 @@ public final class ModDamageTypes {
 		context.register(HOMELANDER_LIGHTNING_CALL, new DamageType("homelander_lightning_call", DamageScaling.NEVER, 0.0F));
 		context.register(HOMELANDER_ROAR_BOSS, new DamageType("homelander_roar_boss", DamageScaling.NEVER, 0.0F));
 		context.register(HOMELANDER_MELEE, new DamageType("homelander_melee", DamageScaling.NEVER, 0.0F));
+		context.register(SPACE_CRUSH, new DamageType("space_crush", DamageScaling.NEVER, 0.0F));
 	}
 
 	public static DamageSource eyeLaser(ServerLevel level, Entity attacker) {
@@ -226,6 +228,10 @@ public final class ModDamageTypes {
 
 	public static DamageSource homelanderMelee(ServerLevel level, Entity attacker) {
 		return source(level, HOMELANDER_MELEE, attacker);
+	}
+
+	public static DamageSource spaceCrush(ServerLevel level, Entity attacker) {
+		return source(level, SPACE_CRUSH, attacker);
 	}
 
 	private static DamageSource source(ServerLevel level, ResourceKey<DamageType> key, Entity attacker) {

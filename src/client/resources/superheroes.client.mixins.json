@@ -16,7 +16,12 @@
 		"GuiOverlayMessageMixin",
 		"ChatComponentMixin",
 		"GuiEffectsMixin",
-		"GameRendererBlurMixin"
+		"GameRendererBlurMixin",
+		"FontVanityCipherMixin",
+		"PandoraCinematicMouseTurnMixin",
+		"PandoraCinematicMousePressMixin",
+		"PandoraCinematicKeyboardMixin",
+		"PandoraCinematicInputFreezeMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

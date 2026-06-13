@@ -427,6 +427,9 @@ public final class HeroAttributes {
 			.add(Attributes.ENTITY_INTERACTION_RANGE, OMNIMAN_REACH, 0.8, AttributeModifier.Operation.ADD_VALUE)
 			.build();
 
+	public static final ResourceLocation STRANGE_HP = ModId.of("modifiers/pandora/max_health");
+	public static final ResourceLocation PANDORA_SCALE = ModId.of("modifiers/pandora/body_scale");
+
 	public static final AttributeModifierSet SCORPION = AttributeModifierSet.builder()
 			.add(Attributes.ARMOR, SCORPION_ARMOR, 14.0, AttributeModifier.Operation.ADD_VALUE)
 			.add(Attributes.ARMOR_TOUGHNESS, SCORPION_TOUGHNESS, 6.0, AttributeModifier.Operation.ADD_VALUE)
@@ -434,6 +437,13 @@ public final class HeroAttributes {
 			.add(Attributes.MOVEMENT_SPEED, SCORPION_SPEED, 0.10, AttributeModifier.Operation.ADD_MULTIPLIED_BASE)
 			.add(Attributes.MAX_HEALTH, SCORPION_HP, 4.0, AttributeModifier.Operation.ADD_VALUE)
 			.add(Attributes.KNOCKBACK_RESISTANCE, SCORPION_KNOCKBACK, 0.3, AttributeModifier.Operation.ADD_VALUE)
+			.build();
+
+	// Pandora is a "naked Steve": vanilla 20 HP, no armor / toughness / damage
+	// bonuses. Her power comes entirely from the House of Vanity, not raw stats.
+	// (Only the 75% body scale is kept — purely visual/hitbox, not a combat buff.)
+	public static final AttributeModifierSet PANDORA = AttributeModifierSet.builder()
+			.add(Attributes.SCALE, PANDORA_SCALE, -0.25, AttributeModifier.Operation.ADD_VALUE)
 			.build();
 
 	public static void thanosClearStoneModifiers(net.minecraft.world.entity.LivingEntity entity) {

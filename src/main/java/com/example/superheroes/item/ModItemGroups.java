@@ -69,6 +69,12 @@ public final class ModItemGroups {
 				output.accept(ModItems.REM_ONI_HORN);
 				output.accept(ModItems.A_TRAIN_SUIT);
 				output.accept(ModItems.SCORPION_KUNAI);
+				output.accept(ModItems.DOCTOR_STRANGE_SUIT);
+
+				// Kazuha & Scaramouche are now normal, obtainable characters — their
+				// transformation items live in the regular creative tab (no longer admin-only).
+				output.accept(ModItems.KAZUHA_VISION);
+				output.accept(ModItems.SCARAMOUCHE_VISION);
 
 				// Админ-предметы показываются в этой же вкладке, когда у игрока
 				// включён /superheroes admin (клиент пересобирает вкладку по пакету)
@@ -85,8 +91,6 @@ public final class ModItemGroups {
 	 * Не появляются в обычном креативе.
 	 */
 	public static final List<Item> ADMIN_ONLY_ITEMS = List.of(
-			ModItems.KAZUHA_VISION,
-			ModItems.SCARAMOUCHE_VISION,
 			ModItems.HOMELANDER_BOSS_SPAWN_EGG,
 			ModItems.HORDE_CRYSTAL
 	);

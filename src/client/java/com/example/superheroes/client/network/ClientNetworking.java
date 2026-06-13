@@ -85,6 +85,34 @@ public final class ClientNetworking {
 
 		ClientPlayNetworking.registerGlobalReceiver(com.example.superheroes.network.ScorpionFxS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> ClientScorpionFx.play(payload)));
+		ClientPlayNetworking.registerGlobalReceiver(com.example.superheroes.network.MirrorDimensionS2CPayload.TYPE, (payload, context) ->
+				context.client().execute(() -> {
+					switch (payload.action()) {
+						case com.example.superheroes.network.MirrorDimensionS2CPayload.ACTION_ON ->
+								com.example.superheroes.client.ClientMirrorDimensionState.activate(payload.mode(), payload.scale());
+						case com.example.superheroes.network.MirrorDimensionS2CPayload.ACTION_OFF ->
+								com.example.superheroes.client.ClientMirrorDimensionState.deactivate(true);
+						case com.example.superheroes.network.MirrorDimensionS2CPayload.ACTION_KEEPALIVE ->
+								com.example.superheroes.client.ClientMirrorDimensionState.keepalive();
+						case com.example.superheroes.network.MirrorDimensionS2CPayload.ACTION_SWITCH ->
+								com.example.superheroes.client.ClientMirrorDimensionState.switchMode(payload.mode(), payload.scale());
+						default -> {
+						}
+					}
+				}));
+
+		ClientPlayNetworking.registerGlobalReceiver(com.example.superheroes.network.PandoraCinematicS2CPayload.TYPE, (payload, context) ->
+				context.client().execute(() -> {
+					if (payload.phase() == com.example.superheroes.network.PandoraCinematicS2CPayload.PHASE_START) {
+						com.example.superheroes.client.ClientPandoraDeathState.start(
+								payload.pandoraId(), payload.killerId(), payload.px(), payload.py(), payload.pz());
+					} else {
+						com.example.superheroes.client.ClientPandoraDeathState.end();
+					}
+				}));
+
+		ClientPlayNetworking.registerGlobalReceiver(com.example.superheroes.network.PandoraHouseStateS2CPayload.TYPE, (payload, context) ->
+				context.client().execute(() -> com.example.superheroes.client.ClientPandoraHouseState.set(payload.open())));
 
 		ClientPlayNetworking.registerGlobalReceiver(ScreenShakeS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> ScreenShakeManager.shake(payload.intensity(), payload.durationTicks())));

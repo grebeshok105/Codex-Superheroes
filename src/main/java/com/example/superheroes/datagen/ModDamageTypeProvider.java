@@ -50,6 +50,7 @@ public final class ModDamageTypeProvider extends FabricDynamicRegistryProvider {
 		entries.add(lookup, ModDamageTypes.HOMELANDER_LIGHTNING_CALL);
 		entries.add(lookup, ModDamageTypes.HOMELANDER_ROAR_BOSS);
 		entries.add(lookup, ModDamageTypes.HOMELANDER_MELEE);
+		entries.add(lookup, ModDamageTypes.SPACE_CRUSH);
 	}
 
 	@Override

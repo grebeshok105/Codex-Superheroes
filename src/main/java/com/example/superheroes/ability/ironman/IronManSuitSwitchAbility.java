@@ -4,7 +4,6 @@ import com.example.superheroes.ability.Ability;
 import com.example.superheroes.ability.AbilityCooldowns;
 import com.example.superheroes.ability.AbilityIds;
 import com.example.superheroes.attachment.ModAttachments;
-import com.example.superheroes.jarvis.JarvisQuotes;
 import com.example.superheroes.sound.ModSounds;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
@@ -49,8 +48,6 @@ public final class IronManSuitSwitchAbility implements Ability {
 		IronManSuitSyncController.broadcast(player);
 		IronManSuitStats.apply(player);
 
-		IronManSuitVariant variant = IronManSuitVariant.get(next);
-
 		level.sendParticles(ParticleTypes.ELECTRIC_SPARK,
 				player.getX(), player.getY() + 1.0, player.getZ(), 30, 0.5, 0.8, 0.5, 0.1);
 		// entity overload → ClientboundSoundEntityPacket: голос ДЖАРВИСа летит вместе
@@ -58,9 +55,7 @@ public final class IronManSuitSwitchAbility implements Ability {
 		level.playSound(null, player,
 				ModSounds.IRONMAN_JARVIS_DIAGNOSTIC, SoundSource.PLAYERS, 0.8f, 1.0f);
 
-		String quote = JarvisQuotes.randomSuitSwitch();
-		player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-				"§6[JARVIS] §f" + quote + " §7[" + variant.nameRu() + "]"));
+		// [JARVIS] сообщение о смене костюма в чат убрано по запросу.
 
 		AbilityCooldowns.setCooldownTicks(player, getId(), COOLDOWN_TICKS);
 		return true;
