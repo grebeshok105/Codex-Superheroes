@@ -294,6 +294,16 @@ section.block { padding: clamp(70px, 10vw, 130px) 0; position: relative; }
   border: 1px solid color-mix(in srgb, var(--tc) 40%, transparent);
   text-shadow: 0 0 12px color-mix(in srgb, var(--tc) 70%, transparent);
 }
+.hcard .nbadge {
+  font-family: var(--font-display); font-size: 11px; letter-spacing: 1.2px; line-height: 1;
+  padding: 5px 11px 4px; border-radius: 999px; color: #fff;
+  background: color-mix(in srgb, var(--tc) 80%, #000);
+  border: 1px solid color-mix(in srgb, var(--tc) 55%, #fff 25%);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--tc) 55%, transparent);
+  text-shadow: 0 1px 3px rgba(0,0,0,.45);
+  animation: nbadgepulse 2.4s ease-in-out infinite;
+}
+@keyframes nbadgepulse { 50% { box-shadow: 0 0 28px color-mix(in srgb, var(--tc) 85%, transparent); transform: translateY(-1px); } }
 .hcard h3 { font-size: 16.5px; margin-bottom: 6px; }
 .hcard p { color: var(--muted); font-size: 13.8px; line-height: 1.5; }
 .tier-legend { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 30px; justify-content: center; color: var(--muted); font-size: 13.5px; font-weight: 600; }
@@ -340,7 +350,7 @@ footer { border-top: 1px solid var(--glass-border); padding: 44px 0; margin-top:
   .marquee .tile { width: 46px; height: 46px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .marquee.m1, .marquee.m2, .grain, .hero-badge, .hero-scroll { animation: none !important; }
+  .marquee.m1, .marquee.m2, .grain, .hero-badge, .hero-scroll, .hcard .nbadge { animation: none !important; }
   .rv { transition: none; opacity: 1; transform: none; }
 }
 
