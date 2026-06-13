@@ -56,16 +56,24 @@ public final class VanityAuthority {
 	/** Namespace of the friend's mod — its passive attribute modifiers are stripped by this. */
 	private static final String FALBIKS_NAMESPACE = "falbiks_heroes";
 
-	/** Per-second light "maddening" debuffs + power-strip upkeep on a trapped victim. */
+	/** Per-second light "maddening" ambient debuffs on a trapped victim (always on in the House). */
 	public static void applyToVictim(ServerPlayer victim) {
 		// 60-tick windows refreshed each keepalive so they fade right after release.
 		victim.addEffect(new MobEffectInstance(MobEffects.CONFUSION, 60, 0, false, false, false));
 		victim.addEffect(new MobEffectInstance(MobEffects.DARKNESS, 60, 0, false, false, false));
 		victim.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 60, 0, false, false, false));
 		victim.addEffect(new MobEffectInstance(MobEffects.DIG_SLOWDOWN, 60, 0, false, false, false));
-		// Mark them as vanity-stripped: blocks our abilities (AbilityRouter) and, via a
-		// soft @Pseudo mixin, the friend's mod abilities/passives too — for ALL heroes,
-		// present or future. Refreshed each keepalive so it clears the moment they escape.
+	}
+
+	/**
+	 * Power-strip upkeep for a single victim — driven ONLY by Pandora's dedicated
+	 * «Лишение тщеславием» ability (toggle), never automatically. Marks the victim as
+	 * vanity-stripped: blocks our abilities (AbilityRouter) and, via a soft @Pseudo mixin,
+	 * the friend's mod abilities/passives too — for ALL heroes, present or future.
+	 * Refreshed each tick the ability is active, so it clears the moment it is toggled off
+	 * (or the victim escapes).
+	 */
+	public static void applyStrip(ServerPlayer victim) {
 		victim.addEffect(new MobEffectInstance(ModEffects.VANITY_STRIPPED, 60, 0, false, false, false));
 		stripFalbiksModifiers(victim);
 	}

@@ -65,7 +65,8 @@ public final class PandoraHero implements Hero {
 				AbilityIds.MIRROR_DIMENSION,
 				AbilityIds.MIRROR_MODE_CYCLE,
 				AbilityIds.SPATIAL_BIND,
-				AbilityIds.SPACE_CRUSH);
+				AbilityIds.SPACE_CRUSH,
+				AbilityIds.VANITY_STRIP);
 	}
 
 	/**
@@ -75,7 +76,8 @@ public final class PandoraHero implements Hero {
 	public static boolean isDimensionOnly(ResourceLocation abilityId) {
 		return AbilityIds.MIRROR_MODE_CYCLE.equals(abilityId)
 				|| AbilityIds.SPATIAL_BIND.equals(abilityId)
-				|| AbilityIds.SPACE_CRUSH.equals(abilityId);
+				|| AbilityIds.SPACE_CRUSH.equals(abilityId)
+				|| AbilityIds.VANITY_STRIP.equals(abilityId);
 	}
 
 	@Override

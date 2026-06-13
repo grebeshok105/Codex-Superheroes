@@ -829,5 +829,9 @@
   "ability.superheroes.space_crush.crushed": "Victims crushed: %s",
   "ability.superheroes.pandora.not_in_house": "This power only works inside the House of Vanity",
   "effect.superheroes.vanity_stripped": "Vanity-Stripped",
-  "ability.superheroes.vanity_stripped": "Your powers are stripped inside the House of Vanity"
+  "ability.superheroes.vanity_stripped": "Your powers are stripped inside the House of Vanity",
+  "ability.superheroes.vanity_strip": "Vanity Strip",
+  "ability.superheroes.vanity_strip.desc": "Only inside the House of Vanity. Toggle: while on, every trapped victim loses ALL abilities and passives — from this mod and the friend's mod (future heroes included). Their skin stays. Toggle off and their powers return.",
+  "ability.superheroes.vanity_strip.on": "Vanity Strip: victims are powerless",
+  "ability.superheroes.vanity_strip.off": "Vanity Strip: powers restored"
 }

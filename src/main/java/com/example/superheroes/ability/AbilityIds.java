@@ -147,6 +147,7 @@ public final class AbilityIds {
 	// Pandora's dimension-only abilities — available ONLY while her House of Vanity is open.
 	public static final ResourceLocation SPATIAL_BIND = ModId.of("spatial_bind");
 	public static final ResourceLocation SPACE_CRUSH = ModId.of("space_crush");
+	public static final ResourceLocation VANITY_STRIP = ModId.of("vanity_strip");
 
 
 	public static boolean isReinhardSwordOnly(ResourceLocation id) {
