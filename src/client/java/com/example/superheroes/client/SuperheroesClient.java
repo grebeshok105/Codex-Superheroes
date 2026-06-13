@@ -193,6 +193,7 @@ public class SuperheroesClient implements ClientModInitializer {
 			com.example.superheroes.client.hud.ReinhardSwordDeathOverlay.render(graphics, tracker);
 			com.example.superheroes.client.hud.ReinhardDarknessOverlay.render(graphics, tracker);
 			// Топовый слой: чёрная вспышка Зеркального измерения прячет фриз Iris.reload().
+			com.example.superheroes.client.hud.PandoraDeathOverlay.render(graphics, tracker);
 			com.example.superheroes.client.hud.MirrorWarpFlashHud.render(graphics, tracker);
 		});
 
@@ -272,6 +273,7 @@ public class SuperheroesClient implements ClientModInitializer {
 
 		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
 			com.example.superheroes.client.ClientMirrorDimensionState.onDisconnect();
+			com.example.superheroes.client.ClientPandoraDeathState.onDisconnect();
 			com.example.superheroes.client.ClientThanosState.clear();
 			com.example.superheroes.client.ClientNanoFormState.clear();
 			com.example.superheroes.client.ClientThinkMarkState.clear();

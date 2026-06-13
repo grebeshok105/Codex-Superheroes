@@ -101,6 +101,10 @@ public final class ClientNetworking {
 					}
 				}));
 
+		ClientPlayNetworking.registerGlobalReceiver(com.example.superheroes.network.PandoraDeathS2CPayload.TYPE, (payload, context) ->
+				context.client().execute(() ->
+						com.example.superheroes.client.ClientPandoraDeathState.start(payload.x(), payload.y(), payload.z())));
+
 		ClientPlayNetworking.registerGlobalReceiver(ScreenShakeS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> ScreenShakeManager.shake(payload.intensity(), payload.durationTicks())));
 

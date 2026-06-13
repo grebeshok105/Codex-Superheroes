@@ -134,6 +134,14 @@ public class SuperheroesMod implements ModInitializer {
 
 		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
 			HeroTransformService.onPlayerDisconnect(handler.getPlayer());
+			com.example.superheroes.effect.PandoraDeathController.onPlayerDisconnect(handler.getPlayer());
+		});
+
+		ServerLivingEntityEvents.ALLOW_DEATH.register((entity, source, amount) -> {
+			if (entity instanceof ServerPlayer serverPlayer) {
+				return com.example.superheroes.effect.PandoraDeathController.allowDeath(serverPlayer, source);
+			}
+			return true;
 		});
 
 		ServerLivingEntityEvents.AFTER_DEATH.register((entity, source) -> {

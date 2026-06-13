@@ -834,5 +834,6 @@
   "ability.superheroes.vanity_strip": "Лишение тщеславием",
   "ability.superheroes.vanity_strip.desc": "Доступно только в Доме тщеславия. Переключатель: пока включено, все затянутые жертвы лишаются ВСЕХ способностей и пассивок — как из этого мода, так и из мода друга (включая будущих героев). Скин остаётся. Выключаешь — силы возвращаются.",
   "ability.superheroes.vanity_strip.on": "Лишение тщеславием: жертвы обессилены",
-  "ability.superheroes.vanity_strip.off": "Лишение тщеславием: силы возвращены"
+  "ability.superheroes.vanity_strip.off": "Лишение тщеславием: силы возвращены",
+  "subtitles.superheroes.pandora.child_giggle": "Детский смех"
 }

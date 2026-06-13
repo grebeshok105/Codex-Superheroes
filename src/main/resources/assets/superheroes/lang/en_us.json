@@ -833,5 +833,6 @@
   "ability.superheroes.vanity_strip": "Vanity Strip",
   "ability.superheroes.vanity_strip.desc": "Only inside the House of Vanity. Toggle: while on, every trapped victim loses ALL abilities and passives — from this mod and the friend's mod (future heroes included). Their skin stays. Toggle off and their powers return.",
   "ability.superheroes.vanity_strip.on": "Vanity Strip: victims are powerless",
-  "ability.superheroes.vanity_strip.off": "Vanity Strip: powers restored"
+  "ability.superheroes.vanity_strip.off": "Vanity Strip: powers restored",
+  "subtitles.superheroes.pandora.child_giggle": "Child's giggle"
 }

@@ -198,5 +198,14 @@
         "stream": false
       }
     ]
+  },
+  "pandora.child_giggle": {
+    "subtitle": "subtitles.superheroes.pandora.child_giggle",
+    "sounds": [
+      {
+        "name": "superheroes:pandora/child_giggle",
+        "stream": true
+      }
+    ]
   }
 }

@@ -60,6 +60,7 @@ public final class HeroTransformService {
 				java.util.Set.of()
 		);
 		player.setAttached(ModAttachments.HERO_DATA, updated);
+		com.example.superheroes.effect.PandoraDeathController.resetOnHeroTaken(player);
 		com.example.superheroes.ability.AbilityCooldowns.clearAndSync(player);
 		com.example.superheroes.effect.RegulusTotemController.clear(player.getUUID());
 		com.example.superheroes.effect.RegulusMadnessController.clearMadness(player);
