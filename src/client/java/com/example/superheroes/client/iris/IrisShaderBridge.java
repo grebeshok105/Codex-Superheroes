@@ -67,6 +67,54 @@ public final class IrisShaderBridge {
 		return ok;
 	}
 
+	/**
+	 * True when shaders are on AND the selected pack is the Acid pack, i.e. the
+	 * warp is actually rendering. Used to detect that the warp got dropped
+	 * (alt-tab pause, a foreign Iris reload, the user toggling shaders) so we
+	 * can heal it without losing the original snapshot.
+	 */
+	public static boolean isAcidWarpActive() {
+		if (!isIrisLoaded()) {
+			return false;
+		}
+		try {
+			if (!net.irisshaders.iris.api.v0.IrisApi.getInstance().getConfig().areShadersEnabled()) {
+				return false;
+			}
+			String current = net.irisshaders.iris.Iris.getIrisConfig().getShaderPackName().orElse("");
+			return current != null && current.toLowerCase(Locale.ROOT).contains("acid");
+		} catch (Throwable t) {
+			return false;
+		}
+	}
+
+	/**
+	 * Re-applies the Acid warp WITHOUT taking a new snapshot (the original is
+	 * still held in {@link #activeSnapshot}). Called when the warp got dropped
+	 * while the ability is still active so the victim never escapes by losing
+	 * focus. No-op when we have no active session.
+	 */
+	public static void reassertAcid(int mode, int scale) {
+		if (!isIrisLoaded() || activeSnapshot == null) {
+			return;
+		}
+		Path pack = findAcidPack();
+		if (pack == null) {
+			return;
+		}
+		try {
+			net.irisshaders.iris.config.IrisConfig config = net.irisshaders.iris.Iris.getIrisConfig();
+			Path optionsFile = pack.resolveSibling(pack.getFileName() + ".txt");
+			Files.writeString(optionsFile, "MODE=" + mode + "\nJ=" + scale + "\n", StandardCharsets.UTF_8);
+			config.setShaderPackName(pack.getFileName().toString());
+			config.setShadersEnabled(true);
+			config.save();
+			net.irisshaders.iris.Iris.reload();
+		} catch (Throwable t) {
+			LOGGER.error("Iris bridge failed to re-assert Acid shaders", t);
+		}
+	}
+
 	/** Called once on client start: heals shader config after a crash mid-warp. */
 	public static void restoreAfterCrashIfNeeded() {
 		MirrorRestoreFile.Snapshot snapshot = MirrorRestoreFile.read();

@@ -6,7 +6,6 @@ import com.example.superheroes.ability.AbilityIds;
 import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.entity.IronLegionDroneEntity;
 import com.example.superheroes.entity.ModEntities;
-import com.example.superheroes.jarvis.JarvisQuotes;
 import com.example.superheroes.sound.ModSounds;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
@@ -82,9 +81,7 @@ public final class IronManLegionAbility implements Ability {
 		level.playSound(null, player, ModSounds.IRONMAN_JARVIS_LEGION_LAUNCH,
 				SoundSource.PLAYERS, 2.0f, 1.0f);
 
-		String quote = JarvisQuotes.randomLegionDeploy();
-		player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-				"§6[JARVIS] §f" + quote));
+		// [JARVIS] сообщение о запуске легиона в чат убрано по запросу.
 
 		AbilityCooldowns.setCooldownTicks(player, getId(), COOLDOWN_TICKS);
 		return true;

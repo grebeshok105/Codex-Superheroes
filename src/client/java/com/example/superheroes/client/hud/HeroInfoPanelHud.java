@@ -231,13 +231,11 @@ public final class HeroInfoPanelHud {
 	 */
 	private static void drawIronManStatus(GuiGraphics g, Minecraft mc, int x, int y, int w,
 			HeroTheme theme, net.minecraft.world.entity.player.Player player) {
-		int gold = 0xFFFFC400;
 		int cyan = 0xFF46D8FF;
 		// строка 1: реактор + статус брони (без названия костюма — оно в ENV справа)
 		int icon = HudScaler.scale(11);
 		EmojiIcons.draw(g, HudIcons.PassiveGlyph.REACTOR, x, y - HudScaler.scale(1), icon);
-		g.drawString(mc.font, HudUtil.text("ARMOR ONLINE").copy()
-				.withStyle(ChatFormatting.BOLD), x + icon + HudScaler.scale(4), y, gold, true);
+		// «ARMOR ONLINE» надпись убрана по запросу — место оставлено пустым, лейаут не сдвигаем.
 		// «online» точка справа
 		int dotSz = HudScaler.scale(4);
 		int dotX = x + w - dotSz - HudScaler.scale(2);

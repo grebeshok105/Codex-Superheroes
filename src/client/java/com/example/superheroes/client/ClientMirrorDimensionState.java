@@ -17,11 +17,15 @@ public final class ClientMirrorDimensionState {
 
 	private static boolean active;
 	private static int ticksSinceKeepalive;
+	private static int activeMode;
+	private static int activeScale;
 
 	private ClientMirrorDimensionState() {
 	}
 
 	public static void activate(int mode, int scale) {
+		activeMode = mode;
+		activeScale = scale;
 		int status = IrisShaderBridge.applyAcid(mode, scale);
 		sendStatus(status);
 		if (status == MirrorDimensionStatusC2SPayload.OK_APPLIED) {
@@ -44,10 +48,23 @@ public final class ClientMirrorDimensionState {
 
 	public static void keepalive() {
 		ticksSinceKeepalive = 0;
+		// Если способность ещё активна, но шейдер слетел (альт-таб/пауза/чужой reload
+		// Iris/ручное переключение шейдеров) — молча вернуть его. reassert делает
+		// reload только когда warp реально пропал, поэтому обычные keepalive'ы ничего
+		// не стоят.
+		if (active && !IrisShaderBridge.isAcidWarpActive()) {
+			IrisShaderBridge.reassertAcid(activeMode, activeScale);
+		}
 	}
 
 	public static void tick(Minecraft client) {
 		if (!active) {
+			return;
+		}
+		// На паузе (альт-таб в одиночке -> встроенный сервер встаёт и не шлёт
+		// keepalive) НЕ накручиваем deadman-таймер: иначе через 5с ложно снимем
+		// шейдер, хотя способность ещё активна. Шейдер не должен пропадать.
+		if (client.isPaused()) {
 			return;
 		}
 		ticksSinceKeepalive++;

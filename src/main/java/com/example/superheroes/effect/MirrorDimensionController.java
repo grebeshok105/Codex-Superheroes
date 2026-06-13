@@ -83,8 +83,9 @@ public final class MirrorDimensionController {
 		if (caster != null && key != null) {
 			ChatFormatting color = status == MirrorDimensionStatusC2SPayload.OK_APPLIED
 					? ChatFormatting.GREEN : ChatFormatting.RED;
+			// actionbar (true), не чат — по запросу убрать спам Зеркального измерения из чата.
 			caster.displayClientMessage(
-					Component.translatable(key, victim.getName()).withStyle(color), false);
+					Component.translatable(key, victim.getName()).withStyle(color), true);
 		}
 		boolean failed = status == MirrorDimensionStatusC2SPayload.NO_IRIS
 				|| status == MirrorDimensionStatusC2SPayload.NO_PACK
