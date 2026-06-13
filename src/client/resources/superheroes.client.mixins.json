@@ -16,7 +16,8 @@
 		"GuiOverlayMessageMixin",
 		"ChatComponentMixin",
 		"GuiEffectsMixin",
-		"GameRendererBlurMixin"
+		"GameRendererBlurMixin",
+		"FontVanityCipherMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

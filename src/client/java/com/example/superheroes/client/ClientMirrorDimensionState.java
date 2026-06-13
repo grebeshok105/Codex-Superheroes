@@ -25,10 +25,26 @@ public final class ClientMirrorDimensionState {
 	private static int activeMode;
 	private static int activeScale;
 
+	/**
+	 * Whether the local player is trapped in Pandora's House — independent of whether
+	 * the Iris/Acid warp actually applied (so the text cipher works even without shaders).
+	 * Drives the progressive «encrypted text» effect (#11).
+	 */
+	private static boolean trapped;
+	private static long trappedSinceMs;
+
+	/** Cipher ramps from this up to 1.0 (fully encrypted). */
+	private static final float CIPHER_BASE = 0.06f;
+	private static final float CIPHER_PER_SECOND = 0.035f;
+
 	private ClientMirrorDimensionState() {
 	}
 
 	public static void activate(int mode, int scale) {
+		if (!trapped) {
+			trapped = true;
+			trappedSinceMs = System.currentTimeMillis();
+		}
 		activeMode = mode;
 		activeScale = scale;
 		if (!IrisShaderBridge.canWarp()) {
@@ -54,7 +70,27 @@ public final class ClientMirrorDimensionState {
 		MirrorWarpFlashHud.flashAndRun(() -> IrisShaderBridge.reassertAcid(mode, scale));
 	}
 
+	/** @return true while the local player is trapped in the House (cipher should run). */
+	public static boolean isTrapped() {
+		return trapped;
+	}
+
+	/**
+	 * Progressive cipher strength [0..1]: 0 when free, rising each second the local player
+	 * stays trapped until the whole screen is fully encrypted. Restored instantly on exit.
+	 */
+	public static float cipherStrength() {
+		if (!trapped || trappedSinceMs <= 0L) {
+			return 0f;
+		}
+		float seconds = (System.currentTimeMillis() - trappedSinceMs) / 1000f;
+		return net.minecraft.util.Mth.clamp(CIPHER_BASE + seconds * CIPHER_PER_SECOND, 0f, 1f);
+	}
+
 	public static void deactivate(boolean reportToServer) {
+		// Free the cipher the instant the House releases us, regardless of warp state.
+		trapped = false;
+		trappedSinceMs = 0L;
 		if (!active) {
 			return;
 		}
