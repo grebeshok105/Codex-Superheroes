@@ -32,6 +32,7 @@ public final class ModSounds {
 	public static final SoundEvent IRONMAN_JARVIS_LEGION_LAUNCH = register("ironman.jarvis_legion_launch");
 	public static final SoundEvent SCORPION_GET_OVER_HERE = register("scorpion.get_over_here");
 	public static final SoundEvent PANDORA_CHILD_GIGGLE = register("pandora.child_giggle");
+	public static final SoundEvent PANDORA_VANITY_REVIVE = register("pandora.vanity_revive");
 
 	private ModSounds() {
 	}

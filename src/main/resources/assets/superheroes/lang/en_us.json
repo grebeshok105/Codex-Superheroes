@@ -335,6 +335,8 @@
   "death.attack.homelander_roar_boss.player": "%1$s was deafened and broken by %2$s's roar",
   "death.attack.homelander_melee": "%1$s was beaten down by Homelander",
   "death.attack.homelander_melee.player": "%1$s was beaten down by %2$s",
+  "death.attack.space_crush": "%1$s collapsed into a tiny black hole",
+  "death.attack.space_crush.player": "%1$s was crushed into a tiny black hole by %2$s",
   "hero.superheroes.goku.passive.1": "Saiyan Body: +6 attack damage, +10 HP",
   "hero.superheroes.goku.passive.2": "Light Frame: +10% movement speed",
   "hero.superheroes.goku.passive.3": "Ki Body: immune to fall damage",
@@ -834,5 +836,7 @@
   "ability.superheroes.vanity_strip.desc": "Only inside the House of Vanity. Toggle: while on, every trapped victim loses ALL abilities and passives — from this mod and the friend's mod (future heroes included). Their skin stays. Toggle off and their powers return.",
   "ability.superheroes.vanity_strip.on": "Vanity Strip: victims are powerless",
   "ability.superheroes.vanity_strip.off": "Vanity Strip: powers restored",
-  "subtitles.superheroes.pandora.child_giggle": "Child's giggle"
+  "subtitles.superheroes.pandora.child_giggle": "Child's giggle",
+  "pandora.death.title": "You thought I'd be that easy to kill?",
+  "subtitles.superheroes.pandora.vanity_revive": "Pandora: \"You thought it'd be that easy?\""
 }

@@ -17,6 +17,13 @@ public final class ClientAbilityFilter {
 	}
 
 	public static List<ResourceLocation> visibleFor(List<ResourceLocation> base, ResourceLocation heroId) {
+		// Vanity-stripped victims (#1): their abilities are fully REMOVED from every HUD —
+		// the ability bar, the radial menu and the tooltip list all go empty, so the round
+		// ability slots simply vanish, exactly like in the reference mod.
+		Minecraft mc = Minecraft.getInstance();
+		if (mc.player != null && com.example.superheroes.effect.ModEffects.isVanityStripped(mc.player)) {
+			return new ArrayList<>();
+		}
 		boolean isDoomsday = ModId.of("doomsday").equals(heroId);
 		boolean isThanos = ThanosHero.ID.equals(heroId);
 		boolean isRem = RemHero.ID.equals(heroId);

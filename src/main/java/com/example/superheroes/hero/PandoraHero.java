@@ -104,4 +104,10 @@ public final class PandoraHero implements Hero {
 	public ResourceLocation getSkinTexture() {
 		return SKIN;
 	}
+
+	@Override
+	public HeroTheme getTheme() {
+		// Pandora's HUD/radial colours are pure white — same monochrome theme as Regulus.
+		return RegulusHero.THEME;
+	}
 }

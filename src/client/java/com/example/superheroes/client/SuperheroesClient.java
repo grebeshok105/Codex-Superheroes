@@ -53,7 +53,6 @@ public class SuperheroesClient implements ClientModInitializer {
 		ModKeys.init();
 		ClientNetworking.init();
 		com.example.superheroes.client.iris.IrisShaderBridge.restoreAfterCrashIfNeeded();
-		com.example.superheroes.client.iris.PandoraVanitasBridge.restoreAfterCrashIfNeeded();
 		ClientTickEvents.END_CLIENT_TICK.register(com.example.superheroes.client.ClientMirrorDimensionState::tick);
 		ClientTickEvents.END_CLIENT_TICK.register(client -> com.example.superheroes.client.ClientPandoraDeathState.tick());
 		com.example.superheroes.client.render.WildShaders.register();
@@ -183,6 +182,7 @@ public class SuperheroesClient implements ClientModInitializer {
 			com.example.superheroes.client.hud.DoomsdayGlitchHud.render(graphics, tracker);
 			com.example.superheroes.client.hud.ReinhardCeremonyOverlay.render(graphics, tracker);
 			com.example.superheroes.client.hud.AbilitiesTooltipHud.render(graphics, tracker);
+			com.example.superheroes.client.hud.PandoraDeathTitleHud.render(graphics, tracker);
 			com.example.superheroes.client.hud.HordeDebugOverlay.render(graphics, tracker);
 			{
 				int[] mcOff = com.example.superheroes.client.hud.HudLayoutManager.offset(

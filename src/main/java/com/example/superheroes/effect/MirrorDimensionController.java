@@ -98,6 +98,10 @@ public final class MirrorDimensionController {
 		stop(caster, false);
 		Session session = new Session(mode, scale, caster.position());
 		SESSIONS.put(caster.getUUID(), session);
+		// Belt-and-suspenders (#6): Pandora must NEVER trap/warp herself. Even alone, the House
+		// opens (so her abilities unlock) but the warp + zone-trap only ever apply to OTHER players.
+		VICTIM_TO_CASTER.remove(caster.getUUID());
+		session.victims.remove(caster.getUUID());
 		int pulled = absorbNearby(caster, session);
 		if (pulled == 0) {
 			caster.displayClientMessage(
@@ -131,7 +135,9 @@ public final class MirrorDimensionController {
 		int pulled = 0;
 		double r2 = PULL_RADIUS * PULL_RADIUS;
 		for (ServerPlayer p : caster.serverLevel().players()) {
-			if (p == caster || p.isSpectator() || p.isDeadOrDying()) {
+			// Never absorb the caster herself — by reference AND by UUID (#6).
+			if (p == caster || p.getUUID().equals(caster.getUUID())
+					|| p.isSpectator() || p.isDeadOrDying()) {
 				continue;
 			}
 			if (p.distanceToSqr(session.center.x, session.center.y, session.center.z) > r2) {

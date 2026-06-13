@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.damage.ModDamageTypes;
 import com.example.superheroes.effect.MirrorDimensionController;
 import com.example.superheroes.effect.SpatialBindController;
 import net.minecraft.ChatFormatting;
@@ -80,8 +81,10 @@ public final class SpaceCrushAbility implements Ability {
 		level.sendParticles(ParticleTypes.LARGE_SMOKE, x, y, z, 60, 0.5, 0.8, 0.5, 0.02);
 		level.playSound(null, x, y, z, SoundEvents.WARDEN_SONIC_BOOM, SoundSource.HOSTILE, 1.4f, 0.6f);
 		level.playSound(null, x, y, z, SoundEvents.ANVIL_LAND, SoundSource.HOSTILE, 1.0f, 0.5f);
-		// Lethal blow credited to Pandora; release the ropes afterwards.
-		victim.hurt(level.damageSources().playerAttack(caster), CRUSH_DAMAGE);
+		// Lethal blow credited to Pandora via the custom «space_crush» death type
+		// (so the chat death message reads as a black-hole collapse, not «умер»);
+		// release the ropes afterwards.
+		victim.hurt(ModDamageTypes.spaceCrush(level, caster), CRUSH_DAMAGE);
 		SpatialBindController.release(victim.getUUID());
 	}
 }
