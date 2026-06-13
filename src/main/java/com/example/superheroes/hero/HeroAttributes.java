@@ -427,7 +427,8 @@ public final class HeroAttributes {
 			.add(Attributes.ENTITY_INTERACTION_RANGE, OMNIMAN_REACH, 0.8, AttributeModifier.Operation.ADD_VALUE)
 			.build();
 
-	public static final ResourceLocation STRANGE_HP = ModId.of("modifiers/doctor_strange/max_health");
+	public static final ResourceLocation STRANGE_HP = ModId.of("modifiers/pandora/max_health");
+	public static final ResourceLocation PANDORA_SCALE = ModId.of("modifiers/pandora/body_scale");
 
 	public static final AttributeModifierSet SCORPION = AttributeModifierSet.builder()
 			.add(Attributes.ARMOR, SCORPION_ARMOR, 14.0, AttributeModifier.Operation.ADD_VALUE)
@@ -438,8 +439,11 @@ public final class HeroAttributes {
 			.add(Attributes.KNOCKBACK_RESISTANCE, SCORPION_KNOCKBACK, 0.3, AttributeModifier.Operation.ADD_VALUE)
 			.build();
 
-	public static final AttributeModifierSet DOCTOR_STRANGE = AttributeModifierSet.builder()
+	public static final AttributeModifierSet PANDORA = AttributeModifierSet.builder()
 			.add(Attributes.MAX_HEALTH, STRANGE_HP, 10.0, AttributeModifier.Operation.ADD_VALUE)
+			// Pandora's body is 75% of a standard Steve — vanilla SCALE attribute
+			// scales the rendered model AND the hitbox/eye-height together.
+			.add(Attributes.SCALE, PANDORA_SCALE, -0.25, AttributeModifier.Operation.ADD_VALUE)
 			.build();
 
 	public static void thanosClearStoneModifiers(net.minecraft.world.entity.LivingEntity entity) {

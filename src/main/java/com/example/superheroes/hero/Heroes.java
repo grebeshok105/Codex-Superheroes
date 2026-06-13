@@ -30,7 +30,7 @@ public final class Heroes {
 	public static final RemHero REM = new RemHero();
 	public static final ATrainHero A_TRAIN = new ATrainHero();
 	public static final ScorpionHero SCORPION = new ScorpionHero();
-	public static final DoctorStrangeHero DOCTOR_STRANGE = new DoctorStrangeHero();
+	public static final PandoraHero PANDORA = new PandoraHero();
 
 	private Heroes() {
 	}
@@ -57,7 +57,7 @@ public final class Heroes {
 		register(REM);
 		register(A_TRAIN);
 		register(SCORPION);
-		register(DOCTOR_STRANGE);
+		register(PANDORA);
 	}
 
 	public static void register(Hero hero) {

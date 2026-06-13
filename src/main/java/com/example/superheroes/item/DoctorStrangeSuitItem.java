@@ -1,6 +1,6 @@
 package com.example.superheroes.item;
 
-import com.example.superheroes.hero.DoctorStrangeHero;
+import com.example.superheroes.hero.PandoraHero;
 import com.example.superheroes.transform.TransformationItem;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
@@ -12,7 +12,7 @@ import java.util.List;
 
 public class DoctorStrangeSuitItem extends TransformationItem {
 	public DoctorStrangeSuitItem(Properties properties) {
-		super(DoctorStrangeHero.ID, properties);
+		super(PandoraHero.ID, properties);
 	}
 
 	@Override

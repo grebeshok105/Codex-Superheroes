@@ -3,7 +3,7 @@ package com.example.superheroes.effect;
 import com.example.superheroes.ability.AbilityIds;
 import com.example.superheroes.ability.AbilityRouter;
 import com.example.superheroes.attachment.ModAttachments;
-import com.example.superheroes.hero.DoctorStrangeHero;
+import com.example.superheroes.hero.PandoraHero;
 import com.example.superheroes.network.MirrorDimensionS2CPayload;
 import com.example.superheroes.network.MirrorDimensionStatusC2SPayload;
 import com.example.superheroes.transform.HeroData;
@@ -233,16 +233,42 @@ public final class MirrorDimensionController {
 			nx = c.x + dx * f;
 			nz = c.z + dz * f;
 		}
-		double ny = outVert ? c.y : p.y;
 		float yaw = Mth360(victim.getYRot() + 180f);
 
 		ServerLevel level = victim.serverLevel();
+		// Always drop the victim onto a safe surface so the yank never teleports
+		// them inside blocks (requested fix). Fall back to the current/center Y if
+		// the heightmap result would still collide.
+		double ny = safeSurfaceY(level, victim, nx, nz, outVert ? c.y : p.y);
 		victim.teleportTo(level, nx, ny, nz, Set.of(), yaw, victim.getXRot());
 		victim.setDeltaMovement(Vec3.ZERO);
 		victim.hurtMarked = true;
 		level.sendParticles(ParticleTypes.PORTAL, nx, ny + 1.0, nz, 60, 0.6, 1.0, 0.6, 0.4);
 		level.sendParticles(ParticleTypes.REVERSE_PORTAL, nx, ny + 1.0, nz, 30, 0.4, 0.8, 0.4, 0.05);
 		session.yankCooldown = YANK_COOLDOWN_TICKS;
+	}
+
+	/**
+	 * Finds a safe Y to place the victim at the given XZ: the top surface from the
+	 * motion-blocking (no-leaves) heightmap, then nudged up until the player's
+	 * hitbox no longer collides (cap +6). Falls back to {@code fallbackY} if the
+	 * surface itself is unusable.
+	 */
+	private static double safeSurfaceY(ServerLevel level, ServerPlayer victim, double x, double z, double fallbackY) {
+		net.minecraft.core.BlockPos.MutableBlockPos cursor =
+				net.minecraft.core.BlockPos.containing(x, fallbackY, z).mutable();
+		int surfaceY = level.getHeight(
+				net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+				cursor.getX(), cursor.getZ());
+		double baseY = surfaceY;
+		net.minecraft.world.entity.EntityDimensions dims = victim.getDimensions(victim.getPose());
+		for (int up = 0; up <= 6; up++) {
+			net.minecraft.world.phys.AABB box = dims.makeBoundingBox(x, baseY + up, z);
+			if (level.noCollision(victim, box)) {
+				return baseY + up;
+			}
+		}
+		return Math.max(baseY, fallbackY);
 	}
 
 	private static float Mth360(float yaw) {
@@ -263,7 +289,7 @@ public final class MirrorDimensionController {
 			return false;
 		}
 		HeroData data = caster.getAttachedOrCreate(ModAttachments.HERO_DATA);
-		if (!data.hasHero() || !DoctorStrangeHero.ID.equals(data.heroId())) {
+		if (!data.hasHero() || !PandoraHero.ID.equals(data.heroId())) {
 			return false;
 		}
 		return data.isActive(AbilityIds.MIRROR_DIMENSION);

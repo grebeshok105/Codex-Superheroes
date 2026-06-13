@@ -11,13 +11,18 @@ import net.minecraft.world.entity.player.Player;
 import java.util.List;
 
 /**
- * Doctor Strange — minimal shell on purpose: the whole feature budget goes
- * into the Mirror Dimension ability. Skin texture is a placeholder until the
- * user supplies art.
+ * Pandora (Re:Zero) — replaces Doctor Strange. The Mirror Dimension feature
+ * becomes the "House of Vanity" (Дом тщеславия): inside it Pandora wields her
+ * Authority of Greed. The body is rendered at 75% of a vanilla Steve via the
+ * vanilla {@code minecraft:generic.scale} attribute (see {@link HeroAttributes#PANDORA}),
+ * which scales both the visual model and the hitbox/eye-height in one shot.
+ *
+ * <p>Skin is a classic/4px (WIDE) player skin override — the client skin mixin
+ * already forces {@code PlayerSkin.Model.WIDE} for hero textures.
  */
-public final class DoctorStrangeHero implements Hero {
-	public static final ResourceLocation ID = ModId.of("doctor_strange");
-	public static final ResourceLocation SKIN = ModId.of("textures/entity/hero/doctor_strange.png");
+public final class PandoraHero implements Hero {
+	public static final ResourceLocation ID = ModId.of("pandora");
+	public static final ResourceLocation SKIN = ModId.of("textures/entity/hero/pandora.png");
 
 	@Override
 	public ResourceLocation getId() {
@@ -41,6 +46,8 @@ public final class DoctorStrangeHero implements Hero {
 
 	@Override
 	public EntityDimensions getDimensions(Pose pose) {
+		// Base (vanilla-equivalent) dimensions; the 0.75 shrink is applied on top
+		// by the SCALE attribute in applyPassives, so we must NOT pre-shrink here.
 		return switch (pose) {
 			case CROUCHING -> EntityDimensions.scalable(0.6f, 1.5f).withEyeHeight(1.27f);
 			case SWIMMING, FALL_FLYING, SPIN_ATTACK -> EntityDimensions.scalable(0.6f, 0.6f).withEyeHeight(0.4f);
@@ -50,6 +57,8 @@ public final class DoctorStrangeHero implements Hero {
 
 	@Override
 	public List<ResourceLocation> getAbilities() {
+		// "Дом тщеславия" (House of Vanity) + "Каприз творца" (Creator's Whim).
+		// Dimension-only abilities (rope-bind, space-crush) are added/gated separately.
 		return List.of(AbilityIds.MIRROR_DIMENSION, AbilityIds.MIRROR_MODE_CYCLE);
 	}
 
@@ -60,12 +69,12 @@ public final class DoctorStrangeHero implements Hero {
 
 	@Override
 	public void applyPassives(Player player) {
-		HeroAttributes.DOCTOR_STRANGE.apply(player);
+		HeroAttributes.PANDORA.apply(player);
 	}
 
 	@Override
 	public void removePassives(Player player) {
-		HeroAttributes.DOCTOR_STRANGE.remove(player);
+		HeroAttributes.PANDORA.remove(player);
 	}
 
 	@Override
