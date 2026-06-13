@@ -50,7 +50,7 @@ public final class DoctorStrangeHero implements Hero {
 
 	@Override
 	public List<ResourceLocation> getAbilities() {
-		return List.of(AbilityIds.MIRROR_DIMENSION);
+		return List.of(AbilityIds.MIRROR_DIMENSION, AbilityIds.MIRROR_MODE_CYCLE);
 	}
 
 	@Override

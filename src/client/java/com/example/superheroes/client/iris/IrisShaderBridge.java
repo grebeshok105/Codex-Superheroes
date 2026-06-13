@@ -37,6 +37,11 @@ public final class IrisShaderBridge {
 		return FabricLoader.getInstance().isModLoaded("iris");
 	}
 
+	/** True when we can actually drive a warp (Iris present AND an Acid pack found). */
+	public static boolean canWarp() {
+		return isIrisLoaded() && findAcidPack() != null;
+	}
+
 	/** @return a {@link MirrorDimensionStatusC2SPayload} status code. */
 	public static int applyAcid(int mode, int scale) {
 		if (!isIrisLoaded()) {

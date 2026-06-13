@@ -812,5 +812,9 @@
   "ability.superheroes.mirror_dimension.applied": "%s is trapped in the Mirror Dimension",
   "ability.superheroes.mirror_dimension.no_iris": "%s has no Iris installed — the Mirror Dimension cannot manifest",
   "ability.superheroes.mirror_dimension.no_pack": "%s has no Acid Shaders pack in their shaderpacks folder",
-  "ability.superheroes.mirror_dimension.iris_fail": "The Mirror Dimension failed to manifest on %s's client (Iris error)"
+  "ability.superheroes.mirror_dimension.iris_fail": "The Mirror Dimension failed to manifest on %s's client (Iris error)",
+  "ability.superheroes.mirror_mode_cycle": "Distortion Switch",
+  "ability.superheroes.mirror_mode_cycle.desc": "Cycles the active Mirror Dimension warp through modes 4 -> 5 -> 6 -> 9. Each switch reloads the victim's shader — hidden behind a black flash on their screen. Activate the Mirror Dimension first.",
+  "ability.superheroes.mirror_mode_cycle.no_session": "Activate the Mirror Dimension first",
+  "ability.superheroes.mirror_mode_cycle.switched": "Distortion mode: %s"
 }

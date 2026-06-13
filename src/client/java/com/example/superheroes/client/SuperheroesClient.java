@@ -192,6 +192,8 @@ public class SuperheroesClient implements ClientModInitializer {
 			}
 			com.example.superheroes.client.hud.ReinhardSwordDeathOverlay.render(graphics, tracker);
 			com.example.superheroes.client.hud.ReinhardDarknessOverlay.render(graphics, tracker);
+			// Топовый слой: чёрная вспышка Зеркального измерения прячет фриз Iris.reload().
+			com.example.superheroes.client.hud.MirrorWarpFlashHud.render(graphics, tracker);
 		});
 
 		ClientTickEvents.START_CLIENT_TICK.register(SuperheroesClient::tickHeroMeleeCharge);

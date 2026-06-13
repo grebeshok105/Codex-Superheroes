@@ -12,12 +12,15 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
  * Acid Shaders pack; this payload only switches it on/off and supplies the
  * deformation options (MODE/J shader options).
  *
- * action: 0 = ON, 1 = OFF, 2 = KEEPALIVE (deadman switch refresh).
+ * action: 0 = ON, 1 = OFF, 2 = KEEPALIVE (deadman switch refresh),
+ * 3 = SWITCH (change MODE/J on an already-active warp WITHOUT re-snapshotting
+ * the victim's original shader state).
  */
 public record MirrorDimensionS2CPayload(int action, int mode, int scale) implements CustomPacketPayload {
 	public static final int ACTION_ON = 0;
 	public static final int ACTION_OFF = 1;
 	public static final int ACTION_KEEPALIVE = 2;
+	public static final int ACTION_SWITCH = 3;
 
 	public static final Type<MirrorDimensionS2CPayload> TYPE = new Type<>(ModId.of("mirror_dimension"));
 

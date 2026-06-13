@@ -94,6 +94,8 @@ public final class ClientNetworking {
 								com.example.superheroes.client.ClientMirrorDimensionState.deactivate(true);
 						case com.example.superheroes.network.MirrorDimensionS2CPayload.ACTION_KEEPALIVE ->
 								com.example.superheroes.client.ClientMirrorDimensionState.keepalive();
+						case com.example.superheroes.network.MirrorDimensionS2CPayload.ACTION_SWITCH ->
+								com.example.superheroes.client.ClientMirrorDimensionState.switchMode(payload.mode(), payload.scale());
 						default -> {
 						}
 					}

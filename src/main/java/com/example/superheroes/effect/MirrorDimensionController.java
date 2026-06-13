@@ -10,28 +10,62 @@ import com.example.superheroes.transform.HeroData;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.ChatFormatting;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /**
  * Server-side state of Doctor Strange's Mirror Dimension: which caster warps
- * which victim. Sends ON/OFF/KEEPALIVE payloads to the victim's client and
- * relays the victim's status answers back to the caster.
+ * which victim, the active warp MODE/J, and the spatial "trap" that keeps the
+ * victim inside a bounded zone around where they were caught.
+ *
+ * Sends ON/OFF/KEEPALIVE/SWITCH payloads to the victim's client and relays the
+ * victim's status answers back to the caster.
  */
 public final class MirrorDimensionController {
 	private static final int KEEPALIVE_INTERVAL_TICKS = 20;
 
-	private static final Map<UUID, UUID> CASTER_TO_VICTIM = new HashMap<>();
+	/** Radius (blocks) of the zone the victim cannot escape while trapped. */
+	private static final double ZONE_RADIUS = 50.0;
+	/** When yanked back, the victim lands this fraction of the radius from the center. */
+	private static final double PULL_BACK_FACTOR = 0.4;
+	/** Ticks between forced yank-backs so the victim isn't teleport-spammed every tick. */
+	private static final int YANK_COOLDOWN_TICKS = 8;
+
+	/** Mode cycle for the mode-switch ability and its matching J (sphere scale). */
+	private static final int[] MODE_CYCLE = {4, 5, 6, 9};
+	private static final int[] SCALE_CYCLE = {16, 8, 32, 256};
+
+	private static final Map<UUID, Session> SESSIONS = new HashMap<>();
 	private static final Map<UUID, UUID> VICTIM_TO_CASTER = new HashMap<>();
 	private static int clock;
 
 	private MirrorDimensionController() {
+	}
+
+	private static final class Session {
+		final UUID victim;
+		int mode;
+		int scale;
+		final Vec3 center;
+		boolean applied;
+		int yankCooldown;
+
+		Session(UUID victim, int mode, int scale, Vec3 center) {
+			this.victim = victim;
+			this.mode = mode;
+			this.scale = scale;
+			this.center = center;
+		}
 	}
 
 	public static void init() {
@@ -47,20 +81,53 @@ public final class MirrorDimensionController {
 			return false;
 		}
 		stop(caster, false);
-		CASTER_TO_VICTIM.put(caster.getUUID(), victim.getUUID());
+		SESSIONS.put(caster.getUUID(), new Session(victim.getUUID(), mode, scale, victim.position()));
 		VICTIM_TO_CASTER.put(victim.getUUID(), caster.getUUID());
 		ServerPlayNetworking.send(victim, new MirrorDimensionS2CPayload(MirrorDimensionS2CPayload.ACTION_ON, mode, scale));
 		return true;
 	}
 
+	/**
+	 * Mode-switch ability: advance the caster's active warp to the next MODE/J in
+	 * the cycle and push it to the victim (SWITCH = re-apply without re-snapshot).
+	 *
+	 * @return false when the caster has no active Mirror Dimension session.
+	 */
+	public static boolean cycleMode(ServerPlayer caster) {
+		Session session = SESSIONS.get(caster.getUUID());
+		if (session == null) {
+			return false;
+		}
+		int next = (indexOfMode(session.mode) + 1) % MODE_CYCLE.length;
+		session.mode = MODE_CYCLE[next];
+		session.scale = SCALE_CYCLE[next];
+		ServerPlayer victim = caster.server.getPlayerList().getPlayer(session.victim);
+		if (victim != null) {
+			ServerPlayNetworking.send(victim,
+					new MirrorDimensionS2CPayload(MirrorDimensionS2CPayload.ACTION_SWITCH, session.mode, session.scale));
+		}
+		caster.displayClientMessage(
+				Component.translatable("ability.superheroes.mirror_mode_cycle.switched", session.mode).withStyle(ChatFormatting.LIGHT_PURPLE), true);
+		return true;
+	}
+
+	private static int indexOfMode(int mode) {
+		for (int i = 0; i < MODE_CYCLE.length; i++) {
+			if (MODE_CYCLE[i] == mode) {
+				return i;
+			}
+		}
+		return 0;
+	}
+
 	/** Stops the caster's active session (if any) and tells the victim to restore shaders. */
 	public static void stop(ServerPlayer caster, boolean notifyCaster) {
-		UUID victimId = CASTER_TO_VICTIM.remove(caster.getUUID());
-		if (victimId == null) {
+		Session session = SESSIONS.remove(caster.getUUID());
+		if (session == null) {
 			return;
 		}
-		VICTIM_TO_CASTER.remove(victimId);
-		ServerPlayer victim = caster.server.getPlayerList().getPlayer(victimId);
+		VICTIM_TO_CASTER.remove(session.victim);
+		ServerPlayer victim = caster.server.getPlayerList().getPlayer(session.victim);
 		if (victim != null) {
 			ServerPlayNetworking.send(victim, new MirrorDimensionS2CPayload(MirrorDimensionS2CPayload.ACTION_OFF, 0, 0));
 		}
@@ -73,6 +140,12 @@ public final class MirrorDimensionController {
 	public static void handleStatus(ServerPlayer victim, int status) {
 		UUID casterId = VICTIM_TO_CASTER.get(victim.getUUID());
 		ServerPlayer caster = casterId == null ? null : victim.server.getPlayerList().getPlayer(casterId);
+		if (status == MirrorDimensionStatusC2SPayload.OK_APPLIED && casterId != null) {
+			Session session = SESSIONS.get(casterId);
+			if (session != null) {
+				session.applied = true;
+			}
+		}
 		String key = switch (status) {
 			case MirrorDimensionStatusC2SPayload.OK_APPLIED -> "ability.superheroes.mirror_dimension.applied";
 			case MirrorDimensionStatusC2SPayload.NO_IRIS -> "ability.superheroes.mirror_dimension.no_iris";
@@ -97,20 +170,21 @@ public final class MirrorDimensionController {
 	}
 
 	private static void tick(MinecraftServer server) {
-		if (CASTER_TO_VICTIM.isEmpty()) {
+		if (SESSIONS.isEmpty()) {
 			clock = 0;
 			return;
 		}
 		clock++;
 		boolean keepalive = clock % KEEPALIVE_INTERVAL_TICKS == 0;
-		Iterator<Map.Entry<UUID, UUID>> it = CASTER_TO_VICTIM.entrySet().iterator();
+		Iterator<Map.Entry<UUID, Session>> it = SESSIONS.entrySet().iterator();
 		while (it.hasNext()) {
-			Map.Entry<UUID, UUID> entry = it.next();
+			Map.Entry<UUID, Session> entry = it.next();
+			Session session = entry.getValue();
 			ServerPlayer caster = server.getPlayerList().getPlayer(entry.getKey());
-			ServerPlayer victim = server.getPlayerList().getPlayer(entry.getValue());
+			ServerPlayer victim = server.getPlayerList().getPlayer(session.victim);
 			if (!sessionValid(caster, victim)) {
 				it.remove();
-				VICTIM_TO_CASTER.remove(entry.getValue());
+				VICTIM_TO_CASTER.remove(session.victim);
 				if (victim != null) {
 					ServerPlayNetworking.send(victim,
 							new MirrorDimensionS2CPayload(MirrorDimensionS2CPayload.ACTION_OFF, 0, 0));
@@ -120,11 +194,65 @@ public final class MirrorDimensionController {
 				}
 				continue;
 			}
+			if (session.applied) {
+				enforceZone(victim, session);
+			}
 			if (keepalive) {
 				ServerPlayNetworking.send(victim,
 						new MirrorDimensionS2CPayload(MirrorDimensionS2CPayload.ACTION_KEEPALIVE, 0, 0));
 			}
 		}
+	}
+
+	/**
+	 * Spatial trap: the victim cannot leave a {@link #ZONE_RADIUS}-block sphere
+	 * around where they were caught. Crossing the border spins them around (yaw
+	 * +180) and yanks them back inside so they get lost in the dimension.
+	 */
+	private static void enforceZone(ServerPlayer victim, Session session) {
+		if (session.yankCooldown > 0) {
+			session.yankCooldown--;
+			return;
+		}
+		Vec3 c = session.center;
+		Vec3 p = victim.position();
+		double dx = p.x - c.x;
+		double dz = p.z - c.z;
+		double horiz = Math.sqrt(dx * dx + dz * dz);
+		double dy = p.y - c.y;
+		boolean outHoriz = horiz > ZONE_RADIUS;
+		boolean outVert = Math.abs(dy) > ZONE_RADIUS;
+		if (!outHoriz && !outVert) {
+			return;
+		}
+
+		double nx = p.x;
+		double nz = p.z;
+		if (outHoriz) {
+			double f = (ZONE_RADIUS * PULL_BACK_FACTOR) / horiz;
+			nx = c.x + dx * f;
+			nz = c.z + dz * f;
+		}
+		double ny = outVert ? c.y : p.y;
+		float yaw = Mth360(victim.getYRot() + 180f);
+
+		ServerLevel level = victim.serverLevel();
+		victim.teleportTo(level, nx, ny, nz, Set.of(), yaw, victim.getXRot());
+		victim.setDeltaMovement(Vec3.ZERO);
+		victim.hurtMarked = true;
+		level.sendParticles(ParticleTypes.PORTAL, nx, ny + 1.0, nz, 60, 0.6, 1.0, 0.6, 0.4);
+		level.sendParticles(ParticleTypes.REVERSE_PORTAL, nx, ny + 1.0, nz, 30, 0.4, 0.8, 0.4, 0.05);
+		session.yankCooldown = YANK_COOLDOWN_TICKS;
+	}
+
+	private static float Mth360(float yaw) {
+		yaw %= 360f;
+		if (yaw < -180f) {
+			yaw += 360f;
+		} else if (yaw > 180f) {
+			yaw -= 360f;
+		}
+		return yaw;
 	}
 
 	private static boolean sessionValid(ServerPlayer caster, ServerPlayer victim) {

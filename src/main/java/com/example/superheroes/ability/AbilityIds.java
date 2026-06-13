@@ -143,6 +143,7 @@ public final class AbilityIds {
 
 	// Doctor Strange
 	public static final ResourceLocation MIRROR_DIMENSION = ModId.of("mirror_dimension");
+	public static final ResourceLocation MIRROR_MODE_CYCLE = ModId.of("mirror_mode_cycle");
 
 
 	public static boolean isReinhardSwordOnly(ResourceLocation id) {

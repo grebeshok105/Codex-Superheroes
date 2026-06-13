@@ -813,5 +813,9 @@
   "ability.superheroes.mirror_dimension.applied": "%s заточён в Зеркальном измерении",
   "ability.superheroes.mirror_dimension.no_iris": "У %s не установлен Iris — Зеркальное измерение не проявилось",
   "ability.superheroes.mirror_dimension.no_pack": "У %s нет пака Acid Shaders в папке shaderpacks",
-  "ability.superheroes.mirror_dimension.iris_fail": "Зеркальное измерение не проявилось на клиенте %s (ошибка Iris)"
+  "ability.superheroes.mirror_dimension.iris_fail": "Зеркальное измерение не проявилось на клиенте %s (ошибка Iris)",
+  "ability.superheroes.mirror_mode_cycle": "Искажение: смена режима",
+  "ability.superheroes.mirror_mode_cycle.desc": "Переключает активное Зеркальное измерение между режимами искривления (4 → 5 → 6 → 9). Каждое переключение перезагружает шейдер цели — на её экране это спрятано под чёрной вспышкой. Сначала активируй Зеркальное измерение.",
+  "ability.superheroes.mirror_mode_cycle.no_session": "Сначала активируй Зеркальное измерение",
+  "ability.superheroes.mirror_mode_cycle.switched": "Режим искривления: %s"
 }
