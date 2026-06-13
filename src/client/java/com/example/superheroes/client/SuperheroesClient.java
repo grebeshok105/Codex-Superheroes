@@ -53,7 +53,9 @@ public class SuperheroesClient implements ClientModInitializer {
 		ModKeys.init();
 		ClientNetworking.init();
 		com.example.superheroes.client.iris.IrisShaderBridge.restoreAfterCrashIfNeeded();
+		com.example.superheroes.client.iris.PandoraVanitasBridge.restoreAfterCrashIfNeeded();
 		ClientTickEvents.END_CLIENT_TICK.register(com.example.superheroes.client.ClientMirrorDimensionState::tick);
+		ClientTickEvents.END_CLIENT_TICK.register(client -> com.example.superheroes.client.ClientPandoraDeathState.tick());
 		com.example.superheroes.client.render.WildShaders.register();
 		LaserBeamRenderer.register();
 		RepulsorBeamRenderer.register();
@@ -193,7 +195,6 @@ public class SuperheroesClient implements ClientModInitializer {
 			com.example.superheroes.client.hud.ReinhardSwordDeathOverlay.render(graphics, tracker);
 			com.example.superheroes.client.hud.ReinhardDarknessOverlay.render(graphics, tracker);
 			// Топовый слой: чёрная вспышка Зеркального измерения прячет фриз Iris.reload().
-			com.example.superheroes.client.hud.PandoraDeathOverlay.render(graphics, tracker);
 			com.example.superheroes.client.hud.MirrorWarpFlashHud.render(graphics, tracker);
 		});
 

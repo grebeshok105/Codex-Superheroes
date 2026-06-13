@@ -63,7 +63,8 @@ public final class ModNetworking {
 		PayloadTypeRegistry.playS2C().register(WallImpactDebrisS2CPayload.TYPE, WallImpactDebrisS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(HordeDebugS2CPayload.TYPE, HordeDebugS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(MirrorDimensionS2CPayload.TYPE, MirrorDimensionS2CPayload.STREAM_CODEC);
-		PayloadTypeRegistry.playS2C().register(PandoraDeathS2CPayload.TYPE, PandoraDeathS2CPayload.STREAM_CODEC);
+		PayloadTypeRegistry.playS2C().register(PandoraCinematicS2CPayload.TYPE, PandoraCinematicS2CPayload.STREAM_CODEC);
+		PayloadTypeRegistry.playS2C().register(PandoraHouseStateS2CPayload.TYPE, PandoraHouseStateS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playC2S().register(MirrorDimensionStatusC2SPayload.TYPE, MirrorDimensionStatusC2SPayload.STREAM_CODEC);
 
 		ServerPlayNetworking.registerGlobalReceiver(ActivateAbilityC2SPayload.TYPE, (payload, context) -> {

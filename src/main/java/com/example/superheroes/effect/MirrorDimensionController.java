@@ -53,7 +53,8 @@ public final class MirrorDimensionController {
 
 	/** Mode cycle for the mode-switch ability and its matching J (sphere scale). */
 	private static final int[] MODE_CYCLE = {4, 5, 6, 9};
-	private static final int[] SCALE_CYCLE = {16, 8, 32, 256};
+	// Preset 9 (MODE 9 / Custom 3) uses J(scale)=4 per request; others keep their tuned scales.
+	private static final int[] SCALE_CYCLE = {16, 8, 32, 4};
 
 	private static final Map<UUID, Session> SESSIONS = new HashMap<>();
 	private static final Map<UUID, UUID> VICTIM_TO_CASTER = new HashMap<>();
@@ -107,7 +108,16 @@ public final class MirrorDimensionController {
 					Component.translatable("ability.superheroes.mirror_dimension.pulled", pulled)
 							.withStyle(ChatFormatting.LIGHT_PURPLE), true);
 		}
+		sendHouseState(caster, true);
 		return true;
+	}
+
+	private static void sendHouseState(ServerPlayer caster, boolean open) {
+		if (ServerPlayNetworking.canSend(caster,
+				com.example.superheroes.network.PandoraHouseStateS2CPayload.TYPE)) {
+			ServerPlayNetworking.send(caster,
+					new com.example.superheroes.network.PandoraHouseStateS2CPayload(open));
+		}
 	}
 
 	/**
@@ -196,6 +206,7 @@ public final class MirrorDimensionController {
 				ServerPlayNetworking.send(victim, new MirrorDimensionS2CPayload(MirrorDimensionS2CPayload.ACTION_OFF, 0, 0));
 			}
 		}
+		sendHouseState(caster, false);
 		if (notifyCaster) {
 			caster.displayClientMessage(
 					Component.translatable("ability.superheroes.mirror_dimension.released").withStyle(ChatFormatting.GRAY), true);

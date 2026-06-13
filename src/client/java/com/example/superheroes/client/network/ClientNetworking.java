@@ -101,9 +101,18 @@ public final class ClientNetworking {
 					}
 				}));
 
-		ClientPlayNetworking.registerGlobalReceiver(com.example.superheroes.network.PandoraDeathS2CPayload.TYPE, (payload, context) ->
-				context.client().execute(() ->
-						com.example.superheroes.client.ClientPandoraDeathState.start(payload.x(), payload.y(), payload.z())));
+		ClientPlayNetworking.registerGlobalReceiver(com.example.superheroes.network.PandoraCinematicS2CPayload.TYPE, (payload, context) ->
+				context.client().execute(() -> {
+					if (payload.phase() == com.example.superheroes.network.PandoraCinematicS2CPayload.PHASE_START) {
+						com.example.superheroes.client.ClientPandoraDeathState.start(
+								payload.pandoraId(), payload.killerId(), payload.px(), payload.py(), payload.pz());
+					} else {
+						com.example.superheroes.client.ClientPandoraDeathState.end();
+					}
+				}));
+
+		ClientPlayNetworking.registerGlobalReceiver(com.example.superheroes.network.PandoraHouseStateS2CPayload.TYPE, (payload, context) ->
+				context.client().execute(() -> com.example.superheroes.client.ClientPandoraHouseState.set(payload.open())));
 
 		ClientPlayNetworking.registerGlobalReceiver(ScreenShakeS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> ScreenShakeManager.shake(payload.intensity(), payload.durationTicks())));

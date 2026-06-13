@@ -100,6 +100,7 @@ public class SuperheroesMod implements ModInitializer {
 
 		net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents.END_SERVER_TICK.register(server -> {
 			com.example.superheroes.effect.DoomGripController.serverTick();
+			com.example.superheroes.effect.PandoraDeathController.serverTick(server);
 			for (net.minecraft.server.level.ServerLevel sl : server.getAllLevels()) {
 				com.example.superheroes.horde.HordeManager.tick(sl);
 			}
@@ -135,6 +136,11 @@ public class SuperheroesMod implements ModInitializer {
 		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
 			HeroTransformService.onPlayerDisconnect(handler.getPlayer());
 			com.example.superheroes.effect.PandoraDeathController.onPlayerDisconnect(handler.getPlayer());
+		});
+
+		ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> {
+			// Pandora never dies — lethal hits trigger her cinematic instead (#7).
+			return com.example.superheroes.effect.PandoraDeathController.allowDamage(entity, source, amount);
 		});
 
 		ServerLivingEntityEvents.ALLOW_DEATH.register((entity, source, amount) -> {
