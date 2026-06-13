@@ -14,7 +14,8 @@
 		"KryptoniteShardPickupMixin",
 		"RoyalIcicleNoDropMixin",
 		"YamatoNoDropMixin",
-		"RemMorningStarNoDropMixin"
+		"RemMorningStarNoDropMixin",
+		"falbiks.HeroComponentStripMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

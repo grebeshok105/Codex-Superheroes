@@ -25,6 +25,11 @@ public final class AbilityRouter {
 					"ability.superheroes.disabled_by_snap").withStyle(net.minecraft.ChatFormatting.DARK_PURPLE), true);
 			return;
 		}
+		if (player.hasEffect(ModEffects.VANITY_STRIPPED)) {
+			player.displayClientMessage(net.minecraft.network.chat.Component.translatable(
+					"ability.superheroes.vanity_stripped").withStyle(net.minecraft.ChatFormatting.DARK_PURPLE), true);
+			return;
+		}
 		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
 		if (!data.hasHero()) {
 			return;

@@ -828,5 +828,7 @@
   "ability.superheroes.space_crush.desc": "Доступно только в Доме тщеславия. Схлопывает пространство вокруг привязанных жертв и мгновенно их раздавливает. Срабатывает только в момент активации.",
   "ability.superheroes.space_crush.no_bound": "Нет привязанных жертв для сжатия",
   "ability.superheroes.space_crush.crushed": "Раздавлено жертв: %s",
-  "ability.superheroes.pandora.not_in_house": "Эта сила доступна только в Доме тщеславия"
+  "ability.superheroes.pandora.not_in_house": "Эта сила доступна только в Доме тщеславия",
+  "effect.superheroes.vanity_stripped": "Лишение тщеславием",
+  "ability.superheroes.vanity_stripped": "В Доме тщеславия ты лишён сил"
 }

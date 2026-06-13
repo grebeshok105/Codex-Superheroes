@@ -827,5 +827,7 @@
   "ability.superheroes.space_crush.desc": "House of Vanity only. Collapses the space around bound victims and crushes them instantly. Triggers only on activation.",
   "ability.superheroes.space_crush.no_bound": "No bound victims to crush",
   "ability.superheroes.space_crush.crushed": "Victims crushed: %s",
-  "ability.superheroes.pandora.not_in_house": "This power only works inside the House of Vanity"
+  "ability.superheroes.pandora.not_in_house": "This power only works inside the House of Vanity",
+  "effect.superheroes.vanity_stripped": "Vanity-Stripped",
+  "ability.superheroes.vanity_stripped": "Your powers are stripped inside the House of Vanity"
 }
