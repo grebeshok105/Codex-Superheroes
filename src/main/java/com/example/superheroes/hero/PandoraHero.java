@@ -57,9 +57,25 @@ public final class PandoraHero implements Hero {
 
 	@Override
 	public List<ResourceLocation> getAbilities() {
-		// "Дом тщеславия" (House of Vanity) + "Каприз творца" (Creator's Whim).
-		// Dimension-only abilities (rope-bind, space-crush) are added/gated separately.
-		return List.of(AbilityIds.MIRROR_DIMENSION, AbilityIds.MIRROR_MODE_CYCLE);
+		// "Дом тщеславия" (House of Vanity) + "Каприз творца" (Creator's Whim) +
+		// dimension-only "Пространственная привязка" (rope bind) and
+		// "Сжатие пространства" (space crush). The dimension-only ones are gated
+		// in AbilityRouter so they only fire while the House is open.
+		return List.of(
+				AbilityIds.MIRROR_DIMENSION,
+				AbilityIds.MIRROR_MODE_CYCLE,
+				AbilityIds.SPATIAL_BIND,
+				AbilityIds.SPACE_CRUSH);
+	}
+
+	/**
+	 * @return true if {@code abilityId} is one of Pandora's dimension-only powers,
+	 *         which may only be used while her House of Vanity is open.
+	 */
+	public static boolean isDimensionOnly(ResourceLocation abilityId) {
+		return AbilityIds.MIRROR_MODE_CYCLE.equals(abilityId)
+				|| AbilityIds.SPATIAL_BIND.equals(abilityId)
+				|| AbilityIds.SPACE_CRUSH.equals(abilityId);
 	}
 
 	@Override

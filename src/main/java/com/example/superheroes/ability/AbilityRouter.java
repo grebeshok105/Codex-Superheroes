@@ -42,6 +42,14 @@ public final class AbilityRouter {
 			com.example.superheroes.hero.ThanosHero.notifyMissingStone(player, abilityId);
 			return;
 		}
+		// Pandora's dimension-only powers exist only while her House of Vanity is open.
+		if (hero instanceof com.example.superheroes.hero.PandoraHero
+				&& com.example.superheroes.hero.PandoraHero.isDimensionOnly(abilityId)
+				&& !com.example.superheroes.effect.MirrorDimensionController.hasActiveHouse(player)) {
+			player.displayClientMessage(net.minecraft.network.chat.Component.translatable(
+					"ability.superheroes.pandora.not_in_house").withStyle(net.minecraft.ChatFormatting.DARK_GRAY), true);
+			return;
+		}
 		Ability ability = AbilityRegistry.get(abilityId);
 		if (ability == null) {
 			return;

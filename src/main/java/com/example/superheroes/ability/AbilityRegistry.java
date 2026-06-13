@@ -142,6 +142,8 @@ public final class AbilityRegistry {
 	public static final ScorpionHellBreathAbility SCORPION_HELL_BREATH = new ScorpionHellBreathAbility();
 	public static final MirrorDimensionAbility MIRROR_DIMENSION = new MirrorDimensionAbility();
 	public static final MirrorModeCycleAbility MIRROR_MODE_CYCLE = new MirrorModeCycleAbility();
+	public static final SpatialBindAbility SPATIAL_BIND = new SpatialBindAbility();
+	public static final SpaceCrushAbility SPACE_CRUSH = new SpaceCrushAbility();
 
 	private AbilityRegistry() {
 	}
@@ -262,6 +264,8 @@ public final class AbilityRegistry {
 		register(SCORPION_HELL_BREATH);
 		register(MIRROR_DIMENSION);
 		register(MIRROR_MODE_CYCLE);
+		register(SPATIAL_BIND);
+		register(SPACE_CRUSH);
 	}
 
 	public static void register(Ability ability) {

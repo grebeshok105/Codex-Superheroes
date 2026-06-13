@@ -819,5 +819,14 @@
   "ability.superheroes.mirror_mode_cycle": "Каприз творца",
   "ability.superheroes.mirror_mode_cycle.desc": "Переключает активное Дом тщеславия между режимами искривления (4 → 5 → 6 → 9). Каждое переключение перезагружает шейдер цели — на её экране это спрятано под чёрной вспышкой. Сначала активируй Дом тщеславия.",
   "ability.superheroes.mirror_mode_cycle.no_session": "Сначала активируй Дом тщеславия",
-  "ability.superheroes.mirror_mode_cycle.switched": "Режим искривления: %s"
+  "ability.superheroes.mirror_mode_cycle.switched": "Режим искривления: %s",
+  "ability.superheroes.spatial_bind": "Пространственная привязка",
+  "ability.superheroes.spatial_bind.desc": "Доступно только в Доме тщеславия. Прибивает всех затянутых жертв пространственными верёвками к небу и земле и полностью обездвиживает их. Затем их можно добить «Сжатием пространства».",
+  "ability.superheroes.spatial_bind.no_targets": "В Доме тщеславия некого привязывать",
+  "ability.superheroes.spatial_bind.bound": "Привязано жертв: %s",
+  "ability.superheroes.space_crush": "Сжатие пространства",
+  "ability.superheroes.space_crush.desc": "Доступно только в Доме тщеславия. Схлопывает пространство вокруг привязанных жертв и мгновенно их раздавливает. Срабатывает только в момент активации.",
+  "ability.superheroes.space_crush.no_bound": "Нет привязанных жертв для сжатия",
+  "ability.superheroes.space_crush.crushed": "Раздавлено жертв: %s",
+  "ability.superheroes.pandora.not_in_house": "Эта сила доступна только в Доме тщеславия"
 }

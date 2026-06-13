@@ -187,6 +187,7 @@ public final class MirrorDimensionController {
 		if (session == null) {
 			return;
 		}
+		SpatialBindController.releaseAllOf(caster.getUUID());
 		for (UUID victimId : session.victims.keySet()) {
 			VICTIM_TO_CASTER.remove(victimId);
 			ServerPlayer victim = caster.server.getPlayerList().getPlayer(victimId);
@@ -203,6 +204,22 @@ public final class MirrorDimensionController {
 	/** @return true if this player is a Pandora with an open House (used to gate dimension-only abilities). */
 	public static boolean hasActiveHouse(ServerPlayer caster) {
 		return SESSIONS.containsKey(caster.getUUID());
+	}
+
+	/** @return the live ServerPlayer victims currently trapped in this caster's House (online only). */
+	public static java.util.List<ServerPlayer> trappedVictims(ServerPlayer caster) {
+		Session session = SESSIONS.get(caster.getUUID());
+		if (session == null) {
+			return java.util.List.of();
+		}
+		java.util.List<ServerPlayer> out = new java.util.ArrayList<>();
+		for (UUID id : session.victims.keySet()) {
+			ServerPlayer p = caster.server.getPlayerList().getPlayer(id);
+			if (p != null && !p.isRemoved() && !p.isDeadOrDying()) {
+				out.add(p);
+			}
+		}
+		return out;
 	}
 
 	/** @return true if this player is currently trapped inside someone's House. */
@@ -264,6 +281,7 @@ public final class MirrorDimensionController {
 			ServerPlayer caster = server.getPlayerList().getPlayer(entry.getKey());
 			if (!casterValid(caster)) {
 				releaseAll(server, session);
+				SpatialBindController.releaseAllOf(entry.getKey());
 				it.remove();
 				if (caster != null) {
 					AbilityRouter.deactivate(caster, AbilityIds.MIRROR_DIMENSION);

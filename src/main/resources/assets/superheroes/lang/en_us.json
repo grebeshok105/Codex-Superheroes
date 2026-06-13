@@ -818,5 +818,14 @@
   "ability.superheroes.mirror_mode_cycle": "Creator's Whim",
   "ability.superheroes.mirror_mode_cycle.desc": "Cycles the active House of Vanity warp through modes 4 -> 5 -> 6 -> 9. Each switch reloads the victim's shader — hidden behind a black flash on their screen. Activate the House of Vanity first.",
   "ability.superheroes.mirror_mode_cycle.no_session": "Activate the House of Vanity first",
-  "ability.superheroes.mirror_mode_cycle.switched": "Distortion mode: %s"
+  "ability.superheroes.mirror_mode_cycle.switched": "Distortion mode: %s",
+  "ability.superheroes.spatial_bind": "Spatial Bind",
+  "ability.superheroes.spatial_bind.desc": "House of Vanity only. Nails every trapped victim to the sky and ground with spatial ropes and roots them completely. They can then be finished with Space Crush.",
+  "ability.superheroes.spatial_bind.no_targets": "Nobody in the House of Vanity to bind",
+  "ability.superheroes.spatial_bind.bound": "Victims bound: %s",
+  "ability.superheroes.space_crush": "Space Crush",
+  "ability.superheroes.space_crush.desc": "House of Vanity only. Collapses the space around bound victims and crushes them instantly. Triggers only on activation.",
+  "ability.superheroes.space_crush.no_bound": "No bound victims to crush",
+  "ability.superheroes.space_crush.crushed": "Victims crushed: %s",
+  "ability.superheroes.pandora.not_in_house": "This power only works inside the House of Vanity"
 }
