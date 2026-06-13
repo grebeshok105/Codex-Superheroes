@@ -810,6 +810,8 @@
   "ability.superheroes.mirror_dimension.released": "The House of Vanity collapses",
   "ability.superheroes.mirror_dimension.no_mod": "%s cannot be trapped: no Codex-Superheroes mod on their client",
   "ability.superheroes.mirror_dimension.applied": "%s is trapped in the House of Vanity",
+  "ability.superheroes.mirror_dimension.pulled": "Players pulled into the House of Vanity: %s",
+  "ability.superheroes.mirror_dimension.empty": "The House of Vanity opens — nobody is nearby",
   "ability.superheroes.mirror_dimension.no_iris": "%s has no Iris installed — the House of Vanity cannot manifest",
   "ability.superheroes.mirror_dimension.no_pack": "%s has no Acid Shaders pack in their shaderpacks folder",
   "ability.superheroes.mirror_dimension.iris_fail": "The House of Vanity failed to manifest on %s's client (Iris error)",

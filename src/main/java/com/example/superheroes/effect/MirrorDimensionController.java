@@ -24,17 +24,27 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Server-side state of Doctor Strange's Mirror Dimension: which caster warps
- * which victim, the active warp MODE/J, and the spatial "trap" that keeps the
- * victim inside a bounded zone around where they were caught.
+ * Server-side state of Pandora's «Дом тщеславия» (House of Vanity). Unlike the
+ * old single-target Mirror Dimension, the House is a <b>zone</b> centred on
+ * Pandora at the moment she casts: <b>every</b> other player within
+ * {@link #PULL_RADIUS} blocks is dragged inside, sees the Acid "round world"
+ * warp on their own client, and is trapped within a {@link #ZONE_RADIUS} sphere
+ * until Pandora drops the House. New players who wander into the radius while
+ * the House is open are absorbed too.
  *
- * Sends ON/OFF/KEEPALIVE/SWITCH payloads to the victim's client and relays the
- * victim's status answers back to the caster.
+ * <p>Pandora herself is the caster — she is "inside" her own House (so her
+ * dimension-only abilities unlock, see {@link #hasActiveHouse}) but does NOT get
+ * the warp shader applied to her screen.
+ *
+ * <p>Sends ON/OFF/KEEPALIVE/SWITCH payloads to each victim's client and relays
+ * their status answers back to Pandora.
  */
 public final class MirrorDimensionController {
 	private static final int KEEPALIVE_INTERVAL_TICKS = 20;
 
-	/** Radius (blocks) of the zone the victim cannot escape while trapped. */
+	/** Radius (blocks) around Pandora from which players are pulled into the House. */
+	private static final double PULL_RADIUS = 50.0;
+	/** Radius (blocks) of the zone a victim cannot escape while trapped. */
 	private static final double ZONE_RADIUS = 50.0;
 	/** When yanked back, the victim lands this fraction of the radius from the center. */
 	private static final double PULL_BACK_FACTOR = 0.4;
@@ -52,16 +62,20 @@ public final class MirrorDimensionController {
 	private MirrorDimensionController() {
 	}
 
-	private static final class Session {
-		final UUID victim;
-		int mode;
-		int scale;
-		final Vec3 center;
+	/** Per-victim trap state inside a House session. */
+	private static final class VictimState {
 		boolean applied;
 		int yankCooldown;
+	}
 
-		Session(UUID victim, int mode, int scale, Vec3 center) {
-			this.victim = victim;
+	/** One open House: the caster (Pandora), where it is anchored, and its victims. */
+	private static final class Session {
+		final Vec3 center;
+		int mode;
+		int scale;
+		final Map<UUID, VictimState> victims = new HashMap<>();
+
+		Session(int mode, int scale, Vec3 center) {
 			this.mode = mode;
 			this.scale = scale;
 			this.center = center;
@@ -72,26 +86,70 @@ public final class MirrorDimensionController {
 		ServerTickEvents.END_SERVER_TICK.register(MirrorDimensionController::tick);
 	}
 
-	/** @return false when the victim is already trapped by another Strange. */
-	public static boolean start(ServerPlayer caster, ServerPlayer victim, int mode, int scale) {
-		UUID existingCaster = VICTIM_TO_CASTER.get(victim.getUUID());
-		if (existingCaster != null && !existingCaster.equals(caster.getUUID())) {
-			caster.displayClientMessage(
-					Component.translatable("ability.superheroes.mirror_dimension.busy").withStyle(ChatFormatting.RED), true);
-			return false;
-		}
+	/**
+	 * Opens (or refreshes) Pandora's House centred on her current position and
+	 * drags in every eligible player within {@link #PULL_RADIUS}.
+	 *
+	 * @return always {@code true} — the House opens even if nobody is nearby yet
+	 *         (latecomers are absorbed on the fly). Reports a summary to Pandora.
+	 */
+	public static boolean start(ServerPlayer caster, int mode, int scale) {
 		stop(caster, false);
-		SESSIONS.put(caster.getUUID(), new Session(victim.getUUID(), mode, scale, victim.position()));
-		VICTIM_TO_CASTER.put(victim.getUUID(), caster.getUUID());
-		ServerPlayNetworking.send(victim, new MirrorDimensionS2CPayload(MirrorDimensionS2CPayload.ACTION_ON, mode, scale));
+		Session session = new Session(mode, scale, caster.position());
+		SESSIONS.put(caster.getUUID(), session);
+		int pulled = absorbNearby(caster, session);
+		if (pulled == 0) {
+			caster.displayClientMessage(
+					Component.translatable("ability.superheroes.mirror_dimension.empty")
+							.withStyle(ChatFormatting.LIGHT_PURPLE), true);
+		} else {
+			caster.displayClientMessage(
+					Component.translatable("ability.superheroes.mirror_dimension.pulled", pulled)
+							.withStyle(ChatFormatting.LIGHT_PURPLE), true);
+		}
 		return true;
 	}
 
 	/**
-	 * Mode-switch ability: advance the caster's active warp to the next MODE/J in
-	 * the cycle and push it to the victim (SWITCH = re-apply without re-snapshot).
+	 * Pulls every eligible player within {@link #PULL_RADIUS} of the House center
+	 * into the given session. Skips the caster, spectators, the dead, players
+	 * already trapped by another House, and players whose client lacks the mod.
 	 *
-	 * @return false when the caster has no active Mirror Dimension session.
+	 * @return how many <i>new</i> victims were absorbed by this call.
+	 */
+	private static int absorbNearby(ServerPlayer caster, Session session) {
+		int pulled = 0;
+		double r2 = PULL_RADIUS * PULL_RADIUS;
+		for (ServerPlayer p : caster.serverLevel().players()) {
+			if (p == caster || p.isSpectator() || p.isDeadOrDying()) {
+				continue;
+			}
+			if (p.distanceToSqr(session.center.x, session.center.y, session.center.z) > r2) {
+				continue;
+			}
+			UUID id = p.getUUID();
+			if (VICTIM_TO_CASTER.containsKey(id)) {
+				continue; // already trapped (by this or another House)
+			}
+			if (!ServerPlayNetworking.canSend(p, MirrorDimensionS2CPayload.TYPE)) {
+				continue; // no Codex-Superheroes mod on their client — can't render
+			}
+			session.victims.put(id, new VictimState());
+			VICTIM_TO_CASTER.put(id, caster.getUUID());
+			ServerPlayNetworking.send(p,
+					new MirrorDimensionS2CPayload(MirrorDimensionS2CPayload.ACTION_ON, session.mode, session.scale));
+			spawnCastParticles(p);
+			pulled++;
+		}
+		return pulled;
+	}
+
+	/**
+	 * Mode-switch ability: advance the House's warp to the next MODE/J in the
+	 * cycle and push it to <b>all</b> trapped victims (SWITCH = re-apply without
+	 * re-snapshotting their original shader state).
+	 *
+	 * @return false when Pandora has no open House.
 	 */
 	public static boolean cycleMode(ServerPlayer caster) {
 		Session session = SESSIONS.get(caster.getUUID());
@@ -101,13 +159,16 @@ public final class MirrorDimensionController {
 		int next = (indexOfMode(session.mode) + 1) % MODE_CYCLE.length;
 		session.mode = MODE_CYCLE[next];
 		session.scale = SCALE_CYCLE[next];
-		ServerPlayer victim = caster.server.getPlayerList().getPlayer(session.victim);
-		if (victim != null) {
-			ServerPlayNetworking.send(victim,
-					new MirrorDimensionS2CPayload(MirrorDimensionS2CPayload.ACTION_SWITCH, session.mode, session.scale));
+		for (UUID victimId : session.victims.keySet()) {
+			ServerPlayer victim = caster.server.getPlayerList().getPlayer(victimId);
+			if (victim != null) {
+				ServerPlayNetworking.send(victim,
+						new MirrorDimensionS2CPayload(MirrorDimensionS2CPayload.ACTION_SWITCH, session.mode, session.scale));
+			}
 		}
 		caster.displayClientMessage(
-				Component.translatable("ability.superheroes.mirror_mode_cycle.switched", session.mode).withStyle(ChatFormatting.LIGHT_PURPLE), true);
+				Component.translatable("ability.superheroes.mirror_mode_cycle.switched", session.mode)
+						.withStyle(ChatFormatting.LIGHT_PURPLE), true);
 		return true;
 	}
 
@@ -120,21 +181,33 @@ public final class MirrorDimensionController {
 		return 0;
 	}
 
-	/** Stops the caster's active session (if any) and tells the victim to restore shaders. */
+	/** Closes Pandora's House (if any) and tells every victim to restore shaders. */
 	public static void stop(ServerPlayer caster, boolean notifyCaster) {
 		Session session = SESSIONS.remove(caster.getUUID());
 		if (session == null) {
 			return;
 		}
-		VICTIM_TO_CASTER.remove(session.victim);
-		ServerPlayer victim = caster.server.getPlayerList().getPlayer(session.victim);
-		if (victim != null) {
-			ServerPlayNetworking.send(victim, new MirrorDimensionS2CPayload(MirrorDimensionS2CPayload.ACTION_OFF, 0, 0));
+		for (UUID victimId : session.victims.keySet()) {
+			VICTIM_TO_CASTER.remove(victimId);
+			ServerPlayer victim = caster.server.getPlayerList().getPlayer(victimId);
+			if (victim != null) {
+				ServerPlayNetworking.send(victim, new MirrorDimensionS2CPayload(MirrorDimensionS2CPayload.ACTION_OFF, 0, 0));
+			}
 		}
 		if (notifyCaster) {
 			caster.displayClientMessage(
 					Component.translatable("ability.superheroes.mirror_dimension.released").withStyle(ChatFormatting.GRAY), true);
 		}
+	}
+
+	/** @return true if this player is a Pandora with an open House (used to gate dimension-only abilities). */
+	public static boolean hasActiveHouse(ServerPlayer caster) {
+		return SESSIONS.containsKey(caster.getUUID());
+	}
+
+	/** @return true if this player is currently trapped inside someone's House. */
+	public static boolean isTrapped(ServerPlayer victim) {
+		return VICTIM_TO_CASTER.containsKey(victim.getUUID());
 	}
 
 	public static void handleStatus(ServerPlayer victim, int status) {
@@ -143,7 +216,10 @@ public final class MirrorDimensionController {
 		if (status == MirrorDimensionStatusC2SPayload.OK_APPLIED && casterId != null) {
 			Session session = SESSIONS.get(casterId);
 			if (session != null) {
-				session.applied = true;
+				VictimState vs = session.victims.get(victim.getUUID());
+				if (vs != null) {
+					vs.applied = true;
+				}
 			}
 		}
 		String key = switch (status) {
@@ -156,16 +232,21 @@ public final class MirrorDimensionController {
 		if (caster != null && key != null) {
 			ChatFormatting color = status == MirrorDimensionStatusC2SPayload.OK_APPLIED
 					? ChatFormatting.GREEN : ChatFormatting.RED;
-			// actionbar (true), не чат — по запросу убрать спам Зеркального измерения из чата.
+			// actionbar (true), не чат — по запросу убрать спам Дома тщеславия из чата.
 			caster.displayClientMessage(
 					Component.translatable(key, victim.getName()).withStyle(color), true);
 		}
 		boolean failed = status == MirrorDimensionStatusC2SPayload.NO_IRIS
 				|| status == MirrorDimensionStatusC2SPayload.NO_PACK
 				|| status == MirrorDimensionStatusC2SPayload.IRIS_API_FAIL;
-		if (failed && caster != null) {
-			// Don't burn the caster's mana on an effect the victim can't render.
-			AbilityRouter.deactivate(caster, AbilityIds.MIRROR_DIMENSION);
+		if (failed && casterId != null) {
+			// This one victim can't render the warp — drop just them, keep the House
+			// open for everyone else (and for latecomers).
+			Session session = SESSIONS.get(casterId);
+			if (session != null) {
+				session.victims.remove(victim.getUUID());
+			}
+			VICTIM_TO_CASTER.remove(victim.getUUID());
 		}
 	}
 
@@ -181,21 +262,39 @@ public final class MirrorDimensionController {
 			Map.Entry<UUID, Session> entry = it.next();
 			Session session = entry.getValue();
 			ServerPlayer caster = server.getPlayerList().getPlayer(entry.getKey());
-			ServerPlayer victim = server.getPlayerList().getPlayer(session.victim);
-			if (!sessionValid(caster, victim)) {
+			if (!casterValid(caster)) {
+				releaseAll(server, session);
 				it.remove();
-				VICTIM_TO_CASTER.remove(session.victim);
-				if (victim != null) {
-					ServerPlayNetworking.send(victim,
-							new MirrorDimensionS2CPayload(MirrorDimensionS2CPayload.ACTION_OFF, 0, 0));
-				}
 				if (caster != null) {
 					AbilityRouter.deactivate(caster, AbilityIds.MIRROR_DIMENSION);
 				}
 				continue;
 			}
-			if (session.applied) {
-				enforceZone(victim, session);
+			// Continuously drag in any new players who entered the radius.
+			if (keepalive) {
+				absorbNearby(caster, session);
+			}
+			tickVictims(server, session, keepalive);
+		}
+	}
+
+	/** Per-session victim upkeep: drop the gone/dead, enforce the trap, keepalive. */
+	private static void tickVictims(MinecraftServer server, Session session, boolean keepalive) {
+		Iterator<Map.Entry<UUID, VictimState>> vit = session.victims.entrySet().iterator();
+		while (vit.hasNext()) {
+			Map.Entry<UUID, VictimState> ve = vit.next();
+			ServerPlayer victim = server.getPlayerList().getPlayer(ve.getKey());
+			if (victim == null || victim.isRemoved() || victim.isDeadOrDying() || victim.isSpectator()) {
+				if (victim != null) {
+					ServerPlayNetworking.send(victim,
+							new MirrorDimensionS2CPayload(MirrorDimensionS2CPayload.ACTION_OFF, 0, 0));
+				}
+				VICTIM_TO_CASTER.remove(ve.getKey());
+				vit.remove();
+				continue;
+			}
+			if (ve.getValue().applied) {
+				enforceZone(victim, session, ve.getValue());
 			}
 			if (keepalive) {
 				ServerPlayNetworking.send(victim,
@@ -204,14 +303,25 @@ public final class MirrorDimensionController {
 		}
 	}
 
+	private static void releaseAll(MinecraftServer server, Session session) {
+		for (UUID victimId : session.victims.keySet()) {
+			VICTIM_TO_CASTER.remove(victimId);
+			ServerPlayer victim = server.getPlayerList().getPlayer(victimId);
+			if (victim != null) {
+				ServerPlayNetworking.send(victim,
+						new MirrorDimensionS2CPayload(MirrorDimensionS2CPayload.ACTION_OFF, 0, 0));
+			}
+		}
+	}
+
 	/**
 	 * Spatial trap: the victim cannot leave a {@link #ZONE_RADIUS}-block sphere
-	 * around where they were caught. Crossing the border spins them around (yaw
-	 * +180) and yanks them back inside so they get lost in the dimension.
+	 * around the House center. Crossing the border spins them around (yaw +180)
+	 * and yanks them back inside so they get lost in the dimension.
 	 */
-	private static void enforceZone(ServerPlayer victim, Session session) {
-		if (session.yankCooldown > 0) {
-			session.yankCooldown--;
+	private static void enforceZone(ServerPlayer victim, Session session, VictimState state) {
+		if (state.yankCooldown > 0) {
+			state.yankCooldown--;
 			return;
 		}
 		Vec3 c = session.center;
@@ -245,7 +355,7 @@ public final class MirrorDimensionController {
 		victim.hurtMarked = true;
 		level.sendParticles(ParticleTypes.PORTAL, nx, ny + 1.0, nz, 60, 0.6, 1.0, 0.6, 0.4);
 		level.sendParticles(ParticleTypes.REVERSE_PORTAL, nx, ny + 1.0, nz, 30, 0.4, 0.8, 0.4, 0.05);
-		session.yankCooldown = YANK_COOLDOWN_TICKS;
+		state.yankCooldown = YANK_COOLDOWN_TICKS;
 	}
 
 	/**
@@ -271,6 +381,13 @@ public final class MirrorDimensionController {
 		return Math.max(baseY, fallbackY);
 	}
 
+	private static void spawnCastParticles(ServerPlayer victim) {
+		ServerLevel level = victim.serverLevel();
+		level.sendParticles(ParticleTypes.REVERSE_PORTAL,
+				victim.getX(), victim.getY() + 1.0, victim.getZ(),
+				80, 0.8, 1.0, 0.8, 0.05);
+	}
+
 	private static float Mth360(float yaw) {
 		yaw %= 360f;
 		if (yaw < -180f) {
@@ -281,11 +398,8 @@ public final class MirrorDimensionController {
 		return yaw;
 	}
 
-	private static boolean sessionValid(ServerPlayer caster, ServerPlayer victim) {
+	private static boolean casterValid(ServerPlayer caster) {
 		if (caster == null || caster.isRemoved() || caster.isDeadOrDying()) {
-			return false;
-		}
-		if (victim == null || victim.isRemoved() || victim.isDeadOrDying() || victim.isSpectator()) {
 			return false;
 		}
 		HeroData data = caster.getAttachedOrCreate(ModAttachments.HERO_DATA);

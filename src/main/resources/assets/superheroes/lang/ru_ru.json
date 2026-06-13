@@ -811,6 +811,8 @@
   "ability.superheroes.mirror_dimension.released": "Дом тщеславия схлопывается",
   "ability.superheroes.mirror_dimension.no_mod": "%s нельзя заточить: на его клиенте нет мода Codex-Superheroes",
   "ability.superheroes.mirror_dimension.applied": "%s заточён в Дом тщеславия",
+  "ability.superheroes.mirror_dimension.pulled": "В Дом тщеславия затянуто игроков: %s",
+  "ability.superheroes.mirror_dimension.empty": "Дом тщеславия раскрыт — рядом никого нет",
   "ability.superheroes.mirror_dimension.no_iris": "У %s не установлен Iris — Дом тщеславия не проявилось",
   "ability.superheroes.mirror_dimension.no_pack": "У %s нет пака Acid Shaders в папке shaderpacks",
   "ability.superheroes.mirror_dimension.iris_fail": "Дом тщеславия не проявилось на клиенте %s (ошибка Iris)",
