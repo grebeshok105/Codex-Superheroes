@@ -156,6 +156,12 @@
 - `TestHeroes.transform(ServerPlayer, ResourceLocation)` replaced 17 copy-pasted transform calls in 10 GameTest files.
 - `build.gradle` gained a backup Central mirror (`CentralAliyunMirror`) — the local repo1 redirect mirror does not carry `com.tngtech.archunit` and shared CI egress IPs get 429s; the extra repo keeps the new dependency resolvable everywhere.
 
+## Architecture migration — stage A2 (plan 01)
+
+- `HeroCompletenessGameTests` (entrypoint #14): `everyListedAbilityIsRegistered` fails on any ability id a hero lists that `AbilityRegistry.get` can't resolve; `everyHeroAndAbilityHasLangInBothLanguages` requires `hero.<ns>.<id>`, `ability.<ns>.<ability>`, `ability.<ns>.<ability>.desc` in both lang files — the exact three key shapes the HUD reads (verified against `AbilityDescriptions.nameKey/descKey`). `lang(String)` is package-accessible for B1 reuse.
+- `assertControllersAreWired` now builds its wiring source from `SuperheroesMod` + every `*Module.java` — a controller may be wired by a hero/shared module instead of the composition root; the check is removed in D2b when static `init()`s disappear.
+- Negative probe confirmed: unregistering `SCORPION_SPEAR` fails `everyListedAbilityIsRegistered` with `superheroes:scorpion lists unregistered superheroes:scorpion_spear`. All 22 heroes pass — no missing lang keys.
+
 ## Important decisions
 - Bound weapons are identified by type (`BoundWeaponItem`) and validated by token; untokened copies are treated as stale on purpose (none are obtainable legitimately; old saves could hold leaked copies).
 - Bound weapons never become item entities: returned to the owner when valid and there is room, otherwise deleted (the ability can reissue).
