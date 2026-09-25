@@ -51,6 +51,9 @@ public final class RegulusMadnessController {
 	private static final Map<UUID, Long> LAST_DAMAGER_TICK = new ConcurrentHashMap<>();
 	private static final int LAST_DAMAGER_TIMEOUT_TICKS = 200;
 
+	private static final int MADNESS_EFFECT_TICKS = 60;
+	private static final int MADNESS_BUFF_AMPLIFIER = 2;
+
 	private RegulusMadnessController() {
 	}
 
@@ -116,8 +119,19 @@ public final class RegulusMadnessController {
 		return null;
 	}
 
-	public static boolean isAnyCounterActive() {
-		return !COUNTERS.isEmpty();
+	/**
+	 * Audit B16: the counter suppresses fall immunity only for its participants (the Regulus
+	 * owner being held mid-air and the attacker being slammed) — not for every hero while any
+	 * counter runs anywhere.
+	 */
+	public static boolean isCounterInvolved(Entity entity) {
+		UUID id = entity.getUUID();
+		for (CounterState counter : COUNTERS.values()) {
+			if (counter.playerId.equals(id) || counter.attackerId.equals(id)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/** World shutdown — counters, cooldowns and damager memory die with the world. */
@@ -258,10 +272,13 @@ public final class RegulusMadnessController {
 
 	public static void clearMadness(ServerPlayer player) {
 		HeroAttributes.REGULUS_MADNESS.remove(player);
-		player.removeEffect(MobEffects.MOVEMENT_SPEED);
-		player.removeEffect(MobEffects.DAMAGE_BOOST);
-		player.removeEffect(MobEffects.JUMP);
-		player.removeEffect(MobEffects.DAMAGE_RESISTANCE);
+		// audit B12: only drop instances that look madness-applied — this hook runs on
+		// join/death/respawn for EVERY player and used to wipe potion, beacon and hero
+		// passive effects of the same holders
+		removeMadnessEffect(player, MobEffects.MOVEMENT_SPEED, MADNESS_BUFF_AMPLIFIER);
+		removeMadnessEffect(player, MobEffects.DAMAGE_BOOST, MADNESS_BUFF_AMPLIFIER);
+		removeMadnessEffect(player, MobEffects.JUMP, MADNESS_BUFF_AMPLIFIER);
+		removeMadnessEffect(player, MobEffects.DAMAGE_RESISTANCE, 0);
 		LAST_DAMAGER.remove(player.getUUID());
 		LAST_DAMAGER_TICK.remove(player.getUUID());
 		DODGE_COOLDOWN.remove(player.getUUID());
@@ -275,11 +292,39 @@ public final class RegulusMadnessController {
 	}
 
 	private static void applyMadnessEffects(ServerPlayer player) {
-		player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 60, 2, true, false, true));
-		player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 60, 2, true, false, true));
-		player.addEffect(new MobEffectInstance(MobEffects.JUMP, 60, 2, true, false, true));
-		player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 60, 0, true, false, true));
-		player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 60, 0, true, false, true));
+		player.addEffect(madnessEffect(MobEffects.MOVEMENT_SPEED, MADNESS_BUFF_AMPLIFIER));
+		player.addEffect(madnessEffect(MobEffects.DAMAGE_BOOST, MADNESS_BUFF_AMPLIFIER));
+		player.addEffect(madnessEffect(MobEffects.JUMP, MADNESS_BUFF_AMPLIFIER));
+		player.addEffect(madnessEffect(MobEffects.REGENERATION, 0));
+		player.addEffect(madnessEffect(MobEffects.DAMAGE_RESISTANCE, 0));
+	}
+
+	private static MobEffectInstance madnessEffect(net.minecraft.core.Holder<net.minecraft.world.effect.MobEffect> effect,
+			int amplifier) {
+		return new MobEffectInstance(effect, MADNESS_EFFECT_TICKS, amplifier, true, false, true);
+	}
+
+	/**
+	 * Madness instances are short ({@value #MADNESS_EFFECT_TICKS} ticks, refreshed every 40),
+	 * ambient, icon-only and carry the fixed amplifiers from {@link #applyMadnessEffects}.
+	 * Anything else on the same holder — a potion, a beacon, an infinite hero passive — is not
+	 * ours to remove.
+	 */
+	private static void removeMadnessEffect(ServerPlayer player,
+			net.minecraft.core.Holder<net.minecraft.world.effect.MobEffect> effect, int amplifier) {
+		MobEffectInstance instance = player.getEffect(effect);
+		if (instance == null) {
+			return;
+		}
+		boolean madnessOwned = instance.getDuration() > 0
+				&& instance.getDuration() <= MADNESS_EFFECT_TICKS
+				&& instance.getAmplifier() == amplifier
+				&& instance.isAmbient()
+				&& !instance.isVisible()
+				&& instance.showIcon();
+		if (madnessOwned) {
+			player.removeEffect(effect);
+		}
 	}
 
 	public static boolean consumeBonusLife(ServerPlayer player) {
