@@ -95,6 +95,15 @@
 - Fall immunity is per-participant again (B16): `LivingEntityFallDamageMixin` asked global `isAnyCounterActive()`, so one Regulus counter anywhere stripped `SuperJumpController`/hero `cancelsFallDamage` immunity from every hero. Now `RegulusMadnessController.isCounterInvolved(entity)` (matches the counter's `playerId`/`attackerId`); `isAnyCounterActive` deleted.
 - 4 new GameTests (`PassivesFallGameTests`): milk-style `removeAllEffects` restores all five Regulus infinites; hero swap replaces the declared set (regulus→kratos restores RESISTANCE, not REGENERATION); `clearMadness` keeps a visible potion, a beacon-style ambient+visible effect and an untouched infinite passive while dropping madness-signed SPEED/JUMP even with a passive nested under them; counter strips fall immunity for owner/victim but not for an uninvolved hero.
 
+## Completed this session (stage 10)
+
+- New synced attachment `PUBLIC_HERO` (B14): `persistent(ResourceLocation.CODEC)` + `copyOnDeath()` + `syncWith(ResourceLocation.STREAM_CODEC, AttachmentSyncPredicate.all())` — a narrow public projection carrying only the hero id; energy/mana and everything else in `HERO_DATA` stays owner-only. Written once inside `HeroDataStore.update` (the single writer, so it cannot drift), plus `syncPublicHero(ServerPlayer)` back-fill on JOIN for pre-existing saves.
+- `PlayerDimensionsMixin` now reads `PUBLIC_HERO` instead of `HERO_DATA` — remote players on clients get the real hero hitbox (Battle Beast etc.) instead of the vanilla one; the local player still refreshes dims via the `HeroDataSyncS2CPayload` receiver.
+- All remote-hero plumbing deleted: `RemoteHeroSkinS2CPayload` + registration + client receiver, `RemoteHeroSkins` map, `broadcastRemoteHeroSkin`, `sendRemoteHeroSkinTo`, and the `EntityTrackingEvents.START_TRACKING` block. Attachment sync covers tracking start, dimension change and respawn for free — `sendRemoteHeroSkinTo`'s early `hero == null` return (the stale-skin-after-relog bug) is gone with it.
+- Client consumers migrated to `player.getAttached(PUBLIC_HERO)`: `AbstractClientPlayerSkinMixin` (hero skins for other players), `IronManEspRenderer` (hero detection + id), `ReinhardScabbardLayer`, `ClientNanoSuitUpState`.
+- New `ClientHeroDimsWatcher`: attachment sync has no client-side change callback, so an END_CLIENT_TICK watcher diffs each tracked player's synced hero id and calls `refreshDimensions()` on change (clears its map when `client.level == null`).
+- 2 new GameTests (`PublicHeroSyncGameTests`): transform writes / untransform clears `PUBLIC_HERO`; join back-fill derives the projection from a legacy directly-written `HERO_DATA`.
+
 ## Important decisions
 - Bound weapons are identified by type (`BoundWeaponItem`) and validated by token; untokened copies are treated as stale on purpose (none are obtainable legitimately; old saves could hold leaked copies).
 - Bound weapons never become item entities: returned to the owner when valid and there is room, otherwise deleted (the ability can reissue).
@@ -102,10 +111,12 @@
 - `AbilityRouter.deactivate` order is flag-off → `onDeactivate` (verified no `onDeactivate` callee reads the active set).
 - Stage 3 lock design: `EntityControlLock` owns the flag transitions; controllers never touch the flags. Locks are re-established, not restored — join hooks re-apply what should still hold (Pandora revival), everything else is released. `RemDemonismController.onRespawn`/`ReinhardController.onDeath` exist but are dead code — intentionally unwired (death → forceUntransform → clear covers them).
 - Lifecycle cleanup (stage 3) must not rely on `ServerPlayConnectionEvents.DISCONNECT` for game state: Fabric can fire it from the Netty thread (`Connection.channelInactive`). Use a main-thread hook before the player is saved (`PlayerList.remove`).
+- Stage 10 projection design: `PUBLIC_HERO` mirrors the hero id only — widening it to resources/passives would re-create the privacy surface of `HERO_DATA` broadcast; anything client-side needing more can read other synced attachments or payloads. `copyOnDeath` mirrors `HERO_DATA` lifecycle (hero persists across death), persistent mirrors save data so no respawn hooks are needed.
 - Ability-scoped attribute buffs should become transient; hero base passives stay permanent (transient max-health modifiers would clamp health on load because `LivingEntity.readAdditionalSaveData` calls `setHealth` after loading attributes).
 
 ## Verification
 
+- Stage 10: `qualityGate` green, 24/24 GameTests (2 new public-hero-sync tests). First run caught a test bug: `untransform` is cooldown-gated right after `transform` — the test uses `forceUntransform`.
 - Stage 8: `qualityGate` green, 26/26 GameTests (4 new House of Vanity tests). Test-only notes: victims must be joined+teleported inside `PULL_RADIUS` BEFORE `AbilityRouter.activate` — latecomer absorb only runs on keepalive ticks (every 20), so post-activation joins race the assert delays; mock players hardcode `isCreative()==true` (bytecode-verified `GameTestHelper$2`), so `VanityAuthority` `mayfly` grant/clear is unreachable in gametest — assert `hasEffect` probes instead.
 - Stage 5: `qualityGate` green, 22/22 GameTests (3 new damage-pipeline tests). Test-only notes: mock players join with private `spawnInvulnerableTime` that blocks `hurt()` — cleared via reflection in the kawarimi test; the test structure spawns ~6M blocks from the mock-player spawn point, so proximity-sensitive asserts must teleport the player first.
 - Stage 4: `qualityGate` green, 19/19 GameTests. Negative check — without the `hasHero()` guard, first-time transforms start with 0 energy and `windPrisonEndsWhenItsZoneExpires` fails.

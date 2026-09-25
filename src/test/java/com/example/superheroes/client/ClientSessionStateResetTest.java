@@ -26,8 +26,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class ClientSessionStateResetTest {
 	private static final UUID PLAYER = UUID.randomUUID();
-	private static final ResourceLocation HERO_ID =
-			ResourceLocation.fromNamespaceAndPath("superheroes", "test_hero");
 	private static final ResourceLocation ABILITY =
 			ResourceLocation.fromNamespaceAndPath("superheroes", "test_ability");
 
@@ -64,7 +62,6 @@ class ClientSessionStateResetTest {
 			ClientMeleeChargeState.update(true, 12);
 			ClientFlightState.update(42, true, com.example.superheroes.flight.FlightMode.IRON_MAN,
 					com.example.superheroes.flight.FlightPhase.HOVER, 0f);
-			RemoteHeroSkins.put(PLAYER, HERO_ID);
 			MirrorWarpFlashHud.flashAndRun(() -> {
 			});
 			ClientAbilityCooldowns.update(ABILITY, 60);
@@ -92,7 +89,6 @@ class ClientSessionStateResetTest {
 			assertEquals(1, ClientNanoFormState.formFor(PLAYER));
 			assertTrue(ClientMeleeChargeState.charging());
 			assertTrue(ClientFlightState.get(42) != null);
-			assertEquals(HERO_ID, RemoteHeroSkins.get(PLAYER));
 			assertTrue(MirrorWarpFlashHud.isCovering());
 			assertTrue(ClientAbilityCooldowns.remainingTicks(ABILITY) > 0);
 
@@ -130,7 +126,6 @@ class ClientSessionStateResetTest {
 			assertEquals(0, ClientNanoFormState.formFor(PLAYER));
 			assertFalse(ClientMeleeChargeState.charging());
 			assertNull(ClientFlightState.get(42));
-			assertNull(RemoteHeroSkins.get(PLAYER));
 			assertFalse(MirrorWarpFlashHud.isCovering());
 			assertEquals(0, ClientAbilityCooldowns.remainingTicks(ABILITY));
 		} finally {

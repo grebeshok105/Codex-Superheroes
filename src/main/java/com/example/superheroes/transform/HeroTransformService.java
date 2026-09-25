@@ -63,7 +63,6 @@ public final class HeroTransformService {
 		player.refreshDimensions();
 		// keep absolute health — transforming must not be a free heal (audit B5)
 		player.setHealth(Math.min(player.getHealth(), player.getMaxHealth()));
-		ModNetworking.broadcastRemoteHeroSkin(player);
 		playTransformFx(player, true);
 		com.example.superheroes.effect.HeroReactionController.onTransformed(player, heroId);
 		markTransformed(player);
@@ -95,7 +94,6 @@ public final class HeroTransformService {
 		com.example.superheroes.lifecycle.PassiveReconciler.clear(player.getUUID());
 		HeroDataStore.update(player, d -> d.withHero(null).withResources(0f, 0f).clearActive());
 		player.refreshDimensions();
-		ModNetworking.broadcastRemoteHeroSkin(player);
 		if (playFx) {
 			playTransformFx(player, false);
 		}

@@ -4,8 +4,6 @@ import com.example.superheroes.ability.AbilityRouter;
 import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.effect.HeroMeleeImpactController;
 import com.example.superheroes.effect.SuperJumpController;
-import com.example.superheroes.hero.Hero;
-import com.example.superheroes.hero.Heroes;
 import com.example.superheroes.transform.HeroData;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
@@ -14,7 +12,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.Optional;
 
 public final class ModNetworking {
 	private ModNetworking() {
@@ -35,7 +32,6 @@ public final class ModNetworking {
 		PayloadTypeRegistry.playS2C().register(RepulsorBlastS2CPayload.TYPE, RepulsorBlastS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(ThanosCosmicBeamS2CPayload.TYPE, ThanosCosmicBeamS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(ScreenShakeS2CPayload.TYPE, ScreenShakeS2CPayload.STREAM_CODEC);
-		PayloadTypeRegistry.playS2C().register(RemoteHeroSkinS2CPayload.TYPE, RemoteHeroSkinS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(ReactorStateS2CPayload.TYPE, ReactorStateS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(MadnessSyncS2CPayload.TYPE, MadnessSyncS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(MadnessVisualS2CPayload.TYPE, MadnessVisualS2CPayload.STREAM_CODEC);
@@ -116,27 +112,6 @@ public final class ModNetworking {
 		}
 	}
 
-
-	public static void broadcastRemoteHeroSkin(ServerPlayer player) {
-		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
-		Optional<ResourceLocation> heroId = Optional.ofNullable(data.heroId());
-		RemoteHeroSkinS2CPayload payload = new RemoteHeroSkinS2CPayload(player.getUUID(), heroId);
-		for (ServerPlayer observer : PlayerLookup.tracking(player)) {
-			if (observer != player) {
-				ServerPlayNetworking.send(observer, payload);
-			}
-		}
-	}
-
-	public static void sendRemoteHeroSkinTo(ServerPlayer observer, ServerPlayer tracked) {
-		HeroData data = tracked.getAttachedOrCreate(ModAttachments.HERO_DATA);
-		Hero hero = data.hasHero() ? Heroes.get(data.heroId()) : null;
-		if (hero == null) {
-			return;
-		}
-		Optional<ResourceLocation> heroId = Optional.ofNullable(data.heroId());
-		ServerPlayNetworking.send(observer, new RemoteHeroSkinS2CPayload(tracked.getUUID(), heroId));
-	}
 
 	public static void broadcastLaser(ServerPlayer shooter, Vec3 start, Vec3 end) {
 		LaserFiredS2CPayload payload = new LaserFiredS2CPayload(shooter.getUUID(), start, end);

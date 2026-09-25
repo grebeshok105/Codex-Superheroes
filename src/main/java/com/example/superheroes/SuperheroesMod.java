@@ -17,7 +17,7 @@ import com.example.superheroes.transform.HeroDataStore;
 import com.example.superheroes.transform.HeroTransformService;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
-import net.fabricmc.fabric.api.networking.v1.EntityTrackingEvents;
+
 import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -166,12 +166,6 @@ public class SuperheroesMod implements ModInitializer {
 			}
 		});
 
-		EntityTrackingEvents.START_TRACKING.register((tracked, observer) -> {
-			if (tracked instanceof ServerPlayer trackedPlayer) {
-				ModNetworking.sendRemoteHeroSkinTo(observer, trackedPlayer);
-			}
-		});
-
 		LOGGER.info("Superheroes mod initialized");
 	}
 
@@ -183,6 +177,7 @@ public class SuperheroesMod implements ModInitializer {
 	private static void registerPlayerLifecycle() {
 		// join — server thread; reconcile session-scoped state on the relogged entity.
 		PlayerLifecycle.onJoin(HeroTransformService::onPlayerJoin);
+		PlayerLifecycle.onJoin(HeroDataStore::syncPublicHero);
 		PlayerLifecycle.onJoin(com.example.superheroes.effect.ReinhardController::onPlayerJoin);
 		PlayerLifecycle.onJoin(com.example.superheroes.effect.BattleBeastCurseController::reapplyOnJoin);
 		PlayerLifecycle.onJoin(com.example.superheroes.effect.RegulusMadnessController::clearMadness);

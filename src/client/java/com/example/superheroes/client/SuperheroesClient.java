@@ -55,6 +55,7 @@ public class SuperheroesClient implements ClientModInitializer {
 		com.example.superheroes.client.iris.IrisShaderBridge.restoreAfterCrashIfNeeded();
 		ClientTickEvents.END_CLIENT_TICK.register(client -> com.example.superheroes.client.iris.IrisShaderBridge.tickCrashRestore());
 		ClientTickEvents.END_CLIENT_TICK.register(com.example.superheroes.client.ClientMirrorDimensionState::tick);
+		ClientHeroDimsWatcher.init();
 		ClientTickEvents.END_CLIENT_TICK.register(client -> com.example.superheroes.client.ClientPandoraDeathState.tick());
 		com.example.superheroes.client.render.WildShaders.register();
 		LaserBeamRenderer.register();

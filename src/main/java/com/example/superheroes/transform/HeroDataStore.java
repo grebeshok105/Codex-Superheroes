@@ -50,6 +50,7 @@ public final class HeroDataStore {
 			return before;
 		}
 		player.setAttached(ModAttachments.HERO_DATA, after);
+		syncPublicHero(player, after.heroId());
 		if (sameShape(before, after)) {
 			player.setAttached(ModAttachments.HERO_DATA_RESOURCES_DIRTY, Boolean.TRUE);
 		} else {
@@ -61,6 +62,22 @@ public final class HeroDataStore {
 	/** Sends the full state now even if nothing changed, e.g. on join or respawn. */
 	public static void syncFull(ServerPlayer player) {
 		sendFull(player, get(player));
+	}
+
+	/**
+	 * Back-fills {@link ModAttachments#PUBLIC_HERO} from {@link ModAttachments#HERO_DATA} —
+	 * covers heroes transformed before the synced attachment existed (audit B14).
+	 */
+	public static void syncPublicHero(ServerPlayer player) {
+		syncPublicHero(player, get(player).heroId());
+	}
+
+	private static void syncPublicHero(ServerPlayer player, ResourceLocation heroId) {
+		if (heroId == null) {
+			player.removeAttached(ModAttachments.PUBLIC_HERO);
+		} else {
+			player.setAttached(ModAttachments.PUBLIC_HERO, heroId);
+		}
 	}
 
 	private static void sendFull(ServerPlayer player, HeroData data) {

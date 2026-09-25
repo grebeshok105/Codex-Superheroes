@@ -127,7 +127,7 @@ public final class ClientNanoSuitUpState {
 		if (mc.player != null && player.getUUID().equals(mc.player.getUUID())) {
 			heroId = ClientHeroState.data().hasHero() ? ClientHeroState.data().heroId() : null;
 		} else {
-			heroId = RemoteHeroSkins.get(player.getUUID());
+			heroId = player.getAttached(com.example.superheroes.attachment.ModAttachments.PUBLIC_HERO);
 		}
 		if (!IronManHero.ID.equals(heroId)) {
 			return null;

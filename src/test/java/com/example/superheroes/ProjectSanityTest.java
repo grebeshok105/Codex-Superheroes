@@ -273,7 +273,7 @@ public final class ProjectSanityTest {
 	private static void assertClientStatesRegisterReset() throws IOException {
 		Pattern clientStateFile = Pattern.compile("Client[A-Za-z0-9]+State\\.java");
 		List<String> namedSingletons = List.of(
-				"ClientAbilityCooldowns.java", "RemoteHeroSkins.java",
+				"ClientAbilityCooldowns.java",
 				"JarvisDetectionHud.java", "MirrorWarpFlashHud.java", "RadialMenuHud.java");
 		forEachJavaFile(CLIENT_JAVA, file -> {
 			String name = file.getFileName().toString();

@@ -4,7 +4,6 @@ import com.example.superheroes.ModId;
 import com.example.superheroes.client.ClientHeroState;
 import com.example.superheroes.client.ClientShadowArmyState;
 import com.example.superheroes.client.ClientUraniumPressureState;
-import com.example.superheroes.client.RemoteHeroSkins;
 import com.example.superheroes.hero.Hero;
 import com.example.superheroes.hero.Heroes;
 import com.example.superheroes.hero.HomelanderHero;
@@ -72,7 +71,7 @@ public abstract class AbstractClientPlayerSkinMixin {
 		if (mc.player != null && player.getUUID().equals(mc.player.getUUID())) {
 			return ClientHeroState.data().hasHero() ? ClientHeroState.data().heroId() : null;
 		}
-		return RemoteHeroSkins.get(player.getUUID());
+		return player.getAttached(com.example.superheroes.attachment.ModAttachments.PUBLIC_HERO);
 	}
 
 	@Unique

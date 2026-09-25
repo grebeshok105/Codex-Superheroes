@@ -24,6 +24,17 @@ public final class ModAttachments {
 			.copyOnDeath()
 			.buildAndRegister(ModId.of("hero_data"));
 
+	/**
+	 * The public hero id, synced to the owner and every tracking player (audit B14).
+	 * Written only by {@link com.example.superheroes.transform.HeroDataStore}; {@code null}
+	 * means "no hero". Mirrors {@code HERO_DATA.heroId} — energy/mana stay private.
+	 */
+	public static final AttachmentType<ResourceLocation> PUBLIC_HERO = AttachmentRegistry.<ResourceLocation>builder()
+			.persistent(ResourceLocation.CODEC)
+			.copyOnDeath()
+			.syncWith(ResourceLocation.STREAM_CODEC, net.fabricmc.fabric.api.attachment.v1.AttachmentSyncPredicate.all())
+			.buildAndRegister(ModId.of("public_hero"));
+
 	public static final AttachmentType<RegulusMadnessState> REGULUS_MADNESS = AttachmentRegistry.<RegulusMadnessState>builder()
 			.initializer(() -> RegulusMadnessState.EMPTY)
 			.buildAndRegister(ModId.of("regulus_madness"));

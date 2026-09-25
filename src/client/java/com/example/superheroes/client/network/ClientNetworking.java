@@ -7,7 +7,6 @@ import com.example.superheroes.client.ClientHeroState;
 import com.example.superheroes.client.ClientMadnessState;
 import com.example.superheroes.client.ClientReactorState;
 import com.example.superheroes.client.ClientRemDemonismState;
-import com.example.superheroes.client.RemoteHeroSkins;
 import com.example.superheroes.client.fx.ClientScorpionFx;
 import com.example.superheroes.client.fx.ScreenShakeManager;
 import com.example.superheroes.client.fx.WallImpactDebrisManager;
@@ -24,7 +23,6 @@ import com.example.superheroes.network.MadnessSyncS2CPayload;
 import com.example.superheroes.network.MadnessVisualS2CPayload;
 import com.example.superheroes.network.ReactorStateS2CPayload;
 import com.example.superheroes.network.RepulsorBlastS2CPayload;
-import com.example.superheroes.network.RemoteHeroSkinS2CPayload;
 import com.example.superheroes.network.ResourceUpdateS2CPayload;
 import com.example.superheroes.network.ScreenShakeS2CPayload;
 import com.example.superheroes.transform.HeroData;
@@ -121,9 +119,6 @@ public final class ClientNetworking {
 				context.client().execute(() -> WallImpactDebrisManager.spawn(
 						context.client().level, payload.position(), payload.direction(),
 						payload.intensity(), payload.blockStateIds())));
-
-		ClientPlayNetworking.registerGlobalReceiver(RemoteHeroSkinS2CPayload.TYPE, (payload, context) ->
-				context.client().execute(() -> RemoteHeroSkins.put(payload.playerId(), payload.heroId().orElse(null))));
 
 		ClientPlayNetworking.registerGlobalReceiver(ReactorStateS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> ClientReactorState.update(payload.active(), payload.progressTicks(), payload.totalTicks(), payload.hasStock())));
