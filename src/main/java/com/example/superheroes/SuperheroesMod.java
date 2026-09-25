@@ -159,7 +159,6 @@ public class SuperheroesMod implements ModInitializer {
 		PlayerLifecycle.onLeave(com.example.superheroes.ability.NarutoRasenganAbility::clear);
 		PlayerLifecycle.onLeave(com.example.superheroes.ability.NarutoOodamaRasenganAbility::clear);
 		PlayerLifecycle.onLeave(com.example.superheroes.ability.NarutoRasenshurikenAbility::clear);
-		PlayerLifecycle.onLeave(com.example.superheroes.ability.CapShieldSlamAbility::clear);
 		PlayerLifecycle.onLeave(com.example.superheroes.effect.MirrorDimensionController::onPlayerGone);
 		PlayerLifecycle.onLeave(com.example.superheroes.effect.SpatialBindController::onPlayerGone);
 
@@ -186,7 +185,6 @@ public class SuperheroesMod implements ModInitializer {
 		PlayerLifecycle.onDeath(com.example.superheroes.ability.NarutoRasenganAbility::clear);
 		PlayerLifecycle.onDeath(com.example.superheroes.ability.NarutoOodamaRasenganAbility::clear);
 		PlayerLifecycle.onDeath(com.example.superheroes.ability.NarutoRasenshurikenAbility::clear);
-		PlayerLifecycle.onDeath(com.example.superheroes.ability.CapShieldSlamAbility::clear);
 		PlayerLifecycle.onDeath(com.example.superheroes.ability.AbilityCooldowns::clearAndSync);
 
 		// respawn — reconcile the fresh entity with state that outlives death.
@@ -223,7 +221,6 @@ public class SuperheroesMod implements ModInitializer {
 			com.example.superheroes.ability.NarutoRasenganAbility.resetAll();
 			com.example.superheroes.ability.NarutoOodamaRasenganAbility.resetAll();
 			com.example.superheroes.ability.NarutoRasenshurikenAbility.resetAll();
-			com.example.superheroes.ability.CapShieldSlamAbility.resetAll();
 			com.example.superheroes.effect.MirrorDimensionController.resetAll();
 			com.example.superheroes.effect.SpatialBindController.resetAll();
 		});
