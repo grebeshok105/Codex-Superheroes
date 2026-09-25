@@ -12,7 +12,7 @@
 | :-- | :-- | :-- | :-- |
 | 1 | B1 no-drop recursion crash, B7 bound-weapon dup, GameTest lane | `hoplite/kroton-d9205130` | PR open |
 | 2 | B2 stale `HeroData` write-back; single `HeroData` writer (debt 2) | `hoplite/kroton-d9205130--herodata-writer` | PR open (stacked on 1) |
-| 3 | Lifecycle: B3, B4, B8, B17, B23, N1 (main-thread leave hook) | | todo |
+| 3 | Lifecycle: B3, B4, B8, B17, B23, N1 (main-thread leave hook) | `hoplite/kroton-d9205130--lifecycle` | PR open (stacked on 2) |
 | 4 | B5 cooldown/heal reset on hero swap, B6 Snap stones | | todo |
 | 5 | Damage pipeline B9, B20, B21; B11 global tick rate | | todo |
 | 6 | B10 `WorldDestructionPolicy` | | todo |
@@ -37,17 +37,29 @@
 - Removed the dead `DeactivateAbilityC2SPayload` endpoint and redundant `server().execute` hops in C2S handlers.
 - `ProjectSanityTest.assertHeroDataHasSingleWriter` guards the single-writer rule.
 
+## Completed this session (stage 3)
+
+- New `lifecycle/` package: `PlayerLifecycle` is the single dispatch hub — hooks for join/leave/death/respawn/server-stopped wired to server-thread events (`ServerPlayerEvents.LEAVE` fires from `PlayerList.remove`, before save; `DISCONNECT` can run on the Netty thread — no longer used for game state). Every controller cleanup in the mod routes through it via `SuperheroesMod.registerPlayerLifecycle`.
+- `lifecycle/EntityControlLock` — refcounted locks over the four NBT-persisted entity flags (NoAI, NoGravity, noPhysics, invulnerable). First owner records the previous flag value into a persistent `CONTROL_LOCK_SHADOW`; last release restores it. If a locked entity unloads while the live (non-persistent) lock map is gone, `reconcile` on `ENTITY_LOAD` restores flags from the shadow. DoomGrip, Think Mark, Regulus freeze/counter, and Reinhard's ceremony all hold locks instead of writing flags directly — stale NoAI/NoGravity after relog can no longer happen (B4).
+- Ability-scoped attribute buffs (Kratos rage, Regulus madness, Reinhard draw, Raiden burst, Naruto/Goku/Rem stances, BattleBeast curse, Doomsday berserk, Thanos stone deltas) now apply as **transient** modifiers via `AttributeModifierSet.Builder.abilityScoped()` — they never serialize, so relog cannot leave zombie buffs (B3). Hero passives stay permanent on purpose (transient max-health clamps health on load). Controllers that re-derive session state on join re-apply: `BattleBeastCurseController.reapplyOnJoin`, `ThanosGauntletStateController.onPlayerReset`, `ReinhardController.onPlayerJoin`, `PandoraDeathController.reapplyState`.
+- `HeroTransformService.clearHeroRuntimeState(player)` is the symmetric cleanup used by both `transform` and `doUntransform` — previously clearAdaptations/clearOnUntransform/Unibeam ran only on untransform (B23). `onPlayerLeave` clears runtime + active flags without running gameplay deactivate side-effects.
+- Dead players are skipped in the per-player END_SERVER_TICK loop and `ThanosSnapWindupController` removes pending snaps for dead/absent casters; `ReinhardSwordDeathMarkController.cancelVictim` flushes marks on victim death/leave (B17).
+- Transform cooldown moved from a `WeakHashMap` to the `TRANSFORM_TICK` attachment; ~20 controllers got `resetAll()`/`onPlayerGone`/`cancel` hooks wired into `SERVER_STOPPED` — static maps no longer leak into a reopened world on the same JVM (B8).
+- Pandora revival state is now the persistent `PANDORA_REVIVED` attachment + an invulnerable control lock (was an NBT flag + in-memory set).
+
 ## Important decisions
 
 - Bound weapons are identified by type (`BoundWeaponItem`) and validated by token; untokened copies are treated as stale on purpose (none are obtainable legitimately; old saves could hold leaked copies).
 - Bound weapons never become item entities: returned to the owner when valid and there is room, otherwise deleted (the ability can reissue).
 - `HeroData` sync: writes are immediate; full syncs stay immediate to preserve packet ordering with other payloads; resource-only syncs are coalesced per tick.
 - `AbilityRouter.deactivate` order is flag-off → `onDeactivate` (verified no `onDeactivate` callee reads the active set).
+- Stage 3 lock design: `EntityControlLock` owns the flag transitions; controllers never touch the flags. Locks are re-established, not restored — join hooks re-apply what should still hold (Pandora revival), everything else is released. `RemDemonismController.onRespawn`/`ReinhardController.onDeath` exist but are dead code — intentionally unwired (death → forceUntransform → clear covers them).
 - Lifecycle cleanup (stage 3) must not rely on `ServerPlayConnectionEvents.DISCONNECT` for game state: Fabric can fire it from the Netty thread (`Connection.channelInactive`). Use a main-thread hook before the player is saved (`PlayerList.remove`).
 - Ability-scoped attribute buffs should become transient; hero base passives stay permanent (transient max-health modifiers would clamp health on load because `LivingEntity.readAdditionalSaveData` calls `setHealth` after loading attributes).
 
 ## Verification
 
+- Stage 3: `qualityGate` green, 16/16 GameTests (7 new lifecycle regressions: owner-leave lock release, refcount, shadow reconcile, transient-vs-permanent NBT, attachment-backed transform cooldown, forceUntransform clears locks+cooldowns, dead-caster snap).
 - Stage 2: `qualityGate` green, 9/9 GameTests; negative check — old tick write-back makes `windPrisonEndsWhenItsZoneExpires` fail.
 - `./gradlew qualityGate --no-daemon` green on stage 1: JUnit, 8 `ProjectSanityTest` checks, assertion audit, jar isolation audit, 7/7 GameTests.
 - Negative check: re-inserting the old mixin logic makes `droppingWithFullInventoryDoesNotRecurse` fail with `StackOverflowError`.

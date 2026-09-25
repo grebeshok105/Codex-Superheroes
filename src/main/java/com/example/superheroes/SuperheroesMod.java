@@ -7,6 +7,8 @@ import com.example.superheroes.effect.ModEffects;
 import com.example.superheroes.hero.Heroes;
 import com.example.superheroes.item.ModItemGroups;
 import com.example.superheroes.item.ModItems;
+import com.example.superheroes.lifecycle.EntityControlLock;
+import com.example.superheroes.lifecycle.PlayerLifecycle;
 import com.example.superheroes.network.ModNetworking;
 import com.example.superheroes.particle.ModParticles;
 import com.example.superheroes.resource.ResourceController;
@@ -16,7 +18,6 @@ import com.example.superheroes.transform.HeroTransformService;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.networking.v1.EntityTrackingEvents;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +28,9 @@ public class SuperheroesMod implements ModInitializer {
 	@Override
 	public void onInitialize() {
 		ModAttachments.init();
+		EntityControlLock.init();
+		PlayerLifecycle.init();
+		registerPlayerLifecycle();
 		ModEffects.init();
 		Heroes.init();
 		AbilityRegistry.init();
@@ -108,6 +112,11 @@ public class SuperheroesMod implements ModInitializer {
 				com.example.superheroes.horde.HordeManager.tick(sl);
 			}
 			for (ServerPlayer p : server.getPlayerList().getPlayers()) {
+				// Dead players stay in the player list until respawn — ability ticks must not
+				// run on a corpse (audit B17).
+				if (p.isDeadOrDying()) {
+					continue;
+				}
 				com.example.superheroes.ability.ChargeTackleAbility.serverTick(p);
 				com.example.superheroes.ability.ViltrumiteChargeAbility.serverTick(p);
 				com.example.superheroes.ability.MeteorSlamAbility.serverTick(p);
@@ -130,15 +139,6 @@ public class SuperheroesMod implements ModInitializer {
 					com.example.superheroes.ability.GokuSuperSaiyanAuraAbility.serverTick(p);
 				}
 			}
-		});
-
-		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
-			HeroTransformService.onPlayerJoin(handler.getPlayer());
-		});
-
-		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
-			HeroTransformService.onPlayerDisconnect(handler.getPlayer());
-			com.example.superheroes.effect.PandoraDeathController.onPlayerDisconnect(handler.getPlayer());
 		});
 
 		ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> {
@@ -165,9 +165,6 @@ public class SuperheroesMod implements ModInitializer {
 			}
 		});
 
-		net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents.AFTER_RESPAWN.register(
-				(oldPlayer, newPlayer, alive) -> HeroTransformService.onPlayerRespawn(newPlayer));
-
 		EntityTrackingEvents.START_TRACKING.register((tracked, observer) -> {
 			if (tracked instanceof ServerPlayer trackedPlayer) {
 				ModNetworking.sendRemoteHeroSkinTo(observer, trackedPlayer);
@@ -175,5 +172,108 @@ public class SuperheroesMod implements ModInitializer {
 		});
 
 		LOGGER.info("Superheroes mod initialized");
+	}
+
+	/**
+	 * Every controller cleanup routed through {@link PlayerLifecycle} — the single dispatch
+	 * point wired to server-thread events ({@code LEAVE} fires before the player is saved and
+	 * removed, unlike {@code DISCONNECT} which may run on the Netty thread).
+	 */
+	private static void registerPlayerLifecycle() {
+		// join — server thread; reconcile session-scoped state on the relogged entity.
+		PlayerLifecycle.onJoin(HeroTransformService::onPlayerJoin);
+		PlayerLifecycle.onJoin(com.example.superheroes.effect.ReinhardController::onPlayerJoin);
+		PlayerLifecycle.onJoin(com.example.superheroes.effect.BattleBeastCurseController::reapplyOnJoin);
+		PlayerLifecycle.onJoin(com.example.superheroes.effect.RegulusMadnessController::clearMadness);
+
+		// leave — drop session-scoped state; never runs gameplay deactivate side-effects.
+		PlayerLifecycle.onLeave(HeroTransformService::onPlayerLeave);
+		PlayerLifecycle.onLeave(EntityControlLock::releaseOwnedBy);
+		PlayerLifecycle.onLeave(com.example.superheroes.effect.PandoraDeathController::onPlayerLeave);
+		PlayerLifecycle.onLeave(com.example.superheroes.effect.DoomGripController::clear);
+		PlayerLifecycle.onLeave(com.example.superheroes.ability.OmnimanThinkMarkAbility::clear);
+		PlayerLifecycle.onLeave(com.example.superheroes.effect.ReinhardSwordDrawCeremonyController::cancelCeremony);
+		PlayerLifecycle.onLeave(com.example.superheroes.effect.RegulusGreedController::onPlayerGone);
+		PlayerLifecycle.onLeave(com.example.superheroes.effect.RegulusMadnessController::clearMadness);
+		PlayerLifecycle.onLeave(com.example.superheroes.effect.KratosRageController::onPlayerGone);
+		PlayerLifecycle.onLeave(com.example.superheroes.effect.ThanosGauntletStateController::onPlayerReset);
+		PlayerLifecycle.onLeave(p -> com.example.superheroes.effect.UnibeamController.clearState(p.getUUID()));
+		PlayerLifecycle.onLeave(p -> com.example.superheroes.effect.MonarchsDomainController.clear(p.getUUID()));
+		PlayerLifecycle.onLeave(p -> com.example.superheroes.effect.ThanosSnapWindupController.cancel(p.getUUID()));
+		PlayerLifecycle.onLeave(p -> com.example.superheroes.effect.ReinhardSwordDeathMarkController.cancelVictim(p.getUUID()));
+		PlayerLifecycle.onLeave(com.example.superheroes.ability.RepulsorChargeController::reset);
+		PlayerLifecycle.onLeave(com.example.superheroes.ability.ChargeTackleAbility::clear);
+		PlayerLifecycle.onLeave(com.example.superheroes.ability.ViltrumiteChargeAbility::clear);
+		PlayerLifecycle.onLeave(com.example.superheroes.ability.MeteorSlamAbility::clear);
+		PlayerLifecycle.onLeave(com.example.superheroes.ability.OmnimanViltrumiteRushAbility::clear);
+		PlayerLifecycle.onLeave(com.example.superheroes.ability.GokuKamehamehaAbility::clear);
+		PlayerLifecycle.onLeave(com.example.superheroes.ability.GokuSpiritBombAbility::clear);
+		PlayerLifecycle.onLeave(com.example.superheroes.ability.NarutoRasenganAbility::clear);
+		PlayerLifecycle.onLeave(com.example.superheroes.ability.NarutoOodamaRasenganAbility::clear);
+		PlayerLifecycle.onLeave(com.example.superheroes.ability.NarutoRasenshurikenAbility::clear);
+		PlayerLifecycle.onLeave(com.example.superheroes.ability.CapShieldSlamAbility::clear);
+
+		// death — charge/lock/session state must not outlive the entity (audit B17).
+		PlayerLifecycle.onDeath(EntityControlLock::releaseOwnedBy);
+		PlayerLifecycle.onDeath(com.example.superheroes.effect.DoomGripController::clear);
+		PlayerLifecycle.onDeath(com.example.superheroes.ability.OmnimanThinkMarkAbility::clear);
+		PlayerLifecycle.onDeath(com.example.superheroes.effect.ReinhardSwordDrawCeremonyController::cancelCeremony);
+		PlayerLifecycle.onDeath(com.example.superheroes.effect.RegulusGreedController::onPlayerGone);
+		PlayerLifecycle.onDeath(com.example.superheroes.effect.RegulusMadnessController::clearMadness);
+		PlayerLifecycle.onDeath(com.example.superheroes.effect.KratosRageController::onPlayerGone);
+		PlayerLifecycle.onDeath(com.example.superheroes.effect.ThanosGauntletStateController::onPlayerReset);
+		PlayerLifecycle.onDeath(p -> com.example.superheroes.effect.UnibeamController.clearState(p.getUUID()));
+		PlayerLifecycle.onDeath(p -> com.example.superheroes.effect.MonarchsDomainController.clear(p.getUUID()));
+		PlayerLifecycle.onDeath(p -> com.example.superheroes.effect.ThanosSnapWindupController.cancel(p.getUUID()));
+		PlayerLifecycle.onDeath(p -> com.example.superheroes.effect.ReinhardSwordDeathMarkController.cancelVictim(p.getUUID()));
+		PlayerLifecycle.onDeath(com.example.superheroes.ability.RepulsorChargeController::reset);
+		PlayerLifecycle.onDeath(com.example.superheroes.ability.ChargeTackleAbility::clear);
+		PlayerLifecycle.onDeath(com.example.superheroes.ability.ViltrumiteChargeAbility::clear);
+		PlayerLifecycle.onDeath(com.example.superheroes.ability.MeteorSlamAbility::clear);
+		PlayerLifecycle.onDeath(com.example.superheroes.ability.OmnimanViltrumiteRushAbility::clear);
+		PlayerLifecycle.onDeath(com.example.superheroes.ability.GokuKamehamehaAbility::clear);
+		PlayerLifecycle.onDeath(com.example.superheroes.ability.GokuSpiritBombAbility::clear);
+		PlayerLifecycle.onDeath(com.example.superheroes.ability.NarutoRasenganAbility::clear);
+		PlayerLifecycle.onDeath(com.example.superheroes.ability.NarutoOodamaRasenganAbility::clear);
+		PlayerLifecycle.onDeath(com.example.superheroes.ability.NarutoRasenshurikenAbility::clear);
+		PlayerLifecycle.onDeath(com.example.superheroes.ability.CapShieldSlamAbility::clear);
+
+		// respawn — reconcile the fresh entity with state that outlives death.
+		PlayerLifecycle.onRespawn(HeroTransformService::onPlayerRespawn);
+		PlayerLifecycle.onRespawn(com.example.superheroes.effect.ThanosGauntletStateController::onPlayerReset);
+		PlayerLifecycle.onRespawn(com.example.superheroes.effect.RegulusMadnessController::clearMadness);
+
+		// world shutdown — static session state must not leak into a new world (audit B8).
+		PlayerLifecycle.onServerStopped(server -> {
+			com.example.superheroes.horde.HordeManager.resetAll();
+			com.example.superheroes.effect.SungJinwooController.resetAll();
+			com.example.superheroes.effect.MonarchsDomainController.resetAll();
+			com.example.superheroes.ability.AbilityCooldowns.resetAll();
+			com.example.superheroes.resource.EnergyLocks.resetAll();
+			com.example.superheroes.effect.RemDemonismController.resetAll();
+			com.example.superheroes.effect.UnibeamController.resetAll();
+			com.example.superheroes.effect.ThanosSnapWindupController.resetAll();
+			com.example.superheroes.effect.ReinhardSwordDeathMarkController.resetAll();
+			com.example.superheroes.effect.ReinhardSwordDrawCeremonyController.resetAll();
+			com.example.superheroes.effect.RegulusGreedController.resetAll();
+			com.example.superheroes.effect.RegulusMadnessController.resetAll();
+			com.example.superheroes.effect.DoomGripController.resetAll();
+			com.example.superheroes.ability.OmnimanThinkMarkAbility.resetAll();
+			com.example.superheroes.effect.KratosRageController.resetAll();
+			com.example.superheroes.effect.BattleBeastCurseController.resetAll();
+			com.example.superheroes.effect.ThanosGauntletStateController.resetAll();
+			com.example.superheroes.effect.PandoraDeathController.resetAll();
+			com.example.superheroes.ability.RepulsorChargeController.resetAll();
+			com.example.superheroes.ability.ChargeTackleAbility.resetAll();
+			com.example.superheroes.ability.ViltrumiteChargeAbility.resetAll();
+			com.example.superheroes.ability.MeteorSlamAbility.resetAll();
+			com.example.superheroes.ability.OmnimanViltrumiteRushAbility.resetAll();
+			com.example.superheroes.ability.GokuKamehamehaAbility.resetAll();
+			com.example.superheroes.ability.GokuSpiritBombAbility.resetAll();
+			com.example.superheroes.ability.NarutoRasenganAbility.resetAll();
+			com.example.superheroes.ability.NarutoOodamaRasenganAbility.resetAll();
+			com.example.superheroes.ability.NarutoRasenshurikenAbility.resetAll();
+			com.example.superheroes.ability.CapShieldSlamAbility.resetAll();
+		});
 	}
 }

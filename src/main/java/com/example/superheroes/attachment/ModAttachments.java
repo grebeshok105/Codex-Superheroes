@@ -6,6 +6,9 @@ import com.example.superheroes.effect.RaidenState;
 import com.example.superheroes.effect.RegulusMadnessState;
 import com.example.superheroes.effect.ReinhardState;
 import com.example.superheroes.item.bound.BoundWeaponIssues;
+import com.example.superheroes.lifecycle.ControlLockShadow;
+import com.example.superheroes.lifecycle.ControlLockState;
+import com.example.superheroes.lifecycle.HeldLocks;
 import com.example.superheroes.transform.HeroData;
 import com.mojang.serialization.Codec;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentRegistry;
@@ -72,6 +75,30 @@ public final class ModAttachments {
 	/** Current issue of each bound weapon; not persistent, so a relog or restart invalidates every old copy. */
 	public static final AttachmentType<BoundWeaponIssues> BOUND_WEAPON_ISSUES =
 			AttachmentRegistry.create(ModId.of("bound_weapon_issues"));
+
+	/** Live {@link com.example.superheroes.lifecycle.EntityControlLock} state on a victim entity; not persistent. */
+	public static final AttachmentType<ControlLockState> CONTROL_LOCKS =
+			AttachmentRegistry.create(ModId.of("control_locks"));
+
+	/** Reverse index on the owning player of the entity locks they hold; not persistent. */
+	public static final AttachmentType<HeldLocks> HELD_LOCKS =
+			AttachmentRegistry.create(ModId.of("held_locks"));
+
+	/** Persistent record of pre-lock flag values so a reload can restore them; see {@link com.example.superheroes.lifecycle.EntityControlLock#reconcile}. */
+	public static final AttachmentType<ControlLockShadow> CONTROL_LOCK_SHADOW = AttachmentRegistry.<ControlLockShadow>builder()
+			.persistent(ControlLockShadow.CODEC)
+			.buildAndRegister(ModId.of("control_lock_shadow"));
+
+	/** Tick of the last hero transform/untransform; not persistent so a new world starts with no cooldown. */
+	public static final AttachmentType<Long> TRANSFORM_TICK =
+			AttachmentRegistry.create(ModId.of("transform_tick"));
+
+	/** Pandora has played her revival cinematic and is permanently un-hittable until she drops the hero. */
+	public static final AttachmentType<Boolean> PANDORA_REVIVED = AttachmentRegistry.<Boolean>builder()
+			.initializer(() -> Boolean.FALSE)
+			.persistent(Codec.BOOL)
+			.copyOnDeath()
+			.buildAndRegister(ModId.of("pandora_revived"));
 
 	private ModAttachments() {
 	}

@@ -22,7 +22,9 @@ public final class ThanosSnapWindupController {
 			while (it.hasNext()) {
 				Map.Entry<UUID, Pending> e = it.next();
 				ServerPlayer player = server.getPlayerList().getPlayer(e.getKey());
-				if (player == null) {
+				// A dead player stays in the player list until respawn — the snap must not fire
+				// from a corpse (audit B17).
+				if (player == null || player.isDeadOrDying()) {
 					it.remove();
 					continue;
 				}
@@ -47,6 +49,16 @@ public final class ThanosSnapWindupController {
 	public static boolean isWindingUp(ServerPlayer player) {
 		Pending p = PENDING.get(player.getUUID());
 		return p != null && !p.snapped;
+	}
+
+	/** Leave/death hook — a pending snap must never fire from a corpse or after relog. */
+	public static void cancel(java.util.UUID playerId) {
+		PENDING.remove(playerId);
+	}
+
+	/** World shutdown — pending snaps die with the world. */
+	public static void resetAll() {
+		PENDING.clear();
 	}
 
 	private static final class Pending {

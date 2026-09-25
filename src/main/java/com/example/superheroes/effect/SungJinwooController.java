@@ -142,6 +142,15 @@ public final class SungJinwooController {
 		PHASE2.remove(player.getUUID());
 	}
 
+	/** World shutdown — army lists and level-keyed echo state must not leak into a new world. */
+	public static void resetAll() {
+		ARMY.clear();
+		DEATH_ECHOES.clear();
+		SUPPRESSED_DEATH_ECHOES.clear();
+		SUMMONED.clear();
+		PHASE2.clear();
+	}
+
 	public static void summonInitialArmy(ServerPlayer player) {
 		ServerLevel level = player.serverLevel();
 		List<UUID> ids = ARMY.computeIfAbsent(player.getUUID(), u -> new ArrayList<>());

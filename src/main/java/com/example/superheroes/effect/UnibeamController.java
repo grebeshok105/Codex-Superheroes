@@ -519,6 +519,13 @@ public final class UnibeamController {
 		return entries;
 	}
 
+	/** World shutdown — beam sessions die with the world. */
+	public static void resetAll() {
+		charging.clear();
+		firing.clear();
+		stunned.clear();
+	}
+
 	private static final class ChargeState {
 		final Vec3 anchor;
 		int progress;

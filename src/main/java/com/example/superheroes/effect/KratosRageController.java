@@ -100,6 +100,23 @@ public final class KratosRageController {
 		sync(player);
 	}
 
+	/**
+	 * Leave/death hook — rage is session-scoped (its buffs are transient modifiers now), so the
+	 * tracking maps must drop the player immediately instead of waiting for the next offline
+	 * sweep inside the tick loop.
+	 */
+	public static void onPlayerGone(ServerPlayer player) {
+		UUID id = player.getUUID();
+		ACTIVE.remove(id);
+		RAGE.put(id, 0f);
+	}
+
+	/** World shutdown — rage state dies with the world. */
+	public static void resetAll() {
+		ACTIVE.clear();
+		RAGE.clear();
+	}
+
 	public static float getRage(ServerPlayer player) {
 		return RAGE.getOrDefault(player.getUUID(), 0f);
 	}

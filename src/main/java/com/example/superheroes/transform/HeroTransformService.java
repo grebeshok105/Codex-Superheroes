@@ -19,12 +19,9 @@ import net.minecraft.sounds.SoundSource;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
-import java.util.WeakHashMap;
 
 public final class HeroTransformService {
 	private static final int COOLDOWN_TICKS = 20;
-	private static final Map<UUID, Long> LAST_TRANSFORM_TICK = new WeakHashMap<>();
 
 	private HeroTransformService() {
 	}
@@ -59,10 +56,7 @@ public final class HeroTransformService {
 				bindings,
 				java.util.Set.of()
 		));
-		com.example.superheroes.effect.PandoraDeathController.resetOnHeroTaken(player);
-		com.example.superheroes.ability.AbilityCooldowns.clearAndSync(player);
-		com.example.superheroes.effect.RegulusTotemController.clear(player.getUUID());
-		com.example.superheroes.effect.RegulusMadnessController.clearMadness(player);
+		clearHeroRuntimeState(player);
 		hero.applyPassives(player);
 		player.refreshDimensions();
 		player.setHealth(player.getMaxHealth());
@@ -94,14 +88,8 @@ public final class HeroTransformService {
 			current.removePassives(player);
 			deactivateAll(player, data);
 		}
-		com.example.superheroes.effect.UnibeamController.clearState(player.getUUID());
-		com.example.superheroes.effect.RegulusTotemController.clear(player.getUUID());
-		com.example.superheroes.effect.RegulusMadnessController.clearMadness(player);
-		com.example.superheroes.effect.ReinhardController.clearAdaptations(player);
-		com.example.superheroes.effect.RaidenLifecycleController.clearOnUntransform(player);
-		com.example.superheroes.effect.RemDemonismController.clear(player);
+		clearHeroRuntimeState(player);
 		HeroDataStore.update(player, d -> d.withHero(null).withResources(0f, 0f).clearActive());
-		com.example.superheroes.ability.AbilityCooldowns.clearAndSync(player);
 		player.refreshDimensions();
 		ModNetworking.broadcastRemoteHeroSkin(player);
 		if (playFx) {
@@ -112,7 +100,7 @@ public final class HeroTransformService {
 	}
 
 	private static boolean isOnCooldown(ServerPlayer player) {
-		Long last = LAST_TRANSFORM_TICK.get(player.getUUID());
+		Long last = player.getAttached(ModAttachments.TRANSFORM_TICK);
 		if (last == null) {
 			return false;
 		}
@@ -120,7 +108,7 @@ public final class HeroTransformService {
 	}
 
 	private static void markTransformed(ServerPlayer player) {
-		LAST_TRANSFORM_TICK.put(player.getUUID(), (long) player.server.getTickCount());
+		player.setAttached(ModAttachments.TRANSFORM_TICK, (long) player.server.getTickCount());
 	}
 
 	private static void playTransformFx(ServerPlayer player, boolean activate) {
@@ -178,11 +166,39 @@ public final class HeroTransformService {
 		hero.applyPassives(player);
 	}
 
-	public static void onPlayerDisconnect(ServerPlayer player) {
+	/**
+	 * Server-thread leave hook ({@link com.example.superheroes.lifecycle.PlayerLifecycle#onLeave}).
+	 * Game-state cleanup must not run on {@code ServerPlayConnectionEvents.DISCONNECT} — Fabric
+	 * can fire that on the Netty thread. Clears session-scoped state without running ability
+	 * {@code onDeactivate} (its gameplay side-effects would persist onto a leaving player).
+	 */
+	public static void onPlayerLeave(ServerPlayer player) {
 		java.util.UUID id = player.getUUID();
 		com.example.superheroes.ability.AbilityCooldowns.clear(id);
 		com.example.superheroes.resource.EnergyLocks.clear(id);
 		com.example.superheroes.effect.RemDemonismController.clear(player);
+		com.example.superheroes.effect.UnibeamController.clearState(id);
+		if (HeroDataStore.get(player).hasHero()) {
+			HeroDataStore.update(player, HeroData::clearActive);
+		}
+	}
+
+	/**
+	 * Every cleanup a hero swap or removal must run, in one place (audit B23: the paths used to
+	 * drift apart — transform cleared a subset of what untransform cleared).
+	 */
+	public static void clearHeroRuntimeState(ServerPlayer player) {
+		com.example.superheroes.effect.UnibeamController.clearState(player.getUUID());
+		com.example.superheroes.ability.AbilityCooldowns.clearAndSync(player);
+		com.example.superheroes.effect.RegulusTotemController.clear(player.getUUID());
+		com.example.superheroes.effect.RegulusMadnessController.clearMadness(player);
+		com.example.superheroes.effect.ReinhardController.clearAdaptations(player);
+		com.example.superheroes.effect.RaidenLifecycleController.clearOnUntransform(player);
+		com.example.superheroes.effect.RemDemonismController.clear(player);
+		com.example.superheroes.effect.PandoraDeathController.resetOnHeroTaken(player);
+		com.example.superheroes.effect.DoomGripController.clear(player);
+		com.example.superheroes.ability.OmnimanThinkMarkAbility.clear(player);
+		com.example.superheroes.lifecycle.EntityControlLock.releaseOwnedBy(player);
 	}
 
 	private static void deactivateAll(ServerPlayer player, HeroData data) {

@@ -81,6 +81,7 @@ public final class RemDemonismController {
 			.add(Attributes.BLOCK_INTERACTION_RANGE, ModId.of("modifiers/rem/demon_block_reach"), 0.8, AttributeModifier.Operation.ADD_VALUE)
 			.add(Attributes.STEP_HEIGHT, ModId.of("modifiers/rem/demon_step"), 0.6, AttributeModifier.Operation.ADD_VALUE)
 			.add(Attributes.JUMP_STRENGTH, ModId.of("modifiers/rem/demon_jump"), 0.08, AttributeModifier.Operation.ADD_VALUE)
+			.abilityScoped()
 			.build();
 
 	private static final Map<UUID, Float> CHARGE = new HashMap<>();
@@ -217,6 +218,16 @@ public final class RemDemonismController {
 
 	public static void onRespawn(ServerPlayer player) {
 		clear(player);
+	}
+
+	/** World shutdown — demonism state dies with the world (windups hold tick-clock values). */
+	public static void resetAll() {
+		CHARGE.clear();
+		ACTIVE.clear();
+		PERMANENT.clear();
+		CRATER_WINDUPS.clear();
+		ICE_WAVES.clear();
+		MORNING_STAR_PULLS.clear();
 	}
 
 	public static boolean isActive(Player player) {

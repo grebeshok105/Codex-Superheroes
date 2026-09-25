@@ -580,4 +580,10 @@ public final class HordeManager {
 	public static boolean hasActiveHorde(Level level) {
 		return ACTIVE.values().stream().anyMatch(i -> i.level == level && !i.finished);
 	}
+
+	/** World shutdown — hordes hold level references that would leak into a new world. */
+	public static void resetAll() {
+		ACTIVE.clear();
+		OVERLAY_PLAYERS.clear();
+	}
 }

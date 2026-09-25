@@ -149,6 +149,17 @@ public final class NarutoRasenganAbility implements Ability {
 				SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 0.7f, 1.4f);
 	}
 
+
+	/** Drop an in-progress charge/rush without firing it (leave, death, untransform). */
+	public static void clear(ServerPlayer player) {
+		ACTIVE.remove(player.getUUID());
+	}
+
+	/** World shutdown — charge sessions die with the world. */
+	public static void resetAll() {
+		ACTIVE.clear();
+	}
+
 	private static final class ActiveRasengan {
 		int ticksLeft;
 		boolean detonated;

@@ -43,6 +43,10 @@ public final class AbilityCooldowns {
 		return left > 0 ? (int) left : 0;
 	}
 
+	/** World shutdown — cooldown deadlines are keyed to a per-world tick clock. */
+	public static void resetAll() {
+		MAP.clear();
+	}
 	public static void clear(UUID id) {
 		MAP.remove(id);
 	}

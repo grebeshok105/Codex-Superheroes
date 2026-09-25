@@ -112,4 +112,14 @@ public final class CapShieldSlamAbility implements Ability {
 		level.playSound(null, pos.x, pos.y, pos.z,
 				SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 0.8f, 1.4f);
 	}
+
+	/** Drop an in-progress slam-jump without firing it (leave, death, untransform). */
+	public static void clear(ServerPlayer player) {
+		JUMPING.remove(player.getUUID());
+	}
+
+	/** World shutdown — slam state dies with the world. */
+	public static void resetAll() {
+		JUMPING.clear();
+	}
 }

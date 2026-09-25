@@ -1,5 +1,7 @@
 package com.example.superheroes.effect;
 
+import com.example.superheroes.lifecycle.ControlLockKind;
+import com.example.superheroes.lifecycle.EntityControlLock;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.core.particles.ParticleTypes;
@@ -107,6 +109,30 @@ public final class RegulusGreedController {
 		return FREEZES.containsKey(entity.getUUID());
 	}
 
+	/** Server-thread leave/death hook — drops the caster's greed state and frees their victims. */
+	public static void onPlayerGone(ServerPlayer player) {
+		UUID id = player.getUUID();
+		MAGNETS.remove(id);
+		if (CASTER_FREEZE_UNTIL.remove(id) != null) {
+			removeKnockback(player);
+		}
+		var server = player.server;
+		FREEZES.values().removeIf(st -> {
+			if (!st.casterId.equals(id)) {
+				return false;
+			}
+			st.release(server);
+			return true;
+		});
+	}
+
+	/** World shutdown — all greed state dies with the world. */
+	public static void resetAll() {
+		MAGNETS.clear();
+		FREEZES.clear();
+		CASTER_FREEZE_UNTIL.clear();
+	}
+
 	public static void startMagnet(ServerPlayer player, LivingEntity victim) {
 		MAGNETS.put(player.getUUID(), new MagnetState(victim.getUUID(), player.tickCount));
 		player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, FREEZE_TICKS, 250, true, false, false));
@@ -156,13 +182,9 @@ public final class RegulusGreedController {
 		applyKnockback(player);
 		CASTER_FREEZE_UNTIL.put(player.getUUID(), player.level().getGameTime() + FREEZE_TICKS);
 
-		FreezeState st = new FreezeState(victim.getUUID(), victim.getX(), victim.getY(), victim.getZ(), FREEZE_TICKS);
-		boolean wasNoAi = false;
-		if (victim instanceof Mob mob) {
-			wasNoAi = mob.isNoAi();
-			mob.setNoAi(true);
-			st.restoreNoAi = wasNoAi;
-		}
+		FreezeState st = new FreezeState(victim.getUUID(), player.getUUID(),
+				victim.getX(), victim.getY(), victim.getZ(), FREEZE_TICKS);
+		EntityControlLock.acquire(victim, ControlLockKind.NO_AI, player);
 		FREEZES.put(victim.getUUID(), st);
 		ServerLevel sl = (ServerLevel) player.level();
 		sl.playSound(null, victim.getX(), victim.getY(), victim.getZ(),
@@ -189,13 +211,14 @@ public final class RegulusGreedController {
 
 	private static final class FreezeState {
 		final UUID victimId;
+		final UUID casterId;
 		final double lockX, lockY, lockZ;
 		int remaining;
-		boolean restoreNoAi = false;
 		final List<QueuedDamage> queuedDamage = new ArrayList<>();
 
-		FreezeState(UUID victimId, double x, double y, double z, int remaining) {
+		FreezeState(UUID victimId, UUID casterId, double x, double y, double z, int remaining) {
 			this.victimId = victimId;
+			this.casterId = casterId;
 			this.lockX = x;
 			this.lockY = y;
 			this.lockZ = z;
@@ -215,9 +238,7 @@ public final class RegulusGreedController {
 		void release(net.minecraft.server.MinecraftServer server) {
 			LivingEntity v = victim(server);
 			if (v == null) return;
-			if (v instanceof Mob mob) {
-				mob.setNoAi(restoreNoAi);
-			}
+			EntityControlLock.release(v, ControlLockKind.NO_AI, casterId);
 			LinkedHashMap<SourceKey, AggregatedDamage> aggregated = new LinkedHashMap<>();
 			for (QueuedDamage q : queuedDamage) {
 				SourceKey key = SourceKey.of(q.source);

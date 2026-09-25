@@ -1,5 +1,7 @@
 package com.example.superheroes.effect;
 
+import com.example.superheroes.lifecycle.ControlLockKind;
+import com.example.superheroes.lifecycle.EntityControlLock;
 import com.example.superheroes.transform.HeroDataStore;
 import com.example.superheroes.ability.AbilityIds;
 import com.example.superheroes.attachment.ModAttachments;
@@ -101,6 +103,12 @@ public final class ReinhardSwordDrawCeremonyController {
 		broadcastProgress(player, false, 0f);
 	}
 
+	/** World shutdown — ceremonies die with the world; entity flags restore via lock shadows. */
+	public static void resetAll() {
+		CEREMONIES.clear();
+		FROZEN_MOBS.clear();
+	}
+
 	private static void tickCeremony(ServerPlayer player, CeremonyState st) {
 		long now = player.serverLevel().getGameTime();
 		long elapsed = now - st.startTick();
@@ -170,11 +178,11 @@ public final class ReinhardSwordDrawCeremonyController {
 		ServerLevel level = player.serverLevel();
 		AABB box = new AABB(player.position(), player.position()).inflate(CEREMONY_RADIUS);
 		for (LivingEntity living : level.getEntitiesOfClass(LivingEntity.class, box, e -> true)) {
-			applyFreeze(living, player.getUUID());
+			applyFreeze(living, player);
 		}
 	}
 
-	private static void applyFreeze(LivingEntity entity, UUID reinhardId) {
+	private static void applyFreeze(LivingEntity entity, ServerPlayer reinhard) {
 		// Slowness 6 caps movement at 0; Weakness 4 + Mining Fatigue 4 prevent meaningful counter-attack
 		entity.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN,
 				CEREMONY_DURATION_TICKS + 5, 6, true, false, false));
@@ -185,11 +193,10 @@ public final class ReinhardSwordDrawCeremonyController {
 		entity.setDeltaMovement(Vec3.ZERO);
 		entity.hurtMarked = true;
 		if (entity instanceof Mob mob) {
-			Set<UUID> set = FROZEN_MOBS.get(reinhardId);
+			Set<UUID> set = FROZEN_MOBS.get(reinhard.getUUID());
 			if (set != null) {
-				if (set.add(mob.getUUID()) && !mob.isNoAi()) {
-					mob.setNoAi(true);
-				}
+				set.add(mob.getUUID());
+				EntityControlLock.acquire(mob, ControlLockKind.NO_AI, reinhard);
 			}
 		}
 	}
@@ -200,7 +207,7 @@ public final class ReinhardSwordDrawCeremonyController {
 		ServerLevel level = player.serverLevel();
 		AABB box = new AABB(player.position(), player.position()).inflate(CEREMONY_RADIUS + 8.0);
 		for (Mob mob : level.getEntitiesOfClass(Mob.class, box, m -> mobIds.contains(m.getUUID()))) {
-			mob.setNoAi(false);
+			EntityControlLock.release(mob, ControlLockKind.NO_AI, player.getUUID());
 			mob.removeEffect(MobEffects.MOVEMENT_SLOWDOWN);
 			mob.removeEffect(MobEffects.WEAKNESS);
 			mob.removeEffect(MobEffects.DIG_SLOWDOWN);

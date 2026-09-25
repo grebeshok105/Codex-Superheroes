@@ -80,7 +80,7 @@ public final class DoomsdayBerserkAbility implements Ability {
 			ResourceLocation id, double amount, AttributeModifier.Operation op) {
 		AttributeInstance inst = player.getAttribute(attribute);
 		if (inst == null) return;
-		inst.addOrReplacePermanentModifier(new AttributeModifier(id, amount, op));
+		inst.addOrUpdateTransientModifier(new AttributeModifier(id, amount, op));
 	}
 
 	private static void remove(ServerPlayer player, Holder<Attribute> attribute, ResourceLocation id) {

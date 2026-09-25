@@ -11,7 +11,7 @@
 | B1 | ✅ исправлено | Один `PlayerBoundWeaponDropMixin` вместо трёх; `BoundWeapons.interceptDrop` никогда не вызывает `drop` повторно. Рекурсия воспроизведена GameTest'ом на старой логике (`StackOverflowError`). Этап 1. |
 | B7 | ✅ исправлено | DataComponent `bound_weapon {owner, issue}` + non-persistent `BOUND_WEAPON_ISSUES`: валидна только текущая выдача владельца, остальные копии исчезают при тике в инвентаре. Этап 1. |
 | B2 | ✅ исправлено | `HeroDataStore.update(player, fn)` — единственный писатель `HERO_DATA` (read-modify-write); `ResourceController` перечитывает состояние после каждого callback, деактивация через `AbilityRouter`; `AbilityRouter.deactivate` сначала снимает флаг, потом зовёт `onDeactivate`; возврат стоимости — дельтой, а не снимком. Регрессия Wind Prison воспроизведена GameTest'ом на старой семантике. Этап 2. |
-| B3, B4, B8, B17, B23 | ⏳ этап 3 | |
+| B3, B4, B8, B17, B23 | ✅ исправлено | `lifecycle/PlayerLifecycle` — единая точка диспетчеризации на событиях серверного потока (`JOIN`/`LEAVE` через `PlayerList.remove`, `AFTER_DEATH`, `AFTER_RESPAWN`, `SERVER_STOPPED`); `lifecycle/EntityControlLock` — рефкаунт-замки на NoAI/NoGravity/noPhysics/invulnerable с NBT-тенью и reconcile на `ENTITY_LOAD`; ability-scoped модификаторы transient (не сохраняются в NBT); `HeroTransformService.clearHeroRuntimeState` — симметричный cleanup для transform/untransform; мёртвые игроки пропускаются в serverTick и windup Snap. Этап 3. |
 | B5, B6 | ⏳ этап 4 | |
 | B9, B11, B20, B21 | ⏳ этап 5 | |
 | B10 | ⏳ этап 6 | |

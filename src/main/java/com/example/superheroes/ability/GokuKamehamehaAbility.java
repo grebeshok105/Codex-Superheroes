@@ -153,6 +153,17 @@ public final class GokuKamehamehaAbility implements Ability {
 		return entity.position().add(0, entity.getBbHeight() / 2.0, 0).distanceTo(onLine);
 	}
 
+
+	/** Drop an in-progress charge/rush without firing it (leave, death, untransform). */
+	public static void clear(ServerPlayer player) {
+		ACTIVE.remove(player.getUUID());
+	}
+
+	/** World shutdown — charge sessions die with the world. */
+	public static void resetAll() {
+		ACTIVE.clear();
+	}
+
 	private static final class ActiveBeam {
 		int ticksLeft;
 		final int stacks;

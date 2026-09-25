@@ -20,6 +20,7 @@ public final class NarutoSageModeAbility implements Ability {
 			.add(Attributes.ATTACK_DAMAGE, SAGE_DAMAGE, 0.5, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL)
 			.add(Attributes.MOVEMENT_SPEED, SAGE_SPEED, 0.25, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL)
 			.add(Attributes.MAX_HEALTH, SAGE_HP, 0.2, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL)
+			.abilityScoped()
 			.build();
 
 	@Override

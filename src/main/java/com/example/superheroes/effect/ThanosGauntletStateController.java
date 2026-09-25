@@ -63,6 +63,20 @@ public final class ThanosGauntletStateController {
 		});
 	}
 
+	/**
+	 * Death/respawn hook — stone buffs are transient modifiers now, so the fresh entity needs
+	 * {@link #APPLIED} reset for the next 10-tick scan to re-apply them (the old permanent
+	 * modifiers died with the entity anyway, but {@code APPLIED} wrongly claimed they remained).
+	 */
+	public static void onPlayerReset(ServerPlayer player) {
+		APPLIED.remove(player.getUUID());
+	}
+
+	/** World shutdown — applied-set tracking dies with the world. */
+	public static void resetAll() {
+		APPLIED.clear();
+	}
+
 	public static void sendStones(ServerPlayer player, Set<InfinityStoneType> stones) {
 		ThanosStonesS2CPayload payload = new ThanosStonesS2CPayload(player.getUUID(), maskOf(stones));
 		for (ServerPlayer p : player.server.getPlayerList().getPlayers()) {
@@ -111,7 +125,7 @@ public final class ThanosGauntletStateController {
 			if (!applied.contains(t)) {
 				AttributeInstance instance = player.getAttribute(t.getAttribute());
 				if (instance != null) {
-					instance.addOrReplacePermanentModifier(new AttributeModifier(t.getModifierId(), t.getAmount(), t.getOperation()));
+					instance.addOrUpdateTransientModifier(new AttributeModifier(t.getModifierId(), t.getAmount(), t.getOperation()));
 				}
 			}
 		}

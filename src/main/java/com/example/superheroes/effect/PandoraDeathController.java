@@ -2,6 +2,8 @@ package com.example.superheroes.effect;
 
 import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.hero.PandoraHero;
+import com.example.superheroes.lifecycle.ControlLockKind;
+import com.example.superheroes.lifecycle.EntityControlLock;
 import com.example.superheroes.network.PandoraCinematicS2CPayload;
 import com.example.superheroes.sound.ModSounds;
 import com.example.superheroes.transform.HeroData;
@@ -17,7 +19,6 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -34,8 +35,11 @@ import java.util.concurrent.ConcurrentHashMap;
  * </ol>
  *
  * <p>After this revival Pandora permanently loses her hitbox: she can no longer be damaged by any
- * means (the cut-scene therefore never re-triggers). The permanent state is cleared when she drops
- * the hero or disconnects.
+ * means (the cut-scene therefore never re-triggers). The revived state lives in the persistent
+ * {@link ModAttachments#PANDORA_REVIVED} attachment and the {@code Invulnerable} entity flag is
+ * held through {@link EntityControlLock} — both survive a relog coherently (audit B4: the old
+ * in-memory set forgot the flag while the NBT-written {@code Invulnerable} byte persisted, and
+ * in the other direction the revived protection silently vanished on relog).
  */
 public final class PandoraDeathController {
 
@@ -45,8 +49,6 @@ public final class PandoraDeathController {
 	private static final float TRIGGER_HP = 0.5f;
 
 	private static final Map<UUID, Session> ACTIVE = new ConcurrentHashMap<>();
-	/** Pandoras that already revived — permanently un-hittable until they drop the hero / leave. */
-	private static final Set<UUID> PERMA_INVULNERABLE = ConcurrentHashMap.newKeySet();
 
 	private PandoraDeathController() {
 	}
@@ -83,6 +85,11 @@ public final class PandoraDeathController {
 		return ACTIVE.containsKey(player.getUUID());
 	}
 
+	private static boolean isRevived(ServerPlayer player) {
+		Boolean revived = player.getAttached(ModAttachments.PANDORA_REVIVED);
+		return revived != null && revived;
+	}
+
 	/**
 	 * Hook for {@code ServerLivingEntityEvents.ALLOW_DAMAGE}.
 	 *
@@ -94,7 +101,7 @@ public final class PandoraDeathController {
 		}
 		ServerPlayer pandora = (ServerPlayer) entity;
 		// Already revived once → her hitbox is gone, nothing can touch her ever again.
-		if (PERMA_INVULNERABLE.contains(pandora.getUUID())) {
+		if (isRevived(pandora)) {
 			return false;
 		}
 		// Mid cut-scene → untouchable.
@@ -120,7 +127,7 @@ public final class PandoraDeathController {
 		player.setHealth(player.getMaxHealth());
 		player.clearFire();
 		player.removeAllEffects();
-		if (!PERMA_INVULNERABLE.contains(player.getUUID()) && !ACTIVE.containsKey(player.getUUID())) {
+		if (!isRevived(player) && !ACTIVE.containsKey(player.getUUID())) {
 			startCinematic(player, source);
 		}
 		return false;
@@ -138,7 +145,7 @@ public final class PandoraDeathController {
 		pandora.setHealth(pandora.getMaxHealth());
 		pandora.clearFire();
 		pandora.removeAllEffects();
-		pandora.setInvulnerable(true);
+		EntityControlLock.acquire(pandora, ControlLockKind.INVULNERABLE, pandora);
 		pandora.setDeltaMovement(Vec3.ZERO);
 		pandora.hurtMarked = true;
 
@@ -207,9 +214,10 @@ public final class PandoraDeathController {
 		pandora.fallDistance = 0f;
 		pandora.connection.teleport(dest.x, dest.y, dest.z, yaw, 0f);
 
-		// Permanent revival: her hitbox is gone — nothing can ever damage her again.
-		PERMA_INVULNERABLE.add(pandora.getUUID());
-		pandora.setInvulnerable(true);
+		// Permanent revival: her hitbox is gone — nothing can ever damage her again. The lock
+		// acquired at cinematic start stays held; the attachment makes the state survive relog.
+		pandora.setAttached(ModAttachments.PANDORA_REVIVED, Boolean.TRUE);
+		EntityControlLock.acquire(pandora, ControlLockKind.INVULNERABLE, pandora);
 
 		// NO child giggle on revival (cut per request).
 		broadcast(level, PandoraCinematicS2CPayload.PHASE_END, pandora, killer, session);
@@ -243,13 +251,28 @@ public final class PandoraDeathController {
 	/** Re-pick of a hero clears any leftover session AND the permanent invulnerability. */
 	public static void resetOnHeroTaken(ServerPlayer player) {
 		ACTIVE.remove(player.getUUID());
-		if (PERMA_INVULNERABLE.remove(player.getUUID())) {
-			player.setInvulnerable(false);
+		player.setAttached(ModAttachments.PANDORA_REVIVED, null);
+		EntityControlLock.release(player, ControlLockKind.INVULNERABLE, player.getUUID());
+	}
+
+	/**
+	 * Re-applies the revived invulnerability after relog/respawn — the entity flag is not
+	 * guaranteed on the fresh entity while the attachment state persists. Called from
+	 * {@link PandoraHero#applyPassives}.
+	 */
+	public static void reapplyState(ServerPlayer player) {
+		if (isRevived(player)) {
+			EntityControlLock.acquire(player, ControlLockKind.INVULNERABLE, player);
 		}
 	}
 
-	public static void onPlayerDisconnect(ServerPlayer player) {
+	/** Server-thread leave hook — drops the cinematic session; the revived attachment persists. */
+	public static void onPlayerLeave(ServerPlayer player) {
 		ACTIVE.remove(player.getUUID());
-		PERMA_INVULNERABLE.remove(player.getUUID());
+	}
+
+	/** World shutdown — sessions die with the world; revived state is attachment-persistent. */
+	public static void resetAll() {
+		ACTIVE.clear();
 	}
 }

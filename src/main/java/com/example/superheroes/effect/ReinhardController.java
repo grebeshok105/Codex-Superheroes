@@ -551,6 +551,21 @@ public final class ReinhardController {
 		FIRST_DODGE_USED.remove(player.getUUID());
 	}
 
+	/**
+	 * Relog reconcile: {@code REINHARD_STATE.swordDrawn} persists, but the bound-sword issue is
+	 * session-scoped and dies on logout — leaving the flag true would block the ceremony from
+	 * ever starting again (the stale flag also made {@code REINHARD_DRAW} stick while it was a
+	 * permanent modifier). Reset it so the player can re-draw the sword.
+	 */
+	public static void onPlayerJoin(ServerPlayer player) {
+		if (!isReinhard(player)) return;
+		ReinhardState state = player.getAttachedOrCreate(ModAttachments.REINHARD_STATE);
+		if (!state.swordDrawn()) return;
+		player.setAttached(ModAttachments.REINHARD_STATE, state.withSwordDrawn(false));
+		HeroAttributes.REINHARD_DRAW.remove(player);
+		com.example.superheroes.ability.ReinhardSwordDrawAbility.removeSword(player);
+	}
+
 	public static void onRespawn(ServerPlayer player) {
 		if (!isReinhard(player)) return;
 		// На реальном респавне — сбрасываем Второе пришествие, фазы и feniks-флаг,

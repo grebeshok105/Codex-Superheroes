@@ -73,6 +73,17 @@ public final class NarutoRasenshurikenAbility implements Ability {
 		}
 	}
 
+
+	/** Drop an in-progress charge/rush without firing it (leave, death, untransform). */
+	public static void clear(ServerPlayer player) {
+		ACTIVE.remove(player.getUUID());
+	}
+
+	/** World shutdown — charge sessions die with the world. */
+	public static void resetAll() {
+		ACTIVE.clear();
+	}
+
 	private static final class ActiveRasenshuriken {
 		private final UUID ownerId;
 		private Vec3 pos;

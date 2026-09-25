@@ -54,6 +54,10 @@ public final class MonarchsDomainController {
 		ACTIVE_UNTIL.put(player.getUUID(), player.level().getGameTime() + durationTicks);
 	}
 
+	/** World shutdown — domain deadlines are keyed to a per-world tick clock. */
+	public static void resetAll() {
+		ACTIVE_UNTIL.clear();
+	}
 	public static void clear(UUID id) {
 		ACTIVE_UNTIL.remove(id);
 	}

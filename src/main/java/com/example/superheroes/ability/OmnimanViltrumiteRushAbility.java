@@ -128,6 +128,11 @@ public final class OmnimanViltrumiteRushAbility implements Ability {
 		}
 	}
 
+	/** World shutdown — charge sessions die with the world. */
+	public static void resetAll() {
+		ACTIVE.clear();
+	}
+
 	public static void clear(ServerPlayer player) {
 		ACTIVE.remove(player.getUUID());
 	}

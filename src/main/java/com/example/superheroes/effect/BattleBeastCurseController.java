@@ -69,6 +69,24 @@ public final class BattleBeastCurseController {
 		STAGES.remove(player.getUUID());
 	}
 
+	/**
+	 * Join hook — the curse buffs are transient modifiers now, so a relogged BattleBeast needs
+	 * them re-applied while {@link #STAGES} (session-scoped) still holds the stage. Silent: no
+	 * stage announcement, no heal — the stage itself did not change.
+	 */
+	public static void reapplyOnJoin(ServerPlayer player) {
+		Integer stage = STAGES.get(player.getUUID());
+		if (stage != null && stage > 0 && isBattleBeast(player)) {
+			buildCurseSet(stage).apply(player);
+		}
+	}
+
+	/** World shutdown — stage tracking and tick-clock starts die with the world. */
+	public static void resetAll() {
+		START_TICKS.clear();
+		STAGES.clear();
+	}
+
 	public static int setStage(ServerPlayer player, int stage) {
 		int clamped = clampStage(stage);
 		UUID id = player.getUUID();
@@ -189,6 +207,7 @@ public final class BattleBeastCurseController {
 				.add(Attributes.MAX_HEALTH, CURSE_HEALTH, stats.health - BASE_HEALTH, AttributeModifier.Operation.ADD_VALUE)
 				.add(Attributes.ENTITY_INTERACTION_RANGE, CURSE_REACH, stats.reach - BASE_REACH, AttributeModifier.Operation.ADD_VALUE)
 				.add(Attributes.STEP_HEIGHT, CURSE_STEP, stats.step - BASE_STEP, AttributeModifier.Operation.ADD_VALUE)
+				.abilityScoped()
 				.build();
 	}
 

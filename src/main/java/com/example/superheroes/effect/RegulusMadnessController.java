@@ -7,9 +7,7 @@ import com.example.superheroes.network.MadnessSyncS2CPayload;
 import com.example.superheroes.network.MadnessVisualS2CPayload;
 import com.example.superheroes.transform.HeroData;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
-import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
@@ -71,21 +69,6 @@ public final class RegulusMadnessController {
 			}
 		});
 
-		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
-			ServerPlayer player = handler.getPlayer();
-			clearMadness(player);
-		});
-
-		ServerLivingEntityEvents.AFTER_DEATH.register((entity, source) -> {
-			if (entity instanceof ServerPlayer player) {
-				clearMadness(player);
-			}
-		});
-
-		ServerPlayerEvents.AFTER_RESPAWN.register((oldPlayer, newPlayer, alive) -> {
-			clearMadness(newPlayer);
-		});
-
 		ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> {
 			if (!(entity instanceof ServerPlayer player)) {
 				return true;
@@ -130,6 +113,14 @@ public final class RegulusMadnessController {
 
 	public static boolean isAnyCounterActive() {
 		return !COUNTERS.isEmpty();
+	}
+
+	/** World shutdown — counters, cooldowns and damager memory die with the world. */
+	public static void resetAll() {
+		COUNTERS.clear();
+		DODGE_COOLDOWN.clear();
+		LAST_DAMAGER.clear();
+		LAST_DAMAGER_TICK.clear();
 	}
 
 	private static void stripFlight(LivingEntity target) {
@@ -269,7 +260,10 @@ public final class RegulusMadnessController {
 		LAST_DAMAGER.remove(player.getUUID());
 		LAST_DAMAGER_TICK.remove(player.getUUID());
 		DODGE_COOLDOWN.remove(player.getUUID());
-		COUNTERS.remove(player.getUUID());
+		CounterState counter = COUNTERS.remove(player.getUUID());
+		if (counter != null && player.level() instanceof ServerLevel sl) {
+			counter.restoreOnAbort(sl);
+		}
 		player.setAttached(ModAttachments.REGULUS_MADNESS, RegulusMadnessState.EMPTY);
 		ServerPlayNetworking.send(player, new MadnessVisualS2CPayload(MadnessVisualS2CPayload.EVENT_EXIT));
 		sync(player);
@@ -333,9 +327,6 @@ public final class RegulusMadnessController {
 		final net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> dim;
 		int tick = 0;
 		Phase phase = Phase.LIFT;
-		boolean attackerWasNoAi;
-		boolean attackerWasNoGravity;
-		boolean playerWasNoGravity;
 		double liftStartY;
 
 		CounterState(UUID playerId, UUID attackerId, net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> dim) {
@@ -358,13 +349,10 @@ public final class RegulusMadnessController {
 				case LIFT -> {
 					if (tick == 1) {
 						liftStartY = attacker.getY();
-						if (attacker instanceof Mob mob) {
-							attackerWasNoAi = mob.isNoAi();
-							mob.setNoAi(true);
-						}
-						attackerWasNoGravity = attacker.isNoGravity();
-						attacker.setNoGravity(true);
-						playerWasNoGravity = player.isNoGravity();
+						com.example.superheroes.lifecycle.EntityControlLock.acquire(
+								attacker, com.example.superheroes.lifecycle.ControlLockKind.NO_AI, player);
+						com.example.superheroes.lifecycle.EntityControlLock.acquire(
+								attacker, com.example.superheroes.lifecycle.ControlLockKind.NO_GRAVITY, player);
 					}
 					double liftStep = COUNTER_LIFT_HEIGHT / (double) COUNTER_LIFT_TICKS;
 					double targetY = Math.min(liftStartY + tick * liftStep, liftStartY + COUNTER_LIFT_HEIGHT);
@@ -382,7 +370,8 @@ public final class RegulusMadnessController {
 					if (tick >= COUNTER_LIFT_TICKS) {
 						phase = Phase.ARRIVE;
 						tick = 0;
-						player.setNoGravity(true);
+						com.example.superheroes.lifecycle.EntityControlLock.acquire(
+								player, com.example.superheroes.lifecycle.ControlLockKind.NO_GRAVITY, player);
 						player.setDeltaMovement(0, 0, 0);
 						Vec3 look = attacker.getViewVector(1.0f);
 						double bx = attacker.getX() - look.x * 1.2;
@@ -399,7 +388,6 @@ public final class RegulusMadnessController {
 				case ARRIVE -> {
 					attacker.setDeltaMovement(0, 0, 0);
 					player.setDeltaMovement(0, 0, 0);
-					player.setNoGravity(true);
 					if (tick % 2 == 0) {
 						level.sendParticles(ParticleTypes.FLASH,
 								attacker.getX(), attacker.getY() + 1.0, attacker.getZ(),
@@ -408,14 +396,10 @@ public final class RegulusMadnessController {
 					if (tick >= COUNTER_ARRIVE_TICKS) {
 						phase = Phase.SLAM;
 						tick = 0;
-						if (attacker instanceof Mob mob) {
-							mob.setNoAi(attackerWasNoAi);
-						}
-						attacker.setNoGravity(attackerWasNoGravity);
+						releaseLocks(attacker, player);
 						attacker.setDeltaMovement(0, -3.5, 0);
 						attacker.hurtMarked = true;
 						attacker.hurt(ModDamageTypes.counterStrike(level, player), 30f);
-						player.setNoGravity(playerWasNoGravity);
 						level.playSound(null, attacker.getX(), attacker.getY(), attacker.getZ(),
 								SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 1.4f, 0.9f);
 					}
@@ -440,11 +424,21 @@ public final class RegulusMadnessController {
 
 		void restoreOnAbort(ServerLevel level) {
 			ServerPlayer player = level.getServer().getPlayerList().getPlayer(playerId);
-			if (player != null) player.setNoGravity(playerWasNoGravity);
 			Entity ae = level.getEntity(attackerId);
-			if (ae instanceof LivingEntity attacker) {
-				attacker.setNoGravity(attackerWasNoGravity);
-				if (attacker instanceof Mob mob) mob.setNoAi(attackerWasNoAi);
+			LivingEntity attacker = ae instanceof LivingEntity le ? le : null;
+			releaseLocks(attacker, player);
+		}
+
+		private void releaseLocks(LivingEntity attacker, ServerPlayer player) {
+			if (attacker != null) {
+				com.example.superheroes.lifecycle.EntityControlLock.release(
+						attacker, com.example.superheroes.lifecycle.ControlLockKind.NO_AI, playerId);
+				com.example.superheroes.lifecycle.EntityControlLock.release(
+						attacker, com.example.superheroes.lifecycle.ControlLockKind.NO_GRAVITY, playerId);
+			}
+			if (player != null) {
+				com.example.superheroes.lifecycle.EntityControlLock.release(
+						player, com.example.superheroes.lifecycle.ControlLockKind.NO_GRAVITY, playerId);
 			}
 		}
 
