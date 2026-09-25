@@ -111,6 +111,16 @@
 - `ClientAbilityFilter` reuses the server tables `DoomsdayHero.isUnlockedAtTier` and `RemHero.isVisibleIn` — the client-side duplicate lists are deleted, so HUD and router can no longer drift apart.
 - `ProjectSanityTest.assertNoHeroTypeDispatch` forbids `instanceof *Hero` outside the hero package; 3 new GameTests (`HeroTickDispatcherGameTests`): dead skip, isActive gating, phase order.
 
+## Completed this session (stage 11b)
+
+
+- Migrated all 47 self-registering `ServerTickEvents.END_SERVER_TICK` controllers onto `HeroTickDispatcher` — 25 `onGlobalTick` + 33 `onPlayerTick` registrations appended to `registerTickHandlers()` in `init()` order. Per-player loops became `PlayerTask`s (central dead-skip, prefetched `HeroData`); offline-player prunes and entity-map sweeps split into `GLOBAL` methods (`pruneGonePlayers`, `tickFreezes`, `tickCounters`, `serverTick`); verbatim global bodies kept where the loop wasn't per-player work (Jarvis scans, Kratos drain, DoomsdayKryptonite interval pass, Raiden/Heavens/ThanosSnap windups).
+- Controllers whose `init()` only held the tick lost it (call removed from `onInitialize`); `init()`s with other registrations (`AttackEntityCallback`, `ALLOW_DAMAGE`, `DISCONNECT`, `START_SERVER_TICK`) kept — only the END registration moved.
+- Deliberately left self-registered: `HeroDataStore` (two `hero_data_flush` phase-boundary registrations by design), `MirrorDimensionController` (owned by stage 8), `MadnessFlightController`/`KratosRageController`/`ThanosGauntletStateController` START_SERVER_TICK registrations (the dispatcher is END-only), `src/client`, `transform/`, `lifecycle/`, `WorldDestructionPolicy` files (stages 6/7/9).
+- Ordering notes: phase split means GLOBAL tasks now run before all per-player work; verified each split pair is data-independent (offline prunes commute; `RegulusMadness` COUNTERS vs `tickPlayer` don't touch shared state; `RegulusGreed` freezes/casters independent). One acknowledged delta: `KratosRageController` rage drain now runs before player tasks — same-tick deactivation timing shifts within the tick, not across ticks.
+
+>>>>>>> a4f794e (refactor(tick): migrate self-registered END_SERVER_TICK handlers onto HeroTickDispatcher)
+
 ## Completed this session (stage 12)
 
 - `fabric.mod.json` deps tightened to what the build actually targets: `minecraft ~1.21.1`, `fabric-api >=0.116.12`.

@@ -6,7 +6,6 @@ import com.example.superheroes.item.KryptoniteShardItem;
 import com.example.superheroes.item.ModItems;
 import com.example.superheroes.transform.HeroData;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
@@ -64,7 +63,6 @@ public final class DoomsdayKryptoniteController {
 			}
 		});
 
-		ServerTickEvents.END_SERVER_TICK.register(DoomsdayKryptoniteController::serverTick);
 	}
 
 	private static void dropShard(ServerPlayer doomsday, ServerPlayer attacker) {
@@ -83,7 +81,7 @@ public final class DoomsdayKryptoniteController {
 						.withStyle(ChatFormatting.GREEN), true);
 	}
 
-	private static void serverTick(MinecraftServer server) {
+	public static void serverTick(MinecraftServer server) {
 		if (server.getTickCount() % CLEANSE_TICK_INTERVAL != 0) return;
 		for (ServerPlayer player : server.getPlayerList().getPlayers()) {
 			if (isDoomsday(player)) continue;

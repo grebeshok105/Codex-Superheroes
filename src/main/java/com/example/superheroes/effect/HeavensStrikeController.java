@@ -4,7 +4,6 @@ import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.network.ScreenShakeS2CPayload;
 import com.example.superheroes.sound.ModSounds;
 import com.example.superheroes.world.WorldDestructionPolicy;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.BlockPos;
@@ -30,6 +29,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import net.minecraft.server.MinecraftServer;
 
 public final class HeavensStrikeController {
 	public static final int WINDUP_TICKS = 80;
@@ -120,30 +120,6 @@ public final class HeavensStrikeController {
 		}
 	}
 
-	public static void init() {
-		ServerTickEvents.END_SERVER_TICK.register(server -> {
-			if (PENDING.isEmpty()) return;
-			Iterator<Map.Entry<UUID, Pending>> it = PENDING.entrySet().iterator();
-			while (it.hasNext()) {
-				Map.Entry<UUID, Pending> e = it.next();
-				ServerPlayer player = server.getPlayerList().getPlayer(e.getKey());
-				if (player == null) {
-					it.remove();
-					continue;
-				}
-				Pending p = e.getValue();
-				long now = player.serverLevel().getGameTime();
-				enforceLock(player, p, now);
-				if (now >= p.impactTick) {
-					clearFreeze(player);
-					impact(player, p);
-					it.remove();
-				} else {
-					windupTick(player, p, now);
-				}
-			}
-		});
-	}
 
 	private static Vec3 findGroundTarget(ServerPlayer player) {
 		ServerLevel level = player.serverLevel();
@@ -298,4 +274,28 @@ public final class HeavensStrikeController {
 			if (r.nextBoolean()) WorldDestructionPolicy.tryBreak(level, mp.immutable(), false, player);
 		}
 	}
+
+	public static void serverTick(MinecraftServer server) {
+			if (PENDING.isEmpty()) return;
+			Iterator<Map.Entry<UUID, Pending>> it = PENDING.entrySet().iterator();
+			while (it.hasNext()) {
+				Map.Entry<UUID, Pending> e = it.next();
+				ServerPlayer player = server.getPlayerList().getPlayer(e.getKey());
+				if (player == null) {
+					it.remove();
+					continue;
+				}
+				Pending p = e.getValue();
+				long now = player.serverLevel().getGameTime();
+				enforceLock(player, p, now);
+				if (now >= p.impactTick) {
+					clearFreeze(player);
+					impact(player, p);
+					it.remove();
+				} else {
+					windupTick(player, p, now);
+				}
+			}
+			}
+
 }

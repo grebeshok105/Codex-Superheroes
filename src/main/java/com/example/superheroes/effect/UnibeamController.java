@@ -6,7 +6,6 @@ import com.example.superheroes.damage.ModDamageTypes;
 import com.example.superheroes.particle.ModParticles;
 import com.example.superheroes.sound.ModSounds;
 import com.example.superheroes.world.WorldDestructionPolicy;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.particles.ParticleTypes;
@@ -35,6 +34,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import net.minecraft.server.MinecraftServer;
+import com.example.superheroes.transform.HeroData;
 
 public final class UnibeamController {
 	public static final int CHARGE_TICKS = 200;
@@ -72,18 +73,6 @@ public final class UnibeamController {
 	private UnibeamController() {
 	}
 
-	public static void init() {
-		ServerTickEvents.END_SERVER_TICK.register(server -> {
-			for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-				tickCharging(player);
-				tickFiring(player);
-				tickStunned(player);
-			}
-			charging.keySet().removeIf(uuid -> server.getPlayerList().getPlayer(uuid) == null);
-			firing.keySet().removeIf(uuid -> server.getPlayerList().getPlayer(uuid) == null);
-			stunned.keySet().removeIf(uuid -> server.getPlayerList().getPlayer(uuid) == null);
-		});
-	}
 
 	public static boolean startCharge(ServerPlayer player) {
 		UUID id = player.getUUID();
@@ -554,4 +543,17 @@ public final class UnibeamController {
 			this.progress = 0;
 		}
 	}
+
+	public static void tickPlayer(MinecraftServer server, ServerPlayer player, HeroData data) {
+		tickCharging(player);
+		tickFiring(player);
+		tickStunned(player);
+	}
+
+	public static void pruneGonePlayers(MinecraftServer server) {
+		charging.keySet().removeIf(uuid -> server.getPlayerList().getPlayer(uuid) == null);
+		firing.keySet().removeIf(uuid -> server.getPlayerList().getPlayer(uuid) == null);
+		stunned.keySet().removeIf(uuid -> server.getPlayerList().getPlayer(uuid) == null);
+	}
+
 }

@@ -6,7 +6,6 @@ import com.example.superheroes.item.UraniumDaggerItem;
 import com.example.superheroes.network.UraniumPressureS2CPayload;
 import com.example.superheroes.network.UraniumThreatS2CPayload;
 import com.example.superheroes.transform.HeroData;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -23,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import net.minecraft.server.MinecraftServer;
 
 public final class UraniumDefenseController {
 	private static final int SCAN_INTERVAL_TICKS = 20;
@@ -34,8 +34,45 @@ public final class UraniumDefenseController {
 	private UraniumDefenseController() {
 	}
 
-	public static void init() {
-		ServerTickEvents.END_SERVER_TICK.register(server -> {
+
+	public static boolean isUnderUraniumThreat(Player player) {
+		return lastPressured.contains(player.getUUID());
+	}
+
+	public static boolean isHomelander(Player player) {
+		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
+		return data.hasHero() && HomelanderHero.ID.equals(data.heroId());
+	}
+
+	public static boolean hasUraniumDagger(Player player) {
+		for (ItemStack stack : player.getInventory().items) {
+			if (stack.getItem() instanceof UraniumDaggerItem) return true;
+		}
+		for (ItemStack stack : player.getInventory().offhand) {
+			if (stack.getItem() instanceof UraniumDaggerItem) return true;
+		}
+		return false;
+	}
+
+	public static boolean isPlayerWithDagger(Player player) {
+		return player instanceof Player && hasUraniumDagger(player);
+	}
+
+	public static float laserDamageMultiplier(Player target) {
+		return hasUraniumDagger(target) ? 0.5f : 1.0f;
+	}
+
+	public static void sendCurrentTo(ServerPlayer player) {
+		List<UUID> ids = new ArrayList<>(lastPressured);
+		ServerPlayNetworking.send(player, new UraniumPressureS2CPayload(ids));
+		if (isHomelander(player)) {
+			int count = lastSourceCount.getOrDefault(player.getUUID(), 0);
+			boolean self = count > 0 && !ModEffects.isMadness(player);
+			ServerPlayNetworking.send(player, new UraniumThreatS2CPayload(self, count));
+		}
+	}
+
+	public static void serverTick(MinecraftServer server) {
 			if (++tickCounter < SCAN_INTERVAL_TICKS) return;
 			tickCounter = 0;
 
@@ -89,43 +126,6 @@ public final class UraniumDefenseController {
 			}
 
 			lastSourceCount.keySet().retainAll(sourceCounts.keySet());
-		});
-	}
+			}
 
-	public static boolean isUnderUraniumThreat(Player player) {
-		return lastPressured.contains(player.getUUID());
-	}
-
-	public static boolean isHomelander(Player player) {
-		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
-		return data.hasHero() && HomelanderHero.ID.equals(data.heroId());
-	}
-
-	public static boolean hasUraniumDagger(Player player) {
-		for (ItemStack stack : player.getInventory().items) {
-			if (stack.getItem() instanceof UraniumDaggerItem) return true;
-		}
-		for (ItemStack stack : player.getInventory().offhand) {
-			if (stack.getItem() instanceof UraniumDaggerItem) return true;
-		}
-		return false;
-	}
-
-	public static boolean isPlayerWithDagger(Player player) {
-		return player instanceof Player && hasUraniumDagger(player);
-	}
-
-	public static float laserDamageMultiplier(Player target) {
-		return hasUraniumDagger(target) ? 0.5f : 1.0f;
-	}
-
-	public static void sendCurrentTo(ServerPlayer player) {
-		List<UUID> ids = new ArrayList<>(lastPressured);
-		ServerPlayNetworking.send(player, new UraniumPressureS2CPayload(ids));
-		if (isHomelander(player)) {
-			int count = lastSourceCount.getOrDefault(player.getUUID(), 0);
-			boolean self = count > 0 && !ModEffects.isMadness(player);
-			ServerPlayNetworking.send(player, new UraniumThreatS2CPayload(self, count));
-		}
-	}
 }

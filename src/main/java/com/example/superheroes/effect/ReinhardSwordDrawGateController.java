@@ -1,7 +1,6 @@
 package com.example.superheroes.effect;
 
 import com.example.superheroes.network.ReinhardSwordGateS2CPayload;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -11,6 +10,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import com.example.superheroes.transform.HeroData;
+import net.minecraft.server.MinecraftServer;
 
 /**
  * Gate that unlocks Reinhard's sword-draw ceremony once a single attacker has dealt
@@ -30,31 +31,6 @@ public final class ReinhardSwordDrawGateController {
 	private ReinhardSwordDrawGateController() {
 	}
 
-	public static void init() {
-		ServerTickEvents.END_SERVER_TICK.register(server -> {
-			if (server.getTickCount() % 20 != 0) return;
-			long now = server.overworld().getGameTime();
-			for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-				Map<UUID, Accum> per = PER_PLAYER.get(player.getUUID());
-				if (per == null) continue;
-				if (per.isEmpty()) continue;
-				boolean changed = false;
-				Iterator<Map.Entry<UUID, Accum>> it = per.entrySet().iterator();
-				while (it.hasNext()) {
-					Map.Entry<UUID, Accum> e = it.next();
-					if (now - e.getValue().lastHitTick > WINDOW_TICKS) {
-						it.remove();
-						changed = true;
-					}
-				}
-				if (changed) {
-					broadcastProgress(player);
-				}
-			}
-			PER_PLAYER.keySet().removeIf(uuid -> server.getPlayerList().getPlayer(uuid) == null);
-			READY.keySet().removeIf(uuid -> server.getPlayerList().getPlayer(uuid) == null);
-		});
-	}
 
 	public static void recordHit(ServerPlayer player, Entity attacker, float amount) {
 		if (attacker == null || amount <= 0f) return;
@@ -116,4 +92,30 @@ public final class ReinhardSwordDrawGateController {
 		float progress = Math.min(1f, best / DAMAGE_THRESHOLD);
 		ServerPlayNetworking.send(player, new ReinhardSwordGateS2CPayload(false, progress));
 	}
+
+	public static void tickPlayer(MinecraftServer server, ServerPlayer player, HeroData data) {
+		if (server.getTickCount() % 20 != 0) return;
+		long now = server.overworld().getGameTime();
+		Map<UUID, Accum> per = PER_PLAYER.get(player.getUUID());
+		if (per == null) return;
+		if (per.isEmpty()) return;
+		boolean changed = false;
+		Iterator<Map.Entry<UUID, Accum>> it = per.entrySet().iterator();
+		while (it.hasNext()) {
+			Map.Entry<UUID, Accum> e = it.next();
+			if (now - e.getValue().lastHitTick > WINDOW_TICKS) {
+				it.remove();
+				changed = true;
+			}
+		}
+		if (changed) {
+			broadcastProgress(player);
+		}
+	}
+
+	public static void pruneGonePlayers(MinecraftServer server) {
+		PER_PLAYER.keySet().removeIf(uuid -> server.getPlayerList().getPlayer(uuid) == null);
+		READY.keySet().removeIf(uuid -> server.getPlayerList().getPlayer(uuid) == null);
+	}
+
 }

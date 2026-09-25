@@ -8,7 +8,6 @@ import com.example.superheroes.hero.Hero;
 import com.example.superheroes.hero.Heroes;
 import com.example.superheroes.transform.HeroData;
 import com.example.superheroes.transform.HeroDataStore;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import org.jetbrains.annotations.Nullable;
@@ -21,15 +20,8 @@ public final class ResourceController {
 	private ResourceController() {
 	}
 
-	public static void init() {
-		ServerTickEvents.END_SERVER_TICK.register(server -> {
-			for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-				tick(player);
-			}
-		});
-	}
 
-	private static void tick(ServerPlayer player) {
+	public static void tick(ServerPlayer player) {
 		HeroData data = HeroDataStore.get(player);
 		if (!data.hasHero()) {
 			return;

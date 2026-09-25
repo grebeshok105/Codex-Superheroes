@@ -1,6 +1,5 @@
 package com.example.superheroes.effect;
 
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.MinecraftServer;
@@ -53,9 +52,6 @@ public final class SpatialBindController {
 		}
 	}
 
-	public static void init() {
-		ServerTickEvents.END_SERVER_TICK.register(SpatialBindController::tick);
-	}
 
 	/** Binds (roots) the given victim to their current spot on behalf of the caster. */
 	public static void bind(ServerPlayer caster, ServerPlayer victim) {
@@ -91,7 +87,7 @@ public final class SpatialBindController {
 		BOUND.clear();
 	}
 
-	private static void tick(MinecraftServer server) {
+	public static void tick(MinecraftServer server) {
 		if (BOUND.isEmpty()) {
 			return;
 		}

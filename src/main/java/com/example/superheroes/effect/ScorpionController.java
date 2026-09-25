@@ -4,7 +4,6 @@ import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.hero.ScorpionHero;
 import com.example.superheroes.transform.HeroData;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.server.MinecraftServer;
@@ -54,13 +53,6 @@ public final class ScorpionController {
 	private ScorpionController() {
 	}
 
-	public static void init() {
-		ServerTickEvents.END_SERVER_TICK.register(server -> {
-			tickSpearPulls(server);
-			tickBreaths(server);
-			tickPassives(server);
-		});
-	}
 
 	public static boolean isScorpion(ServerPlayer player) {
 		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
@@ -234,26 +226,31 @@ public final class ScorpionController {
 
 	// -------------------------------------------------------------- passive
 
-	private static void tickPassives(MinecraftServer server) {
+
+	public static void serverTick(MinecraftServer server) {
+		tickSpearPulls(server);
+		tickBreaths(server);
+	}
+
+	public static void tickPlayer(MinecraftServer server, ServerPlayer player, HeroData data) {
 		long tick = server.getTickCount();
-		for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-			if (!isScorpion(player)) {
-				continue;
+		if (!isScorpion(player)) {
+			return;
+		}
+		if (tick % PASSIVE_REFRESH_INTERVAL == 0) {
+			player.addEffect(new MobEffectInstance(
+					MobEffects.FIRE_RESISTANCE, 60, 0, true, false, false));
+			if (player.isOnFire()) {
+				player.clearFire();
 			}
-			if (tick % PASSIVE_REFRESH_INTERVAL == 0) {
-				player.addEffect(new MobEffectInstance(
-						MobEffects.FIRE_RESISTANCE, 60, 0, true, false, false));
-				if (player.isOnFire()) {
-					player.clearFire();
-				}
-			}
-			ServerLevel level = player.serverLevel();
-			if (tick % 5 == 0) {
-				level.sendParticles(ParticleTypes.SMALL_FLAME,
-						player.getX(), player.getY() + 0.15, player.getZ(),
-						2, 0.30, 0.05, 0.30, 0.01);
-			}
+		}
+		ServerLevel level = player.serverLevel();
+		if (tick % 5 == 0) {
+			level.sendParticles(ParticleTypes.SMALL_FLAME,
+					player.getX(), player.getY() + 0.15, player.getZ(),
+					2, 0.30, 0.05, 0.30, 0.01);
 		}
 	}
 
+>>>>>>> a4f794e (refactor(tick): migrate self-registered END_SERVER_TICK handlers onto HeroTickDispatcher)
 }

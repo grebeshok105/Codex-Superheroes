@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import net.minecraft.server.MinecraftServer;
 
 public final class ThanosGauntletStateController {
 	private static final Map<UUID, EnumSet<InfinityStoneType>> APPLIED = new HashMap<>();
@@ -29,27 +30,6 @@ public final class ThanosGauntletStateController {
 	}
 
 	public static void init() {
-		ServerTickEvents.END_SERVER_TICK.register(server -> {
-			if (server.getTickCount() % 10 != 0) return;
-			for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-				HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
-				if (!ThanosHero.ID.equals(data.heroId())) {
-					if (APPLIED.remove(player.getUUID()) != null) {
-						HeroAttributes.thanosClearStoneModifiers(player);
-						sendStones(player, EnumSet.noneOf(InfinityStoneType.class));
-					}
-					continue;
-				}
-				EnumSet<InfinityStoneType> wanted = scan(player);
-				EnumSet<InfinityStoneType> applied = APPLIED.computeIfAbsent(player.getUUID(), id -> EnumSet.noneOf(InfinityStoneType.class));
-				if (!wanted.equals(applied)) {
-					applyDelta(player, applied, wanted);
-					applied.clear();
-					applied.addAll(wanted);
-					sendStones(player, wanted);
-				}
-			}
-		});
 
 		ServerTickEvents.START_SERVER_TICK.register(server -> {
 			APPLIED.keySet().removeIf(uuid -> server.getPlayerList().getPlayer(uuid) == null);
@@ -130,4 +110,24 @@ public final class ThanosGauntletStateController {
 			}
 		}
 	}
+
+	public static void tickPlayer(MinecraftServer server, ServerPlayer player, HeroData data) {
+		if (server.getTickCount() % 10 != 0) return;
+		if (!ThanosHero.ID.equals(data.heroId())) {
+			if (APPLIED.remove(player.getUUID()) != null) {
+				HeroAttributes.thanosClearStoneModifiers(player);
+				sendStones(player, EnumSet.noneOf(InfinityStoneType.class));
+			}
+			return;
+		}
+		EnumSet<InfinityStoneType> wanted = scan(player);
+		EnumSet<InfinityStoneType> applied = APPLIED.computeIfAbsent(player.getUUID(), id -> EnumSet.noneOf(InfinityStoneType.class));
+		if (!wanted.equals(applied)) {
+			applyDelta(player, applied, wanted);
+			applied.clear();
+			applied.addAll(wanted);
+			sendStones(player, wanted);
+		}
+	}
+
 }

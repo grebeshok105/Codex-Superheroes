@@ -6,7 +6,6 @@ import com.example.superheroes.hero.IronManHero;
 import com.example.superheroes.item.ModItems;
 import com.example.superheroes.network.ReactorStateS2CPayload;
 import com.example.superheroes.transform.HeroData;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
@@ -40,20 +39,13 @@ public final class IronManReactorTracker {
 	private IronManReactorTracker() {
 	}
 
-	public static void init() {
-		ServerTickEvents.END_SERVER_TICK.register(server -> {
-			for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-				tick(player);
-			}
-		});
-	}
 
 	public static boolean isReplacing(ServerPlayer player) {
 		State s = states.get(player.getUUID());
 		return s != null && s.active;
 	}
 
-	private static void tick(ServerPlayer player) {
+	public static void tick(ServerPlayer player) {
 		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
 		UUID id = player.getUUID();
 		if (!data.hasHero() || !IronManHero.ID.equals(data.heroId()) || !player.isAlive()) {

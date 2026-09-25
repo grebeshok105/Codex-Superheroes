@@ -8,7 +8,6 @@ import com.example.superheroes.network.MadnessVisualS2CPayload;
 import com.example.superheroes.transform.HeroData;
 import com.example.superheroes.world.WorldDestructionPolicy;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
@@ -32,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import net.minecraft.server.MinecraftServer;
 
 public final class RegulusMadnessController {
 	private static final long READING_DURATION_TICKS = 200L;
@@ -58,20 +58,6 @@ public final class RegulusMadnessController {
 	}
 
 	public static void init() {
-		ServerTickEvents.END_SERVER_TICK.register(server -> {
-			for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-				tickPlayer(player);
-			}
-			List<UUID> done = new ArrayList<>();
-			for (Map.Entry<UUID, CounterState> e : COUNTERS.entrySet()) {
-				if (e.getValue().tick(server)) {
-					done.add(e.getKey());
-				}
-			}
-			for (UUID id : done) {
-				COUNTERS.remove(id);
-			}
-		});
 
 		ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> {
 			if (!(entity instanceof ServerPlayer player)) {
@@ -530,4 +516,21 @@ public final class RegulusMadnessController {
 			}
 		}
 	}
+
+	public static void tickPlayer(MinecraftServer server, ServerPlayer player, HeroData data) {
+		tickPlayer(player);
+	}
+
+	public static void tickCounters(MinecraftServer server) {
+		List<UUID> done = new ArrayList<>();
+		for (Map.Entry<UUID, CounterState> e : COUNTERS.entrySet()) {
+			if (e.getValue().tick(server)) {
+				done.add(e.getKey());
+			}
+		}
+		for (UUID id : done) {
+			COUNTERS.remove(id);
+		}
+	}
+
 }

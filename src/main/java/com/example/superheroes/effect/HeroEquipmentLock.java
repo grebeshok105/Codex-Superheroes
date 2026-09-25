@@ -2,7 +2,6 @@ package com.example.superheroes.effect;
 
 import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.transform.HeroData;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.event.player.UseItemCallback;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.chat.Component;
@@ -12,17 +11,13 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.ElytraItem;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.server.MinecraftServer;
 
 public final class HeroEquipmentLock {
 	private HeroEquipmentLock() {
 	}
 
 	public static void init() {
-		ServerTickEvents.END_SERVER_TICK.register(server -> {
-			for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-				stripIfHero(player);
-			}
-		});
 		UseItemCallback.EVENT.register((player, world, hand) -> {
 			ItemStack stack = player.getItemInHand(hand);
 			if (!isLockedItem(stack)) {
@@ -74,4 +69,9 @@ public final class HeroEquipmentLock {
 		}
 		return false;
 	}
+
+	public static void tickPlayer(MinecraftServer server, ServerPlayer player, HeroData data) {
+		stripIfHero(player);
+	}
+
 }

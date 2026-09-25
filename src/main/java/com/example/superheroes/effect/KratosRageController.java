@@ -18,6 +18,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import net.minecraft.server.MinecraftServer;
 
 public final class KratosRageController {
 	public static final float MAX_RAGE = 100f;
@@ -44,35 +45,6 @@ public final class KratosRageController {
 			}
 		});
 
-		ServerTickEvents.END_SERVER_TICK.register(server -> {
-			if (ACTIVE.isEmpty()) return;
-			java.util.Iterator<UUID> it = ACTIVE.iterator();
-			while (it.hasNext()) {
-				UUID id = it.next();
-				ServerPlayer p = server.getPlayerList().getPlayer(id);
-				if (p == null) {
-					it.remove();
-					continue;
-				}
-				if (!isKratos(p)) {
-					it.remove();
-					RAGE.put(id, 0f);
-					sync(p);
-					continue;
-				}
-				float curr = RAGE.getOrDefault(id, 0f);
-				float next = curr - DRAIN_PER_TICK;
-				if (next <= 0f) {
-					RAGE.put(id, 0f);
-					it.remove();
-					AbilityRouter.deactivate(p, AbilityIds.KRATOS_SPARTAN_RAGE);
-					sync(p);
-				} else {
-					RAGE.put(id, next);
-					if (server.getTickCount() % 4 == 0) sync(p);
-				}
-			}
-		});
 
 		ServerTickEvents.START_SERVER_TICK.register(server -> {
 			RAGE.keySet().removeIf(uuid -> server.getPlayerList().getPlayer(uuid) == null);
@@ -139,4 +111,35 @@ public final class KratosRageController {
 	public static void sync(ServerPlayer player) {
 		ServerPlayNetworking.send(player, new KratosRageS2CPayload(getRage(player), isActive(player)));
 	}
+
+	public static void serverTick(MinecraftServer server) {
+			if (ACTIVE.isEmpty()) return;
+			java.util.Iterator<UUID> it = ACTIVE.iterator();
+			while (it.hasNext()) {
+				UUID id = it.next();
+				ServerPlayer p = server.getPlayerList().getPlayer(id);
+				if (p == null) {
+					it.remove();
+					continue;
+				}
+				if (!isKratos(p)) {
+					it.remove();
+					RAGE.put(id, 0f);
+					sync(p);
+					continue;
+				}
+				float curr = RAGE.getOrDefault(id, 0f);
+				float next = curr - DRAIN_PER_TICK;
+				if (next <= 0f) {
+					RAGE.put(id, 0f);
+					it.remove();
+					AbilityRouter.deactivate(p, AbilityIds.KRATOS_SPARTAN_RAGE);
+					sync(p);
+				} else {
+					RAGE.put(id, next);
+					if (server.getTickCount() % 4 == 0) sync(p);
+				}
+			}
+			}
+
 }

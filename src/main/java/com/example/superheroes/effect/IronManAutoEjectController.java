@@ -3,7 +3,6 @@ package com.example.superheroes.effect;
 import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.hero.IronManHero;
 import com.example.superheroes.transform.HeroData;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -27,16 +26,8 @@ public final class IronManAutoEjectController {
 	private IronManAutoEjectController() {
 	}
 
-	public static void init() {
-		ServerTickEvents.END_SERVER_TICK.register(server -> {
-			long now = server.getTickCount();
-			for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-				tick(player, now);
-			}
-		});
-	}
 
-	private static void tick(ServerPlayer player, long now) {
+	public static void tick(ServerPlayer player, long now) {
 		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
 		if (!data.hasHero() || !IronManHero.ID.equals(data.heroId())) {
 			return;

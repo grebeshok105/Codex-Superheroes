@@ -2,10 +2,10 @@ package com.example.superheroes.effect;
 
 import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.transform.HeroData;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.server.MinecraftServer;
 
 public final class HeroPassiveRegenController {
 	private static final int REAPPLY_INTERVAL = 40;
@@ -14,22 +14,19 @@ public final class HeroPassiveRegenController {
 	private HeroPassiveRegenController() {
 	}
 
-	public static void init() {
-		ServerTickEvents.END_SERVER_TICK.register(server -> {
-			if (server.getTickCount() % REAPPLY_INTERVAL != 0) {
-				return;
-			}
-			for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-				HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
-				if (!data.hasHero()) {
-					continue;
-				}
-				MobEffectInstance current = player.getEffect(MobEffects.REGENERATION);
-				if (current != null && current.getAmplifier() > 0) {
-					continue;
-				}
-				player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, EFFECT_DURATION, 0, true, false, true));
-			}
-		});
+
+	public static void tickPlayer(MinecraftServer server, ServerPlayer player, HeroData data) {
+		if (server.getTickCount() % REAPPLY_INTERVAL != 0) {
+			return;
+		}
+		if (!data.hasHero()) {
+			return;
+		}
+		MobEffectInstance current = player.getEffect(MobEffects.REGENERATION);
+		if (current != null && current.getAmplifier() > 0) {
+			return;
+		}
+		player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, EFFECT_DURATION, 0, true, false, true));
 	}
+
 }

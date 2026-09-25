@@ -8,7 +8,6 @@ import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.hero.HeroAttributes;
 import com.example.superheroes.network.ReinhardCeremonyS2CPayload;
 import com.example.superheroes.sound.ModSounds;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
@@ -29,6 +28,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import net.minecraft.server.MinecraftServer;
+import com.example.superheroes.transform.HeroData;
 
 /**
  * Ceremonial sword draw for Reinhard. Lasts 10 seconds (200 ticks):
@@ -60,15 +61,6 @@ public final class ReinhardSwordDrawCeremonyController {
 
 	private ReinhardSwordDrawCeremonyController() {}
 
-	public static void init() {
-		ServerTickEvents.END_SERVER_TICK.register(server -> {
-			for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-				CeremonyState st = CEREMONIES.get(player.getUUID());
-				if (st == null) continue;
-				tickCeremony(player, st);
-			}
-		});
-	}
 
 	public static boolean isInCeremony(ServerPlayer player) {
 		return CEREMONIES.containsKey(player.getUUID());
@@ -257,6 +249,13 @@ public final class ReinhardSwordDrawCeremonyController {
 		for (ServerPlayer target : level.getEntitiesOfClass(ServerPlayer.class, box, p -> true)) {
 			ServerPlayNetworking.send(target, payload);
 		}
+	}
+
+
+	public static void tickPlayer(MinecraftServer server, ServerPlayer player, HeroData data) {
+		CeremonyState st = CEREMONIES.get(player.getUUID());
+		if (st == null) return;
+		tickCeremony(player, st);
 	}
 
 }

@@ -8,7 +8,6 @@ import com.example.superheroes.hero.SungJinwooHero;
 import com.example.superheroes.network.SungShadowArmyS2CPayload;
 import com.example.superheroes.transform.HeroData;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
@@ -31,6 +30,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import net.minecraft.server.MinecraftServer;
 
 /**
  * Управляет армией Теневых Солдат для Сон Джи Ву.
@@ -62,11 +62,6 @@ public final class SungJinwooController {
 	}
 
 	public static void init() {
-		ServerTickEvents.END_SERVER_TICK.register(server -> {
-			for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-				tickPlayer(player);
-			}
-		});
 
 		ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> {
 			if (!(entity instanceof ServerPlayer player)) return true;
@@ -377,4 +372,9 @@ public final class SungJinwooController {
 
 	private record DeathEcho(Vec3 pos, long expiresAt) {
 	}
+
+	public static void tickPlayer(MinecraftServer server, ServerPlayer player, HeroData data) {
+		tickPlayer(player);
+	}
+
 }

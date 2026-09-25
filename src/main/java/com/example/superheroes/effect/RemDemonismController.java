@@ -14,7 +14,6 @@ import com.example.superheroes.network.RemDemonismS2CPayload;
 import com.example.superheroes.network.ScreenShakeS2CPayload;
 import com.example.superheroes.transform.HeroData;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.BlockPos;
@@ -44,6 +43,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import net.minecraft.server.MinecraftServer;
 
 public final class RemDemonismController {
 	public static final float MAX_DEMONISM = 100f;
@@ -114,59 +114,6 @@ public final class RemDemonismController {
 			return true;
 		});
 
-		ServerTickEvents.END_SERVER_TICK.register(server -> {
-			Iterator<Map.Entry<UUID, MorningStarPull>> pullIt = MORNING_STAR_PULLS.entrySet().iterator();
-			while (pullIt.hasNext()) {
-				Map.Entry<UUID, MorningStarPull> entry = pullIt.next();
-				MorningStarPull pull = entry.getValue();
-				ServerPlayer player = server.getPlayerList().getPlayer(pull.ownerId);
-				if (player == null || !isRem(player) || !isActive(player)) {
-					pullIt.remove();
-					continue;
-				}
-				Entity entity = player.serverLevel().getEntity(entry.getKey());
-				if (!(entity instanceof LivingEntity target) || !TargetFilters.hostileTo(player).test(target)) {
-					pullIt.remove();
-					continue;
-				}
-				long elapsed = player.serverLevel().getGameTime() - pull.startTick;
-				if (tickMorningStarPull(player, target) || elapsed >= MORNING_STAR_PULL_TICKS) {
-					stopMorningStarPull(target);
-					pullIt.remove();
-				}
-			}
-			Iterator<Map.Entry<UUID, IceSpikeWave>> iceIt = ICE_WAVES.entrySet().iterator();
-			while (iceIt.hasNext()) {
-				Map.Entry<UUID, IceSpikeWave> entry = iceIt.next();
-				ServerPlayer player = server.getPlayerList().getPlayer(entry.getKey());
-				if (player == null || !isRem(player) || !isActive(player)) {
-					iceIt.remove();
-					continue;
-				}
-				if (tickIceSpikeWave(player, entry.getValue())) {
-					iceIt.remove();
-				}
-			}
-			Iterator<Map.Entry<UUID, CraterWindup>> craterIt = CRATER_WINDUPS.entrySet().iterator();
-			while (craterIt.hasNext()) {
-				Map.Entry<UUID, CraterWindup> entry = craterIt.next();
-				ServerPlayer player = server.getPlayerList().getPlayer(entry.getKey());
-				if (player == null || !isRem(player) || !isActive(player)) {
-					craterIt.remove();
-					continue;
-				}
-				if (tickCraterWindup(player, entry.getValue())) {
-					craterIt.remove();
-				}
-			}
-			for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-				if (isRem(player)) {
-					tickRem(player);
-				} else if (CHARGE.containsKey(player.getUUID()) || ACTIVE.contains(player.getUUID())) {
-					clear(player);
-				}
-			}
-		});
 	}
 
 	public static boolean tryActivate(ServerPlayer player) {
@@ -691,4 +638,60 @@ public final class RemDemonismController {
 			this.startTick = startTick;
 		}
 	}
+
+	public static void serverTick(MinecraftServer server) {
+			Iterator<Map.Entry<UUID, MorningStarPull>> pullIt = MORNING_STAR_PULLS.entrySet().iterator();
+			while (pullIt.hasNext()) {
+				Map.Entry<UUID, MorningStarPull> entry = pullIt.next();
+				MorningStarPull pull = entry.getValue();
+				ServerPlayer player = server.getPlayerList().getPlayer(pull.ownerId);
+				if (player == null || !isRem(player) || !isActive(player)) {
+					pullIt.remove();
+					continue;
+				}
+				Entity entity = player.serverLevel().getEntity(entry.getKey());
+				if (!(entity instanceof LivingEntity target) || !TargetFilters.hostileTo(player).test(target)) {
+					pullIt.remove();
+					continue;
+				}
+				long elapsed = player.serverLevel().getGameTime() - pull.startTick;
+				if (tickMorningStarPull(player, target) || elapsed >= MORNING_STAR_PULL_TICKS) {
+					stopMorningStarPull(target);
+					pullIt.remove();
+				}
+			}
+			Iterator<Map.Entry<UUID, IceSpikeWave>> iceIt = ICE_WAVES.entrySet().iterator();
+			while (iceIt.hasNext()) {
+				Map.Entry<UUID, IceSpikeWave> entry = iceIt.next();
+				ServerPlayer player = server.getPlayerList().getPlayer(entry.getKey());
+				if (player == null || !isRem(player) || !isActive(player)) {
+					iceIt.remove();
+					continue;
+				}
+				if (tickIceSpikeWave(player, entry.getValue())) {
+					iceIt.remove();
+				}
+			}
+			Iterator<Map.Entry<UUID, CraterWindup>> craterIt = CRATER_WINDUPS.entrySet().iterator();
+			while (craterIt.hasNext()) {
+				Map.Entry<UUID, CraterWindup> entry = craterIt.next();
+				ServerPlayer player = server.getPlayerList().getPlayer(entry.getKey());
+				if (player == null || !isRem(player) || !isActive(player)) {
+					craterIt.remove();
+					continue;
+				}
+				if (tickCraterWindup(player, entry.getValue())) {
+					craterIt.remove();
+				}
+			}
+				}
+
+	public static void tickPlayer(MinecraftServer server, ServerPlayer player, HeroData data) {
+				if (isRem(player)) {
+					tickRem(player);
+				} else if (CHARGE.containsKey(player.getUUID()) || ACTIVE.contains(player.getUUID())) {
+					clear(player);
+				}
+				}
+
 }

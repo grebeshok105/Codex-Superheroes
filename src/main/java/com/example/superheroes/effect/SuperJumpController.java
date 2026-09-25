@@ -11,7 +11,6 @@ import com.example.superheroes.transform.HeroData;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.Set;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -23,6 +22,7 @@ import net.minecraft.world.phys.Vec3;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import net.minecraft.server.MinecraftServer;
 
 public final class SuperJumpController {
 	private static final double JUMP_VELOCITY = 2.7;
@@ -44,22 +44,6 @@ public final class SuperJumpController {
 	private SuperJumpController() {
 	}
 
-	public static void init() {
-		ServerTickEvents.END_SERVER_TICK.register(server -> {
-			for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-				Long until = FALL_IMMUNITY_UNTIL.get(player.getUUID());
-				if (until == null) {
-					continue;
-				}
-				if (player.level().getGameTime() >= until) {
-					FALL_IMMUNITY_UNTIL.remove(player.getUUID());
-				} else if (player.onGround() && player.getDeltaMovement().y <= 0.0) {
-					player.fallDistance = 0f;
-					FALL_IMMUNITY_UNTIL.remove(player.getUUID());
-				}
-			}
-		});
-	}
 
 	public static void activate(ServerPlayer player) {
 		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
@@ -110,4 +94,18 @@ public final class SuperJumpController {
 		COOLDOWN.remove(id);
 		FALL_IMMUNITY_UNTIL.remove(id);
 	}
+
+	public static void tickPlayer(MinecraftServer server, ServerPlayer player, HeroData data) {
+		Long until = FALL_IMMUNITY_UNTIL.get(player.getUUID());
+		if (until == null) {
+			return;
+		}
+		if (player.level().getGameTime() >= until) {
+			FALL_IMMUNITY_UNTIL.remove(player.getUUID());
+		} else if (player.onGround() && player.getDeltaMovement().y <= 0.0) {
+			player.fallDistance = 0f;
+			FALL_IMMUNITY_UNTIL.remove(player.getUUID());
+		}
+	}
+
 }

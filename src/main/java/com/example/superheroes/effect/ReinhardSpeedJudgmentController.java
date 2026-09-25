@@ -3,7 +3,6 @@ package com.example.superheroes.effect;
 import com.example.superheroes.ability.AbilityIds;
 import com.example.superheroes.debug.AdminAbilityDebug;
 import com.example.superheroes.util.SafeTeleport;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.MinecraftServer;
@@ -26,9 +25,6 @@ public final class ReinhardSpeedJudgmentController {
 	private ReinhardSpeedJudgmentController() {
 	}
 
-	public static void init() {
-		ServerTickEvents.END_SERVER_TICK.register(ReinhardSpeedJudgmentController::tick);
-	}
 
 	public static void start(ServerPlayer attacker, ServerPlayer target, long delayTicks, float damage) {
 		teleportBehind(attacker, target);
@@ -44,7 +40,7 @@ public final class ReinhardSpeedJudgmentController {
 		return true;
 	}
 
-	private static void tick(MinecraftServer server) {
+	public static void tick(MinecraftServer server) {
 		if (PENDING.isEmpty()) return;
 		long now = server.overworld().getGameTime();
 		Iterator<Map.Entry<UUID, PendingStrike>> it = PENDING.entrySet().iterator();

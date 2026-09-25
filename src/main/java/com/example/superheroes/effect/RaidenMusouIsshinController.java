@@ -9,7 +9,6 @@ import com.example.superheroes.particle.ModParticles;
 import com.example.superheroes.sound.ModSounds;
 import com.example.superheroes.transform.HeroData;
 import com.example.superheroes.world.WorldDestructionPolicy;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.BlockPos;
@@ -40,6 +39,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import net.minecraft.server.MinecraftServer;
 
 public final class RaidenMusouIsshinController {
 	private static final int WINDUP_TICKS = 3 * 20;
@@ -69,30 +69,6 @@ public final class RaidenMusouIsshinController {
 	private RaidenMusouIsshinController() {
 	}
 
-	public static void init() {
-		ServerTickEvents.END_SERVER_TICK.register(server -> {
-			if (PENDING.isEmpty()) return;
-			Iterator<Map.Entry<UUID, Pending>> it = PENDING.entrySet().iterator();
-			while (it.hasNext()) {
-				Map.Entry<UUID, Pending> e = it.next();
-				ServerPlayer player = server.getPlayerList().getPlayer(e.getKey());
-				if (player == null || !isRaiden(player) || !hasYamato(player)) {
-					it.remove();
-					continue;
-				}
-				Pending p = e.getValue();
-				long now = player.serverLevel().getGameTime();
-				enforceCasterLock(player, p, now);
-				freezeNearby(player, p.origin, now, false);
-				if (now >= p.impactTick) {
-					impact(player, p);
-					it.remove();
-				} else {
-					windupTick(player, p, now);
-				}
-			}
-		});
-	}
 
 	public static boolean isCharging(ServerPlayer player) {
 		return PENDING.containsKey(player.getUUID());
@@ -368,4 +344,28 @@ public final class RaidenMusouIsshinController {
 		ItemStack off = player.getOffhandItem();
 		return main.getItem() instanceof MusouNoHitotachiItem || off.getItem() instanceof MusouNoHitotachiItem;
 	}
+
+	public static void serverTick(MinecraftServer server) {
+			if (PENDING.isEmpty()) return;
+			Iterator<Map.Entry<UUID, Pending>> it = PENDING.entrySet().iterator();
+			while (it.hasNext()) {
+				Map.Entry<UUID, Pending> e = it.next();
+				ServerPlayer player = server.getPlayerList().getPlayer(e.getKey());
+				if (player == null || !isRaiden(player) || !hasYamato(player)) {
+					it.remove();
+					continue;
+				}
+				Pending p = e.getValue();
+				long now = player.serverLevel().getGameTime();
+				enforceCasterLock(player, p, now);
+				freezeNearby(player, p.origin, now, false);
+				if (now >= p.impactTick) {
+					impact(player, p);
+					it.remove();
+				} else {
+					windupTick(player, p, now);
+				}
+			}
+			}
+
 }

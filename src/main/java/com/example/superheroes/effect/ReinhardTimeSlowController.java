@@ -5,7 +5,6 @@ import com.example.superheroes.lifecycle.ControlLockKind;
 import com.example.superheroes.lifecycle.EntityControlLock;
 import com.example.superheroes.network.ReinhardTimeSlowS2CPayload;
 import com.example.superheroes.sound.ModSounds;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.event.player.AttackBlockCallback;
 import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
@@ -58,7 +57,6 @@ public final class ReinhardTimeSlowController {
 	}
 
 	public static void init() {
-		ServerTickEvents.END_SERVER_TICK.register(ReinhardTimeSlowController::tick);
 
 		// Триггер ТОЛЬКО от ручного ЛКМ (AttackEntityCallback), а не от любого источника урона.
 		// Контратаки/риспосты/AoE-абилки больше не активируют замедление.
@@ -136,7 +134,7 @@ public final class ReinhardTimeSlowController {
 		}
 	}
 
-	private static void tick(MinecraftServer server) {
+	public static void tick(MinecraftServer server) {
 		long now = server.overworld().getGameTime();
 		Set<UUID> shouldBeFrozen = ConcurrentHashMap.newKeySet();
 

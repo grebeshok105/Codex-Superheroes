@@ -9,7 +9,6 @@ import com.example.superheroes.physics.ImpactChargeRules;
 import com.example.superheroes.physics.ImpactProfile;
 import com.example.superheroes.physics.ImpactTier;
 import com.example.superheroes.transform.HeroData;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.particles.ParticleOptions;
@@ -76,10 +75,6 @@ public final class HeroMeleeImpactController {
 			return InteractionResult.PASS;
 		});
 
-		ServerTickEvents.END_SERVER_TICK.register(server -> {
-			processPendingPushes();
-			cleanup(server);
-		});
 	}
 
 	public static void handleChargeInput(ServerPlayer player, HeroMeleeChargeC2SPayload payload) {
@@ -281,4 +276,10 @@ public final class HeroMeleeImpactController {
 			this.startedAt = startedAt;
 		}
 	}
+
+	public static void serverTick(MinecraftServer server) {
+		processPendingPushes();
+		cleanup(server);
+	}
+
 }

@@ -2,7 +2,6 @@ package com.example.superheroes.effect;
 
 import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.entity.ShadowSoldierEntity;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -18,6 +17,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import com.example.superheroes.transform.HeroData;
+import net.minecraft.server.MinecraftServer;
 
 /**
  * Активный домен Монарха: 10с тиков урона врагам в радиусе 25 блоков
@@ -35,21 +36,6 @@ public final class MonarchsDomainController {
 	private MonarchsDomainController() {
 	}
 
-	public static void init() {
-		ServerTickEvents.END_SERVER_TICK.register(server -> {
-			for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-				Long end = ACTIVE_UNTIL.get(player.getUUID());
-				if (end == null) continue;
-				if (player.level().getGameTime() >= end) {
-					expire(player);
-					continue;
-				}
-				if (player.level().getGameTime() % TICK_INTERVAL == 0) {
-					tick(player);
-				}
-			}
-		});
-	}
 
 	public static void activate(ServerPlayer player, int durationTicks) {
 		ACTIVE_UNTIL.put(player.getUUID(), player.level().getGameTime() + durationTicks);
@@ -91,4 +77,17 @@ public final class MonarchsDomainController {
 		Long end = ACTIVE_UNTIL.get(player.getUUID());
 		return end != null && player.level().getGameTime() < end;
 	}
+
+	public static void tickPlayer(MinecraftServer server, ServerPlayer player, HeroData data) {
+		Long end = ACTIVE_UNTIL.get(player.getUUID());
+		if (end == null) return;
+		if (player.level().getGameTime() >= end) {
+			expire(player);
+			return;
+		}
+		if (player.level().getGameTime() % TICK_INTERVAL == 0) {
+			tick(player);
+		}
+	}
+
 }

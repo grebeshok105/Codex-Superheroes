@@ -4,7 +4,6 @@ import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.hero.DoomsdayHero;
 import com.example.superheroes.sound.ModSounds;
 import com.example.superheroes.transform.HeroData;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
@@ -21,15 +20,8 @@ public final class DoomsdayFootstepsController {
 	private DoomsdayFootstepsController() {
 	}
 
-	public static void init() {
-		ServerTickEvents.END_SERVER_TICK.register(server -> {
-			for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-				tickPlayer(player);
-			}
-		});
-	}
 
-	private static void tickPlayer(ServerPlayer player) {
+	public static void tickPlayer(ServerPlayer player) {
 		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
 		UUID id = player.getUUID();
 		if (!data.hasHero() || !DoomsdayHero.ID.equals(data.heroId())) {

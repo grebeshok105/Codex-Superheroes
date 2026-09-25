@@ -2,7 +2,6 @@ package com.example.superheroes.effect;
 
 import com.example.superheroes.entity.ModEntities;
 import com.example.superheroes.entity.RamEntity;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -21,6 +20,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import com.example.superheroes.transform.HeroData;
+import net.minecraft.server.MinecraftServer;
 
 /**
  * Жизненный цикл Рам — помощницы Рем в демонизме:
@@ -43,16 +44,6 @@ public final class RamCompanionController {
 	private RamCompanionController() {
 	}
 
-	public static void init() {
-		ServerTickEvents.END_SERVER_TICK.register(server -> {
-			if (server.getTickCount() % 20 != 0) {
-				return;
-			}
-			for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-				tickPlayer(player);
-			}
-		});
-	}
 
 	private static void tickPlayer(ServerPlayer player) {
 		UUID id = player.getUUID();
@@ -166,4 +157,12 @@ public final class RamCompanionController {
 	public static RamEntity reconcileForTest(ServerPlayer player) {
 		return findRam(player);
 	}
+
+	public static void tickPlayer(MinecraftServer server, ServerPlayer player, HeroData data) {
+		if (server.getTickCount() % 20 != 0) {
+			return;
+		}
+		tickPlayer(player);
+	}
+
 }

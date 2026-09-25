@@ -6,7 +6,6 @@ import com.example.superheroes.hero.Hero;
 import com.example.superheroes.hero.Heroes;
 import com.example.superheroes.hero.LandingImpact;
 import com.example.superheroes.transform.HeroData;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.server.level.ServerPlayer;
 
@@ -14,6 +13,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
+import net.minecraft.server.MinecraftServer;
 
 public final class HeroLandingTracker {
 	private static final float MIN_FALL_DISTANCE = 10.0f;
@@ -38,18 +38,6 @@ public final class HeroLandingTracker {
 	}
 
 	public static void init() {
-		ServerTickEvents.END_SERVER_TICK.register(server -> {
-			for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-				tickPlayer(player, player.level().getGameTime());
-			}
-			Iterator<Map.Entry<UUID, State>> it = states.entrySet().iterator();
-			while (it.hasNext()) {
-				Map.Entry<UUID, State> e = it.next();
-				if (server.getPlayerList().getPlayer(e.getKey()) == null) {
-					it.remove();
-				}
-			}
-		});
 
 		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
 			states.remove(handler.getPlayer().getUUID());
@@ -150,4 +138,13 @@ public final class HeroLandingTracker {
 		s.lastDeltaY = -drop;
 		s.lastHorizontalSpeed = horizontalSpeed;
 	}
+
+	public static void tickPlayer(MinecraftServer server, ServerPlayer player, HeroData data) {
+		tickPlayer(player, player.level().getGameTime());
+	}
+
+	public static void pruneGonePlayers(MinecraftServer server) {
+		states.entrySet().removeIf(e -> server.getPlayerList().getPlayer(e.getKey()) == null);
+	}
+
 }

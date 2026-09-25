@@ -4,7 +4,6 @@ import com.example.superheroes.ModId;
 import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.hero.OmnimanHero;
 import com.example.superheroes.transform.HeroData;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -23,6 +22,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import net.minecraft.server.MinecraftServer;
 
 public final class OmnimanMomentumController {
 	private static final float MAX_MOMENTUM = 100f;
@@ -64,22 +64,6 @@ public final class OmnimanMomentumController {
 			return InteractionResult.PASS;
 		});
 
-		ServerTickEvents.END_SERVER_TICK.register(server -> {
-			Iterator<UUID> activeIt = ACTIVE_MODIFIERS.iterator();
-			while (activeIt.hasNext()) {
-				UUID id = activeIt.next();
-				ServerPlayer player = server.getPlayerList().getPlayer(id);
-				if (player != null) {
-					removeAttackModifiers(player);
-				}
-				activeIt.remove();
-			}
-
-			for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-				tickPlayer(player);
-			}
-			MOMENTUM.keySet().removeIf(id -> server.getPlayerList().getPlayer(id) == null);
-		});
 	}
 
 	public static float momentum(ServerPlayer player) {
@@ -183,4 +167,22 @@ public final class OmnimanMomentumController {
 		}
 		MOMENTUM.put(player.getUUID(), clamped);
 	}
+
+	public static void serverTick(MinecraftServer server) {
+		Iterator<UUID> activeIt = ACTIVE_MODIFIERS.iterator();
+		while (activeIt.hasNext()) {
+			UUID id = activeIt.next();
+			ServerPlayer player = server.getPlayerList().getPlayer(id);
+			if (player != null) {
+				removeAttackModifiers(player);
+			}
+			activeIt.remove();
+		}
+		MOMENTUM.keySet().removeIf(id -> server.getPlayerList().getPlayer(id) == null);
+	}
+
+	public static void tickPlayer(MinecraftServer server, ServerPlayer player, HeroData data) {
+		tickPlayer(player);
+	}
+
 }

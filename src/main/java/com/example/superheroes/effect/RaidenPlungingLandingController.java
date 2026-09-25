@@ -4,13 +4,13 @@ import com.example.superheroes.ability.RaidenPlungingStrikeAbility;
 import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.hero.RaidenHero;
 import com.example.superheroes.transform.HeroData;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import net.minecraft.server.MinecraftServer;
 
 /**
  * Ловит переход air→ground у Райден с активным «armed»-окном Plunging Strike.
@@ -23,11 +23,6 @@ public final class RaidenPlungingLandingController {
 	}
 
 	public static void init() {
-		ServerTickEvents.END_SERVER_TICK.register(server -> {
-			for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-				tick(player);
-			}
-		});
 		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) ->
 				PREV_ON_GROUND.remove(handler.getPlayer().getUUID()));
 	}
@@ -46,4 +41,9 @@ public final class RaidenPlungingLandingController {
 			}
 		}
 	}
+
+	public static void tickPlayer(MinecraftServer server, ServerPlayer player, HeroData data) {
+		tick(player);
+	}
+
 }
