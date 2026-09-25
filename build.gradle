@@ -259,6 +259,22 @@ tasks.register('auditReleaseJarIsolation') {
 	}
 }
 
+// ArchUnit removes fixed violations from the store while tests run; an uncommitted shrink would let the
+// same violation return later, so the gate requires the store to match what is committed.
+tasks.register('verifyArchitectureBaseline') {
+	group = 'verification'
+	description = 'Fails when the frozen ArchUnit baseline differs from the committed one'
+	dependsOn tasks.named('test')
+	doLast {
+		def status = providers.exec {
+			commandLine 'git', 'status', '--porcelain', '--', 'src/test/resources/archunit_store', 'src/test/resources/architecture'
+		}.standardOutput.asText.get().trim()
+		if (!status.isEmpty()) {
+			throw new GradleException("Architecture baseline changed — review and commit it:\n" + status)
+		}
+	}
+}
+
 // The one command. Nothing may be called verified without a green run of this task.
 // `build` already carries assemble + check (compile, JUnit, verification JavaExecs);
 // the gate adds the post-build audits on top.
@@ -269,6 +285,7 @@ tasks.register('qualityGate') {
 	dependsOn tasks.named('verifyAssertionsEnabled')
 	dependsOn tasks.named('auditReleaseJarIsolation')
 	dependsOn tasks.named('runGametest')
+	dependsOn tasks.named('verifyArchitectureBaseline')
 }
 
 // A stale world from an earlier run would leak players and state between GameTest runs.
