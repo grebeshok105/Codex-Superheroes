@@ -23,10 +23,9 @@
 | 11 | Hero hooks / lifecycle events / tick dispatcher (debt 1–4) | `hoplite/kroton-d9205130--hero-modularity` | PR open (stacked on 10) |
 | 11b | Migrate ~50 self-registered `ServerTickEvents` onto the dispatcher | child session | in flight |
 | 12 | Hygiene: deps, docs, missing model/lang | `hoplite/kroton-d9205130--hygiene` | PR open (stacked on 11) |
-| 13 | B18 Sung shadows survive restart; B22 teleport collision checks | | todo |
+| 13 | B18 Sung shadows survive restart; B22 teleport collision checks | `hoplite/kroton-d9205130--shadows-teleports` | PR open (stacked on 12) |
 | 14 | B19 shared target predicate honoring PvP/teams | | todo |
 | 15 | Potential findings (4) + §3 network improvements | | todo |
-
 ## Completed this session (stage 1)
 
 - Replaced three copy-pasted no-drop mixins with `PlayerBoundWeaponDropMixin` + `item/bound/BoundWeapons`. The old code re-entered `Player.drop` via `Inventory.placeItemBackInInventory` on a full inventory (verified in vanilla sources) → `StackOverflowError`.
@@ -68,7 +67,6 @@
 - 3 new GameTests (`DamagePipelineGameTests`): ability damage bypasses the i-frame cooldown (control: mob attack does not), time slow freezes a nearby mob without touching the server tick rate and releases on owner leave, kawarimi saves from a lethal hit and goes on cooldown.
 
 ## Completed this session (stage 6)
-
 - `world/WorldDestructionPolicy` (B10): единая точка прохода для всех способностей, меняющих мир — `tryBreak` (ванильная семантика `destroyBlock` + опциональные дропы), `tryCarve` (тихий вырез в AIR для путей с намеренным подавлением дропа), `tryPlace` (постановки без слома, например огонь). Гейты: `destroySpeed < 0` + тег `superheroes:ability_immune` (новый `src/main/generated/data/superheroes/tags/block/ability_immune.json`, написан руками + `ModBlockTagProvider` на будущее для runDatagen); для игроков — `Level.mayInteract` (защита спавна, граница мира) и `PlayerBlockBreakEvents` BEFORE/CANCELED/AFTER — claim-моды теперь видят все сломы; для мобов и без причины — `RULE_MOBGRIEFING`.
 - Мигрированы все ability-точки: `RegulusMadnessController.carveCrater` (вынесен из `CounterState` на контроллер и получает игрока — раньше съедал бедрок конусом), `RemDemonismController`, `UnibeamController` (луч + кратер + огненное кольцо), `MadnessAftermathController`, `MadnessFlightController`, `RaidenMusouIsshinController.carveSlash` (игрок раньше не передавался), `HeavensStrikeController.carveCrater` (то же), `GuardiansBreakerAbility`, `RushTerrainBreaker`, `BallisticBodyTracker`, `ShockwaveUtil` (моб- и игрок-детонации), `HomelanderBlockThrowGoal` (подбор блока и сам бросок гейтятся — при отказе снаряд не спавнится), `EyeLasersAbility` (огненное кольцо).
 - Дропы: `RushTerrainBreaker`, `BallisticBodyTracker` и `GuardiansBreakerAbility` теперь ломают с дропом — shulker box выскакивает с содержимым вместо исчезновения (регрессия из аудита). `RaidenMusouIsshin`/`HeavensStrike` сохранили свои списки «непробиваемого» в урезанном виде — только ценные блоки, которых нет в теге (обсидиан, crying obsidian, нетерит/железо/древние обломки/маяк/respawn anchor соответственно).
@@ -123,6 +121,12 @@
 - 21 cyrillic `Component.literal` sites converted to `Component.translatable` (+22 new lang keys in both files): commands (horde/admin-build/state), horde crystal + boss bar + Infected Homelander lines, Omniman hint, abilities HUD seconds.
 - `ModAttachments` rewritten from deprecated `AttachmentRegistry.builder()...buildAndRegister` to `AttachmentRegistry.create(id, b -> ...)` (13 attachments, same semantics).
 - `ProjectSanityTest` gained `assertNoCyrillicLiterals` (no `Component.literal` with cyrillic in main/client) and `assertEntityLangNames` (every entity id registered in `ModEntities`/`HordeEntities` has an `entity.superheroes.*` key in en_us.json).
+
+## Completed this session (stage 13)
+
+- B18: армия Sung вынесена из статических `ARMY`/`SUMMONED`/`PHASE2` в persistent-attachment `SUNG_SHADOW_ARMY` (record `attachment/SungShadowArmy`: `List<UUID> shadowIds`, `summoned`, `phase2`). После рестарта UUID сохранённых теней перелинковываются — повторный призыв не случается, т.к. `summoned` переживает рестарт. В тике снимаются только «разрешившиеся и мёртвые» UUID; невыгруженные остаются в списке и подхватываются при загрузке чанка. `ShadowSoldierEntity.aiStep` сам решает свою судьбу: владелец офлайн → сон (цель и месть очищены, не атакует); владелец онлайн, но не Sung или тени нет в армии → `discard()` — так закрываются и снятие героя, и сироты, загрузившиеся после disband.
+- B22: `util/SafeTeleport.clamp(level, entity, dest)` шагает по отрезку (шаг ≈ половина меньшего размера хитбокса, мин. 0.2) и возвращает последнюю точку, где хитбокс свободен от блоков; невыгруженный чанк = препятствие; проверка только по блокам, чтобы «за спину» не упиралось в самого моба. Переведены Goku IT, Loki Tesseract, Scorpion, Kratos God Slayer, Reinhard Speed Judgment, Kawarimi, Shadow Exchange (оба направления), Doom Grip lunge, Thanos Space Portal. Не тронуты (by design): hold/anchor/lockPos/return-телепорты (DoomGrip hold, SpatialBind, RegulusGreed, Unibeam, IronManReactor, Pandora, MirrorDimension, lockPos у HeavensStrike/RaidenMusou/Regulus counter-катсцена) и `DoomsdayTierController.tryRelocate` (точка уже проверяется на свободу).
+- Новый `ShadowsTeleportsGameTests` (4 теста): disband при forceUntransform (нет ни записей, ни сущностей), тень-сирота удаляет себя, телепорт клэмпится у каменной стены, свободный телепорт доходит до точки.
 
 ## Important decisions
 - Bound weapons are identified by type (`BoundWeaponItem`) and validated by token; untokened copies are treated as stale on purpose (none are obtainable legitimately; old saves could hold leaked copies).
