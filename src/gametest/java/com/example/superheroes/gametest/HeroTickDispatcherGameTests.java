@@ -106,7 +106,10 @@ public class HeroTickDispatcherGameTests implements FabricGameTest {
 		helper.runAfterDelay(2, () -> {
 			armed.set(false);
 			int start = log.indexOf("start");
-			helper.assertTrue(start >= 0 && log.indexOf("early") > start && log.indexOf("global") > log.indexOf("early"),
+			List<String> afterStart = start < 0 ? log : log.subList(start, log.size());
+			int early = afterStart.indexOf("early");
+			int global = afterStart.indexOf("global");
+			helper.assertTrue(start >= 0 && early > 0 && global > early,
 					"START before EARLY before GLOBAL within one tick: " + log);
 			helper.succeed();
 		});
