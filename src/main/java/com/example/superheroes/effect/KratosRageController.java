@@ -33,16 +33,15 @@ public final class KratosRageController {
 	}
 
 	public static void init() {
-		ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> {
+		ServerLivingEntityEvents.AFTER_DAMAGE.register((entity, source, baseDamage, damageTaken, blocked) -> {
 			if (entity instanceof ServerPlayer victim && isKratos(victim) && !ACTIVE.contains(victim.getUUID())) {
-				addRage(victim, amount * TAKEN_PER_DMG);
+				addRage(victim, damageTaken * TAKEN_PER_DMG);
 			}
 			Entity src = source.getEntity();
 			if (src instanceof ServerPlayer attacker && entity != attacker
 					&& isKratos(attacker) && !ACTIVE.contains(attacker.getUUID())) {
-				addRage(attacker, amount * DEALT_PER_DMG);
+				addRage(attacker, damageTaken * DEALT_PER_DMG);
 			}
-			return true;
 		});
 
 		ServerTickEvents.END_SERVER_TICK.register(server -> {

@@ -14,6 +14,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
@@ -68,6 +69,9 @@ public final class SungJinwooController {
 		ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> {
 			if (!(entity instanceof ServerPlayer player)) return true;
 			if (!isSung(player)) return true;
+			// /kill, урон от пустоты и прочие источники, игнорирующие неуязвимость,
+			// не отражаются на тени — иначе Sung неубиваем, пока жива хоть одна.
+			if (source.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) return true;
 			ShadowSoldierEntity victim = pickRandomAliveShadow(player);
 			if (victim == null) return true;
 			Entity src = source.getEntity();

@@ -18,7 +18,7 @@ import java.util.UUID;
 public final class HeroLandingTracker {
 	private static final float MIN_FALL_DISTANCE = 10.0f;
 	private static final double TELEPORT_DETECT_DROP = 8.0;
-	private static final long LANDING_COOLDOWN_MS = 250L;
+	private static final long LANDING_COOLDOWN_TICKS = 5L;
 
 	private static final Map<UUID, State> states = new HashMap<>();
 
@@ -34,14 +34,13 @@ public final class HeroLandingTracker {
 		double lastHorizontalSpeed;
 		boolean wasOnGround;
 		boolean tracking;
-		long lastLandingMs;
+		long lastLandingTick;
 	}
 
 	public static void init() {
 		ServerTickEvents.END_SERVER_TICK.register(server -> {
-			long now = System.currentTimeMillis();
 			for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-				tickPlayer(player, now);
+				tickPlayer(player, player.level().getGameTime());
 			}
 			Iterator<Map.Entry<UUID, State>> it = states.entrySet().iterator();
 			while (it.hasNext()) {
@@ -83,7 +82,7 @@ public final class HeroLandingTracker {
 			ns.lastHorizontalSpeed = 0.0;
 			ns.wasOnGround = player.onGround();
 			ns.tracking = !player.onGround();
-			ns.lastLandingMs = 0L;
+			ns.lastLandingTick = 0L;
 			return ns;
 		});
 
@@ -132,8 +131,8 @@ public final class HeroLandingTracker {
 		} else {
 			if (!s.wasOnGround && s.tracking) {
 				float fallDist = (float) Math.max(0.0, s.peakY - currentY);
-				if (fallDist >= MIN_FALL_DISTANCE && now - s.lastLandingMs > LANDING_COOLDOWN_MS) {
-					s.lastLandingMs = now;
+				if (fallDist >= MIN_FALL_DISTANCE && now - s.lastLandingTick > LANDING_COOLDOWN_TICKS) {
+					s.lastLandingTick = now;
 					double vSpeed = Math.abs(s.lastDeltaY);
 					double hSpeed = s.lastHorizontalSpeed;
 					LandingImpact impact = LandingImpact.compute(fallDist, vSpeed, hSpeed);

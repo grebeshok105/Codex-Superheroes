@@ -22,15 +22,14 @@ public final class KratosHandStrikeFxController {
 	}
 
 	public static void init() {
-		ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> {
+		ServerLivingEntityEvents.AFTER_DAMAGE.register((entity, source, baseDamage, damageTaken, blocked) -> {
 			Entity src = source.getEntity();
-			if (!(src instanceof ServerPlayer attacker)) return true;
-			if (entity == attacker) return true;
-			if (!isKratos(attacker)) return true;
-			if (!isBareHand(attacker)) return true;
-			if (!source.is(net.minecraft.world.damagesource.DamageTypes.PLAYER_ATTACK)) return true;
+			if (!(src instanceof ServerPlayer attacker)) return;
+			if (entity == attacker) return;
+			if (!isKratos(attacker)) return;
+			if (!isBareHand(attacker)) return;
+			if (!source.is(net.minecraft.world.damagesource.DamageTypes.PLAYER_ATTACK)) return;
 			spawnFx(entity, attacker.serverLevel());
-			return true;
 		});
 	}
 

@@ -6,39 +6,39 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 public record RegulusMadnessState(
 		boolean madness,
 		boolean bonusLifeAvailable,
-		long manaRegenLockUntilMs,
-		long readingUntilMs
+		long manaRegenLockUntilTick,
+		long readingUntilTick
 ) {
 	public static final RegulusMadnessState EMPTY = new RegulusMadnessState(false, false, 0L, 0L);
 
 	public static final Codec<RegulusMadnessState> CODEC = RecordCodecBuilder.create(i -> i.group(
 			Codec.BOOL.optionalFieldOf("madness", false).forGetter(RegulusMadnessState::madness),
 			Codec.BOOL.optionalFieldOf("bonus_life", false).forGetter(RegulusMadnessState::bonusLifeAvailable),
-			Codec.LONG.optionalFieldOf("mana_lock_until", 0L).forGetter(RegulusMadnessState::manaRegenLockUntilMs),
-			Codec.LONG.optionalFieldOf("reading_until", 0L).forGetter(RegulusMadnessState::readingUntilMs)
+			Codec.LONG.optionalFieldOf("mana_lock_until_tick", 0L).forGetter(RegulusMadnessState::manaRegenLockUntilTick),
+			Codec.LONG.optionalFieldOf("reading_until_tick", 0L).forGetter(RegulusMadnessState::readingUntilTick)
 	).apply(i, RegulusMadnessState::new));
 
 	public RegulusMadnessState withMadness(boolean v) {
-		return new RegulusMadnessState(v, bonusLifeAvailable, manaRegenLockUntilMs, readingUntilMs);
+		return new RegulusMadnessState(v, bonusLifeAvailable, manaRegenLockUntilTick, readingUntilTick);
 	}
 
 	public RegulusMadnessState withBonusLife(boolean v) {
-		return new RegulusMadnessState(madness, v, manaRegenLockUntilMs, readingUntilMs);
+		return new RegulusMadnessState(madness, v, manaRegenLockUntilTick, readingUntilTick);
 	}
 
-	public RegulusMadnessState withManaLock(long ms) {
-		return new RegulusMadnessState(madness, bonusLifeAvailable, ms, readingUntilMs);
+	public RegulusMadnessState withManaLock(long gameTime) {
+		return new RegulusMadnessState(madness, bonusLifeAvailable, gameTime, readingUntilTick);
 	}
 
-	public RegulusMadnessState withReading(long ms) {
-		return new RegulusMadnessState(madness, bonusLifeAvailable, manaRegenLockUntilMs, ms);
+	public RegulusMadnessState withReading(long gameTime) {
+		return new RegulusMadnessState(madness, bonusLifeAvailable, manaRegenLockUntilTick, gameTime);
 	}
 
-	public boolean isReading() {
-		return readingUntilMs > System.currentTimeMillis();
+	public boolean isReading(long gameTime) {
+		return readingUntilTick > gameTime;
 	}
 
-	public boolean isManaRegenLocked() {
-		return manaRegenLockUntilMs > System.currentTimeMillis();
+	public boolean isManaRegenLocked(long gameTime) {
+		return manaRegenLockUntilTick > gameTime;
 	}
 }

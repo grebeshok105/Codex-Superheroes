@@ -33,7 +33,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class RegulusMadnessController {
-	private static final long READING_DURATION_MS = 10000L;
+	private static final long READING_DURATION_TICKS = 200L;
 	private static final int COUNTER_LIFT_TICKS = 20;
 	private static final double COUNTER_LIFT_HEIGHT = 30.0;
 	private static final int COUNTER_ARRIVE_TICKS = 20;
@@ -74,24 +74,28 @@ public final class RegulusMadnessController {
 				return true;
 			}
 			RegulusMadnessState state = player.getAttachedOrCreate(ModAttachments.REGULUS_MADNESS);
-			if (state.isReading()) {
+			if (state.isReading(player.level().getGameTime())) {
 				return false;
 			}
-			if (isRegulus(player)) {
-				Entity cause = source.getEntity();
-				Entity direct = source.getDirectEntity();
-				LivingEntity damager = null;
-				if (cause instanceof LivingEntity le && le != player) {
-					damager = le;
-				} else if (direct instanceof LivingEntity le && le != player) {
-					damager = le;
-				}
-				if (damager != null) {
-					LAST_DAMAGER.put(player.getUUID(), damager.getUUID());
-					LAST_DAMAGER_TICK.put(player.getUUID(), player.level().getGameTime());
-				}
-			}
 			return true;
+		});
+
+		ServerLivingEntityEvents.AFTER_DAMAGE.register((entity, source, baseDamage, damageTaken, blocked) -> {
+			if (!(entity instanceof ServerPlayer player) || !isRegulus(player)) {
+				return;
+			}
+			Entity cause = source.getEntity();
+			Entity direct = source.getDirectEntity();
+			LivingEntity damager = null;
+			if (cause instanceof LivingEntity le && le != player) {
+				damager = le;
+			} else if (direct instanceof LivingEntity le && le != player) {
+				damager = le;
+			}
+			if (damager != null) {
+				LAST_DAMAGER.put(player.getUUID(), damager.getUUID());
+				LAST_DAMAGER_TICK.put(player.getUUID(), player.level().getGameTime());
+			}
 		});
 	}
 
@@ -149,7 +153,7 @@ public final class RegulusMadnessController {
 
 	private static void tickPlayer(ServerPlayer player) {
 		RegulusMadnessState state = player.getAttachedOrCreate(ModAttachments.REGULUS_MADNESS);
-		if (state.isReading()) {
+		if (state.isReading(player.level().getGameTime())) {
 			player.setDeltaMovement(Vec3.ZERO);
 			player.hurtMarked = true;
 			player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 8, 4, true, false, false));
@@ -170,7 +174,7 @@ public final class RegulusMadnessController {
 				level.playSound(null, player.getX(), player.getY(), player.getZ(),
 						SoundEvents.RESPAWN_ANCHOR_DEPLETE.value(), SoundSource.PLAYERS, 1.0f, 0.7f);
 			}
-		} else if (state.readingUntilMs() > 0L && !state.madness()) {
+		} else if (state.readingUntilTick() > 0L && !state.madness()) {
 			finishReading(player);
 		}
 		if (state.madness() && isRegulus(player)) {
@@ -220,9 +224,9 @@ public final class RegulusMadnessController {
 	}
 
 	public static void startReading(ServerPlayer player) {
-		long now = System.currentTimeMillis();
+		long now = player.level().getGameTime();
 		RegulusMadnessState state = player.getAttachedOrCreate(ModAttachments.REGULUS_MADNESS)
-				.withReading(now + READING_DURATION_MS);
+				.withReading(now + READING_DURATION_TICKS);
 		player.setAttached(ModAttachments.REGULUS_MADNESS, state);
 		ServerLevel level = (ServerLevel) player.level();
 		level.playSound(null, player.getX(), player.getY(), player.getZ(),
@@ -296,11 +300,12 @@ public final class RegulusMadnessController {
 	public static void sync(ServerPlayer player) {
 		RegulusMadnessState state = player.getAttachedOrCreate(ModAttachments.REGULUS_MADNESS);
 		Boolean bonusLife = player.getAttachedOrCreate(ModAttachments.REGULUS_BONUS_LIFE);
+		long now = player.level().getGameTime();
 		ServerPlayNetworking.send(player, new MadnessSyncS2CPayload(
 				state.madness(),
 				bonusLife != null && bonusLife,
-				state.readingUntilMs(),
-				state.manaRegenLockUntilMs()
+				Math.max(0L, state.readingUntilTick() - now) * 50L,
+				Math.max(0L, state.manaRegenLockUntilTick() - now) * 50L
 		));
 	}
 

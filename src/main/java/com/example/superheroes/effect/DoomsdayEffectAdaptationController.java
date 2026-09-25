@@ -19,8 +19,8 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class DoomsdayEffectAdaptationController {
-	private static final long REALTIME_THRESHOLD_MS = 10_000L;
-	private static final long IDLE_RESET_MS = 15_000L;
+	private static final long REALTIME_THRESHOLD_TICKS = 200L;
+	private static final long IDLE_RESET_TICKS = 300L;
 
 	private static final Set<Holder<MobEffect>> TRACKED = new HashSet<>();
 	static {
@@ -34,7 +34,7 @@ public final class DoomsdayEffectAdaptationController {
 	}
 
 	private static final Map<UUID, Set<Holder<MobEffect>>> ADAPTED = new ConcurrentHashMap<>();
-	private static final Map<UUID, Map<Holder<MobEffect>, Long>> FIRST_HIT_MS = new ConcurrentHashMap<>();
+	private static final Map<UUID, Map<Holder<MobEffect>, Long>> FIRST_HIT_TICK = new ConcurrentHashMap<>();
 
 	private DoomsdayEffectAdaptationController() {
 	}
@@ -60,12 +60,12 @@ public final class DoomsdayEffectAdaptationController {
 		if (adapted.contains(effect)) {
 			return false;
 		}
-		long now = System.currentTimeMillis();
-		Map<Holder<MobEffect>, Long> firstHit = FIRST_HIT_MS.computeIfAbsent(player.getUUID(), k -> new HashMap<>());
+		long now = player.serverLevel().getGameTime();
+		Map<Holder<MobEffect>, Long> firstHit = FIRST_HIT_TICK.computeIfAbsent(player.getUUID(), k -> new HashMap<>());
 		Long firstTs = firstHit.get(effect);
-		if (firstTs == null || now - firstTs > IDLE_RESET_MS) {
+		if (firstTs == null || now - firstTs > IDLE_RESET_TICKS) {
 			firstHit.put(effect, now);
-		} else if (now - firstTs >= REALTIME_THRESHOLD_MS) {
+		} else if (now - firstTs >= REALTIME_THRESHOLD_TICKS) {
 			adapted.add(effect);
 			firstHit.remove(effect);
 			notifyAdapted(player, effect);
@@ -87,7 +87,7 @@ public final class DoomsdayEffectAdaptationController {
 	public static void clear(ServerPlayer player) {
 		UUID id = player.getUUID();
 		ADAPTED.remove(id);
-		FIRST_HIT_MS.remove(id);
+		FIRST_HIT_TICK.remove(id);
 	}
 
 	private static boolean isDoomsday(ServerPlayer player) {

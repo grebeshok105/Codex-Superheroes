@@ -9,8 +9,8 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 public record MadnessSyncS2CPayload(
 		boolean madness,
 		boolean bonusLifeAvailable,
-		long readingUntilMs,
-		long manaLockUntilMs
+		long readingRemainingMs,
+		long manaLockRemainingMs
 ) implements CustomPacketPayload {
 	public static final Type<MadnessSyncS2CPayload> TYPE = new Type<>(ModId.of("madness_sync"));
 
@@ -18,8 +18,8 @@ public record MadnessSyncS2CPayload(
 			StreamCodec.composite(
 					ByteBufCodecs.BOOL, MadnessSyncS2CPayload::madness,
 					ByteBufCodecs.BOOL, MadnessSyncS2CPayload::bonusLifeAvailable,
-					ByteBufCodecs.VAR_LONG, MadnessSyncS2CPayload::readingUntilMs,
-					ByteBufCodecs.VAR_LONG, MadnessSyncS2CPayload::manaLockUntilMs,
+					ByteBufCodecs.VAR_LONG, MadnessSyncS2CPayload::readingRemainingMs,
+					ByteBufCodecs.VAR_LONG, MadnessSyncS2CPayload::manaLockRemainingMs,
 					MadnessSyncS2CPayload::new
 			);
 

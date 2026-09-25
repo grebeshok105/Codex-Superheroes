@@ -197,6 +197,7 @@ public class SuperheroesMod implements ModInitializer {
 		PlayerLifecycle.onLeave(com.example.superheroes.effect.RegulusGreedController::onPlayerGone);
 		PlayerLifecycle.onLeave(com.example.superheroes.effect.RegulusMadnessController::clearMadness);
 		PlayerLifecycle.onLeave(com.example.superheroes.effect.KratosRageController::onPlayerGone);
+		PlayerLifecycle.onLeave(com.example.superheroes.effect.ReinhardTimeSlowController::onPlayerGone);
 		PlayerLifecycle.onLeave(com.example.superheroes.effect.ThanosGauntletStateController::onPlayerReset);
 		PlayerLifecycle.onLeave(p -> com.example.superheroes.effect.UnibeamController.clearState(p.getUUID()));
 		PlayerLifecycle.onLeave(p -> com.example.superheroes.effect.MonarchsDomainController.clear(p.getUUID()));
@@ -222,6 +223,7 @@ public class SuperheroesMod implements ModInitializer {
 		PlayerLifecycle.onDeath(com.example.superheroes.effect.RegulusGreedController::onPlayerGone);
 		PlayerLifecycle.onDeath(com.example.superheroes.effect.RegulusMadnessController::clearMadness);
 		PlayerLifecycle.onDeath(com.example.superheroes.effect.KratosRageController::onPlayerGone);
+		PlayerLifecycle.onDeath(com.example.superheroes.effect.ReinhardTimeSlowController::onPlayerGone);
 		PlayerLifecycle.onDeath(com.example.superheroes.effect.ThanosGauntletStateController::onPlayerReset);
 		PlayerLifecycle.onDeath(p -> com.example.superheroes.effect.UnibeamController.clearState(p.getUUID()));
 		PlayerLifecycle.onDeath(p -> com.example.superheroes.effect.MonarchsDomainController.clear(p.getUUID()));
@@ -258,6 +260,7 @@ public class SuperheroesMod implements ModInitializer {
 			com.example.superheroes.effect.ReinhardSwordDrawCeremonyController.resetAll();
 			com.example.superheroes.effect.RegulusGreedController.resetAll();
 			com.example.superheroes.effect.RegulusMadnessController.resetAll();
+			com.example.superheroes.effect.ReinhardTimeSlowController.resetAll(server);
 			com.example.superheroes.effect.DoomGripController.resetAll();
 			com.example.superheroes.ability.OmnimanThinkMarkAbility.resetAll();
 			com.example.superheroes.effect.KratosRageController.resetAll();

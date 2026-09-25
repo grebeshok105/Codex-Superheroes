@@ -95,16 +95,15 @@ public final class RemDemonismController {
 	}
 
 	public static void init() {
-		ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> {
+		ServerLivingEntityEvents.AFTER_DAMAGE.register((entity, source, baseDamage, damageTaken, blocked) -> {
 			if (entity instanceof ServerPlayer victim && isRem(victim) && !isActive(victim)) {
-				addCharge(victim, amount * TAKEN_PER_DAMAGE);
+				addCharge(victim, damageTaken * TAKEN_PER_DAMAGE);
 			}
 			Entity attackerEntity = source.getEntity();
 			if (attackerEntity instanceof ServerPlayer attacker && entity != attacker
 					&& isRem(attacker) && !isActive(attacker)) {
-				addCharge(attacker, amount * DEALT_PER_DAMAGE);
+				addCharge(attacker, damageTaken * DEALT_PER_DAMAGE);
 			}
-			return true;
 		});
 
 		ServerLivingEntityEvents.ALLOW_DEATH.register((entity, source, amount) -> {

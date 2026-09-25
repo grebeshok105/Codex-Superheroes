@@ -131,7 +131,7 @@ public final class ClientNetworking {
 		ClientPlayNetworking.registerGlobalReceiver(MadnessSyncS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> ClientMadnessState.update(
 						payload.madness(), payload.bonusLifeAvailable(),
-						payload.readingUntilMs(), payload.manaLockUntilMs())));
+						payload.readingRemainingMs(), payload.manaLockRemainingMs())));
 
 		ClientPlayNetworking.registerGlobalReceiver(MadnessVisualS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> {

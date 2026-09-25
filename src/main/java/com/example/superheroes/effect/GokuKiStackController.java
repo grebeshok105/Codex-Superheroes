@@ -16,11 +16,10 @@ public final class GokuKiStackController {
 	}
 
 	public static void init() {
-		ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> {
-			if (entity instanceof ServerPlayer player && amount > 0.5f) {
+		ServerLivingEntityEvents.AFTER_DAMAGE.register((entity, source, baseDamage, damageTaken, blocked) -> {
+			if (entity instanceof ServerPlayer player && damageTaken > 0.5f) {
 				STACKS.remove(player.getUUID());
 			}
-			return true;
 		});
 	}
 

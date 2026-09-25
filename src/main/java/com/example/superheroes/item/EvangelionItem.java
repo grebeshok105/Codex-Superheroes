@@ -47,7 +47,7 @@ public class EvangelionItem extends Item {
 			return InteractionResultHolder.fail(stack);
 		}
 		RegulusMadnessState state = sp.getAttachedOrCreate(ModAttachments.REGULUS_MADNESS);
-		if (state.madness() || state.isReading()) {
+		if (state.madness() || state.isReading(sp.level().getGameTime())) {
 			sp.displayClientMessage(Component.translatable("item.superheroes.evangelion.already")
 					.withStyle(ChatFormatting.GRAY), true);
 			return InteractionResultHolder.fail(stack);

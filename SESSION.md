@@ -14,7 +14,7 @@
 | 2 | B2 stale `HeroData` write-back; single `HeroData` writer (debt 2) | `hoplite/kroton-d9205130--herodata-writer` | PR open (stacked on 1) |
 | 3 | Lifecycle: B3, B4, B8, B17, B23, N1 (main-thread leave hook) | `hoplite/kroton-d9205130--lifecycle` | PR open (stacked on 2) |
 | 4 | B5 cooldown/heal reset on hero swap, B6 Snap stones | `hoplite/kroton-d9205130--cooldowns-snap` | PR open (stacked on 3) |
-| 5 | Damage pipeline B9, B20, B21; B11 global tick rate | | todo |
+| 5 | Damage pipeline B9, B20, B21; B11 global tick rate | `hoplite/kroton-d9205130--damage-pipeline` | PR open (stacked on 4) |
 | 6 | B10 `WorldDestructionPolicy` | | todo |
 | 7 | B15 client state/session | | todo |
 | 8 | B13 House of Vanity server authority | | todo |
@@ -54,6 +54,15 @@
 - Snap now burns the stones it actually checked: `InfinityGauntletData.clearStones` empties `InsertedStones` on the gauntlet and loose `InfinityStoneItem`s are removed — the snap is no longer infinite (B6).
 - 3 new GameTests (`HeroSwapGameTests`): swap keeps cooldowns, no free heal/energy refill, snap consumes gauntlet + loose stones.
 
+## Completed this session (stage 5)
+
+- Damage accounting moved off `ALLOW_DAMAGE` onto `AFTER_DAMAGE` (`damageTaken`, post-armor/shield): RegulusMadness LAST_DAMAGER, DoomsdayAdaptation/EffectAdaptation accumulation, DoomsdayKryptonite, KratosRage, RemDemonism, GokuKiStack, KratosHandStrikeFx. `ALLOW_DAMAGE` remains only where `return false` is load-bearing (RegulusGreed queue, Reinhard adapted-immunity/riposte, SwordDeathMark suspension, Pandora gate, RegulusMadness reading block, DoomsdayAdaptation immunity). Saves moved to `ALLOW_DEATH`: Kawarimi now only fires on truly lethal hits (no more wasted substitution on non-lethal procs) (B9).
+- `SungJinwooController` divert skips `#bypasses_invulnerability` sources — /kill and void damage can no longer be dumped onto a random shadow (audit's explicit check).
+- 33 of 35 mod damage types added to `#minecraft:bypasses_cooldown` via generated tag (B20): ability damage no longer collides with the 10-tick i-frame window, so multi-hit abilities and rapid re-casts actually land. `SHADOW_ATTACK` and `HOMELANDER_MELEE` stay out — they are mob melee and keep vanilla i-frame rules.
+- `ReinhardTimeSlowController` rewritten without `TickRateManager` (B11): the old code slowed the whole server's tick rate (breaking combat physics, cooldown pacing and redstone for everyone). Now `triggerAbilitySlow` freezes entities within 80 blocks — mobs via `EntityControlLock` (NO_AI + NO_GRAVITY + zeroed velocity), players via transient `MOVEMENT_SPEED`/`JUMP_STRENGTH` zero-modifiers plus attack/use-item/place block callback cancels — 170 ticks, released on expiry, owner death/leave or server stop. The owner walks at full speed inside the freeze, which preserves the power fantasy without corrupting the server clock.
+- All `System.currentTimeMillis` timers in gameplay code replaced with level `gameTime` deadlines (B21): RegulusMadness reading/mana-lock (record fields renamed to `*_until_tick`, codec keys `mana_lock_until_tick`/`reading_until_tick`), DoomsdayAdaptation/EffectAdaptation first-hit/idle windows, `HeroLandingTracker`, `ReinhardSpeedJudgment` pending strikes. Single-player pause and TPS lag can no longer silently shorten or stretch these durations. Wire compatibility kept: `MadnessSyncS2CPayload` still carries remaining-milliseconds (converted from tick deadlines) so the client's wall-clock HUD math is unchanged.
+- 3 new GameTests (`DamagePipelineGameTests`): ability damage bypasses the i-frame cooldown (control: mob attack does not), time slow freezes a nearby mob without touching the server tick rate and releases on owner leave, kawarimi saves from a lethal hit and goes on cooldown.
+
 ## Important decisions
 
 - Bound weapons are identified by type (`BoundWeaponItem`) and validated by token; untokened copies are treated as stale on purpose (none are obtainable legitimately; old saves could hold leaked copies).
@@ -66,6 +75,7 @@
 
 ## Verification
 
+- Stage 5: `qualityGate` green, 22/22 GameTests (3 new damage-pipeline tests). Test-only notes: mock players join with private `spawnInvulnerableTime` that blocks `hurt()` — cleared via reflection in the kawarimi test; the test structure spawns ~6M blocks from the mock-player spawn point, so proximity-sensitive asserts must teleport the player first.
 - Stage 4: `qualityGate` green, 19/19 GameTests. Negative check — without the `hasHero()` guard, first-time transforms start with 0 energy and `windPrisonEndsWhenItsZoneExpires` fails.
 - Stage 3: `qualityGate` green, 16/16 GameTests (7 new lifecycle regressions: owner-leave lock release, refcount, shadow reconcile, transient-vs-permanent NBT, attachment-backed transform cooldown, forceUntransform clears locks+cooldowns, dead-caster snap).
 - Stage 2: `qualityGate` green, 9/9 GameTests; negative check — old tick write-back makes `windPrisonEndsWhenItsZoneExpires` fail.

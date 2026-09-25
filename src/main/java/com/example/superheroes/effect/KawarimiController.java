@@ -36,12 +36,12 @@ public final class KawarimiController {
 	}
 
 	public static void init() {
-		ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> {
+		// ALLOW_DEATH: срабатывает только когда урон реально летален (после всех редукций),
+		// а не на каждом предположительно смертельном ударе до щитов и i-frames.
+		ServerLivingEntityEvents.ALLOW_DEATH.register((entity, source, amount) -> {
 			if (!(entity instanceof ServerPlayer player)) return true;
 			HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
 			if (!data.hasHero() || !NarutoHero.ID.equals(data.heroId())) return true;
-			float hp = player.getHealth();
-			if (amount < hp) return true;
 			long now = player.serverLevel().getGameTime();
 			Long last = LAST_TRIGGER.get(player.getUUID());
 			if (last != null && now - last < COOLDOWN_TICKS) return true;

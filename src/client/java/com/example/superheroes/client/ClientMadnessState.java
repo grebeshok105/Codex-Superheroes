@@ -10,7 +10,7 @@ public final class ClientMadnessState {
 	private ClientMadnessState() {
 	}
 
-	public static void update(boolean madnessNew, boolean bonusLife, long readingUntil, long manaLock) {
+	public static void update(boolean madnessNew, boolean bonusLife, long readingRemainingMs, long manaLockRemainingMs) {
 		if (madnessNew && !madness) {
 			madnessStartedAtMs = System.currentTimeMillis();
 		}
@@ -19,8 +19,9 @@ public final class ClientMadnessState {
 		}
 		madness = madnessNew;
 		bonusLifeAvailable = bonusLife;
-		readingUntilMs = readingUntil;
-		manaLockUntilMs = manaLock;
+		long now = System.currentTimeMillis();
+		readingUntilMs = readingRemainingMs > 0L ? now + readingRemainingMs : 0L;
+		manaLockUntilMs = manaLockRemainingMs > 0L ? now + manaLockRemainingMs : 0L;
 	}
 
 	public static boolean isMadness() {

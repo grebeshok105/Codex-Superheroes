@@ -29,23 +29,23 @@ public final class ReinhardSpeedJudgmentController {
 		ServerTickEvents.END_SERVER_TICK.register(ReinhardSpeedJudgmentController::tick);
 	}
 
-	public static void start(ServerPlayer attacker, ServerPlayer target, long delayMs, float damage) {
+	public static void start(ServerPlayer attacker, ServerPlayer target, long delayTicks, float damage) {
 		teleportBehind(attacker, target);
-		PENDING.put(attacker.getUUID(), new PendingStrike(target.getUUID(), System.currentTimeMillis() + delayMs, damage, false));
+		PENDING.put(attacker.getUUID(), new PendingStrike(target.getUUID(), attacker.serverLevel().getGameTime() + delayTicks, damage, false));
 		ReinhardTimeSlowController.triggerAbilitySlow(attacker);
 	}
 
-	public static boolean startDebugMob(ServerPlayer attacker, Mob target, long delayMs, float damage) {
+	public static boolean startDebugMob(ServerPlayer attacker, Mob target, long delayTicks, float damage) {
 		if (!AdminAbilityDebug.canTargetMob(attacker, AbilityIds.REINHARD_SPEED_JUDGMENT, target)) return false;
 		teleportBehind(attacker, target);
-		PENDING.put(attacker.getUUID(), new PendingStrike(target.getUUID(), System.currentTimeMillis() + delayMs, damage, true));
+		PENDING.put(attacker.getUUID(), new PendingStrike(target.getUUID(), attacker.serverLevel().getGameTime() + delayTicks, damage, true));
 		ReinhardTimeSlowController.triggerAbilitySlow(attacker);
 		return true;
 	}
 
 	private static void tick(MinecraftServer server) {
 		if (PENDING.isEmpty()) return;
-		long now = System.currentTimeMillis();
+		long now = server.overworld().getGameTime();
 		Iterator<Map.Entry<UUID, PendingStrike>> it = PENDING.entrySet().iterator();
 		while (it.hasNext()) {
 			Map.Entry<UUID, PendingStrike> entry = it.next();
@@ -57,7 +57,7 @@ public final class ReinhardSpeedJudgmentController {
 					it.remove();
 					continue;
 				}
-				if (now < pending.strikeAtMs()) {
+				if (now < pending.strikeAtTick()) {
 					teleportBehind(attacker, target);
 					continue;
 				}
@@ -72,7 +72,7 @@ public final class ReinhardSpeedJudgmentController {
 				it.remove();
 				continue;
 			}
-			if (now < pending.strikeAtMs()) {
+			if (now < pending.strikeAtTick()) {
 				teleportBehind(attacker, target);
 				continue;
 			}
@@ -146,6 +146,6 @@ public final class ReinhardSpeedJudgmentController {
 		target.hurt(level.damageSources().playerAttack(attacker), damage);
 	}
 
-	private record PendingStrike(UUID targetId, long strikeAtMs, float damage, boolean debugMobTarget) {
+	private record PendingStrike(UUID targetId, long strikeAtTick, float damage, boolean debugMobTarget) {
 	}
 }
