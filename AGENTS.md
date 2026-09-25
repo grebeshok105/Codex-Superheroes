@@ -106,7 +106,7 @@ Do not guess unstable Minecraft/Fabric/library APIs from memory when the repo, m
 
 Compilation proves nothing. Before a PR:
 
-- `./gradlew build --no-daemon` is the finishing gate — the same full build CI runs, JUnit in `src/test` included. `./gradlew build -x test` is a quick mid-work check, not a finishing gate.
+- `./gradlew qualityGate --no-daemon` is the canonical finishing gate — the same one CI runs. It covers the full build with JUnit in `src/test`, the `ProjectSanityTest` source/resource checks (server-safe `src/main`, no Fabric internals, lang sync, OGG-only sounds, wired heroes/controllers/models), the assertions-enabled audit, and the release-jar isolation audit. `./gradlew build -x test` is a quick mid-work check, not a finishing gate.
 - New behavioral logic gets tests in `src/test`; a bugfix gets a regression test where possible — no theater tests written just to satisfy a rule.
 - Refactors preserve relevant behavior with tests before or alongside structural change where practical.
 - Datagen-touching changes run `./gradlew runDatagen --no-daemon` and the diff in `src/main/generated/` is reviewed.
@@ -115,7 +115,7 @@ Compilation proves nothing. Before a PR:
 
 ## 11. Definition of Done
 
-DONE only when every relevant item holds: DESIGN SPEC fully implemented; implementation plan executed when one was required; no known open items; tests written or updated; `./gradlew build` green; datagen diff reviewed where applicable; in-game verification done where applicable or its absence stated; acceptance criteria checked; independent reviews done where risk warrants them; findings fixed or explicitly rejected with reasons; docs updated where the change outdated them; `SESSION.md` updated with an accurate handoff; final self-review done; git state clean, committed, and pushed.
+DONE only when every relevant item holds: DESIGN SPEC fully implemented; implementation plan executed when one was required; no known open items; tests written or updated; `./gradlew qualityGate` green; datagen diff reviewed where applicable; in-game verification done where applicable or its absence stated; acceptance criteria checked; independent reviews done where risk warrants them; findings fixed or explicitly rejected with reasons; docs updated where the change outdated them; `SESSION.md` updated with an accurate handoff; final self-review done; git state clean, committed, and pushed.
 
 ## 12. Git workflow and GitHub
 
