@@ -276,11 +276,17 @@ public final class ProjectSanityTest {
 						+ " — every public static final XxxHero field needs a matching register(...) call";
 	}
 
-	// Convention: a *Controller that declares `public static void init()` must have that init()
-	// invoked from SuperheroesMod.onInitialize(). Controllers wired elsewhere are renamed or moved,
-	// never silently unregistered.
+	// Convention: a *Controller that declares `public static void init()` must have that init() invoked
+	// from SuperheroesMod.onInitialize() or from a hero/shared module (*Module.java). Removed in stage D2b,
+	// when ticks and lifecycle move behind HeroModuleContext and no controller keeps a static init().
 	private static void assertControllersAreWired() throws IOException {
-		String modSource = Files.readString(SUPERHEROES_MOD);
+		StringBuilder wiring = new StringBuilder(Files.readString(SUPERHEROES_MOD));
+		try (Stream<Path> files = Files.walk(MAIN_JAVA)) {
+			for (Path module : files.filter(p -> p.getFileName().toString().endsWith("Module.java")).toList()) {
+				wiring.append('\n').append(Files.readString(module));
+			}
+		}
+		String wiringSource = wiring.toString();
 		int controllers = 0;
 		try (Stream<Path> files = Files.walk(MAIN_JAVA)) {
 			for (Path file : files.filter(path -> path.getFileName().toString().endsWith("Controller.java")).toList()) {
@@ -289,9 +295,9 @@ public final class ProjectSanityTest {
 				}
 				controllers++;
 				String name = file.getFileName().toString().replace(".java", "");
-				assert modSource.contains(name + ".init()")
-						: file.getFileName() + " declares public static void init() but "
-								+ name + ".init() is never called in SuperheroesMod.onInitialize()";
+				assert wiringSource.contains(name + ".init()")
+						: file.getFileName() + " declares public static void init() but " + name
+								+ ".init() is called neither from SuperheroesMod nor from a *Module";
 			}
 		}
 		assert controllers > 0 : "no *Controller with static init() found; this check would pass vacuously";
