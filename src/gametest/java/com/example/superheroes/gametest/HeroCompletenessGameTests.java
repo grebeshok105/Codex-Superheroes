@@ -5,6 +5,7 @@ import com.example.superheroes.ability.AbilityRegistry;
 import com.example.superheroes.hero.Hero;
 import com.example.superheroes.hero.Heroes;
 import com.example.superheroes.item.ModItemGroups;
+import com.example.superheroes.item.ModItems;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
@@ -70,6 +71,15 @@ public final class HeroCompletenessGameTests implements FabricGameTest {
 	public void superheroesTabIdIsStable(GameTestHelper helper) {
 		helper.assertValueEqual(BuiltInRegistries.CREATIVE_MODE_TAB.getKey(ModItemGroups.SUPERHEROES_TAB),
 				ModId.of("superheroes"), "creative tab id");
+		helper.succeed();
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void pandoraSuitIdIsStable(GameTestHelper helper) {
+		// The registry id is persisted in player saves; it keeps the old name forever.
+		ResourceLocation id = BuiltInRegistries.ITEM.getKey(ModItems.PANDORA_SUIT);
+		helper.assertTrue(ModId.of("doctor_strange_suit").equals(id),
+				"Pandora suit registry id drifted: " + id);
 		helper.succeed();
 	}
 
