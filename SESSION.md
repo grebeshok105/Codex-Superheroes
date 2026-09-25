@@ -21,6 +21,8 @@
 - Stale remote branches were cleaned: only `main`, this branch, `docs/sync-versions-v4`, and `gh-pages` remain (`gh-pages` serves the live grebeshok.eu.cc site).
 - Independent architecture/bug review and VFX-foundation research may happen in parallel; their findings should be brought back into durable project context before implementation.
 - The independent Opus 5.5 architecture/bug audit is preserved at `docs/audits/2026-09-25-opus-architecture-audit.md` and is the current baseline for the restoration rewrite.
+- Architecture audit 2 is preserved as two complementary files: `docs/audits/2026-09-25-hero-modularity-audit.md` (hero locality, `HeroModule`/`HeroProfile`, Scorpion pilot, Reinhard stress-test) and `docs/audits/2026-09-25-hoplite-structural-audit.md` (package cycles, registries, router contract, services, payloads).
+- The executable migration plan that synthesizes both audits on top of the bugfix-pass seams is `docs/design/2026-09-25-architecture-migration-plan.md` (branch `hoplite/leukas-3c8b1c2a`, docs only). It absorbs bugfix roadmap stage 11 (hero hooks / tick dispatcher); the bugfix pass should stop at stages 4–10 + 12.
 
 ## Important decisions
 
@@ -38,15 +40,15 @@
 
 ## Open work
 
-- Establish the architecture/debt map from the independent audit.
-- Decide and execute package identity cleanup away from `com.example.superheroes` — now unblocked by the green verification baseline.
+- Execute `docs/design/2026-09-25-architecture-migration-plan.md` stage by stage; its «Статус стадий» table is the tracker. First stage: `A1` (ArchUnit guardrails) once bugfix PRs #37–#39 are on `main`.
+- Owner decision needed before plan stage `E1`: new root package name (proposed `io.github.grebeshok105.codex`, decision D14 in the plan).
 - Rebuild only the project skills that prove useful for the new workflow.
 - Design a new release/versioning workflow after the verification baseline is stable.
 - Use the VFX research to decide the Codex 5.0 rendering foundation.
 
 ## Next session
 
-1. Read this file, current `AGENTS.md`, and `docs/audits/2026-09-25-opus-architecture-audit.md`.
+1. Read this file, current `AGENTS.md`, `docs/audits/2026-09-25-opus-architecture-audit.md`, and — for architecture work — `docs/design/2026-09-25-architecture-migration-plan.md` (§0 status, §1 current state, §2 decisions).
 2. Use the preserved audit as the baseline for the Opus-led restoration/fix pass.
 3. Re-verify findings while implementing; do not assume subagent-only findings are proven until checked.
 4. Keep `qualityGate` green and update this handoff after each substantial batch.
