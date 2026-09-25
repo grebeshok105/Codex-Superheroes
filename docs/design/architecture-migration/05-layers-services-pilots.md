@@ -62,11 +62,13 @@
 
 ## Контекст
 
-- Внешние зависимости: П3 закончен (D2c — до E1); П4 закончен (CL3 — до F, CL2 и CL4 — до G2); П2 закончен (C2 — до E2; B2 желательна до F); BF5 (B11 time slow) — до G1; решение владельца R14 — до E1; барьер E1 — ни одного открытого PR, трогающего `src/`.
+- Внешние зависимости (обзор §2.1): E1 ждёт завершения всех стадий П1–П4 (включая B2 и C4), решения владельца R14 и окна без открытых PR, трогающих `src/`; дальше стадии П5 идут строго по очереди.
 - Межплановые принципы: R6 (циклы рвутся владением, rename — один барьер) и R7 (где живёт Veil/compat) — `00-overview.md` §4. Целевая раскладка и правила зависимостей — `00-overview.md` §5.
 - Этот план не делает: перенос остальных 20 героев, content-модулей и слияние лучей — всё это П6.
 
 ### Проверенные footprints пилотов
+
+Сняты на вершине стека #39 до стадий П2–П4. К началу F часть касаний уже снята (B1 — таблицы, B3 — `ScorpionKunaiItem`, D2a-1 — регистрация героя и способностей, CL3a-1 — receiver); «Сверка» F и G1 обновляет список по `main`.
 
 **Scorpion** (свои файлы: `M/hero/ScorpionHero`, `M/ability/Scorpion{Spear,Hellfire,FireTeleport,HellBreath}Ability`, `M/effect/ScorpionController` (264 строки, статические `SPEAR_PULLS`, `BREATHS`, собственный `END_SERVER_TICK`, `isScorpion`-проверка), `M/effect/ScorpionFx`, `M/item/ScorpionKunaiItem` (предмет трансформации), `M/network/ScorpionFxS2CPayload`, `C/fx/ClientScorpionFx`, `C/fx/VeilScorpionFx`). Shared-касания: `SuperheroesMod:44`, `AbilityIds:139-142`, `AbilityRegistry:139-142,262-265`, `HeroAttributes:402-407,437-443`, `HeroHudConfig:49`, `HeroTheme:233`, `Heroes:32,59`, `ModItemGroups:71`, `ModItems:210-212`, `ModNetworking:55`, `ModSounds:33`, `ClientNetworking:86-87`. `SPEAR_PULLS`/`BREATHS` не очищаются ни на leave, ни на `SERVER_STOPPED` (не попали в списки BF3).
 
@@ -77,27 +79,25 @@
 | # | Вопрос / расхождение | Что говорит код сейчас | Решение |
 | :-- | :-- | :-- | :-- |
 | R11 | Структурный M6: `Feedback.actionBar` | `displayClientMessage` — однострочный ванильный вызов без правил | Сервис `Feedback` не создаём (нет правила, которое могло бы разойтись). `Motion`, `Targeting`, `FxBroadcast` создаём — у них есть правила (синхронизация скорости, PvP/союзники/спектаторы, адресаты). |
+| R17 | Внешнее ревью: M1 делал `core/net` зависимым от `mechanic.fx.FxBroadcast` | Правило `coreDependsOnNothingAboveIt` запрещает `core → mechanic` | `FxBroadcast` — транспорт (кому отправить payload), поэтому живёт в `core/net`. В `mechanic/` — только `Motion` и `Targeting` |
+| R18 | Внешнее ревью: G1 заставлял модуль Reinhard вызывать `content/admin` | Правило запрещает `hero → content` | Метаданные для admin-отладки объявляет способность: трейт `Ability.debugTargetsMobs()` (default `false`); `AdminAbilityDebug` читает его из `AbilityRegistry`. Герой не знает про content |
 | R14 | Имя нового корневого пакета | `com.example.superheroes` | Предлагаемое по умолчанию: `io.github.grebeshok105.codex`. Это решение владельца; `E1` не стартует без подтверждения, остальные стадии от имени не зависят. |
 
 ## Зависимости стадий
 
 ```mermaid
 flowchart LR
-  D2c[П3 D2c] --> E1[E1 rename]
+  ALL[все стадии П1–П4 + R14] --> E1[E1 rename]
   E1 --> E2[E2 core/mechanic]
-  C2[П2 C2] --> E2
   E2 --> M1[M1 сервисы]
   M1 --> F[F Scorpion]
-  CL3[П4 CL3] --> F
   F --> G1[G1 Reinhard server]
-  BF5[BF5] --> G1
   G1 --> G2[G2 Reinhard client]
-  CL4[П4 CL2 + CL4] --> G2
   G2 --> G3[G3 остатки]
   G3 --> H[H review gate]
 ```
 
-Стадии строго последовательны: каждая опирается на раскладку и registrar'ы предыдущей.
+Стадии строго последовательны: каждая опирается на раскладку и registrar'ы предыдущей. Всё, что П5 берёт из П2–П4 (C2, CL2, CL3, CL4, B2, B3), влито до E1.
 
 ## File Structure
 
@@ -106,7 +106,7 @@ flowchart LR
 | весь `src/**` | переименование корня `com.example.superheroes` → `<root>` | E1 |
 | `<root>/core/{hero,ability,resource,transform,lifecycle,attachment,net}/` | контракты ядра, перенесённые из плоских пакетов | E2 |
 | `<root>/mechanic/boundweapon/` | бывший `item/bound/` | E2 |
-| `<root>/mechanic/motion/Motion.java`, `mechanic/fx/FxBroadcast.java`, `mechanic/targeting/{Targeting,TargetFilter}.java` | правила скорости, адресатов FX и выбора целей | M1 |
+| `<root>/core/net/FxBroadcast.java`, `<root>/mechanic/motion/Motion.java`, `mechanic/targeting/{Targeting,TargetFilter}.java` | адресаты FX (транспорт), правила скорости и выбора целей | M1 |
 | `<root>/core/content/{ContentRegistrar,ModContent,CreativeTabContents}.java`, `core/net/PayloadRegistrar.java` | контент и payload'ы из модулей | F |
 | `<root>/hero/scorpion/**`, `<root>/client/hero/scorpion/**` | модуль Scorpion (дерево — в стадии F) | F |
 | `<root>/hero/reinhard/**`, `<root>/client/hero/reinhard/**`, `AttachmentRegistrar` | модуль Reinhard, attachments из модулей | G1, G2 |
@@ -121,7 +121,7 @@ flowchart LR
 
 - **Цель:** убрать `com.example` из идентичности кода одним механическим PR.
 - **Почему:** SESSION «Open work»; модульный аудит §7.0; все последующие физические переносы происходят уже в финальном корне.
-- **Зависит от:** D2c; решение R14 (имя) подтверждено владельцем; **ни одного открытого PR, трогающего `src/`** (координация с bugfix-pass: этот PR сливается в окно, когда BF-ветки влиты или ещё не начаты).
+- **Зависит от:** все стадии П1–П4 (обзор §2.1); решение R14 (имя) подтверждено владельцем; **ни одного открытого PR, трогающего `src/`** (координация с bugfix-pass: этот PR сливается в окно, когда BF-ветки влиты или ещё не начаты).
 - **Мигрируется:** `git mv` дерева `com/example/superheroes` → `<root>` во всех source set'ах (`main`, `client`, `test`, `gametest`, datagen); `package`/`import`/FQN-строки; `superheroes.mixins.json` и `superheroes.client.mixins.json` (`package`); `fabric.mod.json` entrypoints (main, client, fabric-datagen); `src/gametest/resources/fabric.mod.json`; `gradle.properties` `maven_group`; `ProjectSanityTest` пути (`SUPERHEROES_MOD`, `Heroes.java`); `CodexClasses.ROOT`; ArchUnit store — заменить старый корень новым (`sed` по файлам store; описания нарушений содержат FQN); `package-cycles-baseline.txt` не меняется (он относительный).
 - **Нельзя менять:** mod id `superheroes`, id gametest-мода `superheroes-gametest`, ни одного ресурса и ассета.
 - **Тесты:** весь `qualityGate`; `auditReleaseJarIsolation` проверяет, что в jar нет старого корня (`grep -c 'com/example' <jar list>` = 0 — добавить в задачу аудита).
@@ -132,28 +132,28 @@ flowchart LR
 
 ### Стадия E2 — скелет `core/` и `mechanic/` со строгими слоями
 
-- **Цель:** контракты ядра физически отделены; строгие правила `coreDependsOnNothingAboveIt`/`mechanicsDependOnlyOnCore` начинают охранять реальный код.
+- **Цель:** контракты ядра физически отделены; строгие правила `coreDependsOnNothingAboveIt`/`mechanicsDoNotDependUpward` начинают охранять реальный код.
 - **Почему:** структурный §2.2 (кольцо `ability ↔ hero ↔ effect ↔ transform ↔ network ↔ resource ↔ attachment`), M5; R6.
-- **Зависит от:** E1, C2 (роутер без героев), D2c (transform без героев).
+- **Зависит от:** E1.
 - **Мигрируется (только классы, которые проходят строгие правила; каждый перенос — вместе с владением):**
-  - `hero/{Hero,Heroes,HeroProfile,CombatProfile,BleedProfile,ThreatClass,PassiveGlyph,HeroTheme,HeroHudConfig,AttributeModifierSet,LandingImpact}` + `physics/ImpactStyle` → `core/hero/`;
-  - `ability/{Ability,AbilityRouter,AbilityRegistry,AbilityCooldowns}` → `core/ability/` (`AbilityIds` остаётся в `ability/` до раздела по героям);
-  - `resource/*` → `core/resource/`; `transform/*` → `core/transform/`; `lifecycle/*` → `core/lifecycle/`;
-  - shared attachments (`HERO_DATA`, `HERO_DATA_RESOURCES_DIRTY`, `CONTROL_LOCKS`, `HELD_LOCKS`, `CONTROL_LOCK_SHADOW`, `TRANSFORM_TICK`) → `core/attachment/CoreAttachments`; геройские остаются в `attachment/ModAttachments` до своих волн; id не меняются;
+  - `hero/{Hero,Heroes,BleedProfile,PassiveGlyph,JarvisThreatClass,HeroTheme,HeroHudConfig,AttributeModifierSet,LandingImpact}` + `physics/ImpactStyle` → `core/hero/` (`Heroes` — чистый реестр с D2a-2; классы конкретных героев остаются в `hero/` до своих волн);
+  - `ability/{Ability,AbilityRouter,AbilityRegistry,AbilityCooldowns}` → `core/ability/` (`AbilityRegistry` — чистый реестр с D2a-2; `AbilityIds` остаётся в `ability/` до раздела по героям);
+  - `resource/*` → `core/resource/`; `transform/*` → `core/transform/`; `lifecycle/*` (`PlayerLifecycle`, `HeroLifecycle`, `HeroTickDispatcher`, `TickRegistrar`, `LifecycleRegistrar`, `OwnedSessionMap`, `EntityControlLock` + state/shadow, `PassiveReconciler`) → `core/lifecycle/`;
+  - shared attachments (`HERO_DATA`, `HERO_DATA_RESOURCES_DIRTY`, `PUBLIC_HERO`, `ABILITY_COOLDOWNS`, `ability_availability`, `CONTROL_LOCKS`, `HELD_LOCKS`, `CONTROL_LOCK_SHADOW`, `TRANSFORM_TICK`, `BOUND_WEAPON_ISSUES`) → `core/attachment/CoreAttachments`; геройские остаются в `attachment/ModAttachments` до своих волн; id не меняются;
   - core-payload'ы и их регистрация (`ModNetworking`: активация, привязка, `HeroData`/ресурсы, кулдауны, тряска экрана, обломки) → `core/net/`; появляется `core/net/PayloadRegistrar` (сигнатуры в стадии F);
-  - `item/bound/*` → `mechanic/boundweapon/`.
+  - `item/bound/*` → `mechanic/boundweapon/`; `world/WorldDestructionPolicy` → `mechanic/world/` (sanity `assertWorldMutationsGoThroughPolicy` получает новый путь).
 - **Не мигрируется здесь:** `flight/`, `physics/CombatImpactEngine` (ветка Iron Man), `effect/*` — они переедут с владельцами.
 - **Удаляется:** пустые legacy-пакеты.
 - **Нельзя менять:** поведение; id.
 - **Тесты:** весь `qualityGate`; baseline циклов должен **уменьшиться** (записать число пар до/после).
-- **Acceptance:** `coreDependsOnNothingAboveIt` и `mechanicsDependOnlyOnCore` проверяют > 0 классов (временно выключить `allowEmptyShould` в PR и убедиться, что правило не пустое, затем вернуть).
+- **Acceptance:** `coreDependsOnNothingAboveIt` и `mechanicsDoNotDependUpward` проверяют > 0 классов (временно выключить `allowEmptyShould` в PR и убедиться, что правило не пустое, затем вернуть).
 
 ### Стадия M1 — сервисы механик: `Motion`, `FxBroadcast`, `Targeting`
 
 - **Цель:** правила синхронизации скорости, адресатов FX и выбора целей живут в одном месте; герои используют их, а не копируют идиомы.
 - **Почему:** структурный S5/S11: 124 `hurtMarked = true`, 78 ручных `ClientboundSetEntityMotionPacket`, 5 копий цикла `PlayerLookup.tracking`, 100 inline-предикатов целей (Opus B19 — PvP/союзники игнорируются в 21 копии).
 - **Зависит от:** E2.
-- **Создаётся:** `mechanic/motion/Motion.java`, `mechanic/fx/FxBroadcast.java`, `mechanic/targeting/{Targeting,TargetFilter}.java`, JUnit/GameTests.
+- **Создаётся:** `core/net/FxBroadcast.java` (транспорт, R17), `mechanic/motion/Motion.java`, `mechanic/targeting/{Targeting,TargetFilter}.java`, GameTests.
 
 ```java
 package <root>.mechanic.motion;
@@ -190,7 +190,7 @@ public final class Motion {
 ```
 
 ```java
-package <root>.mechanic.fx;
+package <root>.core.net;
 
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -262,7 +262,7 @@ public record TargetFilter(@Nullable Entity owner, boolean excludeOwner, boolean
 
   `Targeting.living(ServerLevel level, AABB box, TargetFilter filter)` → `level.getEntitiesOfClass(LivingEntity.class, box, filter::test)`.
 - **Мигрируется в этой стадии:** 5 циклов `PlayerLookup.tracking` в `core/net`/`ModNetworking` → `FxBroadcast` (тот же набор адресатов в каждом месте). Геройские вызовы мигрируют в своих волнах (не big-bang).
-- **Создаётся правило (замороженное):** `noClasses().that().doNotHaveSimpleName("Motion").should().callConstructor(ClientboundSetEntityMotionPacket.class, Entity.class)` + то же для `PlayerLookup.tracking`/`around` вне `FxBroadcast` и `core.net`.
+- **Создаётся правило (замороженное):** `noClasses().that().doNotHaveSimpleName("Motion").should().callConstructor(ClientboundSetEntityMotionPacket.class, Entity.class)` + то же для `PlayerLookup.tracking`/`around` вне `core.net`.
 - **Тесты:** GameTest `Motion.set(zombie, v, MARK)` → `zombie.hurtMarked` и скорость; `TargetFilter` — GameTest с зомби, наблюдателем-спектатором и владельцем: каждый флаг отсекает ровно своё.
 - **Acceptance:** в `core/net` нет собственных циклов рассылки.
 
@@ -270,9 +270,9 @@ public record TargetFilter(@Nullable Entity owner, boolean excludeOwner, boolean
 
 ### Стадия F — пилот: Scorpion становится модулем
 
-- **Цель:** первый герой, который целиком живёт в `hero/scorpion/` + `client/hero/scorpion/` и касается shared-кода ровно двумя строками (`HeroModules`, `HeroClientModules`).
+- **Цель:** первый герой, который целиком живёт в `hero/scorpion/` + `client/hero/scorpion/` и касается shared-кода ровно двумя строками (`bootstrap.HeroModules`, `client.bootstrap.HeroClientModules`).
 - **Почему:** модульный аудит §7.3 — Scorpion сравнительно изолирован (≈1000 строк, 10 своих файлов, 12 shared-касаний, нет межгеройских ссылок); на нём дешевле всего обнаружить недостающие registrar'ы.
-- **Зависит от:** M1, CL3, D2c (и E2 — чтобы файлы переезжали один раз). B2 желательна; если B2 ещё не влита, набор атрибутов Scorpion переносится здесь с байт-в-байт id.
+- **Зависит от:** M1 (и через E1 — все стадии П1–П4, включая B2 и B3). `ScorpionModule` и `ScorpionClientModule` уже есть с D2a-1 и CL3a-1; F переносит в них остальные файлы героя.
 - **Затрагивает:** все файлы footprint'а Scorpion (раздел «Контекст» этого плана), `M/core/module/HeroModuleContext.java` (+`content()`, `payloads()`), `M/item/ModItemGroups.java`, `M/sound/ModSounds.java`, `M/item/ModItems.java`, `M/ability/AbilityIds.java`, `M/ability/AbilityRegistry.java`, `M/hero/Heroes.java`, `C/network/ClientNetworking.java`.
 - **Создаётся:**
 
@@ -282,7 +282,6 @@ public record TargetFilter(@Nullable Entity owner, boolean excludeOwner, boolean
   ScorpionItems.java           ScorpionSounds.java
   ability/ ScorpionSpearAbility, ScorpionHellfireAbility, ScorpionFireTeleportAbility, ScorpionHellBreathAbility
   runtime/ ScorpionController.java   (spear pulls, breath, passive — state in OwnedSessionMap)
-  item/    ScorpionKunaiItem.java    (если B3 не свела его к TransformationItem)
   net/     ScorpionFxS2CPayload.java, ScorpionFx.java
 <root>/client/hero/scorpion/
   ScorpionClientModule.java
@@ -291,13 +290,13 @@ public record TargetFilter(@Nullable Entity owner, boolean excludeOwner, boolean
 <root>/core/net/     PayloadRegistrar.java
 ```
 
-- **Удаляется:** Scorpion-строки из `AbilityIds`, `AbilityRegistry`, `Heroes` (поле `SCORPION`), `ModItems`, `ModItemGroups`, `ModSounds`, `ModNetworking`/`core/net`, `ClientNetworking`; старые файлы в `ability/`, `effect/`, `item/`, `network/`, `client/fx/`.
+- **Удаляется:** Scorpion-строки из `AbilityIds`, `ModItems`, `ModItemGroups`, `ModSounds`, `ModNetworking`/`core/net`, `ClientNetworking`; старые файлы в `ability/`, `effect/`, `item/`, `network/`, `client/fx/`.
 - **Старые пути, которых больше нет:** для Scorpion — любые правки в перечисленных shared-файлах.
 - **Нельзя менять:** id `scorpion`, `scorpion_spear`, `scorpion_hellfire`, `scorpion_fire_teleport`, `scorpion_hell_breath`, `scorpion_kunai`, `scorpion_fx` (payload — можно было бы, но причины нет), звук `scorpion.get_over_here`, модификаторы `modifiers/scorpion/*`, баланс (константы `ScorpionController`), поведение Veil/ванильного fallback.
 - **Поведенческие изменения (отдельные коммиты `behavior:`):** состояние притяжения и дыхания очищается при выходе/смерти владельца и на `SERVER_STOPPED` (сейчас не очищается — класс B8/B17); порядок кунаи во вкладке творчества становится «после legacy-предметов» до конца миграции (косметика; финальный порядок = порядок модулей).
 - **Тесты:** `G/ScorpionGameTests.java`; ArchUnit строгие правила модулей теперь проверяют реальные классы.
 - **Runtime:** `runClient` с Veil и без него (для второго прогона временно отфильтровать Veil из `runtimeClasspath` клиентского run-конфига тем же приёмом, что `build.gradle` уже применяет к GameTest-серверу; не коммитить): трансформация кунаем; 4 способности; «GET OVER HERE»; FX; кунай во вкладке; перезаход во время дыхания — после входа дыхания нет.
-- **Acceptance:** `grep -rli scorpion src/main/java src/client/java | grep -v '/hero/scorpion/'` → только `core/module/HeroModules.java` и `client/core/module/HeroClientModules.java`; ArchUnit store — 0 записей со `scorpion`; `runDatagen` diff пуст.
+- **Acceptance:** `grep -rli scorpion src/main/java src/client/java | grep -v '/hero/scorpion/'` → только `bootstrap/HeroModules.java` и `client/bootstrap/HeroClientModules.java`; ArchUnit store — 0 записей со `scorpion`; `runDatagen` diff пуст.
 - **Риски:** static-init: предмет должен регистрироваться во время `onInitialize` (модуль вызывает `ScorpionItems.register(ctx.content())`, что инициализирует класс); datagen провайдеры моделей предметов должны находить кунай через реестр, а не через `ModItems` (сверка `M/datagen/ModItemModelProvider`).
 - **Страховка:** PR делится на F1 (server) и F2 (client) — откатываются независимо, F2 зависит от F1.
 
@@ -383,7 +382,7 @@ public final class ScorpionGameTests implements FabricGameTest {
 
   `ScorpionController` импортируется из текущего пакета `effect` до переноса и из `hero.scorpion.runtime` после. Сверка: если `SCORPION_HELL_BREATH` требует ситуативного условия в `canActivate`, вызвать `ScorpionController.startBreath(player)` напрямую. Run `runGametest` → PASS на старом коде.
 
-- [ ] **Step 2: Перенос файлов** (`git mv`, чтобы сохранить историю): способности, `ScorpionHero`, `ScorpionController` → `runtime/`, `ScorpionFx` + payload → `net/`, `ScorpionKunaiItem` → `item/`. `AbilityIds.SCORPION_*` → `ScorpionAbilities` (`public static final ResourceLocation SPEAR = ModId.of("scorpion_spear");` …); все ссылки обновить.
+- [ ] **Step 2: Перенос файлов** (`git mv`, чтобы сохранить историю): способности, `ScorpionHero`, `ScorpionController` → `runtime/`, `ScorpionFx` + payload → `net/`; предмет — `TransformationItem` из B3, его регистрация и `TransformationLore` переезжают из `ModItems` в `ScorpionItems`. `AbilityIds.SCORPION_*` → `ScorpionAbilities` (`public static final ResourceLocation SPEAR = ModId.of("scorpion_spear");` …); все ссылки обновить.
 
 - [ ] **Step 3: Модуль**
 
@@ -391,11 +390,11 @@ public final class ScorpionGameTests implements FabricGameTest {
 package <root>.hero.scorpion;
 
 public final class ScorpionModule implements HeroModule {
-	private static final ScorpionHero HERO = new ScorpionHero();
+	private final ScorpionHero hero = new ScorpionHero();
 
 	@Override
 	public Hero hero() {
-		return HERO;
+		return hero;
 	}
 
 	@Override
@@ -416,8 +415,15 @@ public final class ScorpionModule implements HeroModule {
 package <root>.hero.scorpion;
 
 public final class ScorpionItems {
-	public static final ScorpionKunaiItem KUNAI = ModContent.item("scorpion_kunai",
-			new ScorpionKunaiItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC)));
+	// Same keys, colors and order as the lore B3 moved out of ScorpionKunaiItem.
+	private static final TransformationLore LORE = new TransformationLore(ChatFormatting.GOLD,
+			List.of(new TransformationLore.Line("item.superheroes.scorpion_kunai.lore.line1", ChatFormatting.GOLD),
+					new TransformationLore.Line("item.superheroes.scorpion_kunai.lore.line2", ChatFormatting.DARK_GRAY)),
+			List.of(new TransformationLore.Line("item.superheroes.scorpion_kunai.lore.usage", ChatFormatting.RED),
+					new TransformationLore.Line("item.superheroes.scorpion_kunai.lore.untransform", ChatFormatting.RED)));
+
+	public static final TransformationItem KUNAI = ModContent.item("scorpion_kunai",
+			new TransformationItem(ScorpionHero.ID, new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC), LORE));
 
 	private ScorpionItems() {
 	}
@@ -438,12 +444,13 @@ public final class ScorpionItems {
 	private static final OwnedSessionMap<UUID, Breath> BREATHS =
 			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.of(OwnedSessionMap.ClearOn.LEAVE, OwnedSessionMap.ClearOn.DEATH));
 
-	static void register(HeroModuleContext ctx) {
-		ctx.ticks().server(TickPhase.EARLY, server -> {
+	/** Module wiring; public because ScorpionModule lives in the parent package hero.scorpion. */
+	public static void register(HeroModuleContext ctx) {
+		ctx.ticks().early(server -> {
 			tickSpearPulls(server);
 			tickBreaths(server);
 		});
-		ctx.ticks().hero(ScorpionHero.ID, TickPhase.EARLY, ScorpionController::tickPassive);
+		ctx.ticks().hero(ScorpionHero.ID, (server, player, data) -> tickPassive(player));
 	}
 ```
 
@@ -495,7 +502,7 @@ public final class ScorpionItems {
 	}
 ```
 
-  `static boolean isPulled(LivingEntity target)` — новый запрос в `ScorpionController` (`SPEAR_PULLS.containsKey(target.getUUID())`), используется тестом.
+  `public static boolean isPulled(LivingEntity target)` — новый публичный запрос в `ScorpionController` (`SPEAR_PULLS.containsKey(target.getUUID())`), как уже публичный `isBreathing`; тест живёт в пакете `gametest`, поэтому package-private доступа нет.
 
 - [ ] **Step 6:** `./gradlew qualityGate --no-daemon` (baseline уменьшился → закоммитить) → PASS; `./gradlew runDatagen --no-daemon` → diff пуст. Commit: `refactor(scorpion): move Scorpion into its hero module`.
 
@@ -520,28 +527,32 @@ public final class ScorpionClientModule implements HeroClientModule {
 }
 ```
 
-  Удалить receiver из `ClientNetworking`, заменить строку в `HeroClientModules` на `new ScorpionClientModule()` (если CL3a создал тонкий модуль — он и дописывается).
+  `ScorpionClientModule` и его receiver уже созданы в П4 CL3a-1; здесь меняются только импорты на новые пакеты FX и payload.
 - [ ] **Step 3:** runtime-чек-лист стадии; скриншоты FX с Veil и без — в PR.
 - [ ] **Step 4:** acceptance-команда стадии → только два файла-списка. Commit: `refactor(scorpion): move Scorpion client FX into its client module`.
 
-#### Task F.4: правило «S2C payload героя имеет receiver в его client-модуле»
+#### Task F.4: правило «S2C payload героя зарегистрирован в его client-модуле»
 
-Выполняется в F1 (сервер Scorpion) и начинает проверять реальный код, как только у Scorpion есть payload и client-модуль.
-
-**Правило «S2C payload героя имеет receiver в его client-модуле»** (строгое ArchUnit, появляется в F):
+Выполняется в F1 и начинает проверять реальный код, как только `ScorpionFxS2CPayload` переезжает в `hero/scorpion/net/`. Правило проверяет **регистрацию**, а не упоминание типа: внешнее ревью показало, что проверка «client-модуль ссылается на payload» проходит и для метода `render(ScorpionFxS2CPayload)`, который нигде не зарегистрирован.
 
 ```java
 	@Test
-	void everyHeroS2CPayloadHasAClientReceiverInItsModule() {
+	void everyHeroS2CPayloadHasARegisteredReceiver() {
 		classes().that(IN_HERO_MODULE).and().haveSimpleNameEndingWith("S2CPayload")
-				.should(new ArchCondition<>("be referenced by the matching client hero module") {
+				.should(new ArchCondition<>("have its TYPE passed to HeroClientContext.receive in its client module") {
 					@Override
 					public void check(JavaClass payload, ConditionEvents events) {
-						String heroId = heroModuleRoot(payload.getPackageName(), ROOT + ".hero.").substring((ROOT + ".hero.").length());
-						boolean received = payload.getDirectDependenciesToSelf().stream()
-								.anyMatch(d -> d.getOriginClass().getPackageName().startsWith(ROOT + ".client.hero." + heroId));
-						if (!received) {
-							events.add(SimpleConditionEvent.violated(payload, payload.getName() + " has no receiver in client.hero." + heroId));
+						String clientModule = ROOT + ".client.hero." + heroId(payload.getPackageName(), ROOT + ".hero.");
+						boolean registered = payload.tryGetField("TYPE").map(type -> type.getAccessesToSelf().stream()
+								.map(com.tngtech.archunit.core.domain.JavaFieldAccess::getOrigin)
+								.anyMatch(origin -> origin.getOwner().getPackageName().startsWith(clientModule)
+										&& origin.getMethodCallsFromSelf().stream().anyMatch(call ->
+												call.getTargetOwner().getName().equals(ROOT + ".client.core.module.HeroClientContext")
+														&& call.getName().equals("receive"))))
+								.orElse(false);
+						if (!registered) {
+							events.add(SimpleConditionEvent.violated(payload,
+									payload.getName() + " is not registered through HeroClientContext.receive in " + clientModule));
 						}
 					}
 				})
@@ -549,6 +560,9 @@ public final class ScorpionClientModule implements HeroClientModule {
 				.check(CodexClasses.mainAndClient());
 	}
 ```
+
+- [ ] **Негативная проба (не коммитить):** в `ScorpionClientModule.register` удалить вызов `ctx.receive(...)` и добавить `static void render(ScorpionFxS2CPayload payload) {}` → `./gradlew test --no-daemon --tests '*ArchitectureRulesTest*'` падает на `everyHeroS2CPayloadHasARegisteredReceiver`; вернуть.
+- Сигнатуры `JavaClass.tryGetField`, `JavaField.getAccessesToSelf`, `JavaCodeUnit.getMethodCallsFromSelf` — ArchUnit 1.5.1; это правило прототипом не компилировалось.
 
 ---
 
@@ -558,11 +572,11 @@ Reinhard использует почти каждый seam: persistent+copyOnDea
 
 #### G1 — сервер Reinhard
 
-- **Зависит от:** F; **BF5** (B11: time slow больше не меняет глобальный tick rate; без этого перенос `ReinhardTimeSlowController` перенесёт баг).
-- **Создаётся:** `hero/reinhard/{ReinhardModule,ReinhardHero,ReinhardAbilities,ReinhardItems,ReinhardSounds,ReinhardAttachments}`, `ability/` (8), `runtime/` (`ReinhardController`, `ReinhardTimeSlowController`, `ReinhardSwordDrawCeremonyController`, `ReinhardSwordDrawGateController`, `ReinhardSwordDeathMarkController`, `ReinhardSpeedJudgmentController`, `ReinhardWorthyOpponent`, `ReinhardState`), `item/` (`RoyalIcicleItem` extends `mechanic.boundweapon.BoundWeaponItem`, suit), `net/` (7 payload'ов + C2S handler wish confirm); `HeroModuleContext.attachments()` → `AttachmentRegistrar` (новый узкий registrar: `<A> AttachmentType<A> persistent(String path, Codec<A> codec, boolean copyOnDeath)` и `<A> AttachmentType<A> transientType(String path)` — тела копируют текущие вызовы `AttachmentRegistry.<A>builder()…buildAndRegister(ModId.of(path))`).
-- **Мигрируется:** `REINHARD_STATE` → `ReinhardAttachments.STATE` (id `reinhard_state` — байт-в-байт, persistent + copyOnDeath как сейчас); `AbilityIds.isReinhardSwordOnly` → `ReinhardHero.checkAccess` (сверка: где сейчас вызывается `isReinhardSwordOnly` и какой отказ — повторить отказ в той же точке цепочки; если проверка стоит внутри способностей, а не в роутере, она остаётся в способностях и лишь переезжает в `ReinhardAbilities`); `HeroTransformService:156` `onRespawn` → `ctx.lifecycle().onRespawn`; `clearAdaptations` → `onHeroChange`; `ReinhardController:419-424` — явный перечень чужих лучевых типов урона → тег типов урона `#superheroes:beam` (datagen, `ModDamageTypeTagProvider`), в который входят **ровно** перечисленные сейчас ключи (`eye_laser`, `repulsor`, `unibeam`, `homelander_eye_laser`, `homelander_heat_vision`, `goku_kamehameha`); эвристика по пути (`laser`/`beam`/`heat_vision`) остаётся — она генерическая и ловит типы урона других модов; `AdminAbilityDebug.MOB_TARGET_ABILITIES` → `AdminAbilityDebug.allowMobTarget(ResourceLocation)`, вызываемый модулем Reinhard (`content/admin` владеет механизмом, Reinhard — данными).
+- **Зависит от:** F. Time slow уже без глобального tick rate (BF5).
+- **Создаётся:** `hero/reinhard/{ReinhardModule,ReinhardHero,ReinhardAbilities,ReinhardItems,ReinhardSounds,ReinhardAttachments}`, `ability/` (8), `runtime/` (`ReinhardController`, `ReinhardTimeSlowController`, `ReinhardSwordDrawCeremonyController`, `ReinhardSwordDrawGateController`, `ReinhardSwordDeathMarkController`, `ReinhardSpeedJudgmentController`, `ReinhardWorthyOpponent`, `ReinhardState`), `item/` (`RoyalIcicleItem` extends `mechanic.boundweapon.BoundWeaponItem`, suit), `net/` (7 payload'ов + C2S handler wish confirm); `HeroModuleContext.attachments()` → `AttachmentRegistrar` (новый узкий registrar: `<A> AttachmentType<A> persistent(String path, Codec<A> codec, boolean copyOnDeath)` и `<A> AttachmentType<A> transientType(String path)` — тела используют API BF12 `AttachmentRegistry.create(ModId.of(path), builder -> …)`, как `ModAttachments`).
+- **Мигрируется:** `REINHARD_STATE` → `ReinhardAttachments.STATE` (id `reinhard_state` — байт-в-байт, persistent + copyOnDeath как сейчас); `AbilityIds.isReinhardSwordOnly` → `ReinhardHero.canUseAbility` (хук BF11) (сверка: где сейчас вызывается `isReinhardSwordOnly` и какой отказ — повторить отказ в той же точке цепочки; если проверка стоит внутри способностей, а не в роутере, она остаётся в способностях и лишь переезжает в `ReinhardAbilities`); `HeroTransformService:156` `onRespawn` → `ctx.lifecycle().onRespawn`; `clearAdaptations` → `ctx.lifecycle().onHeroClear` (уже подписан на `HeroLifecycle.onClear` в BF11); `ReinhardController:419-424` — явный перечень чужих лучевых типов урона → тег типов урона `#superheroes:beam` (datagen, `ModDamageTypeTagProvider`), в который входят **ровно** перечисленные сейчас ключи (`eye_laser`, `repulsor`, `unibeam`, `homelander_eye_laser`, `homelander_heat_vision`, `goku_kamehameha`); эвристика по пути (`laser`/`beam`/`heat_vision`) остаётся — она генерическая и ловит типы урона других модов; `AdminAbilityDebug.MOB_TARGET_ABILITIES` → трейт способности `Ability.debugTargetsMobs()` (default `false`, `ReinhardSpeedJudgmentAbility` → `true`); `AdminAbilityDebug` читает трейт через `AbilityRegistry` — модуль героя не зависит от `content` (R18).
 - **Создаётся также (политика C2S, `00-overview.md` §6.2 п.5):** `core/net/C2SGuards` с `requireHero(ServerPlayer, ResourceLocation heroId)` и `requireActiveAbility(ServerPlayer, ResourceLocation abilityId)`; первый потребитель — handler `ReinhardWishConfirmC2SPayload`. GameTest: пакет от игрока «не того» героя — no-op.
-- **Удаляется:** все Reinhard-строки из `AbilityIds`, `AbilityRegistry`, `Heroes`, `ModItems`, `ModItemGroups`, `ModAttachments`, `ModNetworking`, `ModSounds`, `SuperJumpController` (уже через профиль после B1), `HeroTransformService`, `AdminAbilityDebug`, `ReinhardController` → чужие типы урона.
+- **Удаляется:** все Reinhard-строки из `AbilityIds`, `AbilityRegistry`, `Heroes`, `ModItems`, `ModItemGroups`, `ModAttachments`, `ModNetworking`, `ModSounds`, `SuperJumpController` (уже через хук `canSuperJump` после B1), `HeroTransformService`, `AdminAbilityDebug`, `ReinhardController` → чужие типы урона.
 - **Нельзя менять:** id `reinhard_state`, `royal_icicle`, `reinhard_*` способностей/звуков/payload'ов, значения, тексты, поведение церемонии/меча/метки/time slow (кроме того, что изменил BF5).
 - **Тесты:** существующие BF-тесты Reinhard (`BoundWeaponGameTests` Royal Icicle, lifecycle-церемония) — без изменений; новые: `ReinhardGameTests.stateSurvivesDeath` (persistent+copyOnDeath сохранены: выставить значение в `STATE`, убить, респавн — значение на месте), `beamTagMatchesLegacyList` (тег содержит ровно 6 ключей), `swordOnlyAbilitiesRequireTheSword` (характеризационный, до переноса).
 - **Runtime:** `runClient`: церемония меча, 8 способностей, Wish-экран (C2S), time slow, метка смерти, перезаход с активным состоянием.
@@ -570,9 +584,9 @@ Reinhard использует почти каждый seam: persistent+copyOnDea
 
 #### G2 — клиент Reinhard
 
-- **Зависит от:** G1, CL2, CL4.
+- **Зависит от:** G1 (реестры HUD и слоёв игрока из П4 к этому моменту уже в `main`).
 - **Создаётся:** `client/hero/reinhard/{ReinhardClientModule, state/ (5 стейтов), hud/ (3 оверлея), screen/ReinhardWishScreen, render/ReinhardScabbardLayer}`; в client core — `client/core/audio/ClientSoundFilters` (`register(Predicate<SoundInstance> mute)`; общий `SoundEngineMixin` в `client/core/mixin` спрашивает реестр) и `client/core/hud/AbilityDecorations` (`register(ResourceLocation abilityId, AbilityDecoration)`; `RadialMenuHud` рисует зарегистрированные декорации вместо ветки `REINHARD_SWORD_DRAW` в `:275-278`).
-- **Мигрируется:** `SoundEngineMixin` → общий mixin + фильтр, который регистрирует Reinhard (условие `ClientReinhardTimeSlowState.active()` и исключение `superheroes:reinhard` — байт-в-байт); ореол «меч готов» → `AbilityDecoration` модуля Reinhard; receiver'ы 7 payload'ов, стейты (`ctx.sessionState`), HUD (`ctx.hud` с прежним `order`), слой ножен (`ctx.playerLayer`).
+- **Мигрируется:** `SoundEngineMixin` → общий mixin + фильтр, который регистрирует Reinhard (условие `ClientReinhardTimeSlowState.active()` и исключение `superheroes:reinhard` — байт-в-байт); ореол «меч готов» → `AbilityDecoration` модуля Reinhard; receiver'ы 7 payload'ов, стейты (сброс уже зарегистрирован в каждом через `ClientSessionState`, BF7), HUD (`ctx.hud` с прежним `order`), слой ножен (`ctx.playerLayer`).
 - **Удаляется:** Reinhard-ветки в `SoundEngineMixin`, `RadialMenuHud`, `SuperheroesClient`, `ClientNetworking`, `AbilityDescriptions`/`PassiveIcons` (уже B1).
 - **Нельзя менять:** звук во время time slow, внешний вид радиалки и HUD.
 - **Runtime:** скриншоты радиалки с ореолом, 3 HUD-оверлеев, Wish-экрана до/после; time slow: мир тихий, звуки Reinhard слышны.
@@ -587,7 +601,7 @@ Reinhard использует почти каждый seam: persistent+copyOnDea
 
 ### Стадия H — architecture review gate (обязательный барьер перед волнами)
 
-- **Цель:** решить на фактах, выдержал ли seam Reinhard, прежде чем тиражировать его на 19 героев.
+- **Цель:** решить на фактах, выдержал ли seam Reinhard, прежде чем тиражировать его на остальных 20 героев.
 - **Зависит от:** G3.
 - **Процедура:**
   1. Независимое ревью субагентом профиля `review` (не автором F/G): вход — `00-overview.md` и планы 1–6, диффы F1–F3, G1–G3, ArchUnit store, baseline-метрики `00-overview.md` §3.3 до/после; вопросы — ниже.
@@ -609,14 +623,15 @@ Reinhard использует почти каждый seam: persistent+copyOnDea
 ## Готово, когда
 
 - Корень переименован, `grep -rn 'com\.example' src/ build.gradle gradle.properties` пусто.
-- Строгие `coreDependsOnNothingAboveIt` и `mechanicsDependOnlyOnCore` проверяют непустой набор классов; baseline циклов уменьшился.
-- Scorpion и Reinhard касаются shared-кода только строками в `HeroModules` и `HeroClientModules` (Reinhard — ещё тег `beam.json`, lang и ассеты).
+- Строгие `coreDependsOnNothingAboveIt` и `mechanicsDoNotDependUpward` проверяют непустой набор классов; baseline циклов уменьшился.
+- Scorpion и Reinhard касаются shared-кода только строками в `bootstrap.HeroModules` и `client.bootstrap.HeroClientModules` (Reinhard — ещё тег `beam.json`, lang и ассеты).
 - Review gate H пройден (go), решения записаны, skill `migrate-hero` создан, порядок волн П6 подтверждён.
 
 ## Self-Review
 
-- **Покрытие:** E1, E2, M1, F, G1–G3, H из исходного плана перенесены целиком; footprints пилотов, решения R11, R14, правило receiver'ов (F.4) и `C2SGuards` (G1) — выше.
-- **Что используют следующие планы:** `Motion.set/add` + `Motion.Sync`, `FxBroadcast.tracking/trackingAndSelf/around`, `TargetFilter` (+`withoutOwner/alive/withoutSpectators/and/test`), `Targeting.living`; `ModContent.item/sound`, `ContentRegistrar.creativeTab`, `CreativeTabContents.all`, `PayloadRegistrar.s2c/c2s/FABRIC`; `HeroModuleContext.content()/payloads()/attachments()`, `AttachmentRegistrar.persistent/transientType`; `C2SGuards.requireHero/requireActiveAbility`; `ClientSoundFilters.register`, `AbilityDecorations.register`; тег `#superheroes:beam`; skill `migrate-hero`.
+- **Покрытие:** E1, E2, M1, F, G1–G3, H перестроены под composition roots (R16) и seams BF; замечания внешнего ревью (`core → mechanic` в M1, `hero → content` в G1, B3 против F, доступность методов Scorpion, проверка receiver'а по упоминанию типа, «19 героев») закрыты; решения R11, R14, R17, R18 — выше.
+- **Что используют следующие планы:** `FxBroadcast.tracking/trackingAndSelf/around` (`core.net`), `Motion.set/add` + `Motion.Sync`, `TargetFilter` (+`withoutOwner/alive/withoutSpectators/and/test`), `Targeting.living`; `ModContent.item/sound`, `ContentRegistrar.creativeTab`, `CreativeTabContents.all`, `PayloadRegistrar.s2c/c2s/FABRIC`; `HeroModuleContext.content()/payloads()/attachments()`, `AttachmentRegistrar.persistent/transientType`; `C2SGuards.requireHero/requireActiveAbility`; `Ability.debugTargetsMobs()`; `ClientSoundFilters.register`, `AbilityDecorations.register`; тег `#superheroes:beam`; правило `everyHeroS2CPayloadHasARegisteredReceiver`; skill `migrate-hero`.
+- **Проверка:** код этого плана не компилировался; имена и сигнатуры сверены со сводной базой и прототипом A1/D2a-1.
 
 ## Execution Handoff
 

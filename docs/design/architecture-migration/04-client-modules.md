@@ -4,7 +4,7 @@
 
 **Goal:** Клиентская сторона героя принадлежит его `HeroClientModule`. Клиентские стейты сбрасываются сами, HUD собирается из реестра, клавиши-действия и скины регистрирует герой, доступность способностей приходит с сервера. `SuperheroesClient` не знает героев.
 
-**Architecture:** Реестры `client/core` (`ClientSessionStates`, `HudLayers`, `HeroActionKeys`, `SkinResolver`, `PlayerLayers`) заменяют ручные списки в `SuperheroesClient`, `ClientNetworking`, `ModKeys`, `HudEditScreen` и ветки в skin-миксинах. Каждый герой получает client-модуль в явном списке `HeroClientModules`. Серверная доступность способностей синхронизируется attachment'ом, клиентская копия правил удаляется.
+**Architecture:** Хаб сброса `ClientSessionState` уже сделал BF7. Реестры `client/core` (`HudLayers`, `HeroActionKeys`, `SkinResolver`, `PlayerLayers`) заменяют ручные списки в `SuperheroesClient`, `ClientNetworking`, `ModKeys`, `HudEditScreen` и ветки в skin-миксинах. Каждый герой получает client-модуль в явном списке `HeroClientModules`. Серверная доступность способностей синхронизируется attachment'ом, клиентская копия правил удаляется.
 
 **Tech Stack:** Java 21, Minecraft 1.21.1 (Mojang mappings), Fabric Loader 0.19.2, Fabric API 0.116.12+1.21.1 (client networking, key binding, HUD render callback), Fabric Loom 1.16-SNAPSHOT, Fabric GameTest API, ArchUnit 1.5.1 (из П1).
 
@@ -50,18 +50,20 @@
 
 | Стадия | Статус | PR |
 | :-- | :-- | :-- |
-| CL1 автосброс клиентских стейтов | ⏳ | |
+| CL1 автосброс клиентских стейтов | ✅ закрыт BF7 (#45) | |
 | CL2 реестр HUD-слоёв | ⏳ | |
-| CL3a API и receiver'ы client-модулей | ⏳ | |
-| CL3b клавиши, HUD, рендереры, стейты в модули | ⏳ | |
+| CL3a-1 срез: Scorpion через `HeroClientModule` | ⏳ | |
+| CL3a-2 client-модули остальных 21 героя и их receiver'ы | ⏳ | |
+| CL3b клавиши, HUD, рендереры в модули | ⏳ | |
 | CL4 скины и слои игрока | ⏳ | |
 | C4 доступность способностей с сервера | ⏳ | |
 
 ## Контекст
 
-- Baseline (`00-overview.md` §3.3): `SuperheroesClient` — 393 строки; 26 `Client*State`, у 13 есть reset/clear; 37 HUD-классов, 9 используют `HudLayoutManager`; 36 клиентских receiver'ов; 19 клиентских mixins.
-- Внешние зависимости: П1 A1 (клиентские ArchUnit-правила) — до CL2; П3 D2a (`HeroModules`, порядок героев) — до CL3; П2 C2 (хуки `Hero`) — до C4; BF7 (клиентская сессия, клавиши) — до CL1; BF10 (synced публичный вид героя) — до CL4 и C4.
-- Сквозные политики, которые применяет план: mixin policy и сеть — `00-overview.md` §6.1, §6.2 (решение R12).
+- Baseline (обзор §3.4): `SuperheroesClient` — 390 строк; 27 `Client*State`, все регистрируют сброс (BF7); 37 HUD-классов, 9 используют `HudLayoutManager`; 35 клиентских receiver'ов; 19 клиентских mixins.
+- Seams bugfix-pass, на которых строится план: `ClientSessionState` (BF7), `PUBLIC_HERO` и `ClientHeroDimsWatcher` (BF10), `AttachmentRegistry.create` с `syncWith` (BF10/BF12), укороченный `ClientAbilityFilter` (BF11), фикс отпускания клавиш (BF7).
+- Внешние зависимости (обзор §2.1): П1 A1 — до CL2; П3 D2a-1 — до CL3a-1; П3 D2a-2 — до CL3a-2.
+- Сквозные политики: mixin policy и сеть — обзор §6.1, §6.2 (решение R12); composition roots — R16; вертикальный срез — R19.
 - Этот план не делает: физический перенос клиентских файлов героев в `client/hero/<id>/` — только регистрации (перенос — П5, П6); лучевые рендереры (П6 L2); звуковой mixin Reinhard и декорации радиалки (П5 G2).
 
 ### Решения
@@ -72,29 +74,27 @@
 
 ```mermaid
 flowchart LR
-  BF7[BF7] --> CL1[CL1 сброс стейтов]
   A1[П1 A1] --> CL2[CL2 HUD-реестр]
-  CL1 --> CL3[CL3a/b HeroClientModule]
-  CL2 --> CL3
-  D2a[П3 D2a] --> CL3
-  CL3 --> CL4[CL4 скины]
-  BF10[BF10] --> CL4
-  CL3 --> C4[C4 доступность]
-  C2[П2 C2] --> C4
-  BF10 --> C4
+  D2a1[П3 D2a-1] --> CL3a1[CL3a-1 срез Scorpion]
+  CL2 --> CL3a1
+  CL3a1 --> CL3a2[CL3a-2 остальные 21]
+  D2a2[П3 D2a-2] --> CL3a2
+  CL3a2 --> CL3b[CL3b клавиши, HUD, рендереры]
+  CL3b --> CL4[CL4 скины]
+  CL3a2 --> C4[C4 доступность]
 ```
 
-CL1 и CL2 независимы. CL4 и C4 после CL3 идут параллельно.
+CL4 и C4 идут параллельно. Весь П4 — до П5 E1 (обзор §2.1).
 
 ## File Structure
 
 | Файл | Ответственность | Стадия |
 | :-- | :-- | :-- |
-| `C/core/session/{ClientSessionState,ClientSessionStates}.java` | единый сброс клиентских стейтов | CL1 |
 | `C/core/hud/{HudLayer,MovableHud,HudBounds,HudLayers}.java` | реестр HUD, порядок, перемещаемость | CL2 |
-| `C/core/module/{HeroClientModule,HeroClientContext,CoreClientContext,HeroClientModules}.java` | клиентский модульный seam | CL3 |
-| `C/core/input/HeroActionKeys.java` | клавиши-действия героев | CL3 |
-| `C/hero/<id>/<Id>ClientModule.java` ×22 | клиентская проводка героя | CL3 |
+| `C/core/module/{HeroClientModule,HeroClientContext,CoreClientContext}.java` | контракты клиентского модульного seam | CL3a-1 |
+| `C/bootstrap/HeroClientModules.java` | composition root: явный список client-модулей | CL3a-1 |
+| `C/core/input/HeroActionKeys.java` | клавиши-действия героев | CL3b |
+| `C/hero/<id>/<Id>ClientModule.java` ×22 | клиентская проводка героя (Scorpion — CL3a-1, остальные — CL3a-2) | CL3a |
 | `C/core/render/{SkinProvider,SkinResolver,PlayerLayers}.java` | скины и feature-слои без веток героев | CL4 |
 | `M/core/ability/AbilityAvailability.java` | серверная доступность способностей | C4 |
 
@@ -102,83 +102,9 @@ CL1 и CL2 независимы. CL4 и C4 после CL3 идут паралл�
 
 ## Стадии
 
-### Стадия CL1 — клиентское состояние сбрасывается само
+### CL1 — закрыт BF7
 
-- **Цель:** каждый `Client*State` зарегистрирован в одном месте сброса; новый стейт не может «залипнуть» между мирами.
-- **Почему:** Opus B15 / долг 9, структурный S8: 26 стейтов, ручной сброс 9–13 из них в `SuperheroesClient`.
-- **Зависит от:** **BF7** (клиентская сессия с TTL). Если BF7 создал хаб сброса — `ClientSessionStates` **не создаётся**, используется хаб BF7, а ниже меняются только имена; второй хаб запрещён.
-- **Создаётся:** `C/core/session/ClientSessionState.java`, `C/core/session/ClientSessionStates.java`.
-
-```java
-package com.example.superheroes.client.core.session;
-
-/** Client state that belongs to one connection and must be dropped when it ends or a new one starts. */
-@FunctionalInterface
-public interface ClientSessionState {
-	void reset();
-}
-```
-
-```java
-package com.example.superheroes.client.core.session;
-
-import com.example.superheroes.SuperheroesMod;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
-
-import java.util.ArrayList;
-import java.util.List;
-
-public final class ClientSessionStates {
-	private static final List<ClientSessionState> STATES = new ArrayList<>();
-
-	private ClientSessionStates() {
-	}
-
-	public static void register(ClientSessionState state) {
-		STATES.add(state);
-	}
-
-	public static void init() {
-		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> resetAll());
-		ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> resetAll());
-	}
-
-	static void resetAll() {
-		for (ClientSessionState state : STATES) {
-			try {
-				state.reset();
-			} catch (Throwable t) {
-				SuperheroesMod.LOGGER.error("client session state reset failed", t);
-			}
-		}
-	}
-}
-```
-
-- **Мигрируется:** блок `ClientPlayConnectionEvents.DISCONNECT` в `SuperheroesClient` → `ClientSessionStates.register(X::clear)` для каждого стейта; 13 стейтов без `clear/reset` получают `static void reset()` (обнуление ровно тех полей, что сбрасывает отключение/новый мир). Сброс на `JOIN` — новое поведение (защищает от краша клиента без `DISCONNECT`) → `behavior:` коммит.
-- **Создаётся правило (замороженное):** классы `C/Client*State` имеют статический метод `reset` или `clear`.
-
-```java
-	@Test
-	void clientStatesCanBeReset() {
-		FreezingArchRule.freeze(classes().that().haveSimpleNameStartingWith("Client").and().haveSimpleNameEndingWith("State")
-				.should(new ArchCondition<>("declare a static reset() or clear()") {
-					@Override
-					public void check(JavaClass c, ConditionEvents events) {
-						boolean ok = c.getMethods().stream().anyMatch(m -> m.getModifiers().contains(JavaModifier.STATIC)
-								&& (m.getName().equals("reset") || m.getName().equals("clear")) && m.getRawParameterTypes().isEmpty());
-						if (!ok) {
-							events.add(SimpleConditionEvent.violated(c, c.getName() + " cannot be reset"));
-						}
-					}
-				}))
-				.check(CodexClasses.mainAndClient());
-	}
-```
-
-- **Тесты:** JUnit недоступен для клиентских классов (нет клиента в тестовом classpath) — проверка через правило выше и runtime.
-- **Runtime:** `runClient`: войти в мир как Reinhard, включить Time Slow, выйти в меню, зайти в другой мир — звуки мира слышны (Opus B15); повторить для Pandora-ролика.
-- **Acceptance:** в `SuperheroesClient` нет ручного списка сброса; store правила пуст.
+Автосброс клиентского состояния уже сделан bugfix-pass (#45): `client/ClientSessionState.register(Runnable)` в static-блоке каждого `Client*State`, `resetAll()` на disconnect, sanity `assertClientStatesRegisterReset`. Второй хаб сброса не создаётся; client-модули ничего не регистрируют для сброса.
 
 ### Стадия CL2 — реестр HUD-слоёв
 
@@ -274,14 +200,14 @@ public final class HudLayers {
 - **Удаляется:** жёсткий список HUD в `SuperheroesClient`, `switch` с копией математики в `HudEditScreen`, `HudLayoutManager.ALL`.
 - **Нельзя менять:** z-order, id раскладки, внешний вид. Геройские HUD на этой стадии регистрируются **из `SuperheroesClient`** (они переедут в client-модули в CL3b/волнах).
 - **Runtime:** `runClient`: скриншоты HUD Homelander, Iron Man, Reinhard, Regulus до/после совпадают; редактор HUD показывает те же 7 элементов в тех же рамках; перетаскивание сохраняется между перезапусками.
-- **Acceptance:** `grep -c 'Hud.render\|Hud::render' C/SuperheroesClient.java` → 0 (только `HudLayers.register`).
+- **Acceptance:** `grep -rln 'HudRenderCallback.EVENT.register' src/client/java` → только `HudLayers.java`; в `SuperheroesClient` нет прямых вызовов `render(` HUD-классов — только `HudLayers.register(..., X::render)`.
 
-### Стадия CL3 — `HeroClientModule`: клиентская точка владения героя
+### Стадия CL3 — `HeroClientModule`: клиентская точка владения героя (CL3a-1, CL3a-2, CL3b)
 
-- **Цель:** у каждого героя есть `client/hero/<id>/<Id>ClientModule`, через который он регистрирует receiver'ы своих payload'ов, клавиши-действия, HUD-слои, рендереры сущностей и сброс стейтов.
+- **Цель:** у каждого героя есть `client/hero/<id>/<Id>ClientModule`, через который он регистрирует receiver'ы своих payload'ов, клавиши-действия, HUD-слои и рендереры сущностей.
 - **Почему:** модульный аудит §5 (client), структурный S10 (клавиши героев в entrypoint, ветки `IronManHero.ID` в `SuperheroesClient`), Opus-долг 9.
-- **Зависит от:** CL1, CL2, D2a.
-- **Создаётся:** `C/core/module/{HeroClientModule,HeroClientContext,CoreClientContext,HeroClientModules}.java`, `C/core/input/HeroActionKeys.java`, 22 `C/hero/<id>/<Id>ClientModule.java`.
+- **Зависит от:** CL3a-1 — D2a-1, CL2; CL3a-2 — CL3a-1, D2a-2; CL3b — CL3a-2 (обзор §2.1).
+- **Создаётся:** `C/core/module/{HeroClientModule,HeroClientContext,CoreClientContext}.java` (контракты), `C/bootstrap/HeroClientModules.java` (composition root, R16), `C/core/input/HeroActionKeys.java`, 22 `C/hero/<id>/<Id>ClientModule.java`.
 
 ```java
 package com.example.superheroes.client.core.module;
@@ -300,7 +226,6 @@ package com.example.superheroes.client.core.module;
 
 import com.example.superheroes.client.core.hud.HudLayer;
 import com.example.superheroes.client.core.hud.MovableHud;
-import com.example.superheroes.client.core.session.ClientSessionState;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -311,8 +236,6 @@ import java.util.function.Consumer;
 
 public interface HeroClientContext {
 	<T extends CustomPacketPayload> void receive(CustomPacketPayload.Type<T> type, ClientPlayNetworking.PlayPayloadHandler<T> handler);
-
-	void sessionState(ClientSessionState state);
 
 	void hud(int order, ResourceLocation id, HudLayer layer);
 
@@ -326,14 +249,41 @@ public interface HeroClientContext {
 }
 ```
 
-  `CoreClientContext` создаётся на каждый модуль (`new CoreClientContext(module.heroId())`), потому что `actionKey` фильтрует по герою модуля; `HeroActionKeys` держит пары `(mapping, heroId, onPress)`, регистрирует `KeyBindingHelper.registerKeyBinding` и один `ClientTickEvents.END_CLIENT_TICK`, в котором `while (mapping.consumeClick())` вызывает `onPress`, если текущий герой = `heroId` (механизм опроса — тот, что выбрал BF7; если BF7 перевёл клавиши на `consumeClick`, использовать его реализацию).
+  Сброс клиентского состояния в контексте не нужен: каждый `Client*State` уже регистрирует свой сброс в static-блоке через `ClientSessionState.register` (BF7), это проверяет `assertClientStatesRegisterReset`. `CoreClientContext` создаётся на каждый модуль (`new CoreClientContext(module.heroId())`), потому что `actionKey` фильтрует по герою модуля; `HeroActionKeys` держит пары `(mapping, heroId, onPress)`, регистрирует `KeyBindingHelper.registerKeyBinding` и один `ClientTickEvents.END_CLIENT_TICK`, в котором `while (mapping.consumeClick())` вызывает `onPress`, если текущий герой (по `PUBLIC_HERO` локального игрока) = `heroId`.
+
+```java
+package com.example.superheroes.client.bootstrap;
+
+import com.example.superheroes.client.core.module.CoreClientContext;
+import com.example.superheroes.client.core.module.HeroClientModule;
+
+import java.util.List;
+
+/** Composition root: the only client class that names hero modules; same order as bootstrap.HeroModules. */
+public final class HeroClientModules {
+	public static final List<HeroClientModule> ALL = List.of(
+			new com.example.superheroes.client.hero.scorpion.ScorpionClientModule()
+	);
+
+	private HeroClientModules() {
+	}
+
+	public static void bootstrap() {
+		for (HeroClientModule module : ALL) {
+			module.register(new CoreClientContext(module.heroId()));
+		}
+	}
+}
+```
+
 - **PR-units:**
-  - **CL3a:** API + 22 тонких client-модуля + `HeroClientModules` (явный список в том же порядке, что `HeroModules`) + перенос **hero-specific receiver'ов** из `C/network/ClientNetworking` в client-модули (core-receiver'ы — активация, привязка, `HeroData`, ресурсы, кулдауны, тряска — остаются в `ClientNetworking`, который становится `C/core/net`-частью в E2).
-  - **CL3b:** клавиши `RAIDEN_SWORD_DRAW`, `NANO_WEAPON`, `ESP_TOGGLE` → `actionKey` модулей Raiden/Iron Man (имена `KeyMapping` без изменений); ветки `IronManHero.ID.equals` в `SuperheroesClient:248-252,296-317` → обработчики модуля Iron Man; регистрации геройских HUD (из CL2) → `ctx.hud`; рендереры геройских сущностей (`ShadowSoldier`, `KageBunshin`, `ShieldProjectile`, `SmartMissile`, `Ram`, `IronLegionDrone`) → их client-модули; стейты → `ctx.sessionState`.
+  - **CL3a-1 (срез):** контракты, `HeroClientModules`, `CoreClientContext`, `ScorpionClientModule` с receiver'ом `ScorpionFxS2CPayload` (переезжает из `ClientNetworking`); `SuperheroesClient` вызывает `HeroClientModules.bootstrap()`. Прототип этого среза (без `HeroClientContext`) прошёл на сводной базе (обзор §10).
+  - **CL3a-2:** остальные 21 тонкий client-модуль в порядке `bootstrap.HeroModules` + перенос **hero-specific receiver'ов** из `C/network/ClientNetworking` в client-модули (core-receiver'ы — активация, привязка, `HeroData`, ресурсы, кулдауны, тряска — остаются в `ClientNetworking`, который становится частью `C/core/net` в E2).
+  - **CL3b:** клавиши `RAIDEN_SWORD_DRAW`, `NANO_WEAPON`, `ESP_TOGGLE` → `actionKey` модулей Raiden/Iron Man (имена `KeyMapping` без изменений); ветки `IronManHero.ID.equals` в `SuperheroesClient` → обработчики модуля Iron Man; регистрации геройских HUD (из CL2) → `ctx.hud`; рендереры геройских сущностей (`ShadowSoldier`, `KageBunshin`, `ShieldProjectile`, `SmartMissile`, `Ram`, `IronLegionDrone`) → их client-модули.
 - **Удаляется:** hero-specific строки в `ClientNetworking`, `ModKeys`, `SuperheroesClient`.
 - **Нельзя менять:** имена `KeyMapping` и дефолтные клавиши; число слотов способностей (8) и их подписи; поведение клавиш.
-- **Тесты:** ArchUnit `sharedClientCodeDoesNotDependOnConcreteHeroes` — store теряет записи `SuperheroesClient`, `ClientNetworking`, `ModKeys`; `clientHeroModulesAreReferencedOnlyByThemselvesAndTheModuleList` строго зелёное.
-- **Runtime:** `runClient`: у Raiden срабатывает Sword Draw, у Iron Man — нано-оружие и ESP; у другого героя эти клавиши ничего не делают (как раньше); `options.txt` после перезапуска сохраняет переназначенные клавиши.
+- **Тесты:** ArchUnit `sharedClientCodeDoesNotDependOnConcreteHeroes` — store теряет записи `SuperheroesClient`, `ClientNetworking`, `ModKeys`; `clientHeroModulesAreReferencedOnlyByThemselvesAndTheModuleList` и `clientCoreDoesNotKnowHeroModules` строго зелёные и непустые с CL3a-1.
+- **Runtime:** `runClient` (если окружение позволяет, обзор §11.1 п.11): у Raiden срабатывает Sword Draw, у Iron Man — нано-оружие и ESP; у другого героя эти клавиши ничего не делают (как раньше); `options.txt` после перезапуска сохраняет переназначенные клавиши; FX Scorpion приходят после CL3a-1.
 - **Acceptance:** `SuperheroesClient` не импортирует ни одного героя; `ClientNetworking` содержит только core-receiver'ы.
 
 **Дополнение к CL3b (mixin policy):**
@@ -344,8 +294,8 @@ Accessor, нужный только клиенту (`LightningBoltAccessor` ис
 
 - **Цель:** два skin-миксина и регистрация feature-слоёв не знают героев.
 - **Почему:** модульный аудит §3 (Sung: второй скин выбирается в двух миксинах по разным условиям), структурный S7/S8; Opus B14.
-- **Зависит от:** **BF10** (synced публичный вид героя), CL3.
-- **Сверка:** тип публичного вида героя, который ввёл BF10 (ниже — `PublicHeroView`; если BF10 назвал иначе — использовать его тип и имя в сигнатурах), и точные условия в `AbstractClientPlayerSkinMixin:26-56`, `PlayerRendererMixin:39-58`, `PlayerModelPoseMixin`.
+- **Зависит от:** CL3b.
+- **Сверка:** BF10 ввёл synced attachment `ModAttachments.PUBLIC_HERO` (`ResourceLocation` героя, виден всем клиентам) и `ClientHeroDimsWatcher`; `AbstractClientPlayerSkinMixin` уже читает его. Прочитать точные условия в `AbstractClientPlayerSkinMixin`, `PlayerRendererMixin`, `PlayerModelPoseMixin`.
 - **Создаётся:** `C/core/render/{SkinProvider,SkinResolver,PlayerLayers}.java`.
 
 ```java
@@ -358,10 +308,10 @@ import org.jetbrains.annotations.Nullable;
 /** Hero-owned skin choice. Both methods return {@code null} to fall back to the hero's default skin / vanilla model. */
 public interface SkinProvider {
 	@Nullable
-	ResourceLocation skin(AbstractClientPlayer player, PublicHeroView view);
+	ResourceLocation skin(AbstractClientPlayer player, ResourceLocation heroId);
 
 	@Nullable
-	default Boolean slimModel(AbstractClientPlayer player, PublicHeroView view) {
+	default Boolean slimModel(AbstractClientPlayer player, ResourceLocation heroId) {
 		return null;
 	}
 }
@@ -370,7 +320,7 @@ public interface SkinProvider {
   `SkinResolver.register(ResourceLocation heroId, SkinProvider provider)` (через `HeroClientContext.skin(SkinProvider)`, метод добавляется в контекст этой стадией) и `SkinResolver.resolve(AbstractClientPlayer)`: вид героя → провайдер его героя → `Hero.getSkinTexture()` → `null`. Миксины вызывают только `SkinResolver`. `PlayerLayers.register(Function<PlayerRenderer, RenderLayer<…>>)` (через `HeroClientContext.playerLayer(...)`) заменяет перечисление `RemOniHornFeatureRenderer`, `ReinhardScabbardLayer`, `IronManNanoFormLayer`, `NanoSuitUpLayer` в `SuperheroesClient:99-104`.
 - **Мигрируется:** ветки Homelander/Sung/Thanos/Iron Man из skin-миксинов → `SkinProvider` соответствующих client-модулей; **оба** текущих условия Sung (`hasShadows` для текстуры, `isPhase2` для рендера) сохраняются как есть, каждое в своём методе провайдера, с комментарием о расхождении (выравнивание — отдельное решение владельца).
 - **Нельзя менять:** какой скин видит владелец и другие игроки в каждом состоянии.
-- **Runtime:** `runClient` + второй клиент (или `runClient` с ботом-игроком через `/player`, если доступен Carpet — иначе один клиент и F5): Sung фаза 1/2, Thanos с камнями, Iron Man варианты костюма, Homelander.
+- **Runtime:** то, что видят **другие** игроки, проверяется вторым клиентом, а не видом от третьего лица: временный (не коммитить) run-конфиг Loom `client2` с `programArgs '--username', 'Observer'`, первый клиент открывает мир для LAN, второй подключается. Проверить: Sung фаза 1/2, Thanos с камнями, Iron Man варианты костюма, Homelander — одинаково у владельца и у наблюдателя. Если окружение не позволяет запустить два клиента — PR прямо это пишет, и проверка передаётся владельцу.
 - **Acceptance:** ArchUnit store: нет записей skin-миксинов → героев.
 
 ---
@@ -378,10 +328,10 @@ public interface SkinProvider {
 ### Стадия C4 — клиент получает доступность способностей от сервера
 
 - **Цель:** удалить `C/ClientAbilityFilter` (клиентская копия тиров Doomsday, камней Thanos, дома Pandora, режима Rem).
-- **Почему:** дублирование серверных правил на клиенте (Opus-долг 4, аудит 2 §4.3); расхождение уже есть (таблица тиров записана дважды).
-- **Зависит от:** C2, CL3, **BF10** (паттерн synced attachment).
+- **Почему:** дублирование серверных правил на клиенте (Opus-долг 4, аудит 2 §4.3). BF11 убрал копии таблиц (клиент вызывает `DoomsdayHero.isUnlockedAtTier`, `RemHero.isVisibleIn`, `PandoraHero.isDimensionOnly`), но фильтр по-прежнему сам знает четырёх героев и собирает их состояние из клиентских стейтов.
+- **Зависит от:** CL3a-2.
 - **Сверка:** прочитать `ClientAbilityFilter.visible()` и всех его потребителей: какие состояния нужны (скрыта / показана заблокированной / доступна).
-- **Создаётся:** `M/core/ability/AbilityAvailability.java` — `record AbilityAvailability(Map<ResourceLocation, Visibility> entries)` с `enum Visibility { AVAILABLE, LOCKED, HIDDEN }`, `CODEC` и `STREAM_CODEC`; attachment `superheroes:ability_availability` (non-persistent, sync только владельцу — тем же механизмом, что выбрал BF10); хук `Hero.visibility(ServerPlayer, ResourceLocation) → Visibility` (default `AVAILABLE`), реализации у Doomsday, Thanos, Pandora, Rem — ровно логика `ClientAbilityFilter`, переписанная на серверные источники; dispatcher-хук `players(LATE, …)` пересчитывает и пишет attachment **только при изменении**.
+- **Создаётся:** `M/core/ability/AbilityAvailability.java` — `record AbilityAvailability(Map<ResourceLocation, Visibility> entries)` с `enum Visibility { AVAILABLE, LOCKED, HIDDEN }`, `CODEC` и `STREAM_CODEC`; attachment `superheroes:ability_availability` — non-persistent, sync только владельцу (`AttachmentRegistry.create(id, b -> b.syncWith(STREAM_CODEC, AttachmentSyncPredicate.targetOnly()))`, тот же API, что `PUBLIC_HERO` в BF10 и `AttachmentRegistry.create` в BF12); хук `Hero.visibility(ServerPlayer, ResourceLocation) → Visibility` (default `AVAILABLE`), реализации у Doomsday, Thanos, Pandora, Rem — ровно логика `ClientAbilityFilter`, переписанная на серверные источники; задача диспетчера `onPlayerTick` пересчитывает и пишет attachment **только при изменении**.
 - **Удаляется:** `C/ClientAbilityFilter.java`, клиентские копии таблиц тиров.
 - **Нельзя менять:** что игрок видит в радиалке/панели при каждом состоянии.
 - **Тесты:** GameTest: Doomsday тир 1 → `DOOMSDAY_DOOM_GRIP` = `HIDDEN|LOCKED` (как сейчас на клиенте); после повышения тира — `AVAILABLE`; attachment меняется не чаще, чем меняется состояние.
@@ -391,18 +341,19 @@ public interface SkinProvider {
 
 ## Готово, когда
 
-- `SuperheroesClient` не импортирует ни одного героя; `ClientNetworking` содержит только core-receiver'ы.
-- Store правил `sharedClientCodeDoesNotDependOnConcreteHeroes` и `clientStatesCanBeReset` не содержит записей `SuperheroesClient`, `ClientNetworking`, `ModKeys`, skin-миксинов и `Client*State`.
+- `SuperheroesClient` не импортирует ни одного героя; `ClientNetworking` содержит только core-receiver'ы; единственный `HudRenderCallback` — в `HudLayers`.
+- Store правила `sharedClientCodeDoesNotDependOnConcreteHeroes` не содержит записей `SuperheroesClient`, `ClientNetworking`, `ModKeys` и skin-миксинов.
 - `ClientAbilityFilter` удалён; радиалка и панель показывают то же, что до плана.
-- Runtime-чек-листы CL1–CL4 и C4 пройдены (или в PR прямо указано, что игру запустить не удалось).
+- Runtime-чек-листы CL2–CL4 и C4 пройдены, или в PR прямо указано, что игру запустить не удалось, и перечислены непроверенные пункты.
 
 ## Self-Review
 
-- **Покрытие:** CL1, CL2, CL3, CL4, C4 из исходного плана перенесены целиком, плюс пункт mixin policy про `LightningBoltAccessor`.
-- **Что используют следующие планы:** `ClientSessionState.reset`, `ClientSessionStates.register/init`; `HudLayer`, `MovableHud.layoutId/bounds`, `HudBounds`, `HudLayers.register/registerMovable/init/movables`; `HeroClientModule.heroId/register`, `HeroClientContext.receive/sessionState/hud/movableHud/actionKey/skin/playerLayer`, `HeroClientModules`; `SkinProvider`, `SkinResolver.register/resolve`, `PlayerLayers.register`; `AbilityAvailability`, `Hero.visibility(ServerPlayer, ResourceLocation)`.
+- **Покрытие:** CL2, CL3a-1, CL3a-2, CL3b, CL4, C4 перестроены на BF7/BF10/BF11; замечания внешнего ревью (правило сброса стейтов против собственного интерфейса, неверный acceptance-grep CL2, F5 вместо второго клиента, поздняя проверка seam) закрыты; CL1 закрыт BF7.
+- **Что используют следующие планы:** `HudLayer`, `MovableHud.layoutId/bounds`, `HudBounds`, `HudLayers.register/registerMovable/init/movables`; `HeroClientModule.heroId/register`, `HeroClientContext.receive/hud/movableHud/actionKey/skin/playerLayer`, `client.bootstrap.HeroClientModules`; `SkinProvider`, `SkinResolver.register/resolve`, `PlayerLayers.register`; `AbilityAvailability`, `Hero.visibility(ServerPlayer, ResourceLocation)`.
+- **Проверка:** срез CL3a-1 (без `HeroClientContext`) скомпилирован и проверен ArchUnit-правилами прототипом (обзор §10); остальной код плана не компилировался.
 
 ## Execution Handoff
 
-Исполнение: **Subagent-Driven (рекомендуется)** — свежий субагент на стадию, ревью между стадиями (superpowers:subagent-driven-development), или **Inline** с контрольными точками (superpowers:executing-plans). CL2 стартует сразу после П1 A1, CL1 — после BF7.
+Исполнение: **Subagent-Driven (рекомендуется)** — свежий субагент на стадию, ревью между стадиями (superpowers:subagent-driven-development), или **Inline** с контрольными точками (superpowers:executing-plans). CL2 стартует сразу после П1 A1; CL3a-1 — после CL2 и П3 D2a-1.
 
 При параллельном исполнении несколькими субагентами оркестратор раздаёт задачи этого плана по `00-overview.md` §11 «Оркестрация».

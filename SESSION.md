@@ -22,7 +22,7 @@
 - Independent architecture/bug review and VFX-foundation research may happen in parallel; their findings should be brought back into durable project context before implementation.
 - The independent Opus 5.5 architecture/bug audit is preserved at `docs/audits/2026-09-25-opus-architecture-audit.md` and is the current baseline for the restoration rewrite.
 - Architecture audit 2 is preserved as two complementary files: `docs/audits/2026-09-25-hero-modularity-audit.md` (hero locality, `HeroModule`/`HeroProfile`, Scorpion pilot, Reinhard stress-test) and `docs/audits/2026-09-25-hoplite-structural-audit.md` (package cycles, registries, router contract, services, payloads).
-- The migration that synthesizes both audits on top of the bugfix-pass seams is split into six executable plans in `docs/design/architecture-migration/` (`00-overview.md` is the map; `01`–`06` are the plans). The monolithic `docs/design/2026-09-25-architecture-migration-plan.md` is kept unchanged as an archive and is not executed or updated. The migration absorbs bugfix roadmap stage 11 (hero hooks / tick dispatcher); the bugfix pass should stop at stages 4–10 + 12.
+- The migration that synthesizes both audits is split into six executable plans in `docs/design/architecture-migration/` (`00-overview.md` is the map; `01`–`06` are the plans). They were revised after an external review and rebased on the bugfix stages 4–12 (#40, #42–#49): plans extend the BF11 seams (`HeroTickDispatcher`, `HeroLifecycle`, `Hero` hooks), BF7 `ClientSessionState` and BF10 `PUBLIC_HERO` instead of adding parallel ones. The monolithic `docs/design/2026-09-25-architecture-migration-plan.md` is an unchanged archive of the pre-review version and is not executed or updated.
 
 ## Important decisions
 
@@ -40,7 +40,8 @@
 
 ## Open work
 
-- Execute the plans in `docs/design/architecture-migration/` stage by stage; each plan's «Статус стадий» table is its tracker. First stage: plan 1 `A1` (ArchUnit guardrails) once bugfix PRs #37–#39 are on `main`.
+- Execute the plans in `docs/design/architecture-migration/` stage by stage; the canonical stage graph is `00-overview.md` §2.1 and each plan's «Статус стадий» table is its tracker. First stage: plan 1 `A1` once every bugfix PR (#37–#40, #42–#49) and #41 are on `main`.
+- Merging the bugfix stack: it branches after #42; `fabric.mod.json` GameTest lists and `ProjectSanityTest` conflict (union both sides); #43 deletes `RemoteHeroSkins` while #45 still references it in `ClientSessionStateResetTest` and `assertClientStatesRegisterReset` — whichever merges second must drop those references (`00-overview.md` §3.3).
 - Owner decision needed before plan 5 stage `E1`: new root package name (proposed `io.github.grebeshok105.codex`, decision R14).
 - Rebuild only the project skills that prove useful for the new workflow.
 - Design a new release/versioning workflow after the verification baseline is stable.
