@@ -9,6 +9,13 @@ group = project.maven_group
 repositories {
 	mavenCentral()
 
+	// Backup Central mirror: the local dev mirror and shared CI egress IPs are rate-limited or
+	// partial; this keeps plain Central artifacts (e.g. ArchUnit) resolvable in both places.
+	maven {
+		name = 'CentralAliyunMirror'
+		url = 'https://maven.aliyun.com/repository/central'
+	}
+
 	// Modrinth maven — Iris (compile-only bridge for the Mirror Dimension ability)
 	exclusiveContent {
 		forRepository {
