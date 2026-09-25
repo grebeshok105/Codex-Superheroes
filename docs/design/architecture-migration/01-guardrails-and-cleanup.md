@@ -50,7 +50,7 @@
 
 | Стадия | Статус | PR |
 | :-- | :-- | :-- |
-| A1 ArchUnit guardrails | ⏳ | |
+| A1 ArchUnit guardrails | ✅ | |
 | A2 полнота героя | ⏳ | |
 | N1 мёртвый код | ⏳ | |
 | N2 следы Doctor Strange | ⏳ | |
