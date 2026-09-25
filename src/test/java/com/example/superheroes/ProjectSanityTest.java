@@ -45,6 +45,8 @@ public final class ProjectSanityTest {
 	private static final Pattern HERO_REGISTER = Pattern.compile("register\\(\\s*(\\w+)\\s*\\)");
 	private static final Pattern STATIC_INIT = Pattern.compile("public static void init\\(\\)");
 	private static final Pattern SOUND_NAME = Pattern.compile("\"" + MOD_ID + ":([^\"]+)\"");
+	private static final Pattern DIRECT_WORLD_MUTATION = Pattern.compile(
+			"\\.(?:destroyBlock|removeBlock|setBlock|setBlockAndUpdate)\\(");
 
 	private ProjectSanityTest() {}
 
@@ -58,6 +60,7 @@ public final class ProjectSanityTest {
 		assertControllersAreWired();
 		assertFabricModJsonSanity();
 		assertHeroDataHasSingleWriter();
+		assertWorldMutationsGoThroughPolicy();
 		System.out.println("ProjectSanityTest passed");
 	}
 
@@ -83,6 +86,23 @@ public final class ProjectSanityTest {
 			String source = Files.readString(file);
 			assert !HERO_DATA_DIRECT_WRITE.matcher(source).find()
 					: file + " writes or syncs HERO_DATA directly — use HeroDataStore.update(player, fn)";
+		});
+	}
+
+	// Audit B10: ability-driven block removal / terrain edits route through
+	// WorldDestructionPolicy so protection mods (PlayerBlockBreakEvents, spawn
+	// protection, mobGriefing) see every change. Raw level mutations live only
+	// inside the policy itself.
+	private static void assertWorldMutationsGoThroughPolicy() throws IOException {
+		Path policy = MAIN_JAVA.resolve("com/example/superheroes/world/WorldDestructionPolicy.java");
+		assert Files.exists(policy) : "WorldDestructionPolicy.java is missing";
+		forEachJavaFile(MAIN_JAVA, file -> {
+			if (file.equals(policy)) {
+				return;
+			}
+			String source = Files.readString(file);
+			assert !DIRECT_WORLD_MUTATION.matcher(source).find()
+					: file + " mutates the world directly — route ability block breaks through WorldDestructionPolicy";
 		});
 	}
 

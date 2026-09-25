@@ -2,6 +2,7 @@ package com.example.superheroes.effect;
 
 import com.example.superheroes.network.ScreenShakeS2CPayload;
 import com.example.superheroes.sound.ModSounds;
+import com.example.superheroes.world.WorldDestructionPolicy;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -43,26 +44,14 @@ public final class HeavensStrikeController {
 
 	private static final Map<UUID, Pending> PENDING = new ConcurrentHashMap<>();
 
+	// Precious blocks the strike intentionally cannot dent — everything else
+	// unbreakable is covered by WorldDestructionPolicy (tag + destroySpeed).
 	private static final Set<Block> UNBREAKABLE = Set.of(
-			Blocks.BEDROCK,
-			Blocks.BARRIER,
-			Blocks.END_PORTAL,
-			Blocks.END_PORTAL_FRAME,
-			Blocks.END_GATEWAY,
-			Blocks.NETHER_PORTAL,
-			Blocks.COMMAND_BLOCK,
-			Blocks.CHAIN_COMMAND_BLOCK,
-			Blocks.REPEATING_COMMAND_BLOCK,
-			Blocks.STRUCTURE_BLOCK,
-			Blocks.STRUCTURE_VOID,
-			Blocks.JIGSAW,
-			Blocks.LIGHT,
 			Blocks.IRON_BLOCK,
 			Blocks.NETHERITE_BLOCK,
 			Blocks.OBSIDIAN,
 			Blocks.CRYING_OBSIDIAN,
 			Blocks.RESPAWN_ANCHOR,
-			Blocks.REINFORCED_DEEPSLATE,
 			Blocks.ANCIENT_DEBRIS,
 			Blocks.BEACON
 	);
@@ -267,10 +256,10 @@ public final class HeavensStrikeController {
 			le.hurtMarked = true;
 		}
 
-		carveCrater(level, t, v.radius, v.depth);
+		carveCrater(level, player, t, v.radius, v.depth);
 	}
 
-	private static void carveCrater(ServerLevel level, Vec3 center, int topRadius, int depth) {
+	private static void carveCrater(ServerLevel level, ServerPlayer player, Vec3 center, int topRadius, int depth) {
 		RandomSource r = level.random;
 		BlockPos.MutableBlockPos mp = new BlockPos.MutableBlockPos();
 		int cx = (int) Math.floor(center.x);
@@ -294,8 +283,7 @@ public final class HeavensStrikeController {
 					BlockState s = level.getBlockState(mp);
 					if (s.isAir()) continue;
 					if (UNBREAKABLE.contains(s.getBlock())) continue;
-					if (s.getDestroySpeed(level, mp) < 0) continue;
-					level.destroyBlock(mp, false);
+					WorldDestructionPolicy.tryBreak(level, mp.immutable(), false, player);
 				}
 			}
 		}
@@ -307,8 +295,7 @@ public final class HeavensStrikeController {
 			mp.set(cx + dx, cy - dy, cz + dz);
 			BlockState s = level.getBlockState(mp);
 			if (s.isAir() || UNBREAKABLE.contains(s.getBlock())) continue;
-			if (s.getDestroySpeed(level, mp) < 0) continue;
-			if (r.nextBoolean()) level.destroyBlock(mp, false);
+			if (r.nextBoolean()) WorldDestructionPolicy.tryBreak(level, mp.immutable(), false, player);
 		}
 	}
 }

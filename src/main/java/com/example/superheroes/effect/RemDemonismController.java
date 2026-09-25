@@ -32,7 +32,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.block.Blocks;
+import com.example.superheroes.world.WorldDestructionPolicy;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -441,12 +441,12 @@ public final class RemDemonismController {
 				for (int dy = 0; dy > -depth; dy--) {
 					pos.set(center.getX() + dx, center.getY() + dy, center.getZ() + dz);
 					BlockState state = level.getBlockState(pos);
-					if (state.isAir() || state.is(Blocks.BEDROCK) || state.is(Blocks.END_PORTAL_FRAME)) {
+					if (state.isAir()) {
 						continue;
 					}
 					float hardness = state.getDestroySpeed(level, pos);
 					if (hardness >= 0f && hardness <= 50f) {
-						level.destroyBlock(pos.immutable(), true, player);
+						WorldDestructionPolicy.tryBreak(level, pos.immutable(), true, player);
 					}
 				}
 			}

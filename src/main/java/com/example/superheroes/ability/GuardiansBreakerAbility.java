@@ -1,6 +1,7 @@
 package com.example.superheroes.ability;
 
 import com.example.superheroes.network.ScreenShakeS2CPayload;
+import com.example.superheroes.world.WorldDestructionPolicy;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.BlockPos;
@@ -220,7 +221,7 @@ public final class GuardiansBreakerAbility implements Ability {
 						if (!canBreak(level, pos, state)) {
 							continue;
 						}
-						if (level.destroyBlock(pos.immutable(), false, player)) {
+						if (WorldDestructionPolicy.tryBreak(level, pos.immutable(), true, player)) {
 							destroyed++;
 						}
 					}
@@ -277,8 +278,7 @@ public final class GuardiansBreakerAbility implements Ability {
 		if (state.isAir() || !state.getFluidState().isEmpty()) {
 			return false;
 		}
-		float hardness = state.getDestroySpeed(level, pos);
-		return hardness >= 0f && hardness < HARDNESS_LIMIT;
+		return WorldDestructionPolicy.mayDestroy(level, pos, state, HARDNESS_LIMIT);
 	}
 
 	private static Vec3 centerOf(LivingEntity entity) {

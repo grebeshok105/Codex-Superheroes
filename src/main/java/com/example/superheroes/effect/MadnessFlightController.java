@@ -3,6 +3,7 @@ package com.example.superheroes.effect;
 import com.example.superheroes.ability.AbilityIds;
 import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.transform.HeroData;
+import com.example.superheroes.world.WorldDestructionPolicy;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
@@ -111,8 +112,9 @@ public final class MadnessFlightController {
 			if (hardness < 0f || hardness >= HARDNESS_LIMIT) {
 				continue;
 			}
-			level.destroyBlock(pos, false, player);
-			broke = true;
+			if (WorldDestructionPolicy.tryBreak(level, pos, false, player)) {
+				broke = true;
+			}
 		}
 		return broke;
 	}

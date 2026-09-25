@@ -4,6 +4,7 @@ import com.example.superheroes.ability.AbilityRouter;
 import com.example.superheroes.transform.HeroDataStore;
 import com.example.superheroes.sound.ModSounds;
 import com.example.superheroes.transform.HeroData;
+import com.example.superheroes.world.WorldDestructionPolicy;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
@@ -136,7 +137,7 @@ public final class MadnessAftermathController {
 					if (BaseFireBlock.canBePlacedAt(level, pos, net.minecraft.core.Direction.UP)
 							&& !level.getBlockState(below).isAir()
 							&& level.getRandom().nextFloat() < 0.5f) {
-						level.setBlockAndUpdate(pos, Blocks.FIRE.defaultBlockState());
+						WorldDestructionPolicy.tryPlace(level, pos, Blocks.FIRE.defaultBlockState(), player);
 					}
 				}
 			}

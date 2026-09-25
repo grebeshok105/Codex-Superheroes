@@ -1,6 +1,7 @@
 package com.example.superheroes.entity.ai;
 
 import com.example.superheroes.entity.HomelanderBossEntity;
+import com.example.superheroes.world.WorldDestructionPolicy;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
@@ -54,7 +55,7 @@ public class HomelanderBlockThrowGoal extends Goal {
 		for (int dy = 0; dy <= 2; dy++) {
 			BlockPos p = under.below(dy);
 			BlockState bs = sl.getBlockState(p);
-			if (bs.isSolid() && !bs.isAir() && bs.getDestroySpeed(sl, p) >= 0f) {
+			if (bs.isSolid() && WorldDestructionPolicy.mayDestroy(sl, p, bs)) {
 				pickedState = bs;
 				pickedPos = p;
 				break;
@@ -90,8 +91,8 @@ public class HomelanderBlockThrowGoal extends Goal {
 						6, 0.4, 0.2, 0.4, 0.05);
 			}
 		} else if (phaseTick == WINDUP_TICKS) {
-			if (pickedState != null && pickedPos != null) {
-				sl.removeBlock(pickedPos, false);
+			if (pickedState != null && pickedPos != null
+					&& WorldDestructionPolicy.tryCarve(sl, pickedPos, boss)) {
 
 				Vec3 spawn = boss.position().add(boss.getViewVector(1f).scale(2.0)).add(0, 1.5, 0);
 				FallingBlockEntity fb = FallingBlockEntity.fall(sl, BlockPos.containing(spawn), pickedState);

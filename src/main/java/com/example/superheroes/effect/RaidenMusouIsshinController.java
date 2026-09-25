@@ -7,6 +7,7 @@ import com.example.superheroes.network.ScreenShakeS2CPayload;
 import com.example.superheroes.particle.ModParticles;
 import com.example.superheroes.sound.ModSounds;
 import com.example.superheroes.transform.HeroData;
+import com.example.superheroes.world.WorldDestructionPolicy;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -51,23 +52,11 @@ public final class RaidenMusouIsshinController {
 	private static final double IMPACT_RADIUS = 10.0;
 	private static final float IMPACT_DAMAGE = 16f;
 
+	// Precious blocks the slash intentionally cannot dent — everything else
+	// unbreakable is covered by WorldDestructionPolicy (tag + destroySpeed).
 	private static final Set<Block> UNBREAKABLE = Set.of(
-			Blocks.BEDROCK,
-			Blocks.BARRIER,
-			Blocks.END_PORTAL,
-			Blocks.END_PORTAL_FRAME,
-			Blocks.END_GATEWAY,
-			Blocks.NETHER_PORTAL,
-			Blocks.COMMAND_BLOCK,
-			Blocks.CHAIN_COMMAND_BLOCK,
-			Blocks.REPEATING_COMMAND_BLOCK,
-			Blocks.STRUCTURE_BLOCK,
-			Blocks.STRUCTURE_VOID,
-			Blocks.JIGSAW,
-			Blocks.LIGHT,
 			Blocks.OBSIDIAN,
-			Blocks.CRYING_OBSIDIAN,
-			Blocks.REINFORCED_DEEPSLATE
+			Blocks.CRYING_OBSIDIAN
 	);
 
 	private record Pending(Vec3 origin, Vec3 dir, Vec3 perp, Vec3 lockPos, float lockYaw, float lockPitch,
@@ -184,13 +173,13 @@ public final class RaidenMusouIsshinController {
 	private static void impact(ServerPlayer player, Pending p) {
 		ServerLevel level = player.serverLevel();
 		player.swing(InteractionHand.MAIN_HAND, true);
-		carveSlash(level, p);
+		carveSlash(level, player, p);
 		damageSlash(level, player, p);
 		spawnImpactFx(level, p);
 		shake(level, p.origin);
 	}
 
-	private static void carveSlash(ServerLevel level, Pending p) {
+	private static void carveSlash(ServerLevel level, ServerPlayer player, Pending p) {
 		int halfWidth = SLASH_WIDTH / 2;
 		for (int i = 2; i <= SLASH_LENGTH; i++) {
 			Vec3 point = p.origin.add(p.dir.scale(i));
@@ -202,9 +191,8 @@ public final class RaidenMusouIsshinController {
 				for (int dy = 0; dy < SLASH_DEPTH; dy++) {
 					BlockPos pos = new BlockPos(ox, sy - dy, oz);
 					BlockState state = level.getBlockState(pos);
-					if (state.isAir() || UNBREAKABLE.contains(state.getBlock())) continue;
-					if (state.getDestroySpeed(level, pos) < 0) continue;
-					level.destroyBlock(pos, false);
+					if (UNBREAKABLE.contains(state.getBlock())) continue;
+					WorldDestructionPolicy.tryBreak(level, pos, false, player);
 				}
 			}
 		}

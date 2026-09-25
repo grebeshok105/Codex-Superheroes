@@ -6,6 +6,7 @@ import com.example.superheroes.hero.RegulusHero;
 import com.example.superheroes.network.MadnessSyncS2CPayload;
 import com.example.superheroes.network.MadnessVisualS2CPayload;
 import com.example.superheroes.transform.HeroData;
+import com.example.superheroes.world.WorldDestructionPolicy;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -23,8 +24,8 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -450,7 +451,7 @@ public final class RegulusMadnessController {
 		boolean finalSlam(ServerLevel level, ServerPlayer player, LivingEntity attacker) {
 			BlockPos impact = attacker.blockPosition();
 			level.explode(player, impact.getX(), impact.getY(), impact.getZ(), 6.0f, Level.ExplosionInteraction.NONE);
-			carveCrater(level, impact);
+			RegulusMadnessController.carveCrater(level, impact, player);
 			attacker.teleportTo(impact.getX() + 0.5, impact.getY() - CRATER_DEPTH + 1, impact.getZ() + 0.5);
 			attacker.hurt(ModDamageTypes.counterStrike(level, player), 27f);
 			com.example.superheroes.resource.EnergyLocks.lockTicks(player, 15 * 20);
@@ -465,23 +466,23 @@ public final class RegulusMadnessController {
 			return true;
 		}
 
-		void carveCrater(ServerLevel level, BlockPos impact) {
-			int r = (int) CRATER_RADIUS;
-			for (int dy = 0; dy < CRATER_DEPTH; dy++) {
-				int radius = r - (dy * r / CRATER_DEPTH);
-				if (radius < 1) radius = 1;
-				int radiusSq = radius * radius;
-				for (int dx = -radius; dx <= radius; dx++) {
-					for (int dz = -radius; dz <= radius; dz++) {
-						if (dx * dx + dz * dz > radiusSq) continue;
-						BlockPos p = impact.offset(dx, -dy, dz);
-						if (p.getY() <= level.getMinBuildHeight()) continue;
-						level.setBlock(p, Blocks.AIR.defaultBlockState(), 2 | 16);
-					}
+		enum Phase { LIFT, ARRIVE, SLAM }
+	}
+
+	public static void carveCrater(ServerLevel level, BlockPos impact, @Nullable Entity cause) {
+		int r = (int) CRATER_RADIUS;
+		for (int dy = 0; dy < CRATER_DEPTH; dy++) {
+			int radius = r - (dy * r / CRATER_DEPTH);
+			if (radius < 1) radius = 1;
+			int radiusSq = radius * radius;
+			for (int dx = -radius; dx <= radius; dx++) {
+				for (int dz = -radius; dz <= radius; dz++) {
+					if (dx * dx + dz * dz > radiusSq) continue;
+					BlockPos p = impact.offset(dx, -dy, dz);
+					if (p.getY() <= level.getMinBuildHeight()) continue;
+					WorldDestructionPolicy.tryCarve(level, p, cause);
 				}
 			}
 		}
-
-		enum Phase { LIFT, ARRIVE, SLAM }
 	}
 }

@@ -4,6 +4,7 @@ import com.example.superheroes.transform.HeroDataStore;
 import com.example.superheroes.damage.ModDamageTypes;
 import com.example.superheroes.particle.ModParticles;
 import com.example.superheroes.sound.ModSounds;
+import com.example.superheroes.world.WorldDestructionPolicy;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
@@ -386,7 +387,7 @@ public final class UnibeamController {
 			if (hardness < 0f || hardness >= 50f) {
 				continue;
 			}
-			level.destroyBlock(pos, false, player);
+			WorldDestructionPolicy.tryBreak(level, pos, false, player);
 		}
 		if (progress % 8 == 0) {
 			double f = 0.2 + rand.nextDouble() * 0.7;
@@ -469,13 +470,13 @@ public final class UnibeamController {
 				if (hardness < 0f || hardness >= 50f) {
 					continue;
 				}
-				level.destroyBlock(pos, false, player);
+				WorldDestructionPolicy.tryBreak(level, pos, false, player);
 			}
 			if (step % 3 == 0) {
 				level.explode(player, center.x, center.y, center.z,
 						3.0f + spread * 2.0f, true, Level.ExplosionInteraction.MOB);
 			}
-			placeFireRing(level, center, 2 + (int) (spread * 2));
+			placeFireRing(level, player, center, 2 + (int) (spread * 2));
 			level.sendParticles(ParticleTypes.LAVA,
 					center.x, center.y, center.z, 6, 1.0, 0.6, 1.0, 0.0);
 			level.sendParticles(ParticleTypes.FLAME,
@@ -483,7 +484,7 @@ public final class UnibeamController {
 		}
 	}
 
-	private static void placeFireRing(ServerLevel level, Vec3 center, int radius) {
+	private static void placeFireRing(ServerLevel level, ServerPlayer player, Vec3 center, int radius) {
 		BlockPos centerPos = BlockPos.containing(center);
 		for (int dx = -radius; dx <= radius; dx++) {
 			for (int dz = -radius; dz <= radius; dz++) {
@@ -500,7 +501,7 @@ public final class UnibeamController {
 					if (BaseFireBlock.canBePlacedAt(level, pos, net.minecraft.core.Direction.UP)
 							&& !level.getBlockState(below).isAir()
 							&& level.getRandom().nextFloat() < 0.55f) {
-						level.setBlockAndUpdate(pos, Blocks.FIRE.defaultBlockState());
+						WorldDestructionPolicy.tryPlace(level, pos, Blocks.FIRE.defaultBlockState(), player);
 					}
 				}
 			}
