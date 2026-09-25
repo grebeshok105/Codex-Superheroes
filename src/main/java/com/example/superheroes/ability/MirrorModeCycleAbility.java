@@ -7,7 +7,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 
 /**
- * Doctor Strange — Distortion Switch. Cycles the active Mirror Dimension warp
+ * Pandora — Distortion Switch. Cycles the active Mirror Dimension warp
  * through MODE 4 -> 5 -> 6 -> 9 (with matching J scales). Each switch needs a
  * full Iris pipeline reload on the victim, so the victim's client hides the
  * freeze behind a black flash. Does nothing if no Mirror Dimension is active.

@@ -11,7 +11,7 @@ import net.minecraft.world.entity.player.Player;
 import java.util.List;
 
 /**
- * Pandora (Re:Zero) — replaces Doctor Strange. The Mirror Dimension feature
+ * Pandora (Re:Zero). The Mirror Dimension feature
  * becomes the "House of Vanity" (Дом тщеславия): inside it Pandora wields her
  * Authority of Greed. The body is rendered at 75% of a vanilla Steve via the
  * vanilla {@code minecraft:generic.scale} attribute (see {@link HeroAttributes#PANDORA}),

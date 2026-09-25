@@ -431,7 +431,7 @@ public final class HeroAttributes {
 			.add(Attributes.ENTITY_INTERACTION_RANGE, OMNIMAN_REACH, 0.8, AttributeModifier.Operation.ADD_VALUE)
 			.build();
 
-	public static final ResourceLocation STRANGE_HP = ModId.of("modifiers/pandora/max_health");
+	public static final ResourceLocation PANDORA_HP = ModId.of("modifiers/pandora/max_health");
 	public static final ResourceLocation PANDORA_SCALE = ModId.of("modifiers/pandora/body_scale");
 
 	public static final AttributeModifierSet SCORPION = AttributeModifierSet.builder()
