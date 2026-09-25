@@ -129,12 +129,23 @@ dependencies {
 	testImplementation platform("org.junit:junit-bom:5.10.2")
 	testImplementation "org.junit.jupiter:junit-jupiter"
 	testRuntimeOnly "org.junit.platform:junit-platform-launcher"
+	testImplementation "com.tngtech.archunit:archunit-junit5:1.5.1"
 }
 
 tasks.withType(Test).configureEach {
 	useJUnitPlatform()
 	// A JUnit run that discovers nothing is a silent pass, not a green check.
 	failOnNoDiscoveredTests = true
+}
+
+tasks.named('test') {
+	dependsOn tasks.named('clientClasses')
+	systemProperty 'codex.mainClasses', sourceSets.main.output.classesDirs.asPath
+	systemProperty 'codex.clientClasses', sourceSets.client.output.classesDirs.asPath
+	// One-off baseline creation: -Darchunit.freeze.store.default.allowStoreCreation=true -Dcodex.writeCycleBaseline=true
+	systemProperties System.properties.findAll { it.key.toString().startsWith('archunit.') || it.key.toString().startsWith('codex.write') }
+	// fileTree tolerates a missing directory; inputs.dir(...).optional() does not (Gradle 9.4.1 fails before JUnit starts).
+	inputs.files(fileTree('src/test/resources/archunit_store')).withPropertyName('archunitStore')
 }
 
 // ============================================================================
@@ -248,6 +259,22 @@ tasks.register('auditReleaseJarIsolation') {
 	}
 }
 
+// ArchUnit removes fixed violations from the store while tests run; an uncommitted shrink would let the
+// same violation return later, so the gate requires the store to match what is committed.
+tasks.register('verifyArchitectureBaseline') {
+	group = 'verification'
+	description = 'Fails when the frozen ArchUnit baseline differs from the committed one'
+	dependsOn tasks.named('test')
+	doLast {
+		def status = providers.exec {
+			commandLine 'git', 'status', '--porcelain', '--', 'src/test/resources/archunit_store', 'src/test/resources/architecture'
+		}.standardOutput.asText.get().trim()
+		if (!status.isEmpty()) {
+			throw new GradleException("Architecture baseline changed — review and commit it:\n" + status)
+		}
+	}
+}
+
 // The one command. Nothing may be called verified without a green run of this task.
 // `build` already carries assemble + check (compile, JUnit, verification JavaExecs);
 // the gate adds the post-build audits on top.
@@ -258,6 +285,7 @@ tasks.register('qualityGate') {
 	dependsOn tasks.named('verifyAssertionsEnabled')
 	dependsOn tasks.named('auditReleaseJarIsolation')
 	dependsOn tasks.named('runGametest')
+	dependsOn tasks.named('verifyArchitectureBaseline')
 }
 
 // A stale world from an earlier run would leak players and state between GameTest runs.

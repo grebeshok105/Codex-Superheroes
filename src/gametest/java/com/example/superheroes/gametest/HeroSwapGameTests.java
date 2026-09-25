@@ -30,8 +30,7 @@ public final class HeroSwapGameTests implements FabricGameTest {
 
 		// the transform cooldown is 20 ticks — swap as soon as it legally allows
 		helper.runAfterDelay(25, () -> {
-			helper.assertTrue(HeroTransformService.transform(player, ScaramoucheHero.ID),
-					"swap after the transform cooldown");
+			TestHeroes.transform(player, ScaramoucheHero.ID);
 			helper.assertTrue(AbilityCooldowns.isOnCooldown(player, AbilityIds.RAIDEN_SWORD_DRAW),
 					"a hero swap must not reset ability cooldowns");
 			TestPlayers.leave(player);
@@ -48,8 +47,7 @@ public final class HeroSwapGameTests implements FabricGameTest {
 
 		helper.runAfterDelay(25, () -> {
 			float energyBefore = HeroDataStore.get(player).energy();
-			helper.assertTrue(HeroTransformService.transform(player, ScaramoucheHero.ID),
-					"swap after the transform cooldown");
+			TestHeroes.transform(player, ScaramoucheHero.ID);
 			helper.assertTrue(player.getHealth() < player.getMaxHealth(),
 					"transforming must not be a free heal");
 			float energyAfter = HeroDataStore.get(player).energy();

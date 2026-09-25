@@ -115,7 +115,7 @@ public final class LifecycleGameTests implements FabricGameTest {
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void transformCooldownIsAttachmentBacked(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
-		helper.assertTrue(HeroTransformService.transform(player, RaidenHero.ID), "transformed");
+		TestHeroes.transform(player, RaidenHero.ID);
 
 		helper.assertTrue(player.getAttached(ModAttachments.TRANSFORM_TICK) != null,
 				"the cooldown marker lives on the entity, not in a static map");

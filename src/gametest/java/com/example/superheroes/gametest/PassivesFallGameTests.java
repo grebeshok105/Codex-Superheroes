@@ -3,7 +3,6 @@ package com.example.superheroes.gametest;
 import com.example.superheroes.effect.RegulusMadnessController;
 import com.example.superheroes.hero.KratosHero;
 import com.example.superheroes.hero.RegulusHero;
-import com.example.superheroes.transform.HeroTransformService;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -23,7 +22,7 @@ public final class PassivesFallGameTests implements FabricGameTest {
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void milkWipeRestoresHeroPassives(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
-		helper.assertTrue(HeroTransformService.transform(player, RegulusHero.ID), "regulus transform");
+		TestHeroes.transform(player, RegulusHero.ID);
 		helper.assertTrue(player.hasEffect(MobEffects.REGENERATION), "passives applied at transform");
 
 		// the vanilla milk path: removeAllEffects fires onEffectRemoved per instance
@@ -45,11 +44,10 @@ public final class PassivesFallGameTests implements FabricGameTest {
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void heroSwapReplacesDeclaredPassives(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
-		helper.assertTrue(HeroTransformService.transform(player, RegulusHero.ID), "regulus transform");
+		TestHeroes.transform(player, RegulusHero.ID);
 
 		helper.runAfterDelay(25, () -> {
-			helper.assertTrue(HeroTransformService.transform(player, KratosHero.ID),
-					"swap after the transform cooldown");
+			TestHeroes.transform(player, KratosHero.ID);
 			player.removeAllEffects();
 		});
 		helper.runAfterDelay(30, () -> {
@@ -66,7 +64,7 @@ public final class PassivesFallGameTests implements FabricGameTest {
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void clearMadnessKeepsPotionBeaconAndPassives(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
-		helper.assertTrue(HeroTransformService.transform(player, RegulusHero.ID), "regulus transform");
+		TestHeroes.transform(player, RegulusHero.ID);
 
 		// vanilla potion: ambient=false, visible=true — must survive clearMadness (audit B12)
 		player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 400, 0, false, true, true));
@@ -107,8 +105,8 @@ public final class PassivesFallGameTests implements FabricGameTest {
 	public void counterStripsFallImmunityOnlyForParticipants(GameTestHelper helper) {
 		ServerPlayer regulus = TestPlayers.join(helper);
 		ServerPlayer bystander = TestPlayers.join(helper);
-		helper.assertTrue(HeroTransformService.transform(regulus, RegulusHero.ID), "regulus transform");
-		helper.assertTrue(HeroTransformService.transform(bystander, RegulusHero.ID), "bystander transform");
+		TestHeroes.transform(regulus, RegulusHero.ID);
+		TestHeroes.transform(bystander, RegulusHero.ID);
 		TestPlayers.clearSpawnInvulnerability(regulus);
 		TestPlayers.clearSpawnInvulnerability(bystander);
 		Zombie victim = helper.spawn(EntityType.ZOMBIE, 1, 1, 1);
