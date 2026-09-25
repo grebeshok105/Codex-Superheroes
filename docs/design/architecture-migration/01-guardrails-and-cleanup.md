@@ -930,3 +930,5 @@ git commit -m "test(gametest): share a transform helper across GameTests"
 ## Execution Handoff
 
 Исполнение: **Subagent-Driven (рекомендуется)** — свежий субагент на стадию, ревью между стадиями (superpowers:subagent-driven-development), или **Inline** с контрольными точками (superpowers:executing-plans). Начинать с A1 сразу после вливания BF1–BF3 в `main`.
+
+При параллельном исполнении несколькими субагентами оркестратор раздаёт задачи этого плана по `00-overview.md` §11 «Оркестрация».

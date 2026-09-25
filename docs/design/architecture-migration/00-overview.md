@@ -10,6 +10,7 @@
 - Одна стадия = один PR, если в плане не сказано «PR-units».
 - Статус стадии обновляется в таблице «Статус стадий» её плана. Когда план целиком закончен — ещё и в таблице §2 здесь.
 - Решение, которое затрагивает несколько планов, записывается в §4 этого файла. Решение внутри одного плана — в разделе «Решения» этого плана.
+- Если стадии раздаёт оркестратор нескольким субагентам, он работает по §11 «Оркестрация».
 
 Источники: аудит 1 — `docs/audits/2026-09-25-opus-architecture-audit.md` (баги B1–B23, долг 1–9); аудит 2 — два документа, написанных параллельно и дополняющих друг друга: `docs/audits/2026-09-25-hero-modularity-audit.md` (локальность героя, `HeroModule`, `HeroProfile`, пилот Scorpion, stress-test Reinhard, целевая структура `core/mechanic/hero/content/compat`) и `docs/audits/2026-09-25-hoplite-structural-audit.md` (граф пакетов и циклы, S1–S17, реестры вместо списков, контракт роутера, сервисы вместо идиом, mixin policy, payload'ы, M1–M11). Оба документа добавлены в репозиторий этим PR с ветвей `hoplite/phaistos-c8f77e4f` и `hoplite/sestos-ea593710`.
 
@@ -303,3 +304,82 @@ client/
 ## 10. Известные ограничения
 
 - **Известные ограничения плана:** строки legacy-файлов указаны по вершине стека #39 и сдвинутся после BF4–BF10; `runClient` в песочнице без дисплея может быть недоступен — тогда runtime-пункты стадий проверяет владелец до мержа.
+
+## 11. Оркестрация
+
+Схема: один оркестратор, до двух исполнителей на стадию, ревьюер после сдачи. Исполнители одной модели, задачи и файлы им раздаёт оркестратор.
+
+### 11.1 Правила
+
+1. **Раздача.** Оркестратор читает стадию целиком, делает её «Сверку» и делит задачи по таблице §11.4. Каждый исполнитель получает свои задачи из плана, **список файлов, которые ему можно менять**, и сигнатуры из блоков **Interfaces**. Все остальные файлы для него только для чтения.
+2. **Сначала основа.** Если в §11.4 у стадии есть «основа», её делает один исполнитель, и только после её сдачи второй начинает свою часть. Второй пишет код против сигнатур из плана, а не против файлов, которых ещё нет.
+3. **Один файл — один владелец.** Пока исполнители работают параллельно, каждый файл принадлежит одному из них. Если не сказано иное, общие файлы стадии (`SuperheroesMod`, `SuperheroesClient`, `HeroModules`, `HeroClientModules`, `AbilityIds`, `AbilityRegistry`, `Heroes`, `ModItems`, `ModItemGroups`, `ModSounds`, `ModAttachments`, `ModNetworking`, `ClientNetworking`, `ModKeys`, `Hero.java`, `en_us.json` и `ru_ru.json`, `src/gametest/resources/fabric.mod.json`) принадлежат исполнителю A. Основу (правило 2) тоже делает A.
+4. **Только у оркестратора:** `src/test/resources/archunit_store/**`, `src/test/resources/architecture/package-cycles-baseline.txt`, сгенерированные golden-файлы в `src/gametest/resources/golden/`, таблицы «Статус стадий», `SESSION.md`, этот файл.
+5. **Сборку запускает только оркестратор.** Исполнители пишут код и команды `Run:`/`Expected:`, но Gradle не запускают (правило «Delegated execution» из `writing-plans`). После сведения оркестратор выполняет все `Run:` стадии, `qualityGate`, пересобирает ArchUnit baseline и коммитит его. Падение он возвращает владельцу упавшего файла.
+6. **Запуск между фазами.** Характеризационные тесты и golden-снимки надо снять на **старом** коде, до переноса. Это отдельная фаза: её код пишет исполнитель, запускает оркестратор, и только потом начинается перенос. Такие фазы есть в A1 (создание store и baseline циклов), B1 (golden после B1.2), B2 и B3 (golden до переноса), C1 (тест до чистки, store после), C2 (C2.1 на старом коде), F, G1 и в каждой волне П6.
+7. **Ветки.** У каждого исполнителя свой git worktree и своя ветка от ветки стадии. Оркестратор сливает их в ветку стадии, и на стадию открывается один PR.
+8. **Ревью после сдачи.** Свежий ревьюер, не исполнитель этой стадии, получает общий diff стадии, её паспорт (Acceptance, «Нельзя менять») и Global Constraints. Он проверяет, что поведение не изменилось, сохранённые id не тронуты, ни один файл не вышел за границы задачи и не появилось второго способа делать то же самое. Замечания уходят владельцу файла, после правок оркестратор снова гоняет `qualityGate`. В стадии H ревьюер — главный исполнитель.
+9. **Слияние.** Мержит владелец репозитория. Зависимая стадия стартует от `main`, в который уже влита её зависимость. Стеки PR не строить: ArchUnit baseline в стеке конфликтует на каждом слое.
+10. **Нагрузка.** Одновременно в работе не больше трёх стадий. Узкое место — сведение и `qualityGate` у оркестратора, а не число исполнителей. `runClient` в песочнице не запускается: runtime-чек-листы клиентских стадий проверяет владелец.
+
+### 11.2 Дорожки параллельности
+
+| Когда | Что идёт одновременно |
+| :-- | :-- |
+| Старт | только A1 (барьер) |
+| После A1 | дорожка 1: A2 → B1; дорожка 2: N1 → C2 → D1; дорожка 3: N2 → B3 (N3 — в любую свободную дорожку); дорожка 4: CL2 |
+| По мере BF и зависимостей | C1 (после BF4); B2 (после BF9 и B1); D2a (после C2 и D1) → D2b (после BF5) → D2c; CL1 (после BF7) → CL3 (после CL1, CL2, D2a) → CL4 и C4 (после BF10); клиентская дорожка CL идёт параллельно серверной D2 |
+| П5 | строго по одной стадии; E1 — ни одного открытого PR, трогающего `src/`. Исключение: пока идёт G1, исполнитель B заранее готовит клиентские реестры G2 (см. §11.4) |
+| П6 | после go в H: I1, I2, I3 и IC параллельно; внутри I4 и I5 герои параллельно; I6a → I6b строго по очереди (оба трогают полёт, L2 трогает лучи обоих) |
+
+### 11.3 Файлы, на которых сталкиваются стадии
+
+| Файл | Стадии | Правило |
+| :-- | :-- | :-- |
+| `SuperheroesMod`: тик-цикл и `registerPlayerLifecycle` | N1, D1 (потом D2b, D2c) | N1 → D1 последовательно (одна дорожка) |
+| `ModItems` и класс предмета Пандоры | N2, B3 | N2 → B3 последовательно |
+| `Hero.java`, `DoomsdayHero`, `ThanosHero`, `PandoraHero`, `IronManHero` | B1, C2 (позже B2, C4, D2c) | B1 и C2 можно вести параллельно: правки в разных местах. Конфликт вставки (обе стороны добавили методы рядом) оркестратор решает, оставляя обе стороны |
+| `SuperheroesClient` | CL1, CL2, потом CL3 | CL1 и CL2 правят разные блоки, можно параллельно; CL3 — после обеих |
+| `src/gametest/resources/fabric.mod.json` | почти каждая стадия с GameTest | каждая стадия дописывает свои строки; при конфликте оставить все |
+| `src/test/resources/archunit_store/**` | почти каждая стадия | не мержить руками: взять версию из `main`, прогнать `./gradlew test`, закоммитить результат |
+
+### 11.4 Как делить стадию на двоих
+
+Где сказано «герои A / B», герои делятся по позиции в `Heroes` / `HeroModules.ALL`, нечётные — A, чётные — B:
+
+- **A:** Homelander, Regulus, Doomsday, Naruto, Kratos, Thanos, Raiden, Omni-Man, Scaramouche, Rem, Scorpion.
+- **B:** Iron Man, Sung Jinwoo, Goku, Captain America, Loki, Reinhard, Invincible, Kazuha, Battle Beast, A-Train, Pandora.
+
+Общие способности (`FLIGHT`, `VILTRUMITE_RECOVERY`, `ViltrumiteCharge`) и `SharedMechanics` — у A. Если в строке стоит «один», второго исполнителя оркестратор отдаёт другой стадии, у которой выполнены зависимости.
+
+| Стадия | Основа (первым, один) | Исполнитель A | Исполнитель B |
+| :-- | :-- | :-- | :-- |
+| A1 | — | один: вся стадия | — |
+| A2 | — | A2.1, A2.2 | A2.3 |
+| N1, N2, N3 | — | один на стадию | — |
+| B1 | B1.1 (типы, `Hero.profile()`, перенос `PassiveGlyph`) | B1.2: `HeroProfileGameTests`, golden, профили героев A. B1.3: серверные потребители (`CombatImpactEngine`, `IronManJarvisController`, `JarvisQuotes`, `SuperJumpController`, `HeroBleedingController`, `HeroMeleeImpactController`, `DoomsdayHero.meleeBleed`). B1.4: герои A; удаление `getTheme/getHudConfig` из `Hero`, констант из `HeroTheme`/`HeroHudConfig`, `JarvisThreatClass`, таблиц `CombatImpactEngine`, `ALLOWED_HEROES`, switch кровотечения | B1.2: профили героев B. B1.3: клиентские потребители (`AbilityDescriptions`, `PassiveIcons`, `HudIcons`, `ClientHeroState`, `AbilityBarHud`, `HeroInfoPanelHud`). B1.4: герои B (константы темы и HUD — только чтение из `HeroTheme`/`HeroHudConfig`), удаление `PassiveIcons` и `HERO_PASSIVE_COUNT` |
+| B2 | golden-тест id модификаторов и, если нужен, `Hero.passiveAttributes()` | герои A + удаление `HeroAttributes` в конце | герои B |
+| B3 | — | один: вся стадия (всё сходится в `ModItems`) | — |
+| C1 | `CooldownGateGameTests` | способности героев A и общие способности | способности героев B |
+| C2 | C2.1 (тесты) + C2.2 шаг 1 (`AbilityDenial`, `AbilityBlocker`, `AbilityRules`) + default-методы `Hero` | C2.2 шаги 2 и 4: `AbilityRouter`, `ResourceController`, регистрация правил в `SuperheroesMod` | C2.2 шаг 3: хуки `DoomsdayHero`, `ThanosHero`, `PandoraHero`, `IronManHero` |
+| D1 | — | D1.1 (`OwnedSessionMap`, `LifecycleRegistrar`, JUnit), затем D1.3 после сдачи D1.2 | D1.2 (`TickPhase`, `TickRegistrar`, `HeroTickDispatcher`, `TickDispatcherGameTests`) |
+| D2a | D2a.1 (API) + `HeroModules` + `SharedAbilities` | модули героев A; удаление `Heroes.init`/`AbilityRegistry.init`, правки `SuperheroesMod`, `ProjectSanityTest`, правило `everyHeroModuleIsListed` | модули героев B |
+| D2b-1, D2b-2 | — | контроллеры и модули героев A, core и `SharedMechanics`; все правки `SuperheroesMod` (удаление строк конвертированных контроллеров обеих половин) | контроллеры и модули героев B |
+| D2c | ядро: `PlayerLifecycle`, `LifecycleRegistrar`, `OwnedSessionMap.ClearOn.HERO_CHANGE`, default-методы `Hero`, `DoomsdayHero` | `HeroTransformService`, `SuperheroesMod` и регистрации `onHeroChange` в модулях героев A | регистрации `onHeroChange`/`onRespawn`/`onLeave` в модулях героев B |
+| CL1 | `ClientSessionState`, `ClientSessionStates` | `SuperheroesClient` (все `register`) + `reset()` у стейтов героев A и общих стейтов | `reset()` у стейтов героев B |
+| CL2 | — | один: вся стадия | — |
+| CL3a | API: `HeroClientModule`, `HeroClientContext`, `CoreClientContext`, `HeroClientModules` | `ClientNetworking` (удаляет hero-receiver'ы обеих половин) + client-модули героев A | client-модули героев B с их receiver'ами |
+| CL3b | `HeroActionKeys` | удаление из `SuperheroesClient` и `ModKeys` за обе половины; регистрации HUD, рендереров, стейтов и клавиши Raiden в client-модулях героев A | регистрации HUD, рендереров, стейтов и клавиш Iron Man (`NANO_WEAPON`, `ESP_TOGGLE`) в client-модулях героев B |
+| CL4 | `SkinProvider`, `SkinResolver`, `PlayerLayers`, `HeroClientContext.skin/playerLayer` | переписывание skin-миксинов и удаление регистрации слоёв из `SuperheroesClient` | в этой стадии все client-модули у B: `SkinProvider` Homelander, Sung, Thanos, Iron Man; `playerLayer` Rem, Reinhard, Iron Man |
+| C4 | — | один: вся стадия | — |
+| E1, E2 | — | один на стадию | — |
+| M1 | — | `Motion`, `FxBroadcast`, перенос 5 циклов рассылки, GameTest `Motion` | `TargetFilter`, `Targeting`, GameTest `TargetFilter` |
+| F | — | один: F1, затем F2 | — |
+| G1 + G2 | — | G1 целиком; после вливания G1 — перенос клиента Reinhard в `client/hero/reinhard/` (G2) | параллельно G1: клиентские реестры G2 (`ClientSoundFilters` + общий `SoundEngineMixin`, `AbilityDecorations` + `RadialMenuHud`) с регистрацией в существующем `ReinhardClientModule` |
+| G3 | — | один | — |
+| H | — | ревьюер (не автор F и G) + замеры метрик §8 оркестратором | — |
+| I1a, I1b, I2a, I3 (строки с двумя героями) | I2a: `ChargeSession`; I3: `mechanic/ability` | первый герой строки + основа | второй герой строки, после сдачи основы |
+| остальные строки П6, IC1–IC3 | — | один на строку; разные строки идут параллельно (§11.2) | — |
+| O | — | один | — |
+
+В волнах П6 каждый исполнитель удаляет из общих списков только строки своего героя. Если два героя правят соседние строки, конфликт решает оркестратор, оставляя обе правки.

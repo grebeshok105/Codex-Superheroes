@@ -621,3 +621,5 @@ Reinhard использует почти каждый seam: persistent+copyOnDea
 ## Execution Handoff
 
 Исполнение: **Subagent-Driven (рекомендуется)** — свежий субагент на стадию, ревью между стадиями (superpowers:subagent-driven-development), или **Inline** с контрольными точками (superpowers:executing-plans). Ревью в H делает субагент профиля `review`, не автор F и G.
+
+При параллельном исполнении несколькими субагентами оркестратор раздаёт задачи этого плана по `00-overview.md` §11 «Оркестрация».

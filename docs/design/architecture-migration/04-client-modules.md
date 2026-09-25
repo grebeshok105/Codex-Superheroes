@@ -404,3 +404,5 @@ public interface SkinProvider {
 ## Execution Handoff
 
 Исполнение: **Subagent-Driven (рекомендуется)** — свежий субагент на стадию, ревью между стадиями (superpowers:subagent-driven-development), или **Inline** с контрольными точками (superpowers:executing-plans). CL2 стартует сразу после П1 A1, CL1 — после BF7.
+
+При параллельном исполнении несколькими субагентами оркестратор раздаёт задачи этого плана по `00-overview.md` §11 «Оркестрация».

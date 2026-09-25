@@ -953,3 +953,5 @@ public static void register(HeroModuleContext ctx) {
 ## Execution Handoff
 
 Исполнение: **Subagent-Driven (рекомендуется)** — свежий субагент на стадию, ревью между стадиями (superpowers:subagent-driven-development), или **Inline** с контрольными точками (superpowers:executing-plans). D1 стартует сразу после П1 A1.
+
+При параллельном исполнении несколькими субагентами оркестратор раздаёт задачи этого плана по `00-overview.md` §11 «Оркестрация».

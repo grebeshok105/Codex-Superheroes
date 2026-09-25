@@ -756,3 +756,5 @@ git commit -m "refactor(ability): replace hero branches in AbilityRouter with ga
 ## Execution Handoff
 
 Исполнение: **Subagent-Driven (рекомендуется)** — свежий субагент на стадию, ревью между стадиями (superpowers:subagent-driven-development), или **Inline** с контрольными точками (superpowers:executing-plans). Первыми можно запускать B3 и C2 (после П1 A1) и B1 (после П1 A2).
+
+При параллельном исполнении несколькими субагентами оркестратор раздаёт задачи этого плана по `00-overview.md` §11 «Оркестрация».
