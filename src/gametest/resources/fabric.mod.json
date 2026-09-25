@@ -22,7 +22,8 @@
 			"com.example.superheroes.gametest.TargetPredicateGameTests",
 			"com.example.superheroes.gametest.Stage15GameTests",
 			"com.example.superheroes.gametest.HeroCompletenessGameTests",
-			"com.example.superheroes.gametest.HeroPresentationGameTests"
+			"com.example.superheroes.gametest.HeroPresentationGameTests",
+			"com.example.superheroes.gametest.CooldownGateGameTests"
 		]
 	},
 	"depends": {

@@ -45,7 +45,6 @@ public final class ThanosSpacePortalAbility implements Ability {
 
 	@Override
 	public boolean canActivate(ServerPlayer player) {
-		if (AbilityCooldowns.isOnCooldown(player, getId())) return false;
 		Vec3 eye = player.getEyePosition();
 		Vec3 dir = player.getViewVector(1f);
 		return pickTarget(player, player.serverLevel(), eye, dir) != null;

@@ -57,9 +57,6 @@ public final class ThanosSnapAbility implements Ability {
 
 	@Override
 	public boolean canActivate(ServerPlayer player) {
-		if (AbilityCooldowns.isOnCooldown(player, getId())) {
-			return false;
-		}
 		EnumSet<InfinityStoneType> stones = ThanosGauntletStateController.getCurrentStones(player);
 		if (stones.size() < InfinityStoneType.values().length) {
 			player.displayClientMessage(
