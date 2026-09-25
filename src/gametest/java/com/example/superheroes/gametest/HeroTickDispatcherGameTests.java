@@ -56,7 +56,7 @@ public class HeroTickDispatcherGameTests implements FabricGameTest {
 		HeroTickDispatcher.tick(server);
 		helper.assertTrue(calls.get() == 0, "no hero, no ability task");
 
-		helper.assertTrue(HeroTransformService.transform(player, NarutoHero.ID), "naruto transform");
+		TestHeroes.transform(player, NarutoHero.ID);
 		HeroTickDispatcher.tick(server);
 		helper.assertTrue(calls.get() == 0, "ability task stays gated on isActive");
 
@@ -72,7 +72,7 @@ public class HeroTickDispatcherGameTests implements FabricGameTest {
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void phasesRunInEnumOrder(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
-		helper.assertTrue(HeroTransformService.transform(player, NarutoHero.ID), "naruto transform");
+		TestHeroes.transform(player, NarutoHero.ID);
 		HeroDataStore.update(player, d -> d.withActive(AbilityIds.NARUTO_SAGE_MODE, true));
 
 		List<HeroTickDispatcher.Phase> order = new ArrayList<>();

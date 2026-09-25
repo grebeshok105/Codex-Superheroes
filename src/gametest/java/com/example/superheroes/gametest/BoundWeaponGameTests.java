@@ -6,7 +6,6 @@ import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.hero.RaidenHero;
 import com.example.superheroes.item.ModItems;
 import com.example.superheroes.item.bound.BoundWeapons;
-import com.example.superheroes.transform.HeroTransformService;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -118,7 +117,7 @@ public final class BoundWeaponGameTests implements FabricGameTest {
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void raidenSwordDrawRespectsFullInventory(GameTestHelper helper) {
 		ServerPlayer raiden = TestPlayers.join(helper);
-		helper.assertTrue(HeroTransformService.transform(raiden, RaidenHero.ID), "transformed into Raiden");
+		TestHeroes.transform(raiden, RaidenHero.ID);
 		TestPlayers.fillInventory(raiden);
 
 		AbilityRouter.activate(raiden, AbilityIds.RAIDEN_SWORD_DRAW);

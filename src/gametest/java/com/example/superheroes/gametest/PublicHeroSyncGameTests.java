@@ -16,7 +16,7 @@ public class PublicHeroSyncGameTests implements FabricGameTest {
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void transformPublishesHeroId(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
-		helper.assertTrue(HeroTransformService.transform(player, NarutoHero.ID), "naruto transform");
+		TestHeroes.transform(player, NarutoHero.ID);
 
 		helper.assertValueEqual(NarutoHero.ID, player.getAttached(ModAttachments.PUBLIC_HERO),
 				"transform writes the synced public hero id (audit B14)");
