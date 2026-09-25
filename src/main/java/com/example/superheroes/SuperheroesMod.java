@@ -154,7 +154,6 @@ public class SuperheroesMod implements ModInitializer {
 		PlayerLifecycle.onLeave(com.example.superheroes.ability.RepulsorChargeController::reset);
 		PlayerLifecycle.onLeave(com.example.superheroes.ability.ChargeTackleAbility::clear);
 		PlayerLifecycle.onLeave(com.example.superheroes.ability.ViltrumiteChargeAbility::clear);
-		PlayerLifecycle.onLeave(com.example.superheroes.ability.MeteorSlamAbility::clear);
 		PlayerLifecycle.onLeave(com.example.superheroes.ability.OmnimanViltrumiteRushAbility::clear);
 		PlayerLifecycle.onLeave(com.example.superheroes.ability.GokuKamehamehaAbility::clear);
 		PlayerLifecycle.onLeave(com.example.superheroes.ability.GokuSpiritBombAbility::clear);
@@ -182,7 +181,6 @@ public class SuperheroesMod implements ModInitializer {
 		PlayerLifecycle.onDeath(com.example.superheroes.ability.RepulsorChargeController::reset);
 		PlayerLifecycle.onDeath(com.example.superheroes.ability.ChargeTackleAbility::clear);
 		PlayerLifecycle.onDeath(com.example.superheroes.ability.ViltrumiteChargeAbility::clear);
-		PlayerLifecycle.onDeath(com.example.superheroes.ability.MeteorSlamAbility::clear);
 		PlayerLifecycle.onDeath(com.example.superheroes.ability.OmnimanViltrumiteRushAbility::clear);
 		PlayerLifecycle.onDeath(com.example.superheroes.ability.GokuKamehamehaAbility::clear);
 		PlayerLifecycle.onDeath(com.example.superheroes.ability.GokuSpiritBombAbility::clear);
@@ -220,7 +218,6 @@ public class SuperheroesMod implements ModInitializer {
 			com.example.superheroes.ability.RepulsorChargeController.resetAll();
 			com.example.superheroes.ability.ChargeTackleAbility.resetAll();
 			com.example.superheroes.ability.ViltrumiteChargeAbility.resetAll();
-			com.example.superheroes.ability.MeteorSlamAbility.resetAll();
 			com.example.superheroes.ability.OmnimanViltrumiteRushAbility.resetAll();
 			com.example.superheroes.ability.GokuKamehamehaAbility.resetAll();
 			com.example.superheroes.ability.GokuSpiritBombAbility.resetAll();
@@ -251,8 +248,6 @@ public class SuperheroesMod implements ModInitializer {
 				.onPlayerTick((server, p, data) -> com.example.superheroes.ability.ChargeTackleAbility.serverTick(p));
 		com.example.superheroes.lifecycle.HeroTickDispatcher
 				.onPlayerTick((server, p, data) -> com.example.superheroes.ability.ViltrumiteChargeAbility.serverTick(p));
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onPlayerTick((server, p, data) -> com.example.superheroes.ability.MeteorSlamAbility.serverTick(p));
 		com.example.superheroes.lifecycle.HeroTickDispatcher
 				.onPlayerTick((server, p, data) -> com.example.superheroes.ability.OmnimanViltrumiteRushAbility.serverTick(p));
 		com.example.superheroes.lifecycle.HeroTickDispatcher

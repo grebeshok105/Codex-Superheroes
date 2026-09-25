@@ -2,7 +2,6 @@ package com.example.superheroes.hero;
 
 import com.example.superheroes.ModId;
 import com.example.superheroes.ability.AbilityIds;
-import com.example.superheroes.ability.MeteorSlamAbility;
 import com.example.superheroes.ability.ViltrumiteChargeAbility;
 import com.example.superheroes.physics.ShockwaveUtil;
 import com.example.superheroes.resource.ResourceKind;
@@ -103,7 +102,6 @@ public final class InvincibleHero implements Hero {
 		player.removeEffect(MobEffects.FIRE_RESISTANCE);
 		if (player instanceof ServerPlayer sp) {
 			ViltrumiteChargeAbility.clear(sp);
-			MeteorSlamAbility.clear(sp);
 		}
 	}
 
