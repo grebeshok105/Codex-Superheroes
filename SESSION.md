@@ -21,7 +21,11 @@
 | 9 | B12 passive reconciler, B16 fall immunity | `hoplite/kroton-d9205130--passives-fall` | PR open (stacked on 8) |
 | 10 | B14 synced public hero attachment | `hoplite/kroton-d9205130--public-hero-sync` | PR open (stacked on 9) |
 | 11 | Hero hooks / lifecycle events / tick dispatcher (debt 1–4) | `hoplite/kroton-d9205130--hero-modularity` | PR open (stacked on 10) |
-| 12 | Hygiene: deps, docs, missing model/lang | | todo |
+| 11b | Migrate ~50 self-registered `ServerTickEvents` onto the dispatcher | child session | in flight |
+| 12 | Hygiene: deps, docs, missing model/lang | `hoplite/kroton-d9205130--hygiene` | PR open (stacked on 11) |
+| 13 | B18 Sung shadows survive restart; B22 teleport collision checks | | todo |
+| 14 | B19 shared target predicate honoring PvP/teams | | todo |
+| 15 | Potential findings (4) + §3 network improvements | | todo |
 
 ## Completed this session (stage 1)
 
@@ -110,6 +114,15 @@
 - `Hero` default hooks (debt 4): `getImpactStyle`/`getImpactPower`, `getThreatClass`, `canUseAbility`/`onAbilityDenied`, `isAbilitySuppressedBy`, `getEnergyReserveFor`, `isUraniumWeak`. `CombatImpactEngine` deleted its 20-hero import table (style/power now come from the hero); `JarvisThreatClass` moved `jarvis/` → `hero/` and `forHero` reads `getThreatClass()` — `HERO_THREATS` gone, jarvis↔hero package cycle broken; `AbilityRouter`'s three `instanceof` branches + the IRON_FISTS check + the UNIBEAM reserve are hook calls; `FlightController` reads `isUraniumWeak()` instead of `HomelanderHero.ID`.
 - `ClientAbilityFilter` reuses the server tables `DoomsdayHero.isUnlockedAtTier` and `RemHero.isVisibleIn` — the client-side duplicate lists are deleted, so HUD and router can no longer drift apart.
 - `ProjectSanityTest.assertNoHeroTypeDispatch` forbids `instanceof *Hero` outside the hero package; 3 new GameTests (`HeroTickDispatcherGameTests`): dead skip, isActive gating, phase order.
+
+## Completed this session (stage 12)
+
+- `fabric.mod.json` deps tightened to what the build actually targets: `minecraft ~1.21.1`, `fabric-api >=0.116.12`.
+- `horde_crystal` got a model (`item/generated` + vanilla `echo_shard` texture — no new art needed for a command-issued item).
+- 5 missing entity display names added to en+ru: `horde_acid_bomb`, `horde_fire_bomb`, `kage_bunshin`, `shield_projectile`, `smart_missile`.
+- 21 cyrillic `Component.literal` sites converted to `Component.translatable` (+22 new lang keys in both files): commands (horde/admin-build/state), horde crystal + boss bar + Infected Homelander lines, Omniman hint, abilities HUD seconds.
+- `ModAttachments` rewritten from deprecated `AttachmentRegistry.builder()...buildAndRegister` to `AttachmentRegistry.create(id, b -> ...)` (13 attachments, same semantics).
+- `ProjectSanityTest` gained `assertNoCyrillicLiterals` (no `Component.literal` with cyrillic in main/client) and `assertEntityLangNames` (every entity id registered in `ModEntities`/`HordeEntities` has an `entity.superheroes.*` key in en_us.json).
 
 ## Important decisions
 - Bound weapons are identified by type (`BoundWeaponItem`) and validated by token; untokened copies are treated as stale on purpose (none are obtainable legitimately; old saves could hold leaked copies).
