@@ -27,8 +27,6 @@ public final class HudLayoutManager {
 	public static final String MELEE_CHARGE = "melee_charge";
 	public static final String TOOLTIPS = "tooltips";
 
-	public static final String[] ALL = {HERO_PANEL, HOTBAR, ABILITY_BAR, CHAT, EFFECTS, MELEE_CHARGE, TOOLTIPS};
-
 	private static final int[] ZERO = {0, 0};
 	private static final Map<String, int[]> OFFSETS = new HashMap<>();
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();

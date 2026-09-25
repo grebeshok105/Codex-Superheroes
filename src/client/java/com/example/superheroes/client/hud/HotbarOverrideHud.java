@@ -1,18 +1,39 @@
 package com.example.superheroes.client.hud;
 
 import com.example.superheroes.client.ClientHeroState;
+import com.example.superheroes.client.core.hud.HudBounds;
+import com.example.superheroes.client.core.hud.MovableHud;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 
-public final class HotbarOverrideHud {
+public final class HotbarOverrideHud implements MovableHud {
+	public static final HotbarOverrideHud INSTANCE = new HotbarOverrideHud();
+
 	private static final int BASE_SLOT_SIZE = 18;
 	private static final int BASE_GAP = 1;
 	private static final int BASE_MARGIN = 8;
 
 	private HotbarOverrideHud() {
+	}
+
+	@Override
+	public String layoutId() {
+		return HudLayoutManager.HOTBAR;
+	}
+
+	@Override
+	public HudBounds bounds(int screenWidth, int screenHeight) {
+		int margin = HudScaler.scale(BASE_MARGIN);
+		int panelH = HudScaler.scale(156);
+		int slot = HudScaler.scale(BASE_SLOT_SIZE);
+		int gap = HudScaler.scale(BASE_GAP);
+		int w = 9 * (slot + gap) + HudScaler.scale(46);
+		int[] off = HudLayoutManager.offset(HudLayoutManager.HOTBAR);
+		int y = screenHeight - panelH - margin - slot - HudScaler.scale(4) + off[1];
+		return new HudBounds(margin + off[0], y, w, slot);
 	}
 
 	public static void render(GuiGraphics graphics, DeltaTracker tracker) {

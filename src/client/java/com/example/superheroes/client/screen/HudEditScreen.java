@@ -1,15 +1,17 @@
 package com.example.superheroes.client.screen;
 
-import com.example.superheroes.client.ClientHeroState;
 import com.example.superheroes.client.config.SuperheroesClientConfig;
+import com.example.superheroes.client.core.hud.HudBounds;
+import com.example.superheroes.client.core.hud.HudLayers;
+import com.example.superheroes.client.core.hud.MovableHud;
 import com.example.superheroes.client.hud.HudLayoutManager;
-import com.example.superheroes.client.hud.HudScaler;
 import com.example.superheroes.client.hud.HudUtil;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -76,10 +78,14 @@ public class HudEditScreen extends Screen {
 
 		hovered = elementAt(mouseX, mouseY);
 
-		for (Element e : ELEMENTS) {
-			int[] r = bounds(e.id());
-			boolean hot = e.id().equals(dragging) || (dragging == null && e.id().equals(hovered));
-			drawCard(graphics, e, r[0], r[1], r[2], r[3], hot);
+		for (MovableHud m : orderedMovables()) {
+			Element e = meta(m.layoutId());
+			if (e == null) {
+				continue;
+			}
+			HudBounds r = m.bounds(width, height);
+			boolean hot = m.layoutId().equals(dragging) || (dragging == null && m.layoutId().equals(hovered));
+			drawCard(graphics, e, r.x(), r.y(), r.width(), r.height(), hot);
 		}
 
 		// Title + hint
@@ -122,11 +128,12 @@ public class HudEditScreen extends Screen {
 
 	private String elementAt(double mx, double my) {
 		// topmost = last in list order; iterate reversed so small cards win
-		for (int i = ELEMENTS.size() - 1; i >= 0; i--) {
-			Element e = ELEMENTS.get(i);
-			int[] r = bounds(e.id());
-			if (mx >= r[0] && mx <= r[0] + r[2] && my >= r[1] && my <= r[1] + r[3]) {
-				return e.id();
+		List<MovableHud> movables = orderedMovables();
+		for (int i = movables.size() - 1; i >= 0; i--) {
+			MovableHud m = movables.get(i);
+			HudBounds r = m.bounds(width, height);
+			if (mx >= r.x() && mx <= r.x() + r.width() && my >= r.y() && my <= r.y() + r.height()) {
+				return m.layoutId();
 			}
 		}
 		return null;
@@ -141,9 +148,9 @@ public class HudEditScreen extends Screen {
 			String id = elementAt(mx, my);
 			if (id != null) {
 				dragging = id;
-				int[] r = bounds(id);
-				grabDx = mx - r[0];
-				grabDy = my - r[1];
+				HudBounds r = bounds(id);
+				grabDx = mx - r.x();
+				grabDy = my - r.y();
 				return true;
 			}
 		}
@@ -153,15 +160,15 @@ public class HudEditScreen extends Screen {
 	@Override
 	public boolean mouseDragged(double mx, double my, int button, double ddx, double ddy) {
 		if (dragging != null && button == 0) {
-			int[] cur = bounds(dragging);
+			HudBounds cur = bounds(dragging);
 			int[] off = HudLayoutManager.offset(dragging);
-			int defX = cur[0] - off[0];
-			int defY = cur[1] - off[1];
+			int defX = cur.x() - off[0];
+			int defY = cur.y() - off[1];
 			int nx = (int) Math.round(mx - grabDx) - defX;
 			int ny = (int) Math.round(my - grabDy) - defY;
 			// clamp so the card stays on screen
-			nx = Math.max(-defX, Math.min(nx, width - cur[2] - defX));
-			ny = Math.max(-defY, Math.min(ny, height - cur[3] - defY));
+			nx = Math.max(-defX, Math.min(nx, width - cur.width() - defX));
+			ny = Math.max(-defY, Math.min(ny, height - cur.height() - defY));
 			HudLayoutManager.setOffset(dragging, nx, ny);
 			return true;
 		}
@@ -189,55 +196,38 @@ public class HudEditScreen extends Screen {
 		return false;
 	}
 
-	/** Live bounds {x, y, w, h} of each element, offset included. Mirrors the HUD math. */
-	private int[] bounds(String id) {
-		Minecraft mc = Minecraft.getInstance();
-		int sw = width;
-		int sh = height;
-		int margin = HudScaler.scale(8);
-		int panelW = com.example.superheroes.client.hud.HeroInfoPanelHud.panelWidth();
-		int panelH = HudScaler.scale(156);
-		int[] off = HudLayoutManager.offset(id);
-		switch (id) {
-			case HudLayoutManager.HERO_PANEL -> {
-				return new int[]{margin + off[0], sh - panelH - margin + off[1], panelW, panelH};
-			}
-			case HudLayoutManager.HOTBAR -> {
-				int slot = HudScaler.scale(18);
-				int gap = HudScaler.scale(1);
-				int w = 9 * (slot + gap) + HudScaler.scale(46);
-				int y = sh - panelH - margin - slot - HudScaler.scale(4) + off[1];
-				return new int[]{margin + off[0], y, w, slot};
-			}
-			case HudLayoutManager.ABILITY_BAR -> {
-				int n = ClientHeroState.data().hasHero() ? Math.max(1, ClientHeroState.abilities().size()) : 6;
-				int slotSize = HudScaler.scale(Math.max(28, Math.min(44, 36 + (6 - n) * 2)));
-				int gap = HudScaler.scale(4);
-				int w = n * slotSize + (n - 1) * gap;
-				int y = sh - HudScaler.scale(40) - slotSize + off[1];
-				return new int[]{(sw - w) / 2 + off[0], y, w, slotSize + HudScaler.scale(12)};
-			}
-			case HudLayoutManager.CHAT -> {
-				int autoLift = ClientHeroState.data().hasHero() ? -HudScaler.scale(104) : 0;
-				int w = (int) (mc.options.chatWidth().get() * 280) + 40;
-				int h = 120;
-				return new int[]{2 + off[0], sh - 48 - h + autoLift + off[1], w, h};
-			}
-			case HudLayoutManager.EFFECTS -> {
-				return new int[]{sw - 130 + off[0], 4 + off[1], 126, 60};
-			}
-			case HudLayoutManager.MELEE_CHARGE -> {
-				return new int[]{sw / 2 + 10 + off[0], sh / 2 - 9 + off[1], 14, 24};
-			}
-			case HudLayoutManager.TOOLTIPS -> {
-				// mirrors AbilitiesTooltipHud (raw gui px: right edge, below effects)
-				int w = 250;
-				int h = 140;
-				return new int[]{sw - w - 10 + off[0], 70 + off[1], w, h};
-			}
-			default -> {
-				return new int[]{0, 0, 10, 10};
+	/** Live bounds of a layout element, offset included — the movable's own math. */
+	private HudBounds bounds(String id) {
+		for (MovableHud m : HudLayers.movables()) {
+			if (m.layoutId().equals(id)) {
+				return m.bounds(width, height);
 			}
 		}
+		return new HudBounds(0, 0, 10, 10);
+	}
+
+	/** Movable elements in the screen's card order (same relative order as the old list). */
+	private static List<MovableHud> orderedMovables() {
+		List<MovableHud> movables = new ArrayList<>(HudLayers.movables());
+		movables.sort(Comparator.comparingInt(m -> elementIndex(m.layoutId())));
+		return movables;
+	}
+
+	private static int elementIndex(String layoutId) {
+		for (int i = 0; i < ELEMENTS.size(); i++) {
+			if (ELEMENTS.get(i).id().equals(layoutId)) {
+				return i;
+			}
+		}
+		return ELEMENTS.size();
+	}
+
+	private static Element meta(String layoutId) {
+		for (Element e : ELEMENTS) {
+			if (e.id().equals(layoutId)) {
+				return e;
+			}
+		}
+		return null;
 	}
 }

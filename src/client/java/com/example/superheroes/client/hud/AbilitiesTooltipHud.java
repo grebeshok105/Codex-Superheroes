@@ -5,6 +5,8 @@ import com.example.superheroes.client.ClientAbilityCooldowns;
 import com.example.superheroes.client.ClientAbilityFilter;
 import com.example.superheroes.client.ClientHeroState;
 import com.example.superheroes.client.ClientMadnessState;
+import com.example.superheroes.client.core.hud.HudBounds;
+import com.example.superheroes.client.core.hud.MovableHud;
 import com.example.superheroes.hero.HeroTheme;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.DeltaTracker;
@@ -16,7 +18,9 @@ import net.minecraft.util.FormattedCharSequence;
 
 import java.util.List;
 
-public final class AbilitiesTooltipHud {
+public final class AbilitiesTooltipHud implements MovableHud {
+	public static final AbilitiesTooltipHud INSTANCE = new AbilitiesTooltipHud();
+
 	// Anchored to the RIGHT edge since the v2 HUD redesign; draggable via HUD editor.
 	private static final int ANCHOR_RIGHT = 10;
 	private static final int ANCHOR_TOP = 70;
@@ -49,6 +53,18 @@ public final class AbilitiesTooltipHud {
 	private static boolean userVisible = true;
 
 	private AbilitiesTooltipHud() {
+	}
+
+	@Override
+	public String layoutId() {
+		return HudLayoutManager.TOOLTIPS;
+	}
+
+	@Override
+	public HudBounds bounds(int screenWidth, int screenHeight) {
+		int[] off = HudLayoutManager.offset(HudLayoutManager.TOOLTIPS);
+		return new HudBounds(screenWidth - PANEL_WIDTH - ANCHOR_RIGHT + off[0], ANCHOR_TOP + off[1],
+				PANEL_WIDTH, 140);
 	}
 
 	public static void toggleVisible() {

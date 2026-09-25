@@ -4,6 +4,8 @@ import com.example.superheroes.client.ClientAbilityCooldowns;
 import com.example.superheroes.client.ClientAbilityFilter;
 import com.example.superheroes.client.ClientHeroState;
 import com.example.superheroes.client.config.SuperheroesClientConfig;
+import com.example.superheroes.client.core.hud.HudBounds;
+import com.example.superheroes.client.core.hud.MovableHud;
 import com.example.superheroes.client.render.WildRenderer;
 import com.example.superheroes.client.render.WildShaders;
 import com.example.superheroes.hero.Hero;
@@ -24,7 +26,9 @@ import java.util.List;
  * кольцом цвета героя, круговой маской иконки и дуговым кулдауном.
  * Геометрия слотов (размеры/отступы/drag-границы) не менялась.
  */
-public final class AbilityBarHud {
+public final class AbilityBarHud implements MovableHud {
+	public static final AbilityBarHud INSTANCE = new AbilityBarHud();
+
 	private static final int BASE_SLOT_SIZE = 36;
 	private static final int BASE_GAP = 4;
 	private static final int BASE_BOTTOM_OFFSET = 40;
@@ -37,6 +41,22 @@ public final class AbilityBarHud {
 	private static final int CD_ORANGE = 0xFFFFA94F;
 
 	private AbilityBarHud() {
+	}
+
+	@Override
+	public String layoutId() {
+		return HudLayoutManager.ABILITY_BAR;
+	}
+
+	@Override
+	public HudBounds bounds(int screenWidth, int screenHeight) {
+		int n = ClientHeroState.data().hasHero() ? Math.max(1, ClientHeroState.abilities().size()) : 6;
+		int slotSize = HudScaler.scale(Math.max(28, Math.min(44, BASE_SLOT_SIZE + (6 - n) * 2)));
+		int gap = HudScaler.scale(BASE_GAP);
+		int w = n * slotSize + (n - 1) * gap;
+		int[] off = HudLayoutManager.offset(HudLayoutManager.ABILITY_BAR);
+		int y = screenHeight - HudScaler.scale(BASE_BOTTOM_OFFSET) - slotSize + off[1];
+		return new HudBounds((screenWidth - w) / 2 + off[0], y, w, slotSize + HudScaler.scale(12));
 	}
 
 	public static void tick() {

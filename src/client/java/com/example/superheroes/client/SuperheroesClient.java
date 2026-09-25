@@ -1,16 +1,33 @@
 package com.example.superheroes.client;
 
+import com.example.superheroes.ModId;
+import com.example.superheroes.client.core.hud.HudLayers;
+import com.example.superheroes.client.hud.AbilitiesTooltipHud;
 import com.example.superheroes.client.hud.AbilityBarHud;
+import com.example.superheroes.client.hud.ChatHudMovable;
+import com.example.superheroes.client.hud.CracksOverlayHud;
+import com.example.superheroes.client.hud.DoomsdayGlitchHud;
+import com.example.superheroes.client.hud.EffectsHudMovable;
 import com.example.superheroes.client.hud.HeroInfoPanelHud;
+import com.example.superheroes.client.hud.HordeDebugOverlay;
 import com.example.superheroes.client.hud.HotbarOverrideHud;
 import com.example.superheroes.client.hud.BloodRainHud;
 import com.example.superheroes.client.hud.EvangelionZoomHud;
+import com.example.superheroes.client.hud.JarvisDetectionHud;
 import com.example.superheroes.client.hud.JarvisOverlayHud;
 import com.example.superheroes.client.hud.MadnessHudOverlay;
+import com.example.superheroes.client.hud.MeleeChargeHud;
+import com.example.superheroes.client.hud.MirrorWarpFlashHud;
+import com.example.superheroes.client.hud.PandoraDeathTitleHud;
 import com.example.superheroes.client.hud.RadialMenuHud;
 import com.example.superheroes.client.hud.ReactorOverlayHud;
+import com.example.superheroes.client.hud.ReinhardCeremonyOverlay;
+import com.example.superheroes.client.hud.ReinhardDarknessOverlay;
+import com.example.superheroes.client.hud.ReinhardSwordDeathOverlay;
 import com.example.superheroes.client.hud.ScreenFlashHud;
+import com.example.superheroes.client.hud.SpartanRageHud;
 import com.example.superheroes.client.hud.SunWindupHud;
+import com.example.superheroes.client.hud.UraniumThreatHud;
 import com.example.superheroes.client.fx.ScreenShakeManager;
 import com.example.superheroes.client.fx.WallImpactDebrisManager;
 import com.example.superheroes.client.network.ClientNetworking;
@@ -34,7 +51,6 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
-import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.LivingEntityFeatureRendererRegistrationCallback;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.particle.EndRodParticle;
@@ -160,45 +176,39 @@ public class SuperheroesClient implements ClientModInitializer {
 				sprites -> new com.example.superheroes.client.fx.CustomParticleGate(sprites, EndRodParticle.Provider::new));
 		com.example.superheroes.client.config.SuperheroesClientConfig.load();
 
-		HudRenderCallback.EVENT.register((graphics, tracker) -> {
-			// Spectator mode: hide the entire mod HUD
-			net.minecraft.client.Minecraft hudMc = net.minecraft.client.Minecraft.getInstance();
-			if (hudMc.player != null && hudMc.player.isSpectator()) {
-				return;
-			}
-			JarvisOverlayHud.render(graphics, tracker);
-			com.example.superheroes.client.hud.JarvisDetectionHud.render(graphics, tracker);
-			HeroInfoPanelHud.render(graphics, tracker);
-			HotbarOverrideHud.render(graphics, tracker);
-			AbilityBarHud.render(graphics, tracker);
-			com.example.superheroes.client.hud.SpartanRageHud.render(graphics, tracker);
-			RadialMenuHud.render(graphics, tracker);
-			ScreenFlashHud.render(graphics, tracker);
-			SunWindupHud.render(graphics, tracker);
-			ReactorOverlayHud.render(graphics, tracker);
-			MadnessHudOverlay.render(graphics, tracker);
-			BloodRainHud.render(graphics, tracker);
-			EvangelionZoomHud.render(graphics, tracker);
-			com.example.superheroes.client.hud.UraniumThreatHud.render(graphics, tracker);
-			com.example.superheroes.client.hud.CracksOverlayHud.render(graphics, tracker);
-			com.example.superheroes.client.hud.DoomsdayGlitchHud.render(graphics, tracker);
-			com.example.superheroes.client.hud.ReinhardCeremonyOverlay.render(graphics, tracker);
-			com.example.superheroes.client.hud.AbilitiesTooltipHud.render(graphics, tracker);
-			com.example.superheroes.client.hud.PandoraDeathTitleHud.render(graphics, tracker);
-			com.example.superheroes.client.hud.HordeDebugOverlay.render(graphics, tracker);
-			{
-				int[] mcOff = com.example.superheroes.client.hud.HudLayoutManager.offset(
-						com.example.superheroes.client.hud.HudLayoutManager.MELEE_CHARGE);
-				graphics.pose().pushPose();
-				graphics.pose().translate(mcOff[0], mcOff[1], 0);
-				com.example.superheroes.client.hud.MeleeChargeHud.render(graphics, tracker);
-				graphics.pose().popPose();
-			}
-			com.example.superheroes.client.hud.ReinhardSwordDeathOverlay.render(graphics, tracker);
-			com.example.superheroes.client.hud.ReinhardDarknessOverlay.render(graphics, tracker);
-			// Топовый слой: чёрная вспышка Зеркального измерения прячет фриз Iris.reload().
-			com.example.superheroes.client.hud.MirrorWarpFlashHud.render(graphics, tracker);
-		});
+		HudLayers.init();
+
+		HudLayers.register(100, ModId.of("jarvis_overlay"), JarvisOverlayHud::render);
+		HudLayers.register(200, ModId.of("jarvis_detection"), JarvisDetectionHud::render);
+		HudLayers.registerMovable(300, ModId.of("hero_panel"), HeroInfoPanelHud::render, HeroInfoPanelHud.INSTANCE);
+		HudLayers.registerMovable(400, ModId.of("hotbar"), HotbarOverrideHud::render, HotbarOverrideHud.INSTANCE);
+		HudLayers.registerMovable(500, ModId.of("ability_bar"), AbilityBarHud::render, AbilityBarHud.INSTANCE);
+		// Vanilla chat and effect icons are shifted by mixins, not drawn by a mod layer:
+		// movable-only entries so the HUD editor keeps all 7 cards.
+		HudLayers.registerMovable(550, ModId.of("chat"), (graphics, delta) -> {
+		}, ChatHudMovable.INSTANCE);
+		HudLayers.registerMovable(560, ModId.of("effects"), (graphics, delta) -> {
+		}, EffectsHudMovable.INSTANCE);
+		HudLayers.register(600, ModId.of("spartan_rage"), SpartanRageHud::render);
+		HudLayers.register(700, ModId.of("radial_menu"), RadialMenuHud::render);
+		HudLayers.register(800, ModId.of("screen_flash"), ScreenFlashHud::render);
+		HudLayers.register(900, ModId.of("sun_windup"), SunWindupHud::render);
+		HudLayers.register(1000, ModId.of("reactor_overlay"), ReactorOverlayHud::render);
+		HudLayers.register(1100, ModId.of("madness_overlay"), MadnessHudOverlay::render);
+		HudLayers.register(1200, ModId.of("blood_rain"), BloodRainHud::render);
+		HudLayers.register(1300, ModId.of("evangelion_zoom"), EvangelionZoomHud::render);
+		HudLayers.register(1400, ModId.of("uranium_threat"), UraniumThreatHud::render);
+		HudLayers.register(1500, ModId.of("cracks_overlay"), CracksOverlayHud::render);
+		HudLayers.register(1600, ModId.of("doomsday_glitch"), DoomsdayGlitchHud::render);
+		HudLayers.register(1700, ModId.of("reinhard_ceremony"), ReinhardCeremonyOverlay::render);
+		HudLayers.registerMovable(1800, ModId.of("tooltips"), AbilitiesTooltipHud::render, AbilitiesTooltipHud.INSTANCE);
+		HudLayers.register(1900, ModId.of("pandora_death_title"), PandoraDeathTitleHud::render);
+		HudLayers.register(2000, ModId.of("horde_debug"), HordeDebugOverlay::render);
+		HudLayers.registerMovable(2100, ModId.of("melee_charge"), MeleeChargeHud::render, MeleeChargeHud.INSTANCE);
+		HudLayers.register(2200, ModId.of("reinhard_sword_death"), ReinhardSwordDeathOverlay::render);
+		HudLayers.register(2300, ModId.of("reinhard_darkness"), ReinhardDarknessOverlay::render);
+		// Топовый слой: чёрная вспышка Зеркального измерения прячет фриз Iris.reload().
+		HudLayers.register(2400, ModId.of("mirror_warp_flash"), MirrorWarpFlashHud::render);
 
 		ClientTickEvents.START_CLIENT_TICK.register(SuperheroesClient::tickHeroMeleeCharge);
 		ClientTickEvents.START_CLIENT_TICK.register(SuperheroesClient::tickThinkMarkDash);
