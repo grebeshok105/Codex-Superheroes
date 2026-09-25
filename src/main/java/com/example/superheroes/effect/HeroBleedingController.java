@@ -1,8 +1,10 @@
 package com.example.superheroes.effect;
 
+import com.example.superheroes.hero.BleedProfile;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -16,29 +18,36 @@ public final class HeroBleedingController {
 	}
 
 	/**
+	 * Bleed profile for a melee hit by {@code heroId}, or {@code null} when the
+	 * hero does not apply bleeding. {@code doomsdayTier} is 0 for non-Doomsday
+	 * heroes; Doomsday bleeds only from tier 3 up.
+	 */
+	public static @Nullable BleedProfile bleedFor(ResourceLocation heroId, int doomsdayTier) {
+		if (heroId == null) return null;
+		String path = heroId.getPath();
+		switch (path) {
+			case "battle_beast" -> { return new BleedProfile(0.30f, 0); }
+			case "kratos"       -> { return new BleedProfile(0.25f, 0); }
+			case "omniman"      -> { return new BleedProfile(0.40f, 1); }
+			case "invincible"   -> { return new BleedProfile(0.20f, 0); }
+			case "doomsday"     -> {
+				if (doomsdayTier < 3) return null;
+				return new BleedProfile(0.50f, 1);
+			}
+			default -> { return null; }
+		}
+	}
+
+	/**
 	 * @param heroId attacker's current hero ID (nullable)
 	 * @param target the melee target
 	 * @param doomsdayTier 0 if not Doomsday, else the tier level
 	 */
 	public static void tryApplyBleeding(ResourceLocation heroId, LivingEntity target, int doomsdayTier) {
-		if (heroId == null) return;
-		String path = heroId.getPath();
-		float chance;
-		int amplifier;
-		switch (path) {
-			case "battle_beast" -> { chance = 0.30f; amplifier = 0; }
-			case "kratos"       -> { chance = 0.25f; amplifier = 0; }
-			case "omniman"      -> { chance = 0.40f; amplifier = 1; }
-			case "invincible"   -> { chance = 0.20f; amplifier = 0; }
-			case "doomsday"     -> {
-				if (doomsdayTier < 3) return;
-				chance = 0.50f;
-				amplifier = 1;
-			}
-			default -> { return; }
-		}
-		if (ThreadLocalRandom.current().nextFloat() < chance) {
-			target.addEffect(new MobEffectInstance(ModEffects.BLEEDING, 80, amplifier, false, true, true));
+		BleedProfile bleed = bleedFor(heroId, doomsdayTier);
+		if (bleed == null) return;
+		if (ThreadLocalRandom.current().nextFloat() < bleed.chance()) {
+			target.addEffect(new MobEffectInstance(ModEffects.BLEEDING, 80, bleed.amplifier(), false, true, true));
 		}
 	}
 }

@@ -44,13 +44,16 @@ public final class SuperJumpController {
 	private SuperJumpController() {
 	}
 
+	public static boolean isAllowed(ResourceLocation heroId) {
+		return ALLOWED_HEROES.contains(heroId);
+	}
 
 	public static void activate(ServerPlayer player) {
 		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
 		if (!data.hasHero()) {
 			return;
 		}
-		if (!ALLOWED_HEROES.contains(data.heroId())) {
+		if (!isAllowed(data.heroId())) {
 			return;
 		}
 		UUID id = player.getUUID();
