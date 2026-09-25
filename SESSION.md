@@ -2,7 +2,7 @@
 
 ## Active work
 
-- Branch: `devin/1790340168-agents-md-rebuild`
+- Branch: `main`
 - Goal: Codex Superheroes revival / 5.0 foundation work.
 - Current phase: repository cleanup, agent workflow restoration, verification baseline, and architectural reacquaintance before new content work.
 
@@ -13,8 +13,9 @@
 - `README.md` and `fabric.mod.json` were refreshed for the revived Codex project.
 - Build CI targets Java 21.
 - Cross-session continuity is now mandatory through this file.
-- A separate task is being used to adapt the Jujutsu-style `qualityGate` to Codex.
+- The Jujutsu-style `qualityGate` has been adapted to Codex, merged, and is now the canonical verification baseline.
 - Independent architecture/bug review and VFX-foundation research may happen in parallel; their findings should be brought back into durable project context before implementation.
+- The independent Opus 5.5 architecture/bug audit is preserved at `docs/audits/2026-09-25-opus-architecture-audit.md` and is the current baseline for the restoration rewrite.
 
 ## Important decisions
 
@@ -30,7 +31,6 @@ No runtime verification was required for the documentation/repository-cleanup wo
 
 ## Open work
 
-- Finish and integrate the Codex `qualityGate`.
 - Establish the architecture/debt map from the independent audit.
 - Decide and execute package identity cleanup away from `com.example.superheroes` when the verification baseline is ready.
 - Rebuild only the project skills that prove useful for the new workflow.
@@ -39,7 +39,7 @@ No runtime verification was required for the documentation/repository-cleanup wo
 
 ## Next session
 
-1. Read this file and current `AGENTS.md`.
-2. Check the status/results of the parallel qualityGate, architecture audit, and VFX research tasks.
-3. Integrate findings without overlapping active branches blindly.
-4. Turn verified architectural findings into a prioritized debt map before starting broad refactors.
+1. Read this file, current `AGENTS.md`, and `docs/audits/2026-09-25-opus-architecture-audit.md`.
+2. Use the preserved audit as the baseline for the Opus-led restoration/fix pass.
+3. Re-verify findings while implementing; do not assume subagent-only findings are proven until checked.
+4. Keep `qualityGate` green and update this handoff after each substantial batch.
