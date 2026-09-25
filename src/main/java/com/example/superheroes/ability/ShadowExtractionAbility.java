@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.transform.HeroDataStore;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -43,11 +44,10 @@ public final class ShadowExtractionAbility implements Ability {
 		player.heal(2.0f);
 
 		// Возвращаем 5 ENERGY (charges) — net cost 5
-		var data = player.getAttachedOrCreate(com.example.superheroes.attachment.ModAttachments.HERO_DATA);
-		float newEnergy = Math.min(data.energy() + 5f, com.example.superheroes.hero.Heroes.get(data.heroId()) != null
-				? com.example.superheroes.hero.Heroes.get(data.heroId()).getEnergyMax() : 100f);
-		player.setAttached(com.example.superheroes.attachment.ModAttachments.HERO_DATA, data.withEnergy(newEnergy));
-		com.example.superheroes.network.ModNetworking.syncResources(player, data.withEnergy(newEnergy));
+		HeroDataStore.update(player, d -> {
+			var hero = com.example.superheroes.hero.Heroes.get(d.heroId());
+			return d.withEnergy(Math.min(d.energy() + 5f, hero != null ? hero.getEnergyMax() : 100f));
+		});
 
 		level.sendParticles(ParticleTypes.SOUL, player.getX(), player.getY() + 1, player.getZ(),
 				24, 0.4, 0.6, 0.4, 0.05);

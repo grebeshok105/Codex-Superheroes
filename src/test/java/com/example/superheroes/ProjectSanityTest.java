@@ -36,6 +36,9 @@ public final class ProjectSanityTest {
 	private static final Path FABRIC_MOD_JSON = MAIN_RESOURCES.resolve("fabric.mod.json");
 	private static final String MOD_ID = "superheroes";
 
+	private static final Pattern HERO_DATA_DIRECT_WRITE = Pattern.compile(
+			"setAttached\\(\\s*(?:[\\w.]+\\.)?HERO_DATA\\b|removeAttached\\(\\s*(?:[\\w.]+\\.)?HERO_DATA\\b"
+					+ "|ModNetworking\\.sync(?:HeroData|Resources)\\(");
 	private static final Pattern FABRIC_IMPL_IMPORT = Pattern.compile("net\\.fabricmc\\.fabric\\.impl\\.");
 	private static final Pattern CLIENT_ONLY_IMPORT = Pattern.compile("import\\s+net\\.minecraft\\.client\\.|import\\s+net\\.fabricmc\\.fabric\\.api\\.client\\.");
 	private static final Pattern HERO_FIELD = Pattern.compile("public static final \\w+Hero (\\w+) =", Pattern.MULTILINE);
@@ -54,6 +57,7 @@ public final class ProjectSanityTest {
 		assertEveryHeroRegistered();
 		assertControllersAreWired();
 		assertFabricModJsonSanity();
+		assertHeroDataHasSingleWriter();
 		System.out.println("ProjectSanityTest passed");
 	}
 
@@ -66,6 +70,20 @@ public final class ProjectSanityTest {
 						: file + " references net.fabricmc.fabric.impl.* internals — only net.fabricmc.fabric.api.* is allowed";
 			});
 		}
+	}
+
+	// HeroData has one writer (audit B2): read-modify-write through HeroDataStore, never a stale copy.
+	private static void assertHeroDataHasSingleWriter() throws IOException {
+		Path store = MAIN_JAVA.resolve("com/example/superheroes/transform/HeroDataStore.java");
+		Path networking = MAIN_JAVA.resolve("com/example/superheroes/network/ModNetworking.java");
+		forEachJavaFile(MAIN_JAVA, file -> {
+			if (file.equals(store) || file.equals(networking)) {
+				return;
+			}
+			String source = Files.readString(file);
+			assert !HERO_DATA_DIRECT_WRITE.matcher(source).find()
+					: file + " writes or syncs HERO_DATA directly — use HeroDataStore.update(player, fn)";
+		});
 	}
 
 	// Hard rule: src/main must load on a dedicated server — no client-only imports.

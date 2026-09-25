@@ -1,5 +1,6 @@
 package com.example.superheroes.effect;
 
+import com.example.superheroes.transform.HeroDataStore;
 import com.example.superheroes.ability.AbilityIds;
 import com.example.superheroes.ability.AbilityRouter;
 import com.example.superheroes.attachment.ModAttachments;
@@ -213,9 +214,7 @@ public final class FlightController {
 
 	private static void tickIronManEffects(ServerPlayer player, HeroData data) {
 		if (data.energy() < IRON_MAN_ENERGY_FLOOR) {
-			HeroData updated = data.withResources(IRON_MAN_ENERGY_FLOOR, data.mana());
-			player.setAttached(ModAttachments.HERO_DATA, updated);
-			ModNetworking.syncResources(player, updated);
+			HeroDataStore.update(player, d -> d.withEnergy(Math.max(d.energy(), IRON_MAN_ENERGY_FLOOR)));
 		}
 		ServerLevel level = player.serverLevel();
 		Vec3 pos = player.position();

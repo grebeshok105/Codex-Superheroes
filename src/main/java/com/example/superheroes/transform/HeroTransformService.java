@@ -52,14 +52,13 @@ public final class HeroTransformService {
 		for (ResourceLocation abilityId : hero.getAbilities()) {
 			bindings.putIfAbsent(abilityId, hero.getDefaultBinding(abilityId));
 		}
-		HeroData updated = new HeroData(
+		HeroData updated = HeroDataStore.update(player, d -> new HeroData(
 				Optional.of(heroId),
 				hero.getEnergyMax(),
-				Math.min(data.mana(), hero.getManaMax()),
+				Math.min(d.mana(), hero.getManaMax()),
 				bindings,
 				java.util.Set.of()
-		);
-		player.setAttached(ModAttachments.HERO_DATA, updated);
+		));
 		com.example.superheroes.effect.PandoraDeathController.resetOnHeroTaken(player);
 		com.example.superheroes.ability.AbilityCooldowns.clearAndSync(player);
 		com.example.superheroes.effect.RegulusTotemController.clear(player.getUUID());
@@ -67,7 +66,6 @@ public final class HeroTransformService {
 		hero.applyPassives(player);
 		player.refreshDimensions();
 		player.setHealth(player.getMaxHealth());
-		ModNetworking.syncHeroData(player, updated);
 		ModNetworking.broadcastRemoteHeroSkin(player);
 		playTransformFx(player, true);
 		com.example.superheroes.effect.HeroReactionController.onTransformed(player, heroId);
@@ -102,11 +100,9 @@ public final class HeroTransformService {
 		com.example.superheroes.effect.ReinhardController.clearAdaptations(player);
 		com.example.superheroes.effect.RaidenLifecycleController.clearOnUntransform(player);
 		com.example.superheroes.effect.RemDemonismController.clear(player);
-		HeroData updated = data.withHero(null).withResources(0f, 0f).clearActive();
-		player.setAttached(ModAttachments.HERO_DATA, updated);
+		HeroDataStore.update(player, d -> d.withHero(null).withResources(0f, 0f).clearActive());
 		com.example.superheroes.ability.AbilityCooldowns.clearAndSync(player);
 		player.refreshDimensions();
-		ModNetworking.syncHeroData(player, updated);
 		ModNetworking.broadcastRemoteHeroSkin(player);
 		if (playFx) {
 			playTransformFx(player, false);
@@ -145,10 +141,9 @@ public final class HeroTransformService {
 	}
 
 	public static void onPlayerJoin(ServerPlayer player) {
-		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
+		HeroData data = HeroDataStore.get(player);
 		if (data.hasHero() && !data.activeAbilities().isEmpty()) {
-			data = data.clearActive();
-			player.setAttached(ModAttachments.HERO_DATA, data);
+			data = HeroDataStore.update(player, HeroData::clearActive);
 		}
 		if (data.hasHero()) {
 			Hero hero = Heroes.get(data.heroId());
@@ -156,14 +151,13 @@ public final class HeroTransformService {
 				reapplyLifecyclePassives(player, hero);
 			}
 		}
-		ModNetworking.syncHeroData(player, data);
+		HeroDataStore.syncFull(player);
 	}
 
 	public static void onPlayerRespawn(ServerPlayer newPlayer) {
-		HeroData data = newPlayer.getAttachedOrCreate(ModAttachments.HERO_DATA);
+		HeroData data = HeroDataStore.get(newPlayer);
 		if (data.hasHero() && !data.activeAbilities().isEmpty()) {
-			data = data.clearActive();
-			newPlayer.setAttached(ModAttachments.HERO_DATA, data);
+			data = HeroDataStore.update(newPlayer, HeroData::clearActive);
 		}
 		if (data.hasHero()) {
 			Hero hero = Heroes.get(data.heroId());
@@ -172,7 +166,7 @@ public final class HeroTransformService {
 			}
 		}
 		com.example.superheroes.effect.ReinhardController.onRespawn(newPlayer);
-		ModNetworking.syncHeroData(newPlayer, data);
+		HeroDataStore.syncFull(newPlayer);
 	}
 
 	private static void reapplyLifecyclePassives(ServerPlayer player, Hero hero) {

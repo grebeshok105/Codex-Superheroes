@@ -1,5 +1,6 @@
 package com.example.superheroes.effect;
 
+import com.example.superheroes.transform.HeroDataStore;
 import com.example.superheroes.ModId;
 import com.example.superheroes.ability.AbilityIds;
 import com.example.superheroes.ability.AbilityCooldowns;
@@ -8,7 +9,6 @@ import com.example.superheroes.hero.AttributeModifierSet;
 import com.example.superheroes.item.bound.BoundWeapons;
 import com.example.superheroes.hero.RemHero;
 import com.example.superheroes.item.ModItems;
-import com.example.superheroes.network.ModNetworking;
 import com.example.superheroes.network.RemDemonismS2CPayload;
 import com.example.superheroes.network.ScreenShakeS2CPayload;
 import com.example.superheroes.transform.HeroData;
@@ -631,21 +631,11 @@ public final class RemDemonismController {
 	}
 
 	private static void ensureAbilityActive(ServerPlayer player) {
-		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
-		if (!data.isActive(AbilityIds.REM_ONI_RAGE)) {
-			HeroData updated = data.withActive(AbilityIds.REM_ONI_RAGE, true);
-			player.setAttached(ModAttachments.HERO_DATA, updated);
-			ModNetworking.syncHeroData(player, updated);
-		}
+		HeroDataStore.update(player, d -> d.withActive(AbilityIds.REM_ONI_RAGE, true));
 	}
 
 	private static void clearActiveAbility(ServerPlayer player) {
-		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
-		if (data.isActive(AbilityIds.REM_ONI_RAGE)) {
-			HeroData updated = data.withActive(AbilityIds.REM_ONI_RAGE, false);
-			player.setAttached(ModAttachments.HERO_DATA, updated);
-			ModNetworking.syncHeroData(player, updated);
-		}
+		HeroDataStore.update(player, d -> d.withActive(AbilityIds.REM_ONI_RAGE, false));
 	}
 
 	private static boolean isRem(Player player) {

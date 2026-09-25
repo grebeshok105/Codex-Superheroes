@@ -1,13 +1,11 @@
 package com.example.superheroes.effect;
 
+import com.example.superheroes.transform.HeroDataStore;
 import com.example.superheroes.ability.AbilityIds;
 import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.hero.HeroAttributes;
-import com.example.superheroes.hero.ReinhardHero;
-import com.example.superheroes.network.ModNetworking;
 import com.example.superheroes.network.ReinhardCeremonyS2CPayload;
 import com.example.superheroes.sound.ModSounds;
-import com.example.superheroes.transform.HeroData;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.particles.ParticleTypes;
@@ -24,7 +22,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -152,12 +149,7 @@ public final class ReinhardSwordDrawCeremonyController {
 		}
 		ReinhardTimeSlowController.armForFirstStrike(player);
 
-		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
-		if (!data.isActive(AbilityIds.REINHARD_SWORD_DRAW)) {
-			data = data.withActive(AbilityIds.REINHARD_SWORD_DRAW, true);
-			player.setAttached(ModAttachments.HERO_DATA, data);
-			ModNetworking.syncHeroData(player, data);
-		}
+		HeroDataStore.update(player, d -> d.withActive(AbilityIds.REINHARD_SWORD_DRAW, true));
 
 		ServerLevel level = player.serverLevel();
 		level.sendParticles(ParticleTypes.END_ROD,

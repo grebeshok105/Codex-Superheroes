@@ -1,5 +1,6 @@
 package com.example.superheroes.effect;
 
+import com.example.superheroes.transform.HeroDataStore;
 import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.hero.IronManHero;
 import com.example.superheroes.item.ModItems;
@@ -86,8 +87,7 @@ public final class IronManReactorTracker {
 
 		anchorPlayer(player, s.anchor);
 
-		HeroData zeroed = data.withResources(0f, data.mana());
-		player.setAttached(ModAttachments.HERO_DATA, zeroed);
+		HeroDataStore.update(player, d -> d.withEnergy(0f));
 
 		Vec3 cur = player.position();
 		double dx = cur.x - s.anchor.x;
@@ -123,7 +123,7 @@ public final class IronManReactorTracker {
 		sendState(player, true, s.progress, true);
 
 		if (s.progress >= REPLACE_TICKS) {
-			finishReplace(player, zeroed);
+			finishReplace(player);
 			states.remove(id);
 		}
 	}
@@ -163,7 +163,7 @@ public final class IronManReactorTracker {
 		return -1;
 	}
 
-	private static void finishReplace(ServerPlayer player, HeroData currentData) {
+	private static void finishReplace(ServerPlayer player) {
 		int slot = findReactorSlot(player);
 		if (slot < 0) {
 			sendState(player, true, 0, false);
@@ -173,9 +173,7 @@ public final class IronManReactorTracker {
 		stack.shrink(1);
 		player.getInventory().setChanged();
 
-		HeroData refilled = currentData.withResources(REFILL_AMOUNT, currentData.mana());
-		player.setAttached(ModAttachments.HERO_DATA, refilled);
-		com.example.superheroes.network.ModNetworking.syncResources(player, refilled);
+		HeroDataStore.update(player, d -> d.withEnergy(REFILL_AMOUNT));
 
 		ServerLevel level = player.serverLevel();
 		Vec3 cur = player.position();

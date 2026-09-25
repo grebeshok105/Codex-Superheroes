@@ -1,7 +1,7 @@
 package com.example.superheroes.effect;
 
+import com.example.superheroes.transform.HeroDataStore;
 import com.example.superheroes.attachment.ModAttachments;
-import com.example.superheroes.network.ModNetworking;
 import com.example.superheroes.transform.HeroData;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffect;
@@ -38,9 +38,9 @@ public class SuperheroWeaknessEffect extends MobEffect {
 			dirty = true;
 		}
 		if (dirty) {
-			HeroData updated = data.withResources(energy, mana);
-			player.setAttached(ModAttachments.HERO_DATA, updated);
-			ModNetworking.syncResources(player, updated);
+			float newEnergy = energy;
+			float newMana = mana;
+			HeroDataStore.update(player, d -> d.withResources(newEnergy, newMana));
 		}
 		return true;
 	}

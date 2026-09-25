@@ -1,11 +1,9 @@
 package com.example.superheroes.effect;
 
-import com.example.superheroes.attachment.ModAttachments;
+import com.example.superheroes.transform.HeroDataStore;
 import com.example.superheroes.damage.ModDamageTypes;
-import com.example.superheroes.network.ModNetworking;
 import com.example.superheroes.particle.ModParticles;
 import com.example.superheroes.sound.ModSounds;
-import com.example.superheroes.transform.HeroData;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
@@ -510,13 +508,10 @@ public final class UnibeamController {
 	}
 
 	private static void drainEnergy(ServerPlayer player) {
-		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
-		if (!data.hasHero()) {
+		if (!HeroDataStore.get(player).hasHero()) {
 			return;
 		}
-		HeroData updated = data.withResources(0f, 0f);
-		player.setAttached(ModAttachments.HERO_DATA, updated);
-		ModNetworking.syncResources(player, updated);
+		HeroDataStore.update(player, d -> d.withResources(0f, 0f));
 	}
 
 	@SafeVarargs

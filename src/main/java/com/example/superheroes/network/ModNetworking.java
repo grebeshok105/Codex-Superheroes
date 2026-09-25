@@ -22,7 +22,6 @@ public final class ModNetworking {
 
 	public static void init() {
 		PayloadTypeRegistry.playC2S().register(ActivateAbilityC2SPayload.TYPE, ActivateAbilityC2SPayload.STREAM_CODEC);
-		PayloadTypeRegistry.playC2S().register(DeactivateAbilityC2SPayload.TYPE, DeactivateAbilityC2SPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playC2S().register(BindAbilityResourceC2SPayload.TYPE, BindAbilityResourceC2SPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playC2S().register(SuperJumpC2SPayload.TYPE, SuperJumpC2SPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playC2S().register(ReinhardWishConfirmC2SPayload.TYPE, ReinhardWishConfirmC2SPayload.STREAM_CODEC);
@@ -69,35 +68,31 @@ public final class ModNetworking {
 
 		ServerPlayNetworking.registerGlobalReceiver(ActivateAbilityC2SPayload.TYPE, (payload, context) -> {
 			ServerPlayer player = context.player();
-			context.server().execute(() -> AbilityRouter.activate(player, payload.abilityId()));
-		});
-		ServerPlayNetworking.registerGlobalReceiver(DeactivateAbilityC2SPayload.TYPE, (payload, context) -> {
-			ServerPlayer player = context.player();
-			context.server().execute(() -> AbilityRouter.deactivate(player, payload.abilityId()));
+			AbilityRouter.activate(player, payload.abilityId());
 		});
 		ServerPlayNetworking.registerGlobalReceiver(BindAbilityResourceC2SPayload.TYPE, (payload, context) -> {
 			ServerPlayer player = context.player();
-			context.server().execute(() -> AbilityRouter.bind(player, payload.abilityId(), payload.kind()));
+			AbilityRouter.bind(player, payload.abilityId(), payload.kind());
 		});
 		ServerPlayNetworking.registerGlobalReceiver(SuperJumpC2SPayload.TYPE, (payload, context) -> {
 			ServerPlayer player = context.player();
-			context.server().execute(() -> SuperJumpController.activate(player));
+			SuperJumpController.activate(player);
 		});
 		ServerPlayNetworking.registerGlobalReceiver(ReinhardWishConfirmC2SPayload.TYPE, (payload, context) -> {
 			ServerPlayer player = context.player();
-			context.server().execute(() -> com.example.superheroes.ability.ReinhardWishAbility.confirm(player, payload.damageTypeId()));
+			com.example.superheroes.ability.ReinhardWishAbility.confirm(player, payload.damageTypeId());
 		});
 		ServerPlayNetworking.registerGlobalReceiver(HeroMeleeChargeC2SPayload.TYPE, (payload, context) -> {
 			ServerPlayer player = context.player();
-			context.server().execute(() -> HeroMeleeImpactController.handleChargeInput(player, payload));
+			HeroMeleeImpactController.handleChargeInput(player, payload);
 		});
 		ServerPlayNetworking.registerGlobalReceiver(ThinkMarkDashC2SPayload.TYPE, (payload, context) -> {
 			ServerPlayer player = context.player();
-			context.server().execute(() -> com.example.superheroes.ability.OmnimanThinkMarkAbility.triggerDash(player));
+			com.example.superheroes.ability.OmnimanThinkMarkAbility.triggerDash(player);
 		});
 		ServerPlayNetworking.registerGlobalReceiver(MirrorDimensionStatusC2SPayload.TYPE, (payload, context) -> {
 			ServerPlayer player = context.player();
-			context.server().execute(() -> com.example.superheroes.effect.MirrorDimensionController.handleStatus(player, payload.status()));
+			com.example.superheroes.effect.MirrorDimensionController.handleStatus(player, payload.status());
 		});
 	}
 
@@ -121,11 +116,6 @@ public final class ModNetworking {
 		}
 	}
 
-
-	public static void syncHeroDataFromAttachment(ServerPlayer player) {
-		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
-		syncHeroData(player, data);
-	}
 
 	public static void broadcastRemoteHeroSkin(ServerPlayer player) {
 		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);

@@ -1,9 +1,7 @@
 package com.example.superheroes.effect;
 
-import com.example.superheroes.ability.AbilityIds;
-import com.example.superheroes.ability.AbilityRegistry;
-import com.example.superheroes.attachment.ModAttachments;
-import com.example.superheroes.network.ModNetworking;
+import com.example.superheroes.ability.AbilityRouter;
+import com.example.superheroes.transform.HeroDataStore;
 import com.example.superheroes.sound.ModSounds;
 import com.example.superheroes.transform.HeroData;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
@@ -61,18 +59,11 @@ public final class MadnessAftermathController {
 		player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, AFTERMATH_TICKS, 4, false, false, true));
 		player.setDeltaMovement(Vec3.ZERO);
 		player.hurtMarked = true;
-		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
+		HeroData data = HeroDataStore.get(player);
 		if (data.hasHero()) {
-			HeroData updated = data;
 			for (ResourceLocation abilityId : new HashSet<>(data.activeAbilities())) {
-				var ability = AbilityRegistry.get(abilityId);
-				if (ability != null) {
-					ability.onDeactivate(player);
-				}
-				updated = updated.withActive(abilityId, false);
+				AbilityRouter.deactivate(player, abilityId);
 			}
-			player.setAttached(ModAttachments.HERO_DATA, updated);
-			ModNetworking.syncHeroData(player, updated);
 		}
 		player.serverLevel().playSound(null,
 				player.getX(), player.getY(), player.getZ(),

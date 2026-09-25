@@ -1,5 +1,6 @@
 package com.example.superheroes.command;
 
+import com.example.superheroes.transform.HeroDataStore;
 import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.debug.AdminAbilityDebug;
 import com.example.superheroes.effect.BattleBeastCurseController;
@@ -9,7 +10,6 @@ import com.example.superheroes.hero.DoomsdayHero;
 import com.example.superheroes.hero.Hero;
 import com.example.superheroes.hero.Heroes;
 import com.example.superheroes.item.ModItemGroups;
-import com.example.superheroes.network.ModNetworking;
 import com.example.superheroes.transform.HeroData;
 import com.example.superheroes.transform.HeroTransformService;
 import com.mojang.brigadier.arguments.FloatArgumentType;
@@ -24,7 +24,6 @@ import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.ResourceLocationArgument;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.Item;
@@ -252,9 +251,7 @@ public final class SuperheroesCommands {
 		}
 		Hero hero = Heroes.get(data.heroId());
 		float clamped = hero == null ? amount : Math.min(amount, hero.getEnergyMax());
-		HeroData updated = data.withEnergy(clamped);
-		player.setAttached(ModAttachments.HERO_DATA, updated);
-		ModNetworking.syncResources(player, updated);
+		HeroDataStore.update(player, d -> d.withEnergy(clamped));
 		ctx.getSource().sendSuccess(() -> Component.translatable("commands.superheroes.energy.set",
 				String.format("%.1f", clamped)), false);
 		return (int) clamped;
@@ -272,9 +269,7 @@ public final class SuperheroesCommands {
 		}
 		Hero hero = Heroes.get(data.heroId());
 		float clamped = hero == null ? amount : Math.min(amount, hero.getManaMax());
-		HeroData updated = data.withMana(clamped);
-		player.setAttached(ModAttachments.HERO_DATA, updated);
-		ModNetworking.syncResources(player, updated);
+		HeroDataStore.update(player, d -> d.withMana(clamped));
 		ctx.getSource().sendSuccess(() -> Component.translatable("commands.superheroes.mana.set",
 				String.format("%.1f", clamped)), false);
 		return (int) clamped;

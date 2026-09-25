@@ -1,13 +1,12 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.transform.HeroDataStore;
 import com.example.superheroes.attachment.ModAttachments;
-import com.example.superheroes.effect.ReinhardController;
 import com.example.superheroes.effect.ReinhardState;
 import com.example.superheroes.effect.ReinhardSwordDrawCeremonyController;
 import com.example.superheroes.hero.HeroAttributes;
 import com.example.superheroes.item.ModItems;
 import com.example.superheroes.item.bound.BoundWeapons;
-import com.example.superheroes.transform.HeroData;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -94,12 +93,7 @@ public final class ReinhardSwordDrawAbility implements Ability {
 		HeroAttributes.REINHARD_DRAW.remove(player);
 		removeSword(player);
 		com.example.superheroes.effect.ReinhardTimeSlowController.disarmForFirstStrike(player);
-		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
-		if (data.activeAbilities().contains(AbilityIds.REINHARD_SWORD_DRAW)) {
-			data = data.withActive(AbilityIds.REINHARD_SWORD_DRAW, false);
-			player.setAttached(ModAttachments.HERO_DATA, data);
-			com.example.superheroes.network.ModNetworking.syncHeroData(player, data);
-		}
+		HeroDataStore.update(player, d -> d.withActive(AbilityIds.REINHARD_SWORD_DRAW, false));
 		player.displayClientMessage(
 				Component.translatable("ability.superheroes.reinhard_sword_draw.sheathed"),
 				true);
