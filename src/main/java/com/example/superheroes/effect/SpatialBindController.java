@@ -81,6 +81,16 @@ public final class SpatialBindController {
 		BOUND.values().removeIf(b -> b.caster.equals(casterId));
 	}
 
+	/** Lifecycle hook: a leaving victim's ropes fall away deterministically. */
+	public static void onPlayerGone(ServerPlayer player) {
+		BOUND.remove(player.getUUID());
+	}
+
+	/** World shutdown — no rope state may leak into the next world. */
+	public static void resetAll() {
+		BOUND.clear();
+	}
+
 	private static void tick(MinecraftServer server) {
 		if (BOUND.isEmpty()) {
 			return;

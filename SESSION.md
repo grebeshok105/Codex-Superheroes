@@ -18,7 +18,8 @@
 | 6 | B10 `WorldDestructionPolicy` | | todo |
 | 7 | B15 client state/session | `hoplite/kroton-d9205130--client-state-reset` | PR open (stacked on 5) |
 | 8 | B13 House of Vanity server authority | | todo |
-| 9 | B12 passive reconciler, B16 fall immunity | | todo |
+| 7 | B15 client state/session | | todo |
+| 8 | B13 House of Vanity server authority | `hoplite/kroton-d9205130--vanity-authority` | PR open (stacked on 5) || 9 | B12 passive reconciler, B16 fall immunity | | todo |
 | 10 | B14 synced public hero attachment | | todo |
 | 11 | Hero hooks / lifecycle events / tick dispatcher (debt 1–4) | | todo |
 | 12 | Hygiene: deps, docs, missing model/lang | | todo |
@@ -77,7 +78,16 @@
 - `IrisShaderBridge` стал resilient: `restore()` сбрасывает `activeSnapshot` и удаляет `MirrorRestoreFile` только после успешного restore (раньше снапшот терялся при первой неудаче); `restoreAfterCrashIfNeeded` больше не пытается ресторить в `onInitializeClient` (Iris ещё не готов → всегда фейл → файл удалялся без восстановления) — вместо этого `tickCrashRestore()` ретраит из клиент-тика до 200 тиков, файл удаляется только при успехе.
 - `ChatComponentMixin`: хит-тест чата переведён на тот же сдвиг, что и рендер — `@ModifyVariable` на `screenToChatX`/`screenToChatY` вычитает `HudLayoutManager.offset(CHAT) + autoLift`, так что клики по ссылкам, ховер-теги и подсветка строки работают по реальному положению чата.
 - JUnit: `ClientSessionStateResetTest` дёргает публичные сеттеры ~25 холдеров и проверяет, что `resetAll()` возвращает дефолты; `ClientAbilityCooldownsTest` гоняет дедлайны на инжектированных часах (респавн как скачок времени). `test` sourceSet получил `client.output + client.compileClasspath` (через `afterEvaluate`, т.к. `client` создаётся `splitEnvironmentSourceSets()`).## Important decisions
+## Completed this session (stage 8)
 
+- House of Vanity trap is now server-authoritative (B13): `MirrorDimensionController.enforceZone` runs unconditionally — the yank and `VanityAuthority` debuffs no longer wait for a client ACK (`VictimState.applied` removed). A modified or silent client stays inside the zone exactly like a confirmed one.
+- `absorbNearby` lost its `canSend` gate: victims without the mod (or with networking filtered) are still trapped — the S2C payloads are now purely a cosmetic hint sent via `sendToVictim` (shader warp + cipher flag), so a missing reply no longer weakens containment.
+- `handleStatus` is reduced to caster feedback (it relays the localized status message to Pandora only); `NO_IRIS`/`NO_PACK`/`IRIS_API_FAIL` no longer release the victim — previously a failed or absent warp silently dropped the victim while leaving her client ciphered forever (the deadman only watched `active`).
+- Client cipher scope fixed in `ClientMirrorDimensionState.tick`: the deadman now tracks `trapped` (the cipher) rather than only `active` (the shader), so a victim whose warp never applied still releases the font cipher ~5s after keepalives stop instead of holding it until disconnect.
+- Lifecycle wiring: `MirrorDimensionController.onPlayerGone` and `SpatialBindController.onPlayerGone` release victims/ropes on leave via `PlayerLifecycle.onLeave`; both controllers' `resetAll()` run from `onServerStopped` so no trap state leaks across world restarts.
+- 4 new GameTests (`HouseOfVanityGameTests`): victim trapped without any client confirmation and yanked back when walking out, NO_IRIS status keeps full containment, debuffs applied without confirmation, caster leave closes the House and frees victims (effects cleared via `PlayerLifecycle` hook). Mock players double as the "no client ACK" regression case since `canSend` is false for them.
+
+## Important decisions
 - Bound weapons are identified by type (`BoundWeaponItem`) and validated by token; untokened copies are treated as stale on purpose (none are obtainable legitimately; old saves could hold leaked copies).
 - Bound weapons never become item entities: returned to the owner when valid and there is room, otherwise deleted (the ability can reissue).
 - `HeroData` sync: writes are immediate; full syncs stay immediate to preserve packet ordering with other payloads; resource-only syncs are coalesced per tick.
@@ -88,6 +98,7 @@
 
 ## Verification
 
+- Stage 8: `qualityGate` green, 26/26 GameTests (4 new House of Vanity tests). Test-only notes: victims must be joined+teleported inside `PULL_RADIUS` BEFORE `AbilityRouter.activate` — latecomer absorb only runs on keepalive ticks (every 20), so post-activation joins race the assert delays; mock players hardcode `isCreative()==true` (bytecode-verified `GameTestHelper$2`), so `VanityAuthority` `mayfly` grant/clear is unreachable in gametest — assert `hasEffect` probes instead.
 - Stage 5: `qualityGate` green, 22/22 GameTests (3 new damage-pipeline tests). Test-only notes: mock players join with private `spawnInvulnerableTime` that blocks `hurt()` — cleared via reflection in the kawarimi test; the test structure spawns ~6M blocks from the mock-player spawn point, so proximity-sensitive asserts must teleport the player first.
 - Stage 4: `qualityGate` green, 19/19 GameTests. Negative check — without the `hasHero()` guard, first-time transforms start with 0 energy and `windPrisonEndsWhenItsZoneExpires` fails.
 - Stage 3: `qualityGate` green, 16/16 GameTests (7 new lifecycle regressions: owner-leave lock release, refcount, shadow reconcile, transient-vs-permanent NBT, attachment-backed transform cooldown, forceUntransform clears locks+cooldowns, dead-caster snap).

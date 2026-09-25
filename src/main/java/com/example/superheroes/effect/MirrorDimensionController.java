@@ -37,7 +37,10 @@ import java.util.UUID;
  * the warp shader applied to her screen.
  *
  * <p>Sends ON/OFF/KEEPALIVE/SWITCH payloads to each victim's client and relays
- * their status answers back to Pandora.
+ * their status answers back to Pandora. The payloads are a cosmetic hint only
+ * (shader warp, text cipher): zone membership and the trap are decided by the
+ * server alone, so a client that never answers is still fully contained
+ * (audit B13).
  */
 public final class MirrorDimensionController {
 	private static final int KEEPALIVE_INTERVAL_TICKS = 20;
@@ -65,7 +68,6 @@ public final class MirrorDimensionController {
 
 	/** Per-victim trap state inside a House session. */
 	private static final class VictimState {
-		boolean applied;
 		int yankCooldown;
 	}
 
@@ -126,8 +128,10 @@ public final class MirrorDimensionController {
 
 	/**
 	 * Pulls every eligible player within {@link #PULL_RADIUS} of the House center
-	 * into the given session. Skips the caster, spectators, the dead, players
-	 * already trapped by another House, and players whose client lacks the mod.
+	 * into the given session. Skips the caster, spectators, the dead, and players
+	 * already trapped by another House. Players whose client lacks the mod are
+	 * still absorbed — the warp packet is cosmetic, the trap itself is
+	 * server-side (audit B13).
 	 *
 	 * @return how many <i>new</i> victims were absorbed by this call.
 	 */
@@ -147,12 +151,9 @@ public final class MirrorDimensionController {
 			if (VICTIM_TO_CASTER.containsKey(id)) {
 				continue; // already trapped (by this or another House)
 			}
-			if (!ServerPlayNetworking.canSend(p, MirrorDimensionS2CPayload.TYPE)) {
-				continue; // no Codex-Superheroes mod on their client — can't render
-			}
 			session.victims.put(id, new VictimState());
 			VICTIM_TO_CASTER.put(id, caster.getUUID());
-			ServerPlayNetworking.send(p,
+			sendToVictim(p,
 					new MirrorDimensionS2CPayload(MirrorDimensionS2CPayload.ACTION_ON, session.mode, session.scale));
 			spawnCastParticles(p);
 			pulled++;
@@ -178,7 +179,7 @@ public final class MirrorDimensionController {
 		for (UUID victimId : session.victims.keySet()) {
 			ServerPlayer victim = caster.server.getPlayerList().getPlayer(victimId);
 			if (victim != null) {
-				ServerPlayNetworking.send(victim,
+				sendToVictim(victim,
 						new MirrorDimensionS2CPayload(MirrorDimensionS2CPayload.ACTION_SWITCH, session.mode, session.scale));
 			}
 		}
@@ -209,7 +210,7 @@ public final class MirrorDimensionController {
 			VICTIM_TO_CASTER.remove(victimId);
 			ServerPlayer victim = caster.server.getPlayerList().getPlayer(victimId);
 			if (victim != null) {
-				ServerPlayNetworking.send(victim, new MirrorDimensionS2CPayload(MirrorDimensionS2CPayload.ACTION_OFF, 0, 0));
+				sendToVictim(victim, new MirrorDimensionS2CPayload(MirrorDimensionS2CPayload.ACTION_OFF, 0, 0));
 			}
 		}
 		sendHouseState(caster, false);
@@ -245,18 +246,15 @@ public final class MirrorDimensionController {
 		return VICTIM_TO_CASTER.containsKey(victim.getUUID());
 	}
 
+	/**
+	 * Client's status answer about the (cosmetic) warp attempt — relayed to
+	 * Pandora as feedback only. A victim that can't render the warp (no Iris, no
+	 * Acid pack) or never answers at all stays fully trapped: containment is
+	 * decided by the server, not by client confirmation (audit B13).
+	 */
 	public static void handleStatus(ServerPlayer victim, int status) {
 		UUID casterId = VICTIM_TO_CASTER.get(victim.getUUID());
 		ServerPlayer caster = casterId == null ? null : victim.server.getPlayerList().getPlayer(casterId);
-		if (status == MirrorDimensionStatusC2SPayload.OK_APPLIED && casterId != null) {
-			Session session = SESSIONS.get(casterId);
-			if (session != null) {
-				VictimState vs = session.victims.get(victim.getUUID());
-				if (vs != null) {
-					vs.applied = true;
-				}
-			}
-		}
 		String key = switch (status) {
 			case MirrorDimensionStatusC2SPayload.OK_APPLIED -> "ability.superheroes.mirror_dimension.applied";
 			case MirrorDimensionStatusC2SPayload.NO_IRIS -> "ability.superheroes.mirror_dimension.no_iris";
@@ -270,18 +268,6 @@ public final class MirrorDimensionController {
 			// actionbar (true), не чат — по запросу убрать спам Дома тщеславия из чата.
 			caster.displayClientMessage(
 					Component.translatable(key, victim.getName()).withStyle(color), true);
-		}
-		boolean failed = status == MirrorDimensionStatusC2SPayload.NO_IRIS
-				|| status == MirrorDimensionStatusC2SPayload.NO_PACK
-				|| status == MirrorDimensionStatusC2SPayload.IRIS_API_FAIL;
-		if (failed && casterId != null) {
-			// This one victim can't render the warp — drop just them, keep the House
-			// open for everyone else (and for latecomers).
-			Session session = SESSIONS.get(casterId);
-			if (session != null) {
-				session.victims.remove(victim.getUUID());
-			}
-			VICTIM_TO_CASTER.remove(victim.getUUID());
 		}
 	}
 
@@ -325,19 +311,19 @@ public final class MirrorDimensionController {
 			ServerPlayer victim = server.getPlayerList().getPlayer(ve.getKey());
 			if (victim == null || victim.isRemoved() || victim.isDeadOrDying() || victim.isSpectator()) {
 				if (victim != null) {
-					ServerPlayNetworking.send(victim,
+					sendToVictim(victim,
 							new MirrorDimensionS2CPayload(MirrorDimensionS2CPayload.ACTION_OFF, 0, 0));
 				}
 				VICTIM_TO_CASTER.remove(ve.getKey());
 				vit.remove();
 				continue;
 			}
-			if (ve.getValue().applied) {
-				enforceZone(victim, session, ve.getValue());
-			}
+			// The yank never waits for a client ACK — a silent or modified client
+			// stays inside the zone exactly like a confirmed one (audit B13).
+			enforceZone(victim, session, ve.getValue());
 			if (keepalive) {
 				VanityAuthority.applyToVictim(victim);
-				ServerPlayNetworking.send(victim,
+				sendToVictim(victim,
 						new MirrorDimensionS2CPayload(MirrorDimensionS2CPayload.ACTION_KEEPALIVE, 0, 0));
 			}
 		}
@@ -348,9 +334,48 @@ public final class MirrorDimensionController {
 			VICTIM_TO_CASTER.remove(victimId);
 			ServerPlayer victim = server.getPlayerList().getPlayer(victimId);
 			if (victim != null) {
-				ServerPlayNetworking.send(victim,
+				sendToVictim(victim,
 						new MirrorDimensionS2CPayload(MirrorDimensionS2CPayload.ACTION_OFF, 0, 0));
 			}
+		}
+	}
+
+	/**
+	 * Lifecycle hook: the leaving player is released from any House they were
+	 * trapped in — or, when the House was their own, the House closes — so trap
+	 * state never outlives the session.
+	 */
+	public static void onPlayerGone(ServerPlayer player) {
+		UUID id = player.getUUID();
+		if (SESSIONS.containsKey(id)) {
+			stop(player, false);
+			return;
+		}
+		UUID casterId = VICTIM_TO_CASTER.remove(id);
+		if (casterId != null) {
+			Session session = SESSIONS.get(casterId);
+			if (session != null) {
+				session.victims.remove(id);
+			}
+			SpatialBindController.release(id);
+		}
+	}
+
+	/** World shutdown — drop every House so trap state cannot leak into the next world. */
+	public static void resetAll() {
+		SESSIONS.clear();
+		VICTIM_TO_CASTER.clear();
+		clock = 0;
+	}
+
+	/**
+	 * Cosmetic warp hint to one victim. Guarded by {@code canSend} — a client
+	 * without the mod simply gets no hint, while the server-side trap still
+	 * applies to it in full.
+	 */
+	private static void sendToVictim(ServerPlayer victim, MirrorDimensionS2CPayload payload) {
+		if (ServerPlayNetworking.canSend(victim, MirrorDimensionS2CPayload.TYPE)) {
+			ServerPlayNetworking.send(victim, payload);
 		}
 	}
 

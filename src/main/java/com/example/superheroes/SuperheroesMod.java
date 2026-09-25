@@ -214,6 +214,8 @@ public class SuperheroesMod implements ModInitializer {
 		PlayerLifecycle.onLeave(com.example.superheroes.ability.NarutoOodamaRasenganAbility::clear);
 		PlayerLifecycle.onLeave(com.example.superheroes.ability.NarutoRasenshurikenAbility::clear);
 		PlayerLifecycle.onLeave(com.example.superheroes.ability.CapShieldSlamAbility::clear);
+		PlayerLifecycle.onLeave(com.example.superheroes.effect.MirrorDimensionController::onPlayerGone);
+		PlayerLifecycle.onLeave(com.example.superheroes.effect.SpatialBindController::onPlayerGone);
 
 		// death — charge/lock/session state must not outlive the entity (audit B17).
 		PlayerLifecycle.onDeath(EntityControlLock::releaseOwnedBy);
@@ -278,6 +280,8 @@ public class SuperheroesMod implements ModInitializer {
 			com.example.superheroes.ability.NarutoOodamaRasenganAbility.resetAll();
 			com.example.superheroes.ability.NarutoRasenshurikenAbility.resetAll();
 			com.example.superheroes.ability.CapShieldSlamAbility.resetAll();
+			com.example.superheroes.effect.MirrorDimensionController.resetAll();
+			com.example.superheroes.effect.SpatialBindController.resetAll();
 		});
 	}
 }

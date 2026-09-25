@@ -129,7 +129,13 @@ public final class ClientMirrorDimensionState {
 	public static void tick(Minecraft client) {
 		// Safety net: if a GUI screen stalls rendering, still run the pending reload.
 		MirrorWarpFlashHud.fallbackTick();
-		if (!active) {
+		// The deadman tracks the whole trap state, not just the applied shader:
+		// a victim whose client never managed the warp (no Iris, apply failed)
+		// still gets ciphered text — and must release it too once keepalives
+		// stop (audit B13). The server releases us explicitly on every exit path
+		// as well; this is only the safety net.
+		if (!trapped) {
+			ticksSinceKeepalive = 0;
 			return;
 		}
 		// На паузе (альт-таб в одиночке -> встроенный сервер встаёт и не шлёт

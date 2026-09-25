@@ -13,7 +13,8 @@
 			"com.example.superheroes.gametest.LifecycleGameTests",
 			"com.example.superheroes.gametest.HeroSwapGameTests",
 			"com.example.superheroes.gametest.DamagePipelineGameTests",
-			"com.example.superheroes.gametest.DestructionPolicyGameTests"
+			"com.example.superheroes.gametest.DestructionPolicyGameTests",
+			"com.example.superheroes.gametest.HouseOfVanityGameTests"
 		]
 	},
 	"depends": {
