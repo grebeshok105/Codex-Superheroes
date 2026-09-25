@@ -3,7 +3,7 @@ package com.example.superheroes.resource;
 import com.example.superheroes.ability.Ability;
 import com.example.superheroes.ability.AbilityRegistry;
 import com.example.superheroes.ability.AbilityRouter;
-import com.example.superheroes.effect.ModEffects;
+import com.example.superheroes.core.ability.AbilityRules;
 import com.example.superheroes.hero.Hero;
 import com.example.superheroes.hero.Heroes;
 import com.example.superheroes.transform.HeroData;
@@ -35,7 +35,7 @@ public final class ResourceController {
 			HeroDataStore.update(player, d -> d.withEnergy(
 					Math.min(hero.getEnergyMax(), d.energy() + hero.getEnergyRegenPerTick())));
 		}
-		boolean madness = ModEffects.isMadness(player);
+		boolean madness = AbilityRules.isFree(player);
 		List<ResourceLocation> active = new ArrayList<>(data.activeAbilities());
 		active.sort(Comparator.comparing(ResourceLocation::toString));
 		for (ResourceLocation abilityId : active) {
@@ -77,7 +77,7 @@ public final class ResourceController {
 	 */
 	@Nullable
 	public static ResourcePayment charge(ServerPlayer player, ResourceLocation abilityId, float amount) {
-		if (amount <= 0f || ModEffects.isMadness(player)) {
+		if (amount <= 0f || AbilityRules.isFree(player)) {
 			return ResourcePayment.pay(0f, 0f, ResourceKind.ENERGY, 0f);
 		}
 		HeroData data = HeroDataStore.get(player);
