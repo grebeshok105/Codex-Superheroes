@@ -1,14 +1,14 @@
 package com.example.superheroes.ability;
 
-import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.effect.ModEffects;
 import com.example.superheroes.hero.Hero;
 import com.example.superheroes.hero.Heroes;
-import com.example.superheroes.network.ModNetworking;
 import com.example.superheroes.resource.EnergyLocks;
 import com.example.superheroes.resource.ResourceController;
 import com.example.superheroes.resource.ResourceKind;
+import com.example.superheroes.resource.ResourcePayment;
 import com.example.superheroes.transform.HeroData;
+import com.example.superheroes.transform.HeroDataStore;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 
@@ -30,7 +30,7 @@ public final class AbilityRouter {
 					"ability.superheroes.vanity_stripped").withStyle(net.minecraft.ChatFormatting.DARK_PURPLE), true);
 			return;
 		}
-		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
+		HeroData data = HeroDataStore.get(player);
 		if (!data.hasHero()) {
 			return;
 		}
@@ -78,45 +78,47 @@ public final class AbilityRouter {
 			return;
 		}
 		float cost = ability.costOnActivate();
+		ResourcePayment payment = null;
 		if (cost > 0f) {
 			if (!canPayActivationCost(player, data, hero, abilityId, binding, cost)) {
 				return;
 			}
-			if (!ResourceController.tryConsume(player, abilityId, cost)) {
+			payment = ResourceController.charge(player, abilityId, cost);
+			if (payment == null) {
 				return;
 			}
 		}
 		boolean ok = ability.tryActivate(player);
 		if (!ok) {
-			if (cost > 0f) {
-				restoreActivationCost(player, data.energy(), data.mana());
+			if (payment != null) {
+				// Refund the delta, not a pre-activation snapshot: tryActivate may have changed resources itself.
+				ResourceController.refund(player, payment);
 			}
 			return;
 		}
 		if (ability.isToggle()) {
-			HeroData updated = player.getAttachedOrCreate(ModAttachments.HERO_DATA).withActive(abilityId, true);
-			player.setAttached(ModAttachments.HERO_DATA, updated);
-			ModNetworking.syncHeroData(player, updated);
+			HeroDataStore.update(player, d -> d.withActive(abilityId, true));
 		}
 	}
 
+	/**
+	 * Marks the ability inactive, then runs its {@code onDeactivate}. Clearing first makes nested
+	 * deactivation a no-op and lets {@code onDeactivate} deliberately re-assert the ability
+	 * (Rem's permanent demonism) without being overwritten afterwards.
+	 */
 	public static void deactivate(ServerPlayer player, ResourceLocation abilityId) {
-		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
-		if (!data.isActive(abilityId)) {
+		if (!HeroDataStore.get(player).isActive(abilityId)) {
 			return;
 		}
+		HeroDataStore.update(player, d -> d.withActive(abilityId, false));
 		Ability ability = AbilityRegistry.get(abilityId);
-		if (ability == null) {
-			return;
+		if (ability != null) {
+			ability.onDeactivate(player);
 		}
-		ability.onDeactivate(player);
-		HeroData updated = data.withActive(abilityId, false);
-		player.setAttached(ModAttachments.HERO_DATA, updated);
-		ModNetworking.syncHeroData(player, updated);
 	}
 
 	public static void bind(ServerPlayer player, ResourceLocation abilityId, ResourceKind kind) {
-		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
+		HeroData data = HeroDataStore.get(player);
 		if (!data.hasHero()) {
 			return;
 		}
@@ -124,9 +126,7 @@ public final class AbilityRouter {
 		if (hero == null || !hero.getAbilities().contains(abilityId)) {
 			return;
 		}
-		HeroData updated = data.withBinding(abilityId, kind);
-		player.setAttached(ModAttachments.HERO_DATA, updated);
-		ModNetworking.syncHeroData(player, updated);
+		HeroDataStore.update(player, d -> d.withBinding(abilityId, kind));
 	}
 
 	private static boolean canPayActivationCost(ServerPlayer player, HeroData data, Hero hero,
@@ -138,24 +138,6 @@ public final class AbilityRouter {
 				&& binding == ResourceKind.ENERGY && data.energy() < cost + 100f) {
 			return false;
 		}
-		float energy = data.energy();
-		float mana = data.mana();
-		if (binding == ResourceKind.ENERGY) {
-			if (energy >= cost) {
-				return true;
-			}
-			return mana >= cost - energy;
-		}
-		if (mana >= cost) {
-			return true;
-		}
-		return energy >= cost - mana;
-	}
-
-	private static void restoreActivationCost(ServerPlayer player, float energy, float mana) {
-		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
-		HeroData updated = data.withResources(energy, mana);
-		player.setAttached(ModAttachments.HERO_DATA, updated);
-		ModNetworking.syncResources(player, updated);
+		return ResourcePayment.pay(data.energy(), data.mana(), binding, cost).success();
 	}
 }

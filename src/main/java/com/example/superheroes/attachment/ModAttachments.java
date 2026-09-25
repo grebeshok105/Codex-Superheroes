@@ -65,6 +65,10 @@ public final class ModAttachments {
 			.copyOnDeath()
 			.buildAndRegister(ModId.of("nano_form"));
 
+	/** Set when energy/mana changed this tick and the client still needs the update. */
+	public static final AttachmentType<Boolean> HERO_DATA_RESOURCES_DIRTY =
+			AttachmentRegistry.create(ModId.of("hero_data_resources_dirty"));
+
 	/** Current issue of each bound weapon; not persistent, so a relog or restart invalidates every old copy. */
 	public static final AttachmentType<BoundWeaponIssues> BOUND_WEAPON_ISSUES =
 			AttachmentRegistry.create(ModId.of("bound_weapon_issues"));

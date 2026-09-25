@@ -11,6 +11,7 @@ import com.example.superheroes.network.ModNetworking;
 import com.example.superheroes.particle.ModParticles;
 import com.example.superheroes.resource.ResourceController;
 import com.example.superheroes.sound.ModSounds;
+import com.example.superheroes.transform.HeroDataStore;
 import com.example.superheroes.transform.HeroTransformService;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
@@ -40,6 +41,7 @@ public class SuperheroesMod implements ModInitializer {
 		com.example.superheroes.effect.MirrorDimensionController.init();
 		com.example.superheroes.effect.SpatialBindController.init();
 		ModNetworking.init();
+		HeroDataStore.init();
 		ResourceController.init();
 		com.example.superheroes.effect.MadnessFlightController.init();
 		com.example.superheroes.effect.MadnessAftermathController.init();
