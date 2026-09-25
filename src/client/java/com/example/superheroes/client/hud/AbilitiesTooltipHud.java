@@ -256,7 +256,7 @@ public final class AbilitiesTooltipHud {
 		if (!glitchSecret) {
 			if (cooldownTicks > 0) {
 				int seconds = (cooldownTicks + 19) / 20;
-				statusText = Component.literal(seconds + "с").withStyle(ChatFormatting.BOLD);
+				statusText = Component.translatable("hud.superheroes.abilities.seconds", seconds).withStyle(ChatFormatting.BOLD);
 				statusColor = applyAlpha(ClientHudGlitch.tintColor(0xFFFF9D6E), alpha, 1.0f);
 			} else if (isActive && kind == AbilityDescriptions.Kind.TOGGLE) {
 				statusText = HudUtil.text(Component.translatable("ability.superheroes.status.on")).withStyle(ChatFormatting.BOLD);

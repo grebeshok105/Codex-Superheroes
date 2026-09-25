@@ -24,7 +24,7 @@ public class HordeCrystalItem extends Item {
 		}
 		ServerLevel sl = (ServerLevel) level;
 		if (HordeManager.hasActiveHorde(sl)) {
-			player.sendSystemMessage(Component.literal("§cОрда уже активна в этом мире!"));
+			player.sendSystemMessage(Component.translatable("item.superheroes.horde_crystal.already_active"));
 			return InteractionResultHolder.fail(stack);
 		}
 		HordeManager.startHorde(sl, player.position(), (ServerPlayer) player);

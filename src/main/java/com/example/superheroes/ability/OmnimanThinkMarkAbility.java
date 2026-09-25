@@ -93,7 +93,7 @@ public final class OmnimanThinkMarkAbility implements Ability {
 				target.getX(), target.getY() + target.getBbHeight() * 0.5, target.getZ(),
 				1, 0.0, 0.0, 0.0, 0.0);
 		player.displayClientMessage(
-				Component.literal("§c§lThink, Mark! §7— ПКМ чтобы метнуть"), true);
+				Component.translatable("ability.superheroes.think_mark.hint"), true);
 
 		AbilityCooldowns.setCooldownTicks(player, getId(), COOLDOWN_TICKS);
 		return true;

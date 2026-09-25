@@ -91,7 +91,7 @@ public final class HordeManager {
 			this.currentWave = 0;
 			this.interWaveTimer = 60; // 3s before first wave
 			this.waveBossBar = new ServerBossEvent(
-					Component.literal("§c§lОрда Паразитов"),
+					Component.translatable("horde.superheroes.boss_bar"),
 					BossEvent.BossBarColor.RED,
 					BossEvent.BossBarOverlay.NOTCHED_10);
 		}

@@ -64,6 +64,8 @@ public final class ProjectSanityTest {
 		assertClientStatesRegisterReset();
 		assertClientCooldownsUseLevelGameTime();
 		assertNoHeroTypeDispatch();
+		assertNoCyrillicLiterals();
+		assertEntityLangNames();
 		System.out.println("ProjectSanityTest passed");
 	}
 
@@ -118,6 +120,18 @@ public final class ProjectSanityTest {
 				String source = Files.readString(file);
 				assert !heroDispatch.matcher(source).find()
 						: file + " dispatches on a Hero subtype — move the branch behind a Hero default hook";
+			});
+		}
+	}
+
+	// Hygiene (audit §3): player-facing strings live in the lang files, not hardcoded.
+	private static void assertNoCyrillicLiterals() throws IOException {
+		Pattern cyrillicLiteral = Pattern.compile("Component\\.literal\\(\"[^\"]*[\\u0400-\\u04FF]");
+		for (Path root : List.of(MAIN_JAVA, CLIENT_JAVA)) {
+			forEachJavaFile(root, file -> {
+				String source = Files.readString(file);
+				assert !cyrillicLiteral.matcher(source).find()
+						: file + " hardcodes a cyrillic Component.literal — use a lang key via Component.translatable";
 			});
 		}
 	}
@@ -223,6 +237,22 @@ public final class ProjectSanityTest {
 			}
 		}
 		assert models > 0 : "no item models found under either resources root; this check would pass vacuously";
+	}
+
+	// Every registered entity type needs a display name — unlocalized ids leak into subtitles,
+	// death messages, and the debug overlay (audit "мелочи"). en_us is the source of truth;
+	// ru_ru parity is covered by assertLangFilesInSync.
+	private static void assertEntityLangNames() throws IOException {
+		JsonObject en = parseJsonObject(MAIN_RESOURCES.resolve("assets/" + MOD_ID + "/lang/en_us.json"));
+		Pattern entityId = Pattern.compile("(?:ModId\\.of|register)\\(\\s*\"([a-z_]+)\"");
+		for (String file : List.of("com/example/superheroes/entity/ModEntities.java",
+				"com/example/superheroes/horde/entity/HordeEntities.java")) {
+			Matcher ids = entityId.matcher(Files.readString(MAIN_JAVA.resolve(file)));
+			while (ids.find()) {
+				assert en.has("entity." + MOD_ID + "." + ids.group(1))
+						: "missing entity." + MOD_ID + "." + ids.group(1) + " in en_us.json (registered in " + file + ")";
+			}
+		}
 	}
 
 	// Hero seam: every hero constant declared in Heroes.java must be registered.

@@ -130,12 +130,12 @@ public final class SuperheroesCommands {
 	private static int hordeStart(CommandContext<CommandSourceStack> ctx) {
 		ServerPlayer player = playerOrNull(ctx);
 		if (player == null) {
-			ctx.getSource().sendFailure(Component.literal("Команда доступна только игроку."));
+			ctx.getSource().sendFailure(Component.translatable("commands.superheroes.not_a_player"));
 			return 0;
 		}
 		net.minecraft.server.level.ServerLevel level = player.serverLevel();
 		com.example.superheroes.horde.HordeManager.startHorde(level, player.position(), player);
-		ctx.getSource().sendSuccess(() -> Component.literal("§cОрда запущена."), true);
+		ctx.getSource().sendSuccess(() -> Component.translatable("commands.superheroes.horde.started"), true);
 		return 1;
 	}
 
@@ -143,7 +143,7 @@ public final class SuperheroesCommands {
 		ServerPlayer player = playerOrNull(ctx);
 		if (player == null) return 0;
 		boolean ok = com.example.superheroes.horde.HordeManager.stopHorde(player.serverLevel());
-		ctx.getSource().sendSuccess(() -> Component.literal(ok ? "§7Орда остановлена." : "§7Активной орды нет."), true);
+		ctx.getSource().sendSuccess(() -> Component.translatable(ok ? "commands.superheroes.horde.stopped" : "commands.superheroes.horde.not_active"), true);
 		return ok ? 1 : 0;
 	}
 
@@ -151,7 +151,7 @@ public final class SuperheroesCommands {
 		ServerPlayer player = playerOrNull(ctx);
 		if (player == null) return 0;
 		int n = com.example.superheroes.horde.HordeManager.clearMobs(player.serverLevel());
-		ctx.getSource().sendSuccess(() -> Component.literal("§7Удалено мобов: §e" + n), true);
+		ctx.getSource().sendSuccess(() -> Component.translatable("commands.superheroes.horde.mobs_removed", n), true);
 		return n;
 	}
 
@@ -159,7 +159,7 @@ public final class SuperheroesCommands {
 		ServerPlayer player = playerOrNull(ctx);
 		if (player == null) return 0;
 		boolean ok = com.example.superheroes.horde.HordeManager.forceNextWave(player.serverLevel());
-		ctx.getSource().sendSuccess(() -> Component.literal(ok ? "§eСледующая волна запущена." : "§7Активной орды нет."), true);
+		ctx.getSource().sendSuccess(() -> Component.translatable(ok ? "commands.superheroes.horde.wave_started" : "commands.superheroes.horde.not_active"), true);
 		return ok ? 1 : 0;
 	}
 
@@ -175,7 +175,8 @@ public final class SuperheroesCommands {
 		ServerPlayer player = playerOrNull(ctx);
 		if (player == null) return 0;
 		boolean on = com.example.superheroes.horde.HordeManager.toggleOverlay(player);
-		ctx.getSource().sendSuccess(() -> Component.literal("§7Отладочный оверлей орды: " + (on ? "§aВКЛ" : "§cВЫКЛ")), false);
+		ctx.getSource().sendSuccess(() -> Component.translatable("commands.superheroes.horde.debug_overlay",
+					Component.translatable(on ? "commands.superheroes.state.on" : "commands.superheroes.state.off")), false);
 		return 1;
 	}
 
@@ -183,7 +184,8 @@ public final class SuperheroesCommands {
 		ServerPlayer player = playerOrNull(ctx);
 		if (player == null) return 0;
 		com.example.superheroes.horde.HordeManager.setOverlay(player, enabled);
-		ctx.getSource().sendSuccess(() -> Component.literal("§7Отладочный оверлей орды: " + (enabled ? "§aВКЛ" : "§cВЫКЛ")), false);
+		ctx.getSource().sendSuccess(() -> Component.translatable("commands.superheroes.horde.debug_overlay",
+					Component.translatable(enabled ? "commands.superheroes.state.on" : "commands.superheroes.state.off")), false);
 		return 1;
 	}
 
@@ -194,12 +196,12 @@ public final class SuperheroesCommands {
 		net.minecraft.world.entity.EntityType<?> entityType =
 				com.example.superheroes.horde.entity.HordeEntities.SPAWNABLE.get(type);
 		if (entityType == null) {
-			ctx.getSource().sendFailure(Component.literal("§cНеизвестный тип: " + type));
+			ctx.getSource().sendFailure(Component.translatable("commands.superheroes.horde.unknown_type", type));
 			return 0;
 		}
 		int n = com.example.superheroes.horde.HordeManager.spawnSingle(
 				player.serverLevel(), entityType, player.position(), count);
-		ctx.getSource().sendSuccess(() -> Component.literal("§aЗаспавнено §e" + n + " §a×§f" + type), true);
+		ctx.getSource().sendSuccess(() -> Component.translatable("commands.superheroes.horde.spawned", n, type), true);
 		return n;
 	}
 
@@ -397,9 +399,9 @@ public final class SuperheroesCommands {
 		player.setAttached(ModAttachments.ADMIN_BUILD, enabled);
 		AdminBuildSyncController.send(player);
 		if (enabled) {
-			ctx.getSource().sendSuccess(() -> Component.literal("§6[ADMIN BUILD: ON] §fАдмин-предметы теперь видны в креатив-вкладке Superheroes."), false);
+			ctx.getSource().sendSuccess(() -> Component.translatable("commands.superheroes.admin_build.on"), false);
 		} else {
-			ctx.getSource().sendSuccess(() -> Component.literal("§7[ADMIN BUILD: OFF] §fАдмин-контент скрыт."), false);
+			ctx.getSource().sendSuccess(() -> Component.translatable("commands.superheroes.admin_build.off"), false);
 		}
 		return enabled ? 1 : 0;
 	}
@@ -409,7 +411,7 @@ public final class SuperheroesCommands {
 		if (player == null) return 0;
 		boolean adminEnabled = player.getAttachedOrCreate(ModAttachments.ADMIN_BUILD);
 		if (!adminEnabled) {
-			ctx.getSource().sendFailure(Component.literal("§cАдмин-билд выключен. Сначала включи: /superheroes admin on"));
+			ctx.getSource().sendFailure(Component.translatable("commands.superheroes.admin_build.required"));
 			return 0;
 		}
 		int count = 0;
@@ -421,7 +423,7 @@ public final class SuperheroesCommands {
 			count++;
 		}
 		int finalCount = count;
-		ctx.getSource().sendSuccess(() -> Component.literal("§6[ADMIN] §fВыдано " + finalCount + " админ-предметов."), false);
+		ctx.getSource().sendSuccess(() -> Component.translatable("commands.superheroes.admin_build.given", finalCount), false);
 		return count;
 	}
 
