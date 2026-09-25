@@ -239,3 +239,11 @@
 2. For architecture work: `docs/design/architecture-migration/00-overview.md` plus the one plan whose stage you execute (stage graph §2.1).
 3. Re-verify findings while implementing; do not assume subagent-only findings are proven until checked.
 4. Keep `qualityGate` green; add GameTests for server behavior; update the audit tracker and this file per stage.
+
+## Architecture migration — stage B1 (plan 02)
+
+- Remaining hero-owned data moved onto the hero: `Hero` gained `getPassiveGlyphs()` / `canSuperJump()` / `getMeleeBleed(ServerPlayer)` defaults; all 22 heroes declare their `THEME`/`HUD` literals and values (Pandora THEME = Regulus-palette copy with the mandated comment; Doomsday bleed gates on `getTier(attacker) >= 3` — clamp-equivalent to the old controller read).
+- New types: `hero/BleedProfile` record, `hero/PassiveGlyph` enum (19 constants, `HudIcons.PassiveGlyph` moved verbatim); `AbilityDescriptions.passiveCount` reads the hero; `SuperJumpController`/`HeroBleedingController`/`HeroMeleeImpactController` consume hooks only.
+- Legacy tables deleted: `HeroTheme.<HERO>`×11 + `HeroHudConfig.<HERO>`×21 constants (DEFAULT kept), `PassiveIcons`, `HERO_PASSIVE_COUNT`, `ALLOWED_HEROES`/`isAllowed`/`bleedFor`/`getDoomsdayTier` temp lookups.
+- Characterize-first: goldens `hero_presentation.txt` + `passive_glyphs.txt` captured on old code; `presentationMatchesGolden`/`passiveGlyphsMatchGolden` green post-migration. qualityGate green (59/59 gametests on branch); freeze store shrank by the expected SuperJumpController/getDoomsdayTier/Pandora→Regulus entries.
+- Runtime checklist (§11.1.11): hero panel + radial + energy HUD pixel-identical old-vs-new for homelander/iron_man/pandora/scorpion on a shared run dir; super jump launches on Regulus (F3 Y −62→−45.8) and stays denied on Scorpion. Evidence under `/home/ubuntu/b1-runtime/`.
