@@ -284,6 +284,8 @@ public class SuperheroesMod implements ModInitializer {
 		// --- audit debt 3 remainder: controllers migrated from self-registered
 		// ServerTickEvents onto HeroTickDispatcher; order mirrors init() order.
 		com.example.superheroes.lifecycle.HeroTickDispatcher
+				.onGlobalTick(com.example.superheroes.lifecycle.PassiveReconciler::serverTick);
+		com.example.superheroes.lifecycle.HeroTickDispatcher
 				.onGlobalTick(com.example.superheroes.effect.ScorpionController::serverTick);
 		com.example.superheroes.lifecycle.HeroTickDispatcher
 				.onGlobalTick(com.example.superheroes.effect.SpatialBindController::tick);

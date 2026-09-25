@@ -3,7 +3,6 @@ package com.example.superheroes.lifecycle;
 import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.hero.Hero;
 import com.example.superheroes.transform.HeroData;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.core.Holder;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -43,7 +42,6 @@ public final class PassiveReconciler {
 	}
 
 	public static void init() {
-		ServerTickEvents.END_SERVER_TICK.register(PassiveReconciler::reconcile);
 		PlayerLifecycle.onServerStopped(server -> reset());
 	}
 
@@ -100,7 +98,7 @@ public final class PassiveReconciler {
 		PENDING.clear();
 	}
 
-	private static void reconcile(MinecraftServer server) {
+	public static void serverTick(MinecraftServer server) {
 		if (PENDING.isEmpty()) {
 			return;
 		}
