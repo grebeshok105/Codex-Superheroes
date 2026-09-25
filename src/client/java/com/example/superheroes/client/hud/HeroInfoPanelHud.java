@@ -11,6 +11,7 @@ import com.example.superheroes.hero.Hero;
 import com.example.superheroes.hero.HeroHudConfig;
 import com.example.superheroes.hero.HeroTheme;
 import com.example.superheroes.hero.Heroes;
+import com.example.superheroes.hero.PassiveGlyph;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
@@ -165,7 +166,7 @@ public final class HeroInfoPanelHud implements MovableHud {
 			int starSize = HudScaler.scale(9);
 			int starX = x + (modelW - starSize) / 2 + 2;
 			int starY = y + HudScaler.scale(5);
-			EmojiIcons.drawWithGlow(graphics, HudIcons.PassiveGlyph.STAR, starX, starY, starSize,
+			EmojiIcons.drawWithGlow(graphics, PassiveGlyph.STAR, starX, starY, starSize,
 					applyAlpha(0xFFFFD24A, 120, 1f));
 		}
 		cursorY += HudScaler.scale(15);
@@ -183,7 +184,7 @@ public final class HeroInfoPanelHud implements MovableHud {
 			float hp = lastDisplayedHp + (displayedHp - lastDisplayedHp) * partial;
 			float maxHp = mc.player.getMaxHealth();
 			int hpPct = maxHp > 0 ? Math.round(hp / maxHp * 100f) : 0;
-			drawStatRow(graphics, mc, contentX, cursorY, contentW, HudIcons.PassiveGlyph.HEART,
+			drawStatRow(graphics, mc, contentX, cursorY, contentW, PassiveGlyph.HEART,
 					maxHp > 0 ? Math.min(1f, hp / maxHp) : 0f,
 					0xFFFF8C96, 0xFF9E1428, 0x55FF4455, hpPct + "%");
 			cursorY += HudScaler.scale(14);
@@ -192,7 +193,7 @@ public final class HeroInfoPanelHud implements MovableHud {
 			float energy = lastDisplayedEnergy + (displayedEnergy - lastDisplayedEnergy) * partial;
 			float energyMax = ClientHeroState.energyMax();
 			int pct = energyMax > 0 ? (int) (energy / energyMax * 100f) : 0;
-			drawStatRow(graphics, mc, contentX, cursorY, contentW, HudIcons.PassiveGlyph.BOLT,
+			drawStatRow(graphics, mc, contentX, cursorY, contentW, PassiveGlyph.BOLT,
 					energyMax > 0 ? Math.min(1f, energy / energyMax) : 0f,
 					theme.energyBright(), theme.energyDark(), applyAlpha(theme.energyGlow(), 90, 1f),
 					pct + "%");
@@ -213,7 +214,7 @@ public final class HeroInfoPanelHud implements MovableHud {
 	 * сглаженным вертикальным градиентом и мягким глоу, значение справа.
 	 */
 	private static void drawStatRow(GuiGraphics g, Minecraft mc, int x, int y, int w,
-			HudIcons.PassiveGlyph emoji, float pctFill, int bright, int dark, int glow, String valueText) {
+			PassiveGlyph emoji, float pctFill, int bright, int dark, int glow, String valueText) {
 		int iconSz = HudScaler.scale(10);
 		EmojiIcons.draw(g, emoji, x, y - HudScaler.scale(1), iconSz);
 		Component valComp = HudUtil.text(valueText);

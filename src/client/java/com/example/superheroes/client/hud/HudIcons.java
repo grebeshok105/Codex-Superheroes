@@ -1,6 +1,7 @@
 package com.example.superheroes.client.hud;
 
 import com.example.superheroes.hero.HeroHudConfig;
+import com.example.superheroes.hero.PassiveGlyph;
 import net.minecraft.client.gui.GuiGraphics;
 
 public final class HudIcons {
@@ -192,13 +193,6 @@ public final class HudIcons {
 		g.fill(x + 2 * u, y + u, x + 6 * u, y + 2 * u, c);
 		g.fill(x + u, y + 2 * u, x + 7 * u, y + 6 * u, c);
 		g.fill(x + 2 * u, y + 6 * u, x + 6 * u, y + 7 * u, c);
-	}
-
-	/** Mini vector-style glyphs for hero passive slots in the info panel. */
-	public enum PassiveGlyph {
-		HEART, FEATHER, STAR, EYE,
-		SHIELD, FLAME, BOLT, FIST, SWORD, MAGIC,
-		LEAF, SPIRAL, ICE, BEAST, SKULL, SHADOW, REACTOR, COSMIC, GENERIC
 	}
 
 	public static void drawPassiveIcon(GuiGraphics g, int x, int y, int size, PassiveGlyph glyph, int color) {

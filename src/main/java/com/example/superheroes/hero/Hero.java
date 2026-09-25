@@ -65,6 +65,22 @@ public interface Hero {
 		return JarvisThreatClass.C;
 	}
 
+	/** Glyphs of this hero's passives in the info panel, in lang order {@code hero.<ns>.<id>.passive.<n>}. */
+	default java.util.List<PassiveGlyph> getPassiveGlyphs() {
+		return java.util.List.of();
+	}
+
+	/** Whether the super-jump key works for this hero. */
+	default boolean canSuperJump() {
+		return false;
+	}
+
+	/** Bleeding this hero's melee hit applies right now; {@code null} for none. */
+	@Nullable
+	default BleedProfile getMeleeBleed(ServerPlayer attacker) {
+		return null;
+	}
+
 	/**
 	 * Gate for {@code AbilityRouter.activate} — hero-specific locks (Doomsday tiers,
 	 * Thanos stones, Pandora's dimension-only powers) live here, not in the router.

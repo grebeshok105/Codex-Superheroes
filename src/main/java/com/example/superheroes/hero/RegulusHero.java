@@ -43,6 +43,8 @@ public final class RegulusHero implements Hero {
 			0x66FFFFFF
 	);
 
+	private static final HeroHudConfig HUD = new HeroHudConfig("hud.superheroes.energy.lion_heart", HeroHudConfig.EnergyIconType.LION, false, null);
+
 	@Override
 	public ResourceLocation getId() {
 		return ID;
@@ -160,7 +162,7 @@ public final class RegulusHero implements Hero {
 
 	@Override
 	public HeroHudConfig getHudConfig() {
-		return HeroHudConfig.REGULUS;
+		return HUD;
 	}
 	@Override
 	public double getImpactPower() {
@@ -169,6 +171,16 @@ public final class RegulusHero implements Hero {
 	@Override
 	public JarvisThreatClass getThreatClass() {
 		return JarvisThreatClass.S;
+	}
+
+	@Override
+	public List<PassiveGlyph> getPassiveGlyphs() {
+		return List.of(PassiveGlyph.HEART, PassiveGlyph.SHIELD, PassiveGlyph.STAR, PassiveGlyph.SKULL);
+	}
+
+	@Override
+	public boolean canSuperJump() {
+		return true;
 	}
 
 }

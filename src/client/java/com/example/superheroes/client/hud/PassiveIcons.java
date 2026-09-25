@@ -1,6 +1,6 @@
 package com.example.superheroes.client.hud;
 
-import com.example.superheroes.client.hud.HudIcons.PassiveGlyph;
+import com.example.superheroes.hero.PassiveGlyph;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.HashMap;

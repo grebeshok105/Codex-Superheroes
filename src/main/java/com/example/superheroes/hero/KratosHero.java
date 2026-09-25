@@ -4,17 +4,41 @@ import com.example.superheroes.ModId;
 import com.example.superheroes.ability.AbilityIds;
 import com.example.superheroes.resource.ResourceKind;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.player.Player;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 public final class KratosHero implements Hero {
 	public static final ResourceLocation ID = ModId.of("kratos");
 	public static final ResourceLocation SKIN = ModId.of("textures/entity/hero/kratos.png");
+
+	private static final HeroTheme THEME = new HeroTheme(
+			0xE0200808,
+			0xD00C0202,
+			0x88AA1010,
+			0x33FFB060,
+			0xFFE03030,
+			0xFF601010,
+			0xFFE03030,
+			0x55FF7060,
+			0xFFE03030,
+			0xFF1A0202,
+			0xFFFFB060,
+			0x55FFCC80,
+			0xFFFFB060,
+			0x55AA1010,
+			0xFFFFB060,
+			0xFFFFB060,
+			0xFFFFFFFF,
+			0x55FF7060
+	);
+	private static final HeroHudConfig HUD = new HeroHudConfig("hud.superheroes.energy.spartan_rage", HeroHudConfig.EnergyIconType.FLAME, true, "GOD SLAYER");
 
 	@Override
 	public ResourceLocation getId() {
@@ -85,16 +109,31 @@ public final class KratosHero implements Hero {
 
 	@Override
 	public HeroTheme getTheme() {
-		return HeroTheme.KRATOS;
+		return THEME;
 	}
 
 	@Override
 	public HeroHudConfig getHudConfig() {
-		return HeroHudConfig.KRATOS;
+		return HUD;
 	}
 	@Override
 	public double getImpactPower() {
 		return 1.16;
+	}
+
+	@Override
+	public List<PassiveGlyph> getPassiveGlyphs() {
+		return List.of(PassiveGlyph.FIST, PassiveGlyph.SWORD, PassiveGlyph.SHIELD, PassiveGlyph.BOLT);
+	}
+
+	@Override
+	public boolean canSuperJump() {
+		return true;
+	}
+
+	@Override
+	public @Nullable BleedProfile getMeleeBleed(ServerPlayer attacker) {
+		return new BleedProfile(0.25f, 0);
 	}
 
 }

@@ -34,6 +34,7 @@ public final class KazuhaHero implements Hero {
 			0xFFFFFFFF,
 			0x6678F0C8
 	);
+	private static final HeroHudConfig HUD = new HeroHudConfig("hud.superheroes.energy.anemo", HeroHudConfig.EnergyIconType.LEAF, true, "MAPLE STORM");
 	private static final AttributeModifierSet PASSIVES = AttributeModifierSet.builder()
 			.add(Attributes.ARMOR, ModId.of("modifiers/kazuha/armor"), 16.0, AttributeModifier.Operation.ADD_VALUE)
 			.add(Attributes.ARMOR_TOUGHNESS, ModId.of("modifiers/kazuha/toughness"), 4.0, AttributeModifier.Operation.ADD_VALUE)
@@ -117,7 +118,7 @@ public final class KazuhaHero implements Hero {
 
 	@Override
 	public HeroHudConfig getHudConfig() {
-		return HeroHudConfig.KAZUHA;
+		return HUD;
 	}
 	@Override
 	public double getImpactPower() {
@@ -126,6 +127,11 @@ public final class KazuhaHero implements Hero {
 	@Override
 	public JarvisThreatClass getThreatClass() {
 		return JarvisThreatClass.D;
+	}
+
+	@Override
+	public List<PassiveGlyph> getPassiveGlyphs() {
+		return List.of(PassiveGlyph.LEAF, PassiveGlyph.SWORD, PassiveGlyph.FEATHER);
 	}
 
 }

@@ -38,6 +38,8 @@ public final class SungJinwooHero implements Hero {
 			0x55C7A8FF                   // radialGlow
 	);
 
+	private static final HeroHudConfig HUD = new HeroHudConfig("hud.superheroes.energy.shadow_power", HeroHudConfig.EnergyIconType.SHADOW, true, "MONARCH'S DOMAIN");
+
 	@Override
 	public ResourceLocation getId() {
 		return ID;
@@ -121,7 +123,7 @@ public final class SungJinwooHero implements Hero {
 
 	@Override
 	public HeroHudConfig getHudConfig() {
-		return HeroHudConfig.SUNG_JINWOO;
+		return HUD;
 	}
 	@Override
 	public double getImpactPower() {
@@ -130,6 +132,11 @@ public final class SungJinwooHero implements Hero {
 	@Override
 	public JarvisThreatClass getThreatClass() {
 		return JarvisThreatClass.A;
+	}
+
+	@Override
+	public List<PassiveGlyph> getPassiveGlyphs() {
+		return List.of(PassiveGlyph.SHADOW, PassiveGlyph.SHIELD, PassiveGlyph.EYE, PassiveGlyph.HEART);
 	}
 
 }

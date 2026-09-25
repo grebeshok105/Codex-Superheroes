@@ -14,6 +14,28 @@ public final class CaptainAmericaHero implements Hero {
 	public static final ResourceLocation ID = ModId.of("captain_america");
 	public static final ResourceLocation SKIN = ModId.of("textures/entity/hero/captain_america.png");
 
+	private static final HeroTheme THEME = new HeroTheme(
+			0xE00A1E40,
+			0xD0040A1A,
+			0x881E40AF,
+			0x33EF4444,
+			0xFF60A0FF,
+			0xFF0E2860,
+			0xFF1E40AF,
+			0x556090FF,
+			0xFF60A0FF,
+			0xFF1A0606,
+			0xFFEF4444,
+			0x55FF7878,
+			0xFFEF4444,
+			0x551E40AF,
+			0xFFEF4444,
+			0xFFEF4444,
+			0xFFFFFFFF,
+			0x556090FF
+	);
+	private static final HeroHudConfig HUD = new HeroHudConfig("hud.superheroes.energy.super_serum", HeroHudConfig.EnergyIconType.SHIELD, true, "COUNTER STANCE");
+
 	@Override
 	public ResourceLocation getId() {
 		return ID;
@@ -80,12 +102,12 @@ public final class CaptainAmericaHero implements Hero {
 
 	@Override
 	public HeroTheme getTheme() {
-		return HeroTheme.CAPTAIN_AMERICA;
+		return THEME;
 	}
 
 	@Override
 	public HeroHudConfig getHudConfig() {
-		return HeroHudConfig.CAPTAIN_AMERICA;
+		return HUD;
 	}
 	@Override
 	public double getImpactPower() {
@@ -94,6 +116,11 @@ public final class CaptainAmericaHero implements Hero {
 	@Override
 	public JarvisThreatClass getThreatClass() {
 		return JarvisThreatClass.B;
+	}
+
+	@Override
+	public List<PassiveGlyph> getPassiveGlyphs() {
+		return List.of(PassiveGlyph.SHIELD, PassiveGlyph.FIST, PassiveGlyph.FEATHER);
 	}
 
 }

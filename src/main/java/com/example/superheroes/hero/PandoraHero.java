@@ -24,6 +24,28 @@ public final class PandoraHero implements Hero {
 	public static final ResourceLocation ID = ModId.of("pandora");
 	public static final ResourceLocation SKIN = ModId.of("textures/entity/hero/pandora.png");
 
+	// Same palette as Regulus on purpose (House of Vanity shares his madness colors).
+	private static final HeroTheme THEME = new HeroTheme(
+			0xFFFFFFFF,
+			0xFF606060,
+			0xFFFFFFFF,
+			0x44FFFFFF,
+			0xFFFFFFFF,
+			0xFFCCCCCC,
+			0xFFFFFFFF,
+			0x66FFFFFF,
+			0xFFFFFFFF,
+			0xFF555555,
+			0xFFFFFFFF,
+			0x66E0E0E0,
+			0xFF555555,
+			0x66E0E0E0,
+			0xFFFFFFFF,
+			0xFFFFFFFF,
+			0xFFFFFFFF,
+			0x66FFFFFF
+	);
+
 	@Override
 	public ResourceLocation getId() {
 		return ID;
@@ -111,7 +133,7 @@ public final class PandoraHero implements Hero {
 	@Override
 	public HeroTheme getTheme() {
 		// Pandora's HUD/radial colours are pure white — same monochrome theme as Regulus.
-		return RegulusHero.THEME;
+		return THEME;
 	}
 	@Override
 	public boolean canUseAbility(net.minecraft.server.level.ServerPlayer player,

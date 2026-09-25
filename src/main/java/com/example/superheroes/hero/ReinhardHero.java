@@ -14,6 +14,28 @@ public final class ReinhardHero implements Hero {
 	public static final ResourceLocation ID = ModId.of("reinhard");
 	public static final ResourceLocation SKIN = ModId.of("textures/entity/hero/reinhard.png");
 
+	private static final HeroTheme THEME = new HeroTheme(
+			0xE02A0608,
+			0xD0140204,
+			0x99E62020,
+			0x44FFB0B0,
+			0xFFFF4848,
+			0xFF6E0000,
+			0xFFE61A1A,
+			0x66FF6464,
+			0xFFFF3030,
+			0xFF1A0000,
+			0xFFFF6060,
+			0x66FFA0A0,
+			0xFFFF6060,
+			0x66E61A1A,
+			0xFFFF4040,
+			0xFFFF4040,
+			0xFFFFE0E0,
+			0x66FF6464
+	);
+	private static final HeroHudConfig HUD = new HeroHudConfig("hud.superheroes.energy.divine_blessing", HeroHudConfig.EnergyIconType.SWORD, false, null);
+
 	@Override
 	public ResourceLocation getId() {
 		return ID;
@@ -88,12 +110,12 @@ public final class ReinhardHero implements Hero {
 
 	@Override
 	public HeroTheme getTheme() {
-		return HeroTheme.REINHARD;
+		return THEME;
 	}
 
 	@Override
 	public HeroHudConfig getHudConfig() {
-		return HeroHudConfig.REINHARD;
+		return HUD;
 	}
 	@Override
 	public double getImpactPower() {
@@ -102,6 +124,17 @@ public final class ReinhardHero implements Hero {
 	@Override
 	public JarvisThreatClass getThreatClass() {
 		return JarvisThreatClass.S;
+	}
+
+	@Override
+	public List<PassiveGlyph> getPassiveGlyphs() {
+		return List.of(PassiveGlyph.FEATHER, PassiveGlyph.SHIELD, PassiveGlyph.STAR, PassiveGlyph.SWORD,
+				PassiveGlyph.HEART, PassiveGlyph.BOLT);
+	}
+
+	@Override
+	public boolean canSuperJump() {
+		return true;
 	}
 
 }

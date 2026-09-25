@@ -22,6 +22,28 @@ public final class HomelanderHero implements Hero {
 	public static final ResourceLocation ID = ModId.of("homelander");
 	public static final ResourceLocation SKIN = ModId.of("textures/entity/hero/homelander.png");
 
+	private static final HeroTheme THEME = new HeroTheme(
+			0xE0181C2A,
+			0xD0080A14,
+			0x88FFD27A,
+			0x33FFFFFF,
+			0xFFFFE07A,
+			0xFFB35900,
+			0xFFFFD060,
+			0x55FFE08A,
+			0xFFFFC538,
+			0xFF3B1F8A,
+			0xFFB58CFF,
+			0x55C7A8FF,
+			0xFFB58CFF,
+			0x55FFD27A,
+			0xFFFFC538,
+			0xFFFFC538,
+			0xFFFFF1B0,
+			0x55FFD27A
+	);
+	private static final HeroHudConfig HUD = new HeroHudConfig("hud.superheroes.energy.laser_power", HeroHudConfig.EnergyIconType.LIGHTNING, true, "STUNNING ROAR");
+
 	@Override
 	public ResourceLocation getId() {
 		return ID;
@@ -92,7 +114,7 @@ public final class HomelanderHero implements Hero {
 
 	@Override
 	public HeroTheme getTheme() {
-		return HeroTheme.HOMELANDER;
+		return THEME;
 	}
 
 	@Override
@@ -143,7 +165,7 @@ public final class HomelanderHero implements Hero {
 
 	@Override
 	public HeroHudConfig getHudConfig() {
-		return HeroHudConfig.HOMELANDER;
+		return HUD;
 	}
 	@Override
 	public com.example.superheroes.physics.ImpactStyle getImpactStyle() {
@@ -168,6 +190,11 @@ public final class HomelanderHero implements Hero {
 	@Override
 	public boolean isUraniumWeak() {
 		return true;
+	}
+
+	@Override
+	public List<PassiveGlyph> getPassiveGlyphs() {
+		return List.of(PassiveGlyph.HEART, PassiveGlyph.FLAME, PassiveGlyph.FEATHER);
 	}
 
 }

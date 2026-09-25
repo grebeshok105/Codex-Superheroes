@@ -35,6 +35,7 @@ public final class RemHero implements Hero {
 			0xFFFFFFFF,
 			0x665FCBFF
 	);
+	private static final HeroHudConfig HUD = new HeroHudConfig("hud.superheroes.energy.oni_power", HeroHudConfig.EnergyIconType.ICE, true, "ONI RAGE");
 	private static final AttributeModifierSet PASSIVES = AttributeModifierSet.builder()
 			.add(Attributes.ARMOR, ModId.of("modifiers/rem/armor"), 16.0, AttributeModifier.Operation.ADD_VALUE)
 			.add(Attributes.ARMOR_TOUGHNESS, ModId.of("modifiers/rem/toughness"), 6.0, AttributeModifier.Operation.ADD_VALUE)
@@ -126,7 +127,7 @@ public final class RemHero implements Hero {
 
 	@Override
 	public HeroHudConfig getHudConfig() {
-		return HeroHudConfig.REM;
+		return HUD;
 	}
 	@Override
 	public com.example.superheroes.physics.ImpactStyle getImpactStyle() {
@@ -154,6 +155,11 @@ public final class RemHero implements Hero {
 			return false;
 		}
 		return !isDemonOnly(abilityId) || demonismActive;
+	}
+
+	@Override
+	public List<PassiveGlyph> getPassiveGlyphs() {
+		return List.of(PassiveGlyph.ICE, PassiveGlyph.SKULL, PassiveGlyph.HEART);
 	}
 
 }
