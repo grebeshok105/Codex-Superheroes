@@ -77,8 +77,7 @@ public class SuperheroesMod implements ModInitializer {
 		SuperheroesCommands.init();
 
 		registerTickHandlers();
-		net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents.END_SERVER_TICK
-				.register(com.example.superheroes.lifecycle.HeroTickDispatcher::tick);
+		com.example.superheroes.lifecycle.HeroTickDispatcher.init();
 
 		ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> {
 			// Pandora never dies — lethal hits trigger her cinematic instead (#7).
