@@ -88,4 +88,13 @@ public final class LokiHero implements Hero {
 	public HeroHudConfig getHudConfig() {
 		return HeroHudConfig.LOKI;
 	}
+	@Override
+	public double getImpactPower() {
+		return 0.95;
+	}
+	@Override
+	public JarvisThreatClass getThreatClass() {
+		return JarvisThreatClass.D;
+	}
+
 }

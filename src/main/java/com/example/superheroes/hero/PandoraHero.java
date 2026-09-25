@@ -113,4 +113,17 @@ public final class PandoraHero implements Hero {
 		// Pandora's HUD/radial colours are pure white — same monochrome theme as Regulus.
 		return RegulusHero.THEME;
 	}
+	@Override
+	public boolean canUseAbility(net.minecraft.server.level.ServerPlayer player,
+			com.example.superheroes.transform.HeroData data, ResourceLocation abilityId) {
+		return !isDimensionOnly(abilityId)
+				|| com.example.superheroes.effect.MirrorDimensionController.hasActiveHouse(player);
+	}
+
+	@Override
+	public void onAbilityDenied(net.minecraft.server.level.ServerPlayer player, ResourceLocation abilityId) {
+		player.displayClientMessage(net.minecraft.network.chat.Component.translatable(
+				"ability.superheroes.pandora.not_in_house").withStyle(net.minecraft.ChatFormatting.DARK_GRAY), true);
+	}
+
 }

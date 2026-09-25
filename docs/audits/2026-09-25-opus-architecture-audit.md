@@ -22,7 +22,11 @@
 | B18, B19, B22, мелочи, потенциальные | ⏳ | Разбираются по ходу связанных этапов. |
 | Долг 2 | ✅ закрыт | Все ~20 прямых писателей переведены на `HeroDataStore`; `ProjectSanityTest.assertHeroDataHasSingleWriter` запрещает прямой `setAttached(HERO_DATA)`/sync вне стора. Полный sync — сразу (порядок с другими пакетами), энергия/мана — один пакет в конце тика (фаза `hero_data_flush`). Этап 2. |
 | Долг 5 | ✅ закрыт | Мёртвый `DeactivateAbilityC2SPayload` удалён; лишние `server().execute` в C2S-обработчиках убраны — Fabric и так вызывает их на серверном потоке. Ручной S2C-разводкой для вида героя (`RemoteHeroSkinS2CPayload` + broadcast/track plumbing) заменён synced attachment `PUBLIC_HERO` (этап 10). |
-| Долг 1, 3, 4, 6–9 | ⏳ | Закрывается этапами 3 и 11, без слепого переписывания. |
+| Долг 1 | ✅ закрыт | `PlayerLifecycle` (этап 3) — единый хаб LEAVE/JOIN/AFTER_DEATH/AFTER_RESPAWN/SERVER_STOPPED; `HeroLifecycle` (этап 11) — события `onClear`/`onTransformed` с централизованной таблицей слушателей в `registerPlayerLifecycle()`, заменившие захардкоженный список `clearHeroRuntimeState`. Этапы 3 и 11. |
+| Долг 3 | ⚠️ базовая часть | `HeroTickDispatcher` (этап 11): фазы GLOBAL→LEVELS→PLAYERS→ABILITY_ACTIVE, единый `END_SERVER_TICK`, мёртвые игроки скипаются один раз централизованно (B17 закреплено GameTest'ами), `HeroData` читается один раз на игрока; bootstrap-монолит `SuperheroesMod` разбит на `registerTickHandlers()`/`registerPlayerLifecycle()` — порядок виден в таблице. Миграция ~50 контроллеров, которые всё ещё сами регистрируют `ServerTickEvents`, — следующий этап. |
+| Долг 4 | ✅ закрыт | Хуки в `Hero`: `getImpactStyle`/`getImpactPower` (таблицы `CombatImpactEngine` переехали в 20 героев), `getThreatClass` (`HERO_THREATS` удалён, класс переехал `jarvis/`→`hero/`, цикл пакетов разорван), `canUseAbility`/`onAbilityDenied`/`isAbilitySuppressedBy`/`getEnergyReserveFor`/`isUraniumWeak` (`instanceof` ветки `AbilityRouter` и `HomelanderHero.ID` в `FlightController` удалены); `ClientAbilityFilter` переиспользует серверные таблицы `DoomsdayHero.isUnlockedAtTier`/`RemHero.isVisibleIn` вместо своих дублей. `ProjectSanityTest.assertNoHeroTypeDispatch` запрещает `instanceof *Hero` вне героев. Этап 11. |
+| Долг 6 | ⏳ этапы 3 и 9 | Transient-модификаторы и замки (этап 3) закрыли утечки баффов; reconciler пассивок (B12) — этап 9 в работе. |
+| Долг 7, 8, 9 | ⏳ | Тонкий контракт `Ability`, дубли механик, клиент-монолит — вне этапов 1–11, отдельный план. |
 
 Новые находки, обнаруженные при реализации:
 

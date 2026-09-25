@@ -87,4 +87,13 @@ public final class CaptainAmericaHero implements Hero {
 	public HeroHudConfig getHudConfig() {
 		return HeroHudConfig.CAPTAIN_AMERICA;
 	}
+	@Override
+	public double getImpactPower() {
+		return 0.88;
+	}
+	@Override
+	public JarvisThreatClass getThreatClass() {
+		return JarvisThreatClass.B;
+	}
+
 }

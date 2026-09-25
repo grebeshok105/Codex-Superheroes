@@ -132,4 +132,13 @@ public final class ScaramoucheHero implements Hero {
 	public HeroHudConfig getHudConfig() {
 		return HeroHudConfig.SCARAMOUCHE;
 	}
+	@Override
+	public double getImpactPower() {
+		return 0.92;
+	}
+	@Override
+	public JarvisThreatClass getThreatClass() {
+		return JarvisThreatClass.D;
+	}
+
 }

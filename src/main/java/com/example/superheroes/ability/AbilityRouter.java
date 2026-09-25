@@ -38,21 +38,10 @@ public final class AbilityRouter {
 		if (hero == null || !hero.getAbilities().contains(abilityId)) {
 			return;
 		}
-		if (hero instanceof com.example.superheroes.hero.DoomsdayHero dh
-				&& !dh.isAbilityUnlocked(player, abilityId)) {
-			return;
-		}
-		if (hero instanceof com.example.superheroes.hero.ThanosHero th
-				&& !th.isAbilityUnlocked(player, abilityId)) {
-			com.example.superheroes.hero.ThanosHero.notifyMissingStone(player, abilityId);
-			return;
-		}
-		// Pandora's dimension-only powers exist only while her House of Vanity is open.
-		if (hero instanceof com.example.superheroes.hero.PandoraHero
-				&& com.example.superheroes.hero.PandoraHero.isDimensionOnly(abilityId)
-				&& !com.example.superheroes.effect.MirrorDimensionController.hasActiveHouse(player)) {
-			player.displayClientMessage(net.minecraft.network.chat.Component.translatable(
-					"ability.superheroes.pandora.not_in_house").withStyle(net.minecraft.ChatFormatting.DARK_GRAY), true);
+		// Hero-specific gates live on the hero (audit debt 4): Doomsday tiers, Thanos
+		// stones, Pandora's dimension-only powers.
+		if (!hero.canUseAbility(player, data, abilityId)) {
+			hero.onAbilityDenied(player, abilityId);
 			return;
 		}
 		Ability ability = AbilityRegistry.get(abilityId);
@@ -63,7 +52,7 @@ public final class AbilityRouter {
 			deactivate(player, abilityId);
 			return;
 		}
-		if (data.isActive(AbilityIds.IRON_FISTS) && !abilityId.equals(AbilityIds.IRON_FISTS)) {
+		if (hero.isAbilitySuppressedBy(data, abilityId)) {
 			return;
 		}
 		if (AbilityCooldowns.isOnCooldown(player, abilityId)) {
@@ -134,8 +123,8 @@ public final class AbilityRouter {
 		if (cost <= 0f || ModEffects.isMadness(player)) {
 			return true;
 		}
-		if (!abilityId.equals(AbilityIds.UNIBEAM) && hero.getAbilities().contains(AbilityIds.UNIBEAM)
-				&& binding == ResourceKind.ENERGY && data.energy() < cost + 100f) {
+		if (binding == ResourceKind.ENERGY
+				&& data.energy() < cost + hero.getEnergyReserveFor(abilityId, binding)) {
 			return false;
 		}
 		return ResourcePayment.pay(data.energy(), data.mana(), binding, cost).success();

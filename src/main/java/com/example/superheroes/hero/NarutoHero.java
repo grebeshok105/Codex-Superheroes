@@ -89,4 +89,9 @@ public final class NarutoHero implements Hero {
 	public HeroHudConfig getHudConfig() {
 		return HeroHudConfig.NARUTO;
 	}
+	@Override
+	public JarvisThreatClass getThreatClass() {
+		return JarvisThreatClass.B;
+	}
+
 }

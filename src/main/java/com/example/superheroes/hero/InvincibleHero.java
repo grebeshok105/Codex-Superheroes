@@ -146,4 +146,17 @@ public final class InvincibleHero implements Hero {
 	public HeroHudConfig getHudConfig() {
 		return HeroHudConfig.INVINCIBLE;
 	}
+	@Override
+	public com.example.superheroes.physics.ImpactStyle getImpactStyle() {
+		return com.example.superheroes.physics.ImpactStyle.BRUTAL;
+	}
+	@Override
+	public double getImpactPower() {
+		return 1.22;
+	}
+	@Override
+	public JarvisThreatClass getThreatClass() {
+		return JarvisThreatClass.A;
+	}
+
 }

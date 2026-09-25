@@ -119,4 +119,13 @@ public final class KazuhaHero implements Hero {
 	public HeroHudConfig getHudConfig() {
 		return HeroHudConfig.KAZUHA;
 	}
+	@Override
+	public double getImpactPower() {
+		return 0.95;
+	}
+	@Override
+	public JarvisThreatClass getThreatClass() {
+		return JarvisThreatClass.D;
+	}
+
 }

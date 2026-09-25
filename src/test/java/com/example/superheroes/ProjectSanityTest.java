@@ -63,6 +63,7 @@ public final class ProjectSanityTest {
 		assertWorldMutationsGoThroughPolicy();
 		assertClientStatesRegisterReset();
 		assertClientCooldownsUseLevelGameTime();
+		assertNoHeroTypeDispatch();
 		System.out.println("ProjectSanityTest passed");
 	}
 
@@ -106,6 +107,19 @@ public final class ProjectSanityTest {
 			assert !DIRECT_WORLD_MUTATION.matcher(source).find()
 					: file + " mutates the world directly — route ability block breaks through WorldDestructionPolicy";
 		});
+	}
+
+	// Debt 4: hero-specific branching lives in the Hero hooks (canUseAbility, getImpactStyle,
+	// ...), not in `instanceof` checks scattered through generic code.
+	private static void assertNoHeroTypeDispatch() throws IOException {
+		Pattern heroDispatch = Pattern.compile("instanceof\\s+[\\w.]*\\w+Hero\\b");
+		for (Path root : List.of(MAIN_JAVA, CLIENT_JAVA)) {
+			forEachJavaFile(root, file -> {
+				String source = Files.readString(file);
+				assert !heroDispatch.matcher(source).find()
+						: file + " dispatches on a Hero subtype — move the branch behind a Hero default hook";
+			});
+		}
 	}
 
 	// Hard rule: src/main must load on a dedicated server — no client-only imports.

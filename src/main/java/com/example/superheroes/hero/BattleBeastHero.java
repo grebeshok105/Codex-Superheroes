@@ -149,4 +149,17 @@ public final class BattleBeastHero implements Hero {
 	public HeroHudConfig getHudConfig() {
 		return HeroHudConfig.BATTLE_BEAST;
 	}
+	@Override
+	public com.example.superheroes.physics.ImpactStyle getImpactStyle() {
+		return com.example.superheroes.physics.ImpactStyle.BRUTAL;
+	}
+	@Override
+	public double getImpactPower() {
+		return 1.28;
+	}
+	@Override
+	public JarvisThreatClass getThreatClass() {
+		return JarvisThreatClass.S;
+	}
+
 }

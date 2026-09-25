@@ -127,7 +127,15 @@ public final class DoomsdayHero implements Hero {
         }
 
         public boolean isAbilityUnlocked(Player player, ResourceLocation abilityId) {
-                int tier = getTier(player);
+                return isUnlockedAtTier(getTier(player), abilityId);
+        }
+
+        /**
+         * Tier-gated ability table — shared by the server gate ({@link #isAbilityUnlocked},
+         * which reads the live tier from {@code DOOMSDAY_PROGRESS}) and the client HUD
+         * ({@code ClientAbilityFilter}, which reads {@code ClientDoomsdayState}).
+         */
+        public static boolean isUnlockedAtTier(int tier, ResourceLocation abilityId) {
                 if (AbilityIds.DOOMSDAY_SMASH.equals(abilityId)) return tier >= 2;
                 if (AbilityIds.DOOMSDAY_ROAR.equals(abilityId)) return tier >= 3;
                 if (AbilityIds.DOOMSDAY_BONE_SPIKE.equals(abilityId)) return tier >= 4;
@@ -208,4 +216,23 @@ public final class DoomsdayHero implements Hero {
 	public HeroHudConfig getHudConfig() {
 		return HeroHudConfig.DOOMSDAY;
 	}
+	@Override
+	public com.example.superheroes.physics.ImpactStyle getImpactStyle() {
+		return com.example.superheroes.physics.ImpactStyle.BRUTAL;
+	}
+	@Override
+	public double getImpactPower() {
+		return 1.34;
+	}
+	@Override
+	public JarvisThreatClass getThreatClass() {
+		return JarvisThreatClass.S;
+	}
+
+        @Override
+        public boolean canUseAbility(ServerPlayer player, com.example.superheroes.transform.HeroData data,
+                        ResourceLocation abilityId) {
+                return isAbilityUnlocked(player, abilityId);
+        }
+
 }

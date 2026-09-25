@@ -106,41 +106,9 @@ public class SuperheroesMod implements ModInitializer {
 		com.example.superheroes.effect.ThanosSnapWindupController.init();
 		SuperheroesCommands.init();
 
-		net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents.END_SERVER_TICK.register(server -> {
-			com.example.superheroes.effect.DoomGripController.serverTick();
-			com.example.superheroes.effect.PandoraDeathController.serverTick(server);
-			for (net.minecraft.server.level.ServerLevel sl : server.getAllLevels()) {
-				com.example.superheroes.horde.HordeManager.tick(sl);
-			}
-			for (ServerPlayer p : server.getPlayerList().getPlayers()) {
-				// Dead players stay in the player list until respawn — ability ticks must not
-				// run on a corpse (audit B17).
-				if (p.isDeadOrDying()) {
-					continue;
-				}
-				com.example.superheroes.ability.ChargeTackleAbility.serverTick(p);
-				com.example.superheroes.ability.ViltrumiteChargeAbility.serverTick(p);
-				com.example.superheroes.ability.MeteorSlamAbility.serverTick(p);
-				com.example.superheroes.ability.OmnimanViltrumiteRushAbility.serverTick(p);
-				com.example.superheroes.ability.OmnimanThinkMarkAbility.serverTick(p);
-				com.example.superheroes.ability.ironman.IronManNanoFormController.serverTick(p);
-				com.example.superheroes.ability.GokuKamehamehaAbility.serverTick(p);
-				com.example.superheroes.ability.GokuSpiritBombAbility.serverTick(p);
-				com.example.superheroes.ability.NarutoRasenganAbility.serverTick(p);
-				com.example.superheroes.ability.NarutoOodamaRasenganAbility.serverTick(p);
-				com.example.superheroes.ability.NarutoRasenshurikenAbility.serverTick(p);
-				com.example.superheroes.ability.CapShieldSlamAbility.serverTick(p);
-				com.example.superheroes.ability.RepulsorChargeController.serverTick(p);
-				com.example.superheroes.transform.HeroData data = p
-						.getAttachedOrCreate(com.example.superheroes.attachment.ModAttachments.HERO_DATA);
-				if (data.isActive(com.example.superheroes.ability.AbilityIds.NARUTO_SAGE_MODE)) {
-					com.example.superheroes.ability.NarutoSageModeAbility.serverTick(p);
-				}
-				if (data.isActive(com.example.superheroes.ability.AbilityIds.GOKU_SUPER_SAIYAN_AURA)) {
-					com.example.superheroes.ability.GokuSuperSaiyanAuraAbility.serverTick(p);
-				}
-			}
-		});
+		registerTickHandlers();
+		net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents.END_SERVER_TICK
+				.register(com.example.superheroes.lifecycle.HeroTickDispatcher::tick);
 
 		ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> {
 			// Pandora never dies — lethal hits trigger her cinematic instead (#7).
@@ -178,6 +146,20 @@ public class SuperheroesMod implements ModInitializer {
 		// join — server thread; reconcile session-scoped state on the relogged entity.
 		PlayerLifecycle.onJoin(HeroTransformService::onPlayerJoin);
 		PlayerLifecycle.onJoin(HeroDataStore::syncPublicHero);
+
+		// hero clear — hero-scoped session state dropped on swap/untransform/leave/death.
+		// Ordering is visible here; add new clears to this table (audit debt 1).
+		com.example.superheroes.lifecycle.HeroLifecycle.onClear(p -> com.example.superheroes.effect.UnibeamController.clearState(p.getUUID()));
+		com.example.superheroes.lifecycle.HeroLifecycle.onClear(p -> com.example.superheroes.effect.RegulusTotemController.clear(p.getUUID()));
+		com.example.superheroes.lifecycle.HeroLifecycle.onClear(com.example.superheroes.effect.RegulusMadnessController::clearMadness);
+		com.example.superheroes.lifecycle.HeroLifecycle.onClear(com.example.superheroes.effect.ReinhardController::clearAdaptations);
+		com.example.superheroes.lifecycle.HeroLifecycle.onClear(com.example.superheroes.effect.RaidenLifecycleController::clearOnUntransform);
+		com.example.superheroes.lifecycle.HeroLifecycle.onClear(com.example.superheroes.effect.RemDemonismController::clear);
+		com.example.superheroes.lifecycle.HeroLifecycle.onClear(com.example.superheroes.effect.PandoraDeathController::resetOnHeroTaken);
+		com.example.superheroes.lifecycle.HeroLifecycle.onClear(com.example.superheroes.effect.DoomGripController::clear);
+		com.example.superheroes.lifecycle.HeroLifecycle.onClear(com.example.superheroes.ability.OmnimanThinkMarkAbility::clear);
+		com.example.superheroes.lifecycle.HeroLifecycle.onClear(EntityControlLock::releaseOwnedBy);
+		com.example.superheroes.lifecycle.HeroLifecycle.onTransformed(com.example.superheroes.effect.HeroReactionController::onTransformed);
 		PlayerLifecycle.onJoin(com.example.superheroes.effect.ReinhardController::onPlayerJoin);
 		PlayerLifecycle.onJoin(com.example.superheroes.effect.BattleBeastCurseController::reapplyOnJoin);
 		PlayerLifecycle.onJoin(com.example.superheroes.effect.RegulusMadnessController::clearMadness);
@@ -279,5 +261,54 @@ public class SuperheroesMod implements ModInitializer {
 			com.example.superheroes.effect.MirrorDimensionController.resetAll();
 			com.example.superheroes.effect.SpatialBindController.resetAll();
 		});
+	}
+
+	/**
+	 * Tick wiring for {@link com.example.superheroes.lifecycle.HeroTickDispatcher} — the
+	 * single {@code END_SERVER_TICK} registration. Phase order is GLOBAL → LEVELS →
+	 * PLAYERS → ABILITY_ACTIVE; within a phase tasks run in registration order, so this
+	 * table preserves the ordering the old inline lambda had (audit debt 3).
+	 */
+	private static void registerTickHandlers() {
+		com.example.superheroes.lifecycle.HeroTickDispatcher
+				.onGlobalTick(server -> com.example.superheroes.effect.DoomGripController.serverTick());
+		com.example.superheroes.lifecycle.HeroTickDispatcher
+				.onGlobalTick(com.example.superheroes.effect.PandoraDeathController::serverTick);
+		com.example.superheroes.lifecycle.HeroTickDispatcher
+				.onLevelTick((server, level) -> com.example.superheroes.horde.HordeManager.tick(level));
+
+		com.example.superheroes.lifecycle.HeroTickDispatcher
+				.onPlayerTick((server, p, data) -> com.example.superheroes.ability.ChargeTackleAbility.serverTick(p));
+		com.example.superheroes.lifecycle.HeroTickDispatcher
+				.onPlayerTick((server, p, data) -> com.example.superheroes.ability.ViltrumiteChargeAbility.serverTick(p));
+		com.example.superheroes.lifecycle.HeroTickDispatcher
+				.onPlayerTick((server, p, data) -> com.example.superheroes.ability.MeteorSlamAbility.serverTick(p));
+		com.example.superheroes.lifecycle.HeroTickDispatcher
+				.onPlayerTick((server, p, data) -> com.example.superheroes.ability.OmnimanViltrumiteRushAbility.serverTick(p));
+		com.example.superheroes.lifecycle.HeroTickDispatcher
+				.onPlayerTick((server, p, data) -> com.example.superheroes.ability.OmnimanThinkMarkAbility.serverTick(p));
+		com.example.superheroes.lifecycle.HeroTickDispatcher
+				.onPlayerTick((server, p, data) -> com.example.superheroes.ability.ironman.IronManNanoFormController.serverTick(p));
+		com.example.superheroes.lifecycle.HeroTickDispatcher
+				.onPlayerTick((server, p, data) -> com.example.superheroes.ability.GokuKamehamehaAbility.serverTick(p));
+		com.example.superheroes.lifecycle.HeroTickDispatcher
+				.onPlayerTick((server, p, data) -> com.example.superheroes.ability.GokuSpiritBombAbility.serverTick(p));
+		com.example.superheroes.lifecycle.HeroTickDispatcher
+				.onPlayerTick((server, p, data) -> com.example.superheroes.ability.NarutoRasenganAbility.serverTick(p));
+		com.example.superheroes.lifecycle.HeroTickDispatcher
+				.onPlayerTick((server, p, data) -> com.example.superheroes.ability.NarutoOodamaRasenganAbility.serverTick(p));
+		com.example.superheroes.lifecycle.HeroTickDispatcher
+				.onPlayerTick((server, p, data) -> com.example.superheroes.ability.NarutoRasenshurikenAbility.serverTick(p));
+		com.example.superheroes.lifecycle.HeroTickDispatcher
+				.onPlayerTick((server, p, data) -> com.example.superheroes.ability.CapShieldSlamAbility.serverTick(p));
+		com.example.superheroes.lifecycle.HeroTickDispatcher
+				.onPlayerTick((server, p, data) -> com.example.superheroes.ability.RepulsorChargeController.serverTick(p));
+
+		com.example.superheroes.lifecycle.HeroTickDispatcher.onActiveAbilityTick(
+				com.example.superheroes.ability.AbilityIds.NARUTO_SAGE_MODE,
+				(server, p, data) -> com.example.superheroes.ability.NarutoSageModeAbility.serverTick(p));
+		com.example.superheroes.lifecycle.HeroTickDispatcher.onActiveAbilityTick(
+				com.example.superheroes.ability.AbilityIds.GOKU_SUPER_SAIYAN_AURA,
+				(server, p, data) -> com.example.superheroes.ability.GokuSuperSaiyanAuraAbility.serverTick(p));
 	}
 }

@@ -148,4 +148,17 @@ public final class OmnimanHero implements Hero {
 	public HeroHudConfig getHudConfig() {
 		return HeroHudConfig.OMNIMAN;
 	}
+	@Override
+	public com.example.superheroes.physics.ImpactStyle getImpactStyle() {
+		return com.example.superheroes.physics.ImpactStyle.BRUTAL;
+	}
+	@Override
+	public double getImpactPower() {
+		return 1.27;
+	}
+	@Override
+	public JarvisThreatClass getThreatClass() {
+		return JarvisThreatClass.S;
+	}
+
 }

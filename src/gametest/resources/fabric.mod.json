@@ -16,7 +16,8 @@
 			"com.example.superheroes.gametest.DestructionPolicyGameTests",
 			"com.example.superheroes.gametest.HouseOfVanityGameTests",
 			"com.example.superheroes.gametest.PassivesFallGameTests",
-			"com.example.superheroes.gametest.PublicHeroSyncGameTests"
+			"com.example.superheroes.gametest.PublicHeroSyncGameTests",
+			"com.example.superheroes.gametest.HeroTickDispatcherGameTests"
 		]
 	},
 	"depends": {

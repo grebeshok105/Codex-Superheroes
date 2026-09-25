@@ -8,7 +8,8 @@ import com.example.superheroes.flight.FlightAbilityState;
 import com.example.superheroes.flight.FlightMode;
 import com.example.superheroes.flight.FlightPhase;
 import com.example.superheroes.flight.FlightPhaseResolver;
-import com.example.superheroes.hero.HomelanderHero;
+import com.example.superheroes.hero.Hero;
+import com.example.superheroes.hero.Heroes;
 import com.example.superheroes.network.ModNetworking;
 import com.example.superheroes.particle.ModParticles;
 import com.example.superheroes.transform.HeroData;
@@ -145,7 +146,7 @@ public final class FlightController {
 			clearIfPresent(player);
 			return;
 		}
-		if (handleHomelanderUraniumLimit(player, data, mode)) {
+		if (handleUraniumFlightLimit(player, data, mode)) {
 			return;
 		}
 
@@ -180,10 +181,11 @@ public final class FlightController {
 		sync(player, state, (float) horizontalSpeed, true, false);
 	}
 
-	private static boolean handleHomelanderUraniumLimit(ServerPlayer player, HeroData data, FlightMode mode) {
-		boolean isHomelander = HomelanderHero.ID.equals(data.heroId());
+	private static boolean handleUraniumFlightLimit(ServerPlayer player, HeroData data, FlightMode mode) {
+		Hero hero = Heroes.get(data.heroId());
+		boolean isUraniumWeak = hero != null && hero.isUraniumWeak();
 		UUID id = player.getUUID();
-		if (!isHomelander || mode != FlightMode.NORMAL || ModEffects.isMadness(player)
+		if (!isUraniumWeak || mode != FlightMode.NORMAL || ModEffects.isMadness(player)
 				|| !UraniumDefenseController.isUnderUraniumThreat(player)) {
 			URANIUM_ACTIVE_SINCE.remove(id);
 			return false;

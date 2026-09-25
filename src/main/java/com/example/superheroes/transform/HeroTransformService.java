@@ -64,7 +64,7 @@ public final class HeroTransformService {
 		// keep absolute health — transforming must not be a free heal (audit B5)
 		player.setHealth(Math.min(player.getHealth(), player.getMaxHealth()));
 		playTransformFx(player, true);
-		com.example.superheroes.effect.HeroReactionController.onTransformed(player, heroId);
+		com.example.superheroes.lifecycle.HeroLifecycle.fireTransformed(player, heroId);
 		markTransformed(player);
 		return true;
 	}
@@ -186,21 +186,13 @@ public final class HeroTransformService {
 	}
 
 	/**
-	 * Every cleanup a hero swap or removal must run, in one place (audit B23: the paths used to
-	 * drift apart — transform cleared a subset of what untransform cleared).
+	 * Drop every hero-scoped session-state bit for the player (swap/untransform).
+	 * Subscribers register via {@link com.example.superheroes.lifecycle.HeroLifecycle#onClear}
+	 * (audit B23: transform used to clear a subset of what untransform cleared);
+	 * ability cooldowns deliberately survive — persistent deadlines, not session state.
 	 */
 	public static void clearHeroRuntimeState(ServerPlayer player) {
-		com.example.superheroes.effect.UnibeamController.clearState(player.getUUID());
-		// ability cooldowns survive hero swaps — they are persistent deadlines, not session state
-		com.example.superheroes.effect.RegulusTotemController.clear(player.getUUID());
-		com.example.superheroes.effect.RegulusMadnessController.clearMadness(player);
-		com.example.superheroes.effect.ReinhardController.clearAdaptations(player);
-		com.example.superheroes.effect.RaidenLifecycleController.clearOnUntransform(player);
-		com.example.superheroes.effect.RemDemonismController.clear(player);
-		com.example.superheroes.effect.PandoraDeathController.resetOnHeroTaken(player);
-		com.example.superheroes.effect.DoomGripController.clear(player);
-		com.example.superheroes.ability.OmnimanThinkMarkAbility.clear(player);
-		com.example.superheroes.lifecycle.EntityControlLock.releaseOwnedBy(player);
+		com.example.superheroes.lifecycle.HeroLifecycle.fireClear(player);
 	}
 
 	private static void deactivateAll(ServerPlayer player, HeroData data) {

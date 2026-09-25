@@ -15,13 +15,12 @@
 | 3 | Lifecycle: B3, B4, B8, B17, B23, N1 (main-thread leave hook) | `hoplite/kroton-d9205130--lifecycle` | PR open (stacked on 2) |
 | 4 | B5 cooldown/heal reset on hero swap, B6 Snap stones | `hoplite/kroton-d9205130--cooldowns-snap` | PR open (stacked on 3) |
 | 5 | Damage pipeline B9, B20, B21; B11 global tick rate | `hoplite/kroton-d9205130--damage-pipeline` | PR open (stacked on 4) |
-| 6 | B10 `WorldDestructionPolicy` | | todo |
-| 7 | B15 client state/session | `hoplite/kroton-d9205130--client-state-reset` | PR open (stacked on 5) |
-| 8 | B13 House of Vanity server authority | | todo |
-| 7 | B15 client state/session | | todo |
-| 8 | B13 House of Vanity server authority | `hoplite/kroton-d9205130--vanity-authority` | PR open (stacked on 5) || 9 | B12 passive reconciler, B16 fall immunity | | todo |
-| 10 | B14 synced public hero attachment | | todo |
-| 11 | Hero hooks / lifecycle events / tick dispatcher (debt 1–4) | | todo |
+| 6 | B10 `WorldDestructionPolicy` | `hoplite/kroton-d9205130--destruction-policy` | PR open (stacked on 5) |
+| 7 | B15 client state/session | `hoplite/kroton-d9205130--client-state-reset` | PR open (stacked on 6) |
+| 8 | B13 House of Vanity server authority | `hoplite/kroton-d9205130--vanity-authority` | PR open (stacked on 7) |
+| 9 | B12 passive reconciler, B16 fall immunity | `hoplite/kroton-d9205130--passives-fall` | PR open (stacked on 8) |
+| 10 | B14 synced public hero attachment | `hoplite/kroton-d9205130--public-hero-sync` | PR open (stacked on 9) |
+| 11 | Hero hooks / lifecycle events / tick dispatcher (debt 1–4) | `hoplite/kroton-d9205130--hero-modularity` | PR open (stacked on 10) |
 | 12 | Hygiene: deps, docs, missing model/lang | | todo |
 
 ## Completed this session (stage 1)
@@ -104,6 +103,14 @@
 - New `ClientHeroDimsWatcher`: attachment sync has no client-side change callback, so an END_CLIENT_TICK watcher diffs each tracked player's synced hero id and calls `refreshDimensions()` on change (clears its map when `client.level == null`).
 - 2 new GameTests (`PublicHeroSyncGameTests`): transform writes / untransform clears `PUBLIC_HERO`; join back-fill derives the projection from a legacy directly-written `HERO_DATA`.
 
+## Completed this session (stage 11)
+
+- `lifecycle/HeroTickDispatcher` (debt 3): the only `END_SERVER_TICK` consumer for gameplay ticks — ordered phases GLOBAL → LEVELS → PLAYERS → ABILITY_ACTIVE, the dead-player skip happens once centrally (B17), and `HERO_DATA` is fetched once per player. `SuperheroesMod`'s 100-line inline lambda became `registerTickHandlers()`, a flat table keeping the exact prior order. The ~50 controllers that self-register `ServerTickEvents` stay as they are — migrating them onto the dispatcher is the follow-up hygiene stage.
+- `lifecycle/HeroLifecycle` (debt 1): `onClear`/`onTransformed` listener events fired from `HeroTransformService.clearHeroRuntimeState`/`transform` — the hard-coded cleanup call list (Unibeam, Regulus totem/madness, Reinhard adaptations, Raiden, Rem, Pandora, DoomGrip, Omniman think mark, control locks) is now a registration table in `registerPlayerLifecycle()`.
+- `Hero` default hooks (debt 4): `getImpactStyle`/`getImpactPower`, `getThreatClass`, `canUseAbility`/`onAbilityDenied`, `isAbilitySuppressedBy`, `getEnergyReserveFor`, `isUraniumWeak`. `CombatImpactEngine` deleted its 20-hero import table (style/power now come from the hero); `JarvisThreatClass` moved `jarvis/` → `hero/` and `forHero` reads `getThreatClass()` — `HERO_THREATS` gone, jarvis↔hero package cycle broken; `AbilityRouter`'s three `instanceof` branches + the IRON_FISTS check + the UNIBEAM reserve are hook calls; `FlightController` reads `isUraniumWeak()` instead of `HomelanderHero.ID`.
+- `ClientAbilityFilter` reuses the server tables `DoomsdayHero.isUnlockedAtTier` and `RemHero.isVisibleIn` — the client-side duplicate lists are deleted, so HUD and router can no longer drift apart.
+- `ProjectSanityTest.assertNoHeroTypeDispatch` forbids `instanceof *Hero` outside the hero package; 3 new GameTests (`HeroTickDispatcherGameTests`): dead skip, isActive gating, phase order.
+
 ## Important decisions
 - Bound weapons are identified by type (`BoundWeaponItem`) and validated by token; untokened copies are treated as stale on purpose (none are obtainable legitimately; old saves could hold leaked copies).
 - Bound weapons never become item entities: returned to the owner when valid and there is room, otherwise deleted (the ability can reissue).
@@ -116,6 +123,7 @@
 
 ## Verification
 
+- Stage 11: `qualityGate` green, 27/27 GameTests (3 new dispatcher tests). Intentionally kept: `CombatImpactEngine`'s nano-hammer branch (reads the `NANO_FORM` attachment — an ability-state rule, not a lookup table) and client-side statics (`ThanosHero`, `PandoraHero` tables used by HUD filters).
 - Stage 10: `qualityGate` green, 24/24 GameTests (2 new public-hero-sync tests). First run caught a test bug: `untransform` is cooldown-gated right after `transform` — the test uses `forceUntransform`.
 - Stage 8: `qualityGate` green, 26/26 GameTests (4 new House of Vanity tests). Test-only notes: victims must be joined+teleported inside `PULL_RADIUS` BEFORE `AbilityRouter.activate` — latecomer absorb only runs on keepalive ticks (every 20), so post-activation joins race the assert delays; mock players hardcode `isCreative()==true` (bytecode-verified `GameTestHelper$2`), so `VanityAuthority` `mayfly` grant/clear is unreachable in gametest — assert `hasEffect` probes instead.
 - Stage 5: `qualityGate` green, 22/22 GameTests (3 new damage-pipeline tests). Test-only notes: mock players join with private `spawnInvulnerableTime` that blocks `hurt()` — cleared via reflection in the kawarimi test; the test structure spawns ~6M blocks from the mock-player spawn point, so proximity-sensitive asserts must teleport the player first.

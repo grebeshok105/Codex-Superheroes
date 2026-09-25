@@ -3,7 +3,7 @@ package com.example.superheroes.effect;
 import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.hero.IronManHero;
 import com.example.superheroes.jarvis.JarvisQuotes;
-import com.example.superheroes.jarvis.JarvisThreatClass;
+import com.example.superheroes.hero.JarvisThreatClass;
 import com.example.superheroes.network.JarvisDetectionS2CPayload;
 import com.example.superheroes.transform.HeroData;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;

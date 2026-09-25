@@ -1,5 +1,7 @@
 package com.example.superheroes.jarvis;
 
+import com.example.superheroes.hero.JarvisThreatClass;
+
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 

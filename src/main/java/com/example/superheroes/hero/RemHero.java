@@ -128,4 +128,32 @@ public final class RemHero implements Hero {
 	public HeroHudConfig getHudConfig() {
 		return HeroHudConfig.REM;
 	}
+	@Override
+	public com.example.superheroes.physics.ImpactStyle getImpactStyle() {
+		return com.example.superheroes.physics.ImpactStyle.WEAPON;
+	}
+	@Override
+	public double getImpactPower() {
+		return 1.08;
+	}
+
+	/** Abilities that only exist inside Oni demon form. */
+	public static boolean isDemonOnly(ResourceLocation abilityId) {
+		return AbilityIds.REM_MORNING_STAR.equals(abilityId)
+				|| AbilityIds.REM_MACE_CRATER.equals(abilityId)
+				|| AbilityIds.REM_ONI_KICK.equals(abilityId)
+				|| AbilityIds.REM_HUMA_ICE_SPIKES.equals(abilityId);
+	}
+
+	/**
+	 * HUD visibility table shared with {@code ClientAbilityFilter}: demon-only abilities
+	 * show while demonism is active, {@code REM_ONI_RAGE} hides itself inside it.
+	 */
+	public static boolean isVisibleIn(ResourceLocation abilityId, boolean demonismActive) {
+		if (AbilityIds.REM_ONI_RAGE.equals(abilityId) && demonismActive) {
+			return false;
+		}
+		return !isDemonOnly(abilityId) || demonismActive;
+	}
+
 }

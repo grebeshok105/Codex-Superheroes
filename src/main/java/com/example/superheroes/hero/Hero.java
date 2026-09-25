@@ -47,4 +47,59 @@ public interface Hero {
 	default HeroHudConfig getHudConfig() {
 		return HeroHudConfig.DEFAULT;
 	}
+
+	/**
+	 * Melee impact presentation for {@code CombatImpactEngine} — default hero-neutral
+	 * {@link ImpactStyle#DEFAULT} at power 1.0.
+	 */
+	default com.example.superheroes.physics.ImpactStyle getImpactStyle() {
+		return com.example.superheroes.physics.ImpactStyle.DEFAULT;
+	}
+
+	default double getImpactPower() {
+		return 1.0;
+	}
+
+	/** J.A.R.V.I.S. threat classification shown by Iron Man's scan. */
+	default JarvisThreatClass getThreatClass() {
+		return JarvisThreatClass.C;
+	}
+
+	/**
+	 * Gate for {@code AbilityRouter.activate} — hero-specific locks (Doomsday tiers,
+	 * Thanos stones, Pandora's dimension-only powers) live here, not in the router.
+	 * On {@code false}, {@link #onAbilityDenied} runs for player feedback.
+	 */
+	default boolean canUseAbility(ServerPlayer player, com.example.superheroes.transform.HeroData data,
+			ResourceLocation abilityId) {
+		return true;
+	}
+
+	/** Feedback when {@link #canUseAbility} denied activation (message/sound). */
+	default void onAbilityDenied(ServerPlayer player, ResourceLocation abilityId) {
+	}
+
+	/**
+	 * While-stance suppression: deny an ability because another one is active
+	 * (Homelander's Iron Fists locks out everything else).
+	 */
+	default boolean isAbilitySuppressedBy(com.example.superheroes.transform.HeroData data,
+			ResourceLocation abilityId) {
+		return false;
+	}
+
+	/**
+	 * Energy kept in reserve for a signature ability — activation of {@code abilityId}
+	 * under {@code binding} fails when energy would drop below the reserve
+	 * (Iron Man reserves 100 for Unibeam).
+	 */
+	default float getEnergyReserveFor(ResourceLocation abilityId,
+			com.example.superheroes.resource.ResourceKind binding) {
+		return 0f;
+	}
+
+	/** Uranium pressure forcibly cuts this hero's flight after a grace period. */
+	default boolean isUraniumWeak() {
+		return false;
+	}
 }
