@@ -28,8 +28,7 @@ public final class RemHumaIceSpikesAbility implements Ability {
 	@Override
 	public boolean canActivate(ServerPlayer player) {
 		return RemDemonismController.isActive(player)
-				&& !RemDemonismController.isIceWaveActive(player)
-				&& !AbilityCooldowns.isOnCooldown(player, getId());
+				&& !RemDemonismController.isIceWaveActive(player);
 	}
 
 	@Override

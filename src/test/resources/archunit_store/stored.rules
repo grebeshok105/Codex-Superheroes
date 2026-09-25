@@ -1,5 +1,6 @@
 #
-#Fri Sep 25 20:32:44 UTC 2026
+#Fri Sep 25 22:48:57 UTC 2026
+AbilityRouter\ owns\ the\ cooldown\ check;\ an\ ability\ may\ only\ check\ another\ ability's\ cooldown=ba9a6ce4-2be6-47e1-ab0d-274a63800245
 entrypoints\ and\ module\ lists\ sit\ on\ top;\ use\ LoggerFactory.getLogger(ModId.MOD_ID)\ instead\ of\ SuperheroesMod.LOGGER=2cc0c740-a38f-418f-8f0a-8186cf3e98e0
 lifecycle\ hooks\ are\ registered\ through\ a\ module's\ LifecycleRegistrar=6ab35c1a-33f1-4f02-8c7e-3b264b0d0209
 server\ ticks\ go\ through\ HeroTickDispatcher=4c613794-5fd7-4dfe-9e5d-f5291f8611d3

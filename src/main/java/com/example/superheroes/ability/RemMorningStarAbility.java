@@ -44,7 +44,7 @@ public final class RemMorningStarAbility implements Ability {
 
 	@Override
 	public boolean canActivate(ServerPlayer player) {
-		return RemDemonismController.isActive(player) && !AbilityCooldowns.isOnCooldown(player, getId());
+		return RemDemonismController.isActive(player);
 	}
 
 	@Override

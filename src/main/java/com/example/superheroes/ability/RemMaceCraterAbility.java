@@ -28,8 +28,7 @@ public final class RemMaceCraterAbility implements Ability {
 	@Override
 	public boolean canActivate(ServerPlayer player) {
 		return RemDemonismController.isActive(player)
-				&& !RemDemonismController.isCraterWinding(player)
-				&& !AbilityCooldowns.isOnCooldown(player, getId());
+				&& !RemDemonismController.isCraterWinding(player);
 	}
 
 	@Override

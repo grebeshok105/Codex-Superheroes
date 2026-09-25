@@ -35,7 +35,7 @@ public final class CapShieldThrowAbility implements Ability {
 
 	@Override
 	public boolean canActivate(ServerPlayer player) {
-		return !AbilityCooldowns.isOnCooldown(player, getId()) && findShieldHand(player) != null;
+		return findShieldHand(player) != null;
 	}
 
 	@Override

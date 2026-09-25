@@ -58,7 +58,7 @@ public final class NarutoOodamaRasenganAbility implements Ability {
 
 	@Override
 	public boolean canActivate(ServerPlayer player) {
-		return !AbilityCooldowns.isOnCooldown(player, getId()) && !ACTIVE.containsKey(player.getUUID());
+		return !ACTIVE.containsKey(player.getUUID());
 	}
 
 	@Override
