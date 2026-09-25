@@ -156,6 +156,13 @@
 - `TestHeroes.transform(ServerPlayer, ResourceLocation)` replaced 17 copy-pasted transform calls in 10 GameTest files.
 - `build.gradle` gained a backup Central mirror (`CentralAliyunMirror`) — the local repo1 redirect mirror does not carry `com.tngtech.archunit` and shared CI egress IPs get 429s; the extra repo keeps the new dependency resolvable everywhere.
 
+## Architecture migration — stage N1 (plan 01)
+
+- Removed dead code: `ViltrumiteThunderClapAbility` (never registered), `MeteorSlamAbility` + `ShockwavePulseAbility` (registered but listed by no hero — unreachable through the AbilityRouter hero-list gate), 2 never-registered HUDs (`LowResourceVignetteHud`, `ResourceBarHud`), `HordeGeoRenderer`+`HordeGeoModel` (unregistered geo renderer; `HordeGeoAssets` stays — still used by `BaseHordeEntity`), 7 `AbilityIds` constants, and the 4 `MeteorSlamAbility` call sites in `SuperheroesMod` (onLeave/onDeath/resetAll/playerTick).
+- `archunit_store` shrank 74→73 lifecycle-hook rows (orchestrator regenerated — the deletions removed entries in file `6ab35c1a`).
+- New GameTests guard the contract the deletions relied on: `decodesUnknownAbilityIds` (CODEC tolerates persisted ids the registry no longer knows) and `activatingAnUnlistedAbilityIdIsANoOp` (hero-list gate rejects unlisted-but-registered ids without charging resources).
+- Orphan left deliberately (outside the stage's listed scope): `textures/gui/vignette.png` — its only consumer was `LowResourceVignetteHud`.
+
 ## Architecture migration — stage A2 (plan 01)
 
 - `HeroCompletenessGameTests` (entrypoint #14): `everyListedAbilityIsRegistered` fails on any ability id a hero lists that `AbilityRegistry.get` can't resolve; `everyHeroAndAbilityHasLangInBothLanguages` requires `hero.<ns>.<id>`, `ability.<ns>.<ability>`, `ability.<ns>.<ability>.desc` in both lang files — the exact three key shapes the HUD reads (verified against `AbilityDescriptions.nameKey/descKey`). `lang(String)` is package-accessible for B1 reuse.
