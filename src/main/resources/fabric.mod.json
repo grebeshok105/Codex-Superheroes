@@ -2,14 +2,14 @@
 	"schemaVersion": 1,
 	"id": "superheroes",
 	"version": "${version}",
-	"name": "Superheroes Mod",
-	"description": "Superheroes mod with custom models, abilities, dual-resource system and real-time radial menu.",
+	"name": "Codex Superheroes",
+	"description": "A Fabric superhero mod with transformations, signature abilities, flight, HUD, custom models and VFX.",
 	"authors": [
-		"Me!"
+		"grebeshok105"
 	],
 	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
+		"homepage": "https://github.com/grebeshok105/Codex-Superheroes",
+		"sources": "https://github.com/grebeshok105/Codex-Superheroes"
 	},
 	"license": "CC0-1.0",
 	"icon": "assets/superheroes/icon.png",
