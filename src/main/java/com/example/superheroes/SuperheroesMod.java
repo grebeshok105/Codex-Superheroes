@@ -31,6 +31,7 @@ public class SuperheroesMod implements ModInitializer {
 		AbilityRegistry.init();
 		com.example.superheroes.entity.ModEntities.init();
 		com.example.superheroes.horde.entity.HordeEntities.init();
+		com.example.superheroes.item.ModDataComponents.init();
 		ModItems.init();
 		ModItemGroups.init();
 		ModParticles.init();

@@ -4,7 +4,6 @@ import com.example.superheroes.ability.AbilityIds;
 import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.hero.HeroAttributes;
 import com.example.superheroes.hero.ReinhardHero;
-import com.example.superheroes.item.ModItems;
 import com.example.superheroes.network.ModNetworking;
 import com.example.superheroes.network.ReinhardCeremonyS2CPayload;
 import com.example.superheroes.sound.ModSounds;
@@ -17,13 +16,11 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
@@ -150,7 +147,9 @@ public final class ReinhardSwordDrawCeremonyController {
 		ReinhardState state = player.getAttachedOrCreate(ModAttachments.REINHARD_STATE);
 		player.setAttached(ModAttachments.REINHARD_STATE, state.withSwordDrawn(true));
 		HeroAttributes.REINHARD_DRAW.apply(player);
-		giveSword(player);
+		if (!com.example.superheroes.ability.ReinhardSwordDrawAbility.giveSword(player)) {
+			player.displayClientMessage(Component.translatable("ability.superheroes.bound_weapon.no_room"), true);
+		}
 		ReinhardTimeSlowController.armForFirstStrike(player);
 
 		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
@@ -261,19 +260,4 @@ public final class ReinhardSwordDrawCeremonyController {
 		}
 	}
 
-	private static void giveSword(ServerPlayer player) {
-		if (player.getMainHandItem().is(ModItems.ROYAL_ICICLE)) return;
-		if (player.getOffhandItem().is(ModItems.ROYAL_ICICLE)) return;
-		ItemStack stack = new ItemStack(ModItems.ROYAL_ICICLE);
-		ItemStack mainHand = player.getMainHandItem();
-		if (mainHand.isEmpty()) {
-			player.setItemInHand(InteractionHand.MAIN_HAND, stack);
-		} else if (player.getOffhandItem().isEmpty()) {
-			player.setItemInHand(InteractionHand.OFF_HAND, stack);
-		} else {
-			if (!player.getInventory().add(stack)) {
-				player.drop(stack, false);
-			}
-		}
-	}
 }

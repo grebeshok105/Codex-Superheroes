@@ -1,5 +1,6 @@
 package com.example.superheroes.item;
 
+import com.example.superheroes.item.bound.BoundWeaponItem;
 import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.effect.ModEffects;
 import com.example.superheroes.effect.RemDemonismController;
@@ -22,7 +23,7 @@ import net.minecraft.world.item.TooltipFlag;
 
 import java.util.List;
 
-public class RemMorningStarItem extends SwordItem {
+public class RemMorningStarItem extends BoundWeaponItem {
 	public RemMorningStarItem(Properties properties) {
 		super(Tiers.NETHERITE, properties.attributes(SwordItem.createAttributes(Tiers.NETHERITE, 0, -2.8f)));
 	}

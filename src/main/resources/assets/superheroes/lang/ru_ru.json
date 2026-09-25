@@ -512,6 +512,7 @@
   "hero.superheroes.reinhard.passive.4": "Дракон-меч Рейд — 5с церемония, замедление времени на первом нанесённом ударе",
   "hero.superheroes.reinhard.passive.5": "Второе Пришествие — один раз за жизнь Рейнхард восстаёт со всеми эффектами и +1000 урона мечом",
   "hero.superheroes.reinhard.passive.6": "Божественные рефлексы — отражает projectile/beam и уклоняется от первой обычной атаки за жизнь",
+  "ability.superheroes.bound_weapon.no_room": "Нет свободной руки или слота для оружия",
   "ability.superheroes.reinhard_sword_draw.no_worthy": "Нет достойных противников в округе",
   "ability.superheroes.reinhard_sword_draw.sheathed": "Меч вложен — достойный соперник ушёл",
   "ability.superheroes.reinhard_sword_draw.gate_locked": "Меч заперт — пропусти %s урона от одного противника",

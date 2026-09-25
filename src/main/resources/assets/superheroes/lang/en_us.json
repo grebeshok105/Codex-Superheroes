@@ -512,6 +512,7 @@
   "hero.superheroes.reinhard.passive.4": "Dragon Sword Reid — 5s ceremony, time slows down on first strike that lands",
   "hero.superheroes.reinhard.passive.5": "Second Coming — once per life Reinhard rises with all positive effects and +1000 sword damage",
   "hero.superheroes.reinhard.passive.6": "Divine reflexes — reflects projectiles/beams and dodges the first ordinary attack each life",
+  "ability.superheroes.bound_weapon.no_room": "No free hand or slot for the weapon",
   "ability.superheroes.reinhard_sword_draw.no_worthy": "No worthy opponent nearby",
   "ability.superheroes.reinhard_sword_draw.sheathed": "Sword sheathed — no worthy opponent",
   "ability.superheroes.reinhard_sword_draw.gate_locked": "Sword locked — endure %s damage from a single foe",

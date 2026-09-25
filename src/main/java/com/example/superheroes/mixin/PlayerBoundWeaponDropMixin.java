@@ -1,6 +1,6 @@
 package com.example.superheroes.mixin;
 
-import com.example.superheroes.item.ModItems;
+import com.example.superheroes.item.bound.BoundWeapons;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -9,20 +9,17 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+/** Bound hero weapons never leave their owner as item entities. */
 @Mixin(Player.class)
-public abstract class RoyalIcicleNoDropMixin {
+public abstract class PlayerBoundWeaponDropMixin {
 	@Inject(
 			method = "drop(Lnet/minecraft/world/item/ItemStack;ZZ)Lnet/minecraft/world/entity/item/ItemEntity;",
 			at = @At("HEAD"),
 			cancellable = true
 	)
-	private void superheroes$preventRoyalIcicleDrop(ItemStack stack, boolean throwRandomly, boolean includeOwnerName,
-													CallbackInfoReturnable<ItemEntity> cir) {
-		if (!stack.isEmpty() && stack.is(ModItems.ROYAL_ICICLE)) {
-			Player self = (Player) (Object) this;
-			if (!self.getInventory().add(stack)) {
-				self.getInventory().placeItemBackInInventory(stack);
-			}
+	private void superheroes$keepBoundWeapon(ItemStack stack, boolean throwRandomly, boolean includeThrowerName,
+			CallbackInfoReturnable<ItemEntity> cir) {
+		if (BoundWeapons.interceptDrop((Player) (Object) this, stack)) {
 			cir.setReturnValue(null);
 		}
 	}

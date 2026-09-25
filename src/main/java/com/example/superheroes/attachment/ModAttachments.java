@@ -5,6 +5,7 @@ import com.example.superheroes.effect.DoomsdayProgress;
 import com.example.superheroes.effect.RaidenState;
 import com.example.superheroes.effect.RegulusMadnessState;
 import com.example.superheroes.effect.ReinhardState;
+import com.example.superheroes.item.bound.BoundWeaponIssues;
 import com.example.superheroes.transform.HeroData;
 import com.mojang.serialization.Codec;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentRegistry;
@@ -63,6 +64,10 @@ public final class ModAttachments {
 			.persistent(Codec.INT)
 			.copyOnDeath()
 			.buildAndRegister(ModId.of("nano_form"));
+
+	/** Current issue of each bound weapon; not persistent, so a relog or restart invalidates every old copy. */
+	public static final AttachmentType<BoundWeaponIssues> BOUND_WEAPON_ISSUES =
+			AttachmentRegistry.create(ModId.of("bound_weapon_issues"));
 
 	private ModAttachments() {
 	}

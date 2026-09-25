@@ -5,6 +5,7 @@ import com.example.superheroes.ability.AbilityIds;
 import com.example.superheroes.ability.AbilityCooldowns;
 import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.hero.AttributeModifierSet;
+import com.example.superheroes.item.bound.BoundWeapons;
 import com.example.superheroes.hero.RemHero;
 import com.example.superheroes.item.ModItems;
 import com.example.superheroes.network.ModNetworking;
@@ -16,7 +17,6 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.NonNullList;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.server.level.ServerLevel;
@@ -32,7 +32,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
@@ -286,17 +285,7 @@ public final class RemDemonismController {
 	}
 
 	public static void giveMace(ServerPlayer player) {
-		removeExtraMaces(player, true);
-		if (hasMace(player)) return;
-		ItemStack stack = new ItemStack(ModItems.REM_MORNING_STAR);
-		ItemStack mainHand = player.getMainHandItem();
-		if (mainHand.isEmpty()) {
-			player.setItemInHand(InteractionHand.MAIN_HAND, stack);
-		} else if (player.getOffhandItem().isEmpty()) {
-			player.setItemInHand(InteractionHand.OFF_HAND, stack);
-		} else if (!player.getInventory().add(stack)) {
-			player.drop(stack, false);
-		}
+		BoundWeapons.ensureHeld(player, ModItems.REM_MORNING_STAR);
 	}
 
 	public static void startMorningStarPull(ServerPlayer player, LivingEntity target) {
@@ -312,7 +301,7 @@ public final class RemDemonismController {
 	}
 
 	public static void removeMace(ServerPlayer player) {
-		removeExtraMaces(player, false);
+		BoundWeapons.revoke(player, ModItems.REM_MORNING_STAR);
 	}
 
 	private static void tickRem(ServerPlayer player) {
@@ -669,57 +658,6 @@ public final class RemDemonismController {
 				&& target.isAlive()
 				&& !target.isSpectator()
 				&& !(target instanceof Player player && player.isCreative());
-	}
-
-	private static boolean hasMace(ServerPlayer player) {
-		return hasMace(player.getInventory().items)
-				|| hasMace(player.getInventory().offhand)
-				|| hasMace(player.getInventory().armor)
-				|| isMace(player.containerMenu.getCarried());
-	}
-
-	private static void removeExtraMaces(ServerPlayer player, boolean keepOne) {
-		boolean kept = !keepOne;
-		kept = removeExtraMaces(player.getInventory().items, kept);
-		kept = removeExtraMaces(player.getInventory().offhand, kept);
-		kept = removeExtraMaces(player.getInventory().armor, kept);
-		ItemStack carried = player.containerMenu.getCarried();
-		if (isMace(carried)) {
-			if (!kept) {
-				carried.setCount(1);
-			} else {
-				player.containerMenu.setCarried(ItemStack.EMPTY);
-			}
-		}
-	}
-
-	private static boolean hasMace(NonNullList<ItemStack> slots) {
-		for (ItemStack stack : slots) {
-			if (isMace(stack)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	private static boolean removeExtraMaces(NonNullList<ItemStack> slots, boolean kept) {
-		for (int i = 0; i < slots.size(); i++) {
-			ItemStack stack = slots.get(i);
-			if (!isMace(stack)) {
-				continue;
-			}
-			if (!kept) {
-				stack.setCount(1);
-				kept = true;
-				continue;
-			}
-			slots.set(i, ItemStack.EMPTY);
-		}
-		return kept;
-	}
-
-	private static boolean isMace(ItemStack stack) {
-		return !stack.isEmpty() && stack.is(ModItems.REM_MORNING_STAR);
 	}
 
 	private static void removeMorningStarPulls(UUID ownerId) {

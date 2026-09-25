@@ -1,5 +1,6 @@
 package com.example.superheroes.item;
 
+import com.example.superheroes.item.bound.BoundWeaponItem;
 import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.effect.RaidenState;
 import com.example.superheroes.hero.RaidenHero;
@@ -30,7 +31,7 @@ import java.util.List;
  *     по нескольким целям в радиусе + увеличенный урон.
  *   • Musou Shinsetsu (Q активен) — обычный удар бьёт +50% сильнее, всё в радиусе 4 блока тоже получает урон.
  */
-public class MusouNoHitotachiItem extends SwordItem {
+public class MusouNoHitotachiItem extends BoundWeaponItem {
 	public MusouNoHitotachiItem(Properties properties) {
 		super(Tiers.NETHERITE, properties.attributes(SwordItem.createAttributes(Tiers.NETHERITE, 6, -2.4f)));
 	}

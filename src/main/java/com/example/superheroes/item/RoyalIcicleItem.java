@@ -1,5 +1,6 @@
 package com.example.superheroes.item;
 
+import com.example.superheroes.item.bound.BoundWeaponItem;
 import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.effect.ReinhardState;
 import com.example.superheroes.hero.ReinhardHero;
@@ -41,7 +42,7 @@ import java.util.UUID;
  * Проверка достойности — на стороне сервера через ServerLivingEntityEvents.
  * Сам Item ничего не блокирует — только подсказывает в hurtEnemy().
  */
-public class RoyalIcicleItem extends SwordItem {
+public class RoyalIcicleItem extends BoundWeaponItem {
 	public RoyalIcicleItem(Properties properties) {
 		super(Tiers.NETHERITE, properties.attributes(SwordItem.createAttributes(Tiers.NETHERITE, 100, -2.4f)));
 	}
