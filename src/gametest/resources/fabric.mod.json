@@ -1,0 +1,18 @@
+{
+	"schemaVersion": 1,
+	"id": "superheroes-gametest",
+	"version": "1.0.0",
+	"name": "Codex Superheroes GameTests",
+	"description": "Server GameTests for Codex Superheroes. Development only, never shipped.",
+	"license": "CC0-1.0",
+	"environment": "*",
+	"entrypoints": {
+		"fabric-gametest": [
+			"com.example.superheroes.gametest.BoundWeaponGameTests"
+		]
+	},
+	"depends": {
+		"superheroes": "*",
+		"fabric-gametest-api-v1": "*"
+	}
+}
