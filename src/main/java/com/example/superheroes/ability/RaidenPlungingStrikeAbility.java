@@ -31,11 +31,6 @@ public final class RaidenPlungingStrikeAbility implements Ability {
 
 	@Override
 	public boolean canActivate(ServerPlayer player) {
-		if (AbilityCooldowns.isOnCooldown(player, getId())) {
-			player.displayClientMessage(
-					Component.translatable("ability.superheroes.raiden_plunging_strike.cooldown"), true);
-			return false;
-		}
 		if (HeavensStrikeController.isCharging(player)) {
 			return false;
 		}

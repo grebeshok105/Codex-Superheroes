@@ -164,7 +164,13 @@
 - `TestHeroes.transform(ServerPlayer, ResourceLocation)` replaced 17 copy-pasted transform calls in 10 GameTest files.
 - `build.gradle` gained a backup Central mirror (`CentralAliyunMirror`) — the local repo1 redirect mirror does not carry `com.tngtech.archunit` and shared CI egress IPs get 429s; the extra repo keeps the new dependency resolvable everywhere.
 
-<<<<<<< HEAD
+## Architecture migration — stage C1 (plan 02)
+
+- 81 duplicate `AbilityCooldowns.isOnCooldown(player, getId())` calls removed from `Ability.canActivate` implementations (plan said 85; actual inventory was 82 sites in `ability/` = 81 own-id + 1 router check). Deletion shapes: `return !cd` → `return true` (64), conjunct removal preserving the rest (13), whole `if (cd)` statement removal (4 — the two Raiden ones dropped a cooldown message that was already unreachable: the router rejects before `canActivate` runs). Cooldown SET sites (`setCooldownTicks`) untouched per «Нельзя менять».
+- New frozen ArchUnit rule `abilitiesDoNotCheckTheirOwnCooldown` in `ArchitectureRulesTest` — store generated post-cleanup, empty (no `Ability` implementor calls it).
+- Characterize-first per §11.1.6: `CooldownGateGameTests.routerRejectsAbilityOnCooldown` (Scaramouche Electro Swirl — plain cast, no toggle/preconditions; Wind Prison deliberately avoided since its toggle-off branch precedes the cooldown check) PASSED before and after the deletions.
+- SESSION.md merge-conflict markers from the N3 union merge cleaned up in this branch.
+
 ## Architecture migration — stage N3 (plan 01)
 
 - Deleted the fake `api/` package entirely (`HeroApi`, `AbilityApi`, `CreativeTabIds`, `package-info`; −240 lines). The only consumer was `RepulsorChargeController`: `HeroApi.getCurrentHeroId(player).orElse(null)` → `HeroDataStore.get(player).heroId()` (identical semantics — `heroId()` is `currentHero.orElse(null)`).
@@ -179,7 +185,6 @@
 - New GameTest `pandoraSuitIdIsStable` (in `HeroCompletenessGameTests`) pins the persisted registry id so a future rename can never drift it.
 - `Madness*`/`RegulusMadness*` renames deliberately skipped — waves I5/I6.
 
->>>>>>> origin/main
 ## Architecture migration — stage N1 (plan 01)
 
 - Removed dead code: `ViltrumiteThunderClapAbility` (never registered), `MeteorSlamAbility` + `ShockwavePulseAbility` (registered but listed by no hero — unreachable through the AbilityRouter hero-list gate), 2 never-registered HUDs (`LowResourceVignetteHud`, `ResourceBarHud`), `HordeGeoRenderer`+`HordeGeoModel` (unregistered geo renderer; `HordeGeoAssets` stays — still used by `BaseHordeEntity`), 7 `AbilityIds` constants, and the 4 `MeteorSlamAbility` call sites in `SuperheroesMod` (onLeave/onDeath/resetAll/playerTick).

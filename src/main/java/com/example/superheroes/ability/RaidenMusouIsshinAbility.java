@@ -40,11 +40,6 @@ public final class RaidenMusouIsshinAbility implements Ability {
 
 	@Override
 	public boolean canActivate(ServerPlayer player) {
-		if (AbilityCooldowns.isOnCooldown(player, getId())) {
-			player.displayClientMessage(
-					Component.translatable("ability.superheroes.raiden_musou_isshin.cooldown"), true);
-			return false;
-		}
 		if (RaidenMusouIsshinController.isCharging(player)) {
 			return false;
 		}

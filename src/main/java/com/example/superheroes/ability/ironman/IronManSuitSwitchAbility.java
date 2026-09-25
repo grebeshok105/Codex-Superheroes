@@ -36,7 +36,7 @@ public final class IronManSuitSwitchAbility implements Ability {
 
 	@Override
 	public boolean canActivate(ServerPlayer player) {
-		return !AbilityCooldowns.isOnCooldown(player, getId());
+		return true;
 	}
 
 	@Override

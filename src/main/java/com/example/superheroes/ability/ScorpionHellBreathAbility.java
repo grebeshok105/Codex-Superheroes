@@ -38,8 +38,7 @@ public final class ScorpionHellBreathAbility implements Ability {
 
 	@Override
 	public boolean canActivate(ServerPlayer player) {
-		return !AbilityCooldowns.isOnCooldown(player, getId())
-				&& !ScorpionController.isBreathing(player);
+		return !ScorpionController.isBreathing(player);
 	}
 
 	@Override

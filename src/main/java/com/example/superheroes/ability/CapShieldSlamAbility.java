@@ -48,7 +48,7 @@ public final class CapShieldSlamAbility implements Ability {
 
 	@Override
 	public boolean canActivate(ServerPlayer player) {
-		return !AbilityCooldowns.isOnCooldown(player, getId()) && !JUMPING.containsKey(player.getUUID());
+		return !JUMPING.containsKey(player.getUUID());
 	}
 
 	@Override

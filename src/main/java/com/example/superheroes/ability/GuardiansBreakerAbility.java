@@ -62,7 +62,7 @@ public final class GuardiansBreakerAbility implements Ability {
 
 	@Override
 	public boolean canActivate(ServerPlayer player) {
-		return !AbilityCooldowns.isOnCooldown(player, getId()) && findTarget(player) != null;
+		return findTarget(player) != null;
 	}
 
 	@Override
