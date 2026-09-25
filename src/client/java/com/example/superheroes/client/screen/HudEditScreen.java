@@ -80,9 +80,6 @@ public class HudEditScreen extends Screen {
 
 		for (MovableHud m : orderedMovables()) {
 			Element e = meta(m.layoutId());
-			if (e == null) {
-				continue;
-			}
 			HudBounds r = m.bounds(width, height);
 			boolean hot = m.layoutId().equals(dragging) || (dragging == null && m.layoutId().equals(hovered));
 			drawCard(graphics, e, r.x(), r.y(), r.width(), r.height(), hot);
@@ -206,9 +203,10 @@ public class HudEditScreen extends Screen {
 		return new HudBounds(0, 0, 10, 10);
 	}
 
-	/** Movable elements in the screen's card order (same relative order as the old list). */
+	/** Movables that have an editor card, in the screen's card order — one set for draw and hit-test. */
 	private static List<MovableHud> orderedMovables() {
 		List<MovableHud> movables = new ArrayList<>(HudLayers.movables());
+		movables.removeIf(m -> elementIndex(m.layoutId()) == ELEMENTS.size());
 		movables.sort(Comparator.comparingInt(m -> elementIndex(m.layoutId())));
 		return movables;
 	}
