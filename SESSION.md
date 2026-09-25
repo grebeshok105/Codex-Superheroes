@@ -25,7 +25,7 @@
 | 12 | Hygiene: deps, docs, missing model/lang | `hoplite/kroton-d9205130--hygiene` | PR open (stacked on 11) |
 | 13 | B18 Sung shadows survive restart; B22 teleport collision checks | `hoplite/kroton-d9205130--shadows-teleports` | PR open (stacked on 12) |
 | 14 | B19 shared target predicate honoring PvP/teams | `hoplite/kroton-d9205130--target-predicate` | PR open (stacked on 13) |
-| 15 | Potential findings (4) + §3 network improvements | | todo |
+| 15 | Potential findings (4) + §3 network improvements | `hoplite/kroton-d9205130--potential-net` | PR open (stacked on 14) |
 ## Completed this session (stage 1)
 
 - Replaced three copy-pasted no-drop mixins with `PlayerBoundWeaponDropMixin` + `item/bound/BoundWeapons`. The old code re-entered `Player.drop` via `Inventory.placeItemBackInInventory` on a full inventory (verified in vanilla sources) → `StackOverflowError`.
@@ -86,7 +86,6 @@
 - Client cipher scope fixed in `ClientMirrorDimensionState.tick`: the deadman now tracks `trapped` (the cipher) rather than only `active` (the shader), so a victim whose warp never applied still releases the font cipher ~5s after keepalives stop instead of holding it until disconnect.
 - Lifecycle wiring: `MirrorDimensionController.onPlayerGone` and `SpatialBindController.onPlayerGone` release victims/ropes on leave via `PlayerLifecycle.onLeave`; both controllers' `resetAll()` run from `onServerStopped` so no trap state leaks across world restarts.
 - 4 new GameTests (`HouseOfVanityGameTests`): victim trapped without any client confirmation and yanked back when walking out, NO_IRIS status keeps full containment, debuffs applied without confirmation, caster leave closes the House and frees victims (effects cleared via `PlayerLifecycle` hook). Mock players double as the "no client ACK" regression case since `canSend` is false for them.
-
 ## Completed this session (stage 9)
 
 - Hero passives no longer die to effect wipes (B12). New `lifecycle/PassiveReconciler`: `capture()` arms a ThreadLocal around `hero.applyPassives` while `LivingEntityPassiveEffectsMixin` records every *infinite* `MobEffectInstance` added in that scope — that's the hero's declared passive set, stored per player (with the heroId). `onEffectRemoved` (fired by milk `removeAllEffects`, death-save wipes, `LionHeart`, `ThanosTimeRewind`, `RegulusGreedController.removeEffect(JUMP)`, targeted removes and natural expiry alike) only marks the player dirty; the actual re-assert runs deferred on `END_SERVER_TICK`, skipping effects the player still has — so vanilla `MobEffectInstance.update` nesting (a temporary stronger instance hiding a nested passive) is preserved. A `heroId` guard drops stale records on swap/untransform, `PassiveReconciler.clear` on `doUntransform`.
@@ -134,6 +133,10 @@
 - `magic()` без атакующего теперь атрибутирован (`indirectMagic(attacker, attacker)`), так что `pvp=false`/команды работают и на источнике урона: ScaramoucheWindPrisonAbility, ThanosSoulPulseAbility, MonarchsDomainController, UraniumDaggerItem. DoT-эффекты (Bleeding/Snapped) и fallback-без-владельца (ShieldProjectile generic, SungJinwoo divert) намеренно оставлены unattributed.
 - Побочные правки поведения по сути фикса: creative-игроки и зрители теперь единообразно пропускаются всеми враждебными сканами; DoomGrip вместо фейкового `isAlly` (uuid==uuid) использует настоящие team-правила; кинематик-фризы SwordDrawCeremony (`e -> true`) и TimeSlow-цикл игроков оставлены/переведены осознанно (TimeSlow больше не замораживает тиммейтов без friendly fire).
 
+## Completed this session (stage 15)
+
+- All 4 "потенциальные" findings verified real against current code and fixed:
+
 ## Important decisions
 - Bound weapons are identified by type (`BoundWeaponItem`) and validated by token; untokened copies are treated as stale on purpose (none are obtainable legitimately; old saves could hold leaked copies).
 - Bound weapons never become item entities: returned to the owner when valid and there is room, otherwise deleted (the ability can reissue).
@@ -146,11 +149,11 @@
 
 ## Verification
 
+- Stage 15: `qualityGate` green, 24/24 GameTests (2 new: horde audience pause/resume, ram adopt/dedupe).
 - Stage 14: `qualityGate` green, 24/24 GameTests (2 новых `TargetPredicateGameTests`: AoE бьёт врага и пропускает тиммейта без friendly fire — через `DoomsdayRoar` end-to-end; `pvp=false` убирает игроков из сканов). Готча: `makeMockServerPlayerInLevel` хардкодит `isCreative()=true` и общее имя `test-mock-player` — для pvp/team-тестов нужен `TestPlayers.join(helper, name)` с реальным ServerPlayer.
 - Stage 11: `qualityGate` green, 27/27 GameTests (3 new dispatcher tests). Intentionally kept: `CombatImpactEngine`'s nano-hammer branch (reads the `NANO_FORM` attachment — an ability-state rule, not a lookup table) and client-side statics (`ThanosHero`, `PandoraHero` tables used by HUD filters).
 - Stage 10: `qualityGate` green, 24/24 GameTests (2 new public-hero-sync tests). First run caught a test bug: `untransform` is cooldown-gated right after `transform` — the test uses `forceUntransform`.
-- Stage 8: `qualityGate` green, 26/26 GameTests (4 new House of Vanity tests). Test-only notes: victims must be joined+teleported inside `PULL_RADIUS` BEFORE `AbilityRouter.activate` — latecomer absorb only runs on keepalive ticks (every 20), so post-activation joins race the assert delays; mock players hardcode `isCreative()==true` (bytecode-verified `GameTestHelper$2`), so `VanityAuthority` `mayfly` grant/clear is unreachable in gametest — assert `hasEffect` probes instead.- Stage 5: `qualityGate` green, 22/22 GameTests (3 new damage-pipeline tests). Test-only notes: mock players join with private `spawnInvulnerableTime` that blocks `hurt()` — cleared via reflection in the kawarimi test; the test structure spawns ~6M blocks from the mock-player spawn point, so proximity-sensitive asserts must teleport the player first.
-- Stage 4: `qualityGate` green, 19/19 GameTests. Negative check — without the `hasHero()` guard, first-time transforms start with 0 energy and `windPrisonEndsWhenItsZoneExpires` fails.
+- Stage 8: `qualityGate` green, 26/26 GameTests (4 new House of Vanity tests). Test-only notes: victims must be joined+teleported inside `PULL_RADIUS` BEFORE `AbilityRouter.activate` — latecomer absorb only runs on keepalive ticks (every 20), so post-activation joins race the assert delays; mock players hardcode `isCreative()==true` (bytecode-verified `GameTestHelper$2`), so `VanityAuthority` `mayfly` grant/clear is unreachable in gametest — assert `hasEffect` probes instead.- Stage 5: `qualityGate` green, 22/22 GameTests (3 new damage-pipeline tests). Test-only notes: mock players join with private `spawnInvulnerableTime` that blocks `hurt()` — cleared via reflection in the kawarimi test; the test structure spawns ~6M blocks from the mock-player spawn point, so proximity-sensitive asserts must teleport the player first.- Stage 4: `qualityGate` green, 19/19 GameTests. Negative check — without the `hasHero()` guard, first-time transforms start with 0 energy and `windPrisonEndsWhenItsZoneExpires` fails.
 - Stage 3: `qualityGate` green, 16/16 GameTests (7 new lifecycle regressions: owner-leave lock release, refcount, shadow reconcile, transient-vs-permanent NBT, attachment-backed transform cooldown, forceUntransform clears locks+cooldowns, dead-caster snap).
 - Stage 2: `qualityGate` green, 9/9 GameTests; negative check — old tick write-back makes `windPrisonEndsWhenItsZoneExpires` fail.
 - `./gradlew qualityGate --no-daemon` green on stage 1: JUnit, 8 `ProjectSanityTest` checks, assertion audit, jar isolation audit, 7/7 GameTests.
