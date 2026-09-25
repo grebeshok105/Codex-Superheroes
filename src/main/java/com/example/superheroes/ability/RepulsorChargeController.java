@@ -1,7 +1,7 @@
 package com.example.superheroes.ability;
 
-import com.example.superheroes.api.HeroApi;
 import com.example.superheroes.hero.IronManHero;
+import com.example.superheroes.transform.HeroDataStore;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.Map;
@@ -25,7 +25,7 @@ public final class RepulsorChargeController {
 	}
 
 	public static void serverTick(ServerPlayer player) {
-		boolean ironMan = IronManHero.ID.equals(HeroApi.getCurrentHeroId(player).orElse(null));
+		boolean ironMan = IronManHero.ID.equals(HeroDataStore.get(player).heroId());
 		float c = CHARGE.getOrDefault(player.getUUID(), 0f);
 		if (ironMan && player.isShiftKeyDown()) {
 			c = Math.min(1f, c + 1f / FULL_TICKS);

@@ -1,11 +1,14 @@
 package com.example.superheroes.gametest;
 
+import com.example.superheroes.ModId;
 import com.example.superheroes.ability.AbilityRegistry;
 import com.example.superheroes.hero.Hero;
 import com.example.superheroes.hero.Heroes;
+import com.example.superheroes.item.ModItemGroups;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
@@ -60,6 +63,13 @@ public final class HeroCompletenessGameTests implements FabricGameTest {
 			}
 		}
 		helper.assertTrue(problems.isEmpty(), String.join("; ", problems));
+		helper.succeed();
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void superheroesTabIdIsStable(GameTestHelper helper) {
+		helper.assertValueEqual(BuiltInRegistries.CREATIVE_MODE_TAB.getKey(ModItemGroups.SUPERHEROES_TAB),
+				ModId.of("superheroes"), "creative tab id");
 		helper.succeed();
 	}
 
