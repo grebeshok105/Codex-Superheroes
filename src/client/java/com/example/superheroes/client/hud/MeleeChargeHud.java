@@ -2,6 +2,8 @@ package com.example.superheroes.client.hud;
 
 import com.example.superheroes.client.ClientHeroState;
 import com.example.superheroes.client.ClientMeleeChargeState;
+import com.example.superheroes.client.core.hud.HudBounds;
+import com.example.superheroes.client.core.hud.MovableHud;
 import com.example.superheroes.client.render.WildRenderer;
 import com.example.superheroes.client.render.WildShaders;
 import com.example.superheroes.hero.HeroTheme;
@@ -18,7 +20,9 @@ import net.minecraft.network.chat.Component;
  * градиентной заливкой. Никаких насечек и делений — накопление сглажено,
  * цвет тира перетекает плавным кроссфейдом (тема героя → алый на максимуме).
  */
-public final class MeleeChargeHud {
+public final class MeleeChargeHud implements MovableHud {
+	public static final MeleeChargeHud INSTANCE = new MeleeChargeHud();
+
 	private static final int GAUGE_W = 8;
 	private static final int GAUGE_H = 26;
 	private static final int BG_COLOR = 0xE002030A;
@@ -30,6 +34,17 @@ public final class MeleeChargeHud {
 	private MeleeChargeHud() {
 	}
 
+	@Override
+	public String layoutId() {
+		return HudLayoutManager.MELEE_CHARGE;
+	}
+
+	@Override
+	public HudBounds bounds(int screenWidth, int screenHeight) {
+		int[] off = HudLayoutManager.offset(HudLayoutManager.MELEE_CHARGE);
+		return new HudBounds(screenWidth / 2 + 10 + off[0], screenHeight / 2 - 9 + off[1], 14, 24);
+	}
+
 	public static void render(GuiGraphics graphics, DeltaTracker tracker) {
 		if (!ClientMeleeChargeState.charging()) {
 			wasCharging = false;
@@ -39,6 +54,10 @@ public final class MeleeChargeHud {
 		if (mc.player == null || mc.options.hideGui) return;
 		int ticks = ClientMeleeChargeState.chargeTicks();
 		if (ticks <= 0) return;
+
+		int[] off = HudLayoutManager.offset(HudLayoutManager.MELEE_CHARGE);
+		graphics.pose().pushPose();
+		graphics.pose().translate(off[0], off[1], 0);
 
 		int w = mc.getWindow().getGuiScaledWidth();
 		int h = mc.getWindow().getGuiScaledHeight();
@@ -102,6 +121,8 @@ public final class MeleeChargeHud {
 			graphics.drawString(mc.font, label, labelX, labelY,
 					(alpha << 24) | (bright & 0x00FFFFFF), true);
 		}
+
+		graphics.pose().popPose();
 	}
 
 	private static float smoothstep(float edge0, float edge1, float x) {

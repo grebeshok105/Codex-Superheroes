@@ -3,6 +3,8 @@ package com.example.superheroes.client.hud;
 import com.example.superheroes.client.ClientAbilityCooldowns;
 import com.example.superheroes.client.ClientAbilityFilter;
 import com.example.superheroes.client.ClientHeroState;
+import com.example.superheroes.client.core.hud.HudBounds;
+import com.example.superheroes.client.core.hud.MovableHud;
 import com.example.superheroes.client.render.WildRenderer;
 import com.example.superheroes.client.render.WildShaders;
 import com.example.superheroes.hero.Hero;
@@ -19,7 +21,9 @@ import net.minecraft.resources.ResourceLocation;
 
 import java.util.List;
 
-public final class HeroInfoPanelHud {
+public final class HeroInfoPanelHud implements MovableHud {
+	public static final HeroInfoPanelHud INSTANCE = new HeroInfoPanelHud();
+
 	private static final int BASE_PANEL_W = 252;
 	private static final int BASE_PANEL_H = 156;
 	private static final int BASE_MARGIN = 8;
@@ -40,9 +44,23 @@ public final class HeroInfoPanelHud {
 	private HeroInfoPanelHud() {
 	}
 
+	@Override
+	public String layoutId() {
+		return HudLayoutManager.HERO_PANEL;
+	}
+
+	@Override
+	public HudBounds bounds(int screenWidth, int screenHeight) {
+		int margin = HudScaler.scale(BASE_MARGIN);
+		int panelW = panelWidth();
+		int panelH = HudScaler.scale(BASE_PANEL_H);
+		int[] off = HudLayoutManager.offset(HudLayoutManager.HERO_PANEL);
+		return new HudBounds(margin + off[0], screenHeight - panelH - margin + off[1], panelW, panelH);
+	}
+
 	/**
 	 * Panel width auto-fits the longest ability name of the current hero so the
-	 * two-column ready-list never clips text. Mirrored by HudEditScreen.bounds().
+	 * two-column ready-list never clips text. Mirrored by {@link #bounds}.
 	 */
 	public static int panelWidth() {
 		int base = HudScaler.scale(BASE_PANEL_W);
