@@ -58,9 +58,10 @@
 
 ## Контекст
 
-- Seams bugfix-pass, на которые опирается план: GameTest lane (`src/gametest`, `runGametest` в `qualityGate`), `G/TestPlayers`, `ProjectSanityTest` (честный grep по исходникам и JSON; структурные правила сюда не добавляются).
-- Внешние зависимости: PR #37–#39 (BF1–BF3) влиты в `main` — иначе baseline придётся пересобирать; PR #41 с планами влит.
-- Этот план не трогает production-логику героев. `HeroProfile` — П2, bootstrap и тики — П3, клиент — П4.
+- Seams bugfix-pass, на которые опирается план: GameTest lane (`src/gametest`, `runGametest` в `qualityGate`), `G/TestPlayers` (включая `clearSpawnInvulnerability`), `ProjectSanityTest` (честный grep по исходникам и JSON: `assertHeroDataHasSingleWriter`, `assertNoHeroTypeDispatch`, `assertClientStatesRegisterReset`, `assertWorldMutationsGoThroughPolicy`, `assertNoCyrillicLiterals`, `assertEntityLangNames` и др.; структурные правила сюда не добавляются).
+- Внешние зависимости: База (обзор §2.1) — все PR bugfix-pass (#37–#40, #42–#49) и PR #41 с планами влиты в `main`. Перед влитием стека см. обзор §3.3 (конфликты и `RemoteHeroSkins`).
+- Composition roots и правила слоёв — решение R16 обзора; план 1 их вводит.
+- Этот план не трогает production-логику героев. Данные героя — П2, bootstrap и тики — П3, клиент — П4.
 
 ### Решения
 
@@ -73,13 +74,14 @@
 
 ```mermaid
 flowchart LR
-  A1[A1 ArchUnit] --> A2[A2 полнота героя]
+  BASE[База: BF-стек и #41 в main] --> A1[A1 ArchUnit + TestHeroes]
+  A1 --> A2[A2 полнота героя]
   A1 --> N1[N1 мёртвый код]
   A1 --> N2[N2 Doctor Strange]
   A1 --> N3[N3 api]
 ```
 
-После A1 стадии A2, N1, N2, N3 независимы и идут параллельно.
+После A1 стадии A2, N1, N2, N3 независимы и идут параллельно. Выход плана: A2 нужна П2 B1, N1 — П3 D1, N2 — П2 B3 (обзор §2.1).
 
 ## File Structure
 
@@ -91,8 +93,8 @@ flowchart LR
 | `src/test/resources/archunit.properties` | конфиг freeze store | A1 |
 | `src/test/resources/archunit_store/**` | замороженный baseline нарушений | A1 |
 | `T/architecture/PackageCycleRatchetTest.java`, `src/test/resources/architecture/package-cycles-baseline.txt` | ratchet двунаправленных пар пакетов | A1 |
-| `G/HeroCompletenessGameTests.java` | полнота героя: способности зарегистрированы, lang-ключи есть (П2 B1 и П3 D2a добавляют в него проверки) | A2 |
-| `G/TestHeroes.java` | трансформация в GameTests через `HeroTransformService` | A2 |
+| `G/TestHeroes.java` | трансформация в GameTests через `HeroTransformService` | A1 |
+| `G/HeroCompletenessGameTests.java` | полнота героя: способности зарегистрированы, lang-ключи есть (П3 D2a-2 добавляет в него проверку списка модулей) | A2 |
 
 N1–N3 новых production-файлов не создают. Удаляемое перечислено в их паспортах; единственный переименовываемый класс — `DoctorStrangeSuitItem` → `PandoraSuitItem` (N2).
 
@@ -102,51 +104,28 @@ N1–N3 новых production-файлов не создают. Удаляемо
 
 - **Цель:** механически запретить новые архитектурные нарушения и сделать каждое устранённое нарушение необратимым.
 - **Почему:** без гейта каждый параллельный агент может добавить ещё одну ветку `XHero.ID.equals` в shared-код (именно так Scorpion и Pandora выпали из таблиц — аудит 2, S2). grep по `import` не видит FQN-ссылок, которыми полон bootstrap (R8).
-- **Зависит от:** P0; BF1–BF3 влиты в `main` (иначе baseline придётся пересобирать).
-- **Затрагивает:** `build.gradle`, `src/test/**`, `AGENTS.md` §10 (одна строка про `verifyArchitectureBaseline`).
-- **Создаётся:** `T/architecture/CodexClasses.java`, `T/architecture/ArchitectureRulesTest.java`, `T/architecture/ClientArchitectureRulesTest.java`, `T/architecture/PackageCycleRatchetTest.java`, `src/test/resources/archunit.properties`, `src/test/resources/archunit_store/` (сгенерировано), `src/test/resources/architecture/package-cycles-baseline.txt`, Gradle-задача `verifyArchitectureBaseline`.
-- **Мигрируется / удаляется:** ничего.
+- **Зависит от:** База (§2.1 обзора): все PR bugfix-pass и PR #41 влиты в `main` — иначе baseline придётся пересобирать.
+- **Затрагивает:** `build.gradle`, `src/test/**`, `src/gametest/**` (только `TestHeroes`), `AGENTS.md` §10 (одна фраза).
+- **Создаётся:** `T/architecture/CodexClasses.java`, `T/architecture/ArchitectureRulesTest.java`, `T/architecture/ClientArchitectureRulesTest.java`, `T/architecture/PackageCycleRatchetTest.java`, `src/test/resources/archunit.properties`, `src/test/resources/archunit_store/` (сгенерировано), `src/test/resources/architecture/package-cycles-baseline.txt` (сгенерировано), Gradle-задача `verifyArchitectureBaseline`, `G/TestHeroes.java`.
+- **Мигрируется / удаляется:** ничего в production-коде.
 - **Нельзя менять:** production-код; существующие проверки `ProjectSanityTest`.
-- **Тесты:** сами правила; проверка «зубов» — временное нарушение должно ронять тест (шаг 7).
+- **Тесты:** сами правила; негативные пробы в A1.5.
 - **Runtime:** не нужен.
-- **Acceptance:** `qualityGate` зелёный; store закоммичен; временная ссылка `ScorpionHero.ID` из `M/flight/FlightTuning.java` роняет `sharedCodeDoesNotDependOnConcreteHeroes`; удаление одной замороженной зависимости и повторный прогон меняет store, а `verifyArchitectureBaseline` падает, пока изменение не закоммичено.
-- **Риски:** сигнатуры предикатов ArchUnit 1.5.1 могут отличаться от указанных — семантику правил сохранять, компилировать по javadoc 1.5.1. Хрупкость freeze-описаний циклов — поэтому циклы ведёт собственный ratchet (задача A1.4), а не `FreezingArchRule`.
+- **Acceptance:** `qualityGate` зелёный; store и baseline циклов закоммичены; все негативные пробы A1.5 падают на своём правиле; удаление одной замороженной зависимости меняет store, и `verifyArchitectureBaseline` падает, пока изменение не закоммичено.
+- **Проверено прототипом** (обзор §10): весь код этой стадии компилируется и выполняется на сводной базе BF1–BF12 с ArchUnit 1.5.1 и Gradle 9.4.1; baseline — 32 пары циклов; негативные пробы ловятся.
+- **Риски:** baseline снимается с `main` в момент стадии — числа из обзора §3.4 могут отличаться; это нормально, в PR записываются фактические.
 - **Страховка:** стадия не трогает production; откат — revert PR.
 
 #### Task A1.1: подключить ArchUnit и импорт классов main/client
 
 **Files:**
-- Modify: `build.gradle` (блок `dependencies`, задача `test`)
-- Create: `src/test/java/com/example/superheroes/architecture/CodexClasses.java`
-- Create: `src/test/resources/archunit.properties`
-- Test: `src/test/java/com/example/superheroes/architecture/ArchitectureRulesTest.java`
+- Modify: `build.gradle` (блок `dependencies`, конфигурация задачи `test`)
+- Create: `T/architecture/CodexClasses.java`, `src/test/resources/archunit.properties`
 
 **Interfaces:**
 - Produces: `CodexClasses.ROOT` (`String`), `CodexClasses.main()` → `JavaClasses` (только `src/main`), `CodexClasses.mainAndClient()` → `JavaClasses`.
 
-- [ ] **Step 1: Написать падающий smoke-тест**
-
-```java
-package com.example.superheroes.architecture;
-
-import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-class ArchitectureRulesTest {
-	@Test
-	void importsTheWholeMainSourceSet() {
-		assertTrue(CodexClasses.main().size() > 400, "expected >400 main classes, got " + CodexClasses.main().size());
-	}
-}
-```
-
-- [ ] **Step 2: Убедиться, что падает**
-
-Run: `./gradlew test --no-daemon --tests '*ArchitectureRulesTest*'`
-Expected: FAIL — `cannot find symbol CodexClasses`.
-
-- [ ] **Step 3: Зависимость и проброс путей в `build.gradle`**
+- [ ] **Step 1: Зависимость и проброс путей в `build.gradle`**
 
 В `dependencies` рядом с JUnit:
 
@@ -154,20 +133,21 @@ Expected: FAIL — `cannot find symbol CodexClasses`.
 	testImplementation "com.tngtech.archunit:archunit-junit5:1.5.1"
 ```
 
-Расширить существующую конфигурацию задачи `test` (там, где стоит `useJUnitPlatform()`):
+После блока `tasks.withType(Test).configureEach { … }`:
 
 ```groovy
 tasks.named('test') {
 	dependsOn tasks.named('clientClasses')
 	systemProperty 'codex.mainClasses', sourceSets.main.output.classesDirs.asPath
 	systemProperty 'codex.clientClasses', sourceSets.client.output.classesDirs.asPath
-	// One-off store creation: ./gradlew test -Darchunit.freeze.store.default.allowStoreCreation=true
-	systemProperties System.properties.findAll { it.key.toString().startsWith('archunit.') }
-	inputs.dir('src/test/resources/archunit_store').optional()
+	// One-off baseline creation: -Darchunit.freeze.store.default.allowStoreCreation=true -Dcodex.writeCycleBaseline=true
+	systemProperties System.properties.findAll { it.key.toString().startsWith('archunit.') || it.key.toString().startsWith('codex.write') }
+	// fileTree tolerates a missing directory; inputs.dir(...).optional() does not (Gradle 9.4.1 fails before JUnit starts).
+	inputs.files(fileTree('src/test/resources/archunit_store')).withPropertyName('archunitStore')
 }
 ```
 
-- [ ] **Step 4: `CodexClasses`**
+- [ ] **Step 2: `CodexClasses`**
 
 ```java
 package com.example.superheroes.architecture;
@@ -181,10 +161,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Imports compiled main/client classes from the directories Gradle passes in; see build.gradle `test`. */
 final class CodexClasses {
 	static final String ROOT = "com.example.superheroes";
-
 	private static JavaClasses main;
 	private static JavaClasses mainAndClient;
 
@@ -192,16 +170,12 @@ final class CodexClasses {
 	}
 
 	static synchronized JavaClasses main() {
-		if (main == null) {
-			main = importDirs("codex.mainClasses");
-		}
+		if (main == null) main = importDirs("codex.mainClasses");
 		return main;
 	}
 
 	static synchronized JavaClasses mainAndClient() {
-		if (mainAndClient == null) {
-			mainAndClient = importDirs("codex.mainClasses", "codex.clientClasses");
-		}
+		if (mainAndClient == null) mainAndClient = importDirs("codex.mainClasses", "codex.clientClasses");
 		return mainAndClient;
 	}
 
@@ -209,25 +183,19 @@ final class CodexClasses {
 		List<Path> dirs = new ArrayList<>();
 		for (String property : properties) {
 			String value = System.getProperty(property);
-			if (value == null || value.isBlank()) {
-				throw new IllegalStateException(property + " is not set — run through Gradle, not the IDE runner");
-			}
+			if (value == null || value.isBlank()) throw new IllegalStateException(property + " is not set");
 			for (String entry : value.split(File.pathSeparator)) {
 				Path dir = Path.of(entry);
-				if (Files.isDirectory(dir)) {
-					dirs.add(dir);
-				}
+				if (Files.isDirectory(dir)) dirs.add(dir);
 			}
 		}
-		if (dirs.isEmpty()) {
-			throw new IllegalStateException("no class directories found for " + String.join(", ", properties));
-		}
+		if (dirs.isEmpty()) throw new IllegalStateException("no class directories");
 		return new ClassFileImporter().importPaths(dirs);
 	}
 }
 ```
 
-- [ ] **Step 5: `src/test/resources/archunit.properties`**
+- [ ] **Step 3: `src/test/resources/archunit.properties`**
 
 ```properties
 freeze.store.default.path=src/test/resources/archunit_store
@@ -238,174 +206,91 @@ archRule.failOnEmptyShould=true
 resolveMissingDependenciesFromClassPath=false
 ```
 
-- [ ] **Step 6: Прогнать**
-
-Run: `./gradlew test --no-daemon --tests '*ArchitectureRulesTest*'`
-Expected: PASS.
-
-- [ ] **Step 7: Commit**
+- [ ] **Step 4: Commit**
 
 ```bash
-git add build.gradle src/test/java/com/example/superheroes/architecture src/test/resources/archunit.properties
+git add build.gradle src/test/java/com/example/superheroes/architecture/CodexClasses.java src/test/resources/archunit.properties
 git commit -m "test(arch): import main and client classes for ArchUnit rules"
 ```
 
-#### Task A1.2: замороженные правила на текущий долг
+#### Task A1.2: правила main — замороженные и строгие
 
 **Files:**
-- Modify: `T/architecture/ArchitectureRulesTest.java`
+- Create: `T/architecture/ArchitectureRulesTest.java`
 - Create: `src/test/resources/archunit_store/**` (генерируется)
 
 **Interfaces:**
-- Consumes: `CodexClasses.main()`, `CodexClasses.ROOT`.
-- Produces: предикаты `ArchitectureRulesTest.IN_HERO_MODULE`, `ArchitectureRulesTest.CONCRETE_HERO` (package-private static, переиспользуются в `ClientArchitectureRulesTest`).
+- Consumes: `CodexClasses`.
+- Produces: `ArchitectureRulesTest.ROOT`, `HERO_MODULES` (`"<root>.bootstrap.HeroModules"`), `HERO_CLIENT_MODULES` (`"<root>.client.bootstrap.HeroClientModules"`), предикаты `IN_HERO_MODULE`, `IN_CLIENT_HERO_MODULE`, `CONCRETE_HERO`, `COMPOSITION_ROOT`, `heroId(String, String)`, `onlyReferencedByOwnModuleOr(String modulePrefix, String... allowed)` — их используют `ClientArchitectureRulesTest`, `PackageCycleRatchetTest` и правила П5 F.4.
 
-- [ ] **Step 1: Добавить правила**
+Composition roots (R16 обзора): `SuperheroesMod`, `client.SuperheroesClient`, пакеты `bootstrap..` и `client.bootstrap..`. Им можно зависеть от всего; от них — никому. Контракты модулей лежат в `core.module`, списки — в `bootstrap`, поэтому строгое правило ядра не противоречит списку модулей.
+
+- [ ] **Step 1: Правила**
 
 ```java
 package com.example.superheroes.architecture;
 
 import com.example.superheroes.hero.Hero;
 import com.tngtech.archunit.base.DescribedPredicate;
+import com.tngtech.archunit.core.domain.Dependency;
 import com.tngtech.archunit.core.domain.JavaClass;
+import com.tngtech.archunit.core.domain.JavaConstructorCall;
 import com.tngtech.archunit.core.domain.JavaModifier;
+import com.tngtech.archunit.core.domain.JavaStaticInitializer;
+import com.tngtech.archunit.lang.ArchCondition;
+import com.tngtech.archunit.lang.ConditionEvents;
+import com.tngtech.archunit.lang.SimpleConditionEvent;
 import com.tngtech.archunit.library.freeze.FreezingArchRule;
 import org.junit.jupiter.api.Test;
+
+import java.util.Set;
 
 import static com.tngtech.archunit.base.DescribedPredicate.not;
 import static com.tngtech.archunit.core.domain.JavaCall.Predicates.target;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.simpleName;
 import static com.tngtech.archunit.core.domain.properties.HasName.Predicates.nameStartingWith;
 import static com.tngtech.archunit.core.domain.properties.HasOwner.Predicates.With.owner;
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
+import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ArchitectureRulesTest {
 	static final String ROOT = CodexClasses.ROOT;
+	static final String HERO_MODULES = ROOT + ".bootstrap.HeroModules";
+	static final String HERO_CLIENT_MODULES = ROOT + ".client.bootstrap.HeroClientModules";
 
-	/** {@code <root>.hero.<id>..} — a hero module package (not the flat legacy {@code <root>.hero}). */
-	static final DescribedPredicate<JavaClass> IN_HERO_MODULE = new DescribedPredicate<>("reside in a hero module package") {
-		@Override
-		public boolean test(JavaClass c) {
-			return c.getPackageName().startsWith(ROOT + ".hero.");
-		}
-	};
-
-	static final DescribedPredicate<JavaClass> CONCRETE_HERO = new DescribedPredicate<>("are concrete Hero implementations") {
-		@Override
-		public boolean test(JavaClass c) {
-			return c.isAssignableTo(Hero.class) && !c.isInterface() && !c.getModifiers().contains(JavaModifier.ABSTRACT);
-		}
-	};
-
-	@Test
-	void importsTheWholeMainSourceSet() {
-		assertTrue(CodexClasses.main().size() > 400, "expected >400 main classes, got " + CodexClasses.main().size());
+	static DescribedPredicate<JavaClass> inPackagePrefix(String prefix, String description) {
+		return DescribedPredicate.describe(description, c -> c.getPackageName().startsWith(prefix));
 	}
 
-	@Test
-	void sharedCodeDoesNotDependOnConcreteHeroes() {
-		FreezingArchRule.freeze(noClasses().that(not(IN_HERO_MODULE))
-				.should().dependOnClassesThat(CONCRETE_HERO)
-				.as("shared code asks Heroes/HeroProfile/hooks, never a concrete hero class"))
-				.check(CodexClasses.main());
-	}
+	static final DescribedPredicate<JavaClass> IN_HERO_MODULE = inPackagePrefix(ROOT + ".hero.", "reside in a hero module");
+	static final DescribedPredicate<JavaClass> IN_CLIENT_HERO_MODULE = inPackagePrefix(ROOT + ".client.hero.", "reside in a client hero module");
+	static final DescribedPredicate<JavaClass> CONCRETE_HERO = DescribedPredicate.describe("are concrete heroes",
+			c -> c.isAssignableTo(Hero.class) && !c.isInterface() && !c.getModifiers().contains(JavaModifier.ABSTRACT));
+	/** Entrypoints and module lists: allowed to depend on everything; nothing may depend on them. */
+	static final DescribedPredicate<JavaClass> COMPOSITION_ROOT = DescribedPredicate.describe("are composition roots",
+			c -> c.getName().equals(ROOT + ".SuperheroesMod") || c.getName().equals(ROOT + ".client.SuperheroesClient")
+					|| c.getPackageName().startsWith(ROOT + ".bootstrap") || c.getPackageName().startsWith(ROOT + ".client.bootstrap"));
 
-	@Test
-	void mainDoesNotDependOnClientCode() {
-		FreezingArchRule.freeze(noClasses()
-				.should().dependOnClassesThat().resideInAnyPackage(
-						"net.minecraft.client..", "com.mojang.blaze3d..", "net.fabricmc.fabric.api.client..", ROOT + ".client..")
-				.as("src/main loads on a dedicated server"))
-				.check(CodexClasses.main());
-	}
-
-	@Test
-	void onlyTheDispatcherRegistersServerTicks() {
-		String events = "net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents";
-		FreezingArchRule.freeze(noClasses()
-				.that().doNotHaveSimpleName("HeroTickDispatcher").and().doNotHaveSimpleName("HeroDataStore")
-				.should().accessField(events, "END_SERVER_TICK")
-				.orShould().accessField(events, "START_SERVER_TICK")
-				.orShould().accessField(events, "END_WORLD_TICK")
-				.orShould().accessField(events, "START_WORLD_TICK")
-				.as("server ticks go through core.tick.HeroTickDispatcher"))
-				.check(CodexClasses.main());
-	}
-
-	@Test
-	void lifecycleHooksAreRegisteredByModulesOrCore() {
-		FreezingArchRule.freeze(noClasses()
-				.that().resideOutsideOfPackages(ROOT + ".lifecycle..", ROOT + ".core..")
-				.should().callMethodWhere(target(owner(simpleName("PlayerLifecycle"))).and(target(nameStartingWith("on"))))
-				.as("lifecycle hooks are registered through a module's LifecycleRegistrar"))
-				.check(CodexClasses.main());
-	}
-}
-```
-
-- [ ] **Step 2: Убедиться, что без store правила падают**
-
-Run: `./gradlew test --no-daemon --tests '*ArchitectureRulesTest*'`
-Expected: FAIL — `Creating new violation store is disabled`.
-
-- [ ] **Step 3: Создать baseline**
-
-Run: `./gradlew test --no-daemon --tests '*ArchitectureRulesTest*' -Darchunit.freeze.store.default.allowStoreCreation=true`
-Expected: PASS; появился `src/test/resources/archunit_store/stored.rules` и файлы нарушений.
-
-- [ ] **Step 4: Проверить содержимое baseline** — `grep -c . src/test/resources/archunit_store/*` и выборочно убедиться, что там есть `SuperheroesMod`, `CombatImpactEngine`, `JarvisThreatClass`, `AbilityRouter`, `Heroes`; в PR записать число нарушений на правило.
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add src/test/java/com/example/superheroes/architecture src/test/resources/archunit_store
-git commit -m "test(arch): freeze current hero coupling, client leakage, tick and lifecycle wiring"
-```
-
-#### Task A1.3: строгие правила для новых пакетов (пустые сейчас, обязательные с первого класса)
-
-**Files:**
-- Modify: `T/architecture/ArchitectureRulesTest.java`
-- Create: `T/architecture/ClientArchitectureRulesTest.java`
-
-**Interfaces:**
-- Consumes: `IN_HERO_MODULE`, `CONCRETE_HERO`, `CodexClasses.mainAndClient()`.
-- Produces: правило «hero-модуль виден только своему модулю и спискам модулей» — на нём держатся acceptance стадий F, G, I.
-
-- [ ] **Step 1: Добавить в `ArchitectureRulesTest`**
-
-```java
-	// imports: com.tngtech.archunit.core.domain.Dependency, com.tngtech.archunit.lang.ArchCondition,
-	// com.tngtech.archunit.lang.ConditionEvents, com.tngtech.archunit.lang.SimpleConditionEvent,
-	// static ...ArchRuleDefinition.classes, static ...library.dependencies.SlicesRuleDefinition.slices
-
-	static String heroModuleRoot(String packageName, String prefix) {
+	static String heroId(String packageName, String prefix) {
 		String rest = packageName.substring(prefix.length());
 		int dot = rest.indexOf('.');
-		return prefix + (dot < 0 ? rest : rest.substring(0, dot));
+		return dot < 0 ? rest : rest.substring(0, dot);
 	}
 
-	/**
-	 * @param modulePrefix {@code ROOT + ".hero."} for main modules or {@code ROOT + ".client.hero."} for client modules;
-	 *                     the target's hero id is the first package segment after it.
-	 */
-	static ArchCondition<JavaClass> onlyReferencedByOwnModuleOr(String modulePrefix, String... allowedClasses) {
-		java.util.Set<String> allowed = java.util.Set.of(allowedClasses);
-		return new ArchCondition<>("be referenced only from the same hero module or " + allowed) {
+	static ArchCondition<JavaClass> onlyReferencedByOwnModuleOr(String modulePrefix, String... allowed) {
+		Set<String> allowedNames = Set.of(allowed);
+		return new ArchCondition<>("be referenced only by the same hero module or " + allowedNames) {
 			@Override
 			public void check(JavaClass target, ConditionEvents events) {
-				String heroId = heroModuleRoot(target.getPackageName(), modulePrefix).substring(modulePrefix.length());
-				String mainModule = ROOT + ".hero." + heroId;
-				String clientModule = ROOT + ".client.hero." + heroId;
-				for (Dependency dependency : target.getDirectDependenciesToSelf()) {
-					JavaClass origin = dependency.getOriginClass();
-					String pkg = origin.getPackageName();
-					boolean ok = pkg.equals(mainModule) || pkg.startsWith(mainModule + ".")
-							|| pkg.equals(clientModule) || pkg.startsWith(clientModule + ".")
-							|| allowed.contains(origin.getName());
-					if (!ok) {
-						events.add(SimpleConditionEvent.violated(dependency, dependency.getDescription()));
+				String id = heroId(target.getPackageName(), modulePrefix);
+				for (Dependency d : target.getDirectDependenciesToSelf()) {
+					String pkg = d.getOriginClass().getPackageName();
+					boolean own = pkg.equals(ROOT + ".hero." + id) || pkg.startsWith(ROOT + ".hero." + id + ".")
+							|| pkg.equals(ROOT + ".client.hero." + id) || pkg.startsWith(ROOT + ".client.hero." + id + ".");
+					if (!own && !allowedNames.contains(d.getOriginClass().getName())) {
+						events.add(SimpleConditionEvent.violated(d, d.getDescription()));
 					}
 				}
 			}
@@ -413,143 +298,171 @@ git commit -m "test(arch): freeze current hero coupling, client leakage, tick an
 	}
 
 	@Test
-	void heroModulesAreReferencedOnlyByThemselvesAndTheModuleList() {
-		classes().that(IN_HERO_MODULE)
-				.should(onlyReferencedByOwnModuleOr(ROOT + ".hero.", ROOT + ".core.module.HeroModules"))
-				.allowEmptyShould(true)
-				.check(CodexClasses.main());
+	void importsTheWholeMainSourceSet() {
+		assertTrue(CodexClasses.main().size() > 400, "main classes: " + CodexClasses.main().size());
+	}
+
+	// ---- frozen: current debt may only shrink
+
+	@Test
+	void sharedCodeDoesNotDependOnConcreteHeroes() {
+		FreezingArchRule.freeze(noClasses().that(not(IN_HERO_MODULE)).and(not(COMPOSITION_ROOT))
+				.should().dependOnClassesThat(CONCRETE_HERO)
+				.as("shared code asks the hero registry and hooks, never a concrete hero")).check(CodexClasses.main());
 	}
 
 	@Test
-	void heroModulesDoNotDependOnEachOther() {
-		slices().matching(ROOT + ".hero.(*)..").should().notDependOnEachOther()
-				.allowEmptyShould(true)
-				.check(CodexClasses.main());
+	void mainDoesNotDependOnClientCode() {
+		FreezingArchRule.freeze(noClasses().should().dependOnClassesThat().resideInAnyPackage(
+				"net.minecraft.client..", "com.mojang.blaze3d..", "net.fabricmc.fabric.api.client..", ROOT + ".client..")
+				.as("src/main loads on a dedicated server")).check(CodexClasses.main());
 	}
+
+	@Test
+	void onlyTheDispatcherRegistersServerTicks() {
+		String events = "net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents";
+		FreezingArchRule.freeze(noClasses().that().doNotHaveSimpleName("HeroTickDispatcher").and().doNotHaveSimpleName("HeroDataStore")
+				.should().accessField(events, "END_SERVER_TICK").orShould().accessField(events, "START_SERVER_TICK")
+				.orShould().accessField(events, "END_WORLD_TICK").orShould().accessField(events, "START_WORLD_TICK")
+				.as("server ticks go through HeroTickDispatcher")).check(CodexClasses.main());
+	}
+
+	@Test
+	void lifecycleHooksAreRegisteredThroughRegistrars() {
+		FreezingArchRule.freeze(noClasses().that().resideOutsideOfPackages(ROOT + ".lifecycle..", ROOT + ".core..")
+				.should().callMethodWhere(target(owner(simpleName("PlayerLifecycle"))).and(target(nameStartingWith("on"))))
+				.orShould().callMethodWhere(target(owner(simpleName("HeroLifecycle"))).and(target(nameStartingWith("on"))))
+				.as("lifecycle hooks are registered through a module's LifecycleRegistrar")).check(CodexClasses.main());
+	}
+
+	@Test
+	void nothingDependsOnCompositionRoots() {
+		FreezingArchRule.freeze(noClasses().that(not(COMPOSITION_ROOT)).should().dependOnClassesThat(COMPOSITION_ROOT)
+				.as("entrypoints and module lists sit on top; use LoggerFactory.getLogger(ModId.MOD_ID) instead of SuperheroesMod.LOGGER"))
+				.check(CodexClasses.mainAndClient());
+	}
+
+	// ---- strict: empty today, enforced from the first class
 
 	@Test
 	void coreDependsOnNothingAboveIt() {
 		noClasses().that().resideInAPackage(ROOT + ".core..")
-				.should().dependOnClassesThat().resideInAnyPackage(
-						ROOT + ".mechanic..", ROOT + ".content..", ROOT + ".compat..")
-				.orShould().dependOnClassesThat(IN_HERO_MODULE)
-				.orShould().dependOnClassesThat(CONCRETE_HERO)
-				.allowEmptyShould(true)
-				.check(CodexClasses.main());
+				.should().dependOnClassesThat().resideInAnyPackage(ROOT + ".mechanic..", ROOT + ".content..", ROOT + ".compat..",
+						ROOT + ".bootstrap..", ROOT + ".client..")
+				.orShould().dependOnClassesThat(IN_HERO_MODULE).orShould().dependOnClassesThat(CONCRETE_HERO)
+				.allowEmptyShould(true).check(CodexClasses.main());
 	}
 
 	@Test
-	void mechanicsDependOnlyOnCore() {
+	void mechanicsDoNotDependUpward() {
 		noClasses().that().resideInAPackage(ROOT + ".mechanic..")
-				.should().dependOnClassesThat().resideInAnyPackage(ROOT + ".content..", ROOT + ".compat..")
-				.orShould().dependOnClassesThat(IN_HERO_MODULE)
-				.orShould().dependOnClassesThat(CONCRETE_HERO)
-				.allowEmptyShould(true)
-				.check(CodexClasses.main());
+				.should().dependOnClassesThat().resideInAnyPackage(ROOT + ".content..", ROOT + ".compat..", ROOT + ".bootstrap..")
+				.orShould().dependOnClassesThat(IN_HERO_MODULE).orShould().dependOnClassesThat(CONCRETE_HERO)
+				.allowEmptyShould(true).check(CodexClasses.main());
 	}
+
+	@Test
+	void heroModulesDoNotDependOnEachOther() {
+		slices().matching(ROOT + ".hero.(*)..").should().notDependOnEachOther().allowEmptyShould(true).check(CodexClasses.main());
+	}
+
+	@Test
+	void heroModulesDoNotDependOnContentCompatOrBootstrap() {
+		noClasses().that(IN_HERO_MODULE)
+				.should().dependOnClassesThat().resideInAnyPackage(ROOT + ".content..", ROOT + ".compat..", ROOT + ".bootstrap..")
+				.allowEmptyShould(true).check(CodexClasses.main());
+	}
+
+	@Test
+	void heroModulesAreReferencedOnlyByThemselvesAndTheModuleList() {
+		classes().that(IN_HERO_MODULE).should(onlyReferencedByOwnModuleOr(ROOT + ".hero.", HERO_MODULES))
+				.allowEmptyShould(true).check(CodexClasses.mainAndClient());
+	}
+
+	@Test
+	void everyHeroModuleIsConstructedInTheModuleList() {
+		classes().that().implement(ROOT + ".core.module.HeroModule")
+				.should(new ArchCondition<>("be constructed by HeroModules' static initializer") {
+					@Override
+					public void check(JavaClass module, ConditionEvents events) {
+						boolean listed = false;
+						for (JavaConstructorCall call : module.getConstructorCallsToSelf()) {
+							if (call.getOrigin() instanceof JavaStaticInitializer
+									&& call.getOriginOwner().getName().equals(HERO_MODULES)) {
+								listed = true;
+							}
+						}
+						if (!listed) {
+							events.add(SimpleConditionEvent.violated(module, module.getName() + " is not constructed in HeroModules.ALL"));
+						}
+					}
+				}).allowEmptyShould(true).check(CodexClasses.main());
+	}
+}
 ```
 
-- [ ] **Step 2: `ClientArchitectureRulesTest`**
+Замороженные правила (`FreezingArchRule`) фиксируют текущий долг; строгие пустые сейчас (`allowEmptyShould(true)`) и начинают проверять реальный код, как только появляются `core..`, `mechanic..`, `bootstrap..`, `hero.<id>..`. `everyHeroModuleIsConstructedInTheModuleList` проверяет вызов конструктора модуля именно из статического инициализатора `HeroModules` (поле `ALL = List.of(new …())`): упоминание `ScorpionModule.class` или создание модуля в другом месте правило не удовлетворяет.
+
+- [ ] **Step 2: Без store замороженные правила падают**
+
+Run: `./gradlew test --no-daemon --tests '*ArchitectureRulesTest*'`
+Expected: FAIL — `Creating new violation store is disabled` в 5 замороженных правилах; строгие правила и `importsTheWholeMainSourceSet` — PASS.
+
+#### Task A1.3: правила client
+
+**Files:**
+- Create: `T/architecture/ClientArchitectureRulesTest.java`
+
+- [ ] **Step 1: Правила**
 
 ```java
 package com.example.superheroes.architecture;
 
-import com.tngtech.archunit.base.DescribedPredicate;
-import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.library.freeze.FreezingArchRule;
 import org.junit.jupiter.api.Test;
 
-import static com.example.superheroes.architecture.ArchitectureRulesTest.CONCRETE_HERO;
-import static com.example.superheroes.architecture.ArchitectureRulesTest.IN_HERO_MODULE;
-import static com.example.superheroes.architecture.ArchitectureRulesTest.ROOT;
-import static com.example.superheroes.architecture.ArchitectureRulesTest.onlyReferencedByOwnModuleOr;
+import static com.example.superheroes.architecture.ArchitectureRulesTest.*;
 import static com.tngtech.archunit.base.DescribedPredicate.not;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices;
 
 class ClientArchitectureRulesTest {
-	static final DescribedPredicate<JavaClass> IN_CLIENT_HERO_MODULE = new DescribedPredicate<>("reside in a client hero module") {
-		@Override
-		public boolean test(JavaClass c) {
-			return c.getPackageName().startsWith(ROOT + ".client.hero.");
-		}
-	};
-
-	static final DescribedPredicate<JavaClass> CLIENT_CODE = new DescribedPredicate<>("are client classes") {
-		@Override
-		public boolean test(JavaClass c) {
-			return c.getPackageName().startsWith(ROOT + ".client");
-		}
-	};
-
 	@Test
 	void sharedClientCodeDoesNotDependOnConcreteHeroes() {
-		FreezingArchRule.freeze(noClasses().that(CLIENT_CODE).and(not(IN_CLIENT_HERO_MODULE))
+		FreezingArchRule.freeze(noClasses().that().resideInAPackage(ROOT + ".client..").and(not(IN_CLIENT_HERO_MODULE)).and(not(COMPOSITION_ROOT))
 				.should().dependOnClassesThat(CONCRETE_HERO)
-				.as("shared client code reads the hero registry/profile, never a concrete hero"))
-				.check(CodexClasses.mainAndClient());
+				.as("shared client code reads the hero registry and hooks, never a concrete hero")).check(CodexClasses.mainAndClient());
 	}
 
 	@Test
 	void clientCoreDoesNotKnowHeroModules() {
 		noClasses().that().resideInAPackage(ROOT + ".client.core..")
-				.should().dependOnClassesThat(IN_CLIENT_HERO_MODULE)
-				.orShould().dependOnClassesThat(IN_HERO_MODULE)
-				.allowEmptyShould(true)
-				.check(CodexClasses.mainAndClient());
+				.should().dependOnClassesThat(IN_CLIENT_HERO_MODULE).orShould().dependOnClassesThat(IN_HERO_MODULE)
+				.orShould().dependOnClassesThat(CONCRETE_HERO).orShould().dependOnClassesThat().resideInAPackage(ROOT + ".client.bootstrap..")
+				.allowEmptyShould(true).check(CodexClasses.mainAndClient());
 	}
 
 	@Test
 	void clientHeroModulesDoNotDependOnEachOther() {
-		slices().matching(ROOT + ".client.hero.(*)..").should().notDependOnEachOther()
-				.allowEmptyShould(true)
-				.check(CodexClasses.mainAndClient());
+		slices().matching(ROOT + ".client.hero.(*)..").should().notDependOnEachOther().allowEmptyShould(true).check(CodexClasses.mainAndClient());
 	}
 
 	@Test
 	void clientHeroModulesAreReferencedOnlyByThemselvesAndTheModuleList() {
-		classes().that(IN_CLIENT_HERO_MODULE)
-				.should(onlyReferencedByOwnModuleOr(ROOT + ".client.hero.", ROOT + ".client.core.module.HeroClientModules"))
-				.allowEmptyShould(true)
-				.check(CodexClasses.mainAndClient());
-	}
-
-	@Test
-	void mainHeroModulesAreNotReferencedByForeignClientCode() {
-		classes().that(IN_HERO_MODULE)
-				.should(onlyReferencedByOwnModuleOr(ROOT + ".hero.", ROOT + ".core.module.HeroModules"))
-				.allowEmptyShould(true)
-				.check(CodexClasses.mainAndClient());
+		classes().that(IN_CLIENT_HERO_MODULE).should(onlyReferencedByOwnModuleOr(ROOT + ".client.hero.", HERO_CLIENT_MODULES))
+				.allowEmptyShould(true).check(CodexClasses.mainAndClient());
 	}
 }
-```
-
-Условие разрешает ссылки из `hero.<id>..` и `client.hero.<id>..` того же `<id>`: клиентский модуль героя законно видит серверные классы своего героя (payload'ы, id), но не чужого.
-
-- [ ] **Step 3: Создать baseline клиентского freeze-правила и прогнать всё**
-
-Run: `./gradlew test --no-daemon --tests '*Architecture*' -Darchunit.freeze.store.default.allowStoreCreation=true`, затем без флага.
-Expected: PASS оба раза.
-
-- [ ] **Step 4: Commit**
-
-```bash
-git add src/test/java/com/example/superheroes/architecture src/test/resources/archunit_store
-git commit -m "test(arch): strict layering rules for core, mechanic and hero modules"
 ```
 
 #### Task A1.4: ratchet циклов пакетов
 
 **Files:**
 - Create: `T/architecture/PackageCycleRatchetTest.java`
-- Create: `src/test/resources/architecture/package-cycles-baseline.txt`
+- Create: `src/test/resources/architecture/package-cycles-baseline.txt` (генерируется)
 
-**Interfaces:**
-- Consumes: `CodexClasses.main()`, `CodexClasses.mainAndClient()`.
-- Produces: файл baseline со строками вида `ability <-> hero` (относительно корня, отсортировано).
-
-- [ ] **Step 1: Написать тест**
+- [ ] **Step 1: Тест**
 
 ```java
 package com.example.superheroes.architecture;
@@ -568,8 +481,9 @@ import java.util.TreeSet;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
- * Bidirectional package pairs may only disappear. A new pair fails; a pair that no longer exists
- * must be removed from the baseline in the same PR, so the ratchet never loosens silently.
+ * Bidirectional package pairs may only disappear. Edges that originate in composition roots
+ * (entrypoints, module lists) are not counted: those classes depend on everything by design, and
+ * nothingDependsOnCompositionRoots keeps them a sink.
  */
 class PackageCycleRatchetTest {
 	private static final Path BASELINE = Path.of("src/test/resources/architecture/package-cycles-baseline.txt");
@@ -578,12 +492,15 @@ class PackageCycleRatchetTest {
 	void bidirectionalPackagePairsOnlyShrink() throws IOException {
 		Set<String> edges = new HashSet<>();
 		for (JavaClass origin : CodexClasses.mainAndClient()) {
+			if (ArchitectureRulesTest.COMPOSITION_ROOT.test(origin)) {
+				continue;
+			}
 			String from = relative(origin.getPackageName());
 			if (from == null) {
 				continue;
 			}
-			for (Dependency dependency : origin.getDirectDependenciesFromSelf()) {
-				String to = relative(dependency.getTargetClass().getPackageName());
+			for (Dependency d : origin.getDirectDependenciesFromSelf()) {
+				String to = relative(d.getTargetClass().getPackageName());
 				if (to != null && !to.equals(from)) {
 					edges.add(from + " -> " + to);
 				}
@@ -591,42 +508,51 @@ class PackageCycleRatchetTest {
 		}
 		Set<String> pairs = new TreeSet<>();
 		for (String edge : edges) {
-			String[] parts = edge.split(" -> ");
-			if (edges.contains(parts[1] + " -> " + parts[0])) {
-				pairs.add(parts[0].compareTo(parts[1]) < 0 ? parts[0] + " <-> " + parts[1] : parts[1] + " <-> " + parts[0]);
+			String[] p = edge.split(" -> ");
+			if (edges.contains(p[1] + " -> " + p[0])) {
+				pairs.add(p[0].compareTo(p[1]) < 0 ? p[0] + " <-> " + p[1] : p[1] + " <-> " + p[0]);
 			}
 		}
-		Set<String> baseline = new TreeSet<>(Files.readAllLines(BASELINE));
+		Set<String> baseline = new TreeSet<>(Files.exists(BASELINE) ? Files.readAllLines(BASELINE) : java.util.List.of());
 		baseline.removeIf(String::isBlank);
+		if (Boolean.getBoolean("codex.writeCycleBaseline")) {
+			Files.write(BASELINE, pairs);
+			return;
+		}
 		assertEquals(String.join("\n", baseline), String.join("\n", pairs),
 				"package 2-cycles changed: new pairs are forbidden; removed pairs must be deleted from " + BASELINE);
 	}
 
-	private static String relative(String packageName) {
+	private static String relative(String pkg) {
 		String root = CodexClasses.ROOT;
-		if (packageName.equals(root)) {
-			return "(root)";
-		}
-		return packageName.startsWith(root + ".") ? packageName.substring(root.length() + 1) : null;
+		if (pkg.equals(root)) return "(root)";
+		return pkg.startsWith(root + ".") ? pkg.substring(root.length() + 1) : null;
 	}
 }
 ```
 
-- [ ] **Step 2: Прогнать с пустым baseline** — создать пустой `package-cycles-baseline.txt`.
+Рёбра, выходящие из composition roots, не считаются: они зависят от всего по определению, а `nothingDependsOnCompositionRoots` гарантирует, что обратных рёбер к ним нет. Без этого исключения `SuperheroesMod → core.X` и `core.X → ModId` давали бы цикл с корневым пакетом на каждой новой стадии.
 
-Run: `./gradlew test --no-daemon --tests '*PackageCycleRatchetTest*'`
-Expected: FAIL; в сообщении — фактический список пар (ориентир аудита 2: 36 пар).
+- [ ] **Step 2: Создать baseline обоих механизмов**
 
-- [ ] **Step 3: Записать фактический список в baseline, прогнать** → PASS.
+Run: `mkdir -p src/test/resources/architecture && ./gradlew test --no-daemon --tests '*architecture*' -Darchunit.freeze.store.default.allowStoreCreation=true -Dcodex.writeCycleBaseline=true`
+Expected: PASS; появились `src/test/resources/archunit_store/stored.rules`, файлы нарушений и `package-cycles-baseline.txt` (на сводной базе — 32 пары).
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 3: Повторный прогон без флагов**
+
+Run: `./gradlew test --no-daemon --tests '*architecture*'`
+Expected: PASS.
+
+- [ ] **Step 4: Записать в PR** число строк в каждом файле store (соответствие файлу — по `stored.rules`) и число пар циклов.
+
+- [ ] **Step 5: Commit**
 
 ```bash
-git add src/test/java/com/example/superheroes/architecture/PackageCycleRatchetTest.java src/test/resources/architecture
-git commit -m "test(arch): ratchet bidirectional package dependencies"
+git add src/test/java/com/example/superheroes/architecture src/test/resources/archunit_store src/test/resources/architecture
+git commit -m "test(arch): freeze current coupling, enforce layering for new packages, ratchet package cycles"
 ```
 
-#### Task A1.5: `verifyArchitectureBaseline` в `qualityGate`
+#### Task A1.5: `verifyArchitectureBaseline` в `qualityGate` и негативные пробы
 
 **Files:**
 - Modify: `build.gradle` (задачи `qualityGate`, новая `verifyArchitectureBaseline`)
@@ -654,20 +580,64 @@ tasks.register('verifyArchitectureBaseline') {
 
 В `qualityGate` добавить `dependsOn tasks.named('verifyArchitectureBaseline')`.
 
-- [ ] **Step 2: Проверить зубы (временное нарушение, не коммитить)** — добавить в любой метод `M/flight/FlightTuning.java` строку `Object probe = com.example.superheroes.hero.ScorpionHero.ID;`.
+- [ ] **Step 2: Негативные пробы (временные правки, не коммитить).** Внести все сразу:
+  - `M/core/module/Probe.java`: `static final Object MODULE = new com.example.superheroes.hero.scorpion.ScorpionProbeModule();` и `static final Object LOG = com.example.superheroes.SuperheroesMod.LOGGER;`, где `M/hero/scorpion/ScorpionProbeModule.java` — пустой класс, реализующий `HeroModule` (интерфейс-заглушка `M/core/module/HeroModule.java` с методами `hero()` и `register(Object)` создаётся на время пробы, если D2a-1 ещё не влит);
+  - в `ScorpionProbeModule` — поле, читающее `com.example.superheroes.SuperheroesMod.LOGGER`;
+  - в `M/ability/AbilityRouter.java` — поле `static final Object CYCLE = new com.example.superheroes.core.module.Probe();`.
 
-Run: `./gradlew test --no-daemon --tests '*ArchitectureRulesTest*'`
-Expected: FAIL в `sharedCodeDoesNotDependOnConcreteHeroes` с упоминанием `FlightTuning`. Откатить строку.
+Run: `./gradlew test --no-daemon --tests '*architecture*'`
+Expected: FAIL ровно в `coreDependsOnNothingAboveIt`, `nothingDependsOnCompositionRoots`, `heroModulesAreReferencedOnlyByThemselvesAndTheModuleList`, `everyHeroModuleIsConstructedInTheModuleList` (модуль не создан в `HeroModules.ALL`) и `bidirectionalPackagePairsOnlyShrink` (новая пара `ability <-> core.module`). Откатить пробы: `git checkout -- . && git clean -fd src/main`.
 
 - [ ] **Step 3: Полный гейт** — `./gradlew qualityGate --no-daemon` → PASS.
 
-- [ ] **Step 4: AGENTS.md §10** — к описанию `qualityGate` дописать: «…and the ArchUnit architecture rules (`src/test/.../architecture`) with a frozen, shrink-only baseline in `src/test/resources/archunit_store` (`verifyArchitectureBaseline` fails until a shrunk baseline is committed)».
+- [ ] **Step 4: AGENTS.md §10** — к описанию `qualityGate` дописать: «…and the ArchUnit architecture rules (`src/test/.../architecture`) with a frozen, shrink-only baseline in `src/test/resources/archunit_store` and `src/test/resources/architecture` (`verifyArchitectureBaseline` fails until a shrunk baseline is committed)».
 
 - [ ] **Step 5: Commit**
 
 ```bash
 git add build.gradle AGENTS.md
 git commit -m "build(arch): require a committed architecture baseline in qualityGate"
+```
+
+#### Task A1.6: помощник трансформации для GameTests
+
+**Files:**
+- Create: `G/TestHeroes.java`
+- Modify: `G/BoundWeaponGameTests.java`, `G/HeroDataGameTests.java`, `G/LifecycleGameTests.java` и другие GameTests, где успешная трансформация проверяется `helper.assertTrue(HeroTransformService.transform(...), ...)`
+
+**Interfaces:**
+- Produces: `TestHeroes.transform(ServerPlayer, ResourceLocation)` — используют GameTests всех следующих планов (C2 и D1 стартуют сразу после A1).
+
+- [ ] **Step 1: Код**
+
+```java
+package com.example.superheroes.gametest;
+
+import com.example.superheroes.transform.HeroTransformService;
+import net.minecraft.gametest.framework.GameTestAssertException;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+
+/** Transforms through the same service the transformation item uses. */
+final class TestHeroes {
+	private TestHeroes() {
+	}
+
+	static void transform(ServerPlayer player, ResourceLocation heroId) {
+		if (!HeroTransformService.transform(player, heroId)) {
+			throw new GameTestAssertException("could not transform " + player.getScoreboardName() + " into " + heroId);
+		}
+	}
+}
+```
+
+- [ ] **Step 2:** Заменить `helper.assertTrue(HeroTransformService.transform(p, id), "...")` на `TestHeroes.transform(p, id)` там, где тест ожидает успех; места, где тест проверяет **отказ** трансформации (`assertFalse`), не трогать.
+
+- [ ] **Step 3:** `./gradlew runGametest --no-daemon` → PASS. Commit:
+
+```bash
+git add src/gametest
+git commit -m "test(gametest): share a transform helper across GameTests"
 ```
 
 ---
@@ -678,9 +648,9 @@ git commit -m "build(arch): require a committed architecture baseline in quality
 - **Почему:** `assertControllersAreWired` требует `Name.init()` строкой в `SuperheroesMod` (аудит 2, S1) — любая миграция к модулям начинается с падения гейта; `assertEveryHeroRegistered` читает текст `Heroes.java`.
 - **Зависит от:** A1.
 - **Затрагивает:** `T/ProjectSanityTest.java`, `G/HeroCompletenessGameTests.java` (новый), `src/gametest/resources/fabric.mod.json`, lang-файлы (только если тест найдёт реальные пропуски).
-- **Создаётся:** `HeroCompletenessGameTests`, `G/TestHeroes.java` (Task A2.3; нужен П2 C2 и П3 D1, которые идут параллельно, поэтому создаётся здесь).
+- **Создаётся:** `HeroCompletenessGameTests`.
 - **Мигрируется:** `assertControllersAreWired` принимает вызов `init()` из `SuperheroesMod` **или** из любого `M/**/*Module.java`.
-- **Удаляется:** ничего (сама проверка удаляется в `D2b`, `assertEveryHeroRegistered` — в `D2a`).
+- **Удаляется:** ничего (сама проверка удаляется в D2b, `assertEveryHeroRegistered` — в D2a-2).
 - **Нельзя менять:** тексты существующих lang-ключей.
 - **Тесты:** GameTest полноты; негативная проверка — временно убрать `register(SCORPION_SPEAR)` → тест падает.
 - **Runtime:** не нужен.
@@ -834,46 +804,6 @@ git add src/test/java/com/example/superheroes/ProjectSanityTest.java
 git commit -m "test(sanity): accept controller wiring from modules"
 ```
 
-#### Task A2.3: помощник трансформации для GameTests
-
-**Files:**
-- Create: `G/TestHeroes.java`
-
-**Interfaces:**
-- Produces: `TestHeroes.transform(ServerPlayer, ResourceLocation)` — используется GameTests всех следующих планов.
-
-- [ ] **Step 1: Код**
-
-```java
-package com.example.superheroes.gametest;
-
-import com.example.superheroes.transform.HeroTransformService;
-import net.minecraft.gametest.framework.GameTestAssertException;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
-
-/** Transforms through the same service the transformation item uses. */
-final class TestHeroes {
-	private TestHeroes() {
-	}
-
-	static void transform(ServerPlayer player, ResourceLocation heroId) {
-		if (!HeroTransformService.transform(player, heroId)) {
-			throw new GameTestAssertException("could not transform " + player.getScoreboardName() + " into " + heroId);
-		}
-	}
-}
-```
-
-- [ ] **Step 2:** Заменить прямые вызовы `helper.assertTrue(HeroTransformService.transform(...), ...)` в `BoundWeaponGameTests`, `HeroDataGameTests`, `LifecycleGameTests` на `TestHeroes.transform(...)` там, где тест ожидает успешную трансформацию; места, где тест проверяет **отказ** трансформации (`assertFalse`), не трогать.
-
-- [ ] **Step 3:** `./gradlew runGametest --no-daemon` → PASS. Commit:
-
-```bash
-git add src/gametest
-git commit -m "test(gametest): share a transform helper across GameTests"
-```
-
 ---
 
 ### Стадия N1 — мёртвый и недостижимый код
@@ -881,12 +811,12 @@ git commit -m "test(gametest): share a transform helper across GameTests"
 - **Цель:** удалить код без владельца, чтобы миграция не переносила мусор.
 - **Почему:** аудит 2 (S13): `ViltrumiteThunderClapAbility`, `C/hud/LowResourceVignetteHud`, `C/hud/ResourceBarHud`, `C/render/horde/HordeGeoRenderer` без ссылок; 5 `AbilityIds` без регистрации (`VILTRUMITE_THUNDER_CLAP`, `IRON_MAN_NANO_REPAIR`, `NARUTO_KURAMA_CLOAK`, `NARUTO_TAILED_BEAST_BOMB`, `NARUTO_FLYING_RAIJIN`); `METEOR_SLAM`, `SHOCKWAVE_PULSE` зарегистрированы, но ни у одного героя, при этом `MeteorSlamAbility.serverTick` работает каждый тик на каждого игрока, а `InvincibleHero` чистит его состояние.
 - **Зависит от:** A1 (store фиксирует исчезновение ссылок).
-- **Затрагивает:** перечисленные файлы, `AbilityIds`, `AbilityRegistry`, `SuperheroesMod` (tick/leave/death/stop для `MeteorSlamAbility`), `InvincibleHero`, lang (ключи удалённых способностей — удалить в обоих файлах), текстуры иконок удалённых способностей (если есть).
+- **Затрагивает:** перечисленные файлы, `AbilityIds`, `AbilityRegistry`, `SuperheroesMod` (строка `MeteorSlamAbility` в таблице `registerTickHandlers` BF11 и её `onLeave`/`onDeath`/`resetAll`), `InvincibleHero`, lang (ключи удалённых способностей — удалить в обоих файлах), текстуры иконок удалённых способностей (если есть).
 - **Удаляется:** всё перечисленное. Перед удалением каждого класса — `grep -rn '<ClassName>' src/` = только сам класс.
 - **Нельзя менять:** ни одного достижимого id. `HeroData.CODEC` декодирует неизвестные id способностей (проверено: `ResourceLocation.CODEC`), поэтому старые сохранения с этими id безопасны.
 - **Тесты:** GameTest `HeroDataGameTests.decodesUnknownAbilityIds` — `HeroData.CODEC.parse(NbtOps.INSTANCE, <nbt с active=[superheroes:meteor_slam]>)` → success; `AbilityRouter.activate(player, METEOR_SLAM id)` для героя без неё — no-op.
 - **Runtime:** не нужен (ничего достижимого).
-- **Acceptance:** `grep -rn 'METEOR_SLAM\|SHOCKWAVE_PULSE\|THUNDER_CLAP\|NANO_REPAIR\|KURAMA_CLOAK\|TAILED_BEAST_BOMB\|FLYING_RAIJIN' src/` пусто (кроме удаляемых lang-ключей, которых тоже нет); ArchUnit store уменьшился; `SuperheroesMod` потерял 4 строки `MeteorSlamAbility`.
+- **Acceptance:** `grep -rn 'METEOR_SLAM\|SHOCKWAVE_PULSE\|THUNDER_CLAP\|NANO_REPAIR\|KURAMA_CLOAK\|TAILED_BEAST_BOMB\|FLYING_RAIJIN' src/` пусто (кроме удаляемых lang-ключей, которых тоже нет); ArchUnit store уменьшился; `SuperheroesMod` потерял все строки `MeteorSlamAbility` (тик, leave, death, stop).
 - **Риски:** `ShockwavePulseAbility`/`MeteorSlamAbility` могут переиспользоваться другими классами как утилиты — тогда утилиту переносят к потребителю, а способность удаляют.
 - **Страховка:** revert.
 
@@ -895,11 +825,11 @@ git commit -m "test(gametest): share a transform helper across GameTests"
 - **Цель:** имена классов соответствуют владельцу, persisted id не трогаются.
 - **Почему:** модульный аудит §3 (Pandora): `DoctorStrangeSuitItem`, `STRANGE_HP`, неиспользуемая `textures/entity/hero/doctor_strange.png`, комментарий `// Doctor Strange` в `AbilityIds`.
 - **Зависит от:** A1.
-- **Мигрируется:** `DoctorStrangeSuitItem` → `PandoraSuitItem`, поле `ModItems.DOCTOR_STRANGE_SUIT` → `ModItems.PANDORA_SUIT` (регистрационный id **остаётся** `doctor_strange_suit`, модель `models/item/doctor_strange_suit.json` и lang-ключи `item.superheroes.doctor_strange_suit*` остаются); константа `HeroAttributes.STRANGE_HP` → `PANDORA_HP` (ResourceLocation-значение **не меняется**); комментарии.
+- **Мигрируется:** поле `ModItems.DOCTOR_STRANGE_SUIT` → `ModItems.PANDORA_SUIT` (регистрационный id **остаётся** `doctor_strange_suit`, модель `models/item/doctor_strange_suit.json` и lang-ключи `item.superheroes.doctor_strange_suit*` остаются); константа `HeroAttributes.STRANGE_HP` → `PANDORA_HP` (значение ResourceLocation **не меняется**); комментарии. Класс `DoctorStrangeSuitItem` не переименовывается: у него только lore, и П2 B3 удаляет его вместе с другими lore-only подклассами.
 - **Удаляется:** `textures/entity/hero/doctor_strange.png` после `grep -rn 'doctor_strange.png\|entity/hero/doctor_strange' src/` = пусто.
 - **Нельзя менять:** `doctor_strange_suit`, любые `modifiers/...` id, lang-ключи.
 - **Тесты:** существующий `assertItemModelsResolveToTextures`; GameTest `pandoraSuitIdIsStable`: `BuiltInRegistries.ITEM.getKey(ModItems.PANDORA_SUIT)` == `superheroes:doctor_strange_suit`.
-- **Acceptance:** `grep -rni 'strange' src/main/java src/client/java` → только строковые id `doctor_strange_suit` (с комментарием «persisted id kept from the Doctor Strange era»).
+- **Acceptance:** `grep -rni 'strange' src/main/java src/client/java` → только строковые id `doctor_strange_suit` (с комментарием «persisted id kept from the Doctor Strange era») и класс `DoctorStrangeSuitItem`, который удалит B3.
 - Переименования `Madness*` (Homelander) vs `RegulusMadness*` делаются в волнах I5/I6 вместе с переносом, а не здесь (иначе два переноса одного файла).
 
 ### Стадия N3 — удаление фиктивного `api/`
@@ -919,16 +849,16 @@ git commit -m "test(gametest): share a transform helper across GameTests"
 - `qualityGate` включает ArchUnit-правила main и client, `PackageCycleRatchetTest`, `verifyArchitectureBaseline` и `HeroCompletenessGameTests`.
 - Freeze store и `package-cycles-baseline.txt` закоммичены; после N1–N3 они только уменьшились.
 - `assertControllersAreWired` принимает проводку из `*Module.java`.
-- Нет мёртвых способностей и id из N1, нет пакета `api/`; `grep -rni strange src/main/java src/client/java` находит только persisted id `doctor_strange_suit`.
+- Нет мёртвых способностей и id из N1, нет пакета `api/`; `grep -rni strange src/main/java src/client/java` находит только persisted id `doctor_strange_suit` и класс, который удалит B3.
 
 ## Self-Review
 
-- **Покрытие:** A1, A2, N1–N3 из исходного плана перенесены целиком; решения R8, R13 — выше.
-- **Что используют следующие планы:** `CodexClasses.ROOT/main()/mainAndClient()`; `ArchitectureRulesTest.ROOT`, `IN_HERO_MODULE`, `CONCRETE_HERO`, `heroModuleRoot(String, String)`, `onlyReferencedByOwnModuleOr(String modulePrefix, String... allowedClasses)`; замороженные правила `sharedCodeDoesNotDependOnConcreteHeroes`, `mainDoesNotDependOnClientCode`, `onlyTheDispatcherRegistersServerTicks`, `lifecycleHooksAreRegisteredByModulesOrCore`, `sharedClientCodeDoesNotDependOnConcreteHeroes`; строгие `heroModulesAreReferencedOnlyByThemselvesAndTheModuleList`, `heroModulesDoNotDependOnEachOther`, `coreDependsOnNothingAboveIt`, `mechanicsDependOnlyOnCore`, клиентские аналоги; `HeroCompletenessGameTests.lang(String)`; `TestHeroes.transform(ServerPlayer, ResourceLocation)`.
-- **Ограничение:** сигнатуры предикатов ArchUnit 1.5.1 не компилировались при написании плана (см. «Риски» A1).
+- **Покрытие:** A1, A2, N1–N3 и замечания внешнего ревью к ним (правила слоёв против списка модулей, циклы через корневой пакет, `inputs.dir(...).optional()`, ложный успех проверки списка модулей, неопределённая зависимость P0) закрыты; решения R8, R13 — выше, R16 — обзор.
+- **Что используют следующие планы:** `CodexClasses.ROOT/main()/mainAndClient()`; `ArchitectureRulesTest.ROOT`, `HERO_MODULES`, `HERO_CLIENT_MODULES`, `IN_HERO_MODULE`, `IN_CLIENT_HERO_MODULE`, `CONCRETE_HERO`, `COMPOSITION_ROOT`, `heroId(String, String)`, `onlyReferencedByOwnModuleOr(String modulePrefix, String... allowed)`; замороженные правила `sharedCodeDoesNotDependOnConcreteHeroes`, `mainDoesNotDependOnClientCode`, `onlyTheDispatcherRegistersServerTicks`, `lifecycleHooksAreRegisteredThroughRegistrars`, `nothingDependsOnCompositionRoots`, `sharedClientCodeDoesNotDependOnConcreteHeroes`; строгие `coreDependsOnNothingAboveIt`, `mechanicsDoNotDependUpward`, `heroModulesDoNotDependOnEachOther`, `heroModulesDoNotDependOnContentCompatOrBootstrap`, `heroModulesAreReferencedOnlyByThemselvesAndTheModuleList`, `everyHeroModuleIsConstructedInTheModuleList`, клиентские аналоги; `HeroCompletenessGameTests.lang(String)`; `TestHeroes.transform(ServerPlayer, ResourceLocation)`.
+- **Проверка:** код A1 скомпилирован и прогнан прототипом на сводной базе (обзор §10); код A2 и N-стадий не компилировался.
 
 ## Execution Handoff
 
-Исполнение: **Subagent-Driven (рекомендуется)** — свежий субагент на стадию, ревью между стадиями (superpowers:subagent-driven-development), или **Inline** с контрольными точками (superpowers:executing-plans). Начинать с A1 сразу после вливания BF1–BF3 в `main`.
+Исполнение: **Subagent-Driven (рекомендуется)** — свежий субагент на стадию, ревью между стадиями (superpowers:subagent-driven-development), или **Inline** с контрольными точками (superpowers:executing-plans). Начинать с A1, когда в `main` влиты стек bugfix-pass и PR #41.
 
 При параллельном исполнении несколькими субагентами оркестратор раздаёт задачи этого плана по `00-overview.md` §11 «Оркестрация».
