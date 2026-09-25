@@ -119,7 +119,6 @@
 - Deliberately left self-registered: `HeroDataStore` (two `hero_data_flush` phase-boundary registrations by design), `MirrorDimensionController` (owned by stage 8), `MadnessFlightController`/`KratosRageController`/`ThanosGauntletStateController` START_SERVER_TICK registrations (the dispatcher is END-only), `src/client`, `transform/`, `lifecycle/`, `WorldDestructionPolicy` files (stages 6/7/9).
 - Ordering notes: phase split means GLOBAL tasks now run before all per-player work; verified each split pair is data-independent (offline prunes commute; `RegulusMadness` COUNTERS vs `tickPlayer` don't touch shared state; `RegulusGreed` freezes/casters independent). One acknowledged delta: `KratosRageController` rage drain now runs before player tasks — same-tick deactivation timing shifts within the tick, not across ticks.
 
->>>>>>> a4f794e (refactor(tick): migrate self-registered END_SERVER_TICK handlers onto HeroTickDispatcher)
 
 ## Completed this session (stage 12)
 

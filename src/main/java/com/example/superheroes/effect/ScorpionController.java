@@ -252,5 +252,4 @@ public final class ScorpionController {
 		}
 	}
 
->>>>>>> a4f794e (refactor(tick): migrate self-registered END_SERVER_TICK handlers onto HeroTickDispatcher)
 }
