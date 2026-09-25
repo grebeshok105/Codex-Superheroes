@@ -57,6 +57,17 @@ sourceSets {
 	}
 }
 
+// JUnit covers pure client-side state too (Client*State session resets, cooldown clocks —
+// audit B15): give the test source set the client classes and their compile classpath
+// (mapped Minecraft + LWJGL/GLFW) so they load and link. Runs after loom's
+// splitEnvironmentSourceSets() has created the 'client' source set.
+afterEvaluate {
+	sourceSets.test {
+		compileClasspath += sourceSets.client.output + sourceSets.client.compileClasspath
+		runtimeClasspath += sourceSets.client.output + sourceSets.client.runtimeClasspath
+	}
+}
+
 loom {
 	splitEnvironmentSourceSets()
 

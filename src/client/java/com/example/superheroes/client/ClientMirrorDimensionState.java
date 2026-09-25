@@ -37,6 +37,10 @@ public final class ClientMirrorDimensionState {
 	private static final float CIPHER_BASE = 0.06f;
 	private static final float CIPHER_PER_SECOND = 0.035f;
 
+	static {
+		ClientSessionState.register(ClientMirrorDimensionState::onDisconnect);
+	}
+
 	private ClientMirrorDimensionState() {
 	}
 

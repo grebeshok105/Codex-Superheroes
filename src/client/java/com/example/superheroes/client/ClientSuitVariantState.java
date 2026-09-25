@@ -11,6 +11,10 @@ import java.util.UUID;
 public final class ClientSuitVariantState {
 	private static final Map<UUID, Integer> VARIANTS = new HashMap<>();
 
+	static {
+		ClientSessionState.register(ClientSuitVariantState::clear);
+	}
+
 	private ClientSuitVariantState() {
 	}
 

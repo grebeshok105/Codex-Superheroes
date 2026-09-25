@@ -18,6 +18,10 @@ public final class ClientRepulsorChargeState {
 	private static volatile float charge = 0f;
 	private static volatile long lastFireMs = 0L;
 
+	static {
+		ClientSessionState.register(ClientRepulsorChargeState::reset);
+	}
+
 	private ClientRepulsorChargeState() {
 	}
 
@@ -49,5 +53,11 @@ public final class ClientRepulsorChargeState {
 		}
 		float t = 1f - since / (float) FLASH_MS;
 		return t * t;
+	}
+
+	/** Drop all session state (registered with {@code ClientSessionState}). */
+	public static void reset() {
+		charge = 0f;
+		lastFireMs = 0L;
 	}
 }

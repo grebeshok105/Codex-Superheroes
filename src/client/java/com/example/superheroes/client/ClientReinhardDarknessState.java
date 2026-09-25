@@ -4,6 +4,10 @@ public final class ClientReinhardDarknessState {
 	private static volatile long activatedAtMs;
 	private static volatile long deadlineMs;
 
+	static {
+		ClientSessionState.register(ClientReinhardDarknessState::clearAll);
+	}
+
 	private ClientReinhardDarknessState() {
 	}
 

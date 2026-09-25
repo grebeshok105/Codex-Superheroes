@@ -4,6 +4,10 @@ public final class ClientKratosRageState {
 	private static volatile float rage;
 	private static volatile boolean active;
 
+	static {
+		ClientSessionState.register(ClientKratosRageState::clear);
+	}
+
 	private ClientKratosRageState() {
 	}
 

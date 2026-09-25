@@ -4,6 +4,10 @@ public final class ClientMeleeChargeState {
 	private static volatile boolean charging;
 	private static volatile int chargeTicks;
 
+	static {
+		ClientSessionState.register(ClientMeleeChargeState::clearAll);
+	}
+
 	private ClientMeleeChargeState() {
 	}
 

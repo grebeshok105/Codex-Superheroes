@@ -4,6 +4,10 @@ public final class ClientReinhardSwordGateState {
 	private static volatile boolean ready;
 	private static volatile float progress;
 
+	static {
+		ClientSessionState.register(ClientReinhardSwordGateState::reset);
+	}
+
 	private ClientReinhardSwordGateState() {
 	}
 
@@ -18,5 +22,11 @@ public final class ClientReinhardSwordGateState {
 
 	public static float progress() {
 		return progress;
+	}
+
+	/** Drop all session state (registered with {@code ClientSessionState}). */
+	public static void reset() {
+		ready = false;
+		progress = 0f;
 	}
 }

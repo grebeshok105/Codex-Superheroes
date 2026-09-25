@@ -9,6 +9,10 @@ import java.util.UUID;
 public final class ClientUraniumPressureState {
 	private static volatile Set<UUID> pressured = Collections.emptySet();
 
+	static {
+		ClientSessionState.register(ClientUraniumPressureState::reset);
+	}
+
 	private ClientUraniumPressureState() {
 	}
 
@@ -22,5 +26,10 @@ public final class ClientUraniumPressureState {
 
 	public static boolean anyPressured() {
 		return !pressured.isEmpty();
+	}
+
+	/** Drop all session state (registered with {@code ClientSessionState}). */
+	public static void reset() {
+		pressured = Collections.emptySet();
 	}
 }

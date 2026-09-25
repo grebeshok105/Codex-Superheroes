@@ -17,6 +17,10 @@ public final class ClientThanosState {
 	private static final int FULL_MASK = (1 << InfinityStoneType.values().length) - 1;
 	private static final Map<UUID, Integer> MASKS = new HashMap<>();
 
+	static {
+		ClientSessionState.register(ClientThanosState::clear);
+	}
+
 	private ClientThanosState() {
 	}
 

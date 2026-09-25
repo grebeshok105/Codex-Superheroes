@@ -16,7 +16,7 @@
 | 4 | B5 cooldown/heal reset on hero swap, B6 Snap stones | `hoplite/kroton-d9205130--cooldowns-snap` | PR open (stacked on 3) |
 | 5 | Damage pipeline B9, B20, B21; B11 global tick rate | `hoplite/kroton-d9205130--damage-pipeline` | PR open (stacked on 4) |
 | 6 | B10 `WorldDestructionPolicy` | | todo |
-| 7 | B15 client state/session | | todo |
+| 7 | B15 client state/session | `hoplite/kroton-d9205130--client-state-reset` | PR open (stacked on 5) |
 | 8 | B13 House of Vanity server authority | | todo |
 | 9 | B12 passive reconciler, B16 fall immunity | | todo |
 | 10 | B14 synced public hero attachment | | todo |
@@ -70,8 +70,13 @@
 - Дропы: `RushTerrainBreaker`, `BallisticBodyTracker` и `GuardiansBreakerAbility` теперь ломают с дропом — shulker box выскакивает с содержимым вместо исчезновения (регрессия из аудита). `RaidenMusouIsshin`/`HeavensStrike` сохранили свои списки «непробиваемого» в урезанном виде — только ценные блоки, которых нет в теге (обсидиан, crying obsidian, нетерит/железо/древние обломки/маяк/respawn anchor соответственно).
 - `physics/BlockBreakPolicy` удалён — его роль выполняет новая политика. `ProjectSanityTest` запрещает прямые `destroyBlock`/`removeBlock`/`setBlock`/`setBlockAndUpdate` вне `WorldDestructionPolicy`.
 - 7 новых GameTests (`DestructionPolicyGameTests`): кратер пропускает бедрок и тегированные блоки, вето claim-события отменяет слом и шлёт CANCELED, AFTER стреляет при реальном сломе, mobGriefing гейтит мобов и «без причины» для слома и постановки, shulker box дропается с содержимым, carve намеренно без дропа, контактный слом рывка дропает землю.
-
-## Important decisions
+## Completed this session (stage 7)
+- `ClientSessionState` — единый реестр сброса клиентской сессии (B15): каждый `Client*State`-холдер и сессионный синглтон (`ClientAbilityCooldowns`, `RemoteHeroSkins`, `JarvisDetectionHud`, `MirrorWarpFlashHud`, `RadialMenuHud`) регистрирует свой reset в static-блоке; `ClientPlayConnectionEvents.DISCONNECT` зовёт `resetAll()` вместо ручного списка — до этого сбрасывались только 10 из ~30 холдеров, и уход из мира во время time-slow навсегда глушил звуки мира в следующих мирах. `ProjectSanityTest.assertClientStatesRegisterReset` валится, если `Client*State`-класс не содержит `ClientSessionState.register(`.
+- `ClientAbilityCooldowns` переведён с `LocalPlayer.tickCount` (обнуляется при респавне → HUD рисовал кулдауны в часы) на `ClientLevel#getGameTime()` — монотонные тики уровня; дедлайны в `long`, wire-формат пакета не тронут. Для JUnit — инжектируемый `clock` (`setClockForTesting`/`clearClockForTesting`, package-private).
+- Миксины ролика Pandora (`PandoraCinematicKeyboardMixin`, `PandoraCinematicMousePressMixin`) больше не глотают `GLFW_RELEASE`: `KeyMapping.set(key,false)` приходит только с release, поэтому отпущенная во время ролика клавиша оставалась нажатой — игрок сам шёл/бил после катсцены. `InputFreeze`/`MouseTurn` миксины не тронуты — они не ломают трекинг кнопок.
+- `IrisShaderBridge` стал resilient: `restore()` сбрасывает `activeSnapshot` и удаляет `MirrorRestoreFile` только после успешного restore (раньше снапшот терялся при первой неудаче); `restoreAfterCrashIfNeeded` больше не пытается ресторить в `onInitializeClient` (Iris ещё не готов → всегда фейл → файл удалялся без восстановления) — вместо этого `tickCrashRestore()` ретраит из клиент-тика до 200 тиков, файл удаляется только при успехе.
+- `ChatComponentMixin`: хит-тест чата переведён на тот же сдвиг, что и рендер — `@ModifyVariable` на `screenToChatX`/`screenToChatY` вычитает `HudLayoutManager.offset(CHAT) + autoLift`, так что клики по ссылкам, ховер-теги и подсветка строки работают по реальному положению чата.
+- JUnit: `ClientSessionStateResetTest` дёргает публичные сеттеры ~25 холдеров и проверяет, что `resetAll()` возвращает дефолты; `ClientAbilityCooldownsTest` гоняет дедлайны на инжектированных часах (респавн как скачок времени). `test` sourceSet получил `client.output + client.compileClasspath` (через `afterEvaluate`, т.к. `client` создаётся `splitEnvironmentSourceSets()`).## Important decisions
 
 - Bound weapons are identified by type (`BoundWeaponItem`) and validated by token; untokened copies are treated as stale on purpose (none are obtainable legitimately; old saves could hold leaked copies).
 - Bound weapons never become item entities: returned to the owner when valid and there is room, otherwise deleted (the ability can reissue).

@@ -9,6 +9,10 @@ import java.util.Map;
 public final class ClientFlightState {
 	private static final Map<Integer, State> STATES = new HashMap<>();
 
+	static {
+		ClientSessionState.register(ClientFlightState::clearAll);
+	}
+
 	private ClientFlightState() {
 	}
 

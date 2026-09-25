@@ -21,6 +21,10 @@ public final class ClientPandoraDeathState {
 	private static int pandoraId = -1;
 	private static int killerId = -1;
 
+	static {
+		ClientSessionState.register(ClientPandoraDeathState::onDisconnect);
+	}
+
 	private ClientPandoraDeathState() {
 	}
 

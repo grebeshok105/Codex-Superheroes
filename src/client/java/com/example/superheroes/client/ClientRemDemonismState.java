@@ -7,6 +7,10 @@ import java.util.UUID;
 public final class ClientRemDemonismState {
 	private static final Map<UUID, State> STATES = new HashMap<>();
 
+	static {
+		ClientSessionState.register(ClientRemDemonismState::clearAll);
+	}
+
 	private ClientRemDemonismState() {
 	}
 

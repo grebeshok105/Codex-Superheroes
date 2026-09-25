@@ -11,6 +11,10 @@ import java.util.UUID;
 public final class ClientShadowArmyState {
 	private static final Map<UUID, ArmyInfo> ARMIES = new HashMap<>();
 
+	static {
+		ClientSessionState.register(ClientShadowArmyState::clear);
+	}
+
 	private ClientShadowArmyState() {
 	}
 

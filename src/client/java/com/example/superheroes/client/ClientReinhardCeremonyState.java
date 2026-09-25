@@ -4,6 +4,10 @@ public final class ClientReinhardCeremonyState {
 	private static volatile boolean active;
 	private static volatile float progress;
 
+	static {
+		ClientSessionState.register(ClientReinhardCeremonyState::reset);
+	}
+
 	private ClientReinhardCeremonyState() {
 	}
 
@@ -18,5 +22,11 @@ public final class ClientReinhardCeremonyState {
 
 	public static float progress() {
 		return progress;
+	}
+
+	/** Drop all session state (registered with {@code ClientSessionState}). */
+	public static void reset() {
+		active = false;
+		progress = 0f;
 	}
 }

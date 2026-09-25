@@ -4,6 +4,7 @@ import com.example.superheroes.ability.AbilityIds;
 import com.example.superheroes.client.ClientAbilityCooldowns;
 import com.example.superheroes.client.ClientAbilityFilter;
 import com.example.superheroes.client.ClientHeroState;
+import com.example.superheroes.client.ClientSessionState;
 import com.example.superheroes.client.ClientThanosState;
 import com.example.superheroes.client.ModKeys;
 import com.example.superheroes.client.render.WildRenderer;
@@ -50,6 +51,10 @@ public final class RadialMenuHud {
 	private static float cursorDy;
 	private static float prevCursorDx;
 	private static float prevCursorDy;
+
+	static {
+		ClientSessionState.register(RadialMenuHud::reset);
+	}
 
 	/** Per-sector hover grow progress (0..1), tick-stepped + partial-interpolated. */
 	private static final int MAX_SECTORS = 12;
@@ -138,6 +143,24 @@ public final class RadialMenuHud {
 	private static void closeWithoutActivate() {
 		open = false;
 		selected = -1;
+	}
+
+	/**
+	 * Drop the whole wheel state on disconnect (audit B15): a stale {@code open}
+	 * surviving into the next world lets the first tick fire {@code closeAndActivate}
+	 * with an old selection — a phantom ability activation on join.
+	 */
+	public static void reset() {
+		open = false;
+		selected = -1;
+		cursorDx = 0f;
+		cursorDy = 0f;
+		prevCursorDx = 0f;
+		prevCursorDy = 0f;
+		openProgress = 0f;
+		lastOpenProgress = 0f;
+		java.util.Arrays.fill(hoverProgress, 0f);
+		java.util.Arrays.fill(lastHoverProgress, 0f);
 	}
 
 	public static boolean isOpen() {

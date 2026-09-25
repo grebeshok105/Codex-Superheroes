@@ -7,6 +7,10 @@ public final class ClientMadnessState {
 	private static volatile long manaLockUntilMs = 0L;
 	private static volatile long madnessStartedAtMs = 0L;
 
+	static {
+		ClientSessionState.register(ClientMadnessState::reset);
+	}
+
 	private ClientMadnessState() {
 	}
 
@@ -50,5 +54,14 @@ public final class ClientMadnessState {
 
 	public static long madnessStartedAtMs() {
 		return madnessStartedAtMs;
+	}
+
+	/** Drop all session state (registered with {@code ClientSessionState}). */
+	public static void reset() {
+		madness = false;
+		bonusLifeAvailable = false;
+		readingUntilMs = 0L;
+		manaLockUntilMs = 0L;
+		madnessStartedAtMs = 0L;
 	}
 }

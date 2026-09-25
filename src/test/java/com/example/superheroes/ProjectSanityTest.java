@@ -61,6 +61,8 @@ public final class ProjectSanityTest {
 		assertFabricModJsonSanity();
 		assertHeroDataHasSingleWriter();
 		assertWorldMutationsGoThroughPolicy();
+		assertClientStatesRegisterReset();
+		assertClientCooldownsUseLevelGameTime();
 		System.out.println("ProjectSanityTest passed");
 	}
 
@@ -262,6 +264,38 @@ public final class ProjectSanityTest {
 				: "fabric.mod.json has no main entrypoint";
 		assert entrypoints.has("client") && !entrypoints.getAsJsonArray("client").isEmpty()
 				: "fabric.mod.json has no client entrypoint";
+	}
+
+	// Audit B15: every Client*State holder self-registers a reset with ClientSessionState
+	// in its static block, so the disconnect path iterates ALL of them and no per-class
+	// list in SuperheroesClient can go stale when a new state class appears. The few
+	// session-state singletons outside that naming convention are pinned by name.
+	private static void assertClientStatesRegisterReset() throws IOException {
+		Pattern clientStateFile = Pattern.compile("Client[A-Za-z0-9]+State\\.java");
+		List<String> namedSingletons = List.of(
+				"ClientAbilityCooldowns.java", "RemoteHeroSkins.java",
+				"JarvisDetectionHud.java", "MirrorWarpFlashHud.java", "RadialMenuHud.java");
+		forEachJavaFile(CLIENT_JAVA, file -> {
+			String name = file.getFileName().toString();
+			boolean covered = clientStateFile.matcher(name).matches() && !name.equals("ClientSessionState.java");
+			if (!covered && !namedSingletons.contains(name)) {
+				return;
+			}
+			String source = Files.readString(file);
+			assert source.contains("ClientSessionState.register(")
+					: file + " holds session state but never calls ClientSessionState.register(...) — "
+							+ "its state survives disconnects (audit B15)";
+		});
+	}
+
+	// Audit B15: client cooldown deadlines come from the level's game time, never
+	// LocalPlayer.tickCount — that resets on respawn and made the HUD show hours.
+	private static void assertClientCooldownsUseLevelGameTime() throws IOException {
+		Path cooldowns = CLIENT_JAVA.resolve("com/example/superheroes/client/ClientAbilityCooldowns.java");
+		String source = Files.readString(cooldowns);
+		assert !Pattern.compile("\\.tickCount\\b").matcher(source).find()
+				: cooldowns + " must not derive cooldown deadlines from LocalPlayer.tickCount — "
+						+ "it resets on respawn and broke the HUD (audit B15)";
 	}
 
 	private static JsonObject parseJsonObject(Path file) throws IOException {

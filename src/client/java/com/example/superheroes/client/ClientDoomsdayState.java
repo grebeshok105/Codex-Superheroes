@@ -4,6 +4,10 @@ public final class ClientDoomsdayState {
 	private static int tier = 1;
 	private static int adaptations = 0;
 
+	static {
+		ClientSessionState.register(ClientDoomsdayState::clear);
+	}
+
 	private ClientDoomsdayState() {
 	}
 

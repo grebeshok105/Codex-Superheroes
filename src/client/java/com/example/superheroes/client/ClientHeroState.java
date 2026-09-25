@@ -13,6 +13,10 @@ public final class ClientHeroState {
 	private static volatile HeroData data = HeroData.EMPTY;
 	private static volatile List<ResourceLocation> abilities = List.of();
 
+	static {
+		ClientSessionState.register(ClientHeroState::reset);
+	}
+
 	private ClientHeroState() {
 	}
 
@@ -68,5 +72,11 @@ public final class ClientHeroState {
 		}
 		Hero hero = Heroes.get(data.heroId());
 		return hero != null ? hero.getTheme() : HeroTheme.DEFAULT;
+	}
+
+	/** Drop all session state (registered with {@code ClientSessionState}). */
+	public static void reset() {
+		data = HeroData.EMPTY;
+		abilities = List.of();
 	}
 }

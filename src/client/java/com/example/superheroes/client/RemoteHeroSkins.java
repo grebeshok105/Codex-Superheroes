@@ -10,6 +10,10 @@ import java.util.UUID;
 public final class RemoteHeroSkins {
 	private static final Map<UUID, ResourceLocation> SKINS = new HashMap<>();
 
+	static {
+		ClientSessionState.register(RemoteHeroSkins::clear);
+	}
+
 	private RemoteHeroSkins() {
 	}
 

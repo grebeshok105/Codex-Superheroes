@@ -7,6 +7,10 @@ public final class ClientReinhardTimeSlowState {
 	private static volatile boolean active;
 	private static volatile long activatedAtMs;
 
+	static {
+		ClientSessionState.register(ClientReinhardTimeSlowState::reset);
+	}
+
 	private ClientReinhardTimeSlowState() {
 	}
 
@@ -36,5 +40,11 @@ public final class ClientReinhardTimeSlowState {
 
 	public static long activatedAtMs() {
 		return activatedAtMs;
+	}
+
+	/** Drop all session state (registered with {@code ClientSessionState}). */
+	public static void reset() {
+		active = false;
+		activatedAtMs = 0L;
 	}
 }

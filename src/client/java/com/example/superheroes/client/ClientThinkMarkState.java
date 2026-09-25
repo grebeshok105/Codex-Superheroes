@@ -11,6 +11,10 @@ import java.util.UUID;
 public final class ClientThinkMarkState {
 	private static final Set<UUID> ACTIVE = new HashSet<>();
 
+	static {
+		ClientSessionState.register(ClientThinkMarkState::clear);
+	}
+
 	private ClientThinkMarkState() {
 	}
 

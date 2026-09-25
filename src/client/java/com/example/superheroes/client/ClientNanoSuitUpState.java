@@ -35,6 +35,10 @@ public final class ClientNanoSuitUpState {
 	private static final Map<UUID, Anim> ANIMS = new HashMap<>();
 	private static final Map<UUID, Long> REPAIRS = new HashMap<>();
 
+	static {
+		ClientSessionState.register(ClientNanoSuitUpState::reset);
+	}
+
 	private ClientNanoSuitUpState() {
 	}
 
@@ -196,5 +200,12 @@ public final class ClientNanoSuitUpState {
 			this.texture = texture;
 			this.startMillis = startMillis;
 		}
+	}
+
+	/** Drop all session state (registered with {@code ClientSessionState}). */
+	public static void reset() {
+		LAST_SUIT.clear();
+		ANIMS.clear();
+		REPAIRS.clear();
 	}
 }

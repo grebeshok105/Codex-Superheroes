@@ -7,6 +7,10 @@ package com.example.superheroes.client;
 public final class ClientPandoraHouseState {
 	private static volatile boolean open;
 
+	static {
+		ClientSessionState.register(ClientPandoraHouseState::reset);
+	}
+
 	private ClientPandoraHouseState() {
 	}
 
@@ -16,5 +20,10 @@ public final class ClientPandoraHouseState {
 
 	public static boolean isOpen() {
 		return open;
+	}
+
+	/** Drop all session state (registered with {@code ClientSessionState}). */
+	public static void reset() {
+		open = false;
 	}
 }

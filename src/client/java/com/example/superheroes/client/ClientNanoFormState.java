@@ -12,6 +12,10 @@ import java.util.UUID;
 public final class ClientNanoFormState {
 	private static final Map<UUID, Integer> FORMS = new HashMap<>();
 
+	static {
+		ClientSessionState.register(ClientNanoFormState::clear);
+	}
+
 	private ClientNanoFormState() {
 	}
 
