@@ -1,6 +1,7 @@
 package com.example.superheroes.ability;
 
-import com.example.superheroes.effect.ModEffects;
+import com.example.superheroes.core.ability.AbilityDenial;
+import com.example.superheroes.core.ability.AbilityRules;
 import com.example.superheroes.hero.Hero;
 import com.example.superheroes.hero.Heroes;
 import com.example.superheroes.resource.EnergyLocks;
@@ -17,17 +18,9 @@ public final class AbilityRouter {
 	}
 
 	public static void activate(ServerPlayer player, ResourceLocation abilityId) {
-		if (ModEffects.isAftermath(player)) {
-			return;
-		}
-		if (player.hasEffect(ModEffects.DISABLED_ABILITIES)) {
-			player.displayClientMessage(net.minecraft.network.chat.Component.translatable(
-					"ability.superheroes.disabled_by_snap").withStyle(net.minecraft.ChatFormatting.DARK_PURPLE), true);
-			return;
-		}
-		if (player.hasEffect(ModEffects.VANITY_STRIPPED)) {
-			player.displayClientMessage(net.minecraft.network.chat.Component.translatable(
-					"ability.superheroes.vanity_stripped").withStyle(net.minecraft.ChatFormatting.DARK_PURPLE), true);
+		AbilityDenial blocked = AbilityRules.firstBlock(player, abilityId);
+		if (blocked != null) {
+			blocked.notify(player);
 			return;
 		}
 		HeroData data = HeroDataStore.get(player);
@@ -120,7 +113,7 @@ public final class AbilityRouter {
 
 	private static boolean canPayActivationCost(ServerPlayer player, HeroData data, Hero hero,
 			ResourceLocation abilityId, ResourceKind binding, float cost) {
-		if (cost <= 0f || ModEffects.isMadness(player)) {
+		if (cost <= 0f || AbilityRules.isFree(player)) {
 			return true;
 		}
 		if (binding == ResourceKind.ENERGY
