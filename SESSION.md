@@ -13,8 +13,12 @@
 - `README.md` and `fabric.mod.json` were refreshed for the revived Codex project.
 - Build CI targets Java 21.
 - Cross-session continuity is now mandatory through this file.
+- PR #34 (AGENTS.md rebuild + revival cleanup) is merged into `main`.
+- PR #35 (qualityGate) was stacked on this branch — it merged **into this branch**, so `main` is still 5 commits behind (qualityGate + lang sync + docs). This branch must be merged to `main` for the gate to land there.
 - `qualityGate` has been ported from Jujutsu and adapted to Codex: `./gradlew qualityGate` is now the canonical gate in AGENTS.md §10 and CI (`build` workflow). It runs `build` (compile + JUnit, `failOnNoDiscoveredTests`), `testProjectSanity` (`src/test/java/.../ProjectSanityTest` — 8 source/resource checks), `verifyAssertionsEnabled`, and `auditReleaseJarIsolation`. Jujutsu parts intentionally not ported: GameTest lanes, doc audit, MCP/companion audits, ArchUnit.
 - The gate caught real drift: `ability.superheroes.reinhard_wish.desc_v2` existed only in `ru_ru.json` — fixed by moving the v2 text into `desc` in both lang files.
+- A repo blueprint now exists for Codex (Java 21 + GCS Maven mirror incl. Loom `artifactUrls` patch + compile maintenance + knowledge commands).
+- Stale remote branches were cleaned: only `main`, this branch, `docs/sync-versions-v4`, and `gh-pages` remain (`gh-pages` serves the live grebeshok.eu.cc site).
 - Independent architecture/bug review and VFX-foundation research may happen in parallel; their findings should be brought back into durable project context before implementation.
 
 ## Important decisions
@@ -42,6 +46,7 @@
 ## Next session
 
 1. Read this file and current `AGENTS.md`.
-2. Check the status/results of the parallel architecture audit and VFX research tasks.
-3. Integrate findings without overlapping active branches blindly.
-4. Turn verified architectural findings into a prioritized debt map before starting broad refactors.
+2. Merge this branch (`devin/1790340168-agents-md-rebuild`) to `main` — it carries the qualityGate commits that never landed on `main` (PR #35 merged into this branch, not trunk). Delete it afterwards; keep `docs/sync-versions-v4` and `gh-pages`.
+3. Check the status/results of the parallel architecture audit and VFX research tasks.
+4. Integrate findings without overlapping active branches blindly.
+5. Turn verified architectural findings into a prioritized debt map before starting broad refactors.
