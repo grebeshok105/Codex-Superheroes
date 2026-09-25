@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
@@ -79,7 +80,7 @@ public final class KazuhaMidareRanzanAbility implements Ability {
 
 		List<LivingEntity> targets = level.getEntitiesOfClass(LivingEntity.class,
 				new AABB(impact, impact).inflate(RADIUS),
-				e -> e != player && e.isAlive() && !e.isSpectator() && !(e instanceof Player p && p.isCreative()));
+				TargetFilters.hostileTo(player));
 		float damage = airborne ? AIR_DAMAGE : GROUND_DAMAGE;
 		for (LivingEntity target : targets) {
 			target.invulnerableTime = 0;

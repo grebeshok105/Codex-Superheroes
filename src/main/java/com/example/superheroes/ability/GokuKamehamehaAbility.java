@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.damage.ModDamageTypes;
 import com.example.superheroes.effect.GokuKiStackController;
 import com.example.superheroes.particle.ModParticles;
@@ -123,7 +124,7 @@ public final class GokuKamehamehaAbility implements Ability {
 		float damage = BASE_DAMAGE * ab.multiplier;
 		AABB box = new AABB(eye, actualEnd).inflate(1.0);
 		for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, box,
-				e -> e != player && e.isAlive() && !e.isSpectator() && distanceToBeam(e, eye, dir) < 1.5)) {
+				TargetFilters.hostileTo(player).and(e -> distanceToBeam(e, eye, dir) < 1.5))) {
 			if (ab.alreadyHit.add(target.getUUID())) {
 				target.hurt(ModDamageTypes.gokuKamehameha(level, player), damage);
 				target.igniteForSeconds(2f);

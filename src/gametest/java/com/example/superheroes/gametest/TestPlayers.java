@@ -23,6 +23,25 @@ final class TestPlayers {
 		return player;
 	}
 
+	/**
+	 * A real {@link ServerPlayer} with a unique name, for tests that need distinct
+	 * scoreboard identities or a non-creative game mode ({@code makeMockServerPlayerInLevel}
+	 * hardcodes {@code isCreative() = true} and shares the name "test-mock-player").
+	 */
+	static ServerPlayer join(GameTestHelper helper, String name) {
+		com.mojang.authlib.GameProfile profile = new com.mojang.authlib.GameProfile(java.util.UUID.randomUUID(), name);
+		net.minecraft.server.network.CommonListenerCookie cookie =
+				net.minecraft.server.network.CommonListenerCookie.createInitial(profile, false);
+		ServerPlayer player = new ServerPlayer(helper.getLevel().getServer(), helper.getLevel(),
+				profile, cookie.clientInformation());
+		net.minecraft.network.Connection connection = new net.minecraft.network.Connection(
+				net.minecraft.network.protocol.PacketFlow.SERVERBOUND);
+		new io.netty.channel.embedded.EmbeddedChannel(connection);
+		helper.getLevel().getServer().getPlayerList().placeNewPlayer(connection, player, cookie);
+		player.setGameMode(GameType.SURVIVAL);
+		return player;
+	}
+
 	/** Runs the same disconnect path a closing client triggers on the server thread. */
 	static void leave(ServerPlayer player) {
 		player.connection.onDisconnect(new DisconnectionDetails(Component.literal("gametest")));

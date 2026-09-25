@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.damage.ModDamageTypes;
 import com.example.superheroes.particle.ModParticles;
 import net.minecraft.core.particles.ParticleTypes;
@@ -107,7 +108,7 @@ public final class GokuSpiritBombAbility implements Ability {
 			Vec3 center = origin.add(player.getLookAngle().scale(8.0)).add(0, 1.2, 0);
 			List<LivingEntity> victims = level.getEntitiesOfClass(LivingEntity.class,
 					new AABB(center, center).inflate(RADIUS),
-					e -> e != player && e.isAlive() && !e.isSpectator());
+					TargetFilters.hostileTo(player));
 			for (LivingEntity victim : victims) {
 				victim.invulnerableTime = 0;
 				victim.hurt(ModDamageTypes.gokuSpiritBomb(level, player), DAMAGE);

@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.damage.ModDamageTypes;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
@@ -55,7 +56,7 @@ public final class ThanosRealityTearAbility implements Ability {
 				anchor.x + RADIUS, anchor.y + 6, anchor.z + RADIUS);
 
 		for (LivingEntity le : level.getEntitiesOfClass(LivingEntity.class, aoe,
-				e -> e != player && e.isAlive() && !(e instanceof Player p && p.getUUID().equals(player.getUUID())))) {
+				TargetFilters.hostileTo(player))) {
 			Vec3 toCenter = anchor.subtract(le.position()).normalize().scale(PULL_STRENGTH);
 			le.setDeltaMovement(toCenter.x, 0.6, toCenter.z);
 			le.hurtMarked = true;

@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.damage.ModDamageTypes;
 import com.example.superheroes.particle.ModParticles;
 import com.example.superheroes.util.SafeTeleport;
@@ -53,7 +54,7 @@ public final class GokuInstantTransmissionAbility implements Ability {
 		ServerLevel level = player.serverLevel();
 		AABB box = player.getBoundingBox().inflate(SEARCH_RANGE);
 		List<LivingEntity> candidates = level.getEntitiesOfClass(LivingEntity.class, box,
-				e -> e != player && e.isAlive() && !e.isSpectator() && player.distanceTo(e) <= SEARCH_RANGE);
+				TargetFilters.hostileTo(player).and(e -> player.distanceTo(e) <= SEARCH_RANGE));
 		candidates.sort(Comparator.comparingDouble(player::distanceTo));
 		LivingEntity target = candidates.isEmpty() ? null : candidates.get(0);
 

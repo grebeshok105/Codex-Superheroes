@@ -1,6 +1,7 @@
 package com.example.superheroes.effect;
 
 import com.example.superheroes.attachment.ModAttachments;
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.hero.ScorpionHero;
 import com.example.superheroes.transform.HeroData;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
@@ -215,7 +216,7 @@ public final class ScorpionController {
 		}
 		AABB box = new AABB(eye, eye.add(forward.scale(BREATH_RANGE))).inflate(2.0);
 		for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, box,
-				t -> isValidTarget(player, t))) {
+				TargetFilters.hostileTo(player))) {
 			Vec3 center = target.position().add(0.0, target.getBbHeight() * 0.5, 0.0);
 			Vec3 toTarget = center.subtract(eye);
 			double distance = toTarget.length();
@@ -255,10 +256,4 @@ public final class ScorpionController {
 		}
 	}
 
-	private static boolean isValidTarget(ServerPlayer owner, LivingEntity target) {
-		return target != owner
-				&& target.isAlive()
-				&& !target.isSpectator()
-				&& !(target instanceof Player player && player.isCreative());
-	}
 }

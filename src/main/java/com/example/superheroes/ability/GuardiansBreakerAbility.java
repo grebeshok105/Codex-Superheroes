@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.network.ScreenShakeS2CPayload;
 import com.example.superheroes.world.WorldDestructionPolicy;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
@@ -148,7 +149,7 @@ public final class GuardiansBreakerAbility implements Ability {
 		double closestDistanceSqr = TARGET_RANGE * TARGET_RANGE;
 
 		for (LivingEntity entity : level.getEntitiesOfClass(LivingEntity.class, scan,
-				e -> validTarget(player, e))) {
+				TargetFilters.hostileTo(player))) {
 			double distanceSqr = centerOf(entity).distanceToSqr(origin);
 			if (distanceSqr <= closestDistanceSqr) {
 				closestDistanceSqr = distanceSqr;
@@ -159,12 +160,6 @@ public final class GuardiansBreakerAbility implements Ability {
 		return closest;
 	}
 
-	private static boolean validTarget(ServerPlayer player, LivingEntity entity) {
-		return entity != player
-				&& entity.isAlive()
-				&& !entity.isSpectator()
-				&& !(entity instanceof Player p && p.isCreative());
-	}
 
 	private static int breakFlightPath(ServerLevel level, ServerPlayer player, Vec3 origin, Vec3 direction, double distance) {
 		int destroyed = 0;
@@ -236,7 +231,7 @@ public final class GuardiansBreakerAbility implements Ability {
 		AABB scan = new AABB(impact, impact).inflate(IMPACT_RADIUS);
 		int swept = 0;
 		for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, scan,
-				entity -> validTarget(player, entity) && entity != primary)) {
+				TargetFilters.hostileTo(player).and(entity -> entity != primary))) {
 			Vec3 center = centerOf(target);
 			double distanceSqr = center.distanceToSqr(impact);
 			if (distanceSqr > IMPACT_RADIUS * IMPACT_RADIUS) {

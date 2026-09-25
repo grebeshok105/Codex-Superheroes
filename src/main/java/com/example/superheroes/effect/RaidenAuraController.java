@@ -2,6 +2,7 @@ package com.example.superheroes.effect;
 
 import com.example.superheroes.ability.AbilityIds;
 import com.example.superheroes.attachment.ModAttachments;
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.hero.RaidenHero;
 import com.example.superheroes.particle.ModParticles;
 import com.example.superheroes.transform.HeroData;
@@ -59,9 +60,7 @@ public final class RaidenAuraController {
 		LivingEntity nearest = null;
 		double bestDist = Double.MAX_VALUE;
 		for (LivingEntity le : level.getEntitiesOfClass(LivingEntity.class, box,
-				e -> e != player && e.isAlive() && !e.isSpectator()
-						&& !(e instanceof Player p && p.getUUID().equals(player.getUUID()))
-						&& e.position().distanceToSqr(origin) <= r2)) {
+				TargetFilters.hostileTo(player).and(e -> e.position().distanceToSqr(origin) <= r2))) {
 			double d = le.position().distanceToSqr(origin);
 			if (d < bestDist) {
 				bestDist = d;

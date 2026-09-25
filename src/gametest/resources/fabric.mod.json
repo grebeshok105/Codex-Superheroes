@@ -18,7 +18,8 @@
 			"com.example.superheroes.gametest.PassivesFallGameTests",
 			"com.example.superheroes.gametest.PublicHeroSyncGameTests",
 			"com.example.superheroes.gametest.HeroTickDispatcherGameTests",
-			"com.example.superheroes.gametest.ShadowsTeleportsGameTests"
+			"com.example.superheroes.gametest.ShadowsTeleportsGameTests",
+			"com.example.superheroes.gametest.TargetPredicateGameTests"
 		]
 	},
 	"depends": {

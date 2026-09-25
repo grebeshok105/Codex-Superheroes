@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.network.ScreenShakeS2CPayload;
 import com.example.superheroes.sound.ModSounds;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
@@ -52,7 +53,7 @@ public final class StunningRoarAbility implements Ability {
 
 		AABB box = new AABB(origin, origin).inflate(RADIUS);
 		List<Entity> hits = level.getEntities(player, box,
-				e -> e != player && e.isAlive() && !e.isSpectator() && e instanceof LivingEntity);
+				e -> e instanceof LivingEntity le && TargetFilters.hostileTo(player).test(le));
 		for (Entity e : hits) {
 			double d = e.position().distanceTo(origin);
 			if (d > RADIUS) continue;

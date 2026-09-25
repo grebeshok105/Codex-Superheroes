@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.debug.AdminAbilityDebug;
 import com.example.superheroes.effect.ReinhardSpeedJudgmentController;
 import net.minecraft.core.particles.ParticleTypes;
@@ -99,7 +100,7 @@ public final class ReinhardSpeedJudgmentAbility implements Ability {
 		ServerPlayer best = null;
 		double bestScore = MIN_SPEED_PER_TICK;
 		for (ServerPlayer candidate : level.getEntitiesOfClass(ServerPlayer.class, box,
-				e -> e.isAlive() && e != player && !e.isSpectator())) {
+				e -> TargetFilters.harmableBy(e, player))) {
 			double score = speedScore(candidate);
 			if (score > bestScore) {
 				bestScore = score;

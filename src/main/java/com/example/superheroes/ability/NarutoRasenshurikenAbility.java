@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.damage.ModDamageTypes;
 import com.example.superheroes.particle.ModParticles;
 import net.minecraft.core.particles.ParticleTypes;
@@ -127,7 +128,7 @@ public final class NarutoRasenshurikenAbility implements Ability {
 					pos.x, pos.y, pos.z, 4, 0.8, 0.2, 0.8, 0.0);
 			List<LivingEntity> victims = new ArrayList<>(level.getEntitiesOfClass(LivingEntity.class,
 					new AABB(pos, pos).inflate(RADIUS),
-					e -> e != player && e.isAlive() && !e.isSpectator()));
+					TargetFilters.hostileTo(player)));
 			if (!victims.isEmpty()) {
 				for (LivingEntity victim : victims) {
 					victim.invulnerableTime = 0;

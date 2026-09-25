@@ -1,6 +1,7 @@
 package com.example.superheroes.effect;
 
 import com.example.superheroes.attachment.ModAttachments;
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.hero.RaidenHero;
 import com.example.superheroes.item.MusouNoHitotachiItem;
 import com.example.superheroes.network.ScreenShakeS2CPayload;
@@ -204,9 +205,7 @@ public final class RaidenMusouIsshinController {
 				p.origin.x - 4, p.origin.y - SLASH_DEPTH, p.origin.z - 4,
 				end.x + 4, p.origin.y + 6, end.z + 4));
 		List<LivingEntity> targets = level.getEntitiesOfClass(LivingEntity.class, slashBox,
-				e -> e != player && e.isAlive() && !e.isSpectator()
-						&& !(e instanceof Player targetPlayer && targetPlayer.getUUID().equals(player.getUUID()))
-						&& isInSlashPath(e.position(), p.origin, p.dir, p.perp));
+				TargetFilters.hostileTo(player).and(e -> isInSlashPath(e.position(), p.origin, p.dir, p.perp)));
 		for (LivingEntity le : targets) {
 			float dmg = (le instanceof Player) ? SLASH_DAMAGE_PLAYER : SLASH_DAMAGE_MOB;
 			le.invulnerableTime = 0;
@@ -221,7 +220,7 @@ public final class RaidenMusouIsshinController {
 		for (LivingEntity le : level.getEntitiesOfClass(LivingEntity.class,
 				new AABB(end.x - IMPACT_RADIUS, end.y - 4, end.z - IMPACT_RADIUS,
 						end.x + IMPACT_RADIUS, end.y + 7, end.z + IMPACT_RADIUS),
-				e -> e != player && e.isAlive() && !e.isSpectator() && e.position().distanceToSqr(end) <= r2)) {
+				TargetFilters.hostileTo(player).and(e -> e.position().distanceToSqr(end) <= r2))) {
 			le.invulnerableTime = 0;
 			le.hurt(level.damageSources().playerAttack(player), IMPACT_DAMAGE);
 		}
@@ -285,8 +284,7 @@ public final class RaidenMusouIsshinController {
 		AABB box = new AABB(center.x - FREEZE_RADIUS, center.y - 18, center.z - FREEZE_RADIUS,
 				center.x + FREEZE_RADIUS, center.y + 18, center.z + FREEZE_RADIUS);
 		for (LivingEntity le : level.getEntitiesOfClass(LivingEntity.class, box,
-				e -> e != caster && e.isAlive() && !e.isSpectator()
-						&& e.position().distanceToSqr(center) <= r2)) {
+				TargetFilters.hostileTo(caster).and(e -> e.position().distanceToSqr(center) <= r2))) {
 			le.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN,
 					FREEZE_REFRESH_TICKS + 12, 9, true, false, false));
 			le.addEffect(new MobEffectInstance(MobEffects.WEAKNESS,

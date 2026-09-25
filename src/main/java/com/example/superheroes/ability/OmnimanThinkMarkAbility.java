@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.lifecycle.ControlLockKind;
 import com.example.superheroes.lifecycle.EntityControlLock;
 import com.example.superheroes.network.ThinkMarkS2CPayload;
@@ -287,7 +288,7 @@ public final class OmnimanThinkMarkAbility implements Ability {
 		Vec3 look = player.getViewVector(1f).normalize();
 		AABB box = player.getBoundingBox().inflate(GRAB_RANGE);
 		List<LivingEntity> candidates = player.serverLevel().getEntitiesOfClass(LivingEntity.class, box,
-				e -> e != player && e.isAlive() && !e.isSpectator());
+				TargetFilters.hostileTo(player));
 		LivingEntity best = null;
 		double bestScore = 0.55; // минимальный косинус угла (~57° конус)
 		for (LivingEntity e : candidates) {

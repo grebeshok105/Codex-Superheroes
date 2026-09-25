@@ -1,5 +1,6 @@
 package com.example.superheroes.physics;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.network.ScreenShakeS2CPayload;
 import com.example.superheroes.network.WallImpactDebrisS2CPayload;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
@@ -134,7 +135,7 @@ public final class CombatImpactEngine {
 		}
 		AABB box = new AABB(impact, impact).inflate(radius);
 		for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, box,
-				entity -> entity != primary && validSweepTarget(attacker, entity))) {
+				entity -> entity != primary && TargetFilters.hostileTo(attacker).test(entity))) {
 			Vec3 center = centerOf(target);
 			double distanceSqr = center.distanceToSqr(impact);
 			if (distanceSqr > radius * radius) {
@@ -238,12 +239,6 @@ public final class CombatImpactEngine {
 		}
 	}
 
-	private static boolean validSweepTarget(ServerPlayer attacker, LivingEntity entity) {
-		if (entity == attacker || !entity.isAlive() || entity.isSpectator()) {
-			return false;
-		}
-		return !(entity instanceof Player player && player.isCreative());
-	}
 
 	private static Vec3 centerOf(LivingEntity entity) {
 		return entity.position().add(0.0, entity.getBbHeight() * 0.55, 0.0);

@@ -1,6 +1,7 @@
 package com.example.superheroes.ability;
 
 import com.example.superheroes.attachment.ModAttachments;
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.damage.ModDamageTypes;
 import com.example.superheroes.effect.ModEffects;
 import com.example.superheroes.effect.UraniumDefenseController;
@@ -140,7 +141,7 @@ public final class EyeLasersAbility implements Ability {
 		AABB box = player.getBoundingBox().expandTowards(dir.scale(RANGE)).inflate(1.0);
 		EntityHitResult hit = ProjectileUtil.getEntityHitResult(
 				level, player, eye, entitySearchEnd, box,
-				e -> e instanceof LivingEntity && e.isAlive() && e != player && !e.isSpectator());
+				e -> e instanceof LivingEntity le && TargetFilters.hostileTo(player).test(le));
 		Vec3 actualEnd = entitySearchEnd;
 		float damage = damagePerTick(player) * (madness ? MADNESS_DAMAGE_MUL : 1f);
 		boolean choppy = false;

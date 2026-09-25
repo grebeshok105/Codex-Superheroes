@@ -1,5 +1,6 @@
 package com.example.superheroes.effect;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.entity.ShadowSoldierEntity;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.core.particles.ParticleTypes;
@@ -66,11 +67,10 @@ public final class MonarchsDomainController {
 		ServerLevel level = player.serverLevel();
 		AABB box = player.getBoundingBox().inflate(RADIUS);
 		List<LivingEntity> hits = level.getEntitiesOfClass(LivingEntity.class, box,
-				e -> e != player && e.isAlive() && !(e instanceof ShadowSoldierEntity)
-						&& !(e instanceof Player p && p.getUUID().equals(player.getUUID())));
+				TargetFilters.hostileTo(player).and(e -> !(e instanceof ShadowSoldierEntity)));
 		for (LivingEntity hit : hits) {
 			if (hit.distanceToSqr(player) > RADIUS * RADIUS) continue;
-			hit.hurt(level.damageSources().magic(), TICK_DAMAGE);
+			hit.hurt(level.damageSources().indirectMagic(player, player), TICK_DAMAGE);
 			level.sendParticles(ParticleTypes.SOUL_FIRE_FLAME,
 					hit.getX(), hit.getY() + hit.getBbHeight() * 0.5, hit.getZ(),
 					6, 0.3, 0.4, 0.3, 0.05);

@@ -1,5 +1,6 @@
 package com.example.superheroes.item;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.item.bound.BoundWeaponItem;
 import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.effect.ReinhardState;
@@ -72,9 +73,7 @@ public class RoyalIcicleItem extends BoundWeaponItem {
 							origin.x - SECOND_COMING_CLEAVE_RADIUS, origin.y - SECOND_COMING_CLEAVE_RADIUS, origin.z - SECOND_COMING_CLEAVE_RADIUS,
 							origin.x + SECOND_COMING_CLEAVE_RADIUS, origin.y + SECOND_COMING_CLEAVE_RADIUS, origin.z + SECOND_COMING_CLEAVE_RADIUS);
 					List<LivingEntity> scTargets = level.getEntitiesOfClass(LivingEntity.class, scBox,
-							e -> e != player && e != target && e.isAlive() && !e.isSpectator()
-									&& !(e instanceof Player p && p.getUUID().equals(player.getUUID()))
-									&& e.position().add(0, e.getBbHeight() * 0.5, 0).distanceToSqr(origin) <= scR2);
+							TargetFilters.hostileTo(player).and(e -> e != target && e.position().add(0, e.getBbHeight() * 0.5, 0).distanceToSqr(origin) <= scR2));
 					for (LivingEntity le : scTargets) {
 						le.invulnerableTime = 0;
 						le.hurt(scSrc, SECOND_COMING_CLEAVE_DAMAGE);
@@ -106,9 +105,7 @@ public class RoyalIcicleItem extends BoundWeaponItem {
 							origin.x + CLEAVE_RADIUS, origin.y + CLEAVE_RADIUS, origin.z + CLEAVE_RADIUS);
 					double cleaveR2 = CLEAVE_RADIUS * CLEAVE_RADIUS;
 					List<LivingEntity> cleaveTargets = level.getEntitiesOfClass(LivingEntity.class, cleaveBox,
-							e -> e != player && e != target && e.isAlive() && !e.isSpectator()
-									&& !(e instanceof Player p && p.getUUID().equals(player.getUUID()))
-									&& e.position().add(0, e.getBbHeight() * 0.5, 0).distanceToSqr(origin) <= cleaveR2);
+							TargetFilters.hostileTo(player).and(e -> e != target && e.position().add(0, e.getBbHeight() * 0.5, 0).distanceToSqr(origin) <= cleaveR2));
 					for (LivingEntity le : cleaveTargets) {
 						le.hurt(cleaveSrc, CLEAVE_DAMAGE);
 						le.invulnerableTime = 0;

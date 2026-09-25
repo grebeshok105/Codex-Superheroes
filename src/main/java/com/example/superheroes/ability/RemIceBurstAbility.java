@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.resources.ResourceLocation;
@@ -57,7 +58,7 @@ public final class RemIceBurstAbility implements Ability {
 		Vec3 end = eye.add(forward.scale(RANGE));
 		AABB scan = new AABB(eye, end).inflate(2.6);
 		for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, scan,
-				target -> isValidTarget(player, target))) {
+				TargetFilters.hostileTo(player))) {
 			Vec3 center = target.position().add(0.0, target.getBbHeight() * 0.5, 0.0);
 			Vec3 toTarget = center.subtract(eye);
 			double distance = toTarget.length();
@@ -97,10 +98,4 @@ public final class RemIceBurstAbility implements Ability {
 		return true;
 	}
 
-	private static boolean isValidTarget(ServerPlayer owner, LivingEntity target) {
-		return target != owner
-				&& target.isAlive()
-				&& !target.isSpectator()
-				&& !(target instanceof Player player && player.isCreative());
-	}
 }

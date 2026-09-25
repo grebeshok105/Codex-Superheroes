@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.effect.ModEffects;
 import com.example.superheroes.effect.ThanosCrossModSnapHook;
 import com.example.superheroes.effect.ThanosGauntletStateController;
@@ -92,8 +93,7 @@ public final class ThanosSnapAbility implements Ability {
 
 		AABB aoe = player.getBoundingBox().inflate(RADIUS, RADIUS, RADIUS);
 		List<Player> victims = level.getEntitiesOfClass(Player.class, aoe,
-				p -> p.isAlive() && !p.getUUID().equals(player.getUUID())
-						&& !p.isCreative() && !p.isSpectator());
+				p -> TargetFilters.harmableBy(p, player) && TargetFilters.notCreative(p));
 
 		int snapped = 0;
 		for (Player victim : victims) {

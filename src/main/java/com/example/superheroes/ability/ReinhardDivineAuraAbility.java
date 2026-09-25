@@ -1,6 +1,7 @@
 package com.example.superheroes.ability;
 
 import com.example.superheroes.attachment.ModAttachments;
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.effect.ReinhardState;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
@@ -64,8 +65,7 @@ public final class ReinhardDivineAuraAbility implements Ability {
 		if (player.tickCount % 10 == 0) {
 			AABB box = player.getBoundingBox().inflate(RADIUS);
 			List<LivingEntity> targets = level.getEntitiesOfClass(LivingEntity.class, box,
-					e -> e.isAlive() && e != player && !e.isSpectator()
-							&& e.distanceTo(player) <= RADIUS);
+					TargetFilters.hostileTo(player).and(e -> e.distanceTo(player) <= RADIUS));
 			for (LivingEntity target : targets) {
 				target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 30, 1, true, false, false));
 				target.addEffect(new MobEffectInstance(MobEffects.GLOWING, 30, 0, true, false, false));

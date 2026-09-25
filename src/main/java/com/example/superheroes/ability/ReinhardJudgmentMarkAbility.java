@@ -1,6 +1,7 @@
 package com.example.superheroes.ability;
 
 import com.example.superheroes.attachment.ModAttachments;
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.effect.ReinhardState;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
@@ -66,7 +67,7 @@ public final class ReinhardJudgmentMarkAbility implements Ability {
 		Vec3 cap = bh.getType() == HitResult.Type.BLOCK ? bh.getLocation() : end;
 		AABB box = player.getBoundingBox().expandTowards(dir.scale(RANGE)).inflate(0.8);
 		EntityHitResult hit = ProjectileUtil.getEntityHitResult(level, player, eye, cap, box,
-				e -> e instanceof LivingEntity && e.isAlive() && e != player && !e.isSpectator());
+				e -> e instanceof LivingEntity le && TargetFilters.hostileTo(player).test(le));
 		if (hit == null) return false;
 		LivingEntity target = (LivingEntity) hit.getEntity();
 

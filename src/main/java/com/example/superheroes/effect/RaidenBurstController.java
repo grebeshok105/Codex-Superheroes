@@ -1,6 +1,7 @@
 package com.example.superheroes.effect;
 
 import com.example.superheroes.attachment.ModAttachments;
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.hero.HeroAttributes;
 import com.example.superheroes.hero.RaidenHero;
 import com.example.superheroes.transform.HeroData;
@@ -76,9 +77,7 @@ public final class RaidenBurstController {
 				origin.x - FINAL_SLASH_RADIUS, origin.y - FINAL_SLASH_RADIUS, origin.z - FINAL_SLASH_RADIUS,
 				origin.x + FINAL_SLASH_RADIUS, origin.y + FINAL_SLASH_RADIUS, origin.z + FINAL_SLASH_RADIUS);
 		List<LivingEntity> targets = level.getEntitiesOfClass(LivingEntity.class, box,
-				e -> e != player && e.isAlive() && !e.isSpectator()
-						&& !(e instanceof Player p && p.getUUID().equals(player.getUUID()))
-						&& e.position().add(0, e.getBbHeight() * 0.5, 0).distanceToSqr(origin) <= r2);
+				TargetFilters.hostileTo(player).and(e -> e.position().add(0, e.getBbHeight() * 0.5, 0).distanceToSqr(origin) <= r2));
 		for (LivingEntity le : targets) {
 			float dmg = (le instanceof Player) ? FINAL_SLASH_DAMAGE_PLAYER : FINAL_SLASH_DAMAGE_MOB;
 			le.invulnerableTime = 0;

@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.effect.RegulusGreedController;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -76,7 +77,7 @@ public final class ManiaOfGreedAbility implements Ability {
 		LivingEntity best = null;
 		double bestDist = maxDistSq;
 		for (Entity entity : player.serverLevel().getEntities(player, box,
-				e -> e != player && e.isAlive() && !e.isSpectator() && e instanceof LivingEntity)) {
+				e -> e instanceof LivingEntity le && TargetFilters.hostileTo(player).test(le))) {
 			Vec3 pos = entity.getBoundingBox().getCenter();
 			Vec3 toEntity = pos.subtract(eyes);
 			double along = toEntity.dot(look);

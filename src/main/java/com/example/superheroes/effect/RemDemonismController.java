@@ -1,5 +1,6 @@
 package com.example.superheroes.effect;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.transform.HeroDataStore;
 import com.example.superheroes.ModId;
 import com.example.superheroes.ability.AbilityIds;
@@ -124,7 +125,7 @@ public final class RemDemonismController {
 					continue;
 				}
 				Entity entity = player.serverLevel().getEntity(entry.getKey());
-				if (!(entity instanceof LivingEntity target) || !isValidTarget(player, target)) {
+				if (!(entity instanceof LivingEntity target) || !TargetFilters.hostileTo(player).test(target)) {
 					pullIt.remove();
 					continue;
 				}
@@ -299,7 +300,7 @@ public final class RemDemonismController {
 	}
 
 	public static void startMorningStarPull(ServerPlayer player, LivingEntity target) {
-		if (player == null || target == null || !isActive(player) || !isValidTarget(player, target)) {
+		if (player == null || target == null || !isActive(player) || !TargetFilters.hostileTo(player).test(target)) {
 			return;
 		}
 		MORNING_STAR_PULLS.put(target.getUUID(), new MorningStarPull(
@@ -406,7 +407,7 @@ public final class RemDemonismController {
 		AABB hitBox = new AABB(
 				impact.x - CRATER_RADIUS, player.getY() - 1.0, impact.z - CRATER_RADIUS,
 				impact.x + CRATER_RADIUS, player.getY() + 2.5, impact.z + CRATER_RADIUS);
-		for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, hitBox, target -> isValidTarget(player, target))) {
+		for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, hitBox, TargetFilters.hostileTo(player))) {
 			double dist = target.position().distanceTo(impact);
 			if (dist > CRATER_RADIUS + 1.2) continue;
 			float falloff = (float) Math.max(0.45, 1.0 - dist / (CRATER_RADIUS + 1.2));
@@ -530,7 +531,7 @@ public final class RemDemonismController {
 		AABB box = new AABB(center.x - width - 1.2, center.y - 3.0, center.z - width - 1.2,
 				center.x + width + 1.2, center.y + 4.0, center.z + width + 1.2);
 		for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, box,
-				target -> isValidTarget(player, target))) {
+				TargetFilters.hostileTo(player))) {
 			if (!wave.hitTargets.add(target.getUUID())) {
 				continue;
 			}
@@ -653,12 +654,6 @@ public final class RemDemonismController {
 		return RemHero.ID.equals(data.heroId());
 	}
 
-	private static boolean isValidTarget(ServerPlayer owner, LivingEntity target) {
-		return target != owner
-				&& target.isAlive()
-				&& !target.isSpectator()
-				&& !(target instanceof Player player && player.isCreative());
-	}
 
 	private static void removeMorningStarPulls(UUID ownerId) {
 		MORNING_STAR_PULLS.entrySet().removeIf(entry -> ownerId.equals(entry.getValue().ownerId));

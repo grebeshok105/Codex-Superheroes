@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.effect.DoomGripController;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -48,7 +49,7 @@ public final class DoomGripAbility implements Ability {
 		AABB box = new AABB(origin.subtract(SEARCH_RADIUS, SEARCH_RADIUS, SEARCH_RADIUS),
 				origin.add(SEARCH_RADIUS, SEARCH_RADIUS, SEARCH_RADIUS));
 		List<LivingEntity> candidates = level.getEntitiesOfClass(LivingEntity.class, box,
-				e -> e != player && e.isAlive() && !isAlly(e, player));
+				TargetFilters.hostileTo(player));
 		LivingEntity target = candidates.stream()
 				.min(Comparator.comparingDouble(e -> e.position().distanceToSqr(origin)))
 				.orElse(null);
@@ -61,7 +62,4 @@ public final class DoomGripAbility implements Ability {
 		return true;
 	}
 
-	private static boolean isAlly(LivingEntity e, Player player) {
-		return e.getUUID().equals(player.getUUID());
-	}
 }

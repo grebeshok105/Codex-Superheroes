@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.damage.ModDamageTypes;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
@@ -57,7 +58,7 @@ public final class ThanosMindPulseAbility implements Ability {
 		AABB scan = new AABB(eye, end).inflate(2.0);
 		int hits = 0;
 		for (LivingEntity le : level.getEntitiesOfClass(LivingEntity.class, scan,
-				e -> e != player && e.isAlive() && !(e instanceof Player p && p.getUUID().equals(player.getUUID())))) {
+				TargetFilters.hostileTo(player))) {
 			Vec3 toEntity = le.position().add(0, le.getBbHeight() / 2, 0).subtract(eye);
 			double len = toEntity.length();
 			if (len < 0.001) continue;

@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.damage.ModDamageTypes;
 import com.example.superheroes.particle.ModParticles;
 import net.minecraft.core.particles.ParticleTypes;
@@ -87,7 +88,7 @@ public final class CapShieldSlamAbility implements Ability {
 				pos.x - RADIUS, pos.y - 1, pos.z - RADIUS,
 				pos.x + RADIUS, pos.y + 2, pos.z + RADIUS);
 		for (LivingEntity le : level.getEntitiesOfClass(LivingEntity.class, box,
-				e -> e != player && e.isAlive() && !e.isSpectator())) {
+				TargetFilters.hostileTo(player))) {
 			le.hurt(ModDamageTypes.capShieldSlam(level, player), DAMAGE);
 			Vec3 away = le.position().subtract(pos);
 			double horizDist = Math.sqrt(away.x * away.x + away.z * away.z);

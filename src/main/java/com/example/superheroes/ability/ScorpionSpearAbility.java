@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.effect.ScorpionController;
 import com.example.superheroes.effect.ScorpionFx;
 import net.minecraft.core.particles.ParticleTypes;
@@ -63,7 +64,7 @@ public final class ScorpionSpearAbility implements Ability {
 		double bestDistance = RANGE + 1.0;
 		for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class,
 				new AABB(eye, eye.add(forward.scale(RANGE))).inflate(3.0),
-				target -> isValidTarget(player, target))) {
+				TargetFilters.hostileTo(player))) {
 			Vec3 center = target.position().add(0.0, target.getBbHeight() * 0.5, 0.0);
 			Vec3 toTarget = center.subtract(eye);
 			double distance = toTarget.length();
@@ -118,10 +119,4 @@ public final class ScorpionSpearAbility implements Ability {
 		return true;
 	}
 
-	private static boolean isValidTarget(ServerPlayer owner, LivingEntity target) {
-		return target != owner
-				&& target.isAlive()
-				&& !target.isSpectator()
-				&& !(target instanceof Player player && player.isCreative());
-	}
 }

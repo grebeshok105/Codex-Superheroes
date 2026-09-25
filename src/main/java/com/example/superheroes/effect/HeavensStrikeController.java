@@ -1,5 +1,6 @@
 package com.example.superheroes.effect;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.network.ScreenShakeS2CPayload;
 import com.example.superheroes.sound.ModSounds;
 import com.example.superheroes.world.WorldDestructionPolicy;
@@ -246,8 +247,7 @@ public final class HeavensStrikeController {
 		DamageSource src = level.damageSources().playerAttack(player);
 		double r2 = dmgRange * dmgRange;
 		for (LivingEntity le : level.getEntitiesOfClass(LivingEntity.class, box,
-				e -> e != player && e.isAlive() && !e.isSpectator()
-						&& e.position().distanceToSqr(t) <= r2)) {
+				TargetFilters.hostileTo(player).and(e -> e.position().distanceToSqr(t) <= r2))) {
 			le.invulnerableTime = 0;
 			le.hurt(src, v.damage);
 			Vec3 push = le.position().subtract(t);

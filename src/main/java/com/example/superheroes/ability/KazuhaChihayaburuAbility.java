@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
@@ -66,7 +67,7 @@ public final class KazuhaChihayaburuAbility implements Ability {
 
 		List<LivingEntity> targets = level.getEntitiesOfClass(LivingEntity.class,
 				new AABB(center, center).inflate(RADIUS),
-				e -> e != player && e.isAlive() && !e.isSpectator() && !(e instanceof Player p && p.isCreative()));
+				TargetFilters.hostileTo(player));
 		for (LivingEntity target : targets) {
 			target.invulnerableTime = 0;
 			target.hurt(level.damageSources().playerAttack(player), DAMAGE);

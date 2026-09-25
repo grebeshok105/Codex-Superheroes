@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.damage.ModDamageTypes;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
@@ -85,8 +86,7 @@ public final class KratosLeviathanThrowAbility implements Ability {
 			primary.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 120, 1, true, true, true));
 			AABB splash = primary.getBoundingBox().inflate(3.5);
 			for (LivingEntity neighbor : level.getEntitiesOfClass(LivingEntity.class, splash,
-					e -> e != player && e != primary && e.isAlive()
-							&& !(e instanceof Player p2 && p2.getUUID().equals(player.getUUID())))) {
+					TargetFilters.hostileTo(player).and(e -> e != primary))) {
 				neighbor.hurt(ModDamageTypes.kratosLeviathan(level, player), 16.0f);
 				neighbor.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 80, 2, true, true, true));
 			}
@@ -108,7 +108,7 @@ public final class KratosLeviathanThrowAbility implements Ability {
 		LivingEntity best = null;
 		double bestScore = -Double.MAX_VALUE;
 		for (LivingEntity le : level.getEntitiesOfClass(LivingEntity.class, scan,
-				e -> e != player && e.isAlive() && !(e instanceof Player p && p.getUUID().equals(player.getUUID())))) {
+				TargetFilters.hostileTo(player))) {
 			Vec3 toEntity = le.position().add(0, le.getBbHeight() / 2, 0).subtract(eye);
 			double dist = toEntity.length();
 			if (dist < 0.001 || dist > RANGE) continue;

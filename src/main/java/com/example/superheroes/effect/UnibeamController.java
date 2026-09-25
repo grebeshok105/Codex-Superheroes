@@ -1,5 +1,6 @@
 package com.example.superheroes.effect;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.transform.HeroDataStore;
 import com.example.superheroes.damage.ModDamageTypes;
 import com.example.superheroes.particle.ModParticles;
@@ -168,7 +169,7 @@ public final class UnibeamController {
 
 		AABB pullBox = player.getBoundingBox().inflate(PULL_RADIUS);
 		List<LivingEntity> nearby = level.getEntitiesOfClass(LivingEntity.class, pullBox,
-				e -> e != player && e.isAlive() && !e.isSpectator());
+				TargetFilters.hostileTo(player));
 		for (LivingEntity target : nearby) {
 			Vec3 toPlayer = chest.subtract(target.position().add(0, target.getBbHeight() * 0.5, 0));
 			double dist = toPlayer.length();
@@ -350,7 +351,7 @@ public final class UnibeamController {
 		Vec3 end = origin.add(dir.scale(BEAM_RANGE));
 		AABB box = new AABB(origin, end).inflate(BEAM_RADIUS + 0.5);
 		List<LivingEntity> ents = level.getEntitiesOfClass(LivingEntity.class, box,
-				e -> e != player && e.isAlive() && !e.isSpectator());
+				TargetFilters.hostileTo(player));
 		for (LivingEntity e : ents) {
 			Vec3 toEnt = e.getBoundingBox().getCenter().subtract(origin);
 			double along = toEnt.dot(dir);
@@ -405,7 +406,7 @@ public final class UnibeamController {
 		}
 		AABB aoeBox = player.getBoundingBox().inflate(DEBUFF_RADIUS);
 		List<LivingEntity> aoeTargets = level.getEntitiesOfClass(LivingEntity.class, aoeBox,
-				e -> e != player && e.isAlive() && !e.isSpectator() && e != directHit);
+				TargetFilters.hostileTo(player).and(e -> e != directHit));
 		for (LivingEntity target : aoeTargets) {
 			applyDebuffs(target, AOE_DEBUFFS, 120, 0, false);
 		}
@@ -429,7 +430,7 @@ public final class UnibeamController {
 		Vec3 effectiveEnd = bh.getType() == HitResult.Type.BLOCK ? bh.getLocation() : end;
 		AABB box = player.getBoundingBox().expandTowards(dir.scale(BEAM_RANGE)).inflate(2.5);
 		EntityHitResult hit = ProjectileUtil.getEntityHitResult(level, player, origin, effectiveEnd, box,
-				e -> e instanceof LivingEntity && e.isAlive() && e != player && !e.isSpectator());
+				e -> e instanceof LivingEntity le && TargetFilters.hostileTo(player).test(le));
 		return hit != null ? (LivingEntity) hit.getEntity() : null;
 	}
 

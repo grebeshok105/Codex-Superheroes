@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.damage.ModDamageTypes;
 import com.example.superheroes.particle.ModParticles;
 import net.minecraft.core.particles.ParticleTypes;
@@ -118,7 +119,7 @@ public final class NarutoOodamaRasenganAbility implements Ability {
 			Vec3 forward = hand.add(player.getLookAngle().scale(STRIKE_RANGE));
 			AABB box = new AABB(hand, forward).inflate(2.5);
 			LivingEntity target = level.getEntitiesOfClass(LivingEntity.class, box,
-					e -> e != player && e.isAlive() && !e.isSpectator()).stream()
+					TargetFilters.hostileTo(player)).stream()
 					.findFirst().orElse(null);
 			if (target != null) {
 				detonate(player, target, ar);
@@ -144,7 +145,7 @@ public final class NarutoOodamaRasenganAbility implements Ability {
 		AABB aoe = new AABB(hit.x - AOE_RADIUS, hit.y - AOE_RADIUS, hit.z - AOE_RADIUS,
 				hit.x + AOE_RADIUS, hit.y + AOE_RADIUS, hit.z + AOE_RADIUS);
 		for (LivingEntity nearby : level.getEntitiesOfClass(LivingEntity.class, aoe,
-				e -> e != player && e != primary && e.isAlive() && !e.isSpectator())) {
+				TargetFilters.hostileTo(player).and(e -> e != primary))) {
 			nearby.hurt(ModDamageTypes.narutoRasengan(level, player), DAMAGE * 0.5f);
 			Vec3 away = nearby.position().subtract(hit).normalize();
 			nearby.push(away.x * 1.4, 0.5, away.z * 1.4);

@@ -1,5 +1,6 @@
 package com.example.superheroes.effect;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.lifecycle.ControlLockKind;
 import com.example.superheroes.lifecycle.EntityControlLock;
 import com.example.superheroes.network.ReinhardTimeSlowS2CPayload;
@@ -172,7 +173,7 @@ public final class ReinhardTimeSlowController {
 
 	private static void freezeAround(ServerPlayer owner, ServerLevel level, ActiveSlow slow) {
 		AABB box = new AABB(owner.position(), owner.position()).inflate(FREEZE_RADIUS);
-		for (LivingEntity entity : level.getEntitiesOfClass(LivingEntity.class, box, e -> e.isAlive() && e != owner)) {
+		for (LivingEntity entity : level.getEntitiesOfClass(LivingEntity.class, box, e -> TargetFilters.harmableBy(e, owner))) {
 			if (entity instanceof ServerPlayer victim) {
 				continue; // игроки обрабатываются отдельно через FROZEN_PLAYERS
 			}
@@ -189,7 +190,7 @@ public final class ReinhardTimeSlowController {
 	private static void collectFrozenPlayers(ServerPlayer owner, ServerLevel level, ActiveSlow slow, Set<UUID> out) {
 		AABB box = new AABB(owner.position(), owner.position()).inflate(FREEZE_RADIUS);
 		for (ServerPlayer victim : level.getEntitiesOfClass(ServerPlayer.class, box,
-				p -> p.isAlive() && p != owner && !p.isSpectator())) {
+				p -> TargetFilters.harmableBy(p, owner))) {
 			out.add(victim.getUUID());
 			victim.setDeltaMovement(Vec3.ZERO);
 			victim.hurtMarked = true;

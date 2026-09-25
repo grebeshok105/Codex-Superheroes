@@ -24,7 +24,7 @@
 | 11b | Migrate ~50 self-registered `ServerTickEvents` onto the dispatcher | child session | in flight |
 | 12 | Hygiene: deps, docs, missing model/lang | `hoplite/kroton-d9205130--hygiene` | PR open (stacked on 11) |
 | 13 | B18 Sung shadows survive restart; B22 teleport collision checks | `hoplite/kroton-d9205130--shadows-teleports` | PR open (stacked on 12) |
-| 14 | B19 shared target predicate honoring PvP/teams | | todo |
+| 14 | B19 shared target predicate honoring PvP/teams | `hoplite/kroton-d9205130--target-predicate` | PR open (stacked on 13) |
 | 15 | Potential findings (4) + §3 network improvements | | todo |
 ## Completed this session (stage 1)
 
@@ -80,7 +80,6 @@
 - `ChatComponentMixin`: хит-тест чата переведён на тот же сдвиг, что и рендер — `@ModifyVariable` на `screenToChatX`/`screenToChatY` вычитает `HudLayoutManager.offset(CHAT) + autoLift`, так что клики по ссылкам, ховер-теги и подсветка строки работают по реальному положению чата.
 - JUnit: `ClientSessionStateResetTest` дёргает публичные сеттеры ~25 холдеров и проверяет, что `resetAll()` возвращает дефолты; `ClientAbilityCooldownsTest` гоняет дедлайны на инжектированных часах (респавн как скачок времени). `test` sourceSet получил `client.output + client.compileClasspath` (через `afterEvaluate`, т.к. `client` создаётся `splitEnvironmentSourceSets()`).
 ## Completed this session (stage 8)
-
 - House of Vanity trap is now server-authoritative (B13): `MirrorDimensionController.enforceZone` runs unconditionally — the yank and `VanityAuthority` debuffs no longer wait for a client ACK (`VictimState.applied` removed). A modified or silent client stays inside the zone exactly like a confirmed one.
 - `absorbNearby` lost its `canSend` gate: victims without the mod (or with networking filtered) are still trapped — the S2C payloads are now purely a cosmetic hint sent via `sendToVictim` (shader warp + cipher flag), so a missing reply no longer weakens containment.
 - `handleStatus` is reduced to caster feedback (it relays the localized status message to Pandora only); `NO_IRIS`/`NO_PACK`/`IRIS_API_FAIL` no longer release the victim — previously a failed or absent warp silently dropped the victim while leaving her client ciphered forever (the deadman only watched `active`).
@@ -128,6 +127,13 @@
 - B22: `util/SafeTeleport.clamp(level, entity, dest)` шагает по отрезку (шаг ≈ половина меньшего размера хитбокса, мин. 0.2) и возвращает последнюю точку, где хитбокс свободен от блоков; невыгруженный чанк = препятствие; проверка только по блокам, чтобы «за спину» не упиралось в самого моба. Переведены Goku IT, Loki Tesseract, Scorpion, Kratos God Slayer, Reinhard Speed Judgment, Kawarimi, Shadow Exchange (оба направления), Doom Grip lunge, Thanos Space Portal. Не тронуты (by design): hold/anchor/lockPos/return-телепорты (DoomGrip hold, SpatialBind, RegulusGreed, Unibeam, IronManReactor, Pandora, MirrorDimension, lockPos у HeavensStrike/RaidenMusou/Regulus counter-катсцена) и `DoomsdayTierController.tryRelocate` (точка уже проверяется на свободу).
 - Новый `ShadowsTeleportsGameTests` (4 теста): disband при forceUntransform (нет ни записей, ни сущностей), тень-сирота удаляет себя, телепорт клэмпится у каменной стены, свободный телепорт доходит до точки.
 
+## Completed this session (stage 14)
+
+- `combat/TargetFilters` — единый предикат враждебного выбора целей (B19): `harmableBy(target, attacker)` (alive, не сам атакующий, не spectator, плюс `victim.canHarmPlayer(attacker)` когда обе стороны игроки) и `hostileTo(attacker)` — то же плюс пропуск creative-игроков (наиболее частое условие копий). Ванильная семантика проверена по байткоду: `ServerPlayer.canHarmPlayer` = `isPvpAllowed() && super.canHarmPlayer`, где super покрывает команды и friendly-fire, а `ServerPlayer.hurt` применяет эту же проверку когда источник урона несёт Player-атакующего.
+- Заменено ~25 приватных `isValidTarget`/`validTarget`-хелперов и ~60 инлайн-лямбд в ability/effect/item/entity/physics на `TargetFilters`; лишние условия сохранены через `.and(...)` (дистанция, `!= primary`, исключение ShadowSoldier). Френдли-селекторы (shadows, призывы, владельцы, кинематик-фризы) оставлены как были.
+- `magic()` без атакующего теперь атрибутирован (`indirectMagic(attacker, attacker)`), так что `pvp=false`/команды работают и на источнике урона: ScaramoucheWindPrisonAbility, ThanosSoulPulseAbility, MonarchsDomainController, UraniumDaggerItem. DoT-эффекты (Bleeding/Snapped) и fallback-без-владельца (ShieldProjectile generic, SungJinwoo divert) намеренно оставлены unattributed.
+- Побочные правки поведения по сути фикса: creative-игроки и зрители теперь единообразно пропускаются всеми враждебными сканами; DoomGrip вместо фейкового `isAlly` (uuid==uuid) использует настоящие team-правила; кинематик-фризы SwordDrawCeremony (`e -> true`) и TimeSlow-цикл игроков оставлены/переведены осознанно (TimeSlow больше не замораживает тиммейтов без friendly fire).
+
 ## Important decisions
 - Bound weapons are identified by type (`BoundWeaponItem`) and validated by token; untokened copies are treated as stale on purpose (none are obtainable legitimately; old saves could hold leaked copies).
 - Bound weapons never become item entities: returned to the owner when valid and there is room, otherwise deleted (the ability can reissue).
@@ -140,10 +146,10 @@
 
 ## Verification
 
+- Stage 14: `qualityGate` green, 24/24 GameTests (2 новых `TargetPredicateGameTests`: AoE бьёт врага и пропускает тиммейта без friendly fire — через `DoomsdayRoar` end-to-end; `pvp=false` убирает игроков из сканов). Готча: `makeMockServerPlayerInLevel` хардкодит `isCreative()=true` и общее имя `test-mock-player` — для pvp/team-тестов нужен `TestPlayers.join(helper, name)` с реальным ServerPlayer.
 - Stage 11: `qualityGate` green, 27/27 GameTests (3 new dispatcher tests). Intentionally kept: `CombatImpactEngine`'s nano-hammer branch (reads the `NANO_FORM` attachment — an ability-state rule, not a lookup table) and client-side statics (`ThanosHero`, `PandoraHero` tables used by HUD filters).
 - Stage 10: `qualityGate` green, 24/24 GameTests (2 new public-hero-sync tests). First run caught a test bug: `untransform` is cooldown-gated right after `transform` — the test uses `forceUntransform`.
-- Stage 8: `qualityGate` green, 26/26 GameTests (4 new House of Vanity tests). Test-only notes: victims must be joined+teleported inside `PULL_RADIUS` BEFORE `AbilityRouter.activate` — latecomer absorb only runs on keepalive ticks (every 20), so post-activation joins race the assert delays; mock players hardcode `isCreative()==true` (bytecode-verified `GameTestHelper$2`), so `VanityAuthority` `mayfly` grant/clear is unreachable in gametest — assert `hasEffect` probes instead.
-- Stage 5: `qualityGate` green, 22/22 GameTests (3 new damage-pipeline tests). Test-only notes: mock players join with private `spawnInvulnerableTime` that blocks `hurt()` — cleared via reflection in the kawarimi test; the test structure spawns ~6M blocks from the mock-player spawn point, so proximity-sensitive asserts must teleport the player first.
+- Stage 8: `qualityGate` green, 26/26 GameTests (4 new House of Vanity tests). Test-only notes: victims must be joined+teleported inside `PULL_RADIUS` BEFORE `AbilityRouter.activate` — latecomer absorb only runs on keepalive ticks (every 20), so post-activation joins race the assert delays; mock players hardcode `isCreative()==true` (bytecode-verified `GameTestHelper$2`), so `VanityAuthority` `mayfly` grant/clear is unreachable in gametest — assert `hasEffect` probes instead.- Stage 5: `qualityGate` green, 22/22 GameTests (3 new damage-pipeline tests). Test-only notes: mock players join with private `spawnInvulnerableTime` that blocks `hurt()` — cleared via reflection in the kawarimi test; the test structure spawns ~6M blocks from the mock-player spawn point, so proximity-sensitive asserts must teleport the player first.
 - Stage 4: `qualityGate` green, 19/19 GameTests. Negative check — without the `hasHero()` guard, first-time transforms start with 0 energy and `windPrisonEndsWhenItsZoneExpires` fails.
 - Stage 3: `qualityGate` green, 16/16 GameTests (7 new lifecycle regressions: owner-leave lock release, refcount, shadow reconcile, transient-vs-permanent NBT, attachment-backed transform cooldown, forceUntransform clears locks+cooldowns, dead-caster snap).
 - Stage 2: `qualityGate` green, 9/9 GameTests; negative check — old tick write-back makes `windPrisonEndsWhenItsZoneExpires` fail.

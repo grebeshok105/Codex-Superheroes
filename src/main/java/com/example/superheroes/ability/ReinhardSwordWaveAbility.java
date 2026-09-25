@@ -1,6 +1,7 @@
 package com.example.superheroes.ability;
 
 import com.example.superheroes.attachment.ModAttachments;
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.effect.ReinhardState;
 import com.example.superheroes.effect.ReinhardWorthyOpponent;
 import net.minecraft.core.particles.ParticleTypes;
@@ -57,7 +58,7 @@ public final class ReinhardSwordWaveAbility implements Ability {
 
 		AABB box = new AABB(origin, end).inflate(WIDTH);
 		List<LivingEntity> targets = level.getEntitiesOfClass(LivingEntity.class, box,
-				e -> e.isAlive() && e != player && !e.isSpectator());
+				TargetFilters.hostileTo(player));
 
 		DamageSource src = level.damageSources().playerAttack(player);
 		for (LivingEntity target : targets) {

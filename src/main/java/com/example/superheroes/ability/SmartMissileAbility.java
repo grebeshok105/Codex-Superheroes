@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.entity.SmartMissileEntity;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -83,7 +84,7 @@ public final class SmartMissileAbility implements Ability {
 		Vec3 actualEnd = bh.getType() == HitResult.Type.BLOCK ? bh.getLocation() : end;
 		AABB box = player.getBoundingBox().expandTowards(dir.scale(RANGE)).inflate(2.0);
 		EntityHitResult hit = ProjectileUtil.getEntityHitResult(level, player, eye, actualEnd, box,
-				e -> e instanceof LivingEntity && e.isAlive() && e != player && !e.isSpectator());
+				e -> e instanceof LivingEntity le && TargetFilters.hostileTo(player).test(le));
 		if (hit != null) {
 			return (LivingEntity) hit.getEntity();
 		}
@@ -92,7 +93,7 @@ public final class SmartMissileAbility implements Ability {
 		double bestScore = -1;
 		for (LivingEntity le : level.getEntitiesOfClass(LivingEntity.class,
 				player.getBoundingBox().inflate(RANGE),
-				e -> e.isAlive() && !e.isSpectator() && e != player)) {
+				TargetFilters.hostileTo(player))) {
 			Vec3 to = le.position().add(0, le.getBbHeight() * 0.5, 0).subtract(eye);
 			double dist = to.length();
 			if (dist < 0.1 || dist > RANGE) {

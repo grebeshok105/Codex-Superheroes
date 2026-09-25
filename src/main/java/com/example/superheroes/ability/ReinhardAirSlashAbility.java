@@ -1,6 +1,7 @@
 package com.example.superheroes.ability;
 
 import com.example.superheroes.attachment.ModAttachments;
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.effect.ReinhardState;
 import com.example.superheroes.effect.ReinhardWorthyOpponent;
 import net.minecraft.core.particles.ParticleTypes;
@@ -65,7 +66,7 @@ public final class ReinhardAirSlashAbility implements Ability {
 		Vec3 actualEnd = bh.getType() == HitResult.Type.BLOCK ? bh.getLocation() : end;
 		AABB box = player.getBoundingBox().expandTowards(dir.scale(RANGE)).inflate(1.2);
 		EntityHitResult hit = ProjectileUtil.getEntityHitResult(level, player, eye, actualEnd, box,
-				e -> e instanceof LivingEntity && e.isAlive() && e != player && !e.isSpectator());
+				e -> e instanceof LivingEntity le && TargetFilters.hostileTo(player).test(le));
 		if (hit != null) {
 			LivingEntity target = (LivingEntity) hit.getEntity();
 			boolean worthy = ReinhardWorthyOpponent.isWorthy(target);

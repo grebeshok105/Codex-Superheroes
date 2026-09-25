@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -54,7 +55,7 @@ public final class LokiMindCharmAbility implements Ability {
 		double closest = Double.MAX_VALUE;
 		AABB scan = new AABB(eye, end).inflate(2.0);
 		for (LivingEntity le : level.getEntitiesOfClass(LivingEntity.class, scan,
-				e -> e != player && e.isAlive() && !(e instanceof Player p && p.getUUID().equals(player.getUUID())))) {
+				TargetFilters.hostileTo(player))) {
 			Vec3 toEntity = le.position().add(0, le.getBbHeight() / 2, 0).subtract(eye);
 			double len = toEntity.length();
 			if (len < 0.001) continue;

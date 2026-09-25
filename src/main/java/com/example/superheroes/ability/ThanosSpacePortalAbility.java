@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.util.SafeTeleport;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
@@ -101,7 +102,7 @@ public final class ThanosSpacePortalAbility implements Ability {
 		LivingEntity closest = null;
 		double closestAlong = RANGE + 1.0;
 		for (LivingEntity le : level.getEntitiesOfClass(LivingEntity.class, scan,
-				e -> e != self && e.isAlive() && !(e instanceof Player p && p.getUUID().equals(self.getUUID())))) {
+				TargetFilters.hostileTo(self))) {
 			Vec3 toEntity = le.position().add(0, le.getBbHeight() / 2, 0).subtract(eye);
 			double along = toEntity.dot(dir);
 			if (along < 0.5 || along > RANGE) continue;

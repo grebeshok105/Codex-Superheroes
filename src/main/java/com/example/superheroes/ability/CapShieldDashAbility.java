@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -66,7 +67,7 @@ public final class CapShieldDashAbility implements Ability {
 		AABB sweep = new AABB(from, to).inflate(HIT_RADIUS);
 
 		List<LivingEntity> targets = level.getEntitiesOfClass(LivingEntity.class, sweep,
-				e -> e != player && e.isAlive() && !(e instanceof Player p && p.isCreative()));
+				TargetFilters.hostileTo(player));
 		LivingEntity hit = null;
 		double bestDist = Double.MAX_VALUE;
 		for (LivingEntity t : targets) {

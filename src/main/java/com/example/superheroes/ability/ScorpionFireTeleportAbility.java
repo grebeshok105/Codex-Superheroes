@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.effect.ScorpionFx;
 import com.example.superheroes.util.SafeTeleport;
 import net.minecraft.core.particles.ParticleTypes;
@@ -134,8 +135,7 @@ public final class ScorpionFireTeleportAbility implements Ability {
 		LivingEntity best = null;
 		double bestScore = -1.0;
 		for (LivingEntity le : level.getEntitiesOfClass(LivingEntity.class, box,
-				e -> e != player && e.isAlive() && !e.isSpectator()
-						&& !(e instanceof Player p && p.isCreative()))) {
+				TargetFilters.hostileTo(player))) {
 			Vec3 toE = le.position().add(0, le.getBbHeight() * 0.5, 0).subtract(eye);
 			double dist = toE.length();
 			if (dist > TARGET_SCAN || dist < 0.5) {
