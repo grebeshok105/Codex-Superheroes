@@ -1,76 +1,80 @@
-# Superheroes Mod
+# Codex Superheroes
 
-Fabric-мод для Minecraft 1.21 про героев с трансформациями, кастомным HUD, способностями, ресурсами, VFX, боссами и публичным API для аддонов.
+Codex Superheroes — Fabric-мод для Minecraft 1.21.1 про супергероев, способности и зрелищные боевые системы. Проект объединяет трансформации, уникальные наборы способностей, полёт, HUD, VFX, кастомные модели и серверную игровую логику.
 
-## Текущее состояние
+Сейчас проект проходит полное воскрешение и архитектурную модернизацию: старые системы постепенно приводятся к более чистым границам, тестируемой архитектуре и современной VFX-базе.
 
-- Mod ID: `superheroes`
-- Java package: `com.example.superheroes`
-- Рабочая версия: `3.15.1` в `gradle.properties`
-- База worktree: `main` / feature branches в `Codex-Superheroes`
-- Minecraft: `1.21`
-- Fabric Loader: `0.19.2`
-- Fabric API: `0.102.0+1.21`
-- Java target: `21`
-- Mappings: official Mojang mappings
-- Дополнительно: GeckoLib `4.5.8`
+## Стек
 
-Сейчас в коде `v3.15.1` зарегистрированы 14 героев: Homelander, Iron Man, Regulus, Sung Jin-Woo, Doomsday, Goku, Naruto, Captain America, Kratos, Loki, Thanos, Reinhard van Astrea, Raiden Shogun и Invincible.
+- Minecraft 1.21.1
+- Fabric
+- Java 21
+- official Mojang mappings
+- Fabric API
+- GeckoLib
+- Veil как опциональная VFX/render-зависимость
 
-## Главные системы
+Точные версии всегда смотри в `gradle.properties` и `build.gradle`.
 
-- `Hero` / `HeroData` / `HeroTransformService` — трансформация игрока, passives, размеры, skin sync.
-- `Ability` / `AbilityRegistry` / `AbilityRouter` — toggle и active способности.
-- `ResourceController` — Energy/Mana с привязками способностей и fallback между ресурсами.
-- `ModNetworking` — typed `CustomPayload` C2S/S2C пакеты для Minecraft 1.21.
-- `effect/*Controller` — server-side tick-логика героев, ультов, состояний и прогрессии.
-- `client/hud`, `client/render`, `client/fx` — HUD, beams, overlays, screen shake и визуальные эффекты.
-- `api/*` — стабильный addon API, описан в `docs/api.md`.
+## Что уже есть
+
+Актуальный список игровых героев определяется кодом в:
+
+`src/main/java/com/example/superheroes/hero/Heroes.java`
+
+Основные системы проекта:
+
+- `Hero`, `HeroData`, `HeroTransformService` — трансформация и состояние героя
+- `Ability`, `AbilityRegistry`, `AbilityRouter` — способности и их выполнение
+- `ResourceController` — Energy / Mana
+- `effect/*Controller` — server-side runtime логика героев и механик
+- `client/hud`, `client/render`, `client/fx` — интерфейс, рендер и визуальные эффекты
+- `network` — typed Fabric networking
+- `physics` — общая физика и движение
+- `art-source/` — исходники пользовательских ассетов
+
+Существующие пути описывают текущую реализацию и могут меняться по мере архитектурной модернизации.
 
 ## Сборка
 
+Полная проверка:
+
 ```bash
-./gradlew build --no-daemon -x test
+./gradlew build --no-daemon
 ```
 
-Артефакты появляются в `build/libs/`:
-
-- `superheroes-<version>.jar`
-- `superheroes-<version>-sources.jar`
-
-Для запуска dev-клиента:
+Dev-клиент:
 
 ```bash
 ./gradlew runClient --no-daemon
 ```
 
-Для data generation:
+Datagen:
 
 ```bash
 ./gradlew runDatagen --no-daemon
 ```
 
-Сгенерированные ресурсы лежат в `src/main/generated/` и подключены в `build.gradle` как resources source set.
+Готовые jar-файлы появляются в `build/libs/`.
 
-## Навигация
+## Разработка
 
-- `AGENTS.md` — главная карта проекта и правила для AI-агентов.
-- `.agents/skills/` — узкие workflow-гайды: сборка, релиз, datagen, ассеты, debugging.
-- `.windsurf/` — дублирующие правила и workflow для Windsurf.
-- `docs/api.md` — публичный addon API.
-- `docs/design/` и `docs/plans/` — дизайн-доки и исторические планы; перед доверием сверять с текущим кодом.
-- `art-source/` — сырые ассеты пользователя. Runtime-ресурсы должны лежать в `src/main/resources/assets/superheroes/...`.
+Главные правила разработки и контракт для AI-агентов находятся в `AGENTS.md`.
 
-## Правила разработки
+Ключевой принцип текущего этапа проекта: legacy-код сохраняет ценное поведение, но не считается автоматически правильной архитектурой. Старые решения можно и нужно заменять, когда они создают лишнюю связанность, дублирование, плохую тестируемость или мешают развитию проекта.
 
-- Работать в этой папке для актуальной Codex-базы: `F:\WorkFLow\TestimCodex\grebeshok105-v3.12.2`.
-- Перед кодом читать `AGENTS.md` и `.agents/skills/base-rules/SKILL.md`.
-- Не делать косметических правок и не трогать core-файлы без причины.
-- Новые runtime-звуки — только OGG Vorbis.
-- Новые текстуры/звуки сначала искать в `art-source/`.
-- Локализацию обновлять сразу в `en_us.json` и `ru_ru.json`.
-- Локальная проверка перед PR: `./gradlew build --no-daemon -x test`.
+Новые изменения должны сопровождаться тестами там, где поведение можно проверить автоматически. Финальный gate перед PR — `./gradlew build --no-daemon`. Runtime-изменения дополнительно проверяются в игре.
+
+## Структура репозитория
+
+- `src/main/java/` — общая и server-side логика
+- `src/client/java/` — client-only код
+- `src/main/resources/` — runtime-ресурсы
+- `src/main/generated/` — datagen output, вручную не редактируется
+- `src/test/java/` — JUnit-тесты
+- `art-source/` — исходные модели, текстуры, звуки и другие рабочие ассеты
+- `.agents/skills/` — актуальные специализированные процедуры для агентов, когда они существуют
 
 ## License
 
-Проект указывает лицензию `CC0-1.0` в `fabric.mod.json` и содержит файл `LICENSE`.
+См. `LICENSE`.
