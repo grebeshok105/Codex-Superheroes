@@ -156,6 +156,13 @@
 - `TestHeroes.transform(ServerPlayer, ResourceLocation)` replaced 17 copy-pasted transform calls in 10 GameTest files.
 - `build.gradle` gained a backup Central mirror (`CentralAliyunMirror`) — the local repo1 redirect mirror does not carry `com.tngtech.archunit` and shared CI egress IPs get 429s; the extra repo keeps the new dependency resolvable everywhere.
 
+## Architecture migration — stage N3 (plan 01)
+
+- Deleted the fake `api/` package entirely (`HeroApi`, `AbilityApi`, `CreativeTabIds`, `package-info`; −240 lines). The only consumer was `RepulsorChargeController`: `HeroApi.getCurrentHeroId(player).orElse(null)` → `HeroDataStore.get(player).heroId()` (identical semantics — `heroId()` is `currentHero.orElse(null)`).
+- `CreativeTabIds`'s id `superheroes:superheroes` already lived in `ModItemGroups.SUPERHEROES_TAB_KEY` — no move needed; new GameTest `superheroesTabIdIsStable` pins it.
+- External-consumer check via `gh search code` returned zero before deletion.
+- `package-cycles-baseline.txt` shrank 32→31 pairs (the `ability <-> api` bidirectional pair dropped out — orchestrator regenerated).
+
 ## Architecture migration — stage N1 (plan 01)
 
 - Removed dead code: `ViltrumiteThunderClapAbility` (never registered), `MeteorSlamAbility` + `ShockwavePulseAbility` (registered but listed by no hero — unreachable through the AbilityRouter hero-list gate), 2 never-registered HUDs (`LowResourceVignetteHud`, `ResourceBarHud`), `HordeGeoRenderer`+`HordeGeoModel` (unregistered geo renderer; `HordeGeoAssets` stays — still used by `BaseHordeEntity`), 7 `AbilityIds` constants, and the 4 `MeteorSlamAbility` call sites in `SuperheroesMod` (onLeave/onDeath/resetAll/playerTick).
