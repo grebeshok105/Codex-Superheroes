@@ -103,6 +103,130 @@ dependencies {
 
 tasks.withType(Test).configureEach {
 	useJUnitPlatform()
+	// A JUnit run that discovers nothing is a silent pass, not a green check.
+	failOnNoDiscoveredTests = true
+}
+
+// ============================================================================
+// Verification gate (ported from jujutsu-minecraft, adapted to this codebase:
+// no GameTest lane, no doc audit — those do not exist here yet).
+// ============================================================================
+
+tasks.register('testProjectSanity', JavaExec) {
+	group = 'verification'
+	description = 'Runs resource, seam and side-separation sanity checks'
+	dependsOn tasks.named('testClasses')
+	classpath = sourceSets.test.runtimeClasspath
+	mainClass = 'com.example.superheroes.ProjectSanityTest'
+	maxHeapSize = '128m'
+	jvmArgs '-ea'
+}
+
+// `check` pulls every verification-group JavaExec alongside JUnit, so future sanity
+// programs join the gate just by registering with the same group.
+tasks.named('check') {
+	dependsOn tasks.withType(JavaExec).matching {
+		it.group == 'verification'
+	}
+}
+
+// Assertion programs are plain main() classes guarded by `assert`; a task that forgets
+// -ea passes unconditionally, forever, in silence. Reads the real Gradle task model, so
+// a task registered from anywhere is still covered.
+tasks.register('verifyAssertionsEnabled') {
+	group = 'verification'
+	description = 'Fails if any verification JavaExec task would run with assertions disabled'
+	doLast {
+		// Realized into a plain list: DomainObjectCollection.findAll(Closure) is removed in Gradle 10.
+		def programs = tasks.withType(JavaExec).matching { it.group == 'verification' }.toList()
+		def offenders = programs.findAll { program -> !enablesAssertions(program) }
+				.collect { it.name }
+				.toSorted()
+		if (!offenders.isEmpty()) {
+			throw new GradleException(
+					'These verification JavaExec tasks run with assertions disabled, so every assert inside them\n'
+							+ 'is skipped and the task passes unconditionally:\n'
+							+ offenders.collect { "  - ${it}" }.join('\n')
+							+ "\nGive each one `jvmArgs '-ea'` or `enableAssertions = true`.")
+		}
+		logger.lifecycle("verifyAssertionsEnabled: ${programs.size()} verification JavaExec tasks all enable assertions")
+	}
+}
+
+// True when this program will actually evaluate its `assert` statements, by either route the JVM offers.
+static boolean enablesAssertions(JavaExec program) {
+	if (program.enableAssertions) {
+		return true
+	}
+	return program.jvmArgs.any { String arg ->
+		arg == '-ea' || arg == '-enableassertions' || arg.startsWith('-ea:') || arg.startsWith('-enableassertions:')
+	}
+}
+
+// The release jar must not leak test-only or dev-only content. Scans the remapped jar's
+// OUTER entries only — bundled jar-in-jar deps (GeckoLib) are opaque to this audit;
+// if jar-in-jar scanning is ever needed, this audit must learn to open nested jars.
+tasks.register('auditReleaseJarIsolation') {
+	group = 'verification'
+	description = 'Fails when the release jar leaks test-only or dev-only content'
+	dependsOn tasks.named('remapJar')
+	doLast {
+		File jarFile = tasks.remapJar.archiveFile.get().asFile
+		def offenders = []
+		int entryCount = 0
+		def rootDescriptorText = null
+
+		new java.util.zip.ZipFile(jarFile).withCloseable { java.util.zip.ZipFile zip ->
+			for (java.util.zip.ZipEntry entry : Collections.list(zip.entries())) {
+				String name = entry.name
+				entryCount++
+				if (name.startsWith('org/junit/') || name.startsWith('org/jopentest4j/')
+						|| name.startsWith('org/apiguardian/')) {
+					offenders << "${name}  (test-only JUnit classes)"
+				}
+				if (name.contains('gametest') || name.startsWith('net/fabricmc/fabric/api/gametest/')) {
+					offenders << "${name}  (test-only gametest content)"
+				}
+				if (name == 'fabric.mod.json') {
+					if (rootDescriptorText != null) {
+						offenders << "${name}  (second fabric.mod.json descriptor beyond the root one)"
+					} else {
+						rootDescriptorText = zip.getInputStream(entry).getText('UTF-8')
+					}
+				}
+			}
+
+			if (rootDescriptorText != null) {
+				def descriptor = new groovy.json.JsonSlurper().parseText(rootDescriptorText)
+				if (descriptor.id != 'superheroes') {
+					offenders << "fabric.mod.json  (root descriptor id is '${descriptor.id}', expected 'superheroes')"
+				}
+				if (descriptor.entrypoints instanceof Map
+						&& (descriptor.entrypoints.containsKey('fabric-gametest')
+								|| descriptor.entrypoints.containsKey('fabric-client-gametest'))) {
+					offenders << "fabric.mod.json  (fabric-gametest / fabric-client-gametest entrypoints present)"
+				}
+			}
+		}
+
+		if (!offenders.isEmpty()) {
+			throw new GradleException(
+					'Release jar leaks test-only or dev-only content: ' + jarFile.absolutePath + '\n'
+							+ offenders.collect { "  - ${it}" }.join('\n'))
+		}
+		logger.lifecycle("auditReleaseJarIsolation: ${jarFile.name}: ${entryCount} entries scanned, no test-only or dev-only content")
+	}
+}
+
+// The one command. Nothing may be called verified without a green run of this task.
+// `build` already carries assemble + check (compile, JUnit, verification JavaExecs);
+// the gate adds the post-build audits on top.
+tasks.register('qualityGate') {
+	group = 'verification'
+	description = 'The merge gate: full build with tests plus post-build audits'
+	dependsOn tasks.named('build')
+	dependsOn tasks.named('verifyAssertionsEnabled')
+	dependsOn tasks.named('auditReleaseJarIsolation')
 }
 
 processResources {

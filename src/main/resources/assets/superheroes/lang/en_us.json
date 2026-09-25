@@ -482,7 +482,7 @@
   "ability.superheroes.reinhard_judgment_mark": "Mark of Judgment",
   "ability.superheroes.reinhard_judgment_mark.desc": "Marks the target for 30 seconds. The marked target glows through walls and takes bonus damage from your weapon. 10s cooldown.",
   "ability.superheroes.reinhard_wish": "Make a Wish",
-  "ability.superheroes.reinhard_wish.desc": "Once per 30 seconds, gain immunity to the most recent damage type. 3 wishes per life. After the 3rd — +30% incoming damage until you die.",
+  "ability.superheroes.reinhard_wish.desc": "Opens a wish menu with your last damage sources. Pick one and gain immunity to it. 3 wishes per life.",
   "ability.superheroes.reinhard_wish.granted": "Wish granted: immunity to %s",
   "ability.superheroes.reinhard_sword_wave": "Wind Blade",
   "ability.superheroes.reinhard_sword_wave.desc": "Launches a 25-block crescent wave. 18 dmg to worthy, 9 to mobs. Pierces enemies. 3s cooldown.",
