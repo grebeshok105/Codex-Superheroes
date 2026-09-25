@@ -4,6 +4,7 @@ import com.example.superheroes.ModId;
 import com.example.superheroes.ability.AbilityRegistry;
 import com.example.superheroes.hero.Hero;
 import com.example.superheroes.hero.Heroes;
+import com.example.superheroes.item.ModItemGroups;
 import com.example.superheroes.item.ModItems;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -63,6 +64,13 @@ public final class HeroCompletenessGameTests implements FabricGameTest {
 			}
 		}
 		helper.assertTrue(problems.isEmpty(), String.join("; ", problems));
+		helper.succeed();
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void superheroesTabIdIsStable(GameTestHelper helper) {
+		helper.assertValueEqual(BuiltInRegistries.CREATIVE_MODE_TAB.getKey(ModItemGroups.SUPERHEROES_TAB),
+				ModId.of("superheroes"), "creative tab id");
 		helper.succeed();
 	}
 

@@ -1,5 +1,4 @@
 ability <-> ability.ironman
-ability <-> api
 ability <-> debug
 ability <-> effect
 ability <-> flight
