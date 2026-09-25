@@ -144,7 +144,8 @@
 
 ## Completed this session (stage 15)
 
-- All 4 "потенциальные" findings verified real against current code and fixed:
+- All 4 "потенциальные" findings verified real against current code and fixed:- Architecture audit 2 is preserved as two complementary files: `docs/audits/2026-09-25-hero-modularity-audit.md` (hero locality, `HeroModule`/`HeroProfile`, Scorpion pilot, Reinhard stress-test) and `docs/audits/2026-09-25-hoplite-structural-audit.md` (package cycles, registries, router contract, services, payloads).
+- The migration that synthesizes both audits is split into six executable plans in `docs/design/architecture-migration/` (`00-overview.md` is the map; `01`–`06` are the plans). They were revised after an external review and rebased on the bugfix stages 4–12 (#40, #42–#49): plans extend the BF11 seams (`HeroTickDispatcher`, `HeroLifecycle`, `Hero` hooks), BF7 `ClientSessionState` and BF10 `PUBLIC_HERO` instead of adding parallel ones. The monolithic `docs/design/2026-09-25-architecture-migration-plan.md` is an unchanged archive of the pre-review version and is not executed or updated.
 
 ## Important decisions
 - Bound weapons are identified by type (`BoundWeaponItem`) and validated by token; untokened copies are treated as stale on purpose (none are obtainable legitimately; old saves could hold leaked copies).
@@ -173,9 +174,16 @@
 
 - `runServer` in dev fails mod resolution while Veil is on the runtime classpath (audit N2); decide whether to make Veil `modCompileOnly` + client-only runtime.
 - `auto-approve-pr.yml` still auto-approves green PRs (audit §3); left as a repository-owner decision, not changed by this work.
+- Execute the plans in `docs/design/architecture-migration/` stage by stage; the canonical stage graph is `00-overview.md` §2.1 and each plan's «Статус стадий» table is its tracker. First stage: plan 1 `A1` once every bugfix PR (#37–#40, #42–#49) and #41 are on `main`.
+- The bugfix stack merged as a single linear history (`integrate/main` → `main`): the hazards called out here were real (`fabric.mod.json` GameTest unions, `RemoteHeroSkins` deletion vs stage-7 references, `ServerTickEvents` removal vs later imports) and were resolved during the restack — `RemoteHeroSkins` references dropped, GameTest entrypoints unioned to 13, `TargetFilters`/`SafeTeleport`/`WorldDestructionPolicy` imports kept where still used.
+- Owner decision needed before plan 5 stage `E1`: new root package name (proposed `io.github.grebeshok105.codex`, decision R14).
+- Rebuild only the project skills that prove useful for the new workflow.
+- Design a new release/versioning workflow after the verification baseline is stable.
+- Use the VFX research to decide the Codex 5.0 rendering foundation.
 
 ## Next session
 
-1. Read this file, `AGENTS.md`, and the audit's «Статус исправлений» table.
-2. Continue with the first stage whose PR is not yet open; re-verify each finding on current code first.
-3. Keep `qualityGate` green; add GameTests for server behavior; update the audit tracker and this file per stage.
+1. Read this file, `AGENTS.md`, and the audit's «Статус исправлений» table — the bugfix stack (#37–#53) is integrated on `main`; every stage's state lives in the tracker.
+2. For architecture work: `docs/design/architecture-migration/00-overview.md` plus the one plan whose stage you execute (stage graph §2.1). First stage plan 1 `A1` can start now that the bugfix PRs and #41 are on `main`.
+3. Re-verify findings while implementing; do not assume subagent-only findings are proven until checked.
+4. Keep `qualityGate` green; add GameTests for server behavior; update the audit tracker and this file per stage.
