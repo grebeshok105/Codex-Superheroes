@@ -202,7 +202,8 @@ public final class ModItems {
 			new ATrainSuitItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
 	);
 
-	public static final DoctorStrangeSuitItem DOCTOR_STRANGE_SUIT = register(
+	// persisted id kept from the Doctor Strange era — do not rename the string.
+	public static final DoctorStrangeSuitItem PANDORA_SUIT = register(
 			"doctor_strange_suit",
 			new DoctorStrangeSuitItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
 	);

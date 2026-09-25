@@ -7,7 +7,7 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 
 /**
- * Doctor Strange "Mirror Dimension": drives the victim's client-side Acid
+ * Pandora "Mirror Dimension": drives the victim's client-side Acid
  * shaderpack (Iris). The world-warp itself is rendered by the player's own
  * Acid Shaders pack; this payload only switches it on/off and supplies the
  * deformation options (MODE/J shader options).

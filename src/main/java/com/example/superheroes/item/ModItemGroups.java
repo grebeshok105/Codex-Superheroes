@@ -69,7 +69,7 @@ public final class ModItemGroups {
 				output.accept(ModItems.REM_ONI_HORN);
 				output.accept(ModItems.A_TRAIN_SUIT);
 				output.accept(ModItems.SCORPION_KUNAI);
-				output.accept(ModItems.DOCTOR_STRANGE_SUIT);
+				output.accept(ModItems.PANDORA_SUIT);
 
 				// Kazuha & Scaramouche are now normal, obtainable characters — their
 				// transformation items live in the regular creative tab (no longer admin-only).

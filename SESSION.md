@@ -156,6 +156,13 @@
 - `TestHeroes.transform(ServerPlayer, ResourceLocation)` replaced 17 copy-pasted transform calls in 10 GameTest files.
 - `build.gradle` gained a backup Central mirror (`CentralAliyunMirror`) — the local repo1 redirect mirror does not carry `com.tngtech.archunit` and shared CI egress IPs get 429s; the extra repo keeps the new dependency resolvable everywhere.
 
+## Architecture migration — stage N2 (plan 01)
+
+- Java-only rename of Doctor Strange leftovers: `ModItems.DOCTOR_STRANGE_SUIT` → `PANDORA_SUIT` (registered id stays `doctor_strange_suit` — persisted), `HeroAttributes.STRANGE_HP` → `PANDORA_HP` (value `modifiers/pandora/max_health` unchanged — persisted modifier id), misleading comments fixed in `AbilityIds`/`MirrorModeCycleAbility`/`MirrorDimensionS2CPayload`/`PandoraHero`. `DoctorStrangeSuitItem` class NOT renamed — B3 deletes it.
+- `textures/entity/hero/doctor_strange.png` deleted (grep-verified unreferenced); the item model/texture/lang keys stay.
+- New GameTest `pandoraSuitIdIsStable` (in `HeroCompletenessGameTests`) pins the persisted registry id so a future rename can never drift it.
+- `Madness*`/`RegulusMadness*` renames deliberately skipped — waves I5/I6.
+
 ## Architecture migration — stage N1 (plan 01)
 
 - Removed dead code: `ViltrumiteThunderClapAbility` (never registered), `MeteorSlamAbility` + `ShockwavePulseAbility` (registered but listed by no hero — unreachable through the AbilityRouter hero-list gate), 2 never-registered HUDs (`LowResourceVignetteHud`, `ResourceBarHud`), `HordeGeoRenderer`+`HordeGeoModel` (unregistered geo renderer; `HordeGeoAssets` stays — still used by `BaseHordeEntity`), 7 `AbilityIds` constants, and the 4 `MeteorSlamAbility` call sites in `SuperheroesMod` (onLeave/onDeath/resetAll/playerTick).

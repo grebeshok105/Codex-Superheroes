@@ -134,7 +134,7 @@ public final class AbilityIds {
 	public static final ResourceLocation SCORPION_FIRE_TELEPORT = ModId.of("scorpion_fire_teleport");
 	public static final ResourceLocation SCORPION_HELL_BREATH = ModId.of("scorpion_hell_breath");
 
-	// Doctor Strange
+	// Pandora — Mirror Dimension warp
 	public static final ResourceLocation MIRROR_DIMENSION = ModId.of("mirror_dimension");
 	public static final ResourceLocation MIRROR_MODE_CYCLE = ModId.of("mirror_mode_cycle");
 	// Pandora's dimension-only abilities — available ONLY while her House of Vanity is open.
