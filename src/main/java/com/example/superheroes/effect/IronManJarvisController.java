@@ -3,10 +3,9 @@ package com.example.superheroes.effect;
 import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.hero.IronManHero;
 import com.example.superheroes.jarvis.JarvisQuotes;
-import com.example.superheroes.jarvis.JarvisThreatClass;
+import com.example.superheroes.hero.JarvisThreatClass;
 import com.example.superheroes.network.JarvisDetectionS2CPayload;
 import com.example.superheroes.transform.HeroData;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.resources.ResourceLocation;
@@ -38,12 +37,6 @@ public final class IronManJarvisController {
 	}
 
 	public static void init() {
-		ServerTickEvents.END_SERVER_TICK.register(server -> {
-			if (server.getTickCount() % SCAN_INTERVAL_TICKS == 0) {
-				scan(server);
-			}
-			tickPending(server);
-		});
 
 		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
 			UUID id = handler.getPlayer().getUUID();
@@ -128,4 +121,12 @@ public final class IronManJarvisController {
 		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
 		return data.heroId();
 	}
+
+	public static void serverTick(MinecraftServer server) {
+		if (server.getTickCount() % SCAN_INTERVAL_TICKS == 0) {
+			scan(server);
+		}
+		tickPending(server);
+	}
+
 }

@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.network.ScreenShakeS2CPayload;
 import com.example.superheroes.sound.ModSounds;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
@@ -52,7 +53,7 @@ public final class HandClapAbility implements Ability {
 
 		AABB area = new AABB(origin, origin).inflate(RANGE);
 		List<Entity> hits = level.getEntities(player, area,
-				e -> e != player && e.isAlive() && !e.isSpectator() && e instanceof LivingEntity);
+				e -> e instanceof LivingEntity le && TargetFilters.hostileTo(player).test(le));
 		for (Entity entity : hits) {
 			Vec3 toTarget = entity.position().add(0, entity.getBbHeight() * 0.5, 0).subtract(origin);
 			double dist = toTarget.length();

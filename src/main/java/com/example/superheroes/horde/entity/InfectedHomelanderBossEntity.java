@@ -39,7 +39,7 @@ import java.util.UUID;
  */
 public class InfectedHomelanderBossEntity extends Monster {
 	private final ServerBossEvent bossEvent = new ServerBossEvent(
-			Component.literal("§4§l⚠ Заражённый Хоумлендер"),
+			Component.translatable("entity.superheroes.infected_homelander.name"),
 			BossEvent.BossBarColor.RED,
 			BossEvent.BossBarOverlay.NOTCHED_20);
 
@@ -123,14 +123,14 @@ public class InfectedHomelanderBossEntity extends Monster {
 		if (newPhase == 2) {
 			sl.sendParticles(ParticleTypes.SCULK_SOUL, getX(), getY() + 1.0, getZ(), 50, 3.0, 2.0, 3.0, 0.15);
 			playSound(SoundEvents.WARDEN_ROAR, 2.0f, 0.6f);
-			bossEvent.setName(Component.literal("§5§l⚠ Хоумлендер — ПАРАЗИТИЧЕСКАЯ ЯРОСТЬ"));
+			bossEvent.setName(Component.translatable("entity.superheroes.infected_homelander.rage"));
 			broadcastMessage("§5Хоумлендер пронзительно кричит... паразит пробуждается!");
 		} else if (newPhase == 3) {
 			sl.sendParticles(ParticleTypes.EXPLOSION_EMITTER, getX(), getY() + 1.0, getZ(), 3, 0, 0, 0, 0);
 			sl.sendParticles(ParticleTypes.CRIMSON_SPORE, getX(), getY() + 1.0, getZ(), 100, 5.0, 3.0, 5.0, 0.2);
 			playSound(SoundEvents.ENDER_DRAGON_GROWL, 2.0f, 0.3f);
 			playSound(SoundEvents.WARDEN_SONIC_BOOM, 2.0f, 0.5f);
-			bossEvent.setName(Component.literal("§4§l☠ Хоумлендер — БЕРСЕРК"));
+			bossEvent.setName(Component.translatable("entity.superheroes.infected_homelander.berserk"));
 			broadcastMessage("§4§l⚠ Хоумлендер полностью потерял контроль! БЕРСЕРК!");
 			addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, Integer.MAX_VALUE, 2, false, true, false));
 			addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, Integer.MAX_VALUE, 1, false, true, false));
@@ -274,7 +274,7 @@ public class InfectedHomelanderBossEntity extends Monster {
 		if (!(level() instanceof ServerLevel sl)) return;
 		sl.sendParticles(ParticleTypes.EXPLOSION_EMITTER, getX(), getY() + 1.0, getZ(), 5, 1.0, 1.0, 1.0, 0.0);
 		for (ServerPlayer p : sl.getServer().getPlayerList().getPlayers()) {
-			p.sendSystemMessage(Component.literal("§6§l★ Заражённый Хоумлендер повержен! Орда побеждена! ★"));
+			p.sendSystemMessage(Component.translatable("message.superheroes.horde.defeated"));
 		}
 	}
 

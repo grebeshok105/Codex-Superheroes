@@ -145,4 +145,24 @@ public final class ThanosHero implements Hero {
 	public HeroHudConfig getHudConfig() {
 		return HeroHudConfig.THANOS;
 	}
+	@Override
+	public double getImpactPower() {
+		return 1.25;
+	}
+	@Override
+	public JarvisThreatClass getThreatClass() {
+		return JarvisThreatClass.S;
+	}
+
+	@Override
+	public boolean canUseAbility(ServerPlayer player, com.example.superheroes.transform.HeroData data,
+			ResourceLocation abilityId) {
+		return isAbilityUnlocked(player, abilityId);
+	}
+
+	@Override
+	public void onAbilityDenied(ServerPlayer player, ResourceLocation abilityId) {
+		notifyMissingStone(player, abilityId);
+	}
+
 }

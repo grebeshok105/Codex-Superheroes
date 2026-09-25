@@ -2,132 +2,107 @@ package com.example.superheroes.resource;
 
 import com.example.superheroes.ability.Ability;
 import com.example.superheroes.ability.AbilityRegistry;
-import com.example.superheroes.attachment.ModAttachments;
+import com.example.superheroes.ability.AbilityRouter;
 import com.example.superheroes.effect.ModEffects;
 import com.example.superheroes.hero.Hero;
 import com.example.superheroes.hero.Heroes;
-import com.example.superheroes.network.ModNetworking;
 import com.example.superheroes.transform.HeroData;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import com.example.superheroes.transform.HeroDataStore;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 
 public final class ResourceController {
 	private ResourceController() {
 	}
 
-	public static void init() {
-		ServerTickEvents.END_SERVER_TICK.register(server -> {
-			for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-				tick(player);
-			}
-		});
-	}
 
-	private static void tick(ServerPlayer player) {
-		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
+	public static void tick(ServerPlayer player) {
+		HeroData data = HeroDataStore.get(player);
 		if (!data.hasHero()) {
 			return;
 		}
-		Hero hero = Heroes.get(data.heroId());
+		ResourceLocation heroId = data.heroId();
+		Hero hero = Heroes.get(heroId);
 		if (hero == null) {
 			return;
 		}
-		float energy = data.energy();
-		float mana = data.mana();
-		boolean dirty = false;
-		if (energy < hero.getEnergyMax() && !EnergyLocks.isLocked(player)) {
-			energy = Math.min(hero.getEnergyMax(), energy + hero.getEnergyRegenPerTick());
-			dirty = true;
+		if (data.energy() < hero.getEnergyMax() && !EnergyLocks.isLocked(player)) {
+			HeroDataStore.update(player, d -> d.withEnergy(
+					Math.min(hero.getEnergyMax(), d.energy() + hero.getEnergyRegenPerTick())));
 		}
-		Set<ResourceLocation> active = new HashSet<>(data.activeAbilities());
-		Set<ResourceLocation> toDeactivate = new HashSet<>();
 		boolean madness = ModEffects.isMadness(player);
+		List<ResourceLocation> active = new ArrayList<>(data.activeAbilities());
+		active.sort(Comparator.comparing(ResourceLocation::toString));
 		for (ResourceLocation abilityId : active) {
+			// Re-read every time: an earlier callback may have deactivated abilities, spent resources or
+			// even untransformed the player. Writing back the tick-start copy is what resurrected B2.
+			HeroData current = HeroDataStore.get(player);
+			if (!heroId.equals(current.heroId())) {
+				return;
+			}
+			if (!current.isActive(abilityId)) {
+				continue;
+			}
 			Ability ability = AbilityRegistry.get(abilityId);
 			if (ability == null) {
 				continue;
 			}
 			float cost = madness ? 0f : ability.costPerTick();
 			if (cost > 0f) {
-				ResourceKind kind = data.binding(abilityId, hero.getDefaultBinding(abilityId));
-				ConsumeResult cr = consume(energy, mana, kind, cost);
-				if (!cr.success()) {
-					ability.onDeactivate(player);
-					toDeactivate.add(abilityId);
-					dirty = true;
+				ResourceKind kind = current.binding(abilityId, hero.getDefaultBinding(abilityId));
+				ResourcePayment payment = ResourcePayment.pay(current.energy(), current.mana(), kind, cost);
+				if (!payment.success()) {
+					AbilityRouter.deactivate(player, abilityId);
 					continue;
 				}
-				energy = cr.energy();
-				mana = cr.mana();
-				dirty = true;
+				HeroDataStore.update(player, d -> d.withResources(payment.energy(), payment.mana()));
 			}
 			ability.onTickActive(player);
-		}
-		if (dirty) {
-			HeroData updated = data.withResources(energy, mana);
-			for (ResourceLocation abilityId : toDeactivate) {
-				updated = updated.withActive(abilityId, false);
-			}
-			player.setAttached(ModAttachments.HERO_DATA, updated);
-			if (!toDeactivate.isEmpty()) {
-				ModNetworking.syncHeroData(player, updated);
-			} else {
-				ModNetworking.syncResources(player, updated);
-			}
 		}
 	}
 
 	public static boolean tryConsume(ServerPlayer player, ResourceLocation abilityId, float amount) {
-		if (amount <= 0f) {
-			return true;
+		return charge(player, abilityId, amount) != null;
+	}
+
+	/**
+	 * Spends {@code amount} following the ability's binding.
+	 *
+	 * @return what was taken from each pool, or {@code null} when the player cannot pay
+	 */
+	@Nullable
+	public static ResourcePayment charge(ServerPlayer player, ResourceLocation abilityId, float amount) {
+		if (amount <= 0f || ModEffects.isMadness(player)) {
+			return ResourcePayment.pay(0f, 0f, ResourceKind.ENERGY, 0f);
 		}
-		if (ModEffects.isMadness(player)) {
-			return true;
-		}
-		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
+		HeroData data = HeroDataStore.get(player);
 		if (!data.hasHero()) {
-			return false;
+			return null;
 		}
 		Hero hero = Heroes.get(data.heroId());
 		if (hero == null) {
-			return false;
+			return null;
 		}
 		ResourceKind kind = data.binding(abilityId, hero.getDefaultBinding(abilityId));
-		ConsumeResult cr = consume(data.energy(), data.mana(), kind, amount);
-		if (!cr.success()) {
-			return false;
+		ResourcePayment payment = ResourcePayment.pay(data.energy(), data.mana(), kind, amount);
+		if (!payment.success()) {
+			return null;
 		}
-		HeroData updated = data.withResources(cr.energy(), cr.mana());
-		player.setAttached(ModAttachments.HERO_DATA, updated);
-		ModNetworking.syncResources(player, updated);
-		return true;
+		HeroDataStore.update(player, d -> d.withResources(payment.energy(), payment.mana()));
+		return payment;
 	}
 
-	private static ConsumeResult consume(float energy, float mana, ResourceKind preferred, float amount) {
-		if (preferred == ResourceKind.ENERGY) {
-			if (energy >= amount) {
-				return new ConsumeResult(true, energy - amount, mana);
-			}
-			float deficit = amount - energy;
-			if (mana >= deficit) {
-				return new ConsumeResult(true, 0f, mana - deficit);
-			}
-		} else {
-			if (mana >= amount) {
-				return new ConsumeResult(true, energy, mana - amount);
-			}
-			float deficit = amount - mana;
-			if (energy >= deficit) {
-				return new ConsumeResult(true, energy - deficit, 0f);
-			}
+	/** Gives back exactly what {@link #charge} took, on top of whatever happened since. */
+	public static void refund(ServerPlayer player, ResourcePayment payment) {
+		if (payment.energySpent() <= 0f && payment.manaSpent() <= 0f) {
+			return;
 		}
-		return new ConsumeResult(false, energy, mana);
-	}
-
-	private record ConsumeResult(boolean success, float energy, float mana) {
+		HeroDataStore.update(player, d -> d.withResources(d.energy() + payment.energySpent(),
+				d.mana() + payment.manaSpent()));
 	}
 }

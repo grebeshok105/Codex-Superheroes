@@ -1,25 +1,6 @@
 package com.example.superheroes.physics;
 
-import com.example.superheroes.hero.ATrainHero;
-import com.example.superheroes.hero.BattleBeastHero;
-import com.example.superheroes.hero.CaptainAmericaHero;
-import com.example.superheroes.hero.DoomsdayHero;
-import com.example.superheroes.hero.GokuHero;
-import com.example.superheroes.hero.HomelanderHero;
-import com.example.superheroes.hero.InvincibleHero;
-import com.example.superheroes.hero.IronManHero;
-import com.example.superheroes.hero.KazuhaHero;
-import com.example.superheroes.hero.KratosHero;
-import com.example.superheroes.hero.LokiHero;
-import com.example.superheroes.hero.NarutoHero;
-import com.example.superheroes.hero.OmnimanHero;
-import com.example.superheroes.hero.RaidenHero;
-import com.example.superheroes.hero.RegulusHero;
-import com.example.superheroes.hero.ReinhardHero;
-import com.example.superheroes.hero.RemHero;
-import com.example.superheroes.hero.ScaramoucheHero;
-import com.example.superheroes.hero.SungJinwooHero;
-import com.example.superheroes.hero.ThanosHero;
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.network.ScreenShakeS2CPayload;
 import com.example.superheroes.network.WallImpactDebrisS2CPayload;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
@@ -154,7 +135,7 @@ public final class CombatImpactEngine {
 		}
 		AABB box = new AABB(impact, impact).inflate(radius);
 		for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, box,
-				entity -> entity != primary && validSweepTarget(attacker, entity))) {
+				entity -> entity != primary && TargetFilters.hostileTo(attacker).test(entity))) {
 			Vec3 center = centerOf(target);
 			double distanceSqr = center.distanceToSqr(impact);
 			if (distanceSqr > radius * radius) {
@@ -258,12 +239,6 @@ public final class CombatImpactEngine {
 		}
 	}
 
-	private static boolean validSweepTarget(ServerPlayer attacker, LivingEntity entity) {
-		if (entity == attacker || !entity.isAlive() || entity.isSpectator()) {
-			return false;
-		}
-		return !(entity instanceof Player player && player.isCreative());
-	}
 
 	private static Vec3 centerOf(LivingEntity entity) {
 		return entity.position().add(0.0, entity.getBbHeight() * 0.55, 0.0);
@@ -287,40 +262,13 @@ public final class CombatImpactEngine {
 	}
 
 	private static ImpactStyle styleFor(ResourceLocation heroId) {
-		if (ATrainHero.ID.equals(heroId)) return ImpactStyle.SPEED;
-		if (IronManHero.ID.equals(heroId)) return ImpactStyle.ENERGY;
-		if (RaidenHero.ID.equals(heroId) || RemHero.ID.equals(heroId)) return ImpactStyle.WEAPON;
-		if (DoomsdayHero.ID.equals(heroId)
-				|| BattleBeastHero.ID.equals(heroId)
-				|| OmnimanHero.ID.equals(heroId)
-				|| InvincibleHero.ID.equals(heroId)
-				|| HomelanderHero.ID.equals(heroId)) {
-			return ImpactStyle.BRUTAL;
-		}
-		return ImpactStyle.DEFAULT;
+		com.example.superheroes.hero.Hero hero = com.example.superheroes.hero.Heroes.get(heroId);
+		return hero != null ? hero.getImpactStyle() : ImpactStyle.DEFAULT;
 	}
 
 	private static double heroPower(ResourceLocation heroId) {
-		if (DoomsdayHero.ID.equals(heroId)) return 1.34;
-		if (BattleBeastHero.ID.equals(heroId)) return 1.28;
-		if (OmnimanHero.ID.equals(heroId)) return 1.27;
-		if (ThanosHero.ID.equals(heroId)) return 1.25;
-		if (InvincibleHero.ID.equals(heroId)) return 1.22;
-		if (GokuHero.ID.equals(heroId)) return 1.20;
-		if (KratosHero.ID.equals(heroId)) return 1.16;
-		if (HomelanderHero.ID.equals(heroId)) return 1.15;
-		if (SungJinwooHero.ID.equals(heroId)) return 1.12;
-		if (RegulusHero.ID.equals(heroId)) return 1.10;
-		if (RemHero.ID.equals(heroId)) return 1.08;
-		if (RaidenHero.ID.equals(heroId)) return 1.05;
-		if (ReinhardHero.ID.equals(heroId)) return 1.05;
-		if (NarutoHero.ID.equals(heroId)) return 1.00;
-		if (IronManHero.ID.equals(heroId)) return 1.00;
-		if (KazuhaHero.ID.equals(heroId)) return 0.95;
-		if (LokiHero.ID.equals(heroId)) return 0.95;
-		if (ATrainHero.ID.equals(heroId)) return 0.95;
-		if (ScaramoucheHero.ID.equals(heroId)) return 0.92;
-		if (CaptainAmericaHero.ID.equals(heroId)) return 0.88;
-		return 1.0;
+		com.example.superheroes.hero.Hero hero = com.example.superheroes.hero.Heroes.get(heroId);
+		return hero != null ? hero.getImpactPower() : 1.0;
 	}
+
 }

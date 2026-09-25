@@ -95,4 +95,13 @@ public final class ReinhardHero implements Hero {
 	public HeroHudConfig getHudConfig() {
 		return HeroHudConfig.REINHARD;
 	}
+	@Override
+	public double getImpactPower() {
+		return 1.05;
+	}
+	@Override
+	public JarvisThreatClass getThreatClass() {
+		return JarvisThreatClass.S;
+	}
+
 }

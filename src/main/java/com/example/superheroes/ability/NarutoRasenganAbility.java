@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.damage.ModDamageTypes;
 import com.example.superheroes.particle.ModParticles;
 import net.minecraft.core.particles.ParticleTypes;
@@ -105,7 +106,7 @@ public final class NarutoRasenganAbility implements Ability {
 			Vec3 forward = hand.add(player.getLookAngle().scale(STRIKE_RANGE));
 			AABB box = new AABB(hand, forward).inflate(1.5);
 			LivingEntity target = level.getEntitiesOfClass(LivingEntity.class, box,
-					e -> e != player && e.isAlive() && !e.isSpectator()).stream()
+					TargetFilters.hostileTo(player)).stream()
 					.findFirst().orElse(null);
 			if (target != null) {
 				detonate(player, target, ar);
@@ -131,7 +132,7 @@ public final class NarutoRasenganAbility implements Ability {
 		AABB aoe = new AABB(hit.x - AOE_RADIUS, hit.y - AOE_RADIUS, hit.z - AOE_RADIUS,
 				hit.x + AOE_RADIUS, hit.y + AOE_RADIUS, hit.z + AOE_RADIUS);
 		for (LivingEntity nearby : level.getEntitiesOfClass(LivingEntity.class, aoe,
-				e -> e != player && e != primary && e.isAlive() && !e.isSpectator())) {
+				TargetFilters.hostileTo(player).and(e -> e != primary))) {
 			nearby.hurt(ModDamageTypes.narutoRasengan(level, player), DAMAGE * 0.4f);
 			Vec3 away = nearby.position().subtract(hit).normalize();
 			nearby.push(away.x * 0.8, 0.3, away.z * 0.8);
@@ -147,6 +148,17 @@ public final class NarutoRasenganAbility implements Ability {
 				SoundEvents.GENERIC_EXPLODE.value(), SoundSource.PLAYERS, 1.6f, 0.6f);
 		level.playSound(null, hit.x, hit.y, hit.z,
 				SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 0.7f, 1.4f);
+	}
+
+
+	/** Drop an in-progress charge/rush without firing it (leave, death, untransform). */
+	public static void clear(ServerPlayer player) {
+		ACTIVE.remove(player.getUUID());
+	}
+
+	/** World shutdown — charge sessions die with the world. */
+	public static void resetAll() {
+		ACTIVE.clear();
 	}
 
 	private static final class ActiveRasengan {

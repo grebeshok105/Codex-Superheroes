@@ -14,6 +14,7 @@ public final class SuperheroesDataGenerator implements DataGeneratorEntrypoint {
 		pack.addProvider(ModRecipeProvider::new);
 		pack.addProvider(ModDamageTypeProvider::new);
 		pack.addProvider(ModDamageTypeTagProvider::new);
+		pack.addProvider(ModBlockTagProvider::new);
 	}
 
 	@Override

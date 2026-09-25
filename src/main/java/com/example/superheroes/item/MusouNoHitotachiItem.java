@@ -1,5 +1,7 @@
 package com.example.superheroes.item;
 
+import com.example.superheroes.combat.TargetFilters;
+import com.example.superheroes.item.bound.BoundWeaponItem;
 import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.effect.RaidenState;
 import com.example.superheroes.hero.RaidenHero;
@@ -30,7 +32,7 @@ import java.util.List;
  *     по нескольким целям в радиусе + увеличенный урон.
  *   • Musou Shinsetsu (Q активен) — обычный удар бьёт +50% сильнее, всё в радиусе 4 блока тоже получает урон.
  */
-public class MusouNoHitotachiItem extends SwordItem {
+public class MusouNoHitotachiItem extends BoundWeaponItem {
 	public MusouNoHitotachiItem(Properties properties) {
 		super(Tiers.NETHERITE, properties.attributes(SwordItem.createAttributes(Tiers.NETHERITE, 6, -2.4f)));
 	}
@@ -83,8 +85,7 @@ public class MusouNoHitotachiItem extends SwordItem {
 					double r2 = EYE_AOE_RADIUS * EYE_AOE_RADIUS;
 					List<LivingEntity> nearby = level.getEntitiesOfClass(LivingEntity.class,
 							target.getBoundingBox().inflate(EYE_AOE_RADIUS),
-							e -> e != player && e != target && e.isAlive() && !e.isSpectator()
-									&& e.distanceToSqr(target) <= r2);
+							TargetFilters.hostileTo(player).and(e -> e != target && e.distanceToSqr(target) <= r2));
 					int chained = 0;
 					for (LivingEntity e : nearby) {
 						if (chained >= EYE_CHAIN_MAX) break;
@@ -112,8 +113,7 @@ public class MusouNoHitotachiItem extends SwordItem {
 					double r2 = BURST_AOE_RADIUS * BURST_AOE_RADIUS;
 					List<LivingEntity> nearby = level.getEntitiesOfClass(LivingEntity.class,
 							target.getBoundingBox().inflate(BURST_AOE_RADIUS),
-							e -> e != player && e != target && e.isAlive() && !e.isSpectator()
-									&& e.distanceToSqr(target) <= r2);
+							TargetFilters.hostileTo(player).and(e -> e != target && e.distanceToSqr(target) <= r2));
 					for (LivingEntity e : nearby) {
 						e.invulnerableTime = 0;
 						e.hurt(level.damageSources().playerAttack(player), BURST_AOE_DAMAGE);

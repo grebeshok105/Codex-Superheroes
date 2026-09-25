@@ -19,12 +19,9 @@ import net.minecraft.sounds.SoundSource;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
-import java.util.WeakHashMap;
 
 public final class HeroTransformService {
 	private static final int COOLDOWN_TICKS = 20;
-	private static final Map<UUID, Long> LAST_TRANSFORM_TICK = new WeakHashMap<>();
 
 	private HeroTransformService() {
 	}
@@ -52,25 +49,22 @@ public final class HeroTransformService {
 		for (ResourceLocation abilityId : hero.getAbilities()) {
 			bindings.putIfAbsent(abilityId, hero.getDefaultBinding(abilityId));
 		}
-		HeroData updated = new HeroData(
+		HeroData updated = HeroDataStore.update(player, d -> new HeroData(
 				Optional.of(heroId),
-				hero.getEnergyMax(),
-				Math.min(data.mana(), hero.getManaMax()),
+				// carried over like mana on a hero swap — a swap must not be a free refill
+				// (audit B5); a fresh transform still starts with full energy
+				d.hasHero() ? Math.min(d.energy(), hero.getEnergyMax()) : hero.getEnergyMax(),
+				Math.min(d.mana(), hero.getManaMax()),
 				bindings,
 				java.util.Set.of()
-		);
-		player.setAttached(ModAttachments.HERO_DATA, updated);
-		com.example.superheroes.effect.PandoraDeathController.resetOnHeroTaken(player);
-		com.example.superheroes.ability.AbilityCooldowns.clearAndSync(player);
-		com.example.superheroes.effect.RegulusTotemController.clear(player.getUUID());
-		com.example.superheroes.effect.RegulusMadnessController.clearMadness(player);
-		hero.applyPassives(player);
+		));
+		clearHeroRuntimeState(player);
+		com.example.superheroes.lifecycle.PassiveReconciler.applyAndCapture(player, hero);
 		player.refreshDimensions();
-		player.setHealth(player.getMaxHealth());
-		ModNetworking.syncHeroData(player, updated);
-		ModNetworking.broadcastRemoteHeroSkin(player);
+		// keep absolute health — transforming must not be a free heal (audit B5)
+		player.setHealth(Math.min(player.getHealth(), player.getMaxHealth()));
 		playTransformFx(player, true);
-		com.example.superheroes.effect.HeroReactionController.onTransformed(player, heroId);
+		com.example.superheroes.lifecycle.HeroLifecycle.fireTransformed(player, heroId);
 		markTransformed(player);
 		return true;
 	}
@@ -96,18 +90,10 @@ public final class HeroTransformService {
 			current.removePassives(player);
 			deactivateAll(player, data);
 		}
-		com.example.superheroes.effect.UnibeamController.clearState(player.getUUID());
-		com.example.superheroes.effect.RegulusTotemController.clear(player.getUUID());
-		com.example.superheroes.effect.RegulusMadnessController.clearMadness(player);
-		com.example.superheroes.effect.ReinhardController.clearAdaptations(player);
-		com.example.superheroes.effect.RaidenLifecycleController.clearOnUntransform(player);
-		com.example.superheroes.effect.RemDemonismController.clear(player);
-		HeroData updated = data.withHero(null).withResources(0f, 0f).clearActive();
-		player.setAttached(ModAttachments.HERO_DATA, updated);
-		com.example.superheroes.ability.AbilityCooldowns.clearAndSync(player);
+		clearHeroRuntimeState(player);
+		com.example.superheroes.lifecycle.PassiveReconciler.clear(player.getUUID());
+		HeroDataStore.update(player, d -> d.withHero(null).withResources(0f, 0f).clearActive());
 		player.refreshDimensions();
-		ModNetworking.syncHeroData(player, updated);
-		ModNetworking.broadcastRemoteHeroSkin(player);
 		if (playFx) {
 			playTransformFx(player, false);
 		}
@@ -116,7 +102,7 @@ public final class HeroTransformService {
 	}
 
 	private static boolean isOnCooldown(ServerPlayer player) {
-		Long last = LAST_TRANSFORM_TICK.get(player.getUUID());
+		Long last = player.getAttached(ModAttachments.TRANSFORM_TICK);
 		if (last == null) {
 			return false;
 		}
@@ -124,7 +110,7 @@ public final class HeroTransformService {
 	}
 
 	private static void markTransformed(ServerPlayer player) {
-		LAST_TRANSFORM_TICK.put(player.getUUID(), (long) player.server.getTickCount());
+		player.setAttached(ModAttachments.TRANSFORM_TICK, (long) player.server.getTickCount());
 	}
 
 	private static void playTransformFx(ServerPlayer player, boolean activate) {
@@ -145,10 +131,9 @@ public final class HeroTransformService {
 	}
 
 	public static void onPlayerJoin(ServerPlayer player) {
-		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
+		HeroData data = HeroDataStore.get(player);
 		if (data.hasHero() && !data.activeAbilities().isEmpty()) {
-			data = data.clearActive();
-			player.setAttached(ModAttachments.HERO_DATA, data);
+			data = HeroDataStore.update(player, HeroData::clearActive);
 		}
 		if (data.hasHero()) {
 			Hero hero = Heroes.get(data.heroId());
@@ -156,14 +141,13 @@ public final class HeroTransformService {
 				reapplyLifecyclePassives(player, hero);
 			}
 		}
-		ModNetworking.syncHeroData(player, data);
+		HeroDataStore.syncFull(player);
 	}
 
 	public static void onPlayerRespawn(ServerPlayer newPlayer) {
-		HeroData data = newPlayer.getAttachedOrCreate(ModAttachments.HERO_DATA);
+		HeroData data = HeroDataStore.get(newPlayer);
 		if (data.hasHero() && !data.activeAbilities().isEmpty()) {
-			data = data.clearActive();
-			newPlayer.setAttached(ModAttachments.HERO_DATA, data);
+			data = HeroDataStore.update(newPlayer, HeroData::clearActive);
 		}
 		if (data.hasHero()) {
 			Hero hero = Heroes.get(data.heroId());
@@ -172,23 +156,43 @@ public final class HeroTransformService {
 			}
 		}
 		com.example.superheroes.effect.ReinhardController.onRespawn(newPlayer);
-		ModNetworking.syncHeroData(newPlayer, data);
+		HeroDataStore.syncFull(newPlayer);
 	}
 
 	private static void reapplyLifecyclePassives(ServerPlayer player, Hero hero) {
 		if (DoomsdayHero.ID.equals(hero.getId())) {
-			hero.applyPassives(player);
+			com.example.superheroes.lifecycle.PassiveReconciler.applyAndCapture(player, hero);
 			return;
 		}
 		hero.removePassives(player);
-		hero.applyPassives(player);
+		com.example.superheroes.lifecycle.PassiveReconciler.applyAndCapture(player, hero);
 	}
 
-	public static void onPlayerDisconnect(ServerPlayer player) {
+	/**
+	 * Server-thread leave hook ({@link com.example.superheroes.lifecycle.PlayerLifecycle#onLeave}).
+	 * Game-state cleanup must not run on {@code ServerPlayConnectionEvents.DISCONNECT} — Fabric
+	 * can fire that on the Netty thread. Clears session-scoped state without running ability
+	 * {@code onDeactivate} (its gameplay side-effects would persist onto a leaving player).
+	 */
+	public static void onPlayerLeave(ServerPlayer player) {
 		java.util.UUID id = player.getUUID();
-		com.example.superheroes.ability.AbilityCooldowns.clear(id);
+		// ability cooldowns intentionally persist — they live on the player attachment (audit B5)
 		com.example.superheroes.resource.EnergyLocks.clear(id);
 		com.example.superheroes.effect.RemDemonismController.clear(player);
+		com.example.superheroes.effect.UnibeamController.clearState(id);
+		if (HeroDataStore.get(player).hasHero()) {
+			HeroDataStore.update(player, HeroData::clearActive);
+		}
+	}
+
+	/**
+	 * Drop every hero-scoped session-state bit for the player (swap/untransform).
+	 * Subscribers register via {@link com.example.superheroes.lifecycle.HeroLifecycle#onClear}
+	 * (audit B23: transform used to clear a subset of what untransform cleared);
+	 * ability cooldowns deliberately survive — persistent deadlines, not session state.
+	 */
+	public static void clearHeroRuntimeState(ServerPlayer player) {
+		com.example.superheroes.lifecycle.HeroLifecycle.fireClear(player);
 	}
 
 	private static void deactivateAll(ServerPlayer player, HeroData data) {

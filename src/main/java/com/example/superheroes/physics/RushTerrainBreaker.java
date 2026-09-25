@@ -7,6 +7,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import com.example.superheroes.world.WorldDestructionPolicy;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
@@ -50,7 +51,7 @@ public final class RushTerrainBreaker {
 					if (state.isAir() || !state.getFluidState().isEmpty()) {
 						continue;
 					}
-					if (!BlockBreakPolicy.canImpactBreak(level, pos, state, MAX_HARDNESS)) {
+					if (!WorldDestructionPolicy.mayDestroy(level, pos, state, MAX_HARDNESS)) {
 						continue;
 					}
 					if (debrisStates < DEBRIS_STATE_LIMIT) {
@@ -62,7 +63,7 @@ public final class RushTerrainBreaker {
 					if (hardness > maxHardnessBroken) {
 						maxHardnessBroken = hardness;
 					}
-					if (level.destroyBlock(pos.immutable(), false, player)) {
+					if (WorldDestructionPolicy.tryBreak(level, pos.immutable(), true, player)) {
 						destroyed++;
 					}
 				}

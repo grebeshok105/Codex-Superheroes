@@ -33,6 +33,10 @@ public final class EnergyLocks {
 		return left > 0 ? (int) left : 0;
 	}
 
+	/** World shutdown — lock deadlines are keyed to a per-world tick clock. */
+	public static void resetAll() {
+		LOCKS.clear();
+	}
 	public static void clear(UUID id) {
 		LOCKS.remove(id);
 	}

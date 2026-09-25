@@ -36,12 +36,17 @@ public final class ProjectSanityTest {
 	private static final Path FABRIC_MOD_JSON = MAIN_RESOURCES.resolve("fabric.mod.json");
 	private static final String MOD_ID = "superheroes";
 
+	private static final Pattern HERO_DATA_DIRECT_WRITE = Pattern.compile(
+			"setAttached\\(\\s*(?:[\\w.]+\\.)?HERO_DATA\\b|removeAttached\\(\\s*(?:[\\w.]+\\.)?HERO_DATA\\b"
+					+ "|ModNetworking\\.sync(?:HeroData|Resources)\\(");
 	private static final Pattern FABRIC_IMPL_IMPORT = Pattern.compile("net\\.fabricmc\\.fabric\\.impl\\.");
 	private static final Pattern CLIENT_ONLY_IMPORT = Pattern.compile("import\\s+net\\.minecraft\\.client\\.|import\\s+net\\.fabricmc\\.fabric\\.api\\.client\\.");
 	private static final Pattern HERO_FIELD = Pattern.compile("public static final \\w+Hero (\\w+) =", Pattern.MULTILINE);
 	private static final Pattern HERO_REGISTER = Pattern.compile("register\\(\\s*(\\w+)\\s*\\)");
 	private static final Pattern STATIC_INIT = Pattern.compile("public static void init\\(\\)");
 	private static final Pattern SOUND_NAME = Pattern.compile("\"" + MOD_ID + ":([^\"]+)\"");
+	private static final Pattern DIRECT_WORLD_MUTATION = Pattern.compile(
+			"\\.(?:destroyBlock|removeBlock|setBlock|setBlockAndUpdate)\\(");
 
 	private ProjectSanityTest() {}
 
@@ -54,6 +59,13 @@ public final class ProjectSanityTest {
 		assertEveryHeroRegistered();
 		assertControllersAreWired();
 		assertFabricModJsonSanity();
+		assertHeroDataHasSingleWriter();
+		assertWorldMutationsGoThroughPolicy();
+		assertClientStatesRegisterReset();
+		assertClientCooldownsUseLevelGameTime();
+		assertNoHeroTypeDispatch();
+		assertNoCyrillicLiterals();
+		assertEntityLangNames();
 		System.out.println("ProjectSanityTest passed");
 	}
 
@@ -64,6 +76,62 @@ public final class ProjectSanityTest {
 				String source = Files.readString(file);
 				assert !FABRIC_IMPL_IMPORT.matcher(source).find()
 						: file + " references net.fabricmc.fabric.impl.* internals — only net.fabricmc.fabric.api.* is allowed";
+			});
+		}
+	}
+
+	// HeroData has one writer (audit B2): read-modify-write through HeroDataStore, never a stale copy.
+	private static void assertHeroDataHasSingleWriter() throws IOException {
+		Path store = MAIN_JAVA.resolve("com/example/superheroes/transform/HeroDataStore.java");
+		Path networking = MAIN_JAVA.resolve("com/example/superheroes/network/ModNetworking.java");
+		forEachJavaFile(MAIN_JAVA, file -> {
+			if (file.equals(store) || file.equals(networking)) {
+				return;
+			}
+			String source = Files.readString(file);
+			assert !HERO_DATA_DIRECT_WRITE.matcher(source).find()
+					: file + " writes or syncs HERO_DATA directly — use HeroDataStore.update(player, fn)";
+		});
+	}
+
+	// Audit B10: ability-driven block removal / terrain edits route through
+	// WorldDestructionPolicy so protection mods (PlayerBlockBreakEvents, spawn
+	// protection, mobGriefing) see every change. Raw level mutations live only
+	// inside the policy itself.
+	private static void assertWorldMutationsGoThroughPolicy() throws IOException {
+		Path policy = MAIN_JAVA.resolve("com/example/superheroes/world/WorldDestructionPolicy.java");
+		assert Files.exists(policy) : "WorldDestructionPolicy.java is missing";
+		forEachJavaFile(MAIN_JAVA, file -> {
+			if (file.equals(policy)) {
+				return;
+			}
+			String source = Files.readString(file);
+			assert !DIRECT_WORLD_MUTATION.matcher(source).find()
+					: file + " mutates the world directly — route ability block breaks through WorldDestructionPolicy";
+		});
+	}
+
+	// Debt 4: hero-specific branching lives in the Hero hooks (canUseAbility, getImpactStyle,
+	// ...), not in `instanceof` checks scattered through generic code.
+	private static void assertNoHeroTypeDispatch() throws IOException {
+		Pattern heroDispatch = Pattern.compile("instanceof\\s+[\\w.]*\\w+Hero\\b");
+		for (Path root : List.of(MAIN_JAVA, CLIENT_JAVA)) {
+			forEachJavaFile(root, file -> {
+				String source = Files.readString(file);
+				assert !heroDispatch.matcher(source).find()
+						: file + " dispatches on a Hero subtype — move the branch behind a Hero default hook";
+			});
+		}
+	}
+
+	// Hygiene (audit §3): player-facing strings live in the lang files, not hardcoded.
+	private static void assertNoCyrillicLiterals() throws IOException {
+		Pattern cyrillicLiteral = Pattern.compile("Component\\.literal\\(\"[^\"]*[\\u0400-\\u04FF]");
+		for (Path root : List.of(MAIN_JAVA, CLIENT_JAVA)) {
+			forEachJavaFile(root, file -> {
+				String source = Files.readString(file);
+				assert !cyrillicLiteral.matcher(source).find()
+						: file + " hardcodes a cyrillic Component.literal — use a lang key via Component.translatable";
 			});
 		}
 	}
@@ -171,6 +239,22 @@ public final class ProjectSanityTest {
 		assert models > 0 : "no item models found under either resources root; this check would pass vacuously";
 	}
 
+	// Every registered entity type needs a display name — unlocalized ids leak into subtitles,
+	// death messages, and the debug overlay (audit "мелочи"). en_us is the source of truth;
+	// ru_ru parity is covered by assertLangFilesInSync.
+	private static void assertEntityLangNames() throws IOException {
+		JsonObject en = parseJsonObject(MAIN_RESOURCES.resolve("assets/" + MOD_ID + "/lang/en_us.json"));
+		Pattern entityId = Pattern.compile("(?:ModId\\.of|register)\\(\\s*\"([a-z_]+)\"");
+		for (String file : List.of("com/example/superheroes/entity/ModEntities.java",
+				"com/example/superheroes/horde/entity/HordeEntities.java")) {
+			Matcher ids = entityId.matcher(Files.readString(MAIN_JAVA.resolve(file)));
+			while (ids.find()) {
+				assert en.has("entity." + MOD_ID + "." + ids.group(1))
+						: "missing entity." + MOD_ID + "." + ids.group(1) + " in en_us.json (registered in " + file + ")";
+			}
+		}
+	}
+
 	// Hero seam: every hero constant declared in Heroes.java must be registered.
 	private static void assertEveryHeroRegistered() throws IOException {
 		String heroes = Files.readString(MAIN_JAVA.resolve("com/example/superheroes/hero/Heroes.java"));
@@ -224,6 +308,38 @@ public final class ProjectSanityTest {
 				: "fabric.mod.json has no main entrypoint";
 		assert entrypoints.has("client") && !entrypoints.getAsJsonArray("client").isEmpty()
 				: "fabric.mod.json has no client entrypoint";
+	}
+
+	// Audit B15: every Client*State holder self-registers a reset with ClientSessionState
+	// in its static block, so the disconnect path iterates ALL of them and no per-class
+	// list in SuperheroesClient can go stale when a new state class appears. The few
+	// session-state singletons outside that naming convention are pinned by name.
+	private static void assertClientStatesRegisterReset() throws IOException {
+		Pattern clientStateFile = Pattern.compile("Client[A-Za-z0-9]+State\\.java");
+		List<String> namedSingletons = List.of(
+				"ClientAbilityCooldowns.java",
+				"JarvisDetectionHud.java", "MirrorWarpFlashHud.java", "RadialMenuHud.java");
+		forEachJavaFile(CLIENT_JAVA, file -> {
+			String name = file.getFileName().toString();
+			boolean covered = clientStateFile.matcher(name).matches() && !name.equals("ClientSessionState.java");
+			if (!covered && !namedSingletons.contains(name)) {
+				return;
+			}
+			String source = Files.readString(file);
+			assert source.contains("ClientSessionState.register(")
+					: file + " holds session state but never calls ClientSessionState.register(...) — "
+							+ "its state survives disconnects (audit B15)";
+		});
+	}
+
+	// Audit B15: client cooldown deadlines come from the level's game time, never
+	// LocalPlayer.tickCount — that resets on respawn and made the HUD show hours.
+	private static void assertClientCooldownsUseLevelGameTime() throws IOException {
+		Path cooldowns = CLIENT_JAVA.resolve("com/example/superheroes/client/ClientAbilityCooldowns.java");
+		String source = Files.readString(cooldowns);
+		assert !Pattern.compile("\\.tickCount\\b").matcher(source).find()
+				: cooldowns + " must not derive cooldown deadlines from LocalPlayer.tickCount — "
+						+ "it resets on respawn and broke the HUD (audit B15)";
 	}
 
 	private static JsonObject parseJsonObject(Path file) throws IOException {

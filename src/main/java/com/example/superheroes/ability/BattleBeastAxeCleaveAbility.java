@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.effect.BattleBeastCurseController;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
@@ -57,7 +58,7 @@ public final class BattleBeastAxeCleaveAbility implements Ability {
 		Vec3 end = eye.add(forward.scale(RANGE));
 		AABB scan = new AABB(eye, end).inflate(4.0);
 		for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, scan,
-				target -> isValidTarget(player, target))) {
+				TargetFilters.hostileTo(player))) {
 			Vec3 targetCenter = target.position().add(0.0, target.getBbHeight() * 0.5, 0.0);
 			Vec3 toTarget = targetCenter.subtract(eye);
 			double distance = toTarget.length();
@@ -91,10 +92,4 @@ public final class BattleBeastAxeCleaveAbility implements Ability {
 		return true;
 	}
 
-	private static boolean isValidTarget(ServerPlayer owner, LivingEntity target) {
-		return target != owner
-				&& target.isAlive()
-				&& !target.isSpectator()
-				&& !(target instanceof Player player && player.isCreative());
-	}
 }

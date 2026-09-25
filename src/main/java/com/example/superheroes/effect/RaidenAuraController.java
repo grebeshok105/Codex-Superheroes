@@ -2,10 +2,10 @@ package com.example.superheroes.effect;
 
 import com.example.superheroes.ability.AbilityIds;
 import com.example.superheroes.attachment.ModAttachments;
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.hero.RaidenHero;
 import com.example.superheroes.particle.ModParticles;
 import com.example.superheroes.transform.HeroData;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -16,6 +16,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
+import net.minecraft.server.MinecraftServer;
 
 /**
  * Транс-аура Райден: пока активен RAIDEN_TRANSCENDENCE, каждые 30 тиков
@@ -30,14 +31,6 @@ public final class RaidenAuraController {
 	private RaidenAuraController() {
 	}
 
-	public static void init() {
-		ServerTickEvents.END_SERVER_TICK.register(server -> {
-			for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-				if (!isRaiden(player)) continue;
-				tick(player);
-			}
-		});
-	}
 
 	private static boolean isRaiden(ServerPlayer player) {
 		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
@@ -59,9 +52,7 @@ public final class RaidenAuraController {
 		LivingEntity nearest = null;
 		double bestDist = Double.MAX_VALUE;
 		for (LivingEntity le : level.getEntitiesOfClass(LivingEntity.class, box,
-				e -> e != player && e.isAlive() && !e.isSpectator()
-						&& !(e instanceof Player p && p.getUUID().equals(player.getUUID()))
-						&& e.position().distanceToSqr(origin) <= r2)) {
+				TargetFilters.hostileTo(player).and(e -> e.position().distanceToSqr(origin) <= r2))) {
 			double d = le.position().distanceToSqr(origin);
 			if (d < bestDist) {
 				bestDist = d;
@@ -85,4 +76,10 @@ public final class RaidenAuraController {
 				SoundEvents.LIGHTNING_BOLT_IMPACT, SoundSource.PLAYERS, 0.5f, 1.7f);
 
 	}
+
+	public static void tickPlayer(MinecraftServer server, ServerPlayer player, HeroData data) {
+		if (!isRaiden(player)) return;
+		tick(player);
+	}
+
 }

@@ -1,9 +1,12 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.effect.ModEffects;
 import com.example.superheroes.effect.ThanosCrossModSnapHook;
 import com.example.superheroes.effect.ThanosGauntletStateController;
 import com.example.superheroes.effect.ThanosSnapWindupController;
+import com.example.superheroes.item.InfinityGauntletItem;
+import com.example.superheroes.item.infinity.InfinityGauntletData;
 import com.example.superheroes.item.infinity.InfinityStoneItem;
 import com.example.superheroes.item.infinity.InfinityStoneType;
 import net.minecraft.world.item.ItemStack;
@@ -90,8 +93,7 @@ public final class ThanosSnapAbility implements Ability {
 
 		AABB aoe = player.getBoundingBox().inflate(RADIUS, RADIUS, RADIUS);
 		List<Player> victims = level.getEntitiesOfClass(Player.class, aoe,
-				p -> p.isAlive() && !p.getUUID().equals(player.getUUID())
-						&& !p.isCreative() && !p.isSpectator());
+				p -> TargetFilters.harmableBy(p, player) && TargetFilters.notCreative(p));
 
 		int snapped = 0;
 		for (Player victim : victims) {
@@ -186,6 +188,15 @@ public final class ThanosSnapAbility implements Ability {
 		for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
 			ItemStack stack = player.getInventory().getItem(i);
 			if (stack.isEmpty()) continue;
+			// The stones the snap gate checked live inside the gauntlet — burn those too,
+			// otherwise the snap is free to fire forever (audit B6).
+			if (stack.getItem() instanceof InfinityGauntletItem) {
+				if (InfinityGauntletData.getStoneCount(stack) > 0) {
+					InfinityGauntletData.clearStones(stack);
+					removed = true;
+				}
+				continue;
+			}
 			if (stack.getItem() instanceof InfinityStoneItem) {
 				player.getInventory().setItem(i, ItemStack.EMPTY);
 				removed = true;

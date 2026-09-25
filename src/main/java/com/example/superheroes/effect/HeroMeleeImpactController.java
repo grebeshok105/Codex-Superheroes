@@ -1,6 +1,7 @@
 package com.example.superheroes.effect;
 
 import com.example.superheroes.attachment.ModAttachments;
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.network.HeroMeleeChargeC2SPayload;
 import com.example.superheroes.network.ScreenShakeS2CPayload;
 import com.example.superheroes.physics.CombatImpactEngine;
@@ -8,7 +9,6 @@ import com.example.superheroes.physics.ImpactChargeRules;
 import com.example.superheroes.physics.ImpactProfile;
 import com.example.superheroes.physics.ImpactTier;
 import com.example.superheroes.transform.HeroData;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.particles.ParticleOptions;
@@ -58,7 +58,7 @@ public final class HeroMeleeImpactController {
 			if (world.isClientSide() || hand != InteractionHand.MAIN_HAND || !(player instanceof ServerPlayer attacker)) {
 				return InteractionResult.PASS;
 			}
-			if (!(entity instanceof LivingEntity target) || !validTarget(attacker, target)) {
+			if (!(entity instanceof LivingEntity target) || !TargetFilters.hostileTo(attacker).test(target)) {
 				return InteractionResult.PASS;
 			}
 			HeroData data = attacker.getAttachedOrCreate(ModAttachments.HERO_DATA);
@@ -75,10 +75,6 @@ public final class HeroMeleeImpactController {
 			return InteractionResult.PASS;
 		});
 
-		ServerTickEvents.END_SERVER_TICK.register(server -> {
-			processPendingPushes();
-			cleanup(server);
-		});
 	}
 
 	public static void handleChargeInput(ServerPlayer player, HeroMeleeChargeC2SPayload payload) {
@@ -133,17 +129,11 @@ public final class HeroMeleeImpactController {
 		return (int) Math.max(0L, Math.min(Integer.MAX_VALUE, held));
 	}
 
-	private static boolean validTarget(ServerPlayer attacker, LivingEntity target) {
-		if (target == attacker || !target.isAlive() || target.isSpectator()) {
-			return false;
-		}
-		return !(target instanceof Player player && (player.isCreative() || player.isSpectator()));
-	}
 
 	private static LivingEntity findReleaseTarget(ServerPlayer player, int targetId, double range) {
 		if (targetId >= 0) {
 			Entity entity = player.serverLevel().getEntity(targetId);
-			if (entity instanceof LivingEntity target && validTarget(player, target)
+			if (entity instanceof LivingEntity target && TargetFilters.hostileTo(player).test(target)
 					&& target.distanceTo(player) <= range + RELEASE_HIT_INFLATE + 0.5) {
 				return target;
 			}
@@ -159,7 +149,7 @@ public final class HeroMeleeImpactController {
 		Vec3 entityEnd = blockHit.getType() == HitResult.Type.BLOCK ? blockHit.getLocation() : end;
 		AABB box = player.getBoundingBox().expandTowards(direction.scale(range)).inflate(RELEASE_HIT_INFLATE);
 		EntityHitResult hit = ProjectileUtil.getEntityHitResult(player.serverLevel(), player, eye, entityEnd, box,
-				entity -> entity instanceof LivingEntity target && validTarget(player, target));
+				entity -> entity instanceof LivingEntity target && TargetFilters.hostileTo(player).test(target));
 		if (hit == null || !(hit.getEntity() instanceof LivingEntity target)) {
 			return null;
 		}
@@ -286,4 +276,10 @@ public final class HeroMeleeImpactController {
 			this.startedAt = startedAt;
 		}
 	}
+
+	public static void serverTick(MinecraftServer server) {
+		processPendingPushes();
+		cleanup(server);
+	}
+
 }

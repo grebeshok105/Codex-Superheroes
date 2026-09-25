@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.effect.SungJinwooController;
 import com.example.superheroes.entity.ShadowSoldierEntity;
 import net.minecraft.core.particles.ParticleTypes;
@@ -59,7 +60,7 @@ public final class SacrificeAbility implements Ability {
 		for (ShadowSoldierEntity shadow : shadows) {
 			AABB box = shadow.getBoundingBox().inflate(EXPLOSION_RADIUS);
 			List<LivingEntity> hits = level.getEntitiesOfClass(LivingEntity.class, box,
-					e -> e != player && !(e instanceof ShadowSoldierEntity) && e.isAlive() && !(e instanceof Player p && p.getUUID().equals(player.getUUID())));
+					TargetFilters.hostileTo(player).and(e -> !(e instanceof ShadowSoldierEntity)));
 			for (LivingEntity hit : hits) {
 				if (hit.distanceToSqr(shadow) > EXPLOSION_RADIUS * EXPLOSION_RADIUS) continue;
 				hit.hurt(level.damageSources().playerAttack(player), EXPLOSION_DAMAGE);

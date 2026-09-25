@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -47,7 +48,7 @@ public final class GokuSolarFlareAbility implements Ability {
 		ServerLevel level = player.serverLevel();
 		List<LivingEntity> targets = level.getEntitiesOfClass(LivingEntity.class,
 				player.getBoundingBox().inflate(RADIUS),
-				e -> e != player && e.isAlive() && !e.isSpectator());
+				TargetFilters.hostileTo(player));
 		for (LivingEntity target : targets) {
 			if (target instanceof ServerPlayer) {
 				target.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 80, 1, true, true, true));

@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.resources.ResourceLocation;
@@ -56,7 +57,7 @@ public final class RulersAuthorityAbility implements Ability {
 
 		AABB box = new AABB(eye, eye).inflate(RANGE);
 		List<LivingEntity> candidates = level.getEntitiesOfClass(LivingEntity.class, box,
-				e -> e != player && e.isAlive() && !e.isSpectator() && eye.distanceToSqr(e.position()) <= RANGE * RANGE);
+				TargetFilters.hostileTo(player).and(e -> eye.distanceToSqr(e.position()) <= RANGE * RANGE));
 		LivingEntity target = candidates.stream()
 				.max(Comparator.comparingDouble(e -> {
 					Vec3 toE = e.position().add(0, e.getBbHeight() * 0.5, 0).subtract(eye).normalize();

@@ -6,6 +6,10 @@ public final class ClientReactorState {
 	private static volatile int total = 100;
 	private static volatile boolean hasStock = true;
 
+	static {
+		ClientSessionState.register(ClientReactorState::reset);
+	}
+
 	private ClientReactorState() {
 	}
 
@@ -30,5 +34,13 @@ public final class ClientReactorState {
 
 	public static boolean hasStock() {
 		return hasStock;
+	}
+
+	/** Drop all session state (registered with {@code ClientSessionState}). */
+	public static void reset() {
+		active = false;
+		progress = 0;
+		total = 100;
+		hasStock = true;
 	}
 }

@@ -1,0 +1,30 @@
+{
+	"schemaVersion": 1,
+	"id": "superheroes-gametest",
+	"version": "1.0.0",
+	"name": "Codex Superheroes GameTests",
+	"description": "Server GameTests for Codex Superheroes. Development only, never shipped.",
+	"license": "CC0-1.0",
+	"environment": "*",
+	"entrypoints": {
+		"fabric-gametest": [
+			"com.example.superheroes.gametest.BoundWeaponGameTests",
+			"com.example.superheroes.gametest.HeroDataGameTests",
+			"com.example.superheroes.gametest.LifecycleGameTests",
+			"com.example.superheroes.gametest.HeroSwapGameTests",
+			"com.example.superheroes.gametest.DamagePipelineGameTests",
+			"com.example.superheroes.gametest.DestructionPolicyGameTests",
+			"com.example.superheroes.gametest.HouseOfVanityGameTests",
+			"com.example.superheroes.gametest.PassivesFallGameTests",
+			"com.example.superheroes.gametest.PublicHeroSyncGameTests",
+			"com.example.superheroes.gametest.HeroTickDispatcherGameTests",
+			"com.example.superheroes.gametest.ShadowsTeleportsGameTests",
+			"com.example.superheroes.gametest.TargetPredicateGameTests",
+			"com.example.superheroes.gametest.Stage15GameTests"
+		]
+	},
+	"depends": {
+		"superheroes": "*",
+		"fabric-gametest-api-v1": "*"
+	}
+}

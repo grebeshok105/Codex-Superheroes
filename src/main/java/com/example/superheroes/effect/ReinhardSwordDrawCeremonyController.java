@@ -1,15 +1,13 @@
 package com.example.superheroes.effect;
 
+import com.example.superheroes.lifecycle.ControlLockKind;
+import com.example.superheroes.lifecycle.EntityControlLock;
+import com.example.superheroes.transform.HeroDataStore;
 import com.example.superheroes.ability.AbilityIds;
 import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.hero.HeroAttributes;
-import com.example.superheroes.hero.ReinhardHero;
-import com.example.superheroes.item.ModItems;
-import com.example.superheroes.network.ModNetworking;
 import com.example.superheroes.network.ReinhardCeremonyS2CPayload;
 import com.example.superheroes.sound.ModSounds;
-import com.example.superheroes.transform.HeroData;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
@@ -17,22 +15,21 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import net.minecraft.server.MinecraftServer;
+import com.example.superheroes.transform.HeroData;
 
 /**
  * Ceremonial sword draw for Reinhard. Lasts 10 seconds (200 ticks):
@@ -64,15 +61,6 @@ public final class ReinhardSwordDrawCeremonyController {
 
 	private ReinhardSwordDrawCeremonyController() {}
 
-	public static void init() {
-		ServerTickEvents.END_SERVER_TICK.register(server -> {
-			for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-				CeremonyState st = CEREMONIES.get(player.getUUID());
-				if (st == null) continue;
-				tickCeremony(player, st);
-			}
-		});
-	}
 
 	public static boolean isInCeremony(ServerPlayer player) {
 		return CEREMONIES.containsKey(player.getUUID());
@@ -105,6 +93,12 @@ public final class ReinhardSwordDrawCeremonyController {
 		if (st == null) return;
 		thawNearby(player);
 		broadcastProgress(player, false, 0f);
+	}
+
+	/** World shutdown — ceremonies die with the world; entity flags restore via lock shadows. */
+	public static void resetAll() {
+		CEREMONIES.clear();
+		FROZEN_MOBS.clear();
 	}
 
 	private static void tickCeremony(ServerPlayer player, CeremonyState st) {
@@ -150,15 +144,12 @@ public final class ReinhardSwordDrawCeremonyController {
 		ReinhardState state = player.getAttachedOrCreate(ModAttachments.REINHARD_STATE);
 		player.setAttached(ModAttachments.REINHARD_STATE, state.withSwordDrawn(true));
 		HeroAttributes.REINHARD_DRAW.apply(player);
-		giveSword(player);
+		if (!com.example.superheroes.ability.ReinhardSwordDrawAbility.giveSword(player)) {
+			player.displayClientMessage(Component.translatable("ability.superheroes.bound_weapon.no_room"), true);
+		}
 		ReinhardTimeSlowController.armForFirstStrike(player);
 
-		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
-		if (!data.isActive(AbilityIds.REINHARD_SWORD_DRAW)) {
-			data = data.withActive(AbilityIds.REINHARD_SWORD_DRAW, true);
-			player.setAttached(ModAttachments.HERO_DATA, data);
-			ModNetworking.syncHeroData(player, data);
-		}
+		HeroDataStore.update(player, d -> d.withActive(AbilityIds.REINHARD_SWORD_DRAW, true));
 
 		ServerLevel level = player.serverLevel();
 		level.sendParticles(ParticleTypes.END_ROD,
@@ -179,11 +170,11 @@ public final class ReinhardSwordDrawCeremonyController {
 		ServerLevel level = player.serverLevel();
 		AABB box = new AABB(player.position(), player.position()).inflate(CEREMONY_RADIUS);
 		for (LivingEntity living : level.getEntitiesOfClass(LivingEntity.class, box, e -> true)) {
-			applyFreeze(living, player.getUUID());
+			applyFreeze(living, player);
 		}
 	}
 
-	private static void applyFreeze(LivingEntity entity, UUID reinhardId) {
+	private static void applyFreeze(LivingEntity entity, ServerPlayer reinhard) {
 		// Slowness 6 caps movement at 0; Weakness 4 + Mining Fatigue 4 prevent meaningful counter-attack
 		entity.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN,
 				CEREMONY_DURATION_TICKS + 5, 6, true, false, false));
@@ -194,11 +185,10 @@ public final class ReinhardSwordDrawCeremonyController {
 		entity.setDeltaMovement(Vec3.ZERO);
 		entity.hurtMarked = true;
 		if (entity instanceof Mob mob) {
-			Set<UUID> set = FROZEN_MOBS.get(reinhardId);
+			Set<UUID> set = FROZEN_MOBS.get(reinhard.getUUID());
 			if (set != null) {
-				if (set.add(mob.getUUID()) && !mob.isNoAi()) {
-					mob.setNoAi(true);
-				}
+				set.add(mob.getUUID());
+				EntityControlLock.acquire(mob, ControlLockKind.NO_AI, reinhard);
 			}
 		}
 	}
@@ -209,7 +199,7 @@ public final class ReinhardSwordDrawCeremonyController {
 		ServerLevel level = player.serverLevel();
 		AABB box = new AABB(player.position(), player.position()).inflate(CEREMONY_RADIUS + 8.0);
 		for (Mob mob : level.getEntitiesOfClass(Mob.class, box, m -> mobIds.contains(m.getUUID()))) {
-			mob.setNoAi(false);
+			EntityControlLock.release(mob, ControlLockKind.NO_AI, player.getUUID());
 			mob.removeEffect(MobEffects.MOVEMENT_SLOWDOWN);
 			mob.removeEffect(MobEffects.WEAKNESS);
 			mob.removeEffect(MobEffects.DIG_SLOWDOWN);
@@ -261,19 +251,11 @@ public final class ReinhardSwordDrawCeremonyController {
 		}
 	}
 
-	private static void giveSword(ServerPlayer player) {
-		if (player.getMainHandItem().is(ModItems.ROYAL_ICICLE)) return;
-		if (player.getOffhandItem().is(ModItems.ROYAL_ICICLE)) return;
-		ItemStack stack = new ItemStack(ModItems.ROYAL_ICICLE);
-		ItemStack mainHand = player.getMainHandItem();
-		if (mainHand.isEmpty()) {
-			player.setItemInHand(InteractionHand.MAIN_HAND, stack);
-		} else if (player.getOffhandItem().isEmpty()) {
-			player.setItemInHand(InteractionHand.OFF_HAND, stack);
-		} else {
-			if (!player.getInventory().add(stack)) {
-				player.drop(stack, false);
-			}
-		}
+
+	public static void tickPlayer(MinecraftServer server, ServerPlayer player, HeroData data) {
+		CeremonyState st = CEREMONIES.get(player.getUUID());
+		if (st == null) return;
+		tickCeremony(player, st);
 	}
+
 }

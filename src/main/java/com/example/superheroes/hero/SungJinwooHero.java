@@ -123,4 +123,13 @@ public final class SungJinwooHero implements Hero {
 	public HeroHudConfig getHudConfig() {
 		return HeroHudConfig.SUNG_JINWOO;
 	}
+	@Override
+	public double getImpactPower() {
+		return 1.12;
+	}
+	@Override
+	public JarvisThreatClass getThreatClass() {
+		return JarvisThreatClass.A;
+	}
+
 }

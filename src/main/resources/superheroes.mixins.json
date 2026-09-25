@@ -9,12 +9,11 @@
 		"LivingEntityFallDamageMixin",
 		"LivingEntityFallFlyingMixin",
 		"LivingEntityEffectMixin",
+		"LivingEntityPassiveEffectsMixin",
 		"LivingEntityHealBlockMixin",
 		"ThanosBlockBreakingMixin",
 		"KryptoniteShardPickupMixin",
-		"RoyalIcicleNoDropMixin",
-		"YamatoNoDropMixin",
-		"RemMorningStarNoDropMixin",
+		"PlayerBoundWeaponDropMixin",
 		"falbiks.HeroComponentStripMixin"
 	],
 	"injectors": {

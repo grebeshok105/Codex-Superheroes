@@ -46,4 +46,9 @@ public final class RepulsorChargeController {
 	public static void reset(ServerPlayer player) {
 		CHARGE.remove(player.getUUID());
 	}
+
+	/** World shutdown — charge progress dies with the world. */
+	public static void resetAll() {
+		CHARGE.clear();
+	}
 }

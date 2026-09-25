@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.effect.ScorpionFx;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
@@ -78,7 +79,7 @@ public final class ScorpionHellfireAbility implements Ability {
 
 		AABB area = new AABB(center, center).inflate(BLAST_RADIUS, BLAST_RADIUS + 1.0, BLAST_RADIUS);
 		for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, area,
-				t -> isValidTarget(player, t))) {
+				TargetFilters.hostileTo(player))) {
 			target.invulnerableTime = 0;
 			target.hurt(level.damageSources().playerAttack(player), DAMAGE);
 			target.igniteForSeconds(5f);
@@ -115,10 +116,4 @@ public final class ScorpionHellfireAbility implements Ability {
 				center.x, center.y + 1.2, center.z, 14, 1.0, 1.2, 1.0, 0.02);
 	}
 
-	private static boolean isValidTarget(ServerPlayer owner, LivingEntity target) {
-		return target != owner
-				&& target.isAlive()
-				&& !target.isSpectator()
-				&& !(target instanceof Player player && player.isCreative());
-	}
 }

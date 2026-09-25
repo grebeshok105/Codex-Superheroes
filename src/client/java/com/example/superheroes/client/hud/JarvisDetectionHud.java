@@ -1,6 +1,7 @@
 package com.example.superheroes.client.hud;
 
 import com.example.superheroes.client.ClientHeroState;
+import com.example.superheroes.client.ClientSessionState;
 import com.example.superheroes.hero.IronManHero;
 import com.example.superheroes.sound.ModSounds;
 import net.minecraft.client.DeltaTracker;
@@ -35,6 +36,10 @@ public final class JarvisDetectionHud {
 	private static Phase phase = Phase.IDLE;
 	private static int timer;
 	private static Detection current;
+
+	static {
+		ClientSessionState.register(JarvisDetectionHud::clear);
+	}
 
 	private JarvisDetectionHud() {
 	}

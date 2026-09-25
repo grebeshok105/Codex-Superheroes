@@ -1,5 +1,6 @@
 package com.example.superheroes.effect;
 
+import com.example.superheroes.transform.HeroDataStore;
 import com.example.superheroes.ability.AbilityIds;
 import com.example.superheroes.ability.AbilityRouter;
 import com.example.superheroes.attachment.ModAttachments;
@@ -7,11 +8,11 @@ import com.example.superheroes.flight.FlightAbilityState;
 import com.example.superheroes.flight.FlightMode;
 import com.example.superheroes.flight.FlightPhase;
 import com.example.superheroes.flight.FlightPhaseResolver;
-import com.example.superheroes.hero.HomelanderHero;
+import com.example.superheroes.hero.Hero;
+import com.example.superheroes.hero.Heroes;
 import com.example.superheroes.network.ModNetworking;
 import com.example.superheroes.particle.ModParticles;
 import com.example.superheroes.transform.HeroData;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -26,6 +27,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
+import net.minecraft.server.MinecraftServer;
 
 public final class FlightController {
 	private static final int URANIUM_AUTO_OFF_TICKS = 100;
@@ -56,14 +58,6 @@ public final class FlightController {
 		}
 	}
 
-	public static void init() {
-		ServerTickEvents.END_SERVER_TICK.register(server -> {
-			for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-				tickPlayer(player);
-			}
-			cleanup(server);
-		});
-	}
 
 	public static boolean start(ServerPlayer player, FlightMode mode) {
 		long now = player.level().getGameTime();
@@ -137,14 +131,14 @@ public final class FlightController {
 		return FlightAbilityState.activeMode(data);
 	}
 
-	private static void tickPlayer(ServerPlayer player) {
+	public static void tickPlayer(ServerPlayer player) {
 		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
 		FlightMode mode = data.hasHero() ? activeMode(data) : null;
 		if (mode == null) {
 			clearIfPresent(player);
 			return;
 		}
-		if (handleHomelanderUraniumLimit(player, data, mode)) {
+		if (handleUraniumFlightLimit(player, data, mode)) {
 			return;
 		}
 
@@ -179,10 +173,11 @@ public final class FlightController {
 		sync(player, state, (float) horizontalSpeed, true, false);
 	}
 
-	private static boolean handleHomelanderUraniumLimit(ServerPlayer player, HeroData data, FlightMode mode) {
-		boolean isHomelander = HomelanderHero.ID.equals(data.heroId());
+	private static boolean handleUraniumFlightLimit(ServerPlayer player, HeroData data, FlightMode mode) {
+		Hero hero = Heroes.get(data.heroId());
+		boolean isUraniumWeak = hero != null && hero.isUraniumWeak();
 		UUID id = player.getUUID();
-		if (!isHomelander || mode != FlightMode.NORMAL || ModEffects.isMadness(player)
+		if (!isUraniumWeak || mode != FlightMode.NORMAL || ModEffects.isMadness(player)
 				|| !UraniumDefenseController.isUnderUraniumThreat(player)) {
 			URANIUM_ACTIVE_SINCE.remove(id);
 			return false;
@@ -213,9 +208,7 @@ public final class FlightController {
 
 	private static void tickIronManEffects(ServerPlayer player, HeroData data) {
 		if (data.energy() < IRON_MAN_ENERGY_FLOOR) {
-			HeroData updated = data.withResources(IRON_MAN_ENERGY_FLOOR, data.mana());
-			player.setAttached(ModAttachments.HERO_DATA, updated);
-			ModNetworking.syncResources(player, updated);
+			HeroDataStore.update(player, d -> d.withEnergy(Math.max(d.energy(), IRON_MAN_ENERGY_FLOOR)));
 		}
 		ServerLevel level = player.serverLevel();
 		Vec3 pos = player.position();
@@ -289,7 +282,7 @@ public final class FlightController {
 		}
 	}
 
-	private static void cleanup(net.minecraft.server.MinecraftServer server) {
+	public static void cleanup(net.minecraft.server.MinecraftServer server) {
 		Iterator<Map.Entry<UUID, Long>> it = URANIUM_COOLDOWN_UNTIL.entrySet().iterator();
 		while (it.hasNext()) {
 			Map.Entry<UUID, Long> e = it.next();
@@ -301,4 +294,9 @@ public final class FlightController {
 		STATES.keySet().removeIf(id -> server.getPlayerList().getPlayer(id) == null);
 		URANIUM_ACTIVE_SINCE.keySet().removeIf(id -> server.getPlayerList().getPlayer(id) == null);
 	}
+
+	public static void tickPlayer(MinecraftServer server, ServerPlayer player, HeroData data) {
+		tickPlayer(player);
+	}
+
 }

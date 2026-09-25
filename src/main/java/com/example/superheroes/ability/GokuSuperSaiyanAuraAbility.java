@@ -17,6 +17,7 @@ public final class GokuSuperSaiyanAuraAbility implements Ability {
 	private static final AttributeModifierSet PASSIVES = AttributeModifierSet.builder()
 			.add(Attributes.ATTACK_DAMAGE, AURA_DAMAGE, 1.0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL)
 			.add(Attributes.MOVEMENT_SPEED, AURA_SPEED, 0.3, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL)
+			.abilityScoped()
 			.build();
 
 	@Override

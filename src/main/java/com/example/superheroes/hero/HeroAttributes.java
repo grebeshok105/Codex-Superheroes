@@ -186,6 +186,7 @@ public final class HeroAttributes {
 			.add(Attributes.ARMOR, REGULUS_MADNESS_ARMOR, 10.0, AttributeModifier.Operation.ADD_VALUE)
 			.add(Attributes.MAX_HEALTH, REGULUS_MADNESS_HP, 0.20, AttributeModifier.Operation.ADD_MULTIPLIED_BASE)
 			.add(Attributes.ATTACK_DAMAGE, REGULUS_MADNESS_DAMAGE, 0.40, AttributeModifier.Operation.ADD_VALUE)
+			.abilityScoped()
 			.build();
 
 	public static final AttributeModifierSet SUNG_JINWOO = AttributeModifierSet.builder()
@@ -274,6 +275,7 @@ public final class HeroAttributes {
 			.add(Attributes.ARMOR_TOUGHNESS, KRATOS_RAGE_TOUGHNESS, 6.0, AttributeModifier.Operation.ADD_VALUE)
 			.add(Attributes.MAX_HEALTH, KRATOS_RAGE_HP, 15.0, AttributeModifier.Operation.ADD_VALUE)
 			.add(Attributes.KNOCKBACK_RESISTANCE, KRATOS_RAGE_KB, 1.0, AttributeModifier.Operation.ADD_VALUE)
+			.abilityScoped()
 			.build();
 
 	public static final AttributeModifierSet LOKI = AttributeModifierSet.builder()
@@ -332,6 +334,7 @@ public final class HeroAttributes {
 			.add(Attributes.MOVEMENT_SPEED, REINHARD_DRAW_SPEED, 0.50, AttributeModifier.Operation.ADD_MULTIPLIED_BASE)
 			.add(Attributes.JUMP_STRENGTH, REINHARD_DRAW_JUMP, 0.4, AttributeModifier.Operation.ADD_VALUE)
 			.add(Attributes.ATTACK_SPEED, REINHARD_DRAW_ATTACK_SPEED, 1.0, AttributeModifier.Operation.ADD_VALUE)
+			.abilityScoped()
 			.build();
 
 	// Второе пришествие — одноразовое возрождение Рейнхарда. Колоссальный buff к статам:
@@ -374,6 +377,7 @@ public final class HeroAttributes {
 			.add(Attributes.ATTACK_DAMAGE, RAIDEN_BURST_DAMAGE, 6.0, AttributeModifier.Operation.ADD_VALUE)
 			.add(Attributes.MOVEMENT_SPEED, RAIDEN_BURST_SPEED, 0.50, AttributeModifier.Operation.ADD_MULTIPLIED_BASE)
 			.add(Attributes.ATTACK_SPEED, RAIDEN_BURST_ATTACK_SPEED, 1.5, AttributeModifier.Operation.ADD_VALUE)
+			.abilityScoped()
 			.build();
 
 	public static final ResourceLocation INVINCIBLE_ARMOR = ModId.of("modifiers/invincible/armor");

@@ -1,6 +1,8 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.damage.ModDamageTypes;
+import com.example.superheroes.util.SafeTeleport;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -49,7 +51,7 @@ public final class KratosGodSlayerAbility implements Ability {
 		double closest = Double.MAX_VALUE;
 		AABB scan = player.getBoundingBox().inflate(SCAN_RADIUS);
 		for (LivingEntity le : level.getEntitiesOfClass(LivingEntity.class, scan,
-				e -> e != player && e.isAlive() && !(e instanceof Player p && p.getUUID().equals(player.getUUID())))) {
+				TargetFilters.hostileTo(player))) {
 			double dist = le.distanceToSqr(player);
 			if (dist < closest) {
 				closest = dist;
@@ -64,7 +66,7 @@ public final class KratosGodSlayerAbility implements Ability {
 		}
 
 		Vec3 from = player.position();
-		Vec3 to = target.position().subtract(target.getLookAngle().scale(1.5));
+		Vec3 to = SafeTeleport.clamp(level, player, target.position().subtract(target.getLookAngle().scale(1.5)));
 		level.sendParticles(ParticleTypes.SOUL_FIRE_FLAME,
 				from.x, from.y + 1, from.z, 80, 0.5, 1.0, 0.5, 0.2);
 		player.teleportTo(to.x, to.y, to.z);
@@ -78,7 +80,7 @@ public final class KratosGodSlayerAbility implements Ability {
 			if (lastHit) {
 				AABB aoe = target.getBoundingBox().inflate(4.0);
 				for (LivingEntity le : level.getEntitiesOfClass(LivingEntity.class, aoe,
-						e -> e != player && e.isAlive() && !(e instanceof Player p && p.getUUID().equals(player.getUUID())))) {
+						TargetFilters.hostileTo(player))) {
 					le.hurt(ModDamageTypes.kratosBlade(level, player), dmg);
 					Vec3 push = le.position().subtract(target.position()).normalize().scale(1.2);
 					le.setDeltaMovement(push.x, 0.4, push.z);

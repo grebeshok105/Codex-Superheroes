@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.effect.OmnimanMomentumController;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
@@ -99,7 +100,7 @@ public final class OmnimanWorldBreakerAbility implements Ability {
 		double knockback = SHOCKWAVE_KNOCKBACK + boost * 0.22;
 		double upward = SHOCKWAVE_UPWARD_KNOCKBACK + boost * 0.08;
 
-		for (LivingEntity entity : level.getEntitiesOfClass(LivingEntity.class, scan, e -> validTarget(player, e))) {
+		for (LivingEntity entity : level.getEntitiesOfClass(LivingEntity.class, scan, TargetFilters.hostileTo(player))) {
 			Vec3 center = entity.position().add(0, entity.getBbHeight() * 0.5, 0);
 			double along = center.subtract(eye).dot(direction);
 			if (along < 0.5 || along > SHOCKWAVE_RANGE) continue;
@@ -120,7 +121,7 @@ public final class OmnimanWorldBreakerAbility implements Ability {
 		LivingEntity closest = null;
 		double closestAlong = range + 1.0;
 
-		for (LivingEntity entity : level.getEntitiesOfClass(LivingEntity.class, scan, e -> validTarget(player, e))) {
+		for (LivingEntity entity : level.getEntitiesOfClass(LivingEntity.class, scan, TargetFilters.hostileTo(player))) {
 			Vec3 center = entity.position().add(0, entity.getBbHeight() * 0.55, 0);
 			Vec3 toEntity = center.subtract(eye);
 			double along = toEntity.dot(direction);
@@ -141,10 +142,6 @@ public final class OmnimanWorldBreakerAbility implements Ability {
 		return perpendicular.lengthSqr() <= allowedRadius * allowedRadius;
 	}
 
-	private static boolean validTarget(ServerPlayer player, LivingEntity entity) {
-		return entity != player && entity.isAlive() && !entity.isSpectator()
-				&& !(entity instanceof Player p && p.isCreative());
-	}
 
 	private static void push(LivingEntity target, Vec3 direction, double strength, double upward) {
 		target.setDeltaMovement(direction.x * strength, upward, direction.z * strength);

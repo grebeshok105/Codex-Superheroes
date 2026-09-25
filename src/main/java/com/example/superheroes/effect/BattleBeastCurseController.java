@@ -5,7 +5,6 @@ import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.hero.AttributeModifierSet;
 import com.example.superheroes.hero.BattleBeastHero;
 import com.example.superheroes.transform.HeroData;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -22,6 +21,7 @@ import net.minecraft.world.entity.player.Player;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import net.minecraft.server.MinecraftServer;
 
 public final class BattleBeastCurseController {
 	private static final long STEP_TICKS = 30L * 20L;
@@ -50,23 +50,30 @@ public final class BattleBeastCurseController {
 	private BattleBeastCurseController() {
 	}
 
-	public static void init() {
-		ServerTickEvents.END_SERVER_TICK.register(server -> {
-			for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-				if (isBattleBeast(player)) {
-					tick(player);
-				} else if (START_TICKS.containsKey(player.getUUID()) || STAGES.containsKey(player.getUUID())) {
-					clear(player);
-				}
-			}
-		});
-	}
 
 	public static void clear(ServerPlayer player) {
 		removeCurse(player);
 		healAfterStageChange(player, 0);
 		START_TICKS.remove(player.getUUID());
 		STAGES.remove(player.getUUID());
+	}
+
+	/**
+	 * Join hook — the curse buffs are transient modifiers now, so a relogged BattleBeast needs
+	 * them re-applied while {@link #STAGES} (session-scoped) still holds the stage. Silent: no
+	 * stage announcement, no heal — the stage itself did not change.
+	 */
+	public static void reapplyOnJoin(ServerPlayer player) {
+		Integer stage = STAGES.get(player.getUUID());
+		if (stage != null && stage > 0 && isBattleBeast(player)) {
+			buildCurseSet(stage).apply(player);
+		}
+	}
+
+	/** World shutdown — stage tracking and tick-clock starts die with the world. */
+	public static void resetAll() {
+		START_TICKS.clear();
+		STAGES.clear();
 	}
 
 	public static int setStage(ServerPlayer player, int stage) {
@@ -189,6 +196,7 @@ public final class BattleBeastCurseController {
 				.add(Attributes.MAX_HEALTH, CURSE_HEALTH, stats.health - BASE_HEALTH, AttributeModifier.Operation.ADD_VALUE)
 				.add(Attributes.ENTITY_INTERACTION_RANGE, CURSE_REACH, stats.reach - BASE_REACH, AttributeModifier.Operation.ADD_VALUE)
 				.add(Attributes.STEP_HEIGHT, CURSE_STEP, stats.step - BASE_STEP, AttributeModifier.Operation.ADD_VALUE)
+				.abilityScoped()
 				.build();
 	}
 
@@ -225,4 +233,13 @@ public final class BattleBeastCurseController {
 	private record Stats(double armor, double toughness, double damage, double attackSpeed,
 			double speed, double health, double reach, double step) {
 	}
+
+	public static void tickPlayer(MinecraftServer server, ServerPlayer player, HeroData data) {
+		if (isBattleBeast(player)) {
+			tick(player);
+		} else if (START_TICKS.containsKey(player.getUUID()) || STAGES.containsKey(player.getUUID())) {
+			clear(player);
+		}
+	}
+
 }

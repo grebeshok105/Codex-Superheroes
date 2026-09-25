@@ -35,6 +35,10 @@ public final class ClientNanoSuitUpState {
 	private static final Map<UUID, Anim> ANIMS = new HashMap<>();
 	private static final Map<UUID, Long> REPAIRS = new HashMap<>();
 
+	static {
+		ClientSessionState.register(ClientNanoSuitUpState::reset);
+	}
+
 	private ClientNanoSuitUpState() {
 	}
 
@@ -123,7 +127,7 @@ public final class ClientNanoSuitUpState {
 		if (mc.player != null && player.getUUID().equals(mc.player.getUUID())) {
 			heroId = ClientHeroState.data().hasHero() ? ClientHeroState.data().heroId() : null;
 		} else {
-			heroId = RemoteHeroSkins.get(player.getUUID());
+			heroId = player.getAttached(com.example.superheroes.attachment.ModAttachments.PUBLIC_HERO);
 		}
 		if (!IronManHero.ID.equals(heroId)) {
 			return null;
@@ -196,5 +200,12 @@ public final class ClientNanoSuitUpState {
 			this.texture = texture;
 			this.startMillis = startMillis;
 		}
+	}
+
+	/** Drop all session state (registered with {@code ClientSessionState}). */
+	public static void reset() {
+		LAST_SUIT.clear();
+		ANIMS.clear();
+		REPAIRS.clear();
 	}
 }

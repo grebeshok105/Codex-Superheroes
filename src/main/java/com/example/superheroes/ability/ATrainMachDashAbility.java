@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.resources.ResourceLocation;
@@ -61,7 +62,7 @@ public final class ATrainMachDashAbility implements Ability {
 		Vec3 to = from.add(forward.scale(DISTANCE));
 		AABB sweep = new AABB(from, to).inflate(1.7);
 		for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, sweep,
-				target -> isValidTarget(player, target))) {
+				TargetFilters.hostileTo(player))) {
 			target.invulnerableTime = 0;
 			target.hurt(level.damageSources().playerAttack(player), DAMAGE);
 			target.addEffect(new MobEffectInstance(MobEffects.CONFUSION, 80, 0, true, true, true));
@@ -88,10 +89,4 @@ public final class ATrainMachDashAbility implements Ability {
 		return true;
 	}
 
-	private static boolean isValidTarget(ServerPlayer owner, LivingEntity target) {
-		return target != owner
-				&& target.isAlive()
-				&& !target.isSpectator()
-				&& !(target instanceof Player player && player.isCreative());
-	}
 }

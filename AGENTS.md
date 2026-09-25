@@ -106,8 +106,8 @@ Do not guess unstable Minecraft/Fabric/library APIs from memory when the repo, m
 
 Compilation proves nothing. Before a PR:
 
-- `./gradlew qualityGate --no-daemon` is the canonical finishing gate — the same one CI runs. It covers the full build with JUnit in `src/test`, the `ProjectSanityTest` source/resource checks (server-safe `src/main`, no Fabric internals, lang sync, OGG-only sounds, wired heroes/controllers/models), the assertions-enabled audit, and the release-jar isolation audit. `./gradlew build -x test` is a quick mid-work check, not a finishing gate.
-- New behavioral logic gets tests in `src/test`; a bugfix gets a regression test where possible — no theater tests written just to satisfy a rule.
+- `./gradlew qualityGate --no-daemon` is the canonical finishing gate — the same one CI runs. It covers the full build with JUnit in `src/test`, the `ProjectSanityTest` source/resource checks (server-safe `src/main`, no Fabric internals, lang sync, OGG-only sounds, wired heroes/controllers/models), the assertions-enabled audit, the release-jar isolation audit, and the headless server GameTests in `src/gametest` (`runGametest`). `./gradlew build -x test` is a quick mid-work check, not a finishing gate.
+- New behavioral logic gets tests: pure logic in `src/test` (JUnit), server runtime behavior (players, inventories, abilities, lifecycle) in `src/gametest` via Fabric GameTest with real joined players. A bugfix gets a regression test where possible — no theater tests written just to satisfy a rule.
 - Refactors preserve relevant behavior with tests before or alongside structural change where practical.
 - Datagen-touching changes run `./gradlew runDatagen --no-daemon` and the diff in `src/main/generated/` is reviewed.
 - Runtime-affecting changes (gameplay, input, rendering, entities, networking, VFX, HUD) need in-game verification via `./gradlew runClient --no-daemon` where the environment allows. If the environment cannot launch the game, say so explicitly in the PR instead of claiming verification.

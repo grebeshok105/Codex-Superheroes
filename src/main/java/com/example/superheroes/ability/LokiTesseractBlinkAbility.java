@@ -1,7 +1,9 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.damage.ModDamageTypes;
 import com.example.superheroes.particle.ModParticles;
+import com.example.superheroes.util.SafeTeleport;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -84,6 +86,10 @@ public final class LokiTesseractBlinkAbility implements Ability {
 			}
 		}
 
+		// B22: стена между игроком и точкой назначения обрезает блинк
+		// до последней свободной позиции.
+		dest = SafeTeleport.clamp(level, player, dest);
+
 		// Single clean teleport: keep client rotation relative (no forced camera
 		// snap — the old teleport + setYRot + double resetPosition desynced the
 		// client camera and flipped/stuck the screen).
@@ -127,7 +133,7 @@ public final class LokiTesseractBlinkAbility implements Ability {
 		LivingEntity best = null;
 		double bestScore = -1.0;
 		for (LivingEntity le : level.getEntitiesOfClass(LivingEntity.class, box,
-				e -> e != player && e.isAlive())) {
+				TargetFilters.hostileTo(player))) {
 			if (le instanceof Player p && p.getUUID().equals(player.getUUID())) continue;
 			Vec3 toE = le.position().add(0, le.getBbHeight() * 0.5, 0).subtract(eye);
 			double dist = toE.length();

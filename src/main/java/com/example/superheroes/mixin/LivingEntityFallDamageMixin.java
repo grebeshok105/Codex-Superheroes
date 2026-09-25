@@ -23,7 +23,7 @@ public abstract class LivingEntityFallDamageMixin {
 		if (!(self instanceof Player player)) {
 			return;
 		}
-		boolean counterActive = RegulusMadnessController.isAnyCounterActive();
+		boolean counterActive = RegulusMadnessController.isCounterInvolved(player);
 		if (SuperJumpController.hasFallImmunity(player) && !counterActive) {
 			cir.setReturnValue(false);
 			return;

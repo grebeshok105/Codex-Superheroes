@@ -1,6 +1,7 @@
 package com.example.superheroes.ability;
 
 import com.example.superheroes.attachment.ModAttachments;
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.damage.ModDamageTypes;
 import com.example.superheroes.effect.ModEffects;
 import com.example.superheroes.effect.UraniumDefenseController;
@@ -9,6 +10,7 @@ import com.example.superheroes.hero.Heroes;
 import com.example.superheroes.network.ModNetworking;
 import com.example.superheroes.particle.ModParticles;
 import com.example.superheroes.transform.HeroData;
+import com.example.superheroes.world.WorldDestructionPolicy;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 
@@ -139,7 +141,7 @@ public final class EyeLasersAbility implements Ability {
 		AABB box = player.getBoundingBox().expandTowards(dir.scale(RANGE)).inflate(1.0);
 		EntityHitResult hit = ProjectileUtil.getEntityHitResult(
 				level, player, eye, entitySearchEnd, box,
-				e -> e instanceof LivingEntity && e.isAlive() && e != player && !e.isSpectator());
+				e -> e instanceof LivingEntity le && TargetFilters.hostileTo(player).test(le));
 		Vec3 actualEnd = entitySearchEnd;
 		float damage = damagePerTick(player) * (madness ? MADNESS_DAMAGE_MUL : 1f);
 		boolean choppy = false;
@@ -163,19 +165,19 @@ public final class EyeLasersAbility implements Ability {
 							2.4f, true, Level.ExplosionInteraction.MOB);
 					target.igniteForSeconds(8f);
 				}
-				placeFireRing(level, actualEnd, 3);
+				placeFireRing(level, player, actualEnd, 3);
 			}
 		} else if (madness && blockHit.getType() == HitResult.Type.BLOCK) {
 			if (player.tickCount % 2 == 0) {
 				level.explode(player, actualEnd.x, actualEnd.y, actualEnd.z,
 						2.0f, true, Level.ExplosionInteraction.MOB);
 			}
-			placeFireRing(level, actualEnd, 3);
+			placeFireRing(level, player, actualEnd, 3);
 		}
 		if (!choppy) ModNetworking.broadcastLaser(player, eye, actualEnd);
 	}
 
-	private static void placeFireRing(ServerLevel level, Vec3 center, int radius) {
+	private static void placeFireRing(ServerLevel level, ServerPlayer player, Vec3 center, int radius) {
 		BlockPos centerPos = BlockPos.containing(center);
 		for (int dx = -radius; dx <= radius; dx++) {
 			for (int dz = -radius; dz <= radius; dz++) {
@@ -190,7 +192,7 @@ public final class EyeLasersAbility implements Ability {
 					BlockPos below = pos.below();
 					if (BaseFireBlock.canBePlacedAt(level, pos, net.minecraft.core.Direction.UP)
 							&& !level.getBlockState(below).isAir()) {
-						level.setBlockAndUpdate(pos, Blocks.FIRE.defaultBlockState());
+						WorldDestructionPolicy.tryPlace(level, pos, Blocks.FIRE.defaultBlockState(), player);
 					}
 				}
 			}

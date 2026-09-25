@@ -1,6 +1,7 @@
 package com.example.superheroes.ability;
 
 import com.example.superheroes.attachment.ModAttachments;
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.effect.RegulusMadnessController;
 import com.example.superheroes.effect.RegulusMadnessState;
 import net.minecraft.resources.ResourceLocation;
@@ -74,8 +75,7 @@ public final class CounterStrikeAbility implements Ability {
 		AABB box = new AABB(eye, eye).inflate(SEARCH_RANGE);
 		LivingEntity best = null;
 		double bestDist = SEARCH_RANGE * SEARCH_RANGE;
-		for (Entity e : level.getEntities(player, box, ent -> ent != player && ent.isAlive()
-				&& !ent.isSpectator() && ent instanceof LivingEntity)) {
+		for (Entity e : level.getEntities(player, box, ent -> ent instanceof LivingEntity le && TargetFilters.hostileTo(player).test(le))) {
 			double d = e.distanceToSqr(player);
 			if (d < bestDist) {
 				bestDist = d;

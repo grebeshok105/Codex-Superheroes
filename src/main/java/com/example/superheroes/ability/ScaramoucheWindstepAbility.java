@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
@@ -67,7 +68,7 @@ public final class ScaramoucheWindstepAbility implements Ability {
 
 		AABB area = player.getBoundingBox().inflate(RADIUS);
 		for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, area,
-				target -> isValidTarget(player, target))) {
+				TargetFilters.hostileTo(player))) {
 			Vec3 away = target.position().subtract(player.position());
 			double horizontal = Math.max(0.01, Math.sqrt(away.x * away.x + away.z * away.z));
 			target.hurt(level.damageSources().playerAttack(player), DAMAGE);
@@ -94,10 +95,4 @@ public final class ScaramoucheWindstepAbility implements Ability {
 		return true;
 	}
 
-	private static boolean isValidTarget(ServerPlayer owner, LivingEntity target) {
-		return target != owner
-				&& target.isAlive()
-				&& !target.isSpectator()
-				&& !(target instanceof Player player && player.isCreative());
-	}
 }

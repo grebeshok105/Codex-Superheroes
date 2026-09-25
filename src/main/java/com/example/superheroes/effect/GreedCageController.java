@@ -1,6 +1,5 @@
 package com.example.superheroes.effect;
 
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
@@ -29,9 +28,6 @@ public final class GreedCageController {
 	private GreedCageController() {
 	}
 
-	public static void init() {
-		ServerTickEvents.END_SERVER_TICK.register(GreedCageController::tick);
-	}
 
 	public static void create(ServerLevel level, Vec3 center, List<LivingEntity> targets, int cageVisualTicks) {
 		long now = level.getGameTime();
@@ -50,7 +46,7 @@ public final class GreedCageController {
 		level.sendParticles(ParticleTypes.FLASH, center.x, center.y + 0.5, center.z, 4, 1.5, 1.0, 1.5, 0.0);
 	}
 
-	private static void tick(MinecraftServer server) {
+	public static void tick(MinecraftServer server) {
 		if (ACTIVE.isEmpty()) return;
 		for (int i = ACTIVE.size() - 1; i >= 0; i--) {
 			Cage cage = ACTIVE.get(i);

@@ -1,19 +1,17 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.transform.HeroDataStore;
 import com.example.superheroes.attachment.ModAttachments;
-import com.example.superheroes.effect.ReinhardController;
 import com.example.superheroes.effect.ReinhardState;
 import com.example.superheroes.effect.ReinhardSwordDrawCeremonyController;
 import com.example.superheroes.hero.HeroAttributes;
 import com.example.superheroes.item.ModItems;
-import com.example.superheroes.transform.HeroData;
+import com.example.superheroes.item.bound.BoundWeapons;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.item.ItemStack;
 
 /**
  * Reid Draw — обнажение меча. Тогглится: пока активен, Рейнхард получает бонусы к статам
@@ -80,29 +78,12 @@ public final class ReinhardSwordDrawAbility implements Ability {
 				12, 0.4, 0.6, 0.4, 0.02);
 	}
 
-	public static void giveSword(ServerPlayer player) {
-		if (player.getMainHandItem().is(ModItems.ROYAL_ICICLE)) return;
-		if (player.getOffhandItem().is(ModItems.ROYAL_ICICLE)) return;
-		ItemStack stack = new ItemStack(ModItems.ROYAL_ICICLE);
-		ItemStack mainHand = player.getMainHandItem();
-		if (mainHand.isEmpty()) {
-			player.setItemInHand(InteractionHand.MAIN_HAND, stack);
-		} else if (player.getOffhandItem().isEmpty()) {
-			player.setItemInHand(InteractionHand.OFF_HAND, stack);
-		} else {
-			if (!player.getInventory().add(stack)) {
-				player.drop(stack, false);
-			}
-		}
+	public static boolean giveSword(ServerPlayer player) {
+		return BoundWeapons.ensureHeld(player, ModItems.ROYAL_ICICLE);
 	}
 
 	public static void removeSword(ServerPlayer player) {
-		for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
-			ItemStack s = player.getInventory().getItem(i);
-			if (s.is(ModItems.ROYAL_ICICLE)) {
-				player.getInventory().setItem(i, ItemStack.EMPTY);
-			}
-		}
+		BoundWeapons.revoke(player, ModItems.ROYAL_ICICLE);
 	}
 
 	public static void forceSheathe(ServerPlayer player) {
@@ -112,12 +93,7 @@ public final class ReinhardSwordDrawAbility implements Ability {
 		HeroAttributes.REINHARD_DRAW.remove(player);
 		removeSword(player);
 		com.example.superheroes.effect.ReinhardTimeSlowController.disarmForFirstStrike(player);
-		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
-		if (data.activeAbilities().contains(AbilityIds.REINHARD_SWORD_DRAW)) {
-			data = data.withActive(AbilityIds.REINHARD_SWORD_DRAW, false);
-			player.setAttached(ModAttachments.HERO_DATA, data);
-			com.example.superheroes.network.ModNetworking.syncHeroData(player, data);
-		}
+		HeroDataStore.update(player, d -> d.withActive(AbilityIds.REINHARD_SWORD_DRAW, false));
 		player.displayClientMessage(
 				Component.translatable("ability.superheroes.reinhard_sword_draw.sheathed"),
 				true);

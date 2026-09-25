@@ -1,22 +1,22 @@
 package com.example.superheroes.effect;
 
+import com.example.superheroes.combat.TargetFilters;
+import com.example.superheroes.transform.HeroDataStore;
 import com.example.superheroes.ModId;
 import com.example.superheroes.ability.AbilityIds;
 import com.example.superheroes.ability.AbilityCooldowns;
 import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.hero.AttributeModifierSet;
+import com.example.superheroes.item.bound.BoundWeapons;
 import com.example.superheroes.hero.RemHero;
 import com.example.superheroes.item.ModItems;
-import com.example.superheroes.network.ModNetworking;
 import com.example.superheroes.network.RemDemonismS2CPayload;
 import com.example.superheroes.network.ScreenShakeS2CPayload;
 import com.example.superheroes.transform.HeroData;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.NonNullList;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.server.level.ServerLevel;
@@ -32,8 +32,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.Blocks;
+import com.example.superheroes.world.WorldDestructionPolicy;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -44,6 +43,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import net.minecraft.server.MinecraftServer;
 
 public final class RemDemonismController {
 	public static final float MAX_DEMONISM = 100f;
@@ -82,6 +82,7 @@ public final class RemDemonismController {
 			.add(Attributes.BLOCK_INTERACTION_RANGE, ModId.of("modifiers/rem/demon_block_reach"), 0.8, AttributeModifier.Operation.ADD_VALUE)
 			.add(Attributes.STEP_HEIGHT, ModId.of("modifiers/rem/demon_step"), 0.6, AttributeModifier.Operation.ADD_VALUE)
 			.add(Attributes.JUMP_STRENGTH, ModId.of("modifiers/rem/demon_jump"), 0.08, AttributeModifier.Operation.ADD_VALUE)
+			.abilityScoped()
 			.build();
 
 	private static final Map<UUID, Float> CHARGE = new HashMap<>();
@@ -95,16 +96,15 @@ public final class RemDemonismController {
 	}
 
 	public static void init() {
-		ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> {
+		ServerLivingEntityEvents.AFTER_DAMAGE.register((entity, source, baseDamage, damageTaken, blocked) -> {
 			if (entity instanceof ServerPlayer victim && isRem(victim) && !isActive(victim)) {
-				addCharge(victim, amount * TAKEN_PER_DAMAGE);
+				addCharge(victim, damageTaken * TAKEN_PER_DAMAGE);
 			}
 			Entity attackerEntity = source.getEntity();
 			if (attackerEntity instanceof ServerPlayer attacker && entity != attacker
 					&& isRem(attacker) && !isActive(attacker)) {
-				addCharge(attacker, amount * DEALT_PER_DAMAGE);
+				addCharge(attacker, damageTaken * DEALT_PER_DAMAGE);
 			}
-			return true;
 		});
 
 		ServerLivingEntityEvents.ALLOW_DEATH.register((entity, source, amount) -> {
@@ -114,59 +114,6 @@ public final class RemDemonismController {
 			return true;
 		});
 
-		ServerTickEvents.END_SERVER_TICK.register(server -> {
-			Iterator<Map.Entry<UUID, MorningStarPull>> pullIt = MORNING_STAR_PULLS.entrySet().iterator();
-			while (pullIt.hasNext()) {
-				Map.Entry<UUID, MorningStarPull> entry = pullIt.next();
-				MorningStarPull pull = entry.getValue();
-				ServerPlayer player = server.getPlayerList().getPlayer(pull.ownerId);
-				if (player == null || !isRem(player) || !isActive(player)) {
-					pullIt.remove();
-					continue;
-				}
-				Entity entity = player.serverLevel().getEntity(entry.getKey());
-				if (!(entity instanceof LivingEntity target) || !isValidTarget(player, target)) {
-					pullIt.remove();
-					continue;
-				}
-				long elapsed = player.serverLevel().getGameTime() - pull.startTick;
-				if (tickMorningStarPull(player, target) || elapsed >= MORNING_STAR_PULL_TICKS) {
-					stopMorningStarPull(target);
-					pullIt.remove();
-				}
-			}
-			Iterator<Map.Entry<UUID, IceSpikeWave>> iceIt = ICE_WAVES.entrySet().iterator();
-			while (iceIt.hasNext()) {
-				Map.Entry<UUID, IceSpikeWave> entry = iceIt.next();
-				ServerPlayer player = server.getPlayerList().getPlayer(entry.getKey());
-				if (player == null || !isRem(player) || !isActive(player)) {
-					iceIt.remove();
-					continue;
-				}
-				if (tickIceSpikeWave(player, entry.getValue())) {
-					iceIt.remove();
-				}
-			}
-			Iterator<Map.Entry<UUID, CraterWindup>> craterIt = CRATER_WINDUPS.entrySet().iterator();
-			while (craterIt.hasNext()) {
-				Map.Entry<UUID, CraterWindup> entry = craterIt.next();
-				ServerPlayer player = server.getPlayerList().getPlayer(entry.getKey());
-				if (player == null || !isRem(player) || !isActive(player)) {
-					craterIt.remove();
-					continue;
-				}
-				if (tickCraterWindup(player, entry.getValue())) {
-					craterIt.remove();
-				}
-			}
-			for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-				if (isRem(player)) {
-					tickRem(player);
-				} else if (CHARGE.containsKey(player.getUUID()) || ACTIVE.contains(player.getUUID())) {
-					clear(player);
-				}
-			}
-		});
 	}
 
 	public static boolean tryActivate(ServerPlayer player) {
@@ -218,6 +165,16 @@ public final class RemDemonismController {
 
 	public static void onRespawn(ServerPlayer player) {
 		clear(player);
+	}
+
+	/** World shutdown — demonism state dies with the world (windups hold tick-clock values). */
+	public static void resetAll() {
+		CHARGE.clear();
+		ACTIVE.clear();
+		PERMANENT.clear();
+		CRATER_WINDUPS.clear();
+		ICE_WAVES.clear();
+		MORNING_STAR_PULLS.clear();
 	}
 
 	public static boolean isActive(Player player) {
@@ -286,21 +243,11 @@ public final class RemDemonismController {
 	}
 
 	public static void giveMace(ServerPlayer player) {
-		removeExtraMaces(player, true);
-		if (hasMace(player)) return;
-		ItemStack stack = new ItemStack(ModItems.REM_MORNING_STAR);
-		ItemStack mainHand = player.getMainHandItem();
-		if (mainHand.isEmpty()) {
-			player.setItemInHand(InteractionHand.MAIN_HAND, stack);
-		} else if (player.getOffhandItem().isEmpty()) {
-			player.setItemInHand(InteractionHand.OFF_HAND, stack);
-		} else if (!player.getInventory().add(stack)) {
-			player.drop(stack, false);
-		}
+		BoundWeapons.ensureHeld(player, ModItems.REM_MORNING_STAR);
 	}
 
 	public static void startMorningStarPull(ServerPlayer player, LivingEntity target) {
-		if (player == null || target == null || !isActive(player) || !isValidTarget(player, target)) {
+		if (player == null || target == null || !isActive(player) || !TargetFilters.hostileTo(player).test(target)) {
 			return;
 		}
 		MORNING_STAR_PULLS.put(target.getUUID(), new MorningStarPull(
@@ -312,7 +259,7 @@ public final class RemDemonismController {
 	}
 
 	public static void removeMace(ServerPlayer player) {
-		removeExtraMaces(player, false);
+		BoundWeapons.revoke(player, ModItems.REM_MORNING_STAR);
 	}
 
 	private static void tickRem(ServerPlayer player) {
@@ -360,8 +307,8 @@ public final class RemDemonismController {
 		ServerLevel level = player.serverLevel();
 		long elapsed = level.getGameTime() - windup.startTick;
 		double progress = Math.max(0.0, Math.min(1.0, elapsed / (double) CRATER_WINDUP_TICKS));
-		player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 6, 6, true, false, false));
-		player.addEffect(new MobEffectInstance(MobEffects.DIG_SLOWDOWN, 6, 5, true, false, false));
+		EffectRefresh.refresh(player, MobEffects.MOVEMENT_SLOWDOWN, 6, 6, true, false, false);
+		EffectRefresh.refresh(player, MobEffects.DIG_SLOWDOWN, 6, 5, true, false, false);
 		Vec3 right = new Vec3(-windup.forward.z, 0.0, windup.forward.x);
 		if (right.lengthSqr() < 1.0e-4) {
 			right = new Vec3(1.0, 0.0, 0.0);
@@ -407,7 +354,7 @@ public final class RemDemonismController {
 		AABB hitBox = new AABB(
 				impact.x - CRATER_RADIUS, player.getY() - 1.0, impact.z - CRATER_RADIUS,
 				impact.x + CRATER_RADIUS, player.getY() + 2.5, impact.z + CRATER_RADIUS);
-		for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, hitBox, target -> isValidTarget(player, target))) {
+		for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, hitBox, TargetFilters.hostileTo(player))) {
 			double dist = target.position().distanceTo(impact);
 			if (dist > CRATER_RADIUS + 1.2) continue;
 			float falloff = (float) Math.max(0.45, 1.0 - dist / (CRATER_RADIUS + 1.2));
@@ -442,12 +389,12 @@ public final class RemDemonismController {
 				for (int dy = 0; dy > -depth; dy--) {
 					pos.set(center.getX() + dx, center.getY() + dy, center.getZ() + dz);
 					BlockState state = level.getBlockState(pos);
-					if (state.isAir() || state.is(Blocks.BEDROCK) || state.is(Blocks.END_PORTAL_FRAME)) {
+					if (state.isAir()) {
 						continue;
 					}
 					float hardness = state.getDestroySpeed(level, pos);
 					if (hardness >= 0f && hardness <= 50f) {
-						level.destroyBlock(pos.immutable(), true, player);
+						WorldDestructionPolicy.tryBreak(level, pos.immutable(), true, player);
 					}
 				}
 			}
@@ -531,7 +478,7 @@ public final class RemDemonismController {
 		AABB box = new AABB(center.x - width - 1.2, center.y - 3.0, center.z - width - 1.2,
 				center.x + width + 1.2, center.y + 4.0, center.z + width + 1.2);
 		for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, box,
-				target -> isValidTarget(player, target))) {
+				TargetFilters.hostileTo(player))) {
 			if (!wave.hitTargets.add(target.getUUID())) {
 				continue;
 			}
@@ -642,21 +589,11 @@ public final class RemDemonismController {
 	}
 
 	private static void ensureAbilityActive(ServerPlayer player) {
-		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
-		if (!data.isActive(AbilityIds.REM_ONI_RAGE)) {
-			HeroData updated = data.withActive(AbilityIds.REM_ONI_RAGE, true);
-			player.setAttached(ModAttachments.HERO_DATA, updated);
-			ModNetworking.syncHeroData(player, updated);
-		}
+		HeroDataStore.update(player, d -> d.withActive(AbilityIds.REM_ONI_RAGE, true));
 	}
 
 	private static void clearActiveAbility(ServerPlayer player) {
-		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
-		if (data.isActive(AbilityIds.REM_ONI_RAGE)) {
-			HeroData updated = data.withActive(AbilityIds.REM_ONI_RAGE, false);
-			player.setAttached(ModAttachments.HERO_DATA, updated);
-			ModNetworking.syncHeroData(player, updated);
-		}
+		HeroDataStore.update(player, d -> d.withActive(AbilityIds.REM_ONI_RAGE, false));
 	}
 
 	private static boolean isRem(Player player) {
@@ -664,63 +601,6 @@ public final class RemDemonismController {
 		return RemHero.ID.equals(data.heroId());
 	}
 
-	private static boolean isValidTarget(ServerPlayer owner, LivingEntity target) {
-		return target != owner
-				&& target.isAlive()
-				&& !target.isSpectator()
-				&& !(target instanceof Player player && player.isCreative());
-	}
-
-	private static boolean hasMace(ServerPlayer player) {
-		return hasMace(player.getInventory().items)
-				|| hasMace(player.getInventory().offhand)
-				|| hasMace(player.getInventory().armor)
-				|| isMace(player.containerMenu.getCarried());
-	}
-
-	private static void removeExtraMaces(ServerPlayer player, boolean keepOne) {
-		boolean kept = !keepOne;
-		kept = removeExtraMaces(player.getInventory().items, kept);
-		kept = removeExtraMaces(player.getInventory().offhand, kept);
-		kept = removeExtraMaces(player.getInventory().armor, kept);
-		ItemStack carried = player.containerMenu.getCarried();
-		if (isMace(carried)) {
-			if (!kept) {
-				carried.setCount(1);
-			} else {
-				player.containerMenu.setCarried(ItemStack.EMPTY);
-			}
-		}
-	}
-
-	private static boolean hasMace(NonNullList<ItemStack> slots) {
-		for (ItemStack stack : slots) {
-			if (isMace(stack)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	private static boolean removeExtraMaces(NonNullList<ItemStack> slots, boolean kept) {
-		for (int i = 0; i < slots.size(); i++) {
-			ItemStack stack = slots.get(i);
-			if (!isMace(stack)) {
-				continue;
-			}
-			if (!kept) {
-				stack.setCount(1);
-				kept = true;
-				continue;
-			}
-			slots.set(i, ItemStack.EMPTY);
-		}
-		return kept;
-	}
-
-	private static boolean isMace(ItemStack stack) {
-		return !stack.isEmpty() && stack.is(ModItems.REM_MORNING_STAR);
-	}
 
 	private static void removeMorningStarPulls(UUID ownerId) {
 		MORNING_STAR_PULLS.entrySet().removeIf(entry -> ownerId.equals(entry.getValue().ownerId));
@@ -758,4 +638,60 @@ public final class RemDemonismController {
 			this.startTick = startTick;
 		}
 	}
+
+	public static void serverTick(MinecraftServer server) {
+			Iterator<Map.Entry<UUID, MorningStarPull>> pullIt = MORNING_STAR_PULLS.entrySet().iterator();
+			while (pullIt.hasNext()) {
+				Map.Entry<UUID, MorningStarPull> entry = pullIt.next();
+				MorningStarPull pull = entry.getValue();
+				ServerPlayer player = server.getPlayerList().getPlayer(pull.ownerId);
+				if (player == null || !isRem(player) || !isActive(player)) {
+					pullIt.remove();
+					continue;
+				}
+				Entity entity = player.serverLevel().getEntity(entry.getKey());
+				if (!(entity instanceof LivingEntity target) || !TargetFilters.hostileTo(player).test(target)) {
+					pullIt.remove();
+					continue;
+				}
+				long elapsed = player.serverLevel().getGameTime() - pull.startTick;
+				if (tickMorningStarPull(player, target) || elapsed >= MORNING_STAR_PULL_TICKS) {
+					stopMorningStarPull(target);
+					pullIt.remove();
+				}
+			}
+			Iterator<Map.Entry<UUID, IceSpikeWave>> iceIt = ICE_WAVES.entrySet().iterator();
+			while (iceIt.hasNext()) {
+				Map.Entry<UUID, IceSpikeWave> entry = iceIt.next();
+				ServerPlayer player = server.getPlayerList().getPlayer(entry.getKey());
+				if (player == null || !isRem(player) || !isActive(player)) {
+					iceIt.remove();
+					continue;
+				}
+				if (tickIceSpikeWave(player, entry.getValue())) {
+					iceIt.remove();
+				}
+			}
+			Iterator<Map.Entry<UUID, CraterWindup>> craterIt = CRATER_WINDUPS.entrySet().iterator();
+			while (craterIt.hasNext()) {
+				Map.Entry<UUID, CraterWindup> entry = craterIt.next();
+				ServerPlayer player = server.getPlayerList().getPlayer(entry.getKey());
+				if (player == null || !isRem(player) || !isActive(player)) {
+					craterIt.remove();
+					continue;
+				}
+				if (tickCraterWindup(player, entry.getValue())) {
+					craterIt.remove();
+				}
+			}
+				}
+
+	public static void tickPlayer(MinecraftServer server, ServerPlayer player, HeroData data) {
+				if (isRem(player)) {
+					tickRem(player);
+				} else if (CHARGE.containsKey(player.getUUID()) || ACTIVE.contains(player.getUUID())) {
+					clear(player);
+				}
+				}
+
 }

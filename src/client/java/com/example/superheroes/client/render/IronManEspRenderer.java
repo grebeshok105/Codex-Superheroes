@@ -1,7 +1,6 @@
 package com.example.superheroes.client.render;
 
 import com.example.superheroes.client.ClientHeroState;
-import com.example.superheroes.client.RemoteHeroSkins;
 import com.example.superheroes.hero.IronManHero;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
@@ -127,7 +126,7 @@ public final class IronManEspRenderer {
 			double ez = Mth.lerp(partial, e.zOld, e.getZ());
 			if (e instanceof Player p) {
 				// только трансформированные игроки-герои; обычные — нет
-				if (RemoteHeroSkins.get(p.getUUID()) != null) {
+				if (p.getAttached(com.example.superheroes.attachment.ModAttachments.PUBLIC_HERO) != null) {
 					heroes.add(new Target(e, Kind.HERO));
 				}
 				continue;
@@ -255,7 +254,7 @@ public final class IronManEspRenderer {
 
 	private static String displayName(LivingEntity e) {
 		if (e instanceof Player p) {
-			ResourceLocation heroId = RemoteHeroSkins.get(p.getUUID());
+			ResourceLocation heroId = p.getAttached(com.example.superheroes.attachment.ModAttachments.PUBLIC_HERO);
 			if (heroId != null) {
 				String key = "hero.superheroes." + heroId.getPath();
 				Component c = Component.translatable(key);

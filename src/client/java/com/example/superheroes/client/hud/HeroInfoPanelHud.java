@@ -480,7 +480,7 @@ public final class HeroInfoPanelHud {
 		return applyAlpha(argb, 235, 1f);
 	}
 
-	private static int threatColor(com.example.superheroes.jarvis.JarvisThreatClass threat) {
+	private static int threatColor(com.example.superheroes.hero.JarvisThreatClass threat) {
 		return switch (threat) {
 			case S -> 0xFFFF4A4A;
 			case A -> 0xFFFF7E4A;

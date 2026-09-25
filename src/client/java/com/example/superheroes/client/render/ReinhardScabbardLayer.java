@@ -1,7 +1,6 @@
 package com.example.superheroes.client.render;
 
 import com.example.superheroes.client.ClientHeroState;
-import com.example.superheroes.client.RemoteHeroSkins;
 import com.example.superheroes.hero.ReinhardHero;
 import com.example.superheroes.item.ModItems;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -74,7 +73,7 @@ public final class ReinhardScabbardLayer extends RenderLayer<AbstractClientPlaye
 		if (mc.player != null && player.getUUID().equals(mc.player.getUUID())) {
 			return ReinhardHero.ID.equals(ClientHeroState.heroId());
 		}
-		ResourceLocation remote = RemoteHeroSkins.get(player.getUUID());
+		ResourceLocation remote = player.getAttached(com.example.superheroes.attachment.ModAttachments.PUBLIC_HERO);
 		return ReinhardHero.ID.equals(remote);
 	}
 

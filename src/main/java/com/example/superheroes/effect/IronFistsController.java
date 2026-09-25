@@ -9,7 +9,6 @@ import com.example.superheroes.network.ScreenShakeS2CPayload;
 import com.example.superheroes.physics.ShockwaveUtil;
 import com.example.superheroes.sound.ModSounds;
 import com.example.superheroes.transform.HeroData;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.particles.ParticleTypes;
@@ -29,6 +28,7 @@ import net.minecraft.world.phys.Vec3;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import net.minecraft.server.MinecraftServer;
 
 /**
  * §6 Iron Fists — обновлённая логика:
@@ -59,16 +59,6 @@ public final class IronFistsController {
 	}
 
 	public static void init() {
-		ServerTickEvents.END_SERVER_TICK.register(server -> {
-			for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-				HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
-				if (!data.isActive(AbilityIds.IRON_FISTS)) {
-					if (ACTIVATE_TICK.remove(player.getUUID()) != null) {
-						LAST_DASH.remove(player.getUUID());
-					}
-				}
-			}
-		});
 
 		AttackEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
 			if (world.isClientSide() || !(player instanceof ServerPlayer sp)) {
@@ -192,4 +182,13 @@ public final class IronFistsController {
 		level.sendParticles(ParticleTypes.END_ROD,
 				rightHand.x, rightHand.y, rightHand.z, 2, 0.06, 0.06, 0.06, 0.0);
 	}
+
+	public static void tickPlayer(MinecraftServer server, ServerPlayer player, HeroData data) {
+		if (!data.isActive(AbilityIds.IRON_FISTS)) {
+			if (ACTIVATE_TICK.remove(player.getUUID()) != null) {
+				LAST_DASH.remove(player.getUUID());
+			}
+		}
+	}
+
 }

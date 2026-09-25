@@ -6,7 +6,6 @@ import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.hero.InvincibleHero;
 import com.example.superheroes.sound.ModSounds;
 import com.example.superheroes.transform.HeroData;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
@@ -27,6 +26,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import net.minecraft.server.MinecraftServer;
 
 public final class InvincibleCombatController {
 	private static final int PROC_COOLDOWN_TICKS = 8;
@@ -66,18 +66,6 @@ public final class InvincibleCombatController {
 			return InteractionResult.PASS;
 		});
 
-		ServerTickEvents.END_SERVER_TICK.register(server -> {
-			Iterator<UUID> it = ACTIVE_MODIFIERS.iterator();
-			while (it.hasNext()) {
-				UUID id = it.next();
-				ServerPlayer player = server.getPlayerList().getPlayer(id);
-				if (player != null) {
-					removeAttackModifiers(player);
-				}
-				it.remove();
-			}
-			LAST_PROC.keySet().removeIf(id -> server.getPlayerList().getPlayer(id) == null);
-		});
 	}
 
 	private static void applyAttackModifiers(ServerPlayer player) {
@@ -116,4 +104,18 @@ public final class InvincibleCombatController {
 		level.playSound(null, x, y, z,
 				ModSounds.HOMELANDER_IRON_FISTS_IMPACT, SoundSource.PLAYERS, 0.5f, 1.35f);
 	}
+
+	public static void serverTick(MinecraftServer server) {
+		Iterator<UUID> it = ACTIVE_MODIFIERS.iterator();
+		while (it.hasNext()) {
+			UUID id = it.next();
+			ServerPlayer player = server.getPlayerList().getPlayer(id);
+			if (player != null) {
+				removeAttackModifiers(player);
+			}
+			it.remove();
+		}
+		LAST_PROC.keySet().removeIf(id -> server.getPlayerList().getPlayer(id) == null);
+	}
+
 }

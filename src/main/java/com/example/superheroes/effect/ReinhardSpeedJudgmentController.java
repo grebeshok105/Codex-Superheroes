@@ -2,7 +2,7 @@ package com.example.superheroes.effect;
 
 import com.example.superheroes.ability.AbilityIds;
 import com.example.superheroes.debug.AdminAbilityDebug;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import com.example.superheroes.util.SafeTeleport;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.MinecraftServer;
@@ -25,27 +25,24 @@ public final class ReinhardSpeedJudgmentController {
 	private ReinhardSpeedJudgmentController() {
 	}
 
-	public static void init() {
-		ServerTickEvents.END_SERVER_TICK.register(ReinhardSpeedJudgmentController::tick);
-	}
 
-	public static void start(ServerPlayer attacker, ServerPlayer target, long delayMs, float damage) {
+	public static void start(ServerPlayer attacker, ServerPlayer target, long delayTicks, float damage) {
 		teleportBehind(attacker, target);
-		PENDING.put(attacker.getUUID(), new PendingStrike(target.getUUID(), System.currentTimeMillis() + delayMs, damage, false));
+		PENDING.put(attacker.getUUID(), new PendingStrike(target.getUUID(), attacker.serverLevel().getGameTime() + delayTicks, damage, false));
 		ReinhardTimeSlowController.triggerAbilitySlow(attacker);
 	}
 
-	public static boolean startDebugMob(ServerPlayer attacker, Mob target, long delayMs, float damage) {
+	public static boolean startDebugMob(ServerPlayer attacker, Mob target, long delayTicks, float damage) {
 		if (!AdminAbilityDebug.canTargetMob(attacker, AbilityIds.REINHARD_SPEED_JUDGMENT, target)) return false;
 		teleportBehind(attacker, target);
-		PENDING.put(attacker.getUUID(), new PendingStrike(target.getUUID(), System.currentTimeMillis() + delayMs, damage, true));
+		PENDING.put(attacker.getUUID(), new PendingStrike(target.getUUID(), attacker.serverLevel().getGameTime() + delayTicks, damage, true));
 		ReinhardTimeSlowController.triggerAbilitySlow(attacker);
 		return true;
 	}
 
-	private static void tick(MinecraftServer server) {
+	public static void tick(MinecraftServer server) {
 		if (PENDING.isEmpty()) return;
-		long now = System.currentTimeMillis();
+		long now = server.overworld().getGameTime();
 		Iterator<Map.Entry<UUID, PendingStrike>> it = PENDING.entrySet().iterator();
 		while (it.hasNext()) {
 			Map.Entry<UUID, PendingStrike> entry = it.next();
@@ -57,7 +54,7 @@ public final class ReinhardSpeedJudgmentController {
 					it.remove();
 					continue;
 				}
-				if (now < pending.strikeAtMs()) {
+				if (now < pending.strikeAtTick()) {
 					teleportBehind(attacker, target);
 					continue;
 				}
@@ -72,7 +69,7 @@ public final class ReinhardSpeedJudgmentController {
 				it.remove();
 				continue;
 			}
-			if (now < pending.strikeAtMs()) {
+			if (now < pending.strikeAtTick()) {
 				teleportBehind(attacker, target);
 				continue;
 			}
@@ -103,7 +100,7 @@ public final class ReinhardSpeedJudgmentController {
 
 	private static void teleportBehind(ServerPlayer attacker, LivingEntity target) {
 		Vec3 look = target.getViewVector(1f);
-		Vec3 behind = target.position().subtract(look.scale(1.6));
+		Vec3 behind = SafeTeleport.clamp(attacker.serverLevel(), attacker, target.position().subtract(look.scale(1.6)));
 		attacker.connection.teleport(behind.x, behind.y, behind.z, (target.getYRot() + 180f) % 360f, 0f);
 		attacker.lookAt(EntityAnchorArgument.Anchor.EYES, target.position().add(0, target.getEyeHeight(), 0));
 	}
@@ -146,6 +143,6 @@ public final class ReinhardSpeedJudgmentController {
 		target.hurt(level.damageSources().playerAttack(attacker), damage);
 	}
 
-	private record PendingStrike(UUID targetId, long strikeAtMs, float damage, boolean debugMobTarget) {
+	private record PendingStrike(UUID targetId, long strikeAtTick, float damage, boolean debugMobTarget) {
 	}
 }

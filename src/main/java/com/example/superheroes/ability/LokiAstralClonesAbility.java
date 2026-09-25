@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.damage.ModDamageTypes;
 import com.example.superheroes.particle.ModParticles;
 import net.minecraft.core.particles.ParticleTypes;
@@ -59,7 +60,7 @@ public final class LokiAstralClonesAbility implements Ability {
 
 		AABB pscan = player.getBoundingBox().inflate(20.0);
 		for (Player p : level.getEntitiesOfClass(Player.class, pscan,
-				e -> e.isAlive() && !e.getUUID().equals(player.getUUID()))) {
+				e -> TargetFilters.harmableBy(e, player) && TargetFilters.notCreative(e))) {
 			p.hurt(ModDamageTypes.lokiChaos(level, player), 12.0f);
 			p.addEffect(new MobEffectInstance(MobEffects.CONFUSION, 200, 0, false, true, true));
 			p.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 100, 0, false, true, true));

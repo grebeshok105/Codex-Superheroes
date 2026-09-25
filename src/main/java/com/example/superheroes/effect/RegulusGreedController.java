@@ -1,7 +1,8 @@
 package com.example.superheroes.effect;
 
+import com.example.superheroes.lifecycle.ControlLockKind;
+import com.example.superheroes.lifecycle.EntityControlLock;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -26,6 +27,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import com.example.superheroes.transform.HeroData;
+import net.minecraft.server.MinecraftServer;
 
 public final class RegulusGreedController {
 	private static final int FREEZE_TICKS = 200;
@@ -44,54 +47,6 @@ public final class RegulusGreedController {
 	}
 
 	public static void init() {
-		ServerTickEvents.END_SERVER_TICK.register(server -> {
-			for (ServerPlayer caster : server.getPlayerList().getPlayers()) {
-				UUID uid = caster.getUUID();
-				boolean hasMagnet = MAGNETS.containsKey(uid);
-				Long freezeUntil = CASTER_FREEZE_UNTIL.get(uid);
-				boolean hasFreeze = freezeUntil != null && caster.level().getGameTime() < freezeUntil;
-				if (hasMagnet || hasFreeze) {
-					Vec3 dm = caster.getDeltaMovement();
-					caster.setDeltaMovement(0, Math.min(0, dm.y), 0);
-					caster.hurtMarked = true;
-				} else if (freezeUntil != null) {
-					removeKnockback(caster);
-					CASTER_FREEZE_UNTIL.remove(uid);
-				}
-			}
-
-			List<UUID> toRelease = new ArrayList<>();
-			for (Map.Entry<UUID, FreezeState> e : FREEZES.entrySet()) {
-				FreezeState st = e.getValue();
-				LivingEntity victim = st.victim(server);
-				if (victim == null || !victim.isAlive()) {
-					toRelease.add(e.getKey());
-					continue;
-				}
-				victim.setDeltaMovement(Vec3.ZERO);
-				victim.hurtMarked = true;
-				if (victim instanceof ServerPlayer sp) {
-					sp.connection.teleport(st.lockX, st.lockY, st.lockZ, sp.getYRot(), sp.getXRot());
-				} else {
-					victim.teleportTo(st.lockX, st.lockY, st.lockZ);
-				}
-				if (victim.tickCount % 4 == 0) {
-					ServerLevel sl = (ServerLevel) victim.level();
-					sl.sendParticles(ParticleTypes.END_ROD,
-							victim.getX(), victim.getY() + victim.getBbHeight() * 0.5, victim.getZ(),
-							3, 0.4, 0.4, 0.4, 0.0);
-				}
-				if (--st.remaining <= 0) {
-					toRelease.add(e.getKey());
-				}
-			}
-			for (UUID id : toRelease) {
-				FreezeState st = FREEZES.remove(id);
-				if (st != null) {
-					st.release(server);
-				}
-			}
-		});
 
 		ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> {
 			FreezeState st = FREEZES.get(entity.getUUID());
@@ -105,6 +60,30 @@ public final class RegulusGreedController {
 
 	public static boolean isFrozen(LivingEntity entity) {
 		return FREEZES.containsKey(entity.getUUID());
+	}
+
+	/** Server-thread leave/death hook — drops the caster's greed state and frees their victims. */
+	public static void onPlayerGone(ServerPlayer player) {
+		UUID id = player.getUUID();
+		MAGNETS.remove(id);
+		if (CASTER_FREEZE_UNTIL.remove(id) != null) {
+			removeKnockback(player);
+		}
+		var server = player.server;
+		FREEZES.values().removeIf(st -> {
+			if (!st.casterId.equals(id)) {
+				return false;
+			}
+			st.release(server);
+			return true;
+		});
+	}
+
+	/** World shutdown — all greed state dies with the world. */
+	public static void resetAll() {
+		MAGNETS.clear();
+		FREEZES.clear();
+		CASTER_FREEZE_UNTIL.clear();
 	}
 
 	public static void startMagnet(ServerPlayer player, LivingEntity victim) {
@@ -156,13 +135,9 @@ public final class RegulusGreedController {
 		applyKnockback(player);
 		CASTER_FREEZE_UNTIL.put(player.getUUID(), player.level().getGameTime() + FREEZE_TICKS);
 
-		FreezeState st = new FreezeState(victim.getUUID(), victim.getX(), victim.getY(), victim.getZ(), FREEZE_TICKS);
-		boolean wasNoAi = false;
-		if (victim instanceof Mob mob) {
-			wasNoAi = mob.isNoAi();
-			mob.setNoAi(true);
-			st.restoreNoAi = wasNoAi;
-		}
+		FreezeState st = new FreezeState(victim.getUUID(), player.getUUID(),
+				victim.getX(), victim.getY(), victim.getZ(), FREEZE_TICKS);
+		EntityControlLock.acquire(victim, ControlLockKind.NO_AI, player);
 		FREEZES.put(victim.getUUID(), st);
 		ServerLevel sl = (ServerLevel) player.level();
 		sl.playSound(null, victim.getX(), victim.getY(), victim.getZ(),
@@ -189,13 +164,14 @@ public final class RegulusGreedController {
 
 	private static final class FreezeState {
 		final UUID victimId;
+		final UUID casterId;
 		final double lockX, lockY, lockZ;
 		int remaining;
-		boolean restoreNoAi = false;
 		final List<QueuedDamage> queuedDamage = new ArrayList<>();
 
-		FreezeState(UUID victimId, double x, double y, double z, int remaining) {
+		FreezeState(UUID victimId, UUID casterId, double x, double y, double z, int remaining) {
 			this.victimId = victimId;
+			this.casterId = casterId;
 			this.lockX = x;
 			this.lockY = y;
 			this.lockZ = z;
@@ -215,9 +191,7 @@ public final class RegulusGreedController {
 		void release(net.minecraft.server.MinecraftServer server) {
 			LivingEntity v = victim(server);
 			if (v == null) return;
-			if (v instanceof Mob mob) {
-				mob.setNoAi(restoreNoAi);
-			}
+			EntityControlLock.release(v, ControlLockKind.NO_AI, casterId);
 			LinkedHashMap<SourceKey, AggregatedDamage> aggregated = new LinkedHashMap<>();
 			for (QueuedDamage q : queuedDamage) {
 				SourceKey key = SourceKey.of(q.source);
@@ -279,4 +253,54 @@ public final class RegulusGreedController {
 			return this;
 		}
 	}
+
+	public static void tickPlayer(MinecraftServer server, ServerPlayer player, HeroData data) {
+		UUID uid = player.getUUID();
+		boolean hasMagnet = MAGNETS.containsKey(uid);
+		Long freezeUntil = CASTER_FREEZE_UNTIL.get(uid);
+		boolean hasFreeze = freezeUntil != null && player.level().getGameTime() < freezeUntil;
+		if (hasMagnet || hasFreeze) {
+			Vec3 dm = player.getDeltaMovement();
+			player.setDeltaMovement(0, Math.min(0, dm.y), 0);
+			player.hurtMarked = true;
+		} else if (freezeUntil != null) {
+			removeKnockback(player);
+			CASTER_FREEZE_UNTIL.remove(uid);
+		}
+	}
+
+	public static void tickFreezes(MinecraftServer server) {
+		List<UUID> toRelease = new ArrayList<>();
+		for (Map.Entry<UUID, FreezeState> e : FREEZES.entrySet()) {
+			FreezeState st = e.getValue();
+			LivingEntity victim = st.victim(server);
+			if (victim == null || !victim.isAlive()) {
+				toRelease.add(e.getKey());
+				continue;
+			}
+			victim.setDeltaMovement(Vec3.ZERO);
+			victim.hurtMarked = true;
+			if (victim instanceof ServerPlayer sp) {
+				sp.connection.teleport(st.lockX, st.lockY, st.lockZ, sp.getYRot(), sp.getXRot());
+			} else {
+				victim.teleportTo(st.lockX, st.lockY, st.lockZ);
+			}
+			if (victim.tickCount % 4 == 0) {
+				ServerLevel sl = (ServerLevel) victim.level();
+				sl.sendParticles(ParticleTypes.END_ROD,
+						victim.getX(), victim.getY() + victim.getBbHeight() * 0.5, victim.getZ(),
+						3, 0.4, 0.4, 0.4, 0.0);
+			}
+			if (--st.remaining <= 0) {
+				toRelease.add(e.getKey());
+			}
+		}
+		for (UUID id : toRelease) {
+			FreezeState st = FREEZES.remove(id);
+			if (st != null) {
+				st.release(server);
+			}
+		}
+	}
+
 }

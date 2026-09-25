@@ -90,4 +90,13 @@ public final class RaidenHero implements Hero {
 	public HeroHudConfig getHudConfig() {
 		return HeroHudConfig.RAIDEN;
 	}
+	@Override
+	public com.example.superheroes.physics.ImpactStyle getImpactStyle() {
+		return com.example.superheroes.physics.ImpactStyle.WEAPON;
+	}
+	@Override
+	public double getImpactPower() {
+		return 1.05;
+	}
+
 }

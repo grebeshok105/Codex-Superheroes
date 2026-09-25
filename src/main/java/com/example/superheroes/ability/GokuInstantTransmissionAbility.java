@@ -1,7 +1,9 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.damage.ModDamageTypes;
 import com.example.superheroes.particle.ModParticles;
+import com.example.superheroes.util.SafeTeleport;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.game.ClientboundPlayerPositionPacket;
 import net.minecraft.resources.ResourceLocation;
@@ -52,7 +54,7 @@ public final class GokuInstantTransmissionAbility implements Ability {
 		ServerLevel level = player.serverLevel();
 		AABB box = player.getBoundingBox().inflate(SEARCH_RANGE);
 		List<LivingEntity> candidates = level.getEntitiesOfClass(LivingEntity.class, box,
-				e -> e != player && e.isAlive() && !e.isSpectator() && player.distanceTo(e) <= SEARCH_RANGE);
+				TargetFilters.hostileTo(player).and(e -> player.distanceTo(e) <= SEARCH_RANGE));
 		candidates.sort(Comparator.comparingDouble(player::distanceTo));
 		LivingEntity target = candidates.isEmpty() ? null : candidates.get(0);
 
@@ -68,6 +70,7 @@ public final class GokuInstantTransmissionAbility implements Ability {
 			dest = origin.add(dir.scale(12.0));
 		}
 
+		dest = SafeTeleport.clamp(level, player, dest);
 		spawnParticles(level, origin);
 		player.connection.teleport(dest.x, dest.y, dest.z, player.getYRot(), player.getXRot(), Set.of());
 		spawnParticles(level, dest);

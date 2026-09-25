@@ -3,7 +3,6 @@ package com.example.superheroes.mixin;
 import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.hero.Hero;
 import com.example.superheroes.hero.Heroes;
-import com.example.superheroes.transform.HeroData;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.player.Player;
@@ -17,11 +16,13 @@ public abstract class PlayerDimensionsMixin {
 	@Inject(method = "getDefaultDimensions", at = @At("HEAD"), cancellable = true)
 	private void superheroes$replaceDimensions(Pose pose, CallbackInfoReturnable<EntityDimensions> cir) {
 		Player self = (Player) (Object) this;
-		HeroData data = self.getAttachedOrCreate(ModAttachments.HERO_DATA);
-		if (!data.hasHero()) {
+		// PUBLIC_HERO is synced to every tracking client (audit B14) — remote players
+		// get real hero dimensions instead of the vanilla hitbox.
+		net.minecraft.resources.ResourceLocation heroId = self.getAttached(ModAttachments.PUBLIC_HERO);
+		if (heroId == null) {
 			return;
 		}
-		Hero hero = Heroes.get(data.heroId());
+		Hero hero = Heroes.get(heroId);
 		if (hero == null) {
 			return;
 		}

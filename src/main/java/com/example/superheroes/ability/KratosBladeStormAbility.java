@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.damage.ModDamageTypes;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
@@ -52,7 +53,7 @@ public final class KratosBladeStormAbility implements Ability {
 				center.x - RADIUS, center.y - 2, center.z - RADIUS,
 				center.x + RADIUS, center.y + 4, center.z + RADIUS);
 		for (LivingEntity le : level.getEntitiesOfClass(LivingEntity.class, aoe,
-				e -> e != player && e.isAlive() && !(e instanceof Player p && p.getUUID().equals(player.getUUID())))) {
+				TargetFilters.hostileTo(player))) {
 			double dist = le.position().distanceTo(center);
 			if (dist > RADIUS) continue;
 			float falloff = (float) Math.max(0.0, 1.0 - dist / RADIUS);

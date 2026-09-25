@@ -1,6 +1,7 @@
 package com.example.superheroes.ability;
 
 import com.example.superheroes.attachment.ModAttachments;
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.effect.FlightController;
 import com.example.superheroes.physics.RushTerrainBreaker;
 import com.example.superheroes.transform.HeroData;
@@ -94,7 +95,7 @@ public final class ViltrumiteChargeAbility implements Ability {
 		ServerLevel level = player.serverLevel();
 		AABB box = player.getBoundingBox().inflate(1.4);
 		List<LivingEntity> hits = level.getEntitiesOfClass(LivingEntity.class, box,
-				e -> e != player && e.isAlive() && !e.isSpectator() && !(e instanceof Player p && p.isCreative()));
+				TargetFilters.hostileTo(player));
 		for (LivingEntity hit : hits) {
 			if (!charge.hits.add(hit.getUUID())) continue;
 			hit.hurt(player.damageSources().playerAttack(player), DAMAGE);
@@ -128,6 +129,11 @@ public final class ViltrumiteChargeAbility implements Ability {
 		if (charge.ticksLeft <= 0) {
 			ACTIVE.remove(player.getUUID());
 		}
+	}
+
+	/** World shutdown — charge sessions die with the world. */
+	public static void resetAll() {
+		ACTIVE.clear();
 	}
 
 	public static void clear(ServerPlayer player) {

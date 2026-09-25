@@ -6,7 +6,6 @@ import com.example.superheroes.item.KryptoniteShardItem;
 import com.example.superheroes.item.ModItems;
 import com.example.superheroes.transform.HeroData;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
@@ -39,21 +38,21 @@ public final class DoomsdayKryptoniteController {
 	}
 
 	public static void init() {
-		ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> {
-			if (!(entity instanceof ServerPlayer doomsday)) return true;
-			if (!isDoomsday(doomsday)) return true;
+		ServerLivingEntityEvents.AFTER_DAMAGE.register((entity, source, baseDamage, damageTaken, blocked) -> {
+			if (!(entity instanceof ServerPlayer doomsday)) return;
+			if (!isDoomsday(doomsday)) return;
 			DoomsdayProgress progress = doomsday.getAttachedOrCreate(ModAttachments.DOOMSDAY_PROGRESS);
-			if (progress.tier() < MIN_TIER) return true;
+			if (progress.tier() < MIN_TIER) return;
 
 			Entity attackerEntity = source.getEntity();
-			if (!(attackerEntity instanceof ServerPlayer attacker)) return true;
-			if (attacker.getUUID().equals(doomsday.getUUID())) return true;
+			if (!(attackerEntity instanceof ServerPlayer attacker)) return;
+			if (attacker.getUUID().equals(doomsday.getUUID())) return;
 
-			if (DoomsdayAdaptationController.wouldBlock(doomsday, source)) return true;
-			if (amount <= 0f) return true;
+			if (DoomsdayAdaptationController.wouldBlock(doomsday, source)) return;
+			if (damageTaken <= 0f) return;
 
 			Map<UUID, Float> perAttacker = ACCUM.computeIfAbsent(doomsday.getUUID(), k -> new HashMap<>());
-			float total = perAttacker.merge(attacker.getUUID(), amount, Float::sum);
+			float total = perAttacker.merge(attacker.getUUID(), damageTaken, Float::sum);
 			if (total >= SHARD_THRESHOLD) {
 				int shardsToDrop = (int) (total / SHARD_THRESHOLD);
 				float remainder = total - shardsToDrop * SHARD_THRESHOLD;
@@ -62,10 +61,8 @@ public final class DoomsdayKryptoniteController {
 					dropShard(doomsday, attacker);
 				}
 			}
-			return true;
 		});
 
-		ServerTickEvents.END_SERVER_TICK.register(DoomsdayKryptoniteController::serverTick);
 	}
 
 	private static void dropShard(ServerPlayer doomsday, ServerPlayer attacker) {
@@ -84,7 +81,7 @@ public final class DoomsdayKryptoniteController {
 						.withStyle(ChatFormatting.GREEN), true);
 	}
 
-	private static void serverTick(MinecraftServer server) {
+	public static void serverTick(MinecraftServer server) {
 		if (server.getTickCount() % CLEANSE_TICK_INTERVAL != 0) return;
 		for (ServerPlayer player : server.getPlayerList().getPlayers()) {
 			if (isDoomsday(player)) continue;

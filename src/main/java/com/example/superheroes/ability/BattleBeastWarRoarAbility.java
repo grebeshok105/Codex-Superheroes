@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.effect.BattleBeastCurseController;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
@@ -50,7 +51,7 @@ public final class BattleBeastWarRoarAbility implements Ability {
 		ServerLevel level = player.serverLevel();
 		Vec3 center = player.position().add(0.0, 1.0, 0.0);
 		for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class,
-				new AABB(center, center).inflate(RADIUS), target -> isValidTarget(player, target))) {
+				new AABB(center, center).inflate(RADIUS), TargetFilters.hostileTo(player))) {
 			Vec3 away = target.position().add(0.0, target.getBbHeight() * 0.5, 0.0).subtract(center);
 			double distance = away.length();
 			if (distance > RADIUS || distance < 0.001) continue;
@@ -73,10 +74,4 @@ public final class BattleBeastWarRoarAbility implements Ability {
 		return true;
 	}
 
-	private static boolean isValidTarget(ServerPlayer owner, LivingEntity target) {
-		return target != owner
-				&& target.isAlive()
-				&& !target.isSpectator()
-				&& !(target instanceof Player player && player.isCreative());
-	}
 }

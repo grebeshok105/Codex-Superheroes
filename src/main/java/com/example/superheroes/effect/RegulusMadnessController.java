@@ -6,10 +6,8 @@ import com.example.superheroes.hero.RegulusHero;
 import com.example.superheroes.network.MadnessSyncS2CPayload;
 import com.example.superheroes.network.MadnessVisualS2CPayload;
 import com.example.superheroes.transform.HeroData;
+import com.example.superheroes.world.WorldDestructionPolicy;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
-import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
@@ -25,17 +23,18 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import net.minecraft.server.MinecraftServer;
 
 public final class RegulusMadnessController {
-	private static final long READING_DURATION_MS = 10000L;
+	private static final long READING_DURATION_TICKS = 200L;
 	private static final int COUNTER_LIFT_TICKS = 20;
 	private static final double COUNTER_LIFT_HEIGHT = 30.0;
 	private static final int COUNTER_ARRIVE_TICKS = 20;
@@ -52,63 +51,41 @@ public final class RegulusMadnessController {
 	private static final Map<UUID, Long> LAST_DAMAGER_TICK = new ConcurrentHashMap<>();
 	private static final int LAST_DAMAGER_TIMEOUT_TICKS = 200;
 
+	private static final int MADNESS_EFFECT_TICKS = 60;
+	private static final int MADNESS_BUFF_AMPLIFIER = 2;
+
 	private RegulusMadnessController() {
 	}
 
 	public static void init() {
-		ServerTickEvents.END_SERVER_TICK.register(server -> {
-			for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-				tickPlayer(player);
-			}
-			List<UUID> done = new ArrayList<>();
-			for (Map.Entry<UUID, CounterState> e : COUNTERS.entrySet()) {
-				if (e.getValue().tick(server)) {
-					done.add(e.getKey());
-				}
-			}
-			for (UUID id : done) {
-				COUNTERS.remove(id);
-			}
-		});
-
-		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
-			ServerPlayer player = handler.getPlayer();
-			clearMadness(player);
-		});
-
-		ServerLivingEntityEvents.AFTER_DEATH.register((entity, source) -> {
-			if (entity instanceof ServerPlayer player) {
-				clearMadness(player);
-			}
-		});
-
-		ServerPlayerEvents.AFTER_RESPAWN.register((oldPlayer, newPlayer, alive) -> {
-			clearMadness(newPlayer);
-		});
 
 		ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> {
 			if (!(entity instanceof ServerPlayer player)) {
 				return true;
 			}
 			RegulusMadnessState state = player.getAttachedOrCreate(ModAttachments.REGULUS_MADNESS);
-			if (state.isReading()) {
+			if (state.isReading(player.level().getGameTime())) {
 				return false;
 			}
-			if (isRegulus(player)) {
-				Entity cause = source.getEntity();
-				Entity direct = source.getDirectEntity();
-				LivingEntity damager = null;
-				if (cause instanceof LivingEntity le && le != player) {
-					damager = le;
-				} else if (direct instanceof LivingEntity le && le != player) {
-					damager = le;
-				}
-				if (damager != null) {
-					LAST_DAMAGER.put(player.getUUID(), damager.getUUID());
-					LAST_DAMAGER_TICK.put(player.getUUID(), player.level().getGameTime());
-				}
-			}
 			return true;
+		});
+
+		ServerLivingEntityEvents.AFTER_DAMAGE.register((entity, source, baseDamage, damageTaken, blocked) -> {
+			if (!(entity instanceof ServerPlayer player) || !isRegulus(player)) {
+				return;
+			}
+			Entity cause = source.getEntity();
+			Entity direct = source.getDirectEntity();
+			LivingEntity damager = null;
+			if (cause instanceof LivingEntity le && le != player) {
+				damager = le;
+			} else if (direct instanceof LivingEntity le && le != player) {
+				damager = le;
+			}
+			if (damager != null) {
+				LAST_DAMAGER.put(player.getUUID(), damager.getUUID());
+				LAST_DAMAGER_TICK.put(player.getUUID(), player.level().getGameTime());
+			}
 		});
 	}
 
@@ -128,8 +105,27 @@ public final class RegulusMadnessController {
 		return null;
 	}
 
-	public static boolean isAnyCounterActive() {
-		return !COUNTERS.isEmpty();
+	/**
+	 * Audit B16: the counter suppresses fall immunity only for its participants (the Regulus
+	 * owner being held mid-air and the attacker being slammed) — not for every hero while any
+	 * counter runs anywhere.
+	 */
+	public static boolean isCounterInvolved(Entity entity) {
+		UUID id = entity.getUUID();
+		for (CounterState counter : COUNTERS.values()) {
+			if (counter.playerId.equals(id) || counter.attackerId.equals(id)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/** World shutdown — counters, cooldowns and damager memory die with the world. */
+	public static void resetAll() {
+		COUNTERS.clear();
+		DODGE_COOLDOWN.clear();
+		LAST_DAMAGER.clear();
+		LAST_DAMAGER_TICK.clear();
 	}
 
 	private static void stripFlight(LivingEntity target) {
@@ -158,11 +154,11 @@ public final class RegulusMadnessController {
 
 	private static void tickPlayer(ServerPlayer player) {
 		RegulusMadnessState state = player.getAttachedOrCreate(ModAttachments.REGULUS_MADNESS);
-		if (state.isReading()) {
+		if (state.isReading(player.level().getGameTime())) {
 			player.setDeltaMovement(Vec3.ZERO);
 			player.hurtMarked = true;
-			player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 8, 4, true, false, false));
-			player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 8, 250, true, false, false));
+			EffectRefresh.refresh(player, MobEffects.DAMAGE_RESISTANCE, 8, 4, true, false, false);
+			EffectRefresh.refresh(player, MobEffects.MOVEMENT_SLOWDOWN, 8, 250, true, false, false);
 			ServerLevel level = (ServerLevel) player.level();
 			if (player.tickCount % 2 == 0) {
 				level.sendParticles(ParticleTypes.END_ROD,
@@ -179,7 +175,7 @@ public final class RegulusMadnessController {
 				level.playSound(null, player.getX(), player.getY(), player.getZ(),
 						SoundEvents.RESPAWN_ANCHOR_DEPLETE.value(), SoundSource.PLAYERS, 1.0f, 0.7f);
 			}
-		} else if (state.readingUntilMs() > 0L && !state.madness()) {
+		} else if (state.readingUntilTick() > 0L && !state.madness()) {
 			finishReading(player);
 		}
 		if (state.madness() && isRegulus(player)) {
@@ -229,9 +225,9 @@ public final class RegulusMadnessController {
 	}
 
 	public static void startReading(ServerPlayer player) {
-		long now = System.currentTimeMillis();
+		long now = player.level().getGameTime();
 		RegulusMadnessState state = player.getAttachedOrCreate(ModAttachments.REGULUS_MADNESS)
-				.withReading(now + READING_DURATION_MS);
+				.withReading(now + READING_DURATION_TICKS);
 		player.setAttached(ModAttachments.REGULUS_MADNESS, state);
 		ServerLevel level = (ServerLevel) player.level();
 		level.playSound(null, player.getX(), player.getY(), player.getZ(),
@@ -262,25 +258,59 @@ public final class RegulusMadnessController {
 
 	public static void clearMadness(ServerPlayer player) {
 		HeroAttributes.REGULUS_MADNESS.remove(player);
-		player.removeEffect(MobEffects.MOVEMENT_SPEED);
-		player.removeEffect(MobEffects.DAMAGE_BOOST);
-		player.removeEffect(MobEffects.JUMP);
-		player.removeEffect(MobEffects.DAMAGE_RESISTANCE);
+		// audit B12: only drop instances that look madness-applied — this hook runs on
+		// join/death/respawn for EVERY player and used to wipe potion, beacon and hero
+		// passive effects of the same holders
+		removeMadnessEffect(player, MobEffects.MOVEMENT_SPEED, MADNESS_BUFF_AMPLIFIER);
+		removeMadnessEffect(player, MobEffects.DAMAGE_BOOST, MADNESS_BUFF_AMPLIFIER);
+		removeMadnessEffect(player, MobEffects.JUMP, MADNESS_BUFF_AMPLIFIER);
+		removeMadnessEffect(player, MobEffects.DAMAGE_RESISTANCE, 0);
 		LAST_DAMAGER.remove(player.getUUID());
 		LAST_DAMAGER_TICK.remove(player.getUUID());
 		DODGE_COOLDOWN.remove(player.getUUID());
-		COUNTERS.remove(player.getUUID());
+		CounterState counter = COUNTERS.remove(player.getUUID());
+		if (counter != null && player.level() instanceof ServerLevel sl) {
+			counter.restoreOnAbort(sl);
+		}
 		player.setAttached(ModAttachments.REGULUS_MADNESS, RegulusMadnessState.EMPTY);
 		ServerPlayNetworking.send(player, new MadnessVisualS2CPayload(MadnessVisualS2CPayload.EVENT_EXIT));
 		sync(player);
 	}
 
 	private static void applyMadnessEffects(ServerPlayer player) {
-		player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 60, 2, true, false, true));
-		player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 60, 2, true, false, true));
-		player.addEffect(new MobEffectInstance(MobEffects.JUMP, 60, 2, true, false, true));
-		player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 60, 0, true, false, true));
-		player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 60, 0, true, false, true));
+		player.addEffect(madnessEffect(MobEffects.MOVEMENT_SPEED, MADNESS_BUFF_AMPLIFIER));
+		player.addEffect(madnessEffect(MobEffects.DAMAGE_BOOST, MADNESS_BUFF_AMPLIFIER));
+		player.addEffect(madnessEffect(MobEffects.JUMP, MADNESS_BUFF_AMPLIFIER));
+		player.addEffect(madnessEffect(MobEffects.REGENERATION, 0));
+		player.addEffect(madnessEffect(MobEffects.DAMAGE_RESISTANCE, 0));
+	}
+
+	private static MobEffectInstance madnessEffect(net.minecraft.core.Holder<net.minecraft.world.effect.MobEffect> effect,
+			int amplifier) {
+		return new MobEffectInstance(effect, MADNESS_EFFECT_TICKS, amplifier, true, false, true);
+	}
+
+	/**
+	 * Madness instances are short ({@value #MADNESS_EFFECT_TICKS} ticks, refreshed every 40),
+	 * ambient, icon-only and carry the fixed amplifiers from {@link #applyMadnessEffects}.
+	 * Anything else on the same holder — a potion, a beacon, an infinite hero passive — is not
+	 * ours to remove.
+	 */
+	private static void removeMadnessEffect(ServerPlayer player,
+			net.minecraft.core.Holder<net.minecraft.world.effect.MobEffect> effect, int amplifier) {
+		MobEffectInstance instance = player.getEffect(effect);
+		if (instance == null) {
+			return;
+		}
+		boolean madnessOwned = instance.getDuration() > 0
+				&& instance.getDuration() <= MADNESS_EFFECT_TICKS
+				&& instance.getAmplifier() == amplifier
+				&& instance.isAmbient()
+				&& !instance.isVisible()
+				&& instance.showIcon();
+		if (madnessOwned) {
+			player.removeEffect(effect);
+		}
 	}
 
 	public static boolean consumeBonusLife(ServerPlayer player) {
@@ -302,11 +332,12 @@ public final class RegulusMadnessController {
 	public static void sync(ServerPlayer player) {
 		RegulusMadnessState state = player.getAttachedOrCreate(ModAttachments.REGULUS_MADNESS);
 		Boolean bonusLife = player.getAttachedOrCreate(ModAttachments.REGULUS_BONUS_LIFE);
+		long now = player.level().getGameTime();
 		ServerPlayNetworking.send(player, new MadnessSyncS2CPayload(
 				state.madness(),
 				bonusLife != null && bonusLife,
-				state.readingUntilMs(),
-				state.manaRegenLockUntilMs()
+				Math.max(0L, state.readingUntilTick() - now) * 50L,
+				Math.max(0L, state.manaRegenLockUntilTick() - now) * 50L
 		));
 	}
 
@@ -333,9 +364,6 @@ public final class RegulusMadnessController {
 		final net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> dim;
 		int tick = 0;
 		Phase phase = Phase.LIFT;
-		boolean attackerWasNoAi;
-		boolean attackerWasNoGravity;
-		boolean playerWasNoGravity;
 		double liftStartY;
 
 		CounterState(UUID playerId, UUID attackerId, net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> dim) {
@@ -358,13 +386,10 @@ public final class RegulusMadnessController {
 				case LIFT -> {
 					if (tick == 1) {
 						liftStartY = attacker.getY();
-						if (attacker instanceof Mob mob) {
-							attackerWasNoAi = mob.isNoAi();
-							mob.setNoAi(true);
-						}
-						attackerWasNoGravity = attacker.isNoGravity();
-						attacker.setNoGravity(true);
-						playerWasNoGravity = player.isNoGravity();
+						com.example.superheroes.lifecycle.EntityControlLock.acquire(
+								attacker, com.example.superheroes.lifecycle.ControlLockKind.NO_AI, player);
+						com.example.superheroes.lifecycle.EntityControlLock.acquire(
+								attacker, com.example.superheroes.lifecycle.ControlLockKind.NO_GRAVITY, player);
 					}
 					double liftStep = COUNTER_LIFT_HEIGHT / (double) COUNTER_LIFT_TICKS;
 					double targetY = Math.min(liftStartY + tick * liftStep, liftStartY + COUNTER_LIFT_HEIGHT);
@@ -382,7 +407,8 @@ public final class RegulusMadnessController {
 					if (tick >= COUNTER_LIFT_TICKS) {
 						phase = Phase.ARRIVE;
 						tick = 0;
-						player.setNoGravity(true);
+						com.example.superheroes.lifecycle.EntityControlLock.acquire(
+								player, com.example.superheroes.lifecycle.ControlLockKind.NO_GRAVITY, player);
 						player.setDeltaMovement(0, 0, 0);
 						Vec3 look = attacker.getViewVector(1.0f);
 						double bx = attacker.getX() - look.x * 1.2;
@@ -399,7 +425,6 @@ public final class RegulusMadnessController {
 				case ARRIVE -> {
 					attacker.setDeltaMovement(0, 0, 0);
 					player.setDeltaMovement(0, 0, 0);
-					player.setNoGravity(true);
 					if (tick % 2 == 0) {
 						level.sendParticles(ParticleTypes.FLASH,
 								attacker.getX(), attacker.getY() + 1.0, attacker.getZ(),
@@ -408,14 +433,10 @@ public final class RegulusMadnessController {
 					if (tick >= COUNTER_ARRIVE_TICKS) {
 						phase = Phase.SLAM;
 						tick = 0;
-						if (attacker instanceof Mob mob) {
-							mob.setNoAi(attackerWasNoAi);
-						}
-						attacker.setNoGravity(attackerWasNoGravity);
+						releaseLocks(attacker, player);
 						attacker.setDeltaMovement(0, -3.5, 0);
 						attacker.hurtMarked = true;
 						attacker.hurt(ModDamageTypes.counterStrike(level, player), 30f);
-						player.setNoGravity(playerWasNoGravity);
 						level.playSound(null, attacker.getX(), attacker.getY(), attacker.getZ(),
 								SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 1.4f, 0.9f);
 					}
@@ -440,18 +461,28 @@ public final class RegulusMadnessController {
 
 		void restoreOnAbort(ServerLevel level) {
 			ServerPlayer player = level.getServer().getPlayerList().getPlayer(playerId);
-			if (player != null) player.setNoGravity(playerWasNoGravity);
 			Entity ae = level.getEntity(attackerId);
-			if (ae instanceof LivingEntity attacker) {
-				attacker.setNoGravity(attackerWasNoGravity);
-				if (attacker instanceof Mob mob) mob.setNoAi(attackerWasNoAi);
+			LivingEntity attacker = ae instanceof LivingEntity le ? le : null;
+			releaseLocks(attacker, player);
+		}
+
+		private void releaseLocks(LivingEntity attacker, ServerPlayer player) {
+			if (attacker != null) {
+				com.example.superheroes.lifecycle.EntityControlLock.release(
+						attacker, com.example.superheroes.lifecycle.ControlLockKind.NO_AI, playerId);
+				com.example.superheroes.lifecycle.EntityControlLock.release(
+						attacker, com.example.superheroes.lifecycle.ControlLockKind.NO_GRAVITY, playerId);
+			}
+			if (player != null) {
+				com.example.superheroes.lifecycle.EntityControlLock.release(
+						player, com.example.superheroes.lifecycle.ControlLockKind.NO_GRAVITY, playerId);
 			}
 		}
 
 		boolean finalSlam(ServerLevel level, ServerPlayer player, LivingEntity attacker) {
 			BlockPos impact = attacker.blockPosition();
 			level.explode(player, impact.getX(), impact.getY(), impact.getZ(), 6.0f, Level.ExplosionInteraction.NONE);
-			carveCrater(level, impact);
+			RegulusMadnessController.carveCrater(level, impact, player);
 			attacker.teleportTo(impact.getX() + 0.5, impact.getY() - CRATER_DEPTH + 1, impact.getZ() + 0.5);
 			attacker.hurt(ModDamageTypes.counterStrike(level, player), 27f);
 			com.example.superheroes.resource.EnergyLocks.lockTicks(player, 15 * 20);
@@ -466,23 +497,40 @@ public final class RegulusMadnessController {
 			return true;
 		}
 
-		void carveCrater(ServerLevel level, BlockPos impact) {
-			int r = (int) CRATER_RADIUS;
-			for (int dy = 0; dy < CRATER_DEPTH; dy++) {
-				int radius = r - (dy * r / CRATER_DEPTH);
-				if (radius < 1) radius = 1;
-				int radiusSq = radius * radius;
-				for (int dx = -radius; dx <= radius; dx++) {
-					for (int dz = -radius; dz <= radius; dz++) {
-						if (dx * dx + dz * dz > radiusSq) continue;
-						BlockPos p = impact.offset(dx, -dy, dz);
-						if (p.getY() <= level.getMinBuildHeight()) continue;
-						level.setBlock(p, Blocks.AIR.defaultBlockState(), 2 | 16);
-					}
+		enum Phase { LIFT, ARRIVE, SLAM }
+	}
+
+	public static void carveCrater(ServerLevel level, BlockPos impact, @Nullable Entity cause) {
+		int r = (int) CRATER_RADIUS;
+		for (int dy = 0; dy < CRATER_DEPTH; dy++) {
+			int radius = r - (dy * r / CRATER_DEPTH);
+			if (radius < 1) radius = 1;
+			int radiusSq = radius * radius;
+			for (int dx = -radius; dx <= radius; dx++) {
+				for (int dz = -radius; dz <= radius; dz++) {
+					if (dx * dx + dz * dz > radiusSq) continue;
+					BlockPos p = impact.offset(dx, -dy, dz);
+					if (p.getY() <= level.getMinBuildHeight()) continue;
+					WorldDestructionPolicy.tryCarve(level, p, cause);
 				}
 			}
 		}
-
-		enum Phase { LIFT, ARRIVE, SLAM }
 	}
+
+	public static void tickPlayer(MinecraftServer server, ServerPlayer player, HeroData data) {
+		tickPlayer(player);
+	}
+
+	public static void tickCounters(MinecraftServer server) {
+		List<UUID> done = new ArrayList<>();
+		for (Map.Entry<UUID, CounterState> e : COUNTERS.entrySet()) {
+			if (e.getValue().tick(server)) {
+				done.add(e.getKey());
+			}
+		}
+		for (UUID id : done) {
+			COUNTERS.remove(id);
+		}
+	}
+
 }

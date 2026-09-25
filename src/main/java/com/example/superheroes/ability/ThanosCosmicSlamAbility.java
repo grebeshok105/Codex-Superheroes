@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.damage.ModDamageTypes;
 import com.example.superheroes.network.ModNetworking;
 import com.example.superheroes.particle.ModParticles;
@@ -62,7 +63,7 @@ public final class ThanosCosmicSlamAbility implements Ability {
 
 		AABB swept = new AABB(origin, endPoint).inflate(BEAM_RADIUS + 1.0);
 		for (LivingEntity le : level.getEntitiesOfClass(LivingEntity.class, swept,
-				e -> e != player && e.isAlive() && !(e instanceof Player p && p.getUUID().equals(player.getUUID())))) {
+				TargetFilters.hostileTo(player))) {
 			Vec3 closest = closestPointOnSegment(origin, endPoint, le.position().add(0, le.getBbHeight() * 0.5, 0));
 			double dist = closest.distanceTo(le.position().add(0, le.getBbHeight() * 0.5, 0));
 			if (dist > BEAM_RADIUS) continue;

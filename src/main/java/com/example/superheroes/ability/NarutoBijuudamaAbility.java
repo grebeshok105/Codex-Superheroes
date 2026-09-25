@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.damage.ModDamageTypes;
 import com.example.superheroes.particle.ModParticles;
 import net.minecraft.core.particles.ParticleTypes;
@@ -77,8 +78,7 @@ public final class NarutoBijuudamaAbility implements Ability {
 				impact.x - EXPLOSION_RADIUS, impact.y - EXPLOSION_RADIUS, impact.z - EXPLOSION_RADIUS,
 				impact.x + EXPLOSION_RADIUS, impact.y + EXPLOSION_RADIUS, impact.z + EXPLOSION_RADIUS);
 		for (LivingEntity le : level.getEntitiesOfClass(LivingEntity.class, aoe,
-				e -> e != player && e.isAlive() && !e.isSpectator()
-						&& !(e instanceof Player p2 && p2.getUUID().equals(player.getUUID())))) {
+				TargetFilters.hostileTo(player))) {
 			double dist = le.position().distanceTo(impact);
 			float falloff = (float) Math.max(0.0, 1.0 - dist / EXPLOSION_RADIUS);
 			float damage = edgeDamage + (centerDamage - edgeDamage) * falloff;

@@ -28,7 +28,11 @@ import java.util.stream.Stream;
 public final class IrisShaderBridge {
 	private static final Logger LOGGER = LoggerFactory.getLogger("superheroes-iris-bridge");
 
+	/** Max client ticks to keep retrying the post-crash restore (~10s at 20 tps). */
+	private static final int CRASH_RESTORE_MAX_TICKS = 200;
+
 	private static MirrorRestoreFile.Snapshot activeSnapshot;
+	private static int crashRestoreTicksRemaining;
 
 	private IrisShaderBridge() {
 	}
@@ -59,17 +63,25 @@ public final class IrisShaderBridge {
 		}
 	}
 
-	/** @return true when a restore actually ran. */
+	/**
+	 * @return true when a restore actually ran.
+	 *
+	 * <p>Resilient (audit B15): the snapshot and the restore file are dropped only
+	 * after a successful restore — a failed attempt leaves both in place so a later
+	 * call (or the next client start) can try again.
+	 */
 	public static boolean restore() {
 		MirrorRestoreFile.Snapshot snapshot = activeSnapshot;
-		activeSnapshot = null;
 		if (snapshot == null) {
 			MirrorRestoreFile.delete();
 			return false;
 		}
-		boolean ok = restoreSnapshot(snapshot);
+		if (!restoreSnapshot(snapshot)) {
+			return false;
+		}
+		activeSnapshot = null;
 		MirrorRestoreFile.delete();
-		return ok;
+		return true;
 	}
 
 	/**
@@ -120,15 +132,43 @@ public final class IrisShaderBridge {
 		}
 	}
 
-	/** Called once on client start: heals shader config after a crash mid-warp. */
+	/**
+	 * Called once on client start: arms the deferred post-crash restore.
+	 *
+	 * <p>Iris isn't ready for {@code Iris.reload()} during mod init, so the actual
+	 * restore is retried from the client tick ({@link #tickCrashRestore()}) — the old
+	 * one-shot attempt always failed here and deleted the snapshot anyway (audit B15).
+	 */
 	public static void restoreAfterCrashIfNeeded() {
-		MirrorRestoreFile.Snapshot snapshot = MirrorRestoreFile.read();
-		if (snapshot == null) {
+		if (MirrorRestoreFile.read() == null) {
 			return;
 		}
-		LOGGER.info("Found mirror dimension restore snapshot from a previous session, restoring shader state");
-		restoreSnapshot(snapshot);
-		MirrorRestoreFile.delete();
+		LOGGER.info("Found mirror dimension restore snapshot from a previous session, will retry restore on client ticks");
+		crashRestoreTicksRemaining = CRASH_RESTORE_MAX_TICKS;
+	}
+
+	/**
+	 * Client-tick driver for the post-crash restore. Retries until the restore
+	 * succeeds (Iris becomes reload-capable a few ticks after init); the snapshot
+	 * file is deleted only on success so a failed session never loses it.
+	 */
+	public static void tickCrashRestore() {
+		if (crashRestoreTicksRemaining <= 0) {
+			return;
+		}
+		crashRestoreTicksRemaining--;
+		MirrorRestoreFile.Snapshot snapshot = MirrorRestoreFile.read();
+		if (snapshot == null) {
+			crashRestoreTicksRemaining = 0;
+			return;
+		}
+		if (restoreSnapshot(snapshot)) {
+			MirrorRestoreFile.delete();
+			crashRestoreTicksRemaining = 0;
+			LOGGER.info("Restored shader state from mirror dimension snapshot");
+		} else if (crashRestoreTicksRemaining == 0) {
+			LOGGER.error("Gave up restoring shader state after crash; keeping mirror restore snapshot for the next client start");
+		}
 	}
 
 	private static int applyAcidUnsafe(Path pack, int mode, int scale) throws Throwable {
@@ -143,6 +183,8 @@ public final class IrisShaderBridge {
 				? Files.readString(optionsFile, StandardCharsets.UTF_8) : null;
 		activeSnapshot = snapshot;
 		MirrorRestoreFile.write(snapshot);
+		// A fresh warp supersedes any stale crash-restore snapshot.
+		crashRestoreTicksRemaining = 0;
 
 		Files.writeString(optionsFile, "MODE=" + mode + "\nJ=" + scale + "\n", StandardCharsets.UTF_8);
 		config.setShaderPackName(pack.getFileName().toString());

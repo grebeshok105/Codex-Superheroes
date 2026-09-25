@@ -1,5 +1,6 @@
 package com.example.superheroes.entity;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.damage.ModDamageTypes;
 import com.example.superheroes.particle.ModParticles;
 import net.minecraft.core.particles.ParticleTypes;
@@ -118,7 +119,7 @@ public class ShieldProjectileEntity extends Projectile {
 			LivingEntity hit = null;
 			double bestDist = Double.MAX_VALUE;
 			for (LivingEntity le : server.getEntitiesOfClass(LivingEntity.class, hitBox,
-					e -> e.isAlive() && !e.isSpectator() && e != this.getOwner() && !alreadyHit.contains(e.getUUID()))) {
+					e -> TargetFilters.harmableBy(e, this.getOwner()) && !alreadyHit.contains(e.getUUID()))) {
 				double d = le.distanceToSqr(this);
 				if (d < bestDist) {
 					bestDist = d;
@@ -180,7 +181,7 @@ public class ShieldProjectileEntity extends Projectile {
 		LivingEntity best = null;
 		double bestDist = Double.MAX_VALUE;
 		for (LivingEntity le : server.getEntitiesOfClass(LivingEntity.class, area,
-				e -> e.isAlive() && !e.isSpectator() && e != this.getOwner() && !alreadyHit.contains(e.getUUID()))) {
+				e -> TargetFilters.harmableBy(e, this.getOwner()) && !alreadyHit.contains(e.getUUID()))) {
 			double d = le.distanceToSqr(from);
 			if (d < bestDist) {
 				bestDist = d;

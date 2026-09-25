@@ -2,6 +2,7 @@ package com.example.superheroes.item;
 
 import com.example.superheroes.ModId;
 import com.example.superheroes.attachment.ModAttachments;
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.effect.ModEffects;
 import com.example.superheroes.resource.ResourceController;
 import com.example.superheroes.transform.HeroData;
@@ -46,7 +47,7 @@ public class UraniumDaggerItem extends Item {
 		if (target instanceof ServerPlayer victim && victim.level() instanceof ServerLevel level) {
 			HeroData data = victim.getAttachedOrCreate(ModAttachments.HERO_DATA);
 			if (data.hasHero()) {
-				victim.hurt(level.damageSources().magic(), 10f);
+				victim.hurt(level.damageSources().indirectMagic(attacker, attacker), 10f);
 				victim.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 200, 4, false, true, true));
 				victim.addEffect(new MobEffectInstance(ModEffects.SUPERHERO_WEAKNESS, 200, 0, false, true, true));
 				ResourceController.tryConsume(victim, DRAIN_ID, 200f);

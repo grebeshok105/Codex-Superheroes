@@ -6,7 +6,6 @@ import com.example.superheroes.hero.HeroAttributes;
 import com.example.superheroes.hero.ReinhardHero;
 import com.example.superheroes.transform.HeroData;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
@@ -33,6 +32,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import net.minecraft.server.MinecraftServer;
 
 /**
  * Главный мозг Рейнхарда. Объединяет:
@@ -78,12 +78,6 @@ public final class ReinhardController {
 	}
 
 	public static void init() {
-		ServerTickEvents.END_SERVER_TICK.register(server -> {
-			for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-				if (!isReinhard(player)) continue;
-				tickReinhard(player);
-			}
-		});
 
 		ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> {
 			if (entity instanceof ServerPlayer player && isReinhard(player)) {
@@ -551,6 +545,21 @@ public final class ReinhardController {
 		FIRST_DODGE_USED.remove(player.getUUID());
 	}
 
+	/**
+	 * Relog reconcile: {@code REINHARD_STATE.swordDrawn} persists, but the bound-sword issue is
+	 * session-scoped and dies on logout — leaving the flag true would block the ceremony from
+	 * ever starting again (the stale flag also made {@code REINHARD_DRAW} stick while it was a
+	 * permanent modifier). Reset it so the player can re-draw the sword.
+	 */
+	public static void onPlayerJoin(ServerPlayer player) {
+		if (!isReinhard(player)) return;
+		ReinhardState state = player.getAttachedOrCreate(ModAttachments.REINHARD_STATE);
+		if (!state.swordDrawn()) return;
+		player.setAttached(ModAttachments.REINHARD_STATE, state.withSwordDrawn(false));
+		HeroAttributes.REINHARD_DRAW.remove(player);
+		com.example.superheroes.ability.ReinhardSwordDrawAbility.removeSword(player);
+	}
+
 	public static void onRespawn(ServerPlayer player) {
 		if (!isReinhard(player)) return;
 		// На реальном респавне — сбрасываем Второе пришествие, фазы и feniks-флаг,
@@ -598,4 +607,10 @@ public final class ReinhardController {
 		ResourceKey<DamageType> key = source.typeHolder().unwrapKey().orElse(null);
 		return key != null && !NON_ADAPTABLE.contains(key) && !NON_TRACKED.contains(key);
 	}
+
+	public static void tickPlayer(MinecraftServer server, ServerPlayer player, HeroData data) {
+		if (!isReinhard(player)) return;
+		tickReinhard(player);
+	}
+
 }

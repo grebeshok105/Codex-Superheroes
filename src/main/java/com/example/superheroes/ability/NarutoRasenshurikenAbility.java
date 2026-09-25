@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.damage.ModDamageTypes;
 import com.example.superheroes.particle.ModParticles;
 import net.minecraft.core.particles.ParticleTypes;
@@ -73,6 +74,17 @@ public final class NarutoRasenshurikenAbility implements Ability {
 		}
 	}
 
+
+	/** Drop an in-progress charge/rush without firing it (leave, death, untransform). */
+	public static void clear(ServerPlayer player) {
+		ACTIVE.remove(player.getUUID());
+	}
+
+	/** World shutdown — charge sessions die with the world. */
+	public static void resetAll() {
+		ACTIVE.clear();
+	}
+
 	private static final class ActiveRasenshuriken {
 		private final UUID ownerId;
 		private Vec3 pos;
@@ -116,7 +128,7 @@ public final class NarutoRasenshurikenAbility implements Ability {
 					pos.x, pos.y, pos.z, 4, 0.8, 0.2, 0.8, 0.0);
 			List<LivingEntity> victims = new ArrayList<>(level.getEntitiesOfClass(LivingEntity.class,
 					new AABB(pos, pos).inflate(RADIUS),
-					e -> e != player && e.isAlive() && !e.isSpectator()));
+					TargetFilters.hostileTo(player)));
 			if (!victims.isEmpty()) {
 				for (LivingEntity victim : victims) {
 					victim.invulnerableTime = 0;

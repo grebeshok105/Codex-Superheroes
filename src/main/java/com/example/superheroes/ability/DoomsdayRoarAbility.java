@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.damage.ModDamageTypes;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
@@ -54,7 +55,7 @@ public final class DoomsdayRoarAbility implements Ability {
 
 		AABB area = new AABB(origin, origin).inflate(RADIUS);
 		List<Entity> targets = level.getEntities(player, area,
-				e -> e != player && e.isAlive() && !e.isSpectator() && e instanceof LivingEntity);
+				e -> e instanceof LivingEntity le && TargetFilters.hostileTo(player).test(le));
 
 		for (Entity entity : targets) {
 			Vec3 to = entity.position().add(0, entity.getBbHeight() * 0.5, 0).subtract(origin);

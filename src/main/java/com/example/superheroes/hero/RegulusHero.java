@@ -162,4 +162,13 @@ public final class RegulusHero implements Hero {
 	public HeroHudConfig getHudConfig() {
 		return HeroHudConfig.REGULUS;
 	}
+	@Override
+	public double getImpactPower() {
+		return 1.10;
+	}
+	@Override
+	public JarvisThreatClass getThreatClass() {
+		return JarvisThreatClass.S;
+	}
+
 }

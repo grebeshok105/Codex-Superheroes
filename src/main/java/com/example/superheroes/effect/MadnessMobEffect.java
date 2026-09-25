@@ -1,9 +1,9 @@
 package com.example.superheroes.effect;
 
+import com.example.superheroes.transform.HeroDataStore;
 import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.hero.Hero;
 import com.example.superheroes.hero.Heroes;
-import com.example.superheroes.network.ModNetworking;
 import com.example.superheroes.transform.HeroData;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffect;
@@ -27,9 +27,7 @@ public class MadnessMobEffect extends MobEffect {
 		if (data.hasHero()) {
 			Hero hero = Heroes.get(data.heroId());
 			if (hero != null) {
-				HeroData refilled = data.withResources(hero.getEnergyMax(), hero.getManaMax());
-				player.setAttached(ModAttachments.HERO_DATA, refilled);
-				ModNetworking.syncResources(player, refilled);
+				HeroDataStore.update(player, d -> d.withResources(hero.getEnergyMax(), hero.getManaMax()));
 			}
 		}
 		MobEffectInstance current = entity.getEffect(ModEffects.MADNESS);

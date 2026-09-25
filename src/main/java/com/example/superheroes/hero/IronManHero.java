@@ -146,4 +146,22 @@ public final class IronManHero implements Hero {
 	public HeroHudConfig getHudConfig() {
 		return HeroHudConfig.IRON_MAN;
 	}
+	@Override
+	public com.example.superheroes.physics.ImpactStyle getImpactStyle() {
+		return com.example.superheroes.physics.ImpactStyle.ENERGY;
+	}
+	@Override
+	public JarvisThreatClass getThreatClass() {
+		return JarvisThreatClass.B;
+	}
+
+	@Override
+	public float getEnergyReserveFor(ResourceLocation abilityId,
+			com.example.superheroes.resource.ResourceKind binding) {
+		// Unibeam always keeps a 100-energy floor available.
+		return !AbilityIds.UNIBEAM.equals(abilityId)
+				&& getAbilities().contains(AbilityIds.UNIBEAM)
+				&& binding == com.example.superheroes.resource.ResourceKind.ENERGY ? 100f : 0f;
+	}
+
 }

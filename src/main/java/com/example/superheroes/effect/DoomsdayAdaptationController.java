@@ -30,8 +30,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public final class DoomsdayAdaptationController {
 	private static final float CUMULATIVE_THRESHOLD = 15f;
-	private static final long REALTIME_THRESHOLD_MS = 5_000L;
-	private static final long IDLE_RESET_MS = 10_000L;
+	private static final long REALTIME_THRESHOLD_TICKS = 100L;
+	private static final long IDLE_RESET_TICKS = 200L;
 	private static final float ADAPT_DAMAGE_BONUS = 1.0f;
 
 	/**
@@ -84,7 +84,7 @@ public final class DoomsdayAdaptationController {
 	private static final Map<UUID, Set<ResourceKey<DamageType>>> ADAPTED = new ConcurrentHashMap<>();
 	private static final Map<UUID, Set<ResourceKey<DamageType>>> BANNED = new ConcurrentHashMap<>();
 	private static final Map<UUID, Map<ResourceKey<DamageType>, Float>> CUMULATIVE = new ConcurrentHashMap<>();
-	private static final Map<UUID, Map<ResourceKey<DamageType>, Long>> FIRST_HIT_MS = new ConcurrentHashMap<>();
+	private static final Map<UUID, Map<ResourceKey<DamageType>, Long>> FIRST_HIT_TICK = new ConcurrentHashMap<>();
 	private static final Map<UUID, Integer> ADAPT_COUNT = new ConcurrentHashMap<>();
 
 	private DoomsdayAdaptationController() {
@@ -104,35 +104,47 @@ public final class DoomsdayAdaptationController {
 			}
 
 			Set<ResourceKey<DamageType>> adapted = ADAPTED.computeIfAbsent(player.getUUID(), k -> new HashSet<>());
-			Set<ResourceKey<DamageType>> banned = BANNED.computeIfAbsent(player.getUUID(), k -> new HashSet<>());
 			if (adapted.contains(typeKey) || isAdaptedRelated(adapted, typeKey)) {
 				return false;
 			}
 
-			// Auto-adapt: накапливаем урон по типу; при достижении порога ИЛИ через REALTIME_THRESHOLD_MS — иммун.
+			return true;
+		});
+
+		// Auto-adapt: считаем урон, который реально прошёл (после брони/щитов/i-frames), по типу;
+		// при достижении порога ИЛИ через REALTIME_THRESHOLD_TICKS — иммун.
+		ServerLivingEntityEvents.AFTER_DAMAGE.register((entity, source, baseDamage, damageTaken, blocked) -> {
+			if (!(entity instanceof ServerPlayer player) || !isDoomsday(player)) {
+				return;
+			}
+			ResourceKey<DamageType> typeKey = source.typeHolder().unwrapKey().orElse(null);
+			if (typeKey == null) {
+				return;
+			}
+
+			Set<ResourceKey<DamageType>> adapted = ADAPTED.computeIfAbsent(player.getUUID(), k -> new HashSet<>());
+			Set<ResourceKey<DamageType>> banned = BANNED.computeIfAbsent(player.getUUID(), k -> new HashSet<>());
 			if (!GENERIC_TYPES.contains(typeKey) && !banned.contains(typeKey) && !isInBannedGroup(banned, typeKey)) {
-				long now = System.currentTimeMillis();
+				long now = player.serverLevel().getGameTime();
 				Map<ResourceKey<DamageType>, Float> perType = CUMULATIVE.computeIfAbsent(player.getUUID(), k -> new HashMap<>());
-				Map<ResourceKey<DamageType>, Long> firstHit = FIRST_HIT_MS.computeIfAbsent(player.getUUID(), k -> new HashMap<>());
+				Map<ResourceKey<DamageType>, Long> firstHit = FIRST_HIT_TICK.computeIfAbsent(player.getUUID(), k -> new HashMap<>());
 				Long firstTs = firstHit.get(typeKey);
-				if (firstTs == null || now - firstTs > IDLE_RESET_MS) {
+				if (firstTs == null || now - firstTs > IDLE_RESET_TICKS) {
 					firstHit.put(typeKey, now);
-					perType.put(typeKey, amount);
+					perType.put(typeKey, damageTaken);
 					firstTs = now;
 				} else {
-					perType.merge(typeKey, amount, Float::sum);
+					perType.merge(typeKey, damageTaken, Float::sum);
 				}
 				float total = perType.getOrDefault(typeKey, 0f);
 				boolean reachedDamage = total >= CUMULATIVE_THRESHOLD;
-				boolean reachedTime = (now - firstTs) >= REALTIME_THRESHOLD_MS;
+				boolean reachedTime = (now - firstTs) >= REALTIME_THRESHOLD_TICKS;
 				if (reachedDamage || reachedTime) {
 					registerAdaptation(player, typeKey, false);
 					perType.remove(typeKey);
 					firstHit.remove(typeKey);
 				}
 			}
-
-			return true;
 		});
 	}
 
@@ -249,7 +261,7 @@ public final class DoomsdayAdaptationController {
 		ADAPTED.remove(id);
 		BANNED.remove(id);
 		CUMULATIVE.remove(id);
-		FIRST_HIT_MS.remove(id);
+		FIRST_HIT_TICK.remove(id);
 		ADAPT_COUNT.remove(id);
 		AttributeInstance inst = player.getAttribute(Attributes.ATTACK_DAMAGE);
 		if (inst != null) {

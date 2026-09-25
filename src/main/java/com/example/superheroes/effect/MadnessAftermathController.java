@@ -1,12 +1,10 @@
 package com.example.superheroes.effect;
 
-import com.example.superheroes.ability.AbilityIds;
-import com.example.superheroes.ability.AbilityRegistry;
-import com.example.superheroes.attachment.ModAttachments;
-import com.example.superheroes.network.ModNetworking;
+import com.example.superheroes.ability.AbilityRouter;
+import com.example.superheroes.transform.HeroDataStore;
 import com.example.superheroes.sound.ModSounds;
 import com.example.superheroes.transform.HeroData;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import com.example.superheroes.world.WorldDestructionPolicy;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
@@ -29,6 +27,7 @@ import net.minecraft.world.phys.Vec3;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import net.minecraft.server.MinecraftServer;
 
 public final class MadnessAftermathController {
 	public static final int AFTERMATH_TICKS = 200;
@@ -37,42 +36,17 @@ public final class MadnessAftermathController {
 	private MadnessAftermathController() {
 	}
 
-	public static void init() {
-		ServerTickEvents.END_SERVER_TICK.register(server -> {
-			Set<UUID> stillMadness = new HashSet<>();
-			for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-				boolean madness = ModEffects.isMadness(player);
-				if (madness) {
-					stillMadness.add(player.getUUID());
-				} else if (hadMadnessLastTick.contains(player.getUUID())) {
-					triggerAftermath(player);
-				}
-				if (ModEffects.isAftermath(player)) {
-					tickAftermath(player);
-				}
-			}
-			hadMadnessLastTick.clear();
-			hadMadnessLastTick.addAll(stillMadness);
-		});
-	}
 
 	private static void triggerAftermath(ServerPlayer player) {
 		player.addEffect(new MobEffectInstance(ModEffects.MADNESS_AFTERMATH, AFTERMATH_TICKS, 0, false, false, true));
 		player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, AFTERMATH_TICKS, 4, false, false, true));
 		player.setDeltaMovement(Vec3.ZERO);
 		player.hurtMarked = true;
-		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
+		HeroData data = HeroDataStore.get(player);
 		if (data.hasHero()) {
-			HeroData updated = data;
 			for (ResourceLocation abilityId : new HashSet<>(data.activeAbilities())) {
-				var ability = AbilityRegistry.get(abilityId);
-				if (ability != null) {
-					ability.onDeactivate(player);
-				}
-				updated = updated.withActive(abilityId, false);
+				AbilityRouter.deactivate(player, abilityId);
 			}
-			player.setAttached(ModAttachments.HERO_DATA, updated);
-			ModNetworking.syncHeroData(player, updated);
 		}
 		player.serverLevel().playSound(null,
 				player.getX(), player.getY(), player.getZ(),
@@ -145,7 +119,7 @@ public final class MadnessAftermathController {
 					if (BaseFireBlock.canBePlacedAt(level, pos, net.minecraft.core.Direction.UP)
 							&& !level.getBlockState(below).isAir()
 							&& level.getRandom().nextFloat() < 0.5f) {
-						level.setBlockAndUpdate(pos, Blocks.FIRE.defaultBlockState());
+						WorldDestructionPolicy.tryPlace(level, pos, Blocks.FIRE.defaultBlockState(), player);
 					}
 				}
 			}
@@ -172,4 +146,21 @@ public final class MadnessAftermathController {
 			default -> SoundEvents.LIGHTNING_BOLT_THUNDER;
 		};
 	}
+
+	public static void tickPlayer(MinecraftServer server, ServerPlayer player, HeroData data) {
+		boolean madness = ModEffects.isMadness(player);
+		if (madness) {
+			hadMadnessLastTick.add(player.getUUID());
+		} else if (hadMadnessLastTick.remove(player.getUUID())) {
+			triggerAftermath(player);
+		}
+		if (ModEffects.isAftermath(player)) {
+			tickAftermath(player);
+		}
+	}
+
+	public static void pruneGonePlayers(MinecraftServer server) {
+		hadMadnessLastTick.removeIf(id -> server.getPlayerList().getPlayer(id) == null);
+	}
+
 }

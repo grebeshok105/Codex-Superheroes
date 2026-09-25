@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.damage.ModDamageTypes;
 import com.example.superheroes.effect.GokuKiStackController;
 import com.example.superheroes.particle.ModParticles;
@@ -123,7 +124,7 @@ public final class GokuKamehamehaAbility implements Ability {
 		float damage = BASE_DAMAGE * ab.multiplier;
 		AABB box = new AABB(eye, actualEnd).inflate(1.0);
 		for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, box,
-				e -> e != player && e.isAlive() && !e.isSpectator() && distanceToBeam(e, eye, dir) < 1.5)) {
+				TargetFilters.hostileTo(player).and(e -> distanceToBeam(e, eye, dir) < 1.5))) {
 			if (ab.alreadyHit.add(target.getUUID())) {
 				target.hurt(ModDamageTypes.gokuKamehameha(level, player), damage);
 				target.igniteForSeconds(2f);
@@ -132,15 +133,24 @@ public final class GokuKamehamehaAbility implements Ability {
 
 		double dist = eye.distanceTo(actualEnd);
 		int steps = (int) Math.max(8, dist * 2);
-		for (int i = 0; i < steps; i++) {
-			double t = (double) i / steps;
+		// Batched (audit §3): every ~1.5-block segment sends one packet per
+		// particle type with an elongated spread box instead of ~180
+		// single-particle packets per tick — same beam density.
+		int stride = 3;
+		double stepLen = dist / steps;
+		for (int i = 0; i < steps; i += stride) {
+			int count = Math.min(stride, steps - i);
+			double t = (i + (count - 1) / 2.0) / steps;
 			Vec3 p = eye.add(dir.scale(t * dist));
+			double hx = Math.abs(dir.x) * stepLen * (count - 1) * 0.5 + 0.1;
+			double hy = Math.abs(dir.y) * stepLen * (count - 1) * 0.5 + 0.1;
+			double hz = Math.abs(dir.z) * stepLen * (count - 1) * 0.5 + 0.1;
 			level.sendParticles(ModParticles.GOKU_KAMEHAMEHA_CORE,
-					p.x, p.y, p.z, 1, 0.15, 0.15, 0.15, 0.0);
+					p.x, p.y, p.z, count, hx, hy, hz, 0.0);
 			level.sendParticles(ModParticles.GOKU_KAMEHAMEHA_TRAIL,
-					p.x, p.y, p.z, 1, 0.4, 0.4, 0.4, 0.02);
+					p.x, p.y, p.z, count, hx * 2, hy * 2, hz * 2, 0.02);
 			level.sendParticles(ParticleTypes.END_ROD,
-					p.x, p.y, p.z, 1, 0.1, 0.1, 0.1, 0.0);
+					p.x, p.y, p.z, count, hx, hy, hz, 0.0);
 		}
 		level.sendParticles(ParticleTypes.EXPLOSION,
 				actualEnd.x, actualEnd.y, actualEnd.z, 2, 0.5, 0.5, 0.5, 0.0);
@@ -151,6 +161,17 @@ public final class GokuKamehamehaAbility implements Ability {
 		double along = toEntity.dot(dir);
 		Vec3 onLine = origin.add(dir.scale(Math.max(0, along)));
 		return entity.position().add(0, entity.getBbHeight() / 2.0, 0).distanceTo(onLine);
+	}
+
+
+	/** Drop an in-progress charge/rush without firing it (leave, death, untransform). */
+	public static void clear(ServerPlayer player) {
+		ACTIVE.remove(player.getUUID());
+	}
+
+	/** World shutdown — charge sessions die with the world. */
+	public static void resetAll() {
+		ACTIVE.clear();
 	}
 
 	private static final class ActiveBeam {

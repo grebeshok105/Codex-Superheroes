@@ -41,6 +41,33 @@ repositories {
 	}
 }
 
+sourceSets {
+	main {
+		resources {
+			srcDirs += [
+				'src/main/generated'
+			]
+		}
+	}
+	// Server GameTests run against the real mod; never packaged (auditReleaseJarIsolation enforces it).
+	gametest {
+		compileClasspath += main.compileClasspath + main.output
+		// Veil hard-depends on client-only Fabric modules, so it cannot load on a dedicated server.
+		runtimeClasspath += main.runtimeClasspath.filter { !it.path.contains('veil') } + main.output
+	}
+}
+
+// JUnit covers pure client-side state too (Client*State session resets, cooldown clocks —
+// audit B15): give the test source set the client classes and their compile classpath
+// (mapped Minecraft + LWJGL/GLFW) so they load and link. Runs after loom's
+// splitEnvironmentSourceSets() has created the 'client' source set.
+afterEvaluate {
+	sourceSets.test {
+		compileClasspath += sourceSets.client.output + sourceSets.client.compileClasspath
+		runtimeClasspath += sourceSets.client.output + sourceSets.client.runtimeClasspath
+	}
+}
+
 loom {
 	splitEnvironmentSourceSets()
 
@@ -48,6 +75,9 @@ loom {
 		"superheroes" {
 			sourceSet sourceSets.main
 			sourceSet sourceSets.client
+		}
+		"superheroes-gametest" {
+			sourceSet sourceSets.gametest
 		}
 	}
 
@@ -60,18 +90,18 @@ loom {
 			vmArg "-Dfabric-api.datagen.modid=superheroes"
 			runDir "build/datagen"
 		}
-	}
-}
-
-sourceSets {
-	main {
-		resources {
-			srcDirs += [
-				'src/main/generated'
-			]
+		// Headless GameTest server: exits with the number of failed required tests.
+		gametest {
+			server()
+			name "Game Test"
+			source sourceSets.gametest
+			vmArg "-Dfabric-api.gametest"
+			vmArg "-Dfabric-api.gametest.report-file=${file("build/gametest/junit.xml")}"
+			runDir "build/gametest"
 		}
 	}
 }
+
 
 dependencies {
 	// To change the versions see the gradle.properties file
@@ -227,6 +257,14 @@ tasks.register('qualityGate') {
 	dependsOn tasks.named('build')
 	dependsOn tasks.named('verifyAssertionsEnabled')
 	dependsOn tasks.named('auditReleaseJarIsolation')
+	dependsOn tasks.named('runGametest')
+}
+
+// A stale world from an earlier run would leak players and state between GameTest runs.
+tasks.named('runGametest') {
+	doFirst {
+		delete file('build/gametest/world')
+	}
 }
 
 processResources {

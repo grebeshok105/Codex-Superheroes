@@ -1,11 +1,11 @@
 package com.example.superheroes.effect;
 
 import com.example.superheroes.attachment.ModAttachments;
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.hero.HeroAttributes;
 import com.example.superheroes.hero.RaidenHero;
 import com.example.superheroes.transform.HeroData;
 import com.example.superheroes.particle.ModParticles;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -17,6 +17,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
+import net.minecraft.server.MinecraftServer;
 
 /**
  * Контроллер Burst-режима Райден (Q). Управляет 7-секундным окном:
@@ -31,14 +32,6 @@ public final class RaidenBurstController {
 	private RaidenBurstController() {
 	}
 
-	public static void init() {
-		ServerTickEvents.END_SERVER_TICK.register(server -> {
-			for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-				if (!isRaiden(player)) continue;
-				tick(player);
-			}
-		});
-	}
 
 	private static void tick(ServerPlayer player) {
 		RaidenState state = player.getAttachedOrCreate(ModAttachments.RAIDEN_STATE);
@@ -76,9 +69,7 @@ public final class RaidenBurstController {
 				origin.x - FINAL_SLASH_RADIUS, origin.y - FINAL_SLASH_RADIUS, origin.z - FINAL_SLASH_RADIUS,
 				origin.x + FINAL_SLASH_RADIUS, origin.y + FINAL_SLASH_RADIUS, origin.z + FINAL_SLASH_RADIUS);
 		List<LivingEntity> targets = level.getEntitiesOfClass(LivingEntity.class, box,
-				e -> e != player && e.isAlive() && !e.isSpectator()
-						&& !(e instanceof Player p && p.getUUID().equals(player.getUUID()))
-						&& e.position().add(0, e.getBbHeight() * 0.5, 0).distanceToSqr(origin) <= r2);
+				TargetFilters.hostileTo(player).and(e -> e.position().add(0, e.getBbHeight() * 0.5, 0).distanceToSqr(origin) <= r2));
 		for (LivingEntity le : targets) {
 			float dmg = (le instanceof Player) ? FINAL_SLASH_DAMAGE_PLAYER : FINAL_SLASH_DAMAGE_MOB;
 			le.invulnerableTime = 0;
@@ -109,4 +100,10 @@ public final class RaidenBurstController {
 		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
 		return data.hasHero() && RaidenHero.ID.equals(data.heroId());
 	}
+
+	public static void tickPlayer(MinecraftServer server, ServerPlayer player, HeroData data) {
+		if (!isRaiden(player)) return;
+		tick(player);
+	}
+
 }

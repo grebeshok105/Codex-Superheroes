@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
@@ -68,7 +69,7 @@ public final class ScaramoucheSkyfallBurstAbility implements Ability {
 		Vec3 impact = blockHit.getType() == HitResult.Type.BLOCK ? blockHit.getLocation() : end;
 		AABB rayBox = new AABB(eye, impact).inflate(2.2);
 		EntityHitResult entityHit = ProjectileUtil.getEntityHitResult(level, player, eye, impact, rayBox,
-				entity -> entity instanceof LivingEntity living && isValidTarget(player, living));
+				entity -> entity instanceof LivingEntity living && TargetFilters.hostileTo(player).test(living));
 		if (entityHit != null) {
 			impact = entityHit.getLocation();
 		}
@@ -76,7 +77,7 @@ public final class ScaramoucheSkyfallBurstAbility implements Ability {
 		spawnBeam(level, eye, impact);
 		AABB aoe = new AABB(impact, impact).inflate(RADIUS);
 		for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, aoe,
-				target -> isValidTarget(player, target))) {
+				TargetFilters.hostileTo(player))) {
 			Vec3 targetCenter = target.position().add(0.0, target.getBbHeight() * 0.5, 0.0);
 			double distance = targetCenter.distanceTo(impact);
 			if (distance > RADIUS) continue;
@@ -137,10 +138,4 @@ public final class ScaramoucheSkyfallBurstAbility implements Ability {
 		}
 	}
 
-	private static boolean isValidTarget(ServerPlayer owner, LivingEntity target) {
-		return target != owner
-				&& target.isAlive()
-				&& !target.isSpectator()
-				&& !(target instanceof Player player && player.isCreative());
-	}
 }

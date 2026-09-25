@@ -23,6 +23,10 @@ public final class ClientNanoWeaponState {
 	private static int selected = 0;
 	private static long lastSwitchMs = 0L;
 
+	static {
+		ClientSessionState.register(ClientNanoWeaponState::reset);
+	}
+
 	private ClientNanoWeaponState() {
 	}
 
@@ -42,5 +46,11 @@ public final class ClientNanoWeaponState {
 		int n = WEAPONS.size();
 		selected = ((selected + dir) % n + n) % n;
 		lastSwitchMs = System.currentTimeMillis();
+	}
+
+	/** Drop all session state (registered with {@code ClientSessionState}). */
+	public static void reset() {
+		selected = 0;
+		lastSwitchMs = 0L;
 	}
 }

@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.damage.ModDamageTypes;
 import com.example.superheroes.network.ModNetworking;
 import com.example.superheroes.particle.ModParticles;
@@ -79,7 +80,7 @@ public final class RepulsorAbility implements Ability {
 
 		AABB box = player.getBoundingBox().expandTowards(dir.scale(RANGE)).inflate(charged ? 0.7 + 0.6 * chargeAmt : 0.6);
 		EntityHitResult hit = ProjectileUtil.getEntityHitResult(level, player, eye, actualEnd, box,
-				e -> e instanceof LivingEntity && e.isAlive() && e != player && !e.isSpectator());
+				e -> e instanceof LivingEntity le && TargetFilters.hostileTo(player).test(le));
 		if (hit != null) {
 			LivingEntity target = (LivingEntity) hit.getEntity();
 			target.hurt(ModDamageTypes.repulsor(level, player), dmg);
@@ -94,7 +95,7 @@ public final class RepulsorAbility implements Ability {
 			// ударная волна у точки попадания (радиус растёт с зарядом)
 			List<LivingEntity> nearby = level.getEntitiesOfClass(LivingEntity.class,
 					new AABB(actualEnd, actualEnd).inflate(aoe),
-					e -> e.isAlive() && e != player && !e.isSpectator());
+					TargetFilters.hostileTo(player));
 			for (LivingEntity e : nearby) {
 				double dist = e.position().distanceTo(actualEnd);
 				float falloff = (float) Math.max(0.25, 1.0 - dist / (aoe + 1.0));

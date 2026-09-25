@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.effect.RemDemonismController;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
@@ -61,7 +62,7 @@ public final class RemOniKickAbility implements Ability {
 		Vec3 from = player.position();
 		Vec3 to = from.add(forward.scale(DISTANCE));
 		AABB sweep = new AABB(from, to).inflate(1.4);
-		for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, sweep, target -> isValidTarget(player, target))) {
+		for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, sweep, TargetFilters.hostileTo(player))) {
 			target.invulnerableTime = 0;
 			target.hurt(level.damageSources().playerAttack(player), DAMAGE);
 			target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 60, 1, true, true, true));
@@ -86,10 +87,4 @@ public final class RemOniKickAbility implements Ability {
 		return true;
 	}
 
-	private static boolean isValidTarget(ServerPlayer owner, LivingEntity target) {
-		return target != owner
-				&& target.isAlive()
-				&& !target.isSpectator()
-				&& !(target instanceof Player player && player.isCreative());
-	}
 }

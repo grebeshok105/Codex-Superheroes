@@ -89,4 +89,13 @@ public final class GokuHero implements Hero {
 	public HeroHudConfig getHudConfig() {
 		return HeroHudConfig.GOKU;
 	}
+	@Override
+	public double getImpactPower() {
+		return 1.20;
+	}
+	@Override
+	public JarvisThreatClass getThreatClass() {
+		return JarvisThreatClass.A;
+	}
+
 }

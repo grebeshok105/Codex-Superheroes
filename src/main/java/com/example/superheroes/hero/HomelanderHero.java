@@ -145,4 +145,29 @@ public final class HomelanderHero implements Hero {
 	public HeroHudConfig getHudConfig() {
 		return HeroHudConfig.HOMELANDER;
 	}
+	@Override
+	public com.example.superheroes.physics.ImpactStyle getImpactStyle() {
+		return com.example.superheroes.physics.ImpactStyle.BRUTAL;
+	}
+	@Override
+	public double getImpactPower() {
+		return 1.15;
+	}
+	@Override
+	public JarvisThreatClass getThreatClass() {
+		return JarvisThreatClass.A;
+	}
+
+	@Override
+	public boolean isAbilitySuppressedBy(com.example.superheroes.transform.HeroData data,
+			ResourceLocation abilityId) {
+		// While Iron Fists stance is up, every other ability is locked out.
+		return data.isActive(AbilityIds.IRON_FISTS) && !AbilityIds.IRON_FISTS.equals(abilityId);
+	}
+
+	@Override
+	public boolean isUraniumWeak() {
+		return true;
+	}
+
 }

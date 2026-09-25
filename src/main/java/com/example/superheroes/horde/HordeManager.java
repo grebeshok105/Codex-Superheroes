@@ -51,6 +51,9 @@ public final class HordeManager {
 	private static final double LEASH_MIN_Y_DELTA = 25.0; // fell this far below centre -> snap back
 	private static final int ELITE_SPAWN_DELAY = 40; // boss appears ~2s after the warning
 	private static final int OVERLAY_INTERVAL = 10;
+	/** No living non-spectator player within this radius -> the horde pauses (no spawns, no timers). */
+	private static final double AUDIENCE_RADIUS = 96.0;
+	private static final double AUDIENCE_RADIUS_SQ = AUDIENCE_RADIUS * AUDIENCE_RADIUS;
 
 	/** A spawn deferred by a few ticks (reinforcements / staggered elites). */
 	private static final class DelayedSpawn {
@@ -91,7 +94,7 @@ public final class HordeManager {
 			this.currentWave = 0;
 			this.interWaveTimer = 60; // 3s before first wave
 			this.waveBossBar = new ServerBossEvent(
-					Component.literal("§c§lОрда Паразитов"),
+					Component.translatable("horde.superheroes.boss_bar"),
 					BossEvent.BossBarColor.RED,
 					BossEvent.BossBarOverlay.NOTCHED_10);
 		}
@@ -138,6 +141,13 @@ public final class HordeManager {
 	}
 
 	private static void tickInstance(HordeInstance inst) {
+		// 0) Nobody around -> freeze everything: no wave timers, no delayed
+		//    spawns, no reconcile. Without this the horde would keep spawning
+		//    into unloaded chunks at world min height with nobody to fight.
+		if (!hasAudience(inst)) {
+			return;
+		}
+
 		// 1) Reconcile the live set (source of truth) + leash strays.
 		if (++inst.reconcileTimer >= RECONCILE_INTERVAL) {
 			inst.reconcileTimer = 0;
@@ -193,6 +203,17 @@ public final class HordeManager {
 				inst.interWaveTimer = INTER_WAVE_TICKS;
 			}
 		}
+	}
+
+	/** Any alive non-spectator player in this level close enough to matter. */
+	private static boolean hasAudience(HordeInstance inst) {
+		for (ServerPlayer p : inst.level.getServer().getPlayerList().getPlayers()) {
+			if (p.level() == inst.level && !p.isSpectator() && p.isAlive()
+					&& p.distanceToSqr(inst.center) <= AUDIENCE_RADIUS_SQ) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/** Prune dead/removed UUIDs and snap strays back toward the centre. */
@@ -396,6 +417,12 @@ public final class HordeManager {
 
 	// ─────────────────────────────────────────── debug / commands ─────────
 
+	/** Test/debug: live mob count of the active horde in this level (0 when none). */
+	public static int liveMobCount(ServerLevel level) {
+		HordeInstance inst = activeIn(level);
+		return inst == null ? 0 : inst.liveMobIds.size();
+	}
+
 	private static HordeInstance activeIn(ServerLevel level) {
 		for (HordeInstance inst : ACTIVE.values()) {
 			if (inst.level == level && !inst.finished) {
@@ -579,5 +606,11 @@ public final class HordeManager {
 
 	public static boolean hasActiveHorde(Level level) {
 		return ACTIVE.values().stream().anyMatch(i -> i.level == level && !i.finished);
+	}
+
+	/** World shutdown — hordes hold level references that would leak into a new world. */
+	public static void resetAll() {
+		ACTIVE.clear();
+		OVERLAY_PLAYERS.clear();
 	}
 }

@@ -1,6 +1,7 @@
 package com.example.superheroes.physics;
 
 import com.example.superheroes.network.ScreenShakeS2CPayload;
+import com.example.superheroes.world.WorldDestructionPolicy;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.BlockPos;
@@ -66,7 +67,7 @@ public final class ShockwaveUtil {
 						}
 						float hardness = bs.getDestroySpeed(world, m);
 						if (hardness >= 0f && hardness < 0.6f) {
-							world.destroyBlock(m.immutable(), true, source);
+							WorldDestructionPolicy.tryBreak(world, m.immutable(), true, source);
 						}
 					}
 				}
@@ -141,7 +142,7 @@ public final class ShockwaveUtil {
 						}
 						float hardness = bs.getDestroySpeed(world, m);
 						if (hardness >= 0f && hardness < 0.6f) {
-							world.destroyBlock(m.immutable(), true, source);
+							WorldDestructionPolicy.tryBreak(world, m.immutable(), true, source);
 						}
 					}
 				}

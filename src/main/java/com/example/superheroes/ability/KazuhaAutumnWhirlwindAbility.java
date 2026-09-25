@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
@@ -87,7 +88,7 @@ public final class KazuhaAutumnWhirlwindAbility implements Ability {
 		Vec3 center = player.position().add(0, 0.8, 0);
 		for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class,
 				new AABB(center, center).inflate(RADIUS),
-				e -> e != player && e.isAlive() && !e.isSpectator() && !(e instanceof Player p && p.isCreative()))) {
+				TargetFilters.hostileTo(player))) {
 			target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 50, 0, true, true, true));
 			target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 50, 0, true, true, true));
 			Vec3 push = target.position().subtract(player.position());

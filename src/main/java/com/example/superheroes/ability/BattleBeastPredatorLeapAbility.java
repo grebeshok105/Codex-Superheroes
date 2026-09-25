@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.effect.BattleBeastCurseController;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
@@ -63,7 +64,7 @@ public final class BattleBeastPredatorLeapAbility implements Ability {
 		Vec3 to = from.add(forward.scale(DISTANCE));
 		AABB sweep = new AABB(from, to).inflate(HIT_RADIUS);
 		for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, sweep,
-				target -> isValidTarget(player, target))) {
+				TargetFilters.hostileTo(player))) {
 			target.invulnerableTime = 0;
 			target.hurt(level.damageSources().playerAttack(player), BattleBeastCurseController.scaleDamage(player, DAMAGE));
 			target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 70, 1, true, true, true));
@@ -86,10 +87,4 @@ public final class BattleBeastPredatorLeapAbility implements Ability {
 		return true;
 	}
 
-	private static boolean isValidTarget(ServerPlayer owner, LivingEntity target) {
-		return target != owner
-				&& target.isAlive()
-				&& !target.isSpectator()
-				&& !(target instanceof Player player && player.isCreative());
-	}
 }

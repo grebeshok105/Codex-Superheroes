@@ -1,8 +1,9 @@
 package com.example.superheroes.effect;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.network.ScreenShakeS2CPayload;
 import com.example.superheroes.sound.ModSounds;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import com.example.superheroes.world.WorldDestructionPolicy;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.BlockPos;
@@ -28,6 +29,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import net.minecraft.server.MinecraftServer;
 
 public final class HeavensStrikeController {
 	public static final int WINDUP_TICKS = 80;
@@ -43,26 +45,14 @@ public final class HeavensStrikeController {
 
 	private static final Map<UUID, Pending> PENDING = new ConcurrentHashMap<>();
 
+	// Precious blocks the strike intentionally cannot dent — everything else
+	// unbreakable is covered by WorldDestructionPolicy (tag + destroySpeed).
 	private static final Set<Block> UNBREAKABLE = Set.of(
-			Blocks.BEDROCK,
-			Blocks.BARRIER,
-			Blocks.END_PORTAL,
-			Blocks.END_PORTAL_FRAME,
-			Blocks.END_GATEWAY,
-			Blocks.NETHER_PORTAL,
-			Blocks.COMMAND_BLOCK,
-			Blocks.CHAIN_COMMAND_BLOCK,
-			Blocks.REPEATING_COMMAND_BLOCK,
-			Blocks.STRUCTURE_BLOCK,
-			Blocks.STRUCTURE_VOID,
-			Blocks.JIGSAW,
-			Blocks.LIGHT,
 			Blocks.IRON_BLOCK,
 			Blocks.NETHERITE_BLOCK,
 			Blocks.OBSIDIAN,
 			Blocks.CRYING_OBSIDIAN,
 			Blocks.RESPAWN_ANCHOR,
-			Blocks.REINFORCED_DEEPSLATE,
 			Blocks.ANCIENT_DEBRIS,
 			Blocks.BEACON
 	);
@@ -130,30 +120,6 @@ public final class HeavensStrikeController {
 		}
 	}
 
-	public static void init() {
-		ServerTickEvents.END_SERVER_TICK.register(server -> {
-			if (PENDING.isEmpty()) return;
-			Iterator<Map.Entry<UUID, Pending>> it = PENDING.entrySet().iterator();
-			while (it.hasNext()) {
-				Map.Entry<UUID, Pending> e = it.next();
-				ServerPlayer player = server.getPlayerList().getPlayer(e.getKey());
-				if (player == null) {
-					it.remove();
-					continue;
-				}
-				Pending p = e.getValue();
-				long now = player.serverLevel().getGameTime();
-				enforceLock(player, p, now);
-				if (now >= p.impactTick) {
-					clearFreeze(player);
-					impact(player, p);
-					it.remove();
-				} else {
-					windupTick(player, p, now);
-				}
-			}
-		});
-	}
 
 	private static Vec3 findGroundTarget(ServerPlayer player) {
 		ServerLevel level = player.serverLevel();
@@ -257,8 +223,7 @@ public final class HeavensStrikeController {
 		DamageSource src = level.damageSources().playerAttack(player);
 		double r2 = dmgRange * dmgRange;
 		for (LivingEntity le : level.getEntitiesOfClass(LivingEntity.class, box,
-				e -> e != player && e.isAlive() && !e.isSpectator()
-						&& e.position().distanceToSqr(t) <= r2)) {
+				TargetFilters.hostileTo(player).and(e -> e.position().distanceToSqr(t) <= r2))) {
 			le.invulnerableTime = 0;
 			le.hurt(src, v.damage);
 			Vec3 push = le.position().subtract(t);
@@ -267,10 +232,10 @@ public final class HeavensStrikeController {
 			le.hurtMarked = true;
 		}
 
-		carveCrater(level, t, v.radius, v.depth);
+		carveCrater(level, player, t, v.radius, v.depth);
 	}
 
-	private static void carveCrater(ServerLevel level, Vec3 center, int topRadius, int depth) {
+	private static void carveCrater(ServerLevel level, ServerPlayer player, Vec3 center, int topRadius, int depth) {
 		RandomSource r = level.random;
 		BlockPos.MutableBlockPos mp = new BlockPos.MutableBlockPos();
 		int cx = (int) Math.floor(center.x);
@@ -294,8 +259,7 @@ public final class HeavensStrikeController {
 					BlockState s = level.getBlockState(mp);
 					if (s.isAir()) continue;
 					if (UNBREAKABLE.contains(s.getBlock())) continue;
-					if (s.getDestroySpeed(level, mp) < 0) continue;
-					level.destroyBlock(mp, false);
+					WorldDestructionPolicy.tryBreak(level, mp.immutable(), false, player);
 				}
 			}
 		}
@@ -307,8 +271,31 @@ public final class HeavensStrikeController {
 			mp.set(cx + dx, cy - dy, cz + dz);
 			BlockState s = level.getBlockState(mp);
 			if (s.isAir() || UNBREAKABLE.contains(s.getBlock())) continue;
-			if (s.getDestroySpeed(level, mp) < 0) continue;
-			if (r.nextBoolean()) level.destroyBlock(mp, false);
+			if (r.nextBoolean()) WorldDestructionPolicy.tryBreak(level, mp.immutable(), false, player);
 		}
 	}
+
+	public static void serverTick(MinecraftServer server) {
+			if (PENDING.isEmpty()) return;
+			Iterator<Map.Entry<UUID, Pending>> it = PENDING.entrySet().iterator();
+			while (it.hasNext()) {
+				Map.Entry<UUID, Pending> e = it.next();
+				ServerPlayer player = server.getPlayerList().getPlayer(e.getKey());
+				if (player == null) {
+					it.remove();
+					continue;
+				}
+				Pending p = e.getValue();
+				long now = player.serverLevel().getGameTime();
+				enforceLock(player, p, now);
+				if (now >= p.impactTick) {
+					clearFreeze(player);
+					impact(player, p);
+					it.remove();
+				} else {
+					windupTick(player, p, now);
+				}
+			}
+			}
+
 }

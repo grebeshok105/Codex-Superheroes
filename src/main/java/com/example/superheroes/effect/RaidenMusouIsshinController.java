@@ -1,13 +1,14 @@
 package com.example.superheroes.effect;
 
 import com.example.superheroes.attachment.ModAttachments;
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.hero.RaidenHero;
 import com.example.superheroes.item.MusouNoHitotachiItem;
 import com.example.superheroes.network.ScreenShakeS2CPayload;
 import com.example.superheroes.particle.ModParticles;
 import com.example.superheroes.sound.ModSounds;
 import com.example.superheroes.transform.HeroData;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import com.example.superheroes.world.WorldDestructionPolicy;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.BlockPos;
@@ -38,6 +39,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import net.minecraft.server.MinecraftServer;
 
 public final class RaidenMusouIsshinController {
 	private static final int WINDUP_TICKS = 3 * 20;
@@ -51,23 +53,11 @@ public final class RaidenMusouIsshinController {
 	private static final double IMPACT_RADIUS = 10.0;
 	private static final float IMPACT_DAMAGE = 16f;
 
+	// Precious blocks the slash intentionally cannot dent — everything else
+	// unbreakable is covered by WorldDestructionPolicy (tag + destroySpeed).
 	private static final Set<Block> UNBREAKABLE = Set.of(
-			Blocks.BEDROCK,
-			Blocks.BARRIER,
-			Blocks.END_PORTAL,
-			Blocks.END_PORTAL_FRAME,
-			Blocks.END_GATEWAY,
-			Blocks.NETHER_PORTAL,
-			Blocks.COMMAND_BLOCK,
-			Blocks.CHAIN_COMMAND_BLOCK,
-			Blocks.REPEATING_COMMAND_BLOCK,
-			Blocks.STRUCTURE_BLOCK,
-			Blocks.STRUCTURE_VOID,
-			Blocks.JIGSAW,
-			Blocks.LIGHT,
 			Blocks.OBSIDIAN,
-			Blocks.CRYING_OBSIDIAN,
-			Blocks.REINFORCED_DEEPSLATE
+			Blocks.CRYING_OBSIDIAN
 	);
 
 	private record Pending(Vec3 origin, Vec3 dir, Vec3 perp, Vec3 lockPos, float lockYaw, float lockPitch,
@@ -79,30 +69,6 @@ public final class RaidenMusouIsshinController {
 	private RaidenMusouIsshinController() {
 	}
 
-	public static void init() {
-		ServerTickEvents.END_SERVER_TICK.register(server -> {
-			if (PENDING.isEmpty()) return;
-			Iterator<Map.Entry<UUID, Pending>> it = PENDING.entrySet().iterator();
-			while (it.hasNext()) {
-				Map.Entry<UUID, Pending> e = it.next();
-				ServerPlayer player = server.getPlayerList().getPlayer(e.getKey());
-				if (player == null || !isRaiden(player) || !hasYamato(player)) {
-					it.remove();
-					continue;
-				}
-				Pending p = e.getValue();
-				long now = player.serverLevel().getGameTime();
-				enforceCasterLock(player, p, now);
-				freezeNearby(player, p.origin, now, false);
-				if (now >= p.impactTick) {
-					impact(player, p);
-					it.remove();
-				} else {
-					windupTick(player, p, now);
-				}
-			}
-		});
-	}
 
 	public static boolean isCharging(ServerPlayer player) {
 		return PENDING.containsKey(player.getUUID());
@@ -184,13 +150,13 @@ public final class RaidenMusouIsshinController {
 	private static void impact(ServerPlayer player, Pending p) {
 		ServerLevel level = player.serverLevel();
 		player.swing(InteractionHand.MAIN_HAND, true);
-		carveSlash(level, p);
+		carveSlash(level, player, p);
 		damageSlash(level, player, p);
 		spawnImpactFx(level, p);
 		shake(level, p.origin);
 	}
 
-	private static void carveSlash(ServerLevel level, Pending p) {
+	private static void carveSlash(ServerLevel level, ServerPlayer player, Pending p) {
 		int halfWidth = SLASH_WIDTH / 2;
 		for (int i = 2; i <= SLASH_LENGTH; i++) {
 			Vec3 point = p.origin.add(p.dir.scale(i));
@@ -202,9 +168,8 @@ public final class RaidenMusouIsshinController {
 				for (int dy = 0; dy < SLASH_DEPTH; dy++) {
 					BlockPos pos = new BlockPos(ox, sy - dy, oz);
 					BlockState state = level.getBlockState(pos);
-					if (state.isAir() || UNBREAKABLE.contains(state.getBlock())) continue;
-					if (state.getDestroySpeed(level, pos) < 0) continue;
-					level.destroyBlock(pos, false);
+					if (UNBREAKABLE.contains(state.getBlock())) continue;
+					WorldDestructionPolicy.tryBreak(level, pos, false, player);
 				}
 			}
 		}
@@ -216,9 +181,7 @@ public final class RaidenMusouIsshinController {
 				p.origin.x - 4, p.origin.y - SLASH_DEPTH, p.origin.z - 4,
 				end.x + 4, p.origin.y + 6, end.z + 4));
 		List<LivingEntity> targets = level.getEntitiesOfClass(LivingEntity.class, slashBox,
-				e -> e != player && e.isAlive() && !e.isSpectator()
-						&& !(e instanceof Player targetPlayer && targetPlayer.getUUID().equals(player.getUUID()))
-						&& isInSlashPath(e.position(), p.origin, p.dir, p.perp));
+				TargetFilters.hostileTo(player).and(e -> isInSlashPath(e.position(), p.origin, p.dir, p.perp)));
 		for (LivingEntity le : targets) {
 			float dmg = (le instanceof Player) ? SLASH_DAMAGE_PLAYER : SLASH_DAMAGE_MOB;
 			le.invulnerableTime = 0;
@@ -233,7 +196,7 @@ public final class RaidenMusouIsshinController {
 		for (LivingEntity le : level.getEntitiesOfClass(LivingEntity.class,
 				new AABB(end.x - IMPACT_RADIUS, end.y - 4, end.z - IMPACT_RADIUS,
 						end.x + IMPACT_RADIUS, end.y + 7, end.z + IMPACT_RADIUS),
-				e -> e != player && e.isAlive() && !e.isSpectator() && e.position().distanceToSqr(end) <= r2)) {
+				TargetFilters.hostileTo(player).and(e -> e.position().distanceToSqr(end) <= r2))) {
 			le.invulnerableTime = 0;
 			le.hurt(level.damageSources().playerAttack(player), IMPACT_DAMAGE);
 		}
@@ -297,8 +260,7 @@ public final class RaidenMusouIsshinController {
 		AABB box = new AABB(center.x - FREEZE_RADIUS, center.y - 18, center.z - FREEZE_RADIUS,
 				center.x + FREEZE_RADIUS, center.y + 18, center.z + FREEZE_RADIUS);
 		for (LivingEntity le : level.getEntitiesOfClass(LivingEntity.class, box,
-				e -> e != caster && e.isAlive() && !e.isSpectator()
-						&& e.position().distanceToSqr(center) <= r2)) {
+				TargetFilters.hostileTo(caster).and(e -> e.position().distanceToSqr(center) <= r2))) {
 			le.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN,
 					FREEZE_REFRESH_TICKS + 12, 9, true, false, false));
 			le.addEffect(new MobEffectInstance(MobEffects.WEAKNESS,
@@ -382,4 +344,28 @@ public final class RaidenMusouIsshinController {
 		ItemStack off = player.getOffhandItem();
 		return main.getItem() instanceof MusouNoHitotachiItem || off.getItem() instanceof MusouNoHitotachiItem;
 	}
+
+	public static void serverTick(MinecraftServer server) {
+			if (PENDING.isEmpty()) return;
+			Iterator<Map.Entry<UUID, Pending>> it = PENDING.entrySet().iterator();
+			while (it.hasNext()) {
+				Map.Entry<UUID, Pending> e = it.next();
+				ServerPlayer player = server.getPlayerList().getPlayer(e.getKey());
+				if (player == null || !isRaiden(player) || !hasYamato(player)) {
+					it.remove();
+					continue;
+				}
+				Pending p = e.getValue();
+				long now = player.serverLevel().getGameTime();
+				enforceCasterLock(player, p, now);
+				freezeNearby(player, p.origin, now, false);
+				if (now >= p.impactTick) {
+					impact(player, p);
+					it.remove();
+				} else {
+					windupTick(player, p, now);
+				}
+			}
+			}
+
 }

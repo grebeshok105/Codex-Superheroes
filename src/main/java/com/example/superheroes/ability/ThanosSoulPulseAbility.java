@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.effect.ModEffects;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
@@ -59,11 +60,11 @@ public final class ThanosSoulPulseAbility implements Ability {
 				center.x + RADIUS, center.y + 6, center.z + RADIUS);
 
 		for (LivingEntity le : level.getEntitiesOfClass(LivingEntity.class, aoe,
-				e -> e != player && e.isAlive() && !(e instanceof Player p && p.getUUID().equals(player.getUUID())))) {
+				TargetFilters.hostileTo(player))) {
 			double dist = le.position().distanceTo(player.position());
 			if (dist > RADIUS) continue;
 
-			le.hurt(level.damageSources().magic(), DAMAGE);
+			le.hurt(level.damageSources().indirectMagic(player, player), DAMAGE);
 
 			Vec3 push = le.position().subtract(player.position());
 			double horiz = Math.max(0.01, Math.sqrt(push.x * push.x + push.z * push.z));

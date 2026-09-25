@@ -7,10 +7,14 @@ public final class ClientMadnessState {
 	private static volatile long manaLockUntilMs = 0L;
 	private static volatile long madnessStartedAtMs = 0L;
 
+	static {
+		ClientSessionState.register(ClientMadnessState::reset);
+	}
+
 	private ClientMadnessState() {
 	}
 
-	public static void update(boolean madnessNew, boolean bonusLife, long readingUntil, long manaLock) {
+	public static void update(boolean madnessNew, boolean bonusLife, long readingRemainingMs, long manaLockRemainingMs) {
 		if (madnessNew && !madness) {
 			madnessStartedAtMs = System.currentTimeMillis();
 		}
@@ -19,8 +23,9 @@ public final class ClientMadnessState {
 		}
 		madness = madnessNew;
 		bonusLifeAvailable = bonusLife;
-		readingUntilMs = readingUntil;
-		manaLockUntilMs = manaLock;
+		long now = System.currentTimeMillis();
+		readingUntilMs = readingRemainingMs > 0L ? now + readingRemainingMs : 0L;
+		manaLockUntilMs = manaLockRemainingMs > 0L ? now + manaLockRemainingMs : 0L;
 	}
 
 	public static boolean isMadness() {
@@ -49,5 +54,14 @@ public final class ClientMadnessState {
 
 	public static long madnessStartedAtMs() {
 		return madnessStartedAtMs;
+	}
+
+	/** Drop all session state (registered with {@code ClientSessionState}). */
+	public static void reset() {
+		madness = false;
+		bonusLifeAvailable = false;
+		readingUntilMs = 0L;
+		manaLockUntilMs = 0L;
+		madnessStartedAtMs = 0L;
 	}
 }

@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
@@ -97,7 +98,7 @@ public final class ScaramoucheWindPrisonAbility implements Ability {
 		Vec3 center = zone.center();
 		AABB area = new AABB(center, center).inflate(RADIUS, 4.0, RADIUS);
 		for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, area,
-				target -> isValidTarget(player, target))) {
+				TargetFilters.hostileTo(player))) {
 			Vec3 targetCenter = target.position().add(0.0, target.getBbHeight() * 0.5, 0.0);
 			Vec3 toCenter = center.add(0.0, 1.0, 0.0).subtract(targetCenter);
 			double distance = toCenter.length();
@@ -112,7 +113,7 @@ public final class ScaramoucheWindPrisonAbility implements Ability {
 			target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 30, 2, true, true, true));
 			if (player.tickCount % 10 == 0) {
 				target.invulnerableTime = 0;
-				target.hurt(level.damageSources().magic(), TICK_DAMAGE);
+				target.hurt(level.damageSources().indirectMagic(player, player), TICK_DAMAGE);
 				target.addEffect(new MobEffectInstance(MobEffects.LEVITATION, 20, 0, true, true, true));
 				level.sendParticles(ELECTRO_DUST,
 						targetCenter.x, targetCenter.y, targetCenter.z, 18, 0.3, 0.35, 0.3, 0.0);
@@ -156,12 +157,6 @@ public final class ScaramoucheWindPrisonAbility implements Ability {
 				center.x, center.y + 0.5, center.z, 8, RADIUS * 0.22, 0.25, RADIUS * 0.22, 0.04);
 	}
 
-	private static boolean isValidTarget(ServerPlayer owner, LivingEntity target) {
-		return target != owner
-				&& target.isAlive()
-				&& !target.isSpectator()
-				&& !(target instanceof Player player && player.isCreative());
-	}
 
 	private record ActiveZone(Vec3 center, long expireAt) {
 	}

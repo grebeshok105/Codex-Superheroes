@@ -1,6 +1,7 @@
 package com.example.superheroes.ability;
 
 import com.example.superheroes.attachment.ModAttachments;
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.effect.FlightController;
 import com.example.superheroes.effect.OmnimanMomentumController;
 import com.example.superheroes.physics.RushTerrainBreaker;
@@ -128,6 +129,11 @@ public final class OmnimanViltrumiteRushAbility implements Ability {
 		}
 	}
 
+	/** World shutdown — charge sessions die with the world. */
+	public static void resetAll() {
+		ACTIVE.clear();
+	}
+
 	public static void clear(ServerPlayer player) {
 		ACTIVE.remove(player.getUUID());
 	}
@@ -135,7 +141,7 @@ public final class OmnimanViltrumiteRushAbility implements Ability {
 	private static void hitTargets(ServerPlayer player, ActiveRush rush, Vec3 direction) {
 		ServerLevel level = player.serverLevel();
 		AABB box = player.getBoundingBox().inflate(HIT_SCAN_INFLATE);
-		List<LivingEntity> hits = level.getEntitiesOfClass(LivingEntity.class, box, target -> validTarget(player, target));
+		List<LivingEntity> hits = level.getEntitiesOfClass(LivingEntity.class, box, TargetFilters.hostileTo(player));
 		for (LivingEntity target : hits) {
 			if (!rush.hits.add(target.getUUID())) continue;
 
@@ -163,12 +169,6 @@ public final class OmnimanViltrumiteRushAbility implements Ability {
 		}
 	}
 
-	private static boolean validTarget(ServerPlayer player, LivingEntity target) {
-		return target != player
-				&& target.isAlive()
-				&& !target.isSpectator()
-				&& !(target instanceof Player targetPlayer && targetPlayer.isCreative());
-	}
 
 	private static void sendTrail(ServerLevel level, ServerPlayer player, Vec3 direction, boolean boosted, boolean airborneRush) {
 		Vec3 center = player.position().add(0.0, player.getBbHeight() * 0.5, 0.0);

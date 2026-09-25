@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.damage.ModDamageTypes;
 import com.example.superheroes.particle.ModParticles;
 import net.minecraft.core.particles.ParticleTypes;
@@ -68,6 +69,17 @@ public final class GokuSpiritBombAbility implements Ability {
 		}
 	}
 
+
+	/** Drop an in-progress charge/rush without firing it (leave, death, untransform). */
+	public static void clear(ServerPlayer player) {
+		ACTIVE.remove(player.getUUID());
+	}
+
+	/** World shutdown — charge sessions die with the world. */
+	public static void resetAll() {
+		ACTIVE.clear();
+	}
+
 	private static final class ActiveSpiritBomb {
 		private final Vec3 origin;
 		private int ticks;
@@ -96,7 +108,7 @@ public final class GokuSpiritBombAbility implements Ability {
 			Vec3 center = origin.add(player.getLookAngle().scale(8.0)).add(0, 1.2, 0);
 			List<LivingEntity> victims = level.getEntitiesOfClass(LivingEntity.class,
 					new AABB(center, center).inflate(RADIUS),
-					e -> e != player && e.isAlive() && !e.isSpectator());
+					TargetFilters.hostileTo(player));
 			for (LivingEntity victim : victims) {
 				victim.invulnerableTime = 0;
 				victim.hurt(ModDamageTypes.gokuSpiritBomb(level, player), DAMAGE);

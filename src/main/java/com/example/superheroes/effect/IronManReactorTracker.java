@@ -1,18 +1,17 @@
 package com.example.superheroes.effect;
 
+import com.example.superheroes.transform.HeroDataStore;
 import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.hero.IronManHero;
 import com.example.superheroes.item.ModItems;
 import com.example.superheroes.network.ReactorStateS2CPayload;
 import com.example.superheroes.transform.HeroData;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
@@ -40,20 +39,13 @@ public final class IronManReactorTracker {
 	private IronManReactorTracker() {
 	}
 
-	public static void init() {
-		ServerTickEvents.END_SERVER_TICK.register(server -> {
-			for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-				tick(player);
-			}
-		});
-	}
 
 	public static boolean isReplacing(ServerPlayer player) {
 		State s = states.get(player.getUUID());
 		return s != null && s.active;
 	}
 
-	private static void tick(ServerPlayer player) {
+	public static void tick(ServerPlayer player) {
 		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
 		UUID id = player.getUUID();
 		if (!data.hasHero() || !IronManHero.ID.equals(data.heroId()) || !player.isAlive()) {
@@ -86,8 +78,7 @@ public final class IronManReactorTracker {
 
 		anchorPlayer(player, s.anchor);
 
-		HeroData zeroed = data.withResources(0f, data.mana());
-		player.setAttached(ModAttachments.HERO_DATA, zeroed);
+		HeroDataStore.update(player, d -> d.withEnergy(0f));
 
 		Vec3 cur = player.position();
 		double dx = cur.x - s.anchor.x;
@@ -123,7 +114,7 @@ public final class IronManReactorTracker {
 		sendState(player, true, s.progress, true);
 
 		if (s.progress >= REPLACE_TICKS) {
-			finishReplace(player, zeroed);
+			finishReplace(player);
 			states.remove(id);
 		}
 	}
@@ -137,8 +128,8 @@ public final class IronManReactorTracker {
 		player.setDeltaMovement(Vec3.ZERO);
 		player.fallDistance = 0f;
 		player.hurtMarked = true;
-		player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 5, 250, false, false, false));
-		player.addEffect(new MobEffectInstance(MobEffects.JUMP, 5, 128, false, false, false));
+		EffectRefresh.refresh(player, MobEffects.MOVEMENT_SLOWDOWN, 5, 250, false, false, false);
+		EffectRefresh.refresh(player, MobEffects.JUMP, 5, 128, false, false, false);
 	}
 
 	private static boolean playerHasReactor(ServerPlayer player) {
@@ -163,7 +154,7 @@ public final class IronManReactorTracker {
 		return -1;
 	}
 
-	private static void finishReplace(ServerPlayer player, HeroData currentData) {
+	private static void finishReplace(ServerPlayer player) {
 		int slot = findReactorSlot(player);
 		if (slot < 0) {
 			sendState(player, true, 0, false);
@@ -173,9 +164,7 @@ public final class IronManReactorTracker {
 		stack.shrink(1);
 		player.getInventory().setChanged();
 
-		HeroData refilled = currentData.withResources(REFILL_AMOUNT, currentData.mana());
-		player.setAttached(ModAttachments.HERO_DATA, refilled);
-		com.example.superheroes.network.ModNetworking.syncResources(player, refilled);
+		HeroDataStore.update(player, d -> d.withEnergy(REFILL_AMOUNT));
 
 		ServerLevel level = player.serverLevel();
 		Vec3 cur = player.position();

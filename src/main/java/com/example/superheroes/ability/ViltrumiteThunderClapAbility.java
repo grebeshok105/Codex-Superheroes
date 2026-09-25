@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.resources.ResourceLocation;
@@ -59,9 +60,7 @@ public final class ViltrumiteThunderClapAbility implements Ability {
 
 		Vec3 end = eye.add(forward.scale(RANGE));
 		AABB scan = new AABB(eye, end).inflate(HIT_SCAN_INFLATE);
-		for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, scan, this::isValidTarget)) {
-			if (target == player) continue;
-
+		for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, scan, TargetFilters.hostileTo(player))) {
 			Vec3 targetCenter = target.position().add(0.0, target.getBbHeight() * 0.5, 0.0);
 			Vec3 toTarget = targetCenter.subtract(eye);
 			double distance = toTarget.length();
@@ -93,11 +92,6 @@ public final class ViltrumiteThunderClapAbility implements Ability {
 		return true;
 	}
 
-	private boolean isValidTarget(LivingEntity target) {
-		return target.isAlive()
-				&& !target.isSpectator()
-				&& !(target instanceof Player player && player.isCreative());
-	}
 
 	private void sendBlastEffects(ServerLevel level, Vec3 eye, Vec3 forward, ServerPlayer player) {
 		Vec3 clap = eye.add(forward.scale(0.9));

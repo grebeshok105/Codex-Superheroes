@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.debug.AdminAbilityDebug;
 import com.example.superheroes.effect.ReinhardSpeedJudgmentController;
 import net.minecraft.core.particles.ParticleTypes;
@@ -17,7 +18,7 @@ import net.minecraft.world.phys.Vec3;
 public final class ReinhardSpeedJudgmentAbility implements Ability {
 	private static final double RADIUS = 50.0;
 	private static final double MIN_SPEED_PER_TICK = 0.03;
-	private static final long STRIKE_DELAY_MS = 3_000L;
+	private static final long STRIKE_DELAY_TICKS = 60L;
 	private static final float DAMAGE = 50.0f;
 	private static final int COOLDOWN_TICKS = 8 * 20;
 
@@ -80,10 +81,10 @@ public final class ReinhardSpeedJudgmentAbility implements Ability {
 				SoundEvents.BEACON_POWER_SELECT, SoundSource.PLAYERS, 1.2f, 1.8f);
 		boolean started;
 		if (playerTarget != null) {
-			ReinhardSpeedJudgmentController.start(player, playerTarget, STRIKE_DELAY_MS, DAMAGE);
+			ReinhardSpeedJudgmentController.start(player, playerTarget, STRIKE_DELAY_TICKS, DAMAGE);
 			started = true;
 		} else {
-			started = ReinhardSpeedJudgmentController.startDebugMob(player, mobTarget, STRIKE_DELAY_MS, DAMAGE);
+			started = ReinhardSpeedJudgmentController.startDebugMob(player, mobTarget, STRIKE_DELAY_TICKS, DAMAGE);
 		}
 		if (!started) {
 			player.displayClientMessage(Component.translatable("ability.superheroes.reinhard_speed_judgment.no_target"), true);
@@ -99,7 +100,7 @@ public final class ReinhardSpeedJudgmentAbility implements Ability {
 		ServerPlayer best = null;
 		double bestScore = MIN_SPEED_PER_TICK;
 		for (ServerPlayer candidate : level.getEntitiesOfClass(ServerPlayer.class, box,
-				e -> e.isAlive() && e != player && !e.isSpectator())) {
+				e -> TargetFilters.harmableBy(e, player))) {
 			double score = speedScore(candidate);
 			if (score > bestScore) {
 				bestScore = score;

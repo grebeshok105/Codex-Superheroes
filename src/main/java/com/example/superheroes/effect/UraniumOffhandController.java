@@ -2,7 +2,6 @@ package com.example.superheroes.effect;
 
 import com.example.superheroes.ModId;
 import com.example.superheroes.item.UraniumIsotopeItem;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -16,6 +15,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
+import com.example.superheroes.transform.HeroData;
+import net.minecraft.server.MinecraftServer;
 
 public final class UraniumOffhandController {
 	private static final ResourceLocation KB_MODIFIER_ID = ModId.of("uranium_offhand_kb");
@@ -28,33 +29,6 @@ public final class UraniumOffhandController {
 	private UraniumOffhandController() {
 	}
 
-	public static void init() {
-		ServerTickEvents.END_SERVER_TICK.register(server -> {
-			for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-				ItemStack offhand = player.getOffhandItem();
-				boolean holding = offhand.getItem() instanceof UraniumIsotopeItem;
-				if (holding) {
-					applyKbResistance(player);
-					int ticks = radiationTicks.merge(player.getUUID(), 1, Integer::sum);
-					int stacks = Math.min(RAD_MAX_STACKS, ticks / RAD_TICK_PER_STACK);
-					if (stacks >= RAD_MAX_STACKS) {
-						player.addEffect(new MobEffectInstance(MobEffects.WITHER, 60, 1, false, true, true));
-						player.addEffect(new MobEffectInstance(MobEffects.HUNGER, 60, 0, false, true, true));
-					} else if (stacks >= 3) {
-						player.addEffect(new MobEffectInstance(MobEffects.HUNGER, 60, 0, false, true, true));
-					}
-				} else {
-					removeKbResistance(player);
-					radiationTicks.remove(player.getUUID());
-				}
-			}
-			Iterator<UUID> it = radiationTicks.keySet().iterator();
-			while (it.hasNext()) {
-				UUID id = it.next();
-				if (server.getPlayerList().getPlayer(id) == null) it.remove();
-			}
-		});
-	}
 
 	private static void applyKbResistance(ServerPlayer player) {
 		AttributeInstance attr = player.getAttribute(Attributes.KNOCKBACK_RESISTANCE);
@@ -68,4 +42,28 @@ public final class UraniumOffhandController {
 		if (attr == null) return;
 		attr.removeModifier(KB_MODIFIER_ID);
 	}
+
+	public static void tickPlayer(MinecraftServer server, ServerPlayer player, HeroData data) {
+		ItemStack offhand = player.getOffhandItem();
+		boolean holding = offhand.getItem() instanceof UraniumIsotopeItem;
+		if (holding) {
+			applyKbResistance(player);
+			int ticks = radiationTicks.merge(player.getUUID(), 1, Integer::sum);
+			int stacks = Math.min(RAD_MAX_STACKS, ticks / RAD_TICK_PER_STACK);
+			if (stacks >= RAD_MAX_STACKS) {
+				player.addEffect(new MobEffectInstance(MobEffects.WITHER, 60, 1, false, true, true));
+				player.addEffect(new MobEffectInstance(MobEffects.HUNGER, 60, 0, false, true, true));
+			} else if (stacks >= 3) {
+				player.addEffect(new MobEffectInstance(MobEffects.HUNGER, 60, 0, false, true, true));
+			}
+		} else {
+			removeKbResistance(player);
+			radiationTicks.remove(player.getUUID());
+		}
+	}
+
+	public static void pruneGonePlayers(MinecraftServer server) {
+		radiationTicks.keySet().removeIf(id -> server.getPlayerList().getPlayer(id) == null);
+	}
+
 }

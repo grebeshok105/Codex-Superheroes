@@ -1,9 +1,9 @@
 package com.example.superheroes.item;
 
+import com.example.superheroes.transform.HeroDataStore;
 import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.hero.Hero;
 import com.example.superheroes.hero.Heroes;
-import com.example.superheroes.network.ModNetworking;
 import com.example.superheroes.transform.HeroData;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
@@ -57,9 +57,7 @@ public class CompoundVItem extends Item {
 		if (newMana <= data.mana()) {
 			return InteractionResultHolder.fail(stack);
 		}
-		HeroData updated = data.withMana(newMana);
-		serverPlayer.setAttached(ModAttachments.HERO_DATA, updated);
-		ModNetworking.syncResources(serverPlayer, updated);
+		HeroDataStore.update(serverPlayer, d -> d.withMana(newMana));
 		serverPlayer.serverLevel().playSound(null,
 				serverPlayer.getX(), serverPlayer.getY(), serverPlayer.getZ(),
 				SoundEvents.HONEY_DRINK, SoundSource.PLAYERS, 1f, 1.1f);

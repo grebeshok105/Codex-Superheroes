@@ -1,5 +1,8 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
+import com.example.superheroes.lifecycle.ControlLockKind;
+import com.example.superheroes.lifecycle.EntityControlLock;
 import com.example.superheroes.network.ThinkMarkS2CPayload;
 import com.example.superheroes.physics.RushTerrainBreaker;
 import com.example.superheroes.physics.ShockwaveUtil;
@@ -80,7 +83,7 @@ public final class OmnimanThinkMarkAbility implements Ability {
 		}
 
 		State state = new State(target);
-		lockTarget(state);
+		lockTarget(player, state);
 		ACTIVE.put(player.getUUID(), state);
 		setPose(player, true);
 
@@ -91,7 +94,7 @@ public final class OmnimanThinkMarkAbility implements Ability {
 				target.getX(), target.getY() + target.getBbHeight() * 0.5, target.getZ(),
 				1, 0.0, 0.0, 0.0, 0.0);
 		player.displayClientMessage(
-				Component.literal("§c§lThink, Mark! §7— ПКМ чтобы метнуть"), true);
+				Component.translatable("ability.superheroes.think_mark.hint"), true);
 
 		AbilityCooldowns.setCooldownTicks(player, getId(), COOLDOWN_TICKS);
 		return true;
@@ -190,7 +193,7 @@ public final class OmnimanThinkMarkAbility implements Ability {
 		State state = ACTIVE.remove(player.getUUID());
 		setPose(player, false);
 		if (state != null) {
-			unlockTarget(state);
+			unlockTarget(player.getUUID(), state);
 		}
 		ServerLevel level = player.serverLevel();
 		Vec3 c = player.position();
@@ -209,9 +212,14 @@ public final class OmnimanThinkMarkAbility implements Ability {
 	public static void clear(ServerPlayer player) {
 		State state = ACTIVE.remove(player.getUUID());
 		if (state != null) {
-			unlockTarget(state);
+			unlockTarget(player.getUUID(), state);
 			setPose(player, false);
 		}
+	}
+
+	/** World shutdown — grab sessions die with the world; the locks restore the flags. */
+	public static void resetAll() {
+		ACTIVE.clear();
 	}
 
 	public static boolean isActive(ServerPlayer player) {
@@ -221,29 +229,25 @@ public final class OmnimanThinkMarkAbility implements Ability {
 	// ─────────────────────────────────────────── grab-lock ────────────────
 
 	/** Hard-lock the victim: kill its AI / gravity / physics so it cannot act or fall. */
-	private static void lockTarget(State state) {
+	private static void lockTarget(ServerPlayer owner, State state) {
 		LivingEntity target = state.target;
-		state.wasNoGravity = target.isNoGravity();
-		target.setNoGravity(true);
+		EntityControlLock.acquire(target, ControlLockKind.NO_GRAVITY, owner);
+		EntityControlLock.acquire(target, ControlLockKind.NO_AI, owner);
+		EntityControlLock.acquire(target, ControlLockKind.NO_PHYSICS, owner);
 		if (target instanceof Mob mob) {
-			state.wasNoAi = mob.isNoAi();
-			mob.setNoAi(true);
 			mob.setTarget(null);
-			mob.noPhysics = true; // протаскиваем сквозь блоки, не застревая
 		}
 		target.setDeltaMovement(Vec3.ZERO);
 	}
 
-	private static void unlockTarget(State state) {
+	private static void unlockTarget(UUID ownerId, State state) {
 		LivingEntity target = state.target;
 		if (target == null) {
 			return;
 		}
-		target.setNoGravity(state.wasNoGravity);
-		if (target instanceof Mob mob) {
-			mob.setNoAi(state.wasNoAi);
-			mob.noPhysics = false;
-		}
+		EntityControlLock.release(target, ControlLockKind.NO_GRAVITY, ownerId);
+		EntityControlLock.release(target, ControlLockKind.NO_AI, ownerId);
+		EntityControlLock.release(target, ControlLockKind.NO_PHYSICS, ownerId);
 	}
 
 	/** Прижимаем цель к груди перед вытянутыми руками и держим намертво. */
@@ -254,7 +258,6 @@ public final class OmnimanThinkMarkAbility implements Ability {
 				.subtract(0.0, target.getBbHeight() * 0.5, 0.0);
 		target.teleportTo(hold.x, hold.y, hold.z);
 		target.setDeltaMovement(Vec3.ZERO);
-		target.setNoGravity(true);
 		target.hurtMarked = true;
 		// Игрока-жертву дополнительно «осаживаем» нулевым импульсом на клиенте.
 		if (target instanceof ServerPlayer victim) {
@@ -285,7 +288,7 @@ public final class OmnimanThinkMarkAbility implements Ability {
 		Vec3 look = player.getViewVector(1f).normalize();
 		AABB box = player.getBoundingBox().inflate(GRAB_RANGE);
 		List<LivingEntity> candidates = player.serverLevel().getEntitiesOfClass(LivingEntity.class, box,
-				e -> e != player && e.isAlive() && !e.isSpectator());
+				TargetFilters.hostileTo(player));
 		LivingEntity best = null;
 		double bestScore = 0.55; // минимальный косинус угла (~57° конус)
 		for (LivingEntity e : candidates) {
@@ -313,8 +316,6 @@ public final class OmnimanThinkMarkAbility implements Ability {
 		final LivingEntity target;
 		Phase phase = Phase.GRAB;
 		int ticks;
-		boolean wasNoAi;
-		boolean wasNoGravity;
 
 		State(LivingEntity target) {
 			this.target = target;

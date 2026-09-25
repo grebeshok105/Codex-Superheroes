@@ -3,7 +3,6 @@ package com.example.superheroes.effect;
 import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.hero.HomelanderHero;
 import com.example.superheroes.transform.HeroData;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -11,6 +10,7 @@ import net.minecraft.world.effect.MobEffects;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import net.minecraft.server.MinecraftServer;
 
 /**
  * Хоумлендер: усиленная регенерация (II) включается, когда HP < {@link #LOW_HP_THRESHOLD},
@@ -27,21 +27,6 @@ public final class HomelanderRegenController {
 	private HomelanderRegenController() {
 	}
 
-	public static void init() {
-		ServerTickEvents.END_SERVER_TICK.register(server -> {
-			boolean checkRegen = server.getTickCount() % CHECK_INTERVAL == 0;
-			for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-				HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
-				boolean isHomelander = data.hasHero() && HomelanderHero.ID.equals(data.heroId());
-				if (isHomelander) {
-					player.getFoodData().setSaturation(0f);
-				}
-				if (checkRegen) {
-					tickPlayer(player, isHomelander);
-				}
-			}
-		});
-	}
 
 	private static void tickPlayer(ServerPlayer player, boolean isHomelander) {
 		UUID id = player.getUUID();
@@ -63,4 +48,16 @@ public final class HomelanderRegenController {
 			player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, EFFECT_DURATION, 1, true, false, true));
 		}
 	}
+
+	public static void tickPlayer(MinecraftServer server, ServerPlayer player, HeroData data) {
+		boolean checkRegen = server.getTickCount() % CHECK_INTERVAL == 0;
+		boolean isHomelander = data.hasHero() && HomelanderHero.ID.equals(data.heroId());
+		if (isHomelander) {
+			player.getFoodData().setSaturation(0f);
+		}
+		if (checkRegen) {
+			tickPlayer(player, isHomelander);
+		}
+	}
+
 }

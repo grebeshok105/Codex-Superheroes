@@ -1,5 +1,6 @@
 package com.example.superheroes.client.hud;
 
+import com.example.superheroes.client.ClientSessionState;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -38,6 +39,10 @@ public final class MirrorWarpFlashHud {
 	private static Runnable pendingAction;
 	private static int ticksWaitingToRender;
 
+	static {
+		ClientSessionState.register(MirrorWarpFlashHud::reset);
+	}
+
 	private MirrorWarpFlashHud() {
 	}
 
@@ -47,6 +52,14 @@ public final class MirrorWarpFlashHud {
 		ticksWaitingToRender = 0;
 		phase = Phase.COVERING;
 		phaseStartMs = System.currentTimeMillis();
+	}
+
+	/** Drop any pending cover flash so a queued Iris reload can't fire in the next world. */
+	public static void reset() {
+		phase = Phase.IDLE;
+		pendingAction = null;
+		ticksWaitingToRender = 0;
+		phaseStartMs = 0L;
 	}
 
 	public static boolean isCovering() {

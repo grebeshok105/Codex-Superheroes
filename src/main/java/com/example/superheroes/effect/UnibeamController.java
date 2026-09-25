@@ -1,12 +1,11 @@
 package com.example.superheroes.effect;
 
-import com.example.superheroes.attachment.ModAttachments;
+import com.example.superheroes.combat.TargetFilters;
+import com.example.superheroes.transform.HeroDataStore;
 import com.example.superheroes.damage.ModDamageTypes;
-import com.example.superheroes.network.ModNetworking;
 import com.example.superheroes.particle.ModParticles;
 import com.example.superheroes.sound.ModSounds;
-import com.example.superheroes.transform.HeroData;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import com.example.superheroes.world.WorldDestructionPolicy;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.particles.ParticleTypes;
@@ -35,6 +34,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import net.minecraft.server.MinecraftServer;
+import com.example.superheroes.transform.HeroData;
 
 public final class UnibeamController {
 	public static final int CHARGE_TICKS = 200;
@@ -72,18 +73,6 @@ public final class UnibeamController {
 	private UnibeamController() {
 	}
 
-	public static void init() {
-		ServerTickEvents.END_SERVER_TICK.register(server -> {
-			for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-				tickCharging(player);
-				tickFiring(player);
-				tickStunned(player);
-			}
-			charging.keySet().removeIf(uuid -> server.getPlayerList().getPlayer(uuid) == null);
-			firing.keySet().removeIf(uuid -> server.getPlayerList().getPlayer(uuid) == null);
-			stunned.keySet().removeIf(uuid -> server.getPlayerList().getPlayer(uuid) == null);
-		});
-	}
 
 	public static boolean startCharge(ServerPlayer player) {
 		UUID id = player.getUUID();
@@ -131,17 +120,12 @@ public final class UnibeamController {
 		Vec3 chest = chestOf(player);
 
 		int rays = Math.max(6, Math.round(8 + 18 * p));
-		for (int i = 0; i < rays; i++) {
-			double a = level.getRandom().nextDouble() * Math.PI * 2.0;
-			double dist = 0.4 + level.getRandom().nextDouble() * (0.4 + 0.6 * p);
-			double dy = (level.getRandom().nextDouble() - 0.5) * 0.7;
-			double sx = chest.x + Math.cos(a) * dist;
-			double sy = chest.y + dy;
-			double sz = chest.z + Math.sin(a) * dist;
-			level.sendParticles(ModParticles.UNIBEAM_SPARK,
-					sx, sy, sz, 1,
-					(chest.x - sx) * 0.5, (chest.y - sy) * 0.5, (chest.z - sz) * 0.5, 0.0);
-		}
+		// One packet instead of `rays` packets: the count form distributes the
+		// same converging swarm around the chest (audit §3).
+		double swarm = 0.4 + (0.4 + 0.6 * p);
+		level.sendParticles(ModParticles.UNIBEAM_SPARK,
+				chest.x, chest.y, chest.z, rays,
+				swarm, 0.35, swarm, 0.0);
 		level.sendParticles(ParticleTypes.SOUL_FIRE_FLAME,
 				chest.x, chest.y, chest.z,
 				Math.round(2 + 6 * p), 0.25, 0.25, 0.25, 0.02);
@@ -169,7 +153,7 @@ public final class UnibeamController {
 
 		AABB pullBox = player.getBoundingBox().inflate(PULL_RADIUS);
 		List<LivingEntity> nearby = level.getEntitiesOfClass(LivingEntity.class, pullBox,
-				e -> e != player && e.isAlive() && !e.isSpectator());
+				TargetFilters.hostileTo(player));
 		for (LivingEntity target : nearby) {
 			Vec3 toPlayer = chest.subtract(target.position().add(0, target.getBbHeight() * 0.5, 0));
 			double dist = toPlayer.length();
@@ -275,9 +259,9 @@ public final class UnibeamController {
 		player.hurtMarked = true;
 		player.fallDistance = 0f;
 		player.resetFallDistance();
-		player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 5, 250, false, false, false));
-		player.addEffect(new MobEffectInstance(MobEffects.JUMP, 5, 128, false, false, false));
-		player.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, 5, 0, false, false, false));
+		EffectRefresh.refresh(player, MobEffects.MOVEMENT_SLOWDOWN, 5, 250, false, false, false);
+		EffectRefresh.refresh(player, MobEffects.JUMP, 5, 128, false, false, false);
+		EffectRefresh.refresh(player, MobEffects.FIRE_RESISTANCE, 5, 0, false, false, false);
 	}
 
 	public static void clearState(UUID id) {
@@ -311,30 +295,28 @@ public final class UnibeamController {
 	private static void spawnBeamParticles(ServerLevel level, Vec3 origin, Vec3 dir, int progress) {
 		RandomSource rand = level.getRandom();
 		int slices = 60;
+		int spread = 2 + (int) (BEAM_RADIUS * 4);
+		// Batched (audit §3): one packet per slice carries `spread` sparks with a
+		// spread box covering the old disc + beam-ward streak, so ~60 packets per
+		// tick replace ~400 while the beam keeps the same density.
+		double sx = BEAM_RADIUS + Math.abs(dir.x) * 0.4;
+		double sy = BEAM_RADIUS + Math.abs(dir.y) * 0.4;
+		double sz = BEAM_RADIUS + Math.abs(dir.z) * 0.4;
 		for (int i = 0; i < slices; i++) {
 			double f = (i + rand.nextDouble()) / slices;
 			Vec3 center = origin.add(dir.scale(f * BEAM_RANGE));
-			int spread = 2 + (int) (BEAM_RADIUS * 4);
-			for (int j = 0; j < spread; j++) {
-				double a = rand.nextDouble() * Math.PI * 2.0;
-				double r = rand.nextDouble() * BEAM_RADIUS;
-				Vec3 perp = perpendicular(dir);
-				Vec3 perp2 = dir.cross(perp).normalize();
-				Vec3 off = perp.scale(Math.cos(a) * r).add(perp2.scale(Math.sin(a) * r));
-				Vec3 q = center.add(off);
-				level.sendParticles(ModParticles.UNIBEAM_SPARK,
-						q.x, q.y, q.z, 1,
-						dir.x * 0.4, dir.y * 0.4, dir.z * 0.4, 0.05);
-			}
+			level.sendParticles(ModParticles.UNIBEAM_SPARK,
+					center.x, center.y, center.z, spread,
+					sx, sy, sz, 0.05);
 		}
-		for (int i = 0; i < 20; i++) {
-			double f = rand.nextDouble();
-			Vec3 q = origin.add(dir.scale(f * BEAM_RANGE));
-			level.sendParticles(ParticleTypes.FLAME,
-					q.x, q.y, q.z, 2, 0.3, 0.3, 0.3, 0.02);
-			level.sendParticles(ParticleTypes.LAVA,
-					q.x, q.y, q.z, 1, 0.2, 0.2, 0.2, 0.0);
-		}
+		Vec3 mid = origin.add(dir.scale(BEAM_RANGE * 0.5));
+		double bx = Math.abs(dir.x) * BEAM_RANGE * 0.5;
+		double by = Math.abs(dir.y) * BEAM_RANGE * 0.5;
+		double bz = Math.abs(dir.z) * BEAM_RANGE * 0.5;
+		level.sendParticles(ParticleTypes.FLAME,
+				mid.x, mid.y, mid.z, 40, bx + 0.3, by + 0.3, bz + 0.3, 0.02);
+		level.sendParticles(ParticleTypes.LAVA,
+				mid.x, mid.y, mid.z, 20, bx + 0.2, by + 0.2, bz + 0.2, 0.0);
 		Vec3 end = origin.add(dir.scale(BEAM_RANGE));
 		if (progress % 4 == 0) {
 			level.sendParticles(ParticleTypes.EXPLOSION,
@@ -351,7 +333,7 @@ public final class UnibeamController {
 		Vec3 end = origin.add(dir.scale(BEAM_RANGE));
 		AABB box = new AABB(origin, end).inflate(BEAM_RADIUS + 0.5);
 		List<LivingEntity> ents = level.getEntitiesOfClass(LivingEntity.class, box,
-				e -> e != player && e.isAlive() && !e.isSpectator());
+				TargetFilters.hostileTo(player));
 		for (LivingEntity e : ents) {
 			Vec3 toEnt = e.getBoundingBox().getCenter().subtract(origin);
 			double along = toEnt.dot(dir);
@@ -388,7 +370,7 @@ public final class UnibeamController {
 			if (hardness < 0f || hardness >= 50f) {
 				continue;
 			}
-			level.destroyBlock(pos, false, player);
+			WorldDestructionPolicy.tryBreak(level, pos, false, player);
 		}
 		if (progress % 8 == 0) {
 			double f = 0.2 + rand.nextDouble() * 0.7;
@@ -406,7 +388,7 @@ public final class UnibeamController {
 		}
 		AABB aoeBox = player.getBoundingBox().inflate(DEBUFF_RADIUS);
 		List<LivingEntity> aoeTargets = level.getEntitiesOfClass(LivingEntity.class, aoeBox,
-				e -> e != player && e.isAlive() && !e.isSpectator() && e != directHit);
+				TargetFilters.hostileTo(player).and(e -> e != directHit));
 		for (LivingEntity target : aoeTargets) {
 			applyDebuffs(target, AOE_DEBUFFS, 120, 0, false);
 		}
@@ -430,7 +412,7 @@ public final class UnibeamController {
 		Vec3 effectiveEnd = bh.getType() == HitResult.Type.BLOCK ? bh.getLocation() : end;
 		AABB box = player.getBoundingBox().expandTowards(dir.scale(BEAM_RANGE)).inflate(2.5);
 		EntityHitResult hit = ProjectileUtil.getEntityHitResult(level, player, origin, effectiveEnd, box,
-				e -> e instanceof LivingEntity && e.isAlive() && e != player && !e.isSpectator());
+				e -> e instanceof LivingEntity le && TargetFilters.hostileTo(player).test(le));
 		return hit != null ? (LivingEntity) hit.getEntity() : null;
 	}
 
@@ -438,7 +420,7 @@ public final class UnibeamController {
 		int duration = direct ? baseDuration * 2 : baseDuration;
 		int amplifier = direct ? Math.min(baseAmplifier * 2 + 1, 4) : baseAmplifier;
 		for (Holder<MobEffect> effect : effects) {
-			target.addEffect(new MobEffectInstance(effect, duration, amplifier, false, true, true));
+			EffectRefresh.refresh(target, effect, duration, amplifier, false, true, true);
 		}
 	}
 
@@ -471,13 +453,13 @@ public final class UnibeamController {
 				if (hardness < 0f || hardness >= 50f) {
 					continue;
 				}
-				level.destroyBlock(pos, false, player);
+				WorldDestructionPolicy.tryBreak(level, pos, false, player);
 			}
 			if (step % 3 == 0) {
 				level.explode(player, center.x, center.y, center.z,
 						3.0f + spread * 2.0f, true, Level.ExplosionInteraction.MOB);
 			}
-			placeFireRing(level, center, 2 + (int) (spread * 2));
+			placeFireRing(level, player, center, 2 + (int) (spread * 2));
 			level.sendParticles(ParticleTypes.LAVA,
 					center.x, center.y, center.z, 6, 1.0, 0.6, 1.0, 0.0);
 			level.sendParticles(ParticleTypes.FLAME,
@@ -485,7 +467,7 @@ public final class UnibeamController {
 		}
 	}
 
-	private static void placeFireRing(ServerLevel level, Vec3 center, int radius) {
+	private static void placeFireRing(ServerLevel level, ServerPlayer player, Vec3 center, int radius) {
 		BlockPos centerPos = BlockPos.containing(center);
 		for (int dx = -radius; dx <= radius; dx++) {
 			for (int dz = -radius; dz <= radius; dz++) {
@@ -502,7 +484,7 @@ public final class UnibeamController {
 					if (BaseFireBlock.canBePlacedAt(level, pos, net.minecraft.core.Direction.UP)
 							&& !level.getBlockState(below).isAir()
 							&& level.getRandom().nextFloat() < 0.55f) {
-						level.setBlockAndUpdate(pos, Blocks.FIRE.defaultBlockState());
+						WorldDestructionPolicy.tryPlace(level, pos, Blocks.FIRE.defaultBlockState(), player);
 					}
 				}
 			}
@@ -510,18 +492,22 @@ public final class UnibeamController {
 	}
 
 	private static void drainEnergy(ServerPlayer player) {
-		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
-		if (!data.hasHero()) {
+		if (!HeroDataStore.get(player).hasHero()) {
 			return;
 		}
-		HeroData updated = data.withResources(0f, 0f);
-		player.setAttached(ModAttachments.HERO_DATA, updated);
-		ModNetworking.syncResources(player, updated);
+		HeroDataStore.update(player, d -> d.withResources(0f, 0f));
 	}
 
 	@SafeVarargs
 	private static Holder<MobEffect>[] effects(Holder<MobEffect>... entries) {
 		return entries;
+	}
+
+	/** World shutdown — beam sessions die with the world. */
+	public static void resetAll() {
+		charging.clear();
+		firing.clear();
+		stunned.clear();
 	}
 
 	private static final class ChargeState {
@@ -557,4 +543,17 @@ public final class UnibeamController {
 			this.progress = 0;
 		}
 	}
+
+	public static void tickPlayer(MinecraftServer server, ServerPlayer player, HeroData data) {
+		tickCharging(player);
+		tickFiring(player);
+		tickStunned(player);
+	}
+
+	public static void pruneGonePlayers(MinecraftServer server) {
+		charging.keySet().removeIf(uuid -> server.getPlayerList().getPlayer(uuid) == null);
+		firing.keySet().removeIf(uuid -> server.getPlayerList().getPlayer(uuid) == null);
+		stunned.keySet().removeIf(uuid -> server.getPlayerList().getPlayer(uuid) == null);
+	}
+
 }

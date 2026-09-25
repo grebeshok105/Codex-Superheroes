@@ -92,4 +92,9 @@ public final class KratosHero implements Hero {
 	public HeroHudConfig getHudConfig() {
 		return HeroHudConfig.KRATOS;
 	}
+	@Override
+	public double getImpactPower() {
+		return 1.16;
+	}
+
 }

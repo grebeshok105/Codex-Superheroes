@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.damage.ModDamageTypes;
 import com.example.superheroes.particle.ModParticles;
 import net.minecraft.core.particles.ParticleTypes;
@@ -79,7 +80,7 @@ public final class KratosChainWhirlAbility implements Ability {
 					center.x - RADIUS, center.y - 1.5, center.z - RADIUS,
 					center.x + RADIUS, center.y + 1.5, center.z + RADIUS);
 			for (LivingEntity le : level.getEntitiesOfClass(LivingEntity.class, aoe,
-					e -> e != player && e.isAlive() && !(e instanceof Player p && p.getUUID().equals(player.getUUID())))) {
+					TargetFilters.hostileTo(player))) {
 				if (le.position().distanceTo(center) > RADIUS) continue;
 				le.hurt(ModDamageTypes.kratosBlade(level, player), 9.0f);
 				le.igniteForSeconds(2f);

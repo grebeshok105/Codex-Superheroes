@@ -53,7 +53,9 @@ public class SuperheroesClient implements ClientModInitializer {
 		ModKeys.init();
 		ClientNetworking.init();
 		com.example.superheroes.client.iris.IrisShaderBridge.restoreAfterCrashIfNeeded();
+		ClientTickEvents.END_CLIENT_TICK.register(client -> com.example.superheroes.client.iris.IrisShaderBridge.tickCrashRestore());
 		ClientTickEvents.END_CLIENT_TICK.register(com.example.superheroes.client.ClientMirrorDimensionState::tick);
+		ClientHeroDimsWatcher.init();
 		ClientTickEvents.END_CLIENT_TICK.register(client -> com.example.superheroes.client.ClientPandoraDeathState.tick());
 		com.example.superheroes.client.render.WildShaders.register();
 		LaserBeamRenderer.register();
@@ -273,18 +275,12 @@ public class SuperheroesClient implements ClientModInitializer {
 		});
 
 		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
-			com.example.superheroes.client.ClientMirrorDimensionState.onDisconnect();
-			com.example.superheroes.client.ClientPandoraDeathState.onDisconnect();
-			com.example.superheroes.client.ClientThanosState.clear();
-			com.example.superheroes.client.ClientNanoFormState.clear();
-			com.example.superheroes.client.ClientThinkMarkState.clear();
-			com.example.superheroes.client.hud.JarvisDetectionHud.clear();
-			ClientFlightState.clearAll();
-			ClientRemDemonismState.clearAll();
-			ClientReinhardDarknessState.clearAll();
-			ClientMeleeChargeState.clearAll();
+			// Every Client*State holder registers here via its static block —
+			// no per-class list to go stale (audit B15).
+			ClientSessionState.resetAll();
 			meleeChargeSent = false;
 			meleeChargeTicks = 0;
+			thinkMarkUseWasDown = false;
 		});
 
 	}

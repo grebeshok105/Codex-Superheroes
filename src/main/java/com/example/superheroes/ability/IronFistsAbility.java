@@ -1,10 +1,10 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.transform.HeroDataStore;
 import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.effect.IronFistsController;
 import com.example.superheroes.hero.Hero;
 import com.example.superheroes.hero.Heroes;
-import com.example.superheroes.network.ModNetworking;
 import com.example.superheroes.resource.EnergyLocks;
 import com.example.superheroes.sound.ModSounds;
 import com.example.superheroes.transform.HeroData;
@@ -51,10 +51,7 @@ public final class IronFistsAbility implements Ability {
 
 	@Override
 	public boolean tryActivate(ServerPlayer player) {
-		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
-		HeroData drained = data.withResources(0f, data.mana());
-		player.setAttached(ModAttachments.HERO_DATA, drained);
-		ModNetworking.syncResources(player, drained);
+		HeroDataStore.update(player, d -> d.withEnergy(0f));
 
 		EnergyLocks.lockTicks(player, DURATION_TICKS);
 		IronFistsController.markActivated(player);

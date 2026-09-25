@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.damage.ModDamageTypes;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
@@ -53,7 +54,7 @@ public final class DoomsdayBoneSpikeAbility implements Ability {
 
 		AABB sweep = new AABB(origin, end).inflate(0.6);
 		EntityHitResult hit = ProjectileUtil.getEntityHitResult(level, player, origin, end, sweep,
-				e -> e != player && e.isAlive() && !e.isSpectator() && e instanceof LivingEntity);
+				e -> e instanceof LivingEntity le && TargetFilters.hostileTo(player).test(le));
 
 		Vec3 impactPos = hit != null ? hit.getLocation() : end;
 

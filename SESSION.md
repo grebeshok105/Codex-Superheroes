@@ -2,52 +2,180 @@
 
 ## Active work
 
-- Branch: `devin/1790340168-agents-md-rebuild` (PR #36 lands its remaining commits onto `main`, then the branch is done).
-- Goal: Codex Superheroes revival / 5.0 foundation work.
-- Current phase: repository cleanup, agent workflow restoration, verification baseline, and architectural reacquaintance before new content work.
+- Goal: implement `docs/audits/2026-09-25-opus-architecture-audit.md` as the restoration backlog — fix real bugs and their architectural root causes, stage by stage, without blind rewrites or gameplay redesign.
+- Delivery: a stack of PRs, one per audit stage. Each stage re-verifies its findings on current code before fixing and adds regression tests.
+- The audit's «Статус исправлений» table is the live tracker; update it with every stage.
 
-## Current state
+## Stage roadmap (audit §5)
 
-- `AGENTS.md` has been rebuilt around the revival workflow and legacy-modernization rules.
-- Repository cleanup removed obsolete Windsurf rules, historical plans/design docs, legacy agent skills, stale addon API docs, and the old release workflow.
-- `README.md` and `fabric.mod.json` were refreshed for the revived Codex project.
-- Build CI targets Java 21.
-- Cross-session continuity is now mandatory through this file.
-- PR #34 (AGENTS.md rebuild + revival cleanup) is merged into `main`.
-- PR #35 (qualityGate) was stacked on this branch — it merged **into this branch**, not trunk; PR #36 carries those commits onto `main`.
-- `qualityGate` has been ported from Jujutsu and adapted to Codex: `./gradlew qualityGate` is now the canonical gate in AGENTS.md §10 and CI (`build` workflow). It runs `build` (compile + JUnit, `failOnNoDiscoveredTests`), `testProjectSanity` (`src/test/java/.../ProjectSanityTest` — 8 source/resource checks), `verifyAssertionsEnabled`, and `auditReleaseJarIsolation`. Jujutsu parts intentionally not ported: GameTest lanes, doc audit, MCP/companion audits, ArchUnit.
-- The gate caught real drift: `ability.superheroes.reinhard_wish.desc_v2` existed only in `ru_ru.json` — fixed by moving the v2 text into `desc` in both lang files.
-- A repo blueprint now exists for Codex (Java 21 + GCS Maven mirror incl. Loom `artifactUrls` patch + compile maintenance + knowledge commands).
-- Stale remote branches were cleaned: only `main`, this branch, `docs/sync-versions-v4`, and `gh-pages` remain (`gh-pages` serves the live grebeshok.eu.cc site).
-- Independent architecture/bug review and VFX-foundation research may happen in parallel; their findings should be brought back into durable project context before implementation.
-- The independent Opus 5.5 architecture/bug audit is preserved at `docs/audits/2026-09-25-opus-architecture-audit.md` and is the current baseline for the restoration rewrite.
+| Stage | Scope | Branch | State |
+| :-- | :-- | :-- | :-- |
+| 1 | B1 no-drop recursion crash, B7 bound-weapon dup, GameTest lane | `hoplite/kroton-d9205130` | PR open |
+| 2 | B2 stale `HeroData` write-back; single `HeroData` writer (debt 2) | `hoplite/kroton-d9205130--herodata-writer` | PR open (stacked on 1) |
+| 3 | Lifecycle: B3, B4, B8, B17, B23, N1 (main-thread leave hook) | `hoplite/kroton-d9205130--lifecycle` | PR open (stacked on 2) |
+| 4 | B5 cooldown/heal reset on hero swap, B6 Snap stones | `hoplite/kroton-d9205130--cooldowns-snap` | PR open (stacked on 3) |
+| 5 | Damage pipeline B9, B20, B21; B11 global tick rate | `hoplite/kroton-d9205130--damage-pipeline` | PR open (stacked on 4) |
+| 6 | B10 `WorldDestructionPolicy` | `hoplite/kroton-d9205130--destruction-policy` | PR open (stacked on 5) |
+| 7 | B15 client state/session | `hoplite/kroton-d9205130--client-state-reset` | PR open (stacked on 6) |
+| 8 | B13 House of Vanity server authority | `hoplite/kroton-d9205130--vanity-authority` | PR open (stacked on 7) |
+| 9 | B12 passive reconciler, B16 fall immunity | `hoplite/kroton-d9205130--passives-fall` | PR open (stacked on 8) |
+| 10 | B14 synced public hero attachment | `hoplite/kroton-d9205130--public-hero-sync` | PR open (stacked on 9) |
+| 11 | Hero hooks / lifecycle events / tick dispatcher (debt 1–4) | `hoplite/kroton-d9205130--hero-modularity` | PR open (stacked on 10) |
+| 11b | Migrate ~50 self-registered `ServerTickEvents` onto the dispatcher | child session | in flight |
+| 12 | Hygiene: deps, docs, missing model/lang | `hoplite/kroton-d9205130--hygiene` | PR open (stacked on 11) |
+| 13 | B18 Sung shadows survive restart; B22 teleport collision checks | `hoplite/kroton-d9205130--shadows-teleports` | PR open (stacked on 12) |
+| 14 | B19 shared target predicate honoring PvP/teams | `hoplite/kroton-d9205130--target-predicate` | PR open (stacked on 13) |
+| 15 | Potential findings (4) + §3 network improvements | `hoplite/kroton-d9205130--potential-net` | PR open (stacked on 14) |
+## Completed this session (stage 1)
+
+- Replaced three copy-pasted no-drop mixins with `PlayerBoundWeaponDropMixin` + `item/bound/BoundWeapons`. The old code re-entered `Player.drop` via `Inventory.placeItemBackInInventory` on a full inventory (verified in vanilla sources) → `StackOverflowError`.
+- Bound weapons (Yamato, Royal Icicle, Rem's morning star) now carry a `superheroes:bound_weapon {owner, issue}` data component; the current issue lives in the non-persistent `BOUND_WEAPON_ISSUES` attachment. Stale copies (stashed in a chest then reissued, held by another player, left over from before a relog, `/give`) disappear on their first inventory tick. The three weapons extend `BoundWeaponItem`.
+- Issuing into a full inventory now fails cleanly: Raiden's Sword Draw does not start and shows `ability.superheroes.bound_weapon.no_room`; Reinhard's ceremony completes but warns; Rem retries each tick as before.
+- Added the GameTest lane: `src/gametest` source set, `superheroes-gametest` dev mod, Loom `gametest` run (`runGametest`), wired into `qualityGate`. Veil is excluded from the GameTest server classpath (it hard-depends on client-only Fabric modules).
+
+## Completed this session (stage 2)
+
+- `transform/HeroDataStore` is the only writer of `HERO_DATA`: `update(player, fn)` does read-modify-write; full syncs go out immediately, energy/mana-only changes are coalesced into one `ResourceUpdateS2CPayload` per player at the `hero_data_flush` END_SERVER_TICK phase (ordered after the default phase).
+- `ResourceController` re-reads `HeroData` before each active ability, pays with the pure `ResourcePayment` (JUnit-tested), and deactivates through `AbilityRouter.deactivate`. `AbilityRouter.deactivate` clears the flag before `onDeactivate`; failed activations refund the exact charge (`ResourceController.charge/refund`).
+- Removed the dead `DeactivateAbilityC2SPayload` endpoint and redundant `server().execute` hops in C2S handlers.
+- `ProjectSanityTest.assertHeroDataHasSingleWriter` guards the single-writer rule.
+
+## Completed this session (stage 3)
+
+- New `lifecycle/` package: `PlayerLifecycle` is the single dispatch hub — hooks for join/leave/death/respawn/server-stopped wired to server-thread events (`ServerPlayerEvents.LEAVE` fires from `PlayerList.remove`, before save; `DISCONNECT` can run on the Netty thread — no longer used for game state). Every controller cleanup in the mod routes through it via `SuperheroesMod.registerPlayerLifecycle`.
+- `lifecycle/EntityControlLock` — refcounted locks over the four NBT-persisted entity flags (NoAI, NoGravity, noPhysics, invulnerable). First owner records the previous flag value into a persistent `CONTROL_LOCK_SHADOW`; last release restores it. If a locked entity unloads while the live (non-persistent) lock map is gone, `reconcile` on `ENTITY_LOAD` restores flags from the shadow. DoomGrip, Think Mark, Regulus freeze/counter, and Reinhard's ceremony all hold locks instead of writing flags directly — stale NoAI/NoGravity after relog can no longer happen (B4).
+- Ability-scoped attribute buffs (Kratos rage, Regulus madness, Reinhard draw, Raiden burst, Naruto/Goku/Rem stances, BattleBeast curse, Doomsday berserk, Thanos stone deltas) now apply as **transient** modifiers via `AttributeModifierSet.Builder.abilityScoped()` — they never serialize, so relog cannot leave zombie buffs (B3). Hero passives stay permanent on purpose (transient max-health clamps health on load). Controllers that re-derive session state on join re-apply: `BattleBeastCurseController.reapplyOnJoin`, `ThanosGauntletStateController.onPlayerReset`, `ReinhardController.onPlayerJoin`, `PandoraDeathController.reapplyState`.
+- `HeroTransformService.clearHeroRuntimeState(player)` is the symmetric cleanup used by both `transform` and `doUntransform` — previously clearAdaptations/clearOnUntransform/Unibeam ran only on untransform (B23). `onPlayerLeave` clears runtime + active flags without running gameplay deactivate side-effects.
+- Dead players are skipped in the per-player END_SERVER_TICK loop and `ThanosSnapWindupController` removes pending snaps for dead/absent casters; `ReinhardSwordDeathMarkController.cancelVictim` flushes marks on victim death/leave (B17).
+- Transform cooldown moved from a `WeakHashMap` to the `TRANSFORM_TICK` attachment; ~20 controllers got `resetAll()`/`onPlayerGone`/`cancel` hooks wired into `SERVER_STOPPED` — static maps no longer leak into a reopened world on the same JVM (B8).
+- Pandora revival state is now the persistent `PANDORA_REVIVED` attachment + an invulnerable control lock (was an NBT flag + in-memory set).
+
+## Completed this session (stage 4)
+
+- `ABILITY_COOLDOWNS` persistent attachment (`Map<ResourceLocation, Long>` of game-time deadlines) replaces the static `AbilityCooldowns` map — relog and hero swaps no longer reset cooldowns (B5). Not `copyOnDeath`: death still resets, matching the old semantics. `syncAll` on join resends live deadlines to the client; `clearAndSync` moved to the death hook.
+- `transform()` no longer heals (`setHealth(min(health, maxHealth))`) and no longer refills energy — energy carries over like mana when swapping from a live hero (`d.hasHero() ? min(energy, max) : max`), first-time transforms still start full.
+- Snap now burns the stones it actually checked: `InfinityGauntletData.clearStones` empties `InsertedStones` on the gauntlet and loose `InfinityStoneItem`s are removed — the snap is no longer infinite (B6).
+- 3 new GameTests (`HeroSwapGameTests`): swap keeps cooldowns, no free heal/energy refill, snap consumes gauntlet + loose stones.
+
+## Completed this session (stage 5)
+
+- Damage accounting moved off `ALLOW_DAMAGE` onto `AFTER_DAMAGE` (`damageTaken`, post-armor/shield): RegulusMadness LAST_DAMAGER, DoomsdayAdaptation/EffectAdaptation accumulation, DoomsdayKryptonite, KratosRage, RemDemonism, GokuKiStack, KratosHandStrikeFx. `ALLOW_DAMAGE` remains only where `return false` is load-bearing (RegulusGreed queue, Reinhard adapted-immunity/riposte, SwordDeathMark suspension, Pandora gate, RegulusMadness reading block, DoomsdayAdaptation immunity). Saves moved to `ALLOW_DEATH`: Kawarimi now only fires on truly lethal hits (no more wasted substitution on non-lethal procs) (B9).
+- `SungJinwooController` divert skips `#bypasses_invulnerability` sources — /kill and void damage can no longer be dumped onto a random shadow (audit's explicit check).
+- 33 of 35 mod damage types added to `#minecraft:bypasses_cooldown` via generated tag (B20): ability damage no longer collides with the 10-tick i-frame window, so multi-hit abilities and rapid re-casts actually land. `SHADOW_ATTACK` and `HOMELANDER_MELEE` stay out — they are mob melee and keep vanilla i-frame rules.
+- `ReinhardTimeSlowController` rewritten without `TickRateManager` (B11): the old code slowed the whole server's tick rate (breaking combat physics, cooldown pacing and redstone for everyone). Now `triggerAbilitySlow` freezes entities within 80 blocks — mobs via `EntityControlLock` (NO_AI + NO_GRAVITY + zeroed velocity), players via transient `MOVEMENT_SPEED`/`JUMP_STRENGTH` zero-modifiers plus attack/use-item/place block callback cancels — 170 ticks, released on expiry, owner death/leave or server stop. The owner walks at full speed inside the freeze, which preserves the power fantasy without corrupting the server clock.
+- All `System.currentTimeMillis` timers in gameplay code replaced with level `gameTime` deadlines (B21): RegulusMadness reading/mana-lock (record fields renamed to `*_until_tick`, codec keys `mana_lock_until_tick`/`reading_until_tick`), DoomsdayAdaptation/EffectAdaptation first-hit/idle windows, `HeroLandingTracker`, `ReinhardSpeedJudgment` pending strikes. Single-player pause and TPS lag can no longer silently shorten or stretch these durations. Wire compatibility kept: `MadnessSyncS2CPayload` still carries remaining-milliseconds (converted from tick deadlines) so the client's wall-clock HUD math is unchanged.
+- 3 new GameTests (`DamagePipelineGameTests`): ability damage bypasses the i-frame cooldown (control: mob attack does not), time slow freezes a nearby mob without touching the server tick rate and releases on owner leave, kawarimi saves from a lethal hit and goes on cooldown.
+
+## Completed this session (stage 6)
+- `world/WorldDestructionPolicy` (B10): единая точка прохода для всех способностей, меняющих мир — `tryBreak` (ванильная семантика `destroyBlock` + опциональные дропы), `tryCarve` (тихий вырез в AIR для путей с намеренным подавлением дропа), `tryPlace` (постановки без слома, например огонь). Гейты: `destroySpeed < 0` + тег `superheroes:ability_immune` (новый `src/main/generated/data/superheroes/tags/block/ability_immune.json`, написан руками + `ModBlockTagProvider` на будущее для runDatagen); для игроков — `Level.mayInteract` (защита спавна, граница мира) и `PlayerBlockBreakEvents` BEFORE/CANCELED/AFTER — claim-моды теперь видят все сломы; для мобов и без причины — `RULE_MOBGRIEFING`.
+- Мигрированы все ability-точки: `RegulusMadnessController.carveCrater` (вынесен из `CounterState` на контроллер и получает игрока — раньше съедал бедрок конусом), `RemDemonismController`, `UnibeamController` (луч + кратер + огненное кольцо), `MadnessAftermathController`, `MadnessFlightController`, `RaidenMusouIsshinController.carveSlash` (игрок раньше не передавался), `HeavensStrikeController.carveCrater` (то же), `GuardiansBreakerAbility`, `RushTerrainBreaker`, `BallisticBodyTracker`, `ShockwaveUtil` (моб- и игрок-детонации), `HomelanderBlockThrowGoal` (подбор блока и сам бросок гейтятся — при отказе снаряд не спавнится), `EyeLasersAbility` (огненное кольцо).
+- Дропы: `RushTerrainBreaker`, `BallisticBodyTracker` и `GuardiansBreakerAbility` теперь ломают с дропом — shulker box выскакивает с содержимым вместо исчезновения (регрессия из аудита). `RaidenMusouIsshin`/`HeavensStrike` сохранили свои списки «непробиваемого» в урезанном виде — только ценные блоки, которых нет в теге (обсидиан, crying obsidian, нетерит/железо/древние обломки/маяк/respawn anchor соответственно).
+- `physics/BlockBreakPolicy` удалён — его роль выполняет новая политика. `ProjectSanityTest` запрещает прямые `destroyBlock`/`removeBlock`/`setBlock`/`setBlockAndUpdate` вне `WorldDestructionPolicy`.
+- 7 новых GameTests (`DestructionPolicyGameTests`): кратер пропускает бедрок и тегированные блоки, вето claim-события отменяет слом и шлёт CANCELED, AFTER стреляет при реальном сломе, mobGriefing гейтит мобов и «без причины» для слома и постановки, shulker box дропается с содержимым, carve намеренно без дропа, контактный слом рывка дропает землю.
+## Completed this session (stage 7)
+- `ClientSessionState` — единый реестр сброса клиентской сессии (B15): каждый `Client*State`-холдер и сессионный синглтон (`ClientAbilityCooldowns`, `RemoteHeroSkins`, `JarvisDetectionHud`, `MirrorWarpFlashHud`, `RadialMenuHud`) регистрирует свой reset в static-блоке; `ClientPlayConnectionEvents.DISCONNECT` зовёт `resetAll()` вместо ручного списка — до этого сбрасывались только 10 из ~30 холдеров, и уход из мира во время time-slow навсегда глушил звуки мира в следующих мирах. `ProjectSanityTest.assertClientStatesRegisterReset` валится, если `Client*State`-класс не содержит `ClientSessionState.register(`.
+- `ClientAbilityCooldowns` переведён с `LocalPlayer.tickCount` (обнуляется при респавне → HUD рисовал кулдауны в часы) на `ClientLevel#getGameTime()` — монотонные тики уровня; дедлайны в `long`, wire-формат пакета не тронут. Для JUnit — инжектируемый `clock` (`setClockForTesting`/`clearClockForTesting`, package-private).
+- Миксины ролика Pandora (`PandoraCinematicKeyboardMixin`, `PandoraCinematicMousePressMixin`) больше не глотают `GLFW_RELEASE`: `KeyMapping.set(key,false)` приходит только с release, поэтому отпущенная во время ролика клавиша оставалась нажатой — игрок сам шёл/бил после катсцены. `InputFreeze`/`MouseTurn` миксины не тронуты — они не ломают трекинг кнопок.
+- `IrisShaderBridge` стал resilient: `restore()` сбрасывает `activeSnapshot` и удаляет `MirrorRestoreFile` только после успешного restore (раньше снапшот терялся при первой неудаче); `restoreAfterCrashIfNeeded` больше не пытается ресторить в `onInitializeClient` (Iris ещё не готов → всегда фейл → файл удалялся без восстановления) — вместо этого `tickCrashRestore()` ретраит из клиент-тика до 200 тиков, файл удаляется только при успехе.
+- `ChatComponentMixin`: хит-тест чата переведён на тот же сдвиг, что и рендер — `@ModifyVariable` на `screenToChatX`/`screenToChatY` вычитает `HudLayoutManager.offset(CHAT) + autoLift`, так что клики по ссылкам, ховер-теги и подсветка строки работают по реальному положению чата.
+- JUnit: `ClientSessionStateResetTest` дёргает публичные сеттеры ~25 холдеров и проверяет, что `resetAll()` возвращает дефолты; `ClientAbilityCooldownsTest` гоняет дедлайны на инжектированных часах (респавн как скачок времени). `test` sourceSet получил `client.output + client.compileClasspath` (через `afterEvaluate`, т.к. `client` создаётся `splitEnvironmentSourceSets()`).
+## Completed this session (stage 8)
+- House of Vanity trap is now server-authoritative (B13): `MirrorDimensionController.enforceZone` runs unconditionally — the yank and `VanityAuthority` debuffs no longer wait for a client ACK (`VictimState.applied` removed). A modified or silent client stays inside the zone exactly like a confirmed one.
+- `absorbNearby` lost its `canSend` gate: victims without the mod (or with networking filtered) are still trapped — the S2C payloads are now purely a cosmetic hint sent via `sendToVictim` (shader warp + cipher flag), so a missing reply no longer weakens containment.
+- `handleStatus` is reduced to caster feedback (it relays the localized status message to Pandora only); `NO_IRIS`/`NO_PACK`/`IRIS_API_FAIL` no longer release the victim — previously a failed or absent warp silently dropped the victim while leaving her client ciphered forever (the deadman only watched `active`).
+- Client cipher scope fixed in `ClientMirrorDimensionState.tick`: the deadman now tracks `trapped` (the cipher) rather than only `active` (the shader), so a victim whose warp never applied still releases the font cipher ~5s after keepalives stop instead of holding it until disconnect.
+- Lifecycle wiring: `MirrorDimensionController.onPlayerGone` and `SpatialBindController.onPlayerGone` release victims/ropes on leave via `PlayerLifecycle.onLeave`; both controllers' `resetAll()` run from `onServerStopped` so no trap state leaks across world restarts.
+- 4 new GameTests (`HouseOfVanityGameTests`): victim trapped without any client confirmation and yanked back when walking out, NO_IRIS status keeps full containment, debuffs applied without confirmation, caster leave closes the House and frees victims (effects cleared via `PlayerLifecycle` hook). Mock players double as the "no client ACK" regression case since `canSend` is false for them.
+## Completed this session (stage 9)
+
+- Hero passives no longer die to effect wipes (B12). New `lifecycle/PassiveReconciler`: `capture()` arms a ThreadLocal around `hero.applyPassives` while `LivingEntityPassiveEffectsMixin` records every *infinite* `MobEffectInstance` added in that scope — that's the hero's declared passive set, stored per player (with the heroId). `onEffectRemoved` (fired by milk `removeAllEffects`, death-save wipes, `LionHeart`, `ThanosTimeRewind`, `RegulusGreedController.removeEffect(JUMP)`, targeted removes and natural expiry alike) only marks the player dirty; the actual re-assert runs deferred on `END_SERVER_TICK`, skipping effects the player still has — so vanilla `MobEffectInstance.update` nesting (a temporary stronger instance hiding a nested passive) is preserved. A `heroId` guard drops stale records on swap/untransform, `PassiveReconciler.clear` on `doUntransform`.
+- Capture wired at every real `applyPassives` site: `HeroTransformService.transform` and `reapplyLifecyclePassives` (join/respawn), `DoomsdayTierController.applyProgress` (tier-dependent re-derive). Doomsday's `reapplyLifecyclePassives` keeps its no-removePassives quirk.
+- `RegulusMadnessController.clearMadness` is scoped to madness-owned instances (B12): it used to `removeEffect` SPEED/STRENGTH/JUMP/RESISTANCE unconditionally on every join/leave/death/respawn for ANY player — deleting potion, beacon, and hero passive effects server-wide. Now `removeMadnessEffect` removes an instance only if it matches the madness signature (duration ≤ 60, matching amplifier, ambient, not visible, showIcon); `applyMadnessEffects` builds via `madnessEffect()` so the signature can't drift. A madness instance merged over an infinite passive is still removed whole — the reconciler re-asserts the passive next tick.
+- Fall immunity is per-participant again (B16): `LivingEntityFallDamageMixin` asked global `isAnyCounterActive()`, so one Regulus counter anywhere stripped `SuperJumpController`/hero `cancelsFallDamage` immunity from every hero. Now `RegulusMadnessController.isCounterInvolved(entity)` (matches the counter's `playerId`/`attackerId`); `isAnyCounterActive` deleted.
+- 4 new GameTests (`PassivesFallGameTests`): milk-style `removeAllEffects` restores all five Regulus infinites; hero swap replaces the declared set (regulus→kratos restores RESISTANCE, not REGENERATION); `clearMadness` keeps a visible potion, a beacon-style ambient+visible effect and an untouched infinite passive while dropping madness-signed SPEED/JUMP even with a passive nested under them; counter strips fall immunity for owner/victim but not for an uninvolved hero.
+
+## Completed this session (stage 10)
+
+- New synced attachment `PUBLIC_HERO` (B14): `persistent(ResourceLocation.CODEC)` + `copyOnDeath()` + `syncWith(ResourceLocation.STREAM_CODEC, AttachmentSyncPredicate.all())` — a narrow public projection carrying only the hero id; energy/mana and everything else in `HERO_DATA` stays owner-only. Written once inside `HeroDataStore.update` (the single writer, so it cannot drift), plus `syncPublicHero(ServerPlayer)` back-fill on JOIN for pre-existing saves.
+- `PlayerDimensionsMixin` now reads `PUBLIC_HERO` instead of `HERO_DATA` — remote players on clients get the real hero hitbox (Battle Beast etc.) instead of the vanilla one; the local player still refreshes dims via the `HeroDataSyncS2CPayload` receiver.
+- All remote-hero plumbing deleted: `RemoteHeroSkinS2CPayload` + registration + client receiver, `RemoteHeroSkins` map, `broadcastRemoteHeroSkin`, `sendRemoteHeroSkinTo`, and the `EntityTrackingEvents.START_TRACKING` block. Attachment sync covers tracking start, dimension change and respawn for free — `sendRemoteHeroSkinTo`'s early `hero == null` return (the stale-skin-after-relog bug) is gone with it.
+- Client consumers migrated to `player.getAttached(PUBLIC_HERO)`: `AbstractClientPlayerSkinMixin` (hero skins for other players), `IronManEspRenderer` (hero detection + id), `ReinhardScabbardLayer`, `ClientNanoSuitUpState`.
+- New `ClientHeroDimsWatcher`: attachment sync has no client-side change callback, so an END_CLIENT_TICK watcher diffs each tracked player's synced hero id and calls `refreshDimensions()` on change (clears its map when `client.level == null`).
+- 2 new GameTests (`PublicHeroSyncGameTests`): transform writes / untransform clears `PUBLIC_HERO`; join back-fill derives the projection from a legacy directly-written `HERO_DATA`.
+
+## Completed this session (stage 11)
+
+- `lifecycle/HeroTickDispatcher` (debt 3): the only `END_SERVER_TICK` consumer for gameplay ticks — ordered phases GLOBAL → LEVELS → PLAYERS → ABILITY_ACTIVE, the dead-player skip happens once centrally (B17), and `HERO_DATA` is fetched once per player. `SuperheroesMod`'s 100-line inline lambda became `registerTickHandlers()`, a flat table keeping the exact prior order. The ~50 controllers that self-register `ServerTickEvents` stay as they are — migrating them onto the dispatcher is the follow-up hygiene stage.
+- `lifecycle/HeroLifecycle` (debt 1): `onClear`/`onTransformed` listener events fired from `HeroTransformService.clearHeroRuntimeState`/`transform` — the hard-coded cleanup call list (Unibeam, Regulus totem/madness, Reinhard adaptations, Raiden, Rem, Pandora, DoomGrip, Omniman think mark, control locks) is now a registration table in `registerPlayerLifecycle()`.
+- `Hero` default hooks (debt 4): `getImpactStyle`/`getImpactPower`, `getThreatClass`, `canUseAbility`/`onAbilityDenied`, `isAbilitySuppressedBy`, `getEnergyReserveFor`, `isUraniumWeak`. `CombatImpactEngine` deleted its 20-hero import table (style/power now come from the hero); `JarvisThreatClass` moved `jarvis/` → `hero/` and `forHero` reads `getThreatClass()` — `HERO_THREATS` gone, jarvis↔hero package cycle broken; `AbilityRouter`'s three `instanceof` branches + the IRON_FISTS check + the UNIBEAM reserve are hook calls; `FlightController` reads `isUraniumWeak()` instead of `HomelanderHero.ID`.
+- `ClientAbilityFilter` reuses the server tables `DoomsdayHero.isUnlockedAtTier` and `RemHero.isVisibleIn` — the client-side duplicate lists are deleted, so HUD and router can no longer drift apart.
+- `ProjectSanityTest.assertNoHeroTypeDispatch` forbids `instanceof *Hero` outside the hero package; 3 new GameTests (`HeroTickDispatcherGameTests`): dead skip, isActive gating, phase order.
+
+## Completed this session (stage 11b)
+
+
+- Migrated all 47 self-registering `ServerTickEvents.END_SERVER_TICK` controllers onto `HeroTickDispatcher` — 25 `onGlobalTick` + 33 `onPlayerTick` registrations appended to `registerTickHandlers()` in `init()` order. Per-player loops became `PlayerTask`s (central dead-skip, prefetched `HeroData`); offline-player prunes and entity-map sweeps split into `GLOBAL` methods (`pruneGonePlayers`, `tickFreezes`, `tickCounters`, `serverTick`); verbatim global bodies kept where the loop wasn't per-player work (Jarvis scans, Kratos drain, DoomsdayKryptonite interval pass, Raiden/Heavens/ThanosSnap windups).
+- Controllers whose `init()` only held the tick lost it (call removed from `onInitialize`); `init()`s with other registrations (`AttackEntityCallback`, `ALLOW_DAMAGE`, `DISCONNECT`, `START_SERVER_TICK`) kept — only the END registration moved.
+- Deliberately left self-registered: `HeroDataStore` (two `hero_data_flush` phase-boundary registrations by design), `MirrorDimensionController` (owned by stage 8), `MadnessFlightController`/`KratosRageController`/`ThanosGauntletStateController` START_SERVER_TICK registrations (the dispatcher is END-only), `src/client`, `transform/`, `lifecycle/`, `WorldDestructionPolicy` files (stages 6/7/9).
+- Ordering notes: phase split means GLOBAL tasks now run before all per-player work; verified each split pair is data-independent (offline prunes commute; `RegulusMadness` COUNTERS vs `tickPlayer` don't touch shared state; `RegulusGreed` freezes/casters independent). One acknowledged delta: `KratosRageController` rage drain now runs before player tasks — same-tick deactivation timing shifts within the tick, not across ticks.
+
+
+## Completed this session (stage 12)
+
+- `fabric.mod.json` deps tightened to what the build actually targets: `minecraft ~1.21.1`, `fabric-api >=0.116.12`.
+- `horde_crystal` got a model (`item/generated` + vanilla `echo_shard` texture — no new art needed for a command-issued item).
+- 5 missing entity display names added to en+ru: `horde_acid_bomb`, `horde_fire_bomb`, `kage_bunshin`, `shield_projectile`, `smart_missile`.
+- 21 cyrillic `Component.literal` sites converted to `Component.translatable` (+22 new lang keys in both files): commands (horde/admin-build/state), horde crystal + boss bar + Infected Homelander lines, Omniman hint, abilities HUD seconds.
+- `ModAttachments` rewritten from deprecated `AttachmentRegistry.builder()...buildAndRegister` to `AttachmentRegistry.create(id, b -> ...)` (13 attachments, same semantics).
+- `ProjectSanityTest` gained `assertNoCyrillicLiterals` (no `Component.literal` with cyrillic in main/client) and `assertEntityLangNames` (every entity id registered in `ModEntities`/`HordeEntities` has an `entity.superheroes.*` key in en_us.json).
+
+## Completed this session (stage 13)
+
+- B18: армия Sung вынесена из статических `ARMY`/`SUMMONED`/`PHASE2` в persistent-attachment `SUNG_SHADOW_ARMY` (record `attachment/SungShadowArmy`: `List<UUID> shadowIds`, `summoned`, `phase2`). После рестарта UUID сохранённых теней перелинковываются — повторный призыв не случается, т.к. `summoned` переживает рестарт. В тике снимаются только «разрешившиеся и мёртвые» UUID; невыгруженные остаются в списке и подхватываются при загрузке чанка. `ShadowSoldierEntity.aiStep` сам решает свою судьбу: владелец офлайн → сон (цель и месть очищены, не атакует); владелец онлайн, но не Sung или тени нет в армии → `discard()` — так закрываются и снятие героя, и сироты, загрузившиеся после disband.
+- B22: `util/SafeTeleport.clamp(level, entity, dest)` шагает по отрезку (шаг ≈ половина меньшего размера хитбокса, мин. 0.2) и возвращает последнюю точку, где хитбокс свободен от блоков; невыгруженный чанк = препятствие; проверка только по блокам, чтобы «за спину» не упиралось в самого моба. Переведены Goku IT, Loki Tesseract, Scorpion, Kratos God Slayer, Reinhard Speed Judgment, Kawarimi, Shadow Exchange (оба направления), Doom Grip lunge, Thanos Space Portal. Не тронуты (by design): hold/anchor/lockPos/return-телепорты (DoomGrip hold, SpatialBind, RegulusGreed, Unibeam, IronManReactor, Pandora, MirrorDimension, lockPos у HeavensStrike/RaidenMusou/Regulus counter-катсцена) и `DoomsdayTierController.tryRelocate` (точка уже проверяется на свободу).
+- Новый `ShadowsTeleportsGameTests` (4 теста): disband при forceUntransform (нет ни записей, ни сущностей), тень-сирота удаляет себя, телепорт клэмпится у каменной стены, свободный телепорт доходит до точки.
+
+## Completed this session (stage 14)
+
+- `combat/TargetFilters` — единый предикат враждебного выбора целей (B19): `harmableBy(target, attacker)` (alive, не сам атакующий, не spectator, плюс `victim.canHarmPlayer(attacker)` когда обе стороны игроки) и `hostileTo(attacker)` — то же плюс пропуск creative-игроков (наиболее частое условие копий). Ванильная семантика проверена по байткоду: `ServerPlayer.canHarmPlayer` = `isPvpAllowed() && super.canHarmPlayer`, где super покрывает команды и friendly-fire, а `ServerPlayer.hurt` применяет эту же проверку когда источник урона несёт Player-атакующего.
+- Заменено ~25 приватных `isValidTarget`/`validTarget`-хелперов и ~60 инлайн-лямбд в ability/effect/item/entity/physics на `TargetFilters`; лишние условия сохранены через `.and(...)` (дистанция, `!= primary`, исключение ShadowSoldier). Френдли-селекторы (shadows, призывы, владельцы, кинематик-фризы) оставлены как были.
+- `magic()` без атакующего теперь атрибутирован (`indirectMagic(attacker, attacker)`), так что `pvp=false`/команды работают и на источнике урона: ScaramoucheWindPrisonAbility, ThanosSoulPulseAbility, MonarchsDomainController, UraniumDaggerItem. DoT-эффекты (Bleeding/Snapped) и fallback-без-владельца (ShieldProjectile generic, SungJinwoo divert) намеренно оставлены unattributed.
+- Побочные правки поведения по сути фикса: creative-игроки и зрители теперь единообразно пропускаются всеми враждебными сканами; DoomGrip вместо фейкового `isAlly` (uuid==uuid) использует настоящие team-правила; кинематик-фризы SwordDrawCeremony (`e -> true`) и TimeSlow-цикл игроков оставлены/переведены осознанно (TimeSlow больше не замораживает тиммейтов без friendly fire).
+
+## Completed this session (stage 15)
+
+- All 4 "потенциальные" findings verified real against current code and fixed:
 
 ## Important decisions
-
-- Existing code defines current behavior, not automatically the desired architecture.
-- Legacy systems are preserved when they are healthy; they are replaced only when they create concrete architectural, testing, reliability, or extensibility problems.
-- The revival is workflow/foundation-first. New content is not required to complete the initial restoration phase.
-- `gradle.properties` is the version source of truth.
-- Current release automation is intentionally absent until a new verified release flow is designed.
-- `ProjectSanityTest` stays an honest source/JSON grep, not bytecode analysis; new checks register JavaExec tasks with `group = 'verification'` and are pulled into `check` automatically.
-- Model files with a `minecraft:` parent (e.g. `template_spawn_egg`) legitimately carry no `superheroes:` textures — the item-model check treats them as covered by vanilla.
+- Bound weapons are identified by type (`BoundWeaponItem`) and validated by token; untokened copies are treated as stale on purpose (none are obtainable legitimately; old saves could hold leaked copies).
+- Bound weapons never become item entities: returned to the owner when valid and there is room, otherwise deleted (the ability can reissue).
+- `HeroData` sync: writes are immediate; full syncs stay immediate to preserve packet ordering with other payloads; resource-only syncs are coalesced per tick.
+- `AbilityRouter.deactivate` order is flag-off → `onDeactivate` (verified no `onDeactivate` callee reads the active set).
+- Stage 3 lock design: `EntityControlLock` owns the flag transitions; controllers never touch the flags. Locks are re-established, not restored — join hooks re-apply what should still hold (Pandora revival), everything else is released. `RemDemonismController.onRespawn`/`ReinhardController.onDeath` exist but are dead code — intentionally unwired (death → forceUntransform → clear covers them).
+- Lifecycle cleanup (stage 3) must not rely on `ServerPlayConnectionEvents.DISCONNECT` for game state: Fabric can fire it from the Netty thread (`Connection.channelInactive`). Use a main-thread hook before the player is saved (`PlayerList.remove`).
+- Stage 10 projection design: `PUBLIC_HERO` mirrors the hero id only — widening it to resources/passives would re-create the privacy surface of `HERO_DATA` broadcast; anything client-side needing more can read other synced attachments or payloads. `copyOnDeath` mirrors `HERO_DATA` lifecycle (hero persists across death), persistent mirrors save data so no respawn hooks are needed.
+- Ability-scoped attribute buffs should become transient; hero base passives stay permanent (transient max-health modifiers would clamp health on load because `LivingEntity.readAdditionalSaveData` calls `setHealth` after loading attributes).
 
 ## Verification
 
-`./gradlew qualityGate --no-daemon` ran green locally on this branch: JUnit suite, all 8 `ProjectSanityTest` checks, `verifyAssertionsEnabled` (1 verification JavaExec with `-ea`), `auditReleaseJarIsolation` (`superheroes-4.0.0.jar`, 1344 entries, no test/dev leakage). No runtime verification was required for the documentation/repository-cleanup work recorded here.
+- Stage 15: `qualityGate` green, 24/24 GameTests (2 new: horde audience pause/resume, ram adopt/dedupe).
+- Stage 14: `qualityGate` green, 24/24 GameTests (2 новых `TargetPredicateGameTests`: AoE бьёт врага и пропускает тиммейта без friendly fire — через `DoomsdayRoar` end-to-end; `pvp=false` убирает игроков из сканов). Готча: `makeMockServerPlayerInLevel` хардкодит `isCreative()=true` и общее имя `test-mock-player` — для pvp/team-тестов нужен `TestPlayers.join(helper, name)` с реальным ServerPlayer.
+- Stage 11: `qualityGate` green, 27/27 GameTests (3 new dispatcher tests). Intentionally kept: `CombatImpactEngine`'s nano-hammer branch (reads the `NANO_FORM` attachment — an ability-state rule, not a lookup table) and client-side statics (`ThanosHero`, `PandoraHero` tables used by HUD filters).
+- Stage 10: `qualityGate` green, 24/24 GameTests (2 new public-hero-sync tests). First run caught a test bug: `untransform` is cooldown-gated right after `transform` — the test uses `forceUntransform`.
+- Stage 8: `qualityGate` green, 26/26 GameTests (4 new House of Vanity tests). Test-only notes: victims must be joined+teleported inside `PULL_RADIUS` BEFORE `AbilityRouter.activate` — latecomer absorb only runs on keepalive ticks (every 20), so post-activation joins race the assert delays; mock players hardcode `isCreative()==true` (bytecode-verified `GameTestHelper$2`), so `VanityAuthority` `mayfly` grant/clear is unreachable in gametest — assert `hasEffect` probes instead.- Stage 5: `qualityGate` green, 22/22 GameTests (3 new damage-pipeline tests). Test-only notes: mock players join with private `spawnInvulnerableTime` that blocks `hurt()` — cleared via reflection in the kawarimi test; the test structure spawns ~6M blocks from the mock-player spawn point, so proximity-sensitive asserts must teleport the player first.- Stage 4: `qualityGate` green, 19/19 GameTests. Negative check — without the `hasHero()` guard, first-time transforms start with 0 energy and `windPrisonEndsWhenItsZoneExpires` fails.
+- Stage 3: `qualityGate` green, 16/16 GameTests (7 new lifecycle regressions: owner-leave lock release, refcount, shadow reconcile, transient-vs-permanent NBT, attachment-backed transform cooldown, forceUntransform clears locks+cooldowns, dead-caster snap).
+- Stage 2: `qualityGate` green, 9/9 GameTests; negative check — old tick write-back makes `windPrisonEndsWhenItsZoneExpires` fail.
+- `./gradlew qualityGate --no-daemon` green on stage 1: JUnit, 8 `ProjectSanityTest` checks, assertion audit, jar isolation audit, 7/7 GameTests.
+- Negative check: re-inserting the old mixin logic makes `droppingWithFullInventoryDoesNotRecurse` fail with `StackOverflowError`.
+- No `runClient` in-game session: the sandbox has no display. Server behavior is covered by GameTests with real joined players.
 
-## Open work
+## Known issues / follow-ups
 
-- Establish the architecture/debt map from the independent audit.
-- Decide and execute package identity cleanup away from `com.example.superheroes` — now unblocked by the green verification baseline.
-- Rebuild only the project skills that prove useful for the new workflow.
-- Design a new release/versioning workflow after the verification baseline is stable.
-- Use the VFX research to decide the Codex 5.0 rendering foundation.
+- `runServer` in dev fails mod resolution while Veil is on the runtime classpath (audit N2); decide whether to make Veil `modCompileOnly` + client-only runtime.
+- `auto-approve-pr.yml` still auto-approves green PRs (audit §3); left as a repository-owner decision, not changed by this work.
 
 ## Next session
 
-1. Read this file, current `AGENTS.md`, and `docs/audits/2026-09-25-opus-architecture-audit.md`.
-2. Use the preserved audit as the baseline for the Opus-led restoration/fix pass.
-3. Re-verify findings while implementing; do not assume subagent-only findings are proven until checked.
-4. Keep `qualityGate` green and update this handoff after each substantial batch.
-5. After PR #36 merges, delete `devin/1790340168-agents-md-rebuild` and `devin/1790343904-qualitygate`; keep `docs/sync-versions-v4` and `gh-pages`.
+1. Read this file, `AGENTS.md`, and the audit's «Статус исправлений» table.
+2. Continue with the first stage whose PR is not yet open; re-verify each finding on current code first.
+3. Keep `qualityGate` green; add GameTests for server behavior; update the audit tracker and this file per stage.

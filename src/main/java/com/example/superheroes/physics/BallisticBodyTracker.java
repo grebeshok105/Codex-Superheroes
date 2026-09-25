@@ -2,7 +2,7 @@ package com.example.superheroes.physics;
 
 import com.example.superheroes.network.ScreenShakeS2CPayload;
 import com.example.superheroes.network.WallImpactDebrisS2CPayload;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import com.example.superheroes.world.WorldDestructionPolicy;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.BlockPos;
@@ -59,9 +59,6 @@ public final class BallisticBodyTracker {
 	private BallisticBodyTracker() {
 	}
 
-	public static void init() {
-		ServerTickEvents.END_SERVER_TICK.register(BallisticBodyTracker::tick);
-	}
 
 	public static void launch(LivingEntity body, Vec3 velocity, double power, @Nullable ServerPlayer source) {
 		launch(body, velocity, power, source, false);
@@ -96,7 +93,7 @@ public final class BallisticBodyTracker {
 		}
 	}
 
-	private static void tick(MinecraftServer server) {
+	public static void tick(MinecraftServer server) {
 		if (tracked.isEmpty()) return;
 		Iterator<Map.Entry<UUID, TrackedState>> it = tracked.entrySet().iterator();
 		while (it.hasNext()) {
@@ -156,14 +153,14 @@ public final class BallisticBodyTracker {
 								? SUPER_MAX_BLOCKS_PER_LAUNCH : MAX_BLOCKS_PER_LAUNCH;
 						boolean steepDive = dir.y < STEEP_DOWN_DIR;
 						if (!steepDive && state.brokenTotal < maxBlocksPerLaunch
-								&& BlockBreakPolicy.canImpactBreak(level, mpos, blockState, MAX_HARDNESS)) {
+								&& WorldDestructionPolicy.mayDestroy(level, mpos, blockState, MAX_HARDNESS)) {
 							if (blocksDestroyed >= MAX_BLOCKS_PER_TICK) continue;
 							if (layerIds.size() < DEBRIS_STATE_LIMIT) {
 								layerIds.add(Block.getId(blockState));
 							}
 							float hardness = blockState.getDestroySpeed(level, mpos);
 							if (hardness > maxHardnessBroken) maxHardnessBroken = hardness;
-							if (level.destroyBlock(mpos.immutable(), false, state.source != null ? state.source : body)) {
+							if (WorldDestructionPolicy.tryBreak(level, mpos.immutable(), true, state.source != null ? state.source : body)) {
 								blocksDestroyed++;
 								state.brokenTotal++;
 							}

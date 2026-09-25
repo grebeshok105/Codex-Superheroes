@@ -1,9 +1,9 @@
 package com.example.superheroes.effect;
 
 import com.example.superheroes.attachment.ModAttachments;
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.hero.ScorpionHero;
 import com.example.superheroes.transform.HeroData;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.server.MinecraftServer;
@@ -53,13 +53,6 @@ public final class ScorpionController {
 	private ScorpionController() {
 	}
 
-	public static void init() {
-		ServerTickEvents.END_SERVER_TICK.register(server -> {
-			tickSpearPulls(server);
-			tickBreaths(server);
-			tickPassives(server);
-		});
-	}
 
 	public static boolean isScorpion(ServerPlayer player) {
 		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
@@ -208,14 +201,14 @@ public final class ScorpionController {
 		if (player.tickCount % 8 == 0) {
 			ScorpionFx.breath(level, eye.add(forward.scale(0.8)), forward);
 		}
-		player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 8, 0, true, false, false));
+		EffectRefresh.refresh(player, MobEffects.MOVEMENT_SLOWDOWN, 8, 0, true, false, false);
 
 		if (player.tickCount % 4 != 0) {
 			return;
 		}
 		AABB box = new AABB(eye, eye.add(forward.scale(BREATH_RANGE))).inflate(2.0);
 		for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, box,
-				t -> isValidTarget(player, t))) {
+				TargetFilters.hostileTo(player))) {
 			Vec3 center = target.position().add(0.0, target.getBbHeight() * 0.5, 0.0);
 			Vec3 toTarget = center.subtract(eye);
 			double distance = toTarget.length();
@@ -233,32 +226,30 @@ public final class ScorpionController {
 
 	// -------------------------------------------------------------- passive
 
-	private static void tickPassives(MinecraftServer server) {
+
+	public static void serverTick(MinecraftServer server) {
+		tickSpearPulls(server);
+		tickBreaths(server);
+	}
+
+	public static void tickPlayer(MinecraftServer server, ServerPlayer player, HeroData data) {
 		long tick = server.getTickCount();
-		for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-			if (!isScorpion(player)) {
-				continue;
+		if (!isScorpion(player)) {
+			return;
+		}
+		if (tick % PASSIVE_REFRESH_INTERVAL == 0) {
+			player.addEffect(new MobEffectInstance(
+					MobEffects.FIRE_RESISTANCE, 60, 0, true, false, false));
+			if (player.isOnFire()) {
+				player.clearFire();
 			}
-			if (tick % PASSIVE_REFRESH_INTERVAL == 0) {
-				player.addEffect(new MobEffectInstance(
-						MobEffects.FIRE_RESISTANCE, 60, 0, true, false, false));
-				if (player.isOnFire()) {
-					player.clearFire();
-				}
-			}
-			ServerLevel level = player.serverLevel();
-			if (tick % 5 == 0) {
-				level.sendParticles(ParticleTypes.SMALL_FLAME,
-						player.getX(), player.getY() + 0.15, player.getZ(),
-						2, 0.30, 0.05, 0.30, 0.01);
-			}
+		}
+		ServerLevel level = player.serverLevel();
+		if (tick % 5 == 0) {
+			level.sendParticles(ParticleTypes.SMALL_FLAME,
+					player.getX(), player.getY() + 0.15, player.getZ(),
+					2, 0.30, 0.05, 0.30, 0.01);
 		}
 	}
 
-	private static boolean isValidTarget(ServerPlayer owner, LivingEntity target) {
-		return target != owner
-				&& target.isAlive()
-				&& !target.isSpectator()
-				&& !(target instanceof Player player && player.isCreative());
-	}
 }

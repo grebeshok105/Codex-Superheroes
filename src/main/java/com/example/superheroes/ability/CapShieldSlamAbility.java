@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.damage.ModDamageTypes;
 import com.example.superheroes.particle.ModParticles;
 import net.minecraft.core.particles.ParticleTypes;
@@ -87,7 +88,7 @@ public final class CapShieldSlamAbility implements Ability {
 				pos.x - RADIUS, pos.y - 1, pos.z - RADIUS,
 				pos.x + RADIUS, pos.y + 2, pos.z + RADIUS);
 		for (LivingEntity le : level.getEntitiesOfClass(LivingEntity.class, box,
-				e -> e != player && e.isAlive() && !e.isSpectator())) {
+				TargetFilters.hostileTo(player))) {
 			le.hurt(ModDamageTypes.capShieldSlam(level, player), DAMAGE);
 			Vec3 away = le.position().subtract(pos);
 			double horizDist = Math.sqrt(away.x * away.x + away.z * away.z);
@@ -111,5 +112,15 @@ public final class CapShieldSlamAbility implements Ability {
 				SoundEvents.GENERIC_EXPLODE.value(), SoundSource.PLAYERS, 1.2f, 0.7f);
 		level.playSound(null, pos.x, pos.y, pos.z,
 				SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 0.8f, 1.4f);
+	}
+
+	/** Drop an in-progress slam-jump without firing it (leave, death, untransform). */
+	public static void clear(ServerPlayer player) {
+		JUMPING.remove(player.getUUID());
+	}
+
+	/** World shutdown — slam state dies with the world. */
+	public static void resetAll() {
+		JUMPING.clear();
 	}
 }

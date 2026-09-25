@@ -5,6 +5,10 @@ public final class ClientUraniumThreatState {
 	private static volatile int sourceCount = 0;
 	private static volatile long lastEntryMs = 0L;
 
+	static {
+		ClientSessionState.register(ClientUraniumThreatState::reset);
+	}
+
 	private ClientUraniumThreatState() {
 	}
 
@@ -27,5 +31,12 @@ public final class ClientUraniumThreatState {
 
 	public static long lastEntryMs() {
 		return lastEntryMs;
+	}
+
+	/** Drop all session state (registered with {@code ClientSessionState}). */
+	public static void reset() {
+		self = false;
+		sourceCount = 0;
+		lastEntryMs = 0L;
 	}
 }

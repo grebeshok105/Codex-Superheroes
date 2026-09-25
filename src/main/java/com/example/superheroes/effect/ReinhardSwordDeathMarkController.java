@@ -67,6 +67,24 @@ public final class ReinhardSwordDeathMarkController {
 		}
 	}
 
+	/**
+	 * Leave/death hook for the VICTIM — a mark must never execute on a respawned or relogged
+	 * player (audit B17: the old code let {@link #flushDeaths} hit the fresh entity with
+	 * {@code Float.MAX_VALUE} damage after the victim respawned).
+	 */
+	public static void cancelVictim(java.util.UUID victimId) {
+		MARKED.remove(victimId);
+		FINALIZING.remove(victimId);
+		BYPASS.remove(victimId);
+	}
+
+	/** World shutdown — marks die with the world. */
+	public static void resetAll() {
+		MARKED.clear();
+		FINALIZING.clear();
+		BYPASS.clear();
+	}
+
 	public static void flushDeaths(MinecraftServer server) {
 		if (MARKED.isEmpty()) return;
 		Iterator<Map.Entry<UUID, UUID>> it = MARKED.entrySet().iterator();

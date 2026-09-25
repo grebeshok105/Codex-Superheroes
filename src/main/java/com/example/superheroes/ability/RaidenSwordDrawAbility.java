@@ -3,14 +3,14 @@ package com.example.superheroes.ability;
 import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.effect.RaidenState;
 import com.example.superheroes.item.ModItems;
+import com.example.superheroes.item.bound.BoundWeapons;
 import com.example.superheroes.particle.ModParticles;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.item.ItemStack;
 
 /**
  * Manifest Yamato — toggle. Призывает фиолетовую Ямато в руку.
@@ -45,9 +45,12 @@ public final class RaidenSwordDrawAbility implements Ability {
 
 	@Override
 	public boolean tryActivate(ServerPlayer player) {
+		if (!giveSword(player)) {
+			player.displayClientMessage(Component.translatable("ability.superheroes.bound_weapon.no_room"), true);
+			return false;
+		}
 		RaidenState state = player.getAttachedOrCreate(ModAttachments.RAIDEN_STATE);
 		player.setAttached(ModAttachments.RAIDEN_STATE, state.withSwordDrawn(true));
-		giveSword(player);
 		ServerLevel level = player.serverLevel();
 		level.sendParticles(ModParticles.SWORD_EXPLOSION,
 				player.getX(), player.getY() + 1.0, player.getZ(),
@@ -75,28 +78,11 @@ public final class RaidenSwordDrawAbility implements Ability {
 				SoundEvents.AMETHYST_BLOCK_BREAK, SoundSource.PLAYERS, 0.7f, 1.3f);
 	}
 
-	public static void giveSword(ServerPlayer player) {
-		if (player.getMainHandItem().is(ModItems.MUSOU_NO_HITOTACHI)) return;
-		if (player.getOffhandItem().is(ModItems.MUSOU_NO_HITOTACHI)) return;
-		ItemStack stack = new ItemStack(ModItems.MUSOU_NO_HITOTACHI);
-		ItemStack mainHand = player.getMainHandItem();
-		if (mainHand.isEmpty()) {
-			player.setItemInHand(InteractionHand.MAIN_HAND, stack);
-		} else if (player.getOffhandItem().isEmpty()) {
-			player.setItemInHand(InteractionHand.OFF_HAND, stack);
-		} else {
-			if (!player.getInventory().add(stack)) {
-				player.drop(stack, false);
-			}
-		}
+	public static boolean giveSword(ServerPlayer player) {
+		return BoundWeapons.ensureHeld(player, ModItems.MUSOU_NO_HITOTACHI);
 	}
 
 	public static void removeSword(ServerPlayer player) {
-		for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
-			ItemStack s = player.getInventory().getItem(i);
-			if (s.is(ModItems.MUSOU_NO_HITOTACHI)) {
-				player.getInventory().setItem(i, ItemStack.EMPTY);
-			}
-		}
+		BoundWeapons.revoke(player, ModItems.MUSOU_NO_HITOTACHI);
 	}
 }
