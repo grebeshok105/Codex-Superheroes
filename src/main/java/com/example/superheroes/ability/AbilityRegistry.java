@@ -17,9 +17,7 @@ public final class AbilityRegistry {
 	public static final HandClapAbility HAND_CLAP = new HandClapAbility();
 	public static final StunningRoarAbility STUNNING_ROAR = new StunningRoarAbility();
 	public static final ViltrumiteChargeAbility VILTRUMITE_CHARGE = new ViltrumiteChargeAbility();
-	public static final MeteorSlamAbility METEOR_SLAM = new MeteorSlamAbility();
 	public static final ViltrumiteRecoveryAbility VILTRUMITE_RECOVERY = new ViltrumiteRecoveryAbility();
-	public static final ShockwavePulseAbility SHOCKWAVE_PULSE = new ShockwavePulseAbility();
 	public static final GuardiansBreakerAbility GUARDIANS_BREAKER = new GuardiansBreakerAbility();
 	public static final OmnimanViltrumiteRushAbility OMNIMAN_VILTRUMITE_RUSH = new OmnimanViltrumiteRushAbility();
 	public static final OmnimanWorldBreakerAbility OMNIMAN_WORLD_BREAKER = new OmnimanWorldBreakerAbility();
@@ -157,9 +155,7 @@ public final class AbilityRegistry {
 		register(HAND_CLAP);
 		register(STUNNING_ROAR);
 		register(VILTRUMITE_CHARGE);
-		register(METEOR_SLAM);
 		register(VILTRUMITE_RECOVERY);
-		register(SHOCKWAVE_PULSE);
 		register(GUARDIANS_BREAKER);
 		register(OMNIMAN_VILTRUMITE_RUSH);
 		register(OMNIMAN_WORLD_BREAKER);

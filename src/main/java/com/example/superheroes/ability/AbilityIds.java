@@ -11,10 +11,7 @@ public final class AbilityIds {
 	public static final ResourceLocation HAND_CLAP = ModId.of("hand_clap");
 	public static final ResourceLocation STUNNING_ROAR = ModId.of("stunning_roar");
 	public static final ResourceLocation VILTRUMITE_CHARGE = ModId.of("viltrumite_charge");
-	public static final ResourceLocation METEOR_SLAM = ModId.of("meteor_slam");
 	public static final ResourceLocation VILTRUMITE_RECOVERY = ModId.of("viltrumite_recovery");
-	public static final ResourceLocation SHOCKWAVE_PULSE = ModId.of("shockwave_pulse");
-	public static final ResourceLocation VILTRUMITE_THUNDER_CLAP = ModId.of("viltrumite_thunder_clap");
 	public static final ResourceLocation GUARDIANS_BREAKER = ModId.of("guardians_breaker");
 	public static final ResourceLocation OMNIMAN_VILTRUMITE_RUSH = ModId.of("omniman_viltrumite_rush");
 	public static final ResourceLocation OMNIMAN_WORLD_BREAKER = ModId.of("omniman_world_breaker");
@@ -25,7 +22,6 @@ public final class AbilityIds {
 	public static final ResourceLocation REPULSOR = ModId.of("repulsor");
 	public static final ResourceLocation UNIBEAM = ModId.of("unibeam");
 	public static final ResourceLocation IRON_MAN_NANO_FORM = ModId.of("iron_man_nano_form");
-	public static final ResourceLocation IRON_MAN_NANO_REPAIR = ModId.of("iron_man_nano_repair");
 	public static final ResourceLocation IRON_MAN_SMART_MISSILE = ModId.of("iron_man_smart_missile");
 	public static final ResourceLocation IRON_MAN_SUIT_SWITCH = ModId.of("iron_man_suit_switch");
 	public static final ResourceLocation IRON_MAN_LEGION = ModId.of("iron_man_legion");
@@ -63,9 +59,6 @@ public final class AbilityIds {
 	public static final ResourceLocation NARUTO_SAGE_MODE = ModId.of("naruto_sage_mode");
 	public static final ResourceLocation NARUTO_OODAMA_RASENGAN = ModId.of("naruto_oodama_rasengan");
 	public static final ResourceLocation NARUTO_BIJUUDAMA = ModId.of("naruto_bijuudama");
-	public static final ResourceLocation NARUTO_KURAMA_CLOAK = ModId.of("naruto_kurama_cloak");
-	public static final ResourceLocation NARUTO_TAILED_BEAST_BOMB = ModId.of("naruto_tailed_beast_bomb");
-	public static final ResourceLocation NARUTO_FLYING_RAIJIN = ModId.of("naruto_flying_raijin");
 
 	public static final ResourceLocation CAP_SHIELD_THROW = ModId.of("cap_shield_throw");
 	public static final ResourceLocation CAP_SHIELD_SLAM = ModId.of("cap_shield_slam");
