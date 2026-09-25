@@ -3,6 +3,8 @@ package com.example.superheroes;
 import com.example.superheroes.ability.AbilityRegistry;
 import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.command.SuperheroesCommands;
+import com.example.superheroes.core.ability.AbilityDenial;
+import com.example.superheroes.core.ability.AbilityRules;
 import com.example.superheroes.effect.ModEffects;
 import com.example.superheroes.hero.Heroes;
 import com.example.superheroes.item.ModItemGroups;
@@ -18,6 +20,8 @@ import com.example.superheroes.transform.HeroTransformService;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +37,13 @@ public class SuperheroesMod implements ModInitializer {
 		com.example.superheroes.lifecycle.PassiveReconciler.init();
 		registerPlayerLifecycle();
 		ModEffects.init();
+		// Owned by the heroes whose effects they are; moved into their modules in D2b.
+		AbilityRules.blocker((player, id) -> ModEffects.isAftermath(player) ? AbilityDenial.SILENT : null);
+		AbilityRules.blocker((player, id) -> player.hasEffect(ModEffects.DISABLED_ABILITIES)
+				? AbilityDenial.of(Component.translatable("ability.superheroes.disabled_by_snap").withStyle(ChatFormatting.DARK_PURPLE)) : null);
+		AbilityRules.blocker((player, id) -> player.hasEffect(ModEffects.VANITY_STRIPPED)
+				? AbilityDenial.of(Component.translatable("ability.superheroes.vanity_stripped").withStyle(ChatFormatting.DARK_PURPLE)) : null);
+		AbilityRules.freeCost(ModEffects::isMadness);
 		Heroes.init();
 		AbilityRegistry.init();
 		com.example.superheroes.entity.ModEntities.init();

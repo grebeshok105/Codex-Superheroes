@@ -16,7 +16,6 @@ effect <-> entity
 effect <-> hero
 effect <-> item
 effect <-> network
-effect <-> resource
 effect <-> transform
 entity <-> entity.ai
 entity <-> item

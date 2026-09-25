@@ -164,6 +164,13 @@
 - `TestHeroes.transform(ServerPlayer, ResourceLocation)` replaced 17 copy-pasted transform calls in 10 GameTest files.
 - `build.gradle` gained a backup Central mirror (`CentralAliyunMirror`) — the local repo1 redirect mirror does not carry `com.tngtech.archunit` and shared CI egress IPs get 429s; the extra repo keeps the new dependency resolvable everywhere.
 
+## Architecture migration — stage C2 (plan 02)
+
+- New `core/ability/` trio verbatim per plan: `AbilityDenial` (record, `SILENT` + `notify`), `AbilityBlocker` (functional interface), `AbilityRules` (`blocker`/`freeCost` registries, `firstBlock`, `isFree` — registration order = evaluation order).
+- `AbilityRouter.activate` — the first three `ModEffects` checks replaced by `AbilityRules.firstBlock(...)` + `blocked.notify(player)`; `canPayActivationCost` uses `AbilityRules.isFree`. `ResourceController` — both `isMadness` sites → `isFree` (tick local still named `madness`, semantically "free cost" now). Acceptance grep `ModEffects` in both files → empty.
+- `SuperheroesMod` registers the 4 rules right after `ModEffects.init()` (aftermath → Snap → Vanity → `freeCost(ModEffects::isMadness)`) with the plan's D2b note; two imports added (`Component`, `ChatFormatting`) since the moved code is spelled unqualified there.
+- Characterize-first: 8 `AbilityGateGameTests` PASSED on old code and again post-migration (65/65 gametests in gate). Cycle baseline shrank 31→30 (`effect <-> resource` pair dropped — `ResourceController` no longer imports `ModEffects`; orchestrator regenerated).
+
 ## Architecture migration — stage C1 (plan 02)
 
 - 81 duplicate `AbilityCooldowns.isOnCooldown(player, getId())` calls removed from `Ability.canActivate` implementations (plan said 85; actual inventory was 82 sites in `ability/` = 81 own-id + 1 router check). Deletion shapes: `return !cd` → `return true` (64), conjunct removal preserving the rest (13), whole `if (cd)` statement removal (4 — the two Raiden ones dropped a cooldown message that was already unreachable: the router rejects before `canActivate` runs). Cooldown SET sites (`setCooldownTicks`) untouched per «Нельзя менять».
