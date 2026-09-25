@@ -1,4 +1,4 @@
-# Build the project and run all configured tests for every push and pull request.
+# Run the canonical quality gate (build, JUnit, sanity and jar audits) on every push and pull request.
 
 name: build
 on: [pull_request, push]
@@ -22,8 +22,8 @@ jobs:
       - name: make gradle wrapper executable
         run: chmod +x ./gradlew
 
-      - name: build
-        run: ./gradlew build --no-daemon
+      - name: quality gate
+        run: ./gradlew qualityGate --no-daemon
 
       - name: capture build artifacts
         uses: actions/upload-artifact@v7
