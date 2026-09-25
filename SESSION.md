@@ -13,7 +13,7 @@
 | 1 | B1 no-drop recursion crash, B7 bound-weapon dup, GameTest lane | `hoplite/kroton-d9205130` | PR open |
 | 2 | B2 stale `HeroData` write-back; single `HeroData` writer (debt 2) | `hoplite/kroton-d9205130--herodata-writer` | PR open (stacked on 1) |
 | 3 | Lifecycle: B3, B4, B8, B17, B23, N1 (main-thread leave hook) | `hoplite/kroton-d9205130--lifecycle` | PR open (stacked on 2) |
-| 4 | B5 cooldown/heal reset on hero swap, B6 Snap stones | | todo |
+| 4 | B5 cooldown/heal reset on hero swap, B6 Snap stones | `hoplite/kroton-d9205130--cooldowns-snap` | PR open (stacked on 3) |
 | 5 | Damage pipeline B9, B20, B21; B11 global tick rate | | todo |
 | 6 | B10 `WorldDestructionPolicy` | | todo |
 | 7 | B15 client state/session | | todo |
@@ -47,6 +47,13 @@
 - Transform cooldown moved from a `WeakHashMap` to the `TRANSFORM_TICK` attachment; ~20 controllers got `resetAll()`/`onPlayerGone`/`cancel` hooks wired into `SERVER_STOPPED` — static maps no longer leak into a reopened world on the same JVM (B8).
 - Pandora revival state is now the persistent `PANDORA_REVIVED` attachment + an invulnerable control lock (was an NBT flag + in-memory set).
 
+## Completed this session (stage 4)
+
+- `ABILITY_COOLDOWNS` persistent attachment (`Map<ResourceLocation, Long>` of game-time deadlines) replaces the static `AbilityCooldowns` map — relog and hero swaps no longer reset cooldowns (B5). Not `copyOnDeath`: death still resets, matching the old semantics. `syncAll` on join resends live deadlines to the client; `clearAndSync` moved to the death hook.
+- `transform()` no longer heals (`setHealth(min(health, maxHealth))`) and no longer refills energy — energy carries over like mana when swapping from a live hero (`d.hasHero() ? min(energy, max) : max`), first-time transforms still start full.
+- Snap now burns the stones it actually checked: `InfinityGauntletData.clearStones` empties `InsertedStones` on the gauntlet and loose `InfinityStoneItem`s are removed — the snap is no longer infinite (B6).
+- 3 new GameTests (`HeroSwapGameTests`): swap keeps cooldowns, no free heal/energy refill, snap consumes gauntlet + loose stones.
+
 ## Important decisions
 
 - Bound weapons are identified by type (`BoundWeaponItem`) and validated by token; untokened copies are treated as stale on purpose (none are obtainable legitimately; old saves could hold leaked copies).
@@ -59,6 +66,7 @@
 
 ## Verification
 
+- Stage 4: `qualityGate` green, 19/19 GameTests. Negative check — without the `hasHero()` guard, first-time transforms start with 0 energy and `windPrisonEndsWhenItsZoneExpires` fails.
 - Stage 3: `qualityGate` green, 16/16 GameTests (7 new lifecycle regressions: owner-leave lock release, refcount, shadow reconcile, transient-vs-permanent NBT, attachment-backed transform cooldown, forceUntransform clears locks+cooldowns, dead-caster snap).
 - Stage 2: `qualityGate` green, 9/9 GameTests; negative check — old tick write-back makes `windPrisonEndsWhenItsZoneExpires` fail.
 - `./gradlew qualityGate --no-daemon` green on stage 1: JUnit, 8 `ProjectSanityTest` checks, assertion audit, jar isolation audit, 7/7 GameTests.

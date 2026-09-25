@@ -139,8 +139,8 @@ public final class LifecycleGameTests implements FabricGameTest {
 
 		HeroTransformService.forceUntransform(player);
 
-		helper.assertFalse(AbilityCooldowns.isOnCooldown(player, AbilityIds.RAIDEN_SWORD_DRAW),
-				"ability cooldowns cleared with the hero");
+		helper.assertTrue(AbilityCooldowns.isOnCooldown(player, AbilityIds.RAIDEN_SWORD_DRAW),
+				"cooldown deadlines persist — an untransform must not reset them");
 		helper.assertFalse(zombie.isNoAi(), "held control locks released with the hero");
 		TestPlayers.leave(player);
 		helper.succeed();

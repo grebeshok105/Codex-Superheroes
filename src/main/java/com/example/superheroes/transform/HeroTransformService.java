@@ -51,7 +51,9 @@ public final class HeroTransformService {
 		}
 		HeroData updated = HeroDataStore.update(player, d -> new HeroData(
 				Optional.of(heroId),
-				hero.getEnergyMax(),
+				// carried over like mana on a hero swap — a swap must not be a free refill
+				// (audit B5); a fresh transform still starts with full energy
+				d.hasHero() ? Math.min(d.energy(), hero.getEnergyMax()) : hero.getEnergyMax(),
 				Math.min(d.mana(), hero.getManaMax()),
 				bindings,
 				java.util.Set.of()
@@ -59,7 +61,8 @@ public final class HeroTransformService {
 		clearHeroRuntimeState(player);
 		hero.applyPassives(player);
 		player.refreshDimensions();
-		player.setHealth(player.getMaxHealth());
+		// keep absolute health — transforming must not be a free heal (audit B5)
+		player.setHealth(Math.min(player.getHealth(), player.getMaxHealth()));
 		ModNetworking.broadcastRemoteHeroSkin(player);
 		playTransformFx(player, true);
 		com.example.superheroes.effect.HeroReactionController.onTransformed(player, heroId);
@@ -174,7 +177,7 @@ public final class HeroTransformService {
 	 */
 	public static void onPlayerLeave(ServerPlayer player) {
 		java.util.UUID id = player.getUUID();
-		com.example.superheroes.ability.AbilityCooldowns.clear(id);
+		// ability cooldowns intentionally persist — they live on the player attachment (audit B5)
 		com.example.superheroes.resource.EnergyLocks.clear(id);
 		com.example.superheroes.effect.RemDemonismController.clear(player);
 		com.example.superheroes.effect.UnibeamController.clearState(id);
@@ -189,7 +192,7 @@ public final class HeroTransformService {
 	 */
 	public static void clearHeroRuntimeState(ServerPlayer player) {
 		com.example.superheroes.effect.UnibeamController.clearState(player.getUUID());
-		com.example.superheroes.ability.AbilityCooldowns.clearAndSync(player);
+		// ability cooldowns survive hero swaps — they are persistent deadlines, not session state
 		com.example.superheroes.effect.RegulusTotemController.clear(player.getUUID());
 		com.example.superheroes.effect.RegulusMadnessController.clearMadness(player);
 		com.example.superheroes.effect.ReinhardController.clearAdaptations(player);

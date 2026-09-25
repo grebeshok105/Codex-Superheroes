@@ -185,6 +185,7 @@ public class SuperheroesMod implements ModInitializer {
 		PlayerLifecycle.onJoin(com.example.superheroes.effect.ReinhardController::onPlayerJoin);
 		PlayerLifecycle.onJoin(com.example.superheroes.effect.BattleBeastCurseController::reapplyOnJoin);
 		PlayerLifecycle.onJoin(com.example.superheroes.effect.RegulusMadnessController::clearMadness);
+		PlayerLifecycle.onJoin(com.example.superheroes.ability.AbilityCooldowns::syncAll);
 
 		// leave — drop session-scoped state; never runs gameplay deactivate side-effects.
 		PlayerLifecycle.onLeave(HeroTransformService::onPlayerLeave);
@@ -237,6 +238,7 @@ public class SuperheroesMod implements ModInitializer {
 		PlayerLifecycle.onDeath(com.example.superheroes.ability.NarutoOodamaRasenganAbility::clear);
 		PlayerLifecycle.onDeath(com.example.superheroes.ability.NarutoRasenshurikenAbility::clear);
 		PlayerLifecycle.onDeath(com.example.superheroes.ability.CapShieldSlamAbility::clear);
+		PlayerLifecycle.onDeath(com.example.superheroes.ability.AbilityCooldowns::clearAndSync);
 
 		// respawn — reconcile the fresh entity with state that outlives death.
 		PlayerLifecycle.onRespawn(HeroTransformService::onPlayerRespawn);
@@ -248,7 +250,6 @@ public class SuperheroesMod implements ModInitializer {
 			com.example.superheroes.horde.HordeManager.resetAll();
 			com.example.superheroes.effect.SungJinwooController.resetAll();
 			com.example.superheroes.effect.MonarchsDomainController.resetAll();
-			com.example.superheroes.ability.AbilityCooldowns.resetAll();
 			com.example.superheroes.resource.EnergyLocks.resetAll();
 			com.example.superheroes.effect.RemDemonismController.resetAll();
 			com.example.superheroes.effect.UnibeamController.resetAll();

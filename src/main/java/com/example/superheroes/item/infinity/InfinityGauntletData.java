@@ -55,6 +55,11 @@ public final class InfinityGauntletData {
 		return true;
 	}
 
+	/** Removes every inserted stone — used when the Snap consumes the gauntlet (audit B6). */
+	public static void clearStones(ItemStack stack) {
+		write(stack, List.of());
+	}
+
 	public static InfinityStoneType ejectLast(ItemStack stack) {
 		List<InfinityStoneType> current = new ArrayList<>(getStones(stack));
 		if (current.isEmpty()) return null;

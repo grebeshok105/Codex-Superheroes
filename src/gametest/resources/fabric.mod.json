@@ -10,7 +10,8 @@
 		"fabric-gametest": [
 			"com.example.superheroes.gametest.BoundWeaponGameTests",
 			"com.example.superheroes.gametest.HeroDataGameTests",
-			"com.example.superheroes.gametest.LifecycleGameTests"
+			"com.example.superheroes.gametest.LifecycleGameTests",
+			"com.example.superheroes.gametest.HeroSwapGameTests"
 		]
 	},
 	"depends": {

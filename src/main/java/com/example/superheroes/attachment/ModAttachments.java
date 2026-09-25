@@ -13,6 +13,9 @@ import com.example.superheroes.transform.HeroData;
 import com.mojang.serialization.Codec;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentRegistry;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
+import net.minecraft.resources.ResourceLocation;
+
+import java.util.Map;
 
 public final class ModAttachments {
 	public static final AttachmentType<HeroData> HERO_DATA = AttachmentRegistry.<HeroData>builder()
@@ -92,6 +95,14 @@ public final class ModAttachments {
 	/** Tick of the last hero transform/untransform; not persistent so a new world starts with no cooldown. */
 	public static final AttachmentType<Long> TRANSFORM_TICK =
 			AttachmentRegistry.create(ModId.of("transform_tick"));
+
+	/**
+	 * Ability cooldown deadlines by level game time. Persistent so a hero swap or relog cannot
+	 * reset cooldowns (audit B5); intentionally NOT copyOnDeath — death resets cooldowns.
+	 */
+	public static final AttachmentType<Map<ResourceLocation, Long>> ABILITY_COOLDOWNS = AttachmentRegistry.<Map<ResourceLocation, Long>>builder()
+			.persistent(Codec.unboundedMap(ResourceLocation.CODEC, Codec.LONG))
+			.buildAndRegister(ModId.of("ability_cooldowns"));
 
 	/** Pandora has played her revival cinematic and is permanently un-hittable until she drops the hero. */
 	public static final AttachmentType<Boolean> PANDORA_REVIVED = AttachmentRegistry.<Boolean>builder()
