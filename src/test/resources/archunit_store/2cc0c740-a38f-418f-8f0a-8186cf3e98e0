@@ -1,0 +1,4 @@
+Method <com.example.superheroes.falbiks.HeroComponentAccess.resolve(java.lang.Class)> gets field <com.example.superheroes.SuperheroesMod.LOGGER> in (HeroComponentAccess.java:61)
+Method <com.example.superheroes.lifecycle.PlayerLifecycle.fire(java.util.List, net.minecraft.server.level.ServerPlayer, java.lang.String)> gets field <com.example.superheroes.SuperheroesMod.LOGGER> in (PlayerLifecycle.java:85)
+Method <com.example.superheroes.lifecycle.PlayerLifecycle.init()> gets field <com.example.superheroes.SuperheroesMod.LOGGER> in (PlayerLifecycle.java:74)
+Static Initializer <com.example.superheroes.effect.ThanosCrossModSnapHook.<clinit>()> gets field <com.example.superheroes.SuperheroesMod.LOGGER> in (ThanosCrossModSnapHook.java:47)

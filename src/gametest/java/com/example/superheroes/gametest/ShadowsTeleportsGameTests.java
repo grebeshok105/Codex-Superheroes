@@ -26,8 +26,7 @@ public final class ShadowsTeleportsGameTests implements FabricGameTest {
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void shadowsDisbandOnUntransform(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
-		helper.assertTrue(HeroTransformService.transform(player, SungJinwooHero.ID),
-				"transform into Sung Jin-Woo");
+		TestHeroes.transform(player, SungJinwooHero.ID);
 
 		helper.runAfterDelay(5, () -> {
 			helper.assertTrue(SungJinwooController.aliveCount(player) == SungJinwooController.MAX_SHADOWS,

@@ -4,7 +4,6 @@ import com.example.superheroes.damage.ModDamageTypes;
 import com.example.superheroes.effect.KawarimiController;
 import com.example.superheroes.effect.ReinhardTimeSlowController;
 import com.example.superheroes.hero.NarutoHero;
-import com.example.superheroes.transform.HeroTransformService;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -69,7 +68,7 @@ public final class DamagePipelineGameTests implements FabricGameTest {
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void kawarimiSavesFromLethalHit(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
-		helper.assertTrue(HeroTransformService.transform(player, NarutoHero.ID), "naruto transform");
+		TestHeroes.transform(player, NarutoHero.ID);
 		Zombie attacker = helper.spawn(EntityType.ZOMBIE, 1, 1, 1);
 		// Mock players join with private spawnInvulnerableTime=60 that blocks any
 		// hurt() not in #bypasses_invulnerability; tick() only decrements by 1.

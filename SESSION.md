@@ -2,9 +2,9 @@
 
 ## Active work
 
-- Goal: implement `docs/audits/2026-09-25-opus-architecture-audit.md` as the restoration backlog — fix real bugs and their architectural root causes, stage by stage, without blind rewrites or gameplay redesign.
-- Delivery: a stack of PRs, one per audit stage. Each stage re-verifies its findings on current code before fixing and adds regression tests.
-- The audit's «Статус исправлений» table is the live tracker; update it with every stage.
+- Goal: the bugfix backlog (`docs/audits/2026-09-25-opus-architecture-audit.md`) is integrated on `main`; active work is the architecture-migration program in `docs/design/architecture-migration/` — `00-overview.md` is the map (stage graph §2.1, orchestration §11), plans `01`–`06` are executed stage by stage.
+- Delivery: a stack of PRs, one per migration stage. Orchestrator (main session) assigns file ownership, integrates worker branches, runs every `Run:` command and `qualityGate`, owns `archunit_store/**`, `package-cycles-baseline.txt`, golden files, status tables and this file.
+- The «Статус стадий» table inside each plan is the live tracker; update it with every stage.
 
 ## Stage roadmap (audit §5)
 
@@ -147,6 +147,15 @@
 - All 4 "потенциальные" findings verified real against current code and fixed:- Architecture audit 2 is preserved as two complementary files: `docs/audits/2026-09-25-hero-modularity-audit.md` (hero locality, `HeroModule`/`HeroProfile`, Scorpion pilot, Reinhard stress-test) and `docs/audits/2026-09-25-hoplite-structural-audit.md` (package cycles, registries, router contract, services, payloads).
 - The migration that synthesizes both audits is split into six executable plans in `docs/design/architecture-migration/` (`00-overview.md` is the map; `01`–`06` are the plans). They were revised after an external review and rebased on the bugfix stages 4–12 (#40, #42–#49): plans extend the BF11 seams (`HeroTickDispatcher`, `HeroLifecycle`, `Hero` hooks), BF7 `ClientSessionState` and BF10 `PUBLIC_HERO` instead of adding parallel ones. The monolithic `docs/design/2026-09-25-architecture-migration-plan.md` is an unchanged archive of the pre-review version and is not executed or updated.
 
+## Architecture migration — stage A1 (plan 01)
+
+- ArchUnit guardrails landed: `src/test/java/.../architecture/` — `CodexClasses` imports main/client class dirs from Gradle sysprops; `ArchitectureRulesTest` holds 5 frozen rules (shared→concrete-hero deps, main→client, ServerTickEvents outside the dispatcher, lifecycle hooks outside registrars, depends-on-composition-roots) and 6 strict rules for the future layered packages (core/mechanic/hero-module rules + module-list construction/reference rules); `ClientArchitectureRulesTest` mirrors it for `src/client`; `PackageCycleRatchetTest` ratchets bidirectional package pairs against `src/test/resources/architecture/package-cycles-baseline.txt` (`-Dcodex.writeCycleBaseline=true` regenerates).
+- Freeze store lives in `src/test/resources/archunit_store/` (`archunit.properties`: `allowStoreCreation=false`, `allowStoreUpdate=true` — new violations fail, shrinking violations update the store). Committed baseline: 32 cycle pairs, 134 shared→concrete-hero deps, 33 client→hero, 74 lifecycle-hook call sites, 4 composition-root deps, 5 remaining tick-field accesses (most were already migrated in stage 11b), 0 main→client.
+- `qualityGate` now depends on `verifyArchitectureBaseline` — a PR fails if the store/baseline drift uncommitted.
+- Negative probes (temporary `core/module`/`hero/scorpion` stubs + a synthetic cycle) failed in exactly the expected rules, confirming the strict rules really fire.
+- `TestHeroes.transform(ServerPlayer, ResourceLocation)` replaced 17 copy-pasted transform calls in 10 GameTest files.
+- `build.gradle` gained a backup Central mirror (`CentralAliyunMirror`) — the local repo1 redirect mirror does not carry `com.tngtech.archunit` and shared CI egress IPs get 429s; the extra repo keeps the new dependency resolvable everywhere.
+
 ## Important decisions
 - Bound weapons are identified by type (`BoundWeaponItem`) and validated by token; untokened copies are treated as stale on purpose (none are obtainable legitimately; old saves could hold leaked copies).
 - Bound weapons never become item entities: returned to the owner when valid and there is room, otherwise deleted (the ability can reissue).
@@ -159,6 +168,7 @@
 
 ## Verification
 
+- Migration A1: `qualityGate` green (ArchUnit tests + `verifyArchitectureBaseline` included); negative probes trip exactly the five expected rules; baseline files committed. `runClient` launches to the title screen under xvfb on the orchestration VM.
 - Stage 15: `qualityGate` green, 24/24 GameTests (2 new: horde audience pause/resume, ram adopt/dedupe).
 - Stage 14: `qualityGate` green, 24/24 GameTests (2 новых `TargetPredicateGameTests`: AoE бьёт врага и пропускает тиммейта без friendly fire — через `DoomsdayRoar` end-to-end; `pvp=false` убирает игроков из сканов). Готча: `makeMockServerPlayerInLevel` хардкодит `isCreative()=true` и общее имя `test-mock-player` — для pvp/team-тестов нужен `TestPlayers.join(helper, name)` с реальным ServerPlayer.
 - Stage 11: `qualityGate` green, 27/27 GameTests (3 new dispatcher tests). Intentionally kept: `CombatImpactEngine`'s nano-hammer branch (reads the `NANO_FORM` attachment — an ability-state rule, not a lookup table) and client-side statics (`ThanosHero`, `PandoraHero` tables used by HUD filters).
@@ -168,7 +178,7 @@
 - Stage 2: `qualityGate` green, 9/9 GameTests; negative check — old tick write-back makes `windPrisonEndsWhenItsZoneExpires` fail.
 - `./gradlew qualityGate --no-daemon` green on stage 1: JUnit, 8 `ProjectSanityTest` checks, assertion audit, jar isolation audit, 7/7 GameTests.
 - Negative check: re-inserting the old mixin logic makes `droppingWithFullInventoryDoesNotRecurse` fail with `StackOverflowError`.
-- No `runClient` in-game session: the sandbox has no display. Server behavior is covered by GameTests with real joined players.
+- `runClient` reaches the title screen on the orchestration VM (DISPLAY=:0 + xvfb-run); runtime checklists are feasible for client-facing stages. Server behavior is covered by GameTests with real joined players.
 
 ## Known issues / follow-ups
 
@@ -183,7 +193,7 @@
 
 ## Next session
 
-1. Read this file, `AGENTS.md`, and the audit's «Статус исправлений» table — the bugfix stack (#37–#53) is integrated on `main`; every stage's state lives in the tracker.
-2. For architecture work: `docs/design/architecture-migration/00-overview.md` plus the one plan whose stage you execute (stage graph §2.1). First stage plan 1 `A1` can start now that the bugfix PRs and #41 are on `main`.
+1. Read this file, `AGENTS.md`, and the plan's «Статус стадий» tables — migration stage `A1` is done on `main`; the next legal stages per `00-overview.md` §2.1 are `A2`, `N1`/`N2`/`N3`, `CL2` (three tracks in parallel).
+2. For architecture work: `docs/design/architecture-migration/00-overview.md` plus the one plan whose stage you execute (stage graph §2.1).
 3. Re-verify findings while implementing; do not assume subagent-only findings are proven until checked.
 4. Keep `qualityGate` green; add GameTests for server behavior; update the audit tracker and this file per stage.

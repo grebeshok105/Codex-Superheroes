@@ -5,7 +5,6 @@ import com.example.superheroes.ability.AbilityRouter;
 import com.example.superheroes.effect.MirrorDimensionController;
 import com.example.superheroes.hero.PandoraHero;
 import com.example.superheroes.network.MirrorDimensionStatusC2SPayload;
-import com.example.superheroes.transform.HeroTransformService;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -34,7 +33,7 @@ public final class HouseOfVanityGameTests implements FabricGameTest {
 		ServerPlayer pandora = TestPlayers.join(helper);
 		Vec3 p = abs(helper, 4, 2, 4);
 		pandora.teleportTo(p.x, p.y, p.z);
-		helper.assertTrue(HeroTransformService.transform(pandora, PandoraHero.ID), "pandora transform");
+		TestHeroes.transform(pandora, PandoraHero.ID);
 		return pandora;
 	}
 

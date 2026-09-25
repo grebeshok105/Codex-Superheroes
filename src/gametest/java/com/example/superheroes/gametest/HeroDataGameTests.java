@@ -17,7 +17,7 @@ public final class HeroDataGameTests implements FabricGameTest {
 	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = WIND_PRISON_DURATION_TICKS + 80)
 	public void windPrisonEndsWhenItsZoneExpires(GameTestHelper helper) {
 		ServerPlayer scaramouche = TestPlayers.join(helper);
-		helper.assertTrue(HeroTransformService.transform(scaramouche, ScaramoucheHero.ID), "transformed");
+		TestHeroes.transform(scaramouche, ScaramoucheHero.ID);
 		AbilityRouter.activate(scaramouche, AbilityIds.SCARAMOUCHE_WIND_PRISON);
 		helper.assertTrue(HeroDataStore.get(scaramouche).isActive(AbilityIds.SCARAMOUCHE_WIND_PRISON),
 				"Wind Prison starts");
