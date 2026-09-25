@@ -460,6 +460,16 @@ public class RamEntity extends PathfinderMob {
 		}
 	}
 
+	/**
+	 * Рам — сессионный призыв: не пишется в NBT чанка. Иначе после выгрузки
+	 * чанка из мира загружалась бы вторая копия, а контроллер, не видя живой
+	 * сущности, призывал бы ещё одну (дюп).
+	 */
+	@Override
+	public boolean shouldBeSaved() {
+		return false;
+	}
+
 	@Override
 	public void addAdditionalSaveData(CompoundTag tag) {
 		super.addAdditionalSaveData(tag);

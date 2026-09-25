@@ -1,10 +1,10 @@
 package com.example.superheroes.mixin.falbiks;
 
 import com.example.superheroes.effect.ModEffects;
+import com.example.superheroes.falbiks.HeroComponentAccess;
 import net.minecraft.world.entity.player.Player;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -23,16 +23,17 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  *
  * <p>Everything is fail-soft: if the friend's mod is absent the mixin simply
  * never applies, and {@code require = 0} means a future signature change won't
- * crash the game — at worst this single hook no-ops.
+ * crash the game — at worst this single hook no-ops. The owner is resolved
+ * reflectively via {@link HeroComponentAccess} for the same reason: a
+ * {@code @Shadow} field is verified at mixin apply time and would crash on an
+ * upstream rename, which {@code require = 0} cannot guard.
  */
 @Pseudo
 @Mixin(targets = "com.falbiks.heroes.core.component.HeroComponent", remap = false)
 public abstract class HeroComponentStripMixin {
-	@Shadow(remap = false)
-	private Player player;
-
 	@Inject(method = "tryActivate", at = @At("HEAD"), cancellable = true, remap = false, require = 0)
 	private void superheroes$blockActivateWhenVanityStripped(CallbackInfoReturnable<Boolean> cir) {
+		Player player = HeroComponentAccess.playerOf(this);
 		if (player != null && ModEffects.isVanityStripped(player)) {
 			cir.setReturnValue(false);
 		}
@@ -40,6 +41,7 @@ public abstract class HeroComponentStripMixin {
 
 	@Inject(method = "serverTick", at = @At("HEAD"), cancellable = true, remap = false, require = 0)
 	private void superheroes$blockTickWhenVanityStripped(CallbackInfo ci) {
+		Player player = HeroComponentAccess.playerOf(this);
 		if (player != null && ModEffects.isVanityStripped(player)) {
 			ci.cancel();
 		}
