@@ -112,6 +112,15 @@ class ArchitectureRulesTest {
 				.check(CodexClasses.mainAndClient());
 	}
 
+	@Test
+	void abilitiesDoNotCheckTheirOwnCooldown() {
+		FreezingArchRule.freeze(noClasses().that().implement(com.example.superheroes.ability.Ability.class)
+				.should().callMethod(com.example.superheroes.ability.AbilityCooldowns.class, "isOnCooldown",
+						net.minecraft.server.level.ServerPlayer.class, net.minecraft.resources.ResourceLocation.class)
+				.as("AbilityRouter owns the cooldown check; an ability may only check another ability's cooldown"))
+				.check(CodexClasses.main());
+	}
+
 	// ---- strict: empty today, enforced from the first class
 
 	@Test

@@ -42,8 +42,7 @@ public final class SpatialBindAbility implements Ability {
 
 	@Override
 	public boolean canActivate(ServerPlayer player) {
-		return MirrorDimensionController.hasActiveHouse(player)
-				&& !AbilityCooldowns.isOnCooldown(player, getId());
+		return MirrorDimensionController.hasActiveHouse(player);
 	}
 
 	@Override

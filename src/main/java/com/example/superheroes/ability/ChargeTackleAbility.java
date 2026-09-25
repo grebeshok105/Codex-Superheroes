@@ -50,7 +50,7 @@ public final class ChargeTackleAbility implements Ability {
 
 	@Override
 	public boolean canActivate(ServerPlayer player) {
-		return !AbilityCooldowns.isOnCooldown(player, getId());
+		return true;
 	}
 
 	@Override
