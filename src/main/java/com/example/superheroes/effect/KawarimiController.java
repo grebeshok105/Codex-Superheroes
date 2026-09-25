@@ -4,6 +4,7 @@ import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.hero.NarutoHero;
 import com.example.superheroes.particle.ModParticles;
 import com.example.superheroes.transform.HeroData;
+import com.example.superheroes.util.SafeTeleport;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
@@ -82,7 +83,7 @@ public final class KawarimiController {
 		// Teleport behind attacker
 		Vec3 attackerLook = attacker.getLookAngle();
 		Vec3 dest = attacker.position().subtract(attackerLook.scale(2.0));
-		dest = new Vec3(dest.x, attacker.getY(), dest.z);
+		dest = SafeTeleport.clamp(player.serverLevel(), player, new Vec3(dest.x, attacker.getY(), dest.z));
 		player.connection.teleport(dest.x, dest.y, dest.z, attacker.getYRot(), 0, Set.of());
 
 		// Debuff attacker

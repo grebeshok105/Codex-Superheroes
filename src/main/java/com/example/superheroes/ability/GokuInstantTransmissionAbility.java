@@ -2,6 +2,7 @@ package com.example.superheroes.ability;
 
 import com.example.superheroes.damage.ModDamageTypes;
 import com.example.superheroes.particle.ModParticles;
+import com.example.superheroes.util.SafeTeleport;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.game.ClientboundPlayerPositionPacket;
 import net.minecraft.resources.ResourceLocation;
@@ -68,6 +69,7 @@ public final class GokuInstantTransmissionAbility implements Ability {
 			dest = origin.add(dir.scale(12.0));
 		}
 
+		dest = SafeTeleport.clamp(level, player, dest);
 		spawnParticles(level, origin);
 		player.connection.teleport(dest.x, dest.y, dest.z, player.getYRot(), player.getXRot(), Set.of());
 		spawnParticles(level, dest);

@@ -3,6 +3,7 @@ package com.example.superheroes.effect;
 import com.example.superheroes.damage.ModDamageTypes;
 import com.example.superheroes.lifecycle.ControlLockKind;
 import com.example.superheroes.lifecycle.EntityControlLock;
+import com.example.superheroes.util.SafeTeleport;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.server.level.ServerLevel;
@@ -38,7 +39,7 @@ public final class DoomGripController {
 		ServerLevel level = doomsday.serverLevel();
 
 		Vec3 look = doomsday.getLookAngle().normalize();
-		Vec3 lungePos = target.position().subtract(look.scale(1.5));
+		Vec3 lungePos = SafeTeleport.clamp(level, doomsday, target.position().subtract(look.scale(1.5)));
 		doomsday.teleportTo(level, lungePos.x, lungePos.y, lungePos.z,
 				java.util.Set.of(), doomsday.getYRot(), doomsday.getXRot());
 		doomsday.connection.resetPosition();

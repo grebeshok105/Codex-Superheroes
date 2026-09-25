@@ -1,5 +1,6 @@
 package com.example.superheroes.ability;
 
+import com.example.superheroes.util.SafeTeleport;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -62,7 +63,8 @@ public final class ThanosSpacePortalAbility implements Ability {
 
 		Vec3 originPos = target.position();
 
-		Vec3 landing = player.position().add(dir.x * LANDING_DISTANCE, 0.0, dir.z * LANDING_DISTANCE);
+		Vec3 landing = SafeTeleport.clamp(level, target,
+				player.position().add(dir.x * LANDING_DISTANCE, 0.0, dir.z * LANDING_DISTANCE));
 		float yaw = (player.getYRot() + 180f) % 360f;
 		float pitch = 0f;
 

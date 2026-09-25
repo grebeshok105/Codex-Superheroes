@@ -2,6 +2,7 @@ package com.example.superheroes.effect;
 
 import com.example.superheroes.ability.AbilityIds;
 import com.example.superheroes.debug.AdminAbilityDebug;
+import com.example.superheroes.util.SafeTeleport;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.particles.ParticleTypes;
@@ -103,7 +104,7 @@ public final class ReinhardSpeedJudgmentController {
 
 	private static void teleportBehind(ServerPlayer attacker, LivingEntity target) {
 		Vec3 look = target.getViewVector(1f);
-		Vec3 behind = target.position().subtract(look.scale(1.6));
+		Vec3 behind = SafeTeleport.clamp(attacker.serverLevel(), attacker, target.position().subtract(look.scale(1.6)));
 		attacker.connection.teleport(behind.x, behind.y, behind.z, (target.getYRot() + 180f) % 360f, 0f);
 		attacker.lookAt(EntityAnchorArgument.Anchor.EYES, target.position().add(0, target.getEyeHeight(), 0));
 	}

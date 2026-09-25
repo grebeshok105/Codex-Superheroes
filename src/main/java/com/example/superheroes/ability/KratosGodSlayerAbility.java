@@ -1,6 +1,7 @@
 package com.example.superheroes.ability;
 
 import com.example.superheroes.damage.ModDamageTypes;
+import com.example.superheroes.util.SafeTeleport;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -64,7 +65,7 @@ public final class KratosGodSlayerAbility implements Ability {
 		}
 
 		Vec3 from = player.position();
-		Vec3 to = target.position().subtract(target.getLookAngle().scale(1.5));
+		Vec3 to = SafeTeleport.clamp(level, player, target.position().subtract(target.getLookAngle().scale(1.5)));
 		level.sendParticles(ParticleTypes.SOUL_FIRE_FLAME,
 				from.x, from.y + 1, from.z, 80, 0.5, 1.0, 0.5, 0.2);
 		player.teleportTo(to.x, to.y, to.z);

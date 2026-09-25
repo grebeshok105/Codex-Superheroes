@@ -2,6 +2,7 @@ package com.example.superheroes.ability;
 
 import com.example.superheroes.effect.SungJinwooController;
 import com.example.superheroes.entity.ShadowSoldierEntity;
+import com.example.superheroes.util.SafeTeleport;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -62,9 +63,11 @@ public final class ShadowExchangeAbility implements Ability {
 		Vec3 playerPos = player.position();
 		Vec3 shadowPos = nearest.position();
 
-		// Свап позиций
-		nearest.teleportTo(playerPos.x, playerPos.y, playerPos.z);
-		player.teleportTo(shadowPos.x, shadowPos.y, shadowPos.z);
+		// Свап позиций (с клэмпом по препятствиям — B22)
+		Vec3 shadowDest = SafeTeleport.clamp(level, nearest, playerPos);
+		Vec3 playerDest = SafeTeleport.clamp(level, player, shadowPos);
+		nearest.teleportTo(shadowDest.x, shadowDest.y, shadowDest.z);
+		player.teleportTo(playerDest.x, playerDest.y, playerDest.z);
 
 		// 0.5с неуязвимости
 		player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 10, 4, true, false, false));

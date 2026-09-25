@@ -1,6 +1,7 @@
 package com.example.superheroes.effect;
 
 import com.example.superheroes.attachment.ModAttachments;
+import com.example.superheroes.attachment.SungShadowArmy;
 import com.example.superheroes.entity.ModEntities;
 import com.example.superheroes.entity.ShadowSoldierEntity;
 import com.example.superheroes.hero.SungJinwooHero;
@@ -41,15 +42,16 @@ import java.util.concurrent.ConcurrentHashMap;
  *  - ВЕСЬ урон по Сону всегда переадресуется на одну случайную живую тень
  *    (без радиуса). Если живых нет — Сон получает урон сам.
  *  - При снятии костюма / выходе из игры — тени деспавнятся.
+ *  - Армия хранится в persistent-attachment {@link SungShadowArmy} (audit B18):
+ *    после рестарта сервера сохранённые тени перелинковываются по UUID, а не
+ *    спавнятся заново. Тень-сирота (владелец снял героя / ушёл) не атакует и
+ *    удаляет себя, когда владелец онлайн и её нет в его армии.
  */
 public final class SungJinwooController {
 	public static final int MAX_SHADOWS = 10;
 
-	private static final Map<UUID, List<UUID>> ARMY = new ConcurrentHashMap<>();
 	private static final Map<ServerLevel, List<DeathEcho>> DEATH_ECHOES = new ConcurrentHashMap<>();
 	private static final Set<UUID> SUPPRESSED_DEATH_ECHOES = ConcurrentHashMap.newKeySet();
-	private static final Set<UUID> SUMMONED = ConcurrentHashMap.newKeySet();
-	private static final Set<UUID> PHASE2 = ConcurrentHashMap.newKeySet();
 	private static final Random RNG = new Random();
 	/** TTL для буфера смертей: 30 минут (фактически не теряем эхо до Arise). */
 	private static final long DEATH_ECHO_TICKS = 20L * 60L * 30L;
@@ -105,6 +107,20 @@ public final class SungJinwooController {
 		return data != null && SungJinwooHero.ID.equals(data.heroId());
 	}
 
+	private static SungShadowArmy army(ServerPlayer player) {
+		SungShadowArmy a = player.getAttached(ModAttachments.SUNG_SHADOW_ARMY);
+		return a == null ? SungShadowArmy.EMPTY : a;
+	}
+
+	private static void saveArmy(ServerPlayer player, SungShadowArmy army) {
+		player.setAttached(ModAttachments.SUNG_SHADOW_ARMY, army);
+	}
+
+	/** Legitimacy check a shadow entity can run on itself: owner is Sung and lists it. */
+	public static boolean isArmyMember(ServerPlayer owner, UUID shadowId) {
+		return isSung(owner) && army(owner).shadowIds().contains(shadowId);
+	}
+
 	private static void tickPlayer(ServerPlayer player) {
 		boolean sung = isSung(player);
 		if (!sung) {
@@ -112,53 +128,55 @@ public final class SungJinwooController {
 			return;
 		}
 
-		List<UUID> ids = ARMY.computeIfAbsent(player.getUUID(), u -> new ArrayList<>());
-		// Чистим мёртвых — но НЕ респавним.
-		ids.removeIf(uuid -> {
-			Entity e = player.serverLevel().getEntity(uuid);
-			return !(e instanceof ShadowSoldierEntity ss) || !ss.isAlive();
+		SungShadowArmy a = army(player);
+		List<UUID> ids = new ArrayList<>(a.shadowIds());
+		ServerLevel level = player.serverLevel();
+		// Чистим мёртвых — но НЕ респавним. Неразрешённый UUID (невыгруженный
+		// чанк) остаётся в списке: тень перелинкуется, когда чанк загрузится.
+		boolean changed = ids.removeIf(uuid -> {
+			Entity e = level.getEntity(uuid);
+			return e != null && (!(e instanceof ShadowSoldierEntity ss) || !ss.isAlive());
 		});
-
-		if (!SUMMONED.contains(player.getUUID())) {
+		if (!a.summoned()) {
 			summonInitialArmy(player);
-			SUMMONED.add(player.getUUID());
-			ids = ARMY.get(player.getUUID());
+			a = army(player);
+			ids = new ArrayList<>(a.shadowIds());
+		} else if (changed) {
+			saveArmy(player, a.withShadows(ids));
 		}
 
-		boolean hasShadows = ids != null && !ids.isEmpty();
-		broadcastArmyState(player, hasShadows, ids == null ? 0 : ids.size());
+		broadcastArmyState(player, !ids.isEmpty(), ids.size());
 	}
 
 	public static void enterPhase2(ServerPlayer player) {
 		if (!isSung(player)) return;
-		if (PHASE2.add(player.getUUID())) {
-			List<UUID> ids = ARMY.get(player.getUUID());
-			boolean hasShadows = ids != null && !ids.isEmpty();
-			broadcastArmyState(player, hasShadows, ids == null ? 0 : ids.size());
-		}
+		SungShadowArmy a = army(player);
+		if (a.phase2()) return;
+		saveArmy(player, a.withPhase2(true));
+		List<UUID> ids = a.shadowIds();
+		broadcastArmyState(player, !ids.isEmpty(), ids.size());
 	}
 
 	public static boolean isPhase2(ServerPlayer player) {
-		return PHASE2.contains(player.getUUID());
+		return army(player).phase2();
 	}
 
 	public static void resetPhase(ServerPlayer player) {
-		PHASE2.remove(player.getUUID());
+		SungShadowArmy a = army(player);
+		if (a.phase2()) {
+			saveArmy(player, a.withPhase2(false));
+		}
 	}
 
-	/** World shutdown — army lists and level-keyed echo state must not leak into a new world. */
+	/** World shutdown — level-keyed echo state must not leak into a new world. */
 	public static void resetAll() {
-		ARMY.clear();
 		DEATH_ECHOES.clear();
 		SUPPRESSED_DEATH_ECHOES.clear();
-		SUMMONED.clear();
-		PHASE2.clear();
 	}
 
 	public static void summonInitialArmy(ServerPlayer player) {
 		ServerLevel level = player.serverLevel();
-		List<UUID> ids = ARMY.computeIfAbsent(player.getUUID(), u -> new ArrayList<>());
-		ids.clear();
+		List<UUID> ids = new ArrayList<>();
 		// 5 наземных, 5 летающих, расставлены полукругом сзади
 		for (int i = 0; i < MAX_SHADOWS; i++) {
 			boolean grounded = (i % 2 == 0); // чередуем
@@ -167,6 +185,7 @@ public final class SungJinwooController {
 				ids.add(shadow.getUUID());
 			}
 		}
+		saveArmy(player, army(player).withShadows(ids).withSummoned(true));
 		level.playSound(null, player.getX(), player.getY(), player.getZ(),
 				SoundEvents.WARDEN_EMERGE, SoundSource.PLAYERS, 0.5f, 1.6f);
 		level.sendParticles(ParticleTypes.PORTAL, player.getX(), player.getY() + 1.0, player.getZ(),
@@ -208,17 +227,14 @@ public final class SungJinwooController {
 	/** Совместимость с прежним API (Arise и др.). Случайный слот, случайная позиция. */
 	public static ShadowSoldierEntity spawnOneShadowAt(ServerLevel level, ServerPlayer owner, Vec3 pos) {
 		boolean grounded = RNG.nextBoolean();
-		List<UUID> ids = ARMY.computeIfAbsent(owner.getUUID(), u -> new ArrayList<>());
-		int slotIndex = ids.size();
+		int slotIndex = army(owner).shadowIds().size();
 		int slotCount = Math.max(MAX_SHADOWS, slotIndex + 1);
 		return spawnConfiguredShadowAt(level, owner, pos, slotIndex, slotCount, grounded);
 	}
 
 	public static int aliveCount(ServerPlayer player) {
-		List<UUID> ids = ARMY.get(player.getUUID());
-		if (ids == null) return 0;
 		int n = 0;
-		for (UUID id : ids) {
+		for (UUID id : army(player).shadowIds()) {
 			Entity e = player.serverLevel().getEntity(id);
 			if (e instanceof ShadowSoldierEntity ss && ss.isAlive()) n++;
 		}
@@ -227,9 +243,7 @@ public final class SungJinwooController {
 
 	public static List<ShadowSoldierEntity> aliveShadows(ServerPlayer player) {
 		List<ShadowSoldierEntity> out = new ArrayList<>();
-		List<UUID> ids = ARMY.get(player.getUUID());
-		if (ids == null) return out;
-		for (UUID id : ids) {
+		for (UUID id : army(player).shadowIds()) {
 			Entity e = player.serverLevel().getEntity(id);
 			if (e instanceof ShadowSoldierEntity ss && ss.isAlive()) out.add(ss);
 		}
@@ -302,35 +316,38 @@ public final class SungJinwooController {
 	}
 
 	public static void registerExtraShadow(ServerPlayer owner, ShadowSoldierEntity shadow) {
-		List<UUID> ids = ARMY.computeIfAbsent(owner.getUUID(), u -> new ArrayList<>());
+		SungShadowArmy a = army(owner);
+		List<UUID> ids = new ArrayList<>(a.shadowIds());
 		ids.add(shadow.getUUID());
+		saveArmy(owner, a.withShadows(ids));
 	}
 
 	public static void disbandAll(ServerPlayer player) {
-		List<UUID> ids = ARMY.remove(player.getUUID());
-		SUMMONED.remove(player.getUUID());
-		if (ids == null) return;
+		SungShadowArmy a = army(player);
+		saveArmy(player, SungShadowArmy.EMPTY);
 		ServerLevel level = player.serverLevel();
-		for (UUID id : ids) {
+		for (UUID id : a.shadowIds()) {
 			Entity e = level.getEntity(id);
 			if (e instanceof ShadowSoldierEntity ss) {
 				level.sendParticles(ParticleTypes.PORTAL, ss.getX(), ss.getY() + 1, ss.getZ(),
 						20, 0.3, 0.6, 0.3, 0.15);
 				ss.discard();
 			}
+			// Невыгруженные тени удаляют себя сами при загрузке чанка:
+			// их UUID больше нет в армии владельца (см. ShadowSoldierEntity.aiStep).
 		}
 	}
 
 	private static void disbandIfPresent(ServerPlayer player) {
-		if (ARMY.containsKey(player.getUUID()) || SUMMONED.contains(player.getUUID()) || PHASE2.contains(player.getUUID())) {
+		SungShadowArmy a = army(player);
+		if (!a.shadowIds().isEmpty() || a.summoned() || a.phase2()) {
 			disbandAll(player);
-			PHASE2.remove(player.getUUID());
 			broadcastArmyState(player, false, 0);
 		}
 	}
 
 	private static void broadcastArmyState(ServerPlayer player, boolean hasShadows, int count) {
-		boolean phase2 = PHASE2.contains(player.getUUID());
+		boolean phase2 = army(player).phase2();
 		SungShadowArmyS2CPayload payload = new SungShadowArmyS2CPayload(player.getUUID(), hasShadows, count, phase2);
 		for (ServerPlayer p : player.serverLevel().players()) {
 			ServerPlayNetworking.send(p, payload);

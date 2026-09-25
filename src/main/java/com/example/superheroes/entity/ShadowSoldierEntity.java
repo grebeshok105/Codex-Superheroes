@@ -8,6 +8,7 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.damagesource.DamageSource;
@@ -225,6 +226,21 @@ public class ShadowSoldierEntity extends PathfinderMob {
 		}
 
 		Player owner = getOwner();
+		if (owner == null) {
+			// Владелец офлайн или мёртв: тень «засыпает» — не атакует и не мстит,
+			// пока хозяин не вернётся (audit B18, сироты не дерутся).
+			if (this.getTarget() != null) this.setTarget(null);
+			this.setLastHurtByMob(null);
+			return;
+		}
+		// Тень легитимна, только пока владелец — Сон и держит её в своей армии.
+		// Иначе это сохранённая копия из прошлой сессии или пережиток disband —
+		// удаляемся, как это сделал бы disbandAll для выгруженной тени.
+		if (!(owner instanceof ServerPlayer ownerSp)
+				|| !com.example.superheroes.effect.SungJinwooController.isArmyMember(ownerSp, this.getUUID())) {
+			this.discard();
+			return;
+		}
 		LivingEntity desired = chooseTarget(owner);
 		// Подхватываем активный агрессор-таргет (HurtByTargetGoal) — не сбрасываем его.
 		LivingEntity current = this.getTarget();

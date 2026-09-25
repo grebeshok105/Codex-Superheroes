@@ -103,6 +103,12 @@ public final class ModAttachments {
 	public static final AttachmentType<Map<ResourceLocation, Long>> ABILITY_COOLDOWNS = AttachmentRegistry.create(ModId.of("ability_cooldowns"), b -> b
 			.persistent(Codec.unboundedMap(ResourceLocation.CODEC, Codec.LONG)));
 
+	/** Sung Jin-Woo's shadow army: entity UUIDs + summon/phase flags; persistent so a restart re-links shadows (audit B18). */
+	public static final AttachmentType<SungShadowArmy> SUNG_SHADOW_ARMY = AttachmentRegistry.<SungShadowArmy>builder()
+			.initializer(() -> SungShadowArmy.EMPTY)
+			.persistent(SungShadowArmy.CODEC)
+			.buildAndRegister(ModId.of("sung_shadow_army"));
+
 	/** Pandora has played her revival cinematic and is permanently un-hittable until she drops the hero. */
 	public static final AttachmentType<Boolean> PANDORA_REVIVED = AttachmentRegistry.create(ModId.of("pandora_revived"), b -> b
 			.initializer(() -> Boolean.FALSE)

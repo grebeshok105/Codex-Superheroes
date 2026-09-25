@@ -1,6 +1,7 @@
 package com.example.superheroes.ability;
 
 import com.example.superheroes.effect.ScorpionFx;
+import com.example.superheroes.util.SafeTeleport;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -83,6 +84,8 @@ public final class ScorpionFireTeleportAbility implements Ability {
 				dest = end.subtract(0, 1.5, 0);
 			}
 		}
+
+		dest = SafeTeleport.clamp(level, player, dest);
 
 		if (target != null) {
 			float yawTo = (float) Math.toDegrees(Math.atan2(
