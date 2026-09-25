@@ -28,6 +28,22 @@ final class TestPlayers {
 		player.connection.onDisconnect(new DisconnectionDetails(Component.literal("gametest")));
 	}
 
+	/**
+	 * Mock players join with a private {@code spawnInvulnerableTime=60} that makes {@code hurt()}
+	 * return false for damage not in {@code #bypasses_invulnerability}; {@code tick()} only
+	 * decrements it by 1. Clear it when a test needs real damage to land.
+	 */
+	static void clearSpawnInvulnerability(ServerPlayer player) {
+		try {
+			java.lang.reflect.Field f = ServerPlayer.class.getDeclaredField("spawnInvulnerableTime");
+			f.setAccessible(true);
+			f.setInt(player, 0);
+		} catch (ReflectiveOperationException e) {
+			throw new IllegalStateException(e);
+		}
+		player.invulnerableTime = 0;
+	}
+
 	static void fillInventory(ServerPlayer player) {
 		Inventory inventory = player.getInventory();
 		for (int i = 0; i < inventory.items.size(); i++) {
