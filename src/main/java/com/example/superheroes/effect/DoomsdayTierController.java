@@ -91,7 +91,8 @@ public final class DoomsdayTierController {
 		DoomsdayProgress progress = player.getAttachedOrCreate(ModAttachments.DOOMSDAY_PROGRESS);
 		HeroAttributes.DOOMSDAY.remove(player);
 		HeroAttributes.buildDoomsdayTierSet(progress.tier()).apply(player);
-		DoomsdayHero.applyTierEffects(player, progress.tier());
+		com.example.superheroes.lifecycle.PassiveReconciler.capture(player, DoomsdayHero.ID,
+				() -> DoomsdayHero.applyTierEffects(player, progress.tier()));
 		DoomsdayAdaptationController.reapplyDamageBonus(player);
 		player.setHealth(player.getMaxHealth());
 		sync(player);

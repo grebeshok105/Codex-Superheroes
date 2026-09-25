@@ -9,6 +9,7 @@
 		"LivingEntityFallDamageMixin",
 		"LivingEntityFallFlyingMixin",
 		"LivingEntityEffectMixin",
+		"LivingEntityPassiveEffectsMixin",
 		"LivingEntityHealBlockMixin",
 		"ThanosBlockBreakingMixin",
 		"KryptoniteShardPickupMixin",

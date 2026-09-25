@@ -59,7 +59,7 @@ public final class HeroTransformService {
 				java.util.Set.of()
 		));
 		clearHeroRuntimeState(player);
-		hero.applyPassives(player);
+		com.example.superheroes.lifecycle.PassiveReconciler.applyAndCapture(player, hero);
 		player.refreshDimensions();
 		// keep absolute health — transforming must not be a free heal (audit B5)
 		player.setHealth(Math.min(player.getHealth(), player.getMaxHealth()));
@@ -92,6 +92,7 @@ public final class HeroTransformService {
 			deactivateAll(player, data);
 		}
 		clearHeroRuntimeState(player);
+		com.example.superheroes.lifecycle.PassiveReconciler.clear(player.getUUID());
 		HeroDataStore.update(player, d -> d.withHero(null).withResources(0f, 0f).clearActive());
 		player.refreshDimensions();
 		ModNetworking.broadcastRemoteHeroSkin(player);
@@ -162,11 +163,11 @@ public final class HeroTransformService {
 
 	private static void reapplyLifecyclePassives(ServerPlayer player, Hero hero) {
 		if (DoomsdayHero.ID.equals(hero.getId())) {
-			hero.applyPassives(player);
+			com.example.superheroes.lifecycle.PassiveReconciler.applyAndCapture(player, hero);
 			return;
 		}
 		hero.removePassives(player);
-		hero.applyPassives(player);
+		com.example.superheroes.lifecycle.PassiveReconciler.applyAndCapture(player, hero);
 	}
 
 	/**

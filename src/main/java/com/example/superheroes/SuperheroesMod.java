@@ -30,6 +30,7 @@ public class SuperheroesMod implements ModInitializer {
 		ModAttachments.init();
 		EntityControlLock.init();
 		PlayerLifecycle.init();
+		com.example.superheroes.lifecycle.PassiveReconciler.init();
 		registerPlayerLifecycle();
 		ModEffects.init();
 		Heroes.init();
