@@ -171,8 +171,8 @@ public final class RegulusMadnessController {
 		if (state.isReading(player.level().getGameTime())) {
 			player.setDeltaMovement(Vec3.ZERO);
 			player.hurtMarked = true;
-			player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 8, 4, true, false, false));
-			player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 8, 250, true, false, false));
+			EffectRefresh.refresh(player, MobEffects.DAMAGE_RESISTANCE, 8, 4, true, false, false);
+			EffectRefresh.refresh(player, MobEffects.MOVEMENT_SLOWDOWN, 8, 250, true, false, false);
 			ServerLevel level = (ServerLevel) player.level();
 			if (player.tickCount % 2 == 0) {
 				level.sendParticles(ParticleTypes.END_ROD,

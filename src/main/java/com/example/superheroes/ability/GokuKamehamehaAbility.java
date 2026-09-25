@@ -133,15 +133,24 @@ public final class GokuKamehamehaAbility implements Ability {
 
 		double dist = eye.distanceTo(actualEnd);
 		int steps = (int) Math.max(8, dist * 2);
-		for (int i = 0; i < steps; i++) {
-			double t = (double) i / steps;
+		// Batched (audit §3): every ~1.5-block segment sends one packet per
+		// particle type with an elongated spread box instead of ~180
+		// single-particle packets per tick — same beam density.
+		int stride = 3;
+		double stepLen = dist / steps;
+		for (int i = 0; i < steps; i += stride) {
+			int count = Math.min(stride, steps - i);
+			double t = (i + (count - 1) / 2.0) / steps;
 			Vec3 p = eye.add(dir.scale(t * dist));
+			double hx = Math.abs(dir.x) * stepLen * (count - 1) * 0.5 + 0.1;
+			double hy = Math.abs(dir.y) * stepLen * (count - 1) * 0.5 + 0.1;
+			double hz = Math.abs(dir.z) * stepLen * (count - 1) * 0.5 + 0.1;
 			level.sendParticles(ModParticles.GOKU_KAMEHAMEHA_CORE,
-					p.x, p.y, p.z, 1, 0.15, 0.15, 0.15, 0.0);
+					p.x, p.y, p.z, count, hx, hy, hz, 0.0);
 			level.sendParticles(ModParticles.GOKU_KAMEHAMEHA_TRAIL,
-					p.x, p.y, p.z, 1, 0.4, 0.4, 0.4, 0.02);
+					p.x, p.y, p.z, count, hx * 2, hy * 2, hz * 2, 0.02);
 			level.sendParticles(ParticleTypes.END_ROD,
-					p.x, p.y, p.z, 1, 0.1, 0.1, 0.1, 0.0);
+					p.x, p.y, p.z, count, hx, hy, hz, 0.0);
 		}
 		level.sendParticles(ParticleTypes.EXPLOSION,
 				actualEnd.x, actualEnd.y, actualEnd.z, 2, 0.5, 0.5, 0.5, 0.0);

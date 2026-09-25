@@ -131,17 +131,12 @@ public final class UnibeamController {
 		Vec3 chest = chestOf(player);
 
 		int rays = Math.max(6, Math.round(8 + 18 * p));
-		for (int i = 0; i < rays; i++) {
-			double a = level.getRandom().nextDouble() * Math.PI * 2.0;
-			double dist = 0.4 + level.getRandom().nextDouble() * (0.4 + 0.6 * p);
-			double dy = (level.getRandom().nextDouble() - 0.5) * 0.7;
-			double sx = chest.x + Math.cos(a) * dist;
-			double sy = chest.y + dy;
-			double sz = chest.z + Math.sin(a) * dist;
-			level.sendParticles(ModParticles.UNIBEAM_SPARK,
-					sx, sy, sz, 1,
-					(chest.x - sx) * 0.5, (chest.y - sy) * 0.5, (chest.z - sz) * 0.5, 0.0);
-		}
+		// One packet instead of `rays` packets: the count form distributes the
+		// same converging swarm around the chest (audit §3).
+		double swarm = 0.4 + (0.4 + 0.6 * p);
+		level.sendParticles(ModParticles.UNIBEAM_SPARK,
+				chest.x, chest.y, chest.z, rays,
+				swarm, 0.35, swarm, 0.0);
 		level.sendParticles(ParticleTypes.SOUL_FIRE_FLAME,
 				chest.x, chest.y, chest.z,
 				Math.round(2 + 6 * p), 0.25, 0.25, 0.25, 0.02);
@@ -275,9 +270,9 @@ public final class UnibeamController {
 		player.hurtMarked = true;
 		player.fallDistance = 0f;
 		player.resetFallDistance();
-		player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 5, 250, false, false, false));
-		player.addEffect(new MobEffectInstance(MobEffects.JUMP, 5, 128, false, false, false));
-		player.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, 5, 0, false, false, false));
+		EffectRefresh.refresh(player, MobEffects.MOVEMENT_SLOWDOWN, 5, 250, false, false, false);
+		EffectRefresh.refresh(player, MobEffects.JUMP, 5, 128, false, false, false);
+		EffectRefresh.refresh(player, MobEffects.FIRE_RESISTANCE, 5, 0, false, false, false);
 	}
 
 	public static void clearState(UUID id) {
@@ -311,30 +306,28 @@ public final class UnibeamController {
 	private static void spawnBeamParticles(ServerLevel level, Vec3 origin, Vec3 dir, int progress) {
 		RandomSource rand = level.getRandom();
 		int slices = 60;
+		int spread = 2 + (int) (BEAM_RADIUS * 4);
+		// Batched (audit §3): one packet per slice carries `spread` sparks with a
+		// spread box covering the old disc + beam-ward streak, so ~60 packets per
+		// tick replace ~400 while the beam keeps the same density.
+		double sx = BEAM_RADIUS + Math.abs(dir.x) * 0.4;
+		double sy = BEAM_RADIUS + Math.abs(dir.y) * 0.4;
+		double sz = BEAM_RADIUS + Math.abs(dir.z) * 0.4;
 		for (int i = 0; i < slices; i++) {
 			double f = (i + rand.nextDouble()) / slices;
 			Vec3 center = origin.add(dir.scale(f * BEAM_RANGE));
-			int spread = 2 + (int) (BEAM_RADIUS * 4);
-			for (int j = 0; j < spread; j++) {
-				double a = rand.nextDouble() * Math.PI * 2.0;
-				double r = rand.nextDouble() * BEAM_RADIUS;
-				Vec3 perp = perpendicular(dir);
-				Vec3 perp2 = dir.cross(perp).normalize();
-				Vec3 off = perp.scale(Math.cos(a) * r).add(perp2.scale(Math.sin(a) * r));
-				Vec3 q = center.add(off);
-				level.sendParticles(ModParticles.UNIBEAM_SPARK,
-						q.x, q.y, q.z, 1,
-						dir.x * 0.4, dir.y * 0.4, dir.z * 0.4, 0.05);
-			}
+			level.sendParticles(ModParticles.UNIBEAM_SPARK,
+					center.x, center.y, center.z, spread,
+					sx, sy, sz, 0.05);
 		}
-		for (int i = 0; i < 20; i++) {
-			double f = rand.nextDouble();
-			Vec3 q = origin.add(dir.scale(f * BEAM_RANGE));
-			level.sendParticles(ParticleTypes.FLAME,
-					q.x, q.y, q.z, 2, 0.3, 0.3, 0.3, 0.02);
-			level.sendParticles(ParticleTypes.LAVA,
-					q.x, q.y, q.z, 1, 0.2, 0.2, 0.2, 0.0);
-		}
+		Vec3 mid = origin.add(dir.scale(BEAM_RANGE * 0.5));
+		double bx = Math.abs(dir.x) * BEAM_RANGE * 0.5;
+		double by = Math.abs(dir.y) * BEAM_RANGE * 0.5;
+		double bz = Math.abs(dir.z) * BEAM_RANGE * 0.5;
+		level.sendParticles(ParticleTypes.FLAME,
+				mid.x, mid.y, mid.z, 40, bx + 0.3, by + 0.3, bz + 0.3, 0.02);
+		level.sendParticles(ParticleTypes.LAVA,
+				mid.x, mid.y, mid.z, 20, bx + 0.2, by + 0.2, bz + 0.2, 0.0);
 		Vec3 end = origin.add(dir.scale(BEAM_RANGE));
 		if (progress % 4 == 0) {
 			level.sendParticles(ParticleTypes.EXPLOSION,
@@ -438,7 +431,7 @@ public final class UnibeamController {
 		int duration = direct ? baseDuration * 2 : baseDuration;
 		int amplifier = direct ? Math.min(baseAmplifier * 2 + 1, 4) : baseAmplifier;
 		for (Holder<MobEffect> effect : effects) {
-			target.addEffect(new MobEffectInstance(effect, duration, amplifier, false, true, true));
+			EffectRefresh.refresh(target, effect, duration, amplifier, false, true, true);
 		}
 	}
 

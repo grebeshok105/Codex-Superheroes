@@ -13,7 +13,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
@@ -137,8 +136,8 @@ public final class IronManReactorTracker {
 		player.setDeltaMovement(Vec3.ZERO);
 		player.fallDistance = 0f;
 		player.hurtMarked = true;
-		player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 5, 250, false, false, false));
-		player.addEffect(new MobEffectInstance(MobEffects.JUMP, 5, 128, false, false, false));
+		EffectRefresh.refresh(player, MobEffects.MOVEMENT_SLOWDOWN, 5, 250, false, false, false);
+		EffectRefresh.refresh(player, MobEffects.JUMP, 5, 128, false, false, false);
 	}
 
 	private static boolean playerHasReactor(ServerPlayer player) {

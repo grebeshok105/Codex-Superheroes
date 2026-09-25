@@ -360,8 +360,8 @@ public final class RemDemonismController {
 		ServerLevel level = player.serverLevel();
 		long elapsed = level.getGameTime() - windup.startTick;
 		double progress = Math.max(0.0, Math.min(1.0, elapsed / (double) CRATER_WINDUP_TICKS));
-		player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 6, 6, true, false, false));
-		player.addEffect(new MobEffectInstance(MobEffects.DIG_SLOWDOWN, 6, 5, true, false, false));
+		EffectRefresh.refresh(player, MobEffects.MOVEMENT_SLOWDOWN, 6, 6, true, false, false);
+		EffectRefresh.refresh(player, MobEffects.DIG_SLOWDOWN, 6, 5, true, false, false);
 		Vec3 right = new Vec3(-windup.forward.z, 0.0, windup.forward.x);
 		if (right.lengthSqr() < 1.0e-4) {
 			right = new Vec3(1.0, 0.0, 0.0);

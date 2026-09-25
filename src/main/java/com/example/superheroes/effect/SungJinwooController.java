@@ -145,6 +145,11 @@ public final class SungJinwooController {
 			saveArmy(player, a.withShadows(ids));
 		}
 
+		// Periodic resend so a player who just walked into tracking range
+		// converges without waiting for the next count change.
+		if (player.tickCount % 100 == 0) {
+			LAST_SENT.remove(player.getUUID());
+		}
 		broadcastArmyState(player, !ids.isEmpty(), ids.size());
 	}
 
@@ -172,6 +177,7 @@ public final class SungJinwooController {
 	public static void resetAll() {
 		DEATH_ECHOES.clear();
 		SUPPRESSED_DEATH_ECHOES.clear();
+		LAST_SENT.clear();
 	}
 
 	public static void summonInitialArmy(ServerPlayer player) {
@@ -342,15 +348,30 @@ public final class SungJinwooController {
 		SungShadowArmy a = army(player);
 		if (!a.shadowIds().isEmpty() || a.summoned() || a.phase2()) {
 			disbandAll(player);
+			LAST_SENT.remove(player.getUUID()); // force the all-clear send
 			broadcastArmyState(player, false, 0);
 		}
 	}
 
+	/** Last army state sent per owner — broadcast only on change (audit §3). */
+	private static final Map<UUID, ArmyState> LAST_SENT = new ConcurrentHashMap<>();
+
+	private record ArmyState(boolean hasShadows, int count, boolean phase2) {
+	}
+
 	private static void broadcastArmyState(ServerPlayer player, boolean hasShadows, int count) {
-		boolean phase2 = army(player).phase2();
-		SungShadowArmyS2CPayload payload = new SungShadowArmyS2CPayload(player.getUUID(), hasShadows, count, phase2);
-		for (ServerPlayer p : player.serverLevel().players()) {
-			ServerPlayNetworking.send(p, payload);
+		ArmyState state = new ArmyState(hasShadows, count, army(player).phase2());
+		if (state.equals(LAST_SENT.put(player.getUUID(), state))) {
+			return;
+		}
+		SungShadowArmyS2CPayload payload = new SungShadowArmyS2CPayload(
+				player.getUUID(), state.hasShadows(), state.count(), state.phase2());
+		ServerPlayNetworking.send(player, payload);
+		// Only observers who can actually see the owner need the army counter.
+		for (ServerPlayer observer : net.fabricmc.fabric.api.networking.v1.PlayerLookup.tracking(player)) {
+			if (observer != player) {
+				ServerPlayNetworking.send(observer, payload);
+			}
 		}
 	}
 

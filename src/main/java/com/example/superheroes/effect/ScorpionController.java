@@ -209,7 +209,7 @@ public final class ScorpionController {
 		if (player.tickCount % 8 == 0) {
 			ScorpionFx.breath(level, eye.add(forward.scale(0.8)), forward);
 		}
-		player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 8, 0, true, false, false));
+		EffectRefresh.refresh(player, MobEffects.MOVEMENT_SLOWDOWN, 8, 0, true, false, false);
 
 		if (player.tickCount % 4 != 0) {
 			return;

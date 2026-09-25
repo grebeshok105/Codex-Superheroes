@@ -17,11 +17,13 @@ import java.util.function.UnaryOperator;
  * <p>Every change is a read-modify-write of the current value, so no caller can resurrect state by
  * writing back a copy it read earlier in the tick (audit B2). Changes to the hero, bindings or active
  * set are synced immediately to keep ordering with other payloads; energy/mana-only changes are
- * coalesced into one packet per player at the end of the server tick.
+ * coalesced into one packet per player every {@value #RESOURCE_FLUSH_INTERVAL} ticks.
  */
 public final class HeroDataStore {
 	/** Ordered after the default phase so a whole tick of resource changes is flushed once. */
 	public static final ResourceLocation FLUSH_PHASE = ModId.of("hero_data_flush");
+	/** Dirty resource state is flushed at most once per this many ticks. */
+	private static final int RESOURCE_FLUSH_INTERVAL = 10;
 
 	private HeroDataStore() {
 	}
@@ -29,6 +31,12 @@ public final class HeroDataStore {
 	public static void init() {
 		ServerTickEvents.END_SERVER_TICK.addPhaseOrdering(Event.DEFAULT_PHASE, FLUSH_PHASE);
 		ServerTickEvents.END_SERVER_TICK.register(FLUSH_PHASE, server -> {
+			// Energy regen dirties the attachment every tick; flushing the dirty
+			// flag every RESOURCE_FLUSH_INTERVAL ticks keeps HUD updates smooth
+			// enough (0.5s) without a packet per tick per player (audit §3).
+			if (server.getTickCount() % RESOURCE_FLUSH_INTERVAL != 0) {
+				return;
+			}
 			for (ServerPlayer player : server.getPlayerList().getPlayers()) {
 				flushResources(player);
 			}
