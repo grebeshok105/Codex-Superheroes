@@ -1,12 +1,16 @@
 # AGENTS.md — Codex Superheroes
 
-Fabric mod (Minecraft 1.21.1, Java 21, mod id `superheroes`, package `com.example.superheroes`): superhero ability fantasy — transformations, flight physics, signature moves, HUD, VFX — natively embedded in Minecraft. Exact versions live in `gradle.properties` and `build.gradle`; code wins if any doc differs.
+Fabric mod (Minecraft 1.21.1, Java 21, mod id `superheroes`, package `com.example.superheroes`): superhero ability fantasy — transformations, flight physics, signature moves, HUD, VFX — natively embedded in Minecraft. Exact dependency and game versions live in `gradle.properties` and `build.gradle`; current code and passing tests win if any document differs.
 
 ## 1. What we are building
 
 A mod whose heroes **feel** like their source material — mechanics, timings, interactions, animations, VFX — while staying readable and genuinely playable inside Minecraft. Recognizability over literal copying: never sacrifice gameplay to mirror a scene. A hero that is faithful but unplayable is a failed hero.
 
-The roster already proved the architecture holds. The project is in **systemic development**: every feature must strengthen the whole — reuse existing mechanisms, extend shared systems, never grow a disconnected island.
+Codex Superheroes is in **revival and architectural modernization**. The current codebase is working history, not automatically the desired architecture. Existing behavior, saves, content, and player-facing contracts matter; old structural choices do not become permanent merely because they already exist.
+
+Every substantial change should improve the whole project: reuse a healthy shared mechanism when it fits, extend it when that keeps the design coherent, and deliberately replace it when it creates coupling, duplication, poor testability, or blocks future work. Never add a disconnected island just to avoid touching legacy code.
+
+**Existing code describes current behavior. It does not automatically define the desired architecture.**
 
 Playable heroes today: `src/main/java/com/example/superheroes/hero/Heroes.java` is the roster.
 
@@ -18,11 +22,13 @@ Playable heroes today: `src/main/java/com/example/superheroes/hero/Heroes.java` 
 - Server-side hero logic ticks in `effect/*Controller` classes registered in `SuperheroesMod.onInitialize()`.
 - Keybinds and slot layouts are defaults, not architecture: a hero design that needs more actions or binds must be able to get them without breaking the seam.
 
+These paths describe the current implementation. During refactors, preserve behavior intentionally while moving responsibilities to better boundaries where needed.
+
 ## 3. How user and agent work together
 
 The user supplies the **DESIGN SPEC** — WHAT and WHY: behavior, feel, constraints, edge cases, interactions, acceptance criteria.
 
-The agent owns the technical side — HOW. Before executing any ready spec, a full **implementation plan** must exist. No plan → the agent researches the repo, reads the relevant skills/docs/code, and writes the plan itself. A plan never silently changes the user's design decisions.
+The agent owns the technical side — HOW. Before any **non-trivial** implementation, a sufficiently complete implementation plan must exist. If it is missing, the agent researches the repo, reads relevant skills/docs/code, and writes the plan itself. Small, obvious fixes do not require ceremonial planning. A plan never silently changes the user's design decisions.
 
 A complete spec means no re-brainstorming: settled design decisions are not reopened without cause.
 
@@ -30,7 +36,7 @@ When the user asks to invent something large from scratch — system, hero, mech
 
 ## 4. Autonomy
 
-The agent works end to end without micromanagement: understand the goal → research the repo → read the relevant project skills → read current docs and context → use available MCP and dev tools → write the implementation plan if missing → implement → write or update tests → run automated checks → launch the game when runtime is touched → verify in game → fix findings → re-verify → self-review → run independent reviews → bring the task to DONE.
+The agent works end to end without micromanagement: understand the goal → research the repo → read relevant project skills and current docs → inspect current code and git history where useful → use available MCP and dev tools → write an implementation plan when the task warrants one → implement → write or update tests → run automated checks → launch the game when runtime is touched → verify in game → fix findings → re-verify → self-review → run independent reviews when risk justifies them → bring the task to DONE.
 
 Anything answerable through code, docs, git, skills, MCP, or research tools is resolved independently. Ordinary technical actions already permitted by this contract need no permission asked. Trivial technical choices never stop execution.
 
@@ -38,27 +44,31 @@ Escalate only real design/product blockers, or forks with fundamentally differen
 
 ## 5. Architecture quality
 
-The implementation must fully work, fit the existing project logically, create no duplicate systems, take no shortcut that degrades structure, live in the right place, use existing abstractions where reasonable, and stay extensible. Never pick the shortest path when it litters duplication, one-off crutches, or future cost.
+The implementation must fully work, fit the project logically, create no duplicate systems, take no shortcut that degrades structure, live in the right place, use healthy existing abstractions where reasonable, and stay extensible.
+
+Do not preserve a legacy abstraction merely for consistency. Before extending an old central system, check whether it is already causing hero-specific branching, excessive coupling, duplicated state, difficult testing, client/server leakage, or unrelated responsibilities. If so, prefer a deliberate migration with tests over adding another special case.
+
+Never pick the shortest path when it litters duplication, one-off crutches, or future cost. Refactors must still be scoped: do not turn every feature task into an unrelated rewrite.
 
 ## 6. Hard rules
 
 - Server-authoritative gameplay; rendering, HUD, particles, camera, keybinds, and menus live client-side (`src/client`); nothing client-only in `src/main` — a dedicated server loads it.
 - Public Fabric and Minecraft APIs only: `net.fabricmc.fabric.api.*`, never `net.fabricmc.fabric.impl.*`, no deprecated APIs without reason.
 - Networking is typed `CustomPayload` + `StreamCodec` via `ModNetworking` — not legacy `PacketByteBuf`-style code.
-- Reuse shared mechanisms before building new ones; one concern, one system.
-- Mixins stay narrow and scoped; injected members get `@Unique`; prefer MixinExtras `@WrapOperation` over `@Redirect`. The non-obvious traps live in the `loader-gotchas` skill, not here.
-- Preserve the hero seam: shared code asks the hero/registry, never which hero the player is.
-- Runtime sounds are OGG Vorbis only. Before creating any texture, sound, model, or FX, check `art-source/` first (see the `art-source` skill).
+- Reuse healthy shared mechanisms before building new ones, but never preserve a bad abstraction solely because it already exists.
+- Mixins stay narrow and scoped; injected members get `@Unique`; prefer MixinExtras `@WrapOperation` over `@Redirect` when it is the clearer and safer hook.
+- Preserve the hero seam: shared code asks the hero/registry or an appropriate shared abstraction, never which concrete hero the player is.
+- Runtime sounds are OGG Vorbis only. Before creating any texture, sound, model, or FX, check `art-source/` first.
 - `en_us.json` and `ru_ru.json` are updated together.
 - `src/main/generated/` is datagen output — regenerate it via `runDatagen`, never hand-edit.
 
 ## 7. Skills
 
-Project skills live in `.agents/skills/` and are work procedures, not suggestions: read the matching one and follow it. `.windsurf/` mirrors the same rules and workflows for Windsurf.
+Project skills live in `.agents/skills/`. A matching current skill is a work procedure, not a suggestion: read it and follow it.
 
-Current set: `project-profile`, `base-rules`, `build-mod`, `mod-build-jar`, `release-mod`, `version-bump-policy`, `publish-mod`, `add-item`, `add-block`, `datagen`, `debug-crash`, `loader-gotchas`, `art-source`, `research-tools`, `mod-change-report`, `admin-ability-debug`, `worker-subagent-dispatch`, `minecraft-mod-dev`.
+`AGENTS.md` owns global project rules. Skills own specialized, repeatable workflows. A skill must be Codex-specific enough to save real repeated reasoning, current with the repository, and distinct from existing procedures. Do not create a skill for a micro-action or merely because the same action happened twice.
 
-A stable workflow repeated twice or more becomes a project skill on its own, no asking needed. No skill per micro-action: one-off repetitions stay inline.
+Legacy skills are not authoritative merely because they exist. If a skill contradicts current code, tests, or this file, fix or replace the skill instead of preserving the contradiction.
 
 ## 8. Tools
 
@@ -67,10 +77,12 @@ Prefer the lightest tool that answers. All querying is pre-authorized — on fai
 | Tool | For |
 |---|---|
 | gradle (`build`, `compileJava`, `runDatagen`, `runClient`) | compilation, tests, datagen, dev client |
-| javap + decompiled MC jar (`research-tools` skill) | vanilla Minecraft internals, method signatures — offline, no API guessing |
-| web search / fetch | Fabric docs, open-source mod examples, external API facts |
-| git / gh | branches, history, PRs, releases |
-| MCP servers when connected (`.windsurf/rules/agents.md`) | mcdev sources, context7 docs, sequential-thinking — that doc says which agent to call when |
+| javap / decompiled Minecraft sources when available | vanilla internals and method signatures without guessing |
+| web search / fetch | current Fabric docs, library docs, open-source mod examples, external API facts |
+| git / gh | branches, history, diffs, PRs, tags, releases |
+| connected MCP/dev tools | code navigation, Minecraft sources, docs, runtime control, research |
+
+Do not guess unstable Minecraft/Fabric/library APIs from memory when the repo, mapped sources, or current docs can answer.
 
 ## 9. Verification
 
@@ -78,34 +90,43 @@ Compilation proves nothing. Before a PR:
 
 - `./gradlew build --no-daemon` is the finishing gate — the same full build CI runs, JUnit in `src/test` included. `./gradlew build -x test` is a quick mid-work check, not a finishing gate.
 - New behavioral logic gets tests in `src/test`; a bugfix gets a regression test where possible — no theater tests written just to satisfy a rule.
+- Refactors preserve relevant behavior with tests before or alongside structural change where practical.
 - Datagen-touching changes run `./gradlew runDatagen --no-daemon` and the diff in `src/main/generated/` is reviewed.
-- Runtime-affecting changes (gameplay, input, rendering, entities, networking, VFX, HUD) need in-game verification via `./gradlew runClient --no-daemon` where the environment allows. If the sandbox cannot launch the game, say so explicitly in the PR instead of claiming verification.
-- Large or risky changes get independent review through subagents (`worker-subagent-dispatch` skill). A worker's verification ceiling is compilation; full builds, test suites, and game runs belong to the main agent only.
+- Runtime-affecting changes (gameplay, input, rendering, entities, networking, VFX, HUD) need in-game verification via `./gradlew runClient --no-daemon` where the environment allows. If the environment cannot launch the game, say so explicitly in the PR instead of claiming verification.
+- Large or risky changes get independent review through available subagents/reviewers. Delegated workers do not duplicate full verification suites unless the workflow explicitly requires it; the main agent owns final build, tests, and runtime verification.
 
 ## 10. Definition of Done
 
-DONE only when every relevant item holds: DESIGN SPEC fully implemented; implementation plan executed; no known open items; tests written or updated; `./gradlew build` green; datagen diff reviewed where applicable; in-game verification done where applicable or its absence stated; acceptance criteria checked; independent reviews done for large changes; findings fixed or explicitly rejected with reasons; docs updated where the change outdated them; final self-review done; git state clean and pushed.
+DONE only when every relevant item holds: DESIGN SPEC fully implemented; implementation plan executed when one was required; no known open items; tests written or updated; `./gradlew build` green; datagen diff reviewed where applicable; in-game verification done where applicable or its absence stated; acceptance criteria checked; independent reviews done where risk warrants them; findings fixed or explicitly rejected with reasons; docs updated where the change outdated them; final self-review done; git state clean and pushed.
 
 ## 11. Git workflow and GitHub
 
-Git is mandatory and GitHub is the only home of the work. Each self-contained task runs on its own branch; changes split into small logical commits (English, conventional-style: `feat(scope): ...`, `fix(scope): ...`); each finished task ships as its own PR. **Nothing task-related may live only on the local machine**: branches, fixes, and docs are pushed to GitHub at task end — no unpushed state is ever carried across sessions.
+Git is mandatory and GitHub is the only home of the work. Each self-contained task runs on its own branch; changes split into small logical commits (English, conventional-style: `feat(scope): ...`, `fix(scope): ...`); each finished task ships as its own PR. **Nothing task-related may live only on the local machine**: branches, fixes, and docs are pushed to GitHub at task end — no unpushed state is carried across sessions.
 
 PRs are written for a Russian-speaking player audience:
 
 - **Title: explicit, readable, in Russian**, naming the task — not «fix», «wip», «upd».
 - **Body opens with what was done and how it works, written for the player** — Russian, clear and inviting, content-side only.
-- **Below: the full technical part** — what, why, key decisions, what was verified and how (build, tests, in-game verification), known limits.
+- **Below: the full technical part** — what, why, key decisions, migrations/refactors where relevant, what was verified and how, known limits.
 
 ## 12. Versioning & releases
 
-The version lives in `gradle.properties` (`mod_version`); the `version-bump-policy` skill is authoritative for choosing the next number — hotfix / small fix → patch, крупное обновление → minor, глобальный релиз → major. Tags are `vX.Y.Z`.
+The version source of truth is `gradle.properties` (`mod_version`). Release tags use `vX.Y.Z`. Version changes follow semantic intent: bugfix-only work normally increments patch, meaningful feature releases increment minor, and intentionally breaking or milestone releases increment major.
 
-Releases ship through the `release-mod` skill (`gh release create` with the built jar; notes in Russian, for players). `.github/workflows/release.yml` auto-publishes on pushes to `baseline` — GitHub Actions are not changed without an explicit request.
+The existing release infrastructure is under audit during the revival. Do not infer current release behavior from legacy branches, tags, comments, or workflows. Do not publish a release or change release automation unless the task explicitly requires it. When release work is requested, inspect the current workflow, tags, built artifact naming, and target branch first; then use or create a current project release procedure based on verified reality.
 
 ## 13. Documentation
 
-Docs stay current with the code: a change that outdated a document updates it in the same task. Before creating a new markdown file, find the existing place for the information. No sprawl, no temp facts in durable files — this file points at context, it does not store it.
+Docs stay current with the code: a change that outdated a durable document updates it in the same task. Before creating a new markdown file, find whether the information belongs in an existing durable document. Avoid documentation sprawl and temporary facts in long-lived files.
 
-Context map: `README.md` (overview), `docs/api.md` (public addon API), `docs/design/` (hero/balance specs), `docs/plans/` plus `plan.md`, `ROUND4-PLAN.md` (implementation plans), `.agents/skills/` (procedures), `.windsurf/` (Windsurf mirror), `art-source/` (raw assets).
+During the revival, documentation is being pruned aggressively. Historical plans and obsolete workflow docs are evidence, not authority. Git history is the archive; do not keep dead documents in the active tree merely for historical preservation.
 
-Authority when sources disagree: current code and passing tests → this file → project skills → docs and plans.
+Durable context should converge on:
+- `README.md` — public project overview and setup.
+- `AGENTS.md` — global agent contract and project-wide rules.
+- `docs/api.md` — public addon API only while it is actively maintained.
+- `docs/design/` — active or intentionally preserved design specifications, not completed task logs.
+- `.agents/skills/` — current specialized procedures.
+- `art-source/` — raw/source assets and their provenance.
+
+Authority when sources disagree: current code and passing tests → this file → current project skills → current durable docs. Historical plans never override current implementation or explicit design decisions.
