@@ -2,6 +2,8 @@ package com.example.superheroes.client.hud;
 
 import com.example.superheroes.ability.Ability;
 import com.example.superheroes.ability.AbilityRegistry;
+import com.example.superheroes.hero.Hero;
+import com.example.superheroes.hero.Heroes;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.HashMap;
@@ -53,7 +55,8 @@ public final class AbilityDescriptions {
 	}
 
 	public static int passiveCount(ResourceLocation heroId) {
-		return HERO_PASSIVE_COUNT.getOrDefault(heroId.getPath(), 0);
+		Hero hero = Heroes.get(heroId);
+		return hero == null ? 0 : hero.getPassiveGlyphs().size();
 	}
 
 	public static String passiveKey(ResourceLocation heroId, int index) {

@@ -297,6 +297,7 @@ public final class HeroInfoPanelHud implements MovableHud {
 			ResourceLocation heroId, HeroTheme theme) {
 		int count = AbilityDescriptions.passiveCount(heroId);
 		if (count <= 0) return;
+		Hero hero = Heroes.get(heroId);
 		Component label = HudUtil.text("ПАССИВКИ");
 		// label по центру высоты чипов
 		g.drawString(mc.font, label, x, y - HudScaler.scale(3) + (HudScaler.scale(14) - 8) / 2,
@@ -318,7 +319,7 @@ public final class HeroInfoPanelHud implements MovableHud {
 			}
 			int inset = Math.max(1, HudScaler.scale(1));
 			int emojiSz = chip - inset * 2;
-			EmojiIcons.draw(g, PassiveIcons.glyph(heroId, i), cx + inset, chipY + inset, emojiSz);
+			EmojiIcons.draw(g, HudIcons.passiveGlyph(hero, i), cx + inset, chipY + inset, emojiSz);
 			cx += chip + gap;
 		}
 	}

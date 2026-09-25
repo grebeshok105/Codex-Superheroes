@@ -2,6 +2,8 @@ package com.example.superheroes.effect;
 
 import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.hero.DoomsdayHero;
+import com.example.superheroes.hero.Hero;
+import com.example.superheroes.hero.Heroes;
 import com.example.superheroes.hero.KratosHero;
 import com.example.superheroes.hero.NarutoHero;
 import com.example.superheroes.hero.RegulusHero;
@@ -53,7 +55,8 @@ public final class SuperJumpController {
 		if (!data.hasHero()) {
 			return;
 		}
-		if (!isAllowed(data.heroId())) {
+		Hero hero = Heroes.get(data.heroId());
+		if (hero == null || !hero.canSuperJump()) {
 			return;
 		}
 		UUID id = player.getUUID();

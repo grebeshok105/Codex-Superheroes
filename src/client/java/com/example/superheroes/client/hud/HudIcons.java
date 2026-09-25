@@ -1,11 +1,23 @@
 package com.example.superheroes.client.hud;
 
+import com.example.superheroes.hero.Hero;
 import com.example.superheroes.hero.HeroHudConfig;
 import com.example.superheroes.hero.PassiveGlyph;
 import net.minecraft.client.gui.GuiGraphics;
 
+import java.util.List;
+
 public final class HudIcons {
 	private HudIcons() {
+	}
+
+	/** Glyph for the hero's {@code index}-th passive; {@code GENERIC} when out of range. */
+	public static PassiveGlyph passiveGlyph(Hero hero, int index) {
+		List<PassiveGlyph> glyphs = hero == null ? List.of() : hero.getPassiveGlyphs();
+		if (index < 0 || index >= glyphs.size()) {
+			return PassiveGlyph.GENERIC;
+		}
+		return glyphs.get(index);
 	}
 
 	public static void drawEnergyIcon(GuiGraphics g, int x, int y, int size, HeroHudConfig.EnergyIconType type, int color) {

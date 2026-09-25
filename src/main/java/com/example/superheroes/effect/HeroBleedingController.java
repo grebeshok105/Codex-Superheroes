@@ -1,7 +1,9 @@
 package com.example.superheroes.effect;
 
 import com.example.superheroes.hero.BleedProfile;
+import com.example.superheroes.hero.Hero;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
 import org.jetbrains.annotations.Nullable;
@@ -39,12 +41,12 @@ public final class HeroBleedingController {
 	}
 
 	/**
-	 * @param heroId attacker's current hero ID (nullable)
+	 * @param hero attacker's current hero
+	 * @param attacker the melee attacker
 	 * @param target the melee target
-	 * @param doomsdayTier 0 if not Doomsday, else the tier level
 	 */
-	public static void tryApplyBleeding(ResourceLocation heroId, LivingEntity target, int doomsdayTier) {
-		BleedProfile bleed = bleedFor(heroId, doomsdayTier);
+	public static void tryApplyBleeding(Hero hero, ServerPlayer attacker, LivingEntity target) {
+		BleedProfile bleed = hero.getMeleeBleed(attacker);
 		if (bleed == null) return;
 		if (ThreadLocalRandom.current().nextFloat() < bleed.chance()) {
 			target.addEffect(new MobEffectInstance(ModEffects.BLEEDING, 80, bleed.amplifier(), false, true, true));
