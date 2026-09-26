@@ -20,6 +20,7 @@ import io.github.grebeshok105.codex.client.network.ClientNetworking;
 import io.github.grebeshok105.codex.client.render.HomelanderBossRenderer;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.entity.ModEntities;
+import io.github.grebeshok105.codex.mechanic.boundweapon.BoundWeaponItem;
 import io.github.grebeshok105.codex.client.render.CosmicBeamRenderer;
 import io.github.grebeshok105.codex.client.render.LaserBeamRenderer;
 import io.github.grebeshok105.codex.client.render.LocalLaserOverlay;
@@ -301,7 +302,7 @@ public class SuperheroesClient implements ClientModInitializer {
 			return true;
 		}
 		if (stack.getItem() instanceof net.minecraft.world.item.BlockItem
-				|| stack.is(net.minecraft.core.registries.BuiltInRegistries.ITEM.get(ModId.of("royal_icicle")))) {
+				|| (stack.getItem() instanceof BoundWeaponItem boundWeapon && boundWeapon.blocksChargedAttackTiers())) {
 			return false;
 		}
 		return stack.getUseAnimation() == net.minecraft.world.item.UseAnim.NONE;

@@ -48,6 +48,11 @@ public class RoyalIcicleItem extends BoundWeaponItem {
 		super(Tiers.NETHERITE, properties.attributes(SwordItem.createAttributes(Tiers.NETHERITE, 100, -2.4f)));
 	}
 
+	@Override
+	public boolean blocksChargedAttackTiers() {
+		return true;
+	}
+
 	private static final double CLEAVE_RADIUS = 5.0;
 	private static final float CLEAVE_DAMAGE = 100.0f;
 	private static final double DARKNESS_RADIUS = 10.0;
