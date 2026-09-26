@@ -1,7 +1,9 @@
 package com.example.superheroes.client.hero.homelander;
 
+import com.example.superheroes.ModId;
 import com.example.superheroes.client.core.module.HeroClientContext;
 import com.example.superheroes.client.core.module.HeroClientModule;
+import com.example.superheroes.client.hud.UraniumThreatHud;
 import com.example.superheroes.client.render.LaserBeamRenderer;
 import com.example.superheroes.hero.HomelanderHero;
 import com.example.superheroes.network.LaserFiredS2CPayload;
@@ -17,6 +19,7 @@ public record HomelanderClientModule() implements HeroClientModule {
 
 	@Override
 	public void register(HeroClientContext ctx) {
+		ctx.hud(1400, ModId.of("uranium_threat"), UraniumThreatHud::render);
 		ctx.receive(LaserFiredS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> LaserBeamRenderer.add(payload.start(), payload.end())));
 		ctx.receive(UraniumPressureS2CPayload.TYPE, (payload, context) ->

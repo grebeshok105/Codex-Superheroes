@@ -6,29 +6,13 @@ import com.example.superheroes.client.core.hud.HudLayers;
 import com.example.superheroes.client.hud.AbilitiesTooltipHud;
 import com.example.superheroes.client.hud.AbilityBarHud;
 import com.example.superheroes.client.hud.ChatHudMovable;
-import com.example.superheroes.client.hud.CracksOverlayHud;
-import com.example.superheroes.client.hud.DoomsdayGlitchHud;
 import com.example.superheroes.client.hud.EffectsHudMovable;
 import com.example.superheroes.client.hud.HeroInfoPanelHud;
 import com.example.superheroes.client.hud.HordeDebugOverlay;
 import com.example.superheroes.client.hud.HotbarOverrideHud;
-import com.example.superheroes.client.hud.BloodRainHud;
-import com.example.superheroes.client.hud.EvangelionZoomHud;
-import com.example.superheroes.client.hud.JarvisDetectionHud;
-import com.example.superheroes.client.hud.JarvisOverlayHud;
-import com.example.superheroes.client.hud.MadnessHudOverlay;
 import com.example.superheroes.client.hud.MeleeChargeHud;
-import com.example.superheroes.client.hud.MirrorWarpFlashHud;
-import com.example.superheroes.client.hud.PandoraDeathTitleHud;
 import com.example.superheroes.client.hud.RadialMenuHud;
-import com.example.superheroes.client.hud.ReactorOverlayHud;
-import com.example.superheroes.client.hud.ReinhardCeremonyOverlay;
-import com.example.superheroes.client.hud.ReinhardDarknessOverlay;
-import com.example.superheroes.client.hud.ReinhardSwordDeathOverlay;
 import com.example.superheroes.client.hud.ScreenFlashHud;
-import com.example.superheroes.client.hud.SpartanRageHud;
-import com.example.superheroes.client.hud.SunWindupHud;
-import com.example.superheroes.client.hud.UraniumThreatHud;
 import com.example.superheroes.client.fx.ScreenShakeManager;
 import com.example.superheroes.client.fx.WallImpactDebrisManager;
 import com.example.superheroes.client.network.ClientNetworking;
@@ -39,7 +23,6 @@ import com.example.superheroes.item.ModItems;
 import com.example.superheroes.client.render.CosmicBeamRenderer;
 import com.example.superheroes.client.render.LaserBeamRenderer;
 import com.example.superheroes.client.render.LocalLaserOverlay;
-import com.example.superheroes.client.render.RepulsorBeamRenderer;
 import com.example.superheroes.client.render.lightning.SuperheroLightningRenderer;
 import com.example.superheroes.client.screen.BindingsScreen;
 import com.example.superheroes.network.ActivateAbilityC2SPayload;
@@ -77,18 +60,10 @@ public class SuperheroesClient implements ClientModInitializer {
 		ClientTickEvents.END_CLIENT_TICK.register(client -> com.example.superheroes.client.ClientPandoraDeathState.tick());
 		com.example.superheroes.client.render.WildShaders.register();
 		LaserBeamRenderer.register();
-		RepulsorBeamRenderer.register();
-		com.example.superheroes.client.render.IronManEspRenderer.register();
 		CosmicBeamRenderer.register();
 		LocalLaserOverlay.register();
 		EntityRendererRegistry.register(EntityType.LIGHTNING_BOLT, SuperheroLightningRenderer::new);
 		EntityRendererRegistry.register(ModEntities.HOMELANDER_BOSS, HomelanderBossRenderer::new);
-		EntityRendererRegistry.register(ModEntities.SHADOW_SOLDIER, com.example.superheroes.client.render.ShadowSoldierRenderer::new);
-		EntityRendererRegistry.register(ModEntities.KAGE_BUNSHIN, com.example.superheroes.client.render.KageBunshinRenderer::new);
-		EntityRendererRegistry.register(ModEntities.SHIELD_PROJECTILE, com.example.superheroes.client.render.ShieldProjectileRenderer::new);
-		EntityRendererRegistry.register(ModEntities.SMART_MISSILE, com.example.superheroes.client.render.SmartMissileRenderer::new);
-		EntityRendererRegistry.register(ModEntities.RAM, com.example.superheroes.client.render.RamRenderer::new);
-		EntityRendererRegistry.register(ModEntities.IRON_LEGION_DRONE, com.example.superheroes.client.render.IronLegionDroneRenderer::new);
 		// Horde entity renderers — vanilla models matched to each mob's texture UV
 		// (custom geo/textures are mismatched imports → garbled UVs, deferred to a proper import PR).
 		EntityRendererRegistry.register(com.example.superheroes.horde.entity.HordeEntities.CRAWLER, com.example.superheroes.client.render.horde.GenericHordeRenderer.spider("crawler", 0.4f, 0.55f));
@@ -180,8 +155,6 @@ public class SuperheroesClient implements ClientModInitializer {
 
 		HudLayers.init();
 
-		HudLayers.register(100, ModId.of("jarvis_overlay"), JarvisOverlayHud::render);
-		HudLayers.register(200, ModId.of("jarvis_detection"), JarvisDetectionHud::render);
 		HudLayers.registerMovable(300, ModId.of("hero_panel"), HeroInfoPanelHud::render, HeroInfoPanelHud.INSTANCE);
 		HudLayers.registerMovable(400, ModId.of("hotbar"), HotbarOverrideHud::render, HotbarOverrideHud.INSTANCE);
 		HudLayers.registerMovable(500, ModId.of("ability_bar"), AbilityBarHud::render, AbilityBarHud.INSTANCE);
@@ -191,34 +164,14 @@ public class SuperheroesClient implements ClientModInitializer {
 		}, ChatHudMovable.INSTANCE);
 		HudLayers.registerMovable(560, ModId.of("effects"), (graphics, delta) -> {
 		}, EffectsHudMovable.INSTANCE);
-		HudLayers.register(600, ModId.of("spartan_rage"), SpartanRageHud::render);
 		HudLayers.register(700, ModId.of("radial_menu"), RadialMenuHud::render);
 		HudLayers.register(800, ModId.of("screen_flash"), ScreenFlashHud::render);
-		HudLayers.register(900, ModId.of("sun_windup"), SunWindupHud::render);
-		HudLayers.register(1000, ModId.of("reactor_overlay"), ReactorOverlayHud::render);
-		HudLayers.register(1100, ModId.of("madness_overlay"), MadnessHudOverlay::render);
-		HudLayers.register(1200, ModId.of("blood_rain"), BloodRainHud::render);
-		HudLayers.register(1300, ModId.of("evangelion_zoom"), EvangelionZoomHud::render);
-		HudLayers.register(1400, ModId.of("uranium_threat"), UraniumThreatHud::render);
-		HudLayers.register(1500, ModId.of("cracks_overlay"), CracksOverlayHud::render);
-		HudLayers.register(1600, ModId.of("doomsday_glitch"), DoomsdayGlitchHud::render);
-		HudLayers.register(1700, ModId.of("reinhard_ceremony"), ReinhardCeremonyOverlay::render);
 		HudLayers.registerMovable(1800, ModId.of("tooltips"), AbilitiesTooltipHud::render, AbilitiesTooltipHud.INSTANCE);
-		HudLayers.register(1900, ModId.of("pandora_death_title"), PandoraDeathTitleHud::render);
 		HudLayers.register(2000, ModId.of("horde_debug"), HordeDebugOverlay::render);
 		HudLayers.registerMovable(2100, ModId.of("melee_charge"), MeleeChargeHud::render, MeleeChargeHud.INSTANCE);
-		HudLayers.register(2200, ModId.of("reinhard_sword_death"), ReinhardSwordDeathOverlay::render);
-		HudLayers.register(2300, ModId.of("reinhard_darkness"), ReinhardDarknessOverlay::render);
-		// Топовый слой: чёрная вспышка Зеркального измерения прячет фриз Iris.reload().
-		HudLayers.register(2400, ModId.of("mirror_warp_flash"), MirrorWarpFlashHud::render);
 
 		ClientTickEvents.START_CLIENT_TICK.register(SuperheroesClient::tickHeroMeleeCharge);
 		ClientTickEvents.START_CLIENT_TICK.register(SuperheroesClient::tickThinkMarkDash);
-		ClientTickEvents.END_CLIENT_TICK.register(com.example.superheroes.client.ClientNanoSuitUpState::clientTick);
-		ClientTickEvents.END_CLIENT_TICK.register(com.example.superheroes.client.hud.JarvisDetectionHud::tick);
-		ClientTickEvents.END_CLIENT_TICK.register(SuperheroesClient::tickNanoWeaponSelect);
-		ClientTickEvents.END_CLIENT_TICK.register(SuperheroesClient::tickEspToggle);
-		ClientTickEvents.END_CLIENT_TICK.register(SuperheroesClient::tickRepulsorCharge);
 
 		// "HUD" button in the pause menu -> drag editor for all HUD elements
 		net.fabricmc.fabric.api.client.screen.v1.ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
@@ -259,13 +212,6 @@ public class SuperheroesClient implements ClientModInitializer {
 					ClientPlayNetworking.send(SuperJumpC2SPayload.INSTANCE);
 				}
 			}
-			while (ModKeys.RAIDEN_SWORD_DRAW.consumeClick()) {
-				if (client.player != null && ClientHeroState.data().hasHero()
-						&& com.example.superheroes.hero.RaidenHero.ID.equals(ClientHeroState.heroId())) {
-					ClientPlayNetworking.send(new ActivateAbilityC2SPayload(
-							com.example.superheroes.ability.AbilityIds.RAIDEN_SWORD_DRAW));
-				}
-			}
 			// Raw GLFW polling: vanilla KeyMapping.MAP allows one mapping per key, so our
 			// L / 3 / 4 / 5 binds conflict with vanilla and consumeClick() is unreliable.
 			while (ModKeys.TOGGLE_TOOLTIPS.consumeClick()) {
@@ -300,33 +246,6 @@ public class SuperheroesClient implements ClientModInitializer {
 	private static boolean thinkMarkUseWasDown = false;
 
 	/** While the Omni-Man grab is active, RMB (use) launches the dash/slam. */
-	private static void tickNanoWeaponSelect(Minecraft client) {
-		if (client.player == null || !ClientHeroState.data().hasHero()
-				|| !com.example.superheroes.hero.IronManHero.ID.equals(ClientHeroState.data().heroId())) {
-			return;
-		}
-		while (ModKeys.NANO_WEAPON.consumeClick()) {
-			com.example.superheroes.client.ClientNanoWeaponState.cycle(1);
-		}
-	}
-
-	private static void tickEspToggle(Minecraft client) {
-		if (client.player == null || !ClientHeroState.data().hasHero()
-				|| !com.example.superheroes.hero.IronManHero.ID.equals(ClientHeroState.data().heroId())) {
-			return;
-		}
-		while (ModKeys.ESP_TOGGLE.consumeClick()) {
-			com.example.superheroes.client.render.IronManEspRenderer.cycleMode();
-		}
-	}
-
-	private static void tickRepulsorCharge(Minecraft client) {
-		boolean ironMan = client.player != null && ClientHeroState.data().hasHero()
-				&& com.example.superheroes.hero.IronManHero.ID.equals(ClientHeroState.data().heroId());
-		boolean sneaking = client.player != null && client.player.isShiftKeyDown();
-		com.example.superheroes.client.ClientRepulsorChargeState.clientTick(ironMan, sneaking);
-	}
-
 	private static void tickThinkMarkDash(Minecraft client) {
 		if (client.player == null || client.level == null) {
 			thinkMarkUseWasDown = false;
