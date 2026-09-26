@@ -29,7 +29,6 @@ public final class Heroes {
 	public static final BattleBeastHero BATTLE_BEAST = new BattleBeastHero();
 	public static final RemHero REM = new RemHero();
 	public static final ATrainHero A_TRAIN = new ATrainHero();
-	public static final ScorpionHero SCORPION = new ScorpionHero();
 	public static final PandoraHero PANDORA = new PandoraHero();
 
 	private Heroes() {
@@ -56,7 +55,6 @@ public final class Heroes {
 		register(BATTLE_BEAST);
 		register(REM);
 		register(A_TRAIN);
-		register(SCORPION);
 		register(PANDORA);
 	}
 
