@@ -6,6 +6,7 @@ import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.effect.ModEffects;
 import com.example.superheroes.resource.ResourceController;
 import com.example.superheroes.transform.HeroData;
+import com.example.superheroes.transform.TooltipFrame;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;

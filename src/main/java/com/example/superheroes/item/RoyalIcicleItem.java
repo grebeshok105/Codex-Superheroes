@@ -7,6 +7,7 @@ import com.example.superheroes.effect.ReinhardState;
 import com.example.superheroes.hero.ReinhardHero;
 import com.example.superheroes.network.ReinhardDarknessS2CPayload;
 import com.example.superheroes.transform.HeroData;
+import com.example.superheroes.transform.TooltipFrame;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;

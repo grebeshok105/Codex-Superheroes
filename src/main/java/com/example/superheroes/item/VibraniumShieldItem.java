@@ -1,5 +1,6 @@
 package com.example.superheroes.item;
 
+import com.example.superheroes.transform.TooltipFrame;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;

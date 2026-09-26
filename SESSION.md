@@ -264,6 +264,13 @@
 - First consumer migrated: `CapShieldSlamAbility` `WeakHashMap` → `OwnedSessionMap` (LEAVE+DEATH + always server-stop clear; its `clear`'s "untransform" javadoc was stale — no `onClear` registration ever existed, behavior preserved exactly). The three registrations dropped from `SuperheroesMod`.
 - Integration fix: `startRunsBeforeEndPhasesAndEarlyBeforeGlobal` asserted absolute index order — made robust to mid-tick hook registration (search relative to first "start"). qualityGate green: 67/67 gametests; worker's hand-shrunk freeze-store entries verified = canonical `allowStoreUpdate` output.
 
+## Architecture migration — stage B3 (plan 02)
+
+- `TransformationLore` record (`transform/`) + `TransformationItem(heroId, props, lore)` ctor; new `appendHoverText` emits openDivider→flavor→empty→bullets→closeDivider via `TooltipFrame`, null-guarded so the 7 remaining subclasses keep working.
+- 15 lore-only subclasses deleted; `ModItems` now constructs them inline with identical keys/colors/order/props. Hero ids passed as `ModId.of("…")` literals — `<Hero>.ID` class reads would have added 15 new frozen-rule violations (`sharedCodeDoesNotDependOnConcreteHeroes` can't grow); convention confirmed by plan 06 I5a («id героев строками»). Pandora keeps `doctor_strange_suit` id + comment.
+- Integration fixes: `item.TooltipFrame` moved to `transform/` (TransformationItem's tooltip dep created a new `item <-> transform` package cycle — ratchet caught it; move is acyclic since `item.infinity` never imports `transform`). Freeze store −16 (all removed entries = deleted subclasses' hero-id reads, zero additions).
+- Golden `transformation_lore.txt` (22 items) captured pre-migration; `transformationItemLoreIsStable` now compares against it — green post-migration. qualityGate: 70/70 gametests.
+
 ## Architecture migration — stage B2 (plan 02)
 
 - `Hero.passiveAttributes()` returns the hero's `AttributeModifierSet`; default `applyPassives`/`removePassives` route through it. 6 fully-reducible heroes dropped both overrides (captain_america, goku, loki, naruto, scorpion, kazuha); 5 partially (atrain, rem, pandora, raiden, reinhard keep the override with extra side effects); 11 custom keep overrides but route the passive set through `PASSIVES`.
@@ -278,3 +285,10 @@
 - Store shrank exactly 2 lines (Heroes.SCORPION field + clinit call); cycle baseline unchanged.
 - Gametest `scorpionIsRegisteredThroughItsModule` asserts registry↔module list identity + all 4 ability ids. qualityGate 70/70.
 - Runtime (PR head @742ecda): kunai transform, all 4 scorpion abilities (spear/eruption/breath/hellport), suggestion list, regulus sanity — PASS. Pre-existing bug found (NOT regression): Hellport never displaces — `SafeTeleport.clamp` self-collides on the caster's bounding box; files byte-identical to main. Logged for a separate fix ticket.
+
+## Architecture migration — stage B3 (plan 02)
+
+- `TransformationItem(heroId, props, lore)` + `TransformationLore` record (flavor/bullets) — 15 per-item item subclasses deleted; `ModItems` registers all 15 transformation items as plain `new TransformationItem(ModId.of("<heroId>"), props, lore)` with the SAME item ids (`doctor_strange_suit` keeps id, heroId `pandora`). `TooltipFrame` moved item/ → transform/.
+- `blade_of_chaos` keeps its own subclass (`KratosBladeItem`) for the "◆ Contains stone" hint — retained per plan.
+- Item stack `appendHoverText` lore-guarded: openDivider → flavor → empty → bullets → closeDivider — output identical to the deleted overrides.
+- Runtime cross-build verification (old subclasses vs new build, same world/GUI scale, fixed hover coords): goku_gi + scorpion_kunai pixel-perfect; doctor_strange_suit content identical (≤0.78% px residual = fill bleed); blade_of_chaos stone hint identical; kunai right-click → scorpion transform + hellfire HUD PASS. qualityGate 71/71.

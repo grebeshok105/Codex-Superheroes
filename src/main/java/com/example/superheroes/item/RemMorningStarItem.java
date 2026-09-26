@@ -6,6 +6,7 @@ import com.example.superheroes.effect.ModEffects;
 import com.example.superheroes.effect.RemDemonismController;
 import com.example.superheroes.hero.RemHero;
 import com.example.superheroes.transform.HeroData;
+import com.example.superheroes.transform.TooltipFrame;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;

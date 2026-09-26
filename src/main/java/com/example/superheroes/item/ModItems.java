@@ -4,21 +4,36 @@ import com.example.superheroes.ModId;
 import com.example.superheroes.entity.ModEntities;
 import com.example.superheroes.item.infinity.InfinityStoneItem;
 import com.example.superheroes.item.infinity.InfinityStoneType;
+import com.example.superheroes.transform.TransformationItem;
+import com.example.superheroes.transform.TransformationLore;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Rarity;
 import net.minecraft.world.item.SpawnEggItem;
 
+import java.util.List;
+
 public final class ModItems {
-	public static final HomelanderSuitItem HOMELANDER_SUIT = register(
+	public static final TransformationItem HOMELANDER_SUIT = register(
 			"homelander_suit",
-			new HomelanderSuitItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
+			new TransformationItem(ModId.of("homelander"), new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC),
+					new TransformationLore(ChatFormatting.DARK_RED,
+							List.of(new TransformationLore.Line("item.superheroes.homelander_suit.lore.line1", ChatFormatting.RED),
+									new TransformationLore.Line("item.superheroes.homelander_suit.lore.line2", ChatFormatting.DARK_GRAY)),
+							List.of(new TransformationLore.Line("item.superheroes.homelander_suit.lore.usage", ChatFormatting.GOLD),
+									new TransformationLore.Line("item.superheroes.homelander_suit.lore.untransform", ChatFormatting.YELLOW))))
 	);
 
-	public static final IronManSuitItem IRON_MAN_SUIT = register(
+	public static final TransformationItem IRON_MAN_SUIT = register(
 			"iron_man_suit",
-			new IronManSuitItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
+			new TransformationItem(ModId.of("iron_man"), new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC),
+					new TransformationLore(ChatFormatting.GOLD,
+							List.of(new TransformationLore.Line("item.superheroes.iron_man_suit.lore.line1", ChatFormatting.GOLD),
+									new TransformationLore.Line("item.superheroes.iron_man_suit.lore.line2", ChatFormatting.DARK_GRAY)),
+							List.of(new TransformationLore.Line("item.superheroes.iron_man_suit.lore.usage", ChatFormatting.AQUA),
+									new TransformationLore.Line("item.superheroes.iron_man_suit.lore.untransform", ChatFormatting.RED))))
 	);
 
 	public static final CompoundVItem COMPOUND_V = register(
@@ -72,14 +87,24 @@ public final class ModItems {
 			new ShadowMonarchsCloakItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
 	);
 
-	public static final DoomsdaySuitItem DOOMSDAY_GENOME = register(
+	public static final TransformationItem DOOMSDAY_GENOME = register(
 			"doomsday_genome",
-			new DoomsdaySuitItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
+			new TransformationItem(ModId.of("doomsday"), new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC),
+					new TransformationLore(ChatFormatting.DARK_PURPLE,
+							List.of(new TransformationLore.Line("item.superheroes.doomsday_genome.lore.line1", ChatFormatting.LIGHT_PURPLE),
+									new TransformationLore.Line("item.superheroes.doomsday_genome.lore.line2", ChatFormatting.DARK_GRAY)),
+							List.of(new TransformationLore.Line("item.superheroes.doomsday_genome.lore.usage", ChatFormatting.RED),
+									new TransformationLore.Line("item.superheroes.doomsday_genome.lore.untransform", ChatFormatting.GOLD))))
 	);
 
-	public static final GokuGiItem GOKU_GI = register(
+	public static final TransformationItem GOKU_GI = register(
 			"goku_gi",
-			new GokuGiItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
+			new TransformationItem(ModId.of("goku"), new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC),
+					new TransformationLore(ChatFormatting.GOLD,
+							List.of(new TransformationLore.Line("item.superheroes.goku_gi.lore.line1", ChatFormatting.GOLD),
+									new TransformationLore.Line("item.superheroes.goku_gi.lore.line2", ChatFormatting.DARK_GRAY)),
+							List.of(new TransformationLore.Line("item.superheroes.goku_gi.lore.usage", ChatFormatting.YELLOW),
+									new TransformationLore.Line("item.superheroes.goku_gi.lore.untransform", ChatFormatting.RED))))
 	);
 
 	public static final NarutoHeadbandItem NARUTO_HEADBAND = register(
@@ -147,9 +172,14 @@ public final class ModItems {
 			new KryptoniteShardItem(new Item.Properties().stacksTo(16).rarity(Rarity.RARE))
 	);
 
-	public static final ReinhardSuitItem REINHARD_SUIT = register(
+	public static final TransformationItem REINHARD_SUIT = register(
 			"reinhard_suit",
-			new ReinhardSuitItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
+			new TransformationItem(ModId.of("reinhard"), new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC),
+					new TransformationLore(ChatFormatting.GOLD,
+							List.of(new TransformationLore.Line("item.superheroes.reinhard_suit.lore.line1", ChatFormatting.GOLD),
+									new TransformationLore.Line("item.superheroes.reinhard_suit.lore.line2", ChatFormatting.DARK_GRAY)),
+							List.of(new TransformationLore.Line("item.superheroes.reinhard_suit.lore.usage", ChatFormatting.YELLOW),
+									new TransformationLore.Line("item.superheroes.reinhard_suit.lore.untransform", ChatFormatting.RED))))
 	);
 
 	public static final RoyalIcicleItem ROYAL_ICICLE = register(
@@ -157,39 +187,74 @@ public final class ModItems {
 			new RoyalIcicleItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
 	);
 
-	public static final RaidenSuitItem RAIDEN_SUIT = register(
+	public static final TransformationItem RAIDEN_SUIT = register(
 			"raiden_suit",
-			new RaidenSuitItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
+			new TransformationItem(ModId.of("raiden_shogun"), new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC),
+					new TransformationLore(ChatFormatting.LIGHT_PURPLE,
+							List.of(new TransformationLore.Line("item.superheroes.raiden_suit.lore.line1", ChatFormatting.LIGHT_PURPLE),
+									new TransformationLore.Line("item.superheroes.raiden_suit.lore.line2", ChatFormatting.DARK_GRAY)),
+							List.of(new TransformationLore.Line("item.superheroes.raiden_suit.lore.usage", ChatFormatting.YELLOW),
+									new TransformationLore.Line("item.superheroes.raiden_suit.lore.untransform", ChatFormatting.RED))))
 	);
 
-	public static final InvincibleSuitItem INVINCIBLE_SUIT = register(
+	public static final TransformationItem INVINCIBLE_SUIT = register(
 			"invincible_suit",
-			new InvincibleSuitItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
+			new TransformationItem(ModId.of("invincible"), new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC),
+					new TransformationLore(ChatFormatting.BLUE,
+							List.of(new TransformationLore.Line("item.superheroes.invincible_suit.lore.line1", ChatFormatting.YELLOW),
+									new TransformationLore.Line("item.superheroes.invincible_suit.lore.line2", ChatFormatting.DARK_GRAY)),
+							List.of(new TransformationLore.Line("item.superheroes.invincible_suit.lore.usage", ChatFormatting.AQUA),
+									new TransformationLore.Line("item.superheroes.invincible_suit.lore.untransform", ChatFormatting.RED))))
 	);
 
-	public static final OmnimanSuitItem OMNIMAN_SUIT = register(
+	public static final TransformationItem OMNIMAN_SUIT = register(
 			"omniman_suit",
-			new OmnimanSuitItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
+			new TransformationItem(ModId.of("omniman"), new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC),
+					new TransformationLore(ChatFormatting.DARK_RED,
+							List.of(new TransformationLore.Line("item.superheroes.omniman_suit.lore.line1", ChatFormatting.RED),
+									new TransformationLore.Line("item.superheroes.omniman_suit.lore.line2", ChatFormatting.DARK_GRAY)),
+							List.of(new TransformationLore.Line("item.superheroes.omniman_suit.lore.usage", ChatFormatting.GOLD),
+									new TransformationLore.Line("item.superheroes.omniman_suit.lore.untransform", ChatFormatting.RED))))
 	);
 
-	public static final KazuhaVisionItem KAZUHA_VISION = register(
+	public static final TransformationItem KAZUHA_VISION = register(
 			"kazuha_vision",
-			new KazuhaVisionItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
+			new TransformationItem(ModId.of("kazuha"), new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC),
+					new TransformationLore(ChatFormatting.GREEN,
+							List.of(new TransformationLore.Line("item.superheroes.kazuha_vision.lore.line1", ChatFormatting.GOLD),
+									new TransformationLore.Line("item.superheroes.kazuha_vision.lore.line2", ChatFormatting.DARK_GRAY)),
+							List.of(new TransformationLore.Line("item.superheroes.kazuha_vision.lore.usage", ChatFormatting.AQUA),
+									new TransformationLore.Line("item.superheroes.kazuha_vision.lore.untransform", ChatFormatting.RED))))
 	);
 
-	public static final ScaramoucheVisionItem SCARAMOUCHE_VISION = register(
+	public static final TransformationItem SCARAMOUCHE_VISION = register(
 			"scaramouche_vision",
-			new ScaramoucheVisionItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
+			new TransformationItem(ModId.of("scaramouche"), new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC),
+					new TransformationLore(ChatFormatting.DARK_AQUA,
+							List.of(new TransformationLore.Line("item.superheroes.scaramouche_vision.lore.line1", ChatFormatting.AQUA),
+									new TransformationLore.Line("item.superheroes.scaramouche_vision.lore.line2", ChatFormatting.DARK_GRAY)),
+							List.of(new TransformationLore.Line("item.superheroes.scaramouche_vision.lore.usage", ChatFormatting.AQUA),
+									new TransformationLore.Line("item.superheroes.scaramouche_vision.lore.untransform", ChatFormatting.RED))))
 	);
 
-	public static final BattleBeastMedallionItem BATTLE_BEAST_MEDALLION = register(
+	public static final TransformationItem BATTLE_BEAST_MEDALLION = register(
 			"battle_beast_medallion",
-			new BattleBeastMedallionItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
+			new TransformationItem(ModId.of("battle_beast"), new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC),
+					new TransformationLore(ChatFormatting.DARK_RED,
+							List.of(new TransformationLore.Line("item.superheroes.battle_beast_medallion.lore.line1", ChatFormatting.RED),
+									new TransformationLore.Line("item.superheroes.battle_beast_medallion.lore.line2", ChatFormatting.DARK_GRAY)),
+							List.of(new TransformationLore.Line("item.superheroes.battle_beast_medallion.lore.usage", ChatFormatting.GOLD),
+									new TransformationLore.Line("item.superheroes.battle_beast_medallion.lore.untransform", ChatFormatting.RED))))
 	);
 
-	public static final RemOniHornItem REM_ONI_HORN = register(
+	public static final TransformationItem REM_ONI_HORN = register(
 			"rem_oni_horn",
-			new RemOniHornItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
+			new TransformationItem(ModId.of("rem"), new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC),
+					new TransformationLore(ChatFormatting.BLUE,
+							List.of(new TransformationLore.Line("item.superheroes.rem_oni_horn.lore.line1", ChatFormatting.AQUA),
+									new TransformationLore.Line("item.superheroes.rem_oni_horn.lore.line2", ChatFormatting.DARK_GRAY)),
+							List.of(new TransformationLore.Line("item.superheroes.rem_oni_horn.lore.usage", ChatFormatting.AQUA),
+									new TransformationLore.Line("item.superheroes.rem_oni_horn.lore.untransform", ChatFormatting.RED))))
 	);
 
 	public static final RemMorningStarItem REM_MORNING_STAR = register(
@@ -197,20 +262,35 @@ public final class ModItems {
 			new RemMorningStarItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
 	);
 
-	public static final ATrainSuitItem A_TRAIN_SUIT = register(
+	public static final TransformationItem A_TRAIN_SUIT = register(
 			"a_train_suit",
-			new ATrainSuitItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
+			new TransformationItem(ModId.of("a_train"), new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC),
+					new TransformationLore(ChatFormatting.BLUE,
+							List.of(new TransformationLore.Line("item.superheroes.a_train_suit.lore.line1", ChatFormatting.RED),
+									new TransformationLore.Line("item.superheroes.a_train_suit.lore.line2", ChatFormatting.DARK_GRAY)),
+							List.of(new TransformationLore.Line("item.superheroes.a_train_suit.lore.usage", ChatFormatting.AQUA),
+									new TransformationLore.Line("item.superheroes.a_train_suit.lore.untransform", ChatFormatting.RED))))
 	);
 
 	// persisted id kept from the Doctor Strange era — do not rename the string.
-	public static final DoctorStrangeSuitItem PANDORA_SUIT = register(
+	public static final TransformationItem PANDORA_SUIT = register(
 			"doctor_strange_suit",
-			new DoctorStrangeSuitItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
+			new TransformationItem(ModId.of("pandora"), new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC),
+					new TransformationLore(ChatFormatting.DARK_RED,
+							List.of(new TransformationLore.Line("item.superheroes.doctor_strange_suit.lore.line1", ChatFormatting.RED),
+									new TransformationLore.Line("item.superheroes.doctor_strange_suit.lore.line2", ChatFormatting.DARK_GRAY)),
+							List.of(new TransformationLore.Line("item.superheroes.doctor_strange_suit.lore.usage", ChatFormatting.YELLOW),
+									new TransformationLore.Line("item.superheroes.doctor_strange_suit.lore.untransform", ChatFormatting.GOLD))))
 	);
 
-	public static final ScorpionKunaiItem SCORPION_KUNAI = register(
+	public static final TransformationItem SCORPION_KUNAI = register(
 			"scorpion_kunai",
-			new ScorpionKunaiItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
+			new TransformationItem(ModId.of("scorpion"), new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC),
+					new TransformationLore(ChatFormatting.GOLD,
+							List.of(new TransformationLore.Line("item.superheroes.scorpion_kunai.lore.line1", ChatFormatting.GOLD),
+									new TransformationLore.Line("item.superheroes.scorpion_kunai.lore.line2", ChatFormatting.DARK_GRAY)),
+							List.of(new TransformationLore.Line("item.superheroes.scorpion_kunai.lore.usage", ChatFormatting.RED),
+									new TransformationLore.Line("item.superheroes.scorpion_kunai.lore.untransform", ChatFormatting.RED))))
 	);
 
 	public static final MusouNoHitotachiItem MUSOU_NO_HITOTACHI = register(
