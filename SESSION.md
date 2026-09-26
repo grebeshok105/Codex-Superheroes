@@ -277,3 +277,9 @@
 - Store shrank exactly 2 lines (Heroes.SCORPION field + clinit call); cycle baseline unchanged.
 - Gametest `scorpionIsRegisteredThroughItsModule` asserts registry↔module list identity + all 4 ability ids. qualityGate 70/70.
 - Runtime (PR head @742ecda): kunai transform, all 4 scorpion abilities (spear/eruption/breath/hellport), suggestion list, regulus sanity — PASS. Pre-existing bug found (NOT regression): Hellport never displaces — `SafeTeleport.clamp` self-collides on the caster's bounding box; files byte-identical to main. Logged for a separate fix ticket.
+
+## Architecture migration — stage D2a-2 (plan 03)
+
+- All 22 heroes registered through modules: 21 new `hero/<id>/<Id>Module.java` (package = hero id w/o underscores; `final class`, own hero field, `register(ctx)` = hero's abilities in `getAbilities()` order). `HeroModules.ALL` = 22 in original `Heroes.init()` order; `bootstrap` = heroes → `SharedAbilities` → module register (two-pass preserved). `bootstrap/SharedAbilities` owns FLIGHT + VILTRUMITE_RECOVERY (≥2-hero abilities) in old init order.
+- `Heroes`/`AbilityRegistry` fields + `init()` deleted; `register`/`get`/`all` kept. `SuperheroesMod`: `HeroModules.bootstrap(CoreModuleContext.INSTANCE)` at the old init site. 114 module abilities + 2 shared = 116 ids — id set identical to old init; each old ability owned by exactly one module/shared.
+- Gametest `modulesCoverEveryHeroInRegistryOrder` (verbatim from plan) + index-independent `scorpionIsRegisteredThroughItsModule`. Cycle baseline: `ability<->ability.ironman` pair resolved and removed; store auto-shrank ~42 stale `Heroes.*`/`AbilityRegistry.*` entries. qualityGate 71/71.
