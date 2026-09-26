@@ -147,6 +147,13 @@
 - All 4 "потенциальные" findings verified real against current code and fixed:- Architecture audit 2 is preserved as two complementary files: `docs/audits/2026-09-25-hero-modularity-audit.md` (hero locality, `HeroModule`/`HeroProfile`, Scorpion pilot, Reinhard stress-test) and `docs/audits/2026-09-25-hoplite-structural-audit.md` (package cycles, registries, router contract, services, payloads).
 - The migration that synthesizes both audits is split into six executable plans in `docs/design/architecture-migration/` (`00-overview.md` is the map; `01`–`06` are the plans). They were revised after an external review and rebased on the bugfix stages 4–12 (#40, #42–#49): plans extend the BF11 seams (`HeroTickDispatcher`, `HeroLifecycle`, `Hero` hooks), BF7 `ClientSessionState` and BF10 `PUBLIC_HERO` instead of adding parallel ones. The monolithic `docs/design/2026-09-25-architecture-migration-plan.md` is an unchanged archive of the pre-review version and is not executed or updated.
 
+## Architecture migration — stages E1 + E2 (plan 05)
+
+- **E1 (#81):** root package `com.example.superheroes` → `io.github.grebeshok105.codex` (R14, owner-approved). Pure rename: 681/683 files byte-identical modulo substitution; only build.gradle/gradle.properties differ. Acceptance: zero `com.example` refs; barrier held (no open src/ PRs at merge).
+- **E2 (#83):** `core/` + `mechanic/` skeleton — 52 moves + 3 new (`CoreAttachments` 9 shared ids byte-identical, `CoreNetworking` — `ModNetworking.init()` calls it first, `PayloadRegistrar` per F.1). `item/bound`→`mechanic/boundweapon`, `world/`→`mechanic/world`; emptied legacy packages deleted.
+- Deviations logged: `BOUND_WEAPON_ISSUES` stayed in `ModAttachments` (type in mechanic; core→mechanic forbidden — plan internally inconsistent); `PlayerLifecycle` logger → `LoggerFactory.getLogger(MOD_ID)` (R16); cycle baseline 28→31 (old top-level ring dismantled, contracts re-expressed as thin intra-core pairs — waves break them by ownership per R6); residual core→legacy edges (`HeroTransformService→particle`, `TooltipFrame→item.infinity`) noted for wave work.
+- Gate: compile all source-sets, junit 48/48, gametest 97/97; strict rules verified non-empty (`allowEmptyShould` flipped+restored); store+baseline refrozen post-integration.
+
 ## Architecture migration — stage CL2 (plan 04)
 
 - New `client/core/hud/` registry: `HudLayer` (functional iface), `HudBounds`, `MovableHud` (`layoutId()` + `bounds(w,h)`), `HudLayers` — the mod's single `HudRenderCallback` (spectator gate lives inside it), `register`/`registerMovable`, `movables()`. All 24 HUD renders in `SuperheroesClient` are now `HudLayers.register(order, id, X::render)` with `order` = former position × 100.

@@ -51,7 +51,7 @@
 | Стадия | Статус | PR |
 | :-- | :-- | :-- |
 | E1 переименование корня (барьер) | ✅ | merged #81 |
-| E2 скелет `core/` и `mechanic/` | ⏳ | |
+| E2 скелет `core/` и `mechanic/` | ✅ | merged #83 |
 | M1 `Motion`, `FxBroadcast`, `Targeting` | ⏳ | |
 | F1 Scorpion — сервер | ⏳ | |
 | F2 Scorpion — клиент | ⏳ | |
