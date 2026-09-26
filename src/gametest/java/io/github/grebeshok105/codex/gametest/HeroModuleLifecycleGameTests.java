@@ -176,21 +176,25 @@ public final class HeroModuleLifecycleGameTests implements FabricGameTest {
 		TestHeroes.transform(owner, ReinhardHero.ID);
 		ServerPlayer victim = TestPlayers.join(helper, "frozen-victim");
 		// ServerPlayer.canHarmPlayer gates the player-freeze path on isPvpAllowed(); the
-		// gametest server runs with pvp off, so enable it for this test only.
+		// gametest server runs with pvp off, so enable it for this test only and
+		// restore it — the flag is global to every concurrent test in the batch.
+		boolean oldPvp = helper.getLevel().getServer().isPvpAllowed();
 		helper.getLevel().getServer().setPvpAllowed(true);
 		Zombie frozen = helper.spawn(EntityType.ZOMBIE, 1, 1, 1);
 		owner.teleportTo(frozen.getX() - 3.0, frozen.getY(), frozen.getZ());
 		victim.teleportTo(frozen.getX() + 3.0, frozen.getY(), frozen.getZ());
 		ReinhardTimeSlowController.triggerAbilitySlow(owner);
 
-		// Freshly spawned mobs only enter the accessible entity sections freezeAround()
-		// scans once their chunk's tracking upgrade lands — poll for that, then settle.
-		TestPlayers.awaitVisible(helper, frozen, () -> helper.runAfterDelay(2, () -> {
+		// Freshly joined players and spawned mobs only enter the accessible entity
+		// sections freezeAround() scans once their chunk's tracking upgrade lands —
+		// poll for both, then settle.
+		TestPlayers.awaitVisible(helper, victim, () -> TestPlayers.awaitVisible(helper, frozen, () -> helper.runAfterDelay(2, () -> {
 			helper.assertTrue(TestPlayers.lockOwners(frozen, ControlLockKind.NO_AI)
 					.contains(owner.getUUID()), "time slow holds a NoAI lock on the mob");
 			helper.assertTrue(victim.getAttribute(Attributes.MOVEMENT_SPEED)
 							.getModifier(TIME_SLOW_FREEZE) != null,
 					"frozen players get the zero-speed modifier");
+			helper.getLevel().getServer().setPvpAllowed(oldPvp);
 
 			TestPlayers.leave(victim);
 			helper.assertTrue(victim.getAttribute(Attributes.MOVEMENT_SPEED)
@@ -203,7 +207,7 @@ public final class HeroModuleLifecycleGameTests implements FabricGameTest {
 			helper.assertFalse(ReinhardTimeSlowController.isActive(owner),
 					"owner's slow dropped");
 			helper.succeed();
-		}));
+		})));
 	}
 
 	/** {@code ReinhardTimeSlowController.resetAll}: world shutdown releases every lock and
