@@ -15,6 +15,7 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.player.Player;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -42,6 +43,8 @@ public final class DoomsdayHero implements Hero {
                         0xFFFFE0C0,
                         0x55D83A1A
         );
+
+        private static final HeroHudConfig HUD = new HeroHudConfig("hud.superheroes.energy.rage", HeroHudConfig.EnergyIconType.SKULL, true, "DOOM GRIP");
 
         @Override
         public ResourceLocation getId() {
@@ -214,7 +217,7 @@ public final class DoomsdayHero implements Hero {
 
 	@Override
 	public HeroHudConfig getHudConfig() {
-		return HeroHudConfig.DOOMSDAY;
+		return HUD;
 	}
 	@Override
 	public com.example.superheroes.physics.ImpactStyle getImpactStyle() {
@@ -234,5 +237,20 @@ public final class DoomsdayHero implements Hero {
                         ResourceLocation abilityId) {
                 return isAbilityUnlocked(player, abilityId);
         }
+
+	@Override
+	public List<PassiveGlyph> getPassiveGlyphs() {
+		return List.of(PassiveGlyph.FIST, PassiveGlyph.STAR, PassiveGlyph.HEART, PassiveGlyph.BOLT, PassiveGlyph.SKULL);
+	}
+
+	@Override
+	public boolean canSuperJump() {
+		return true;
+	}
+
+	@Override
+	public @Nullable BleedProfile getMeleeBleed(ServerPlayer attacker) {
+		return getTier(attacker) >= 3 ? new BleedProfile(0.50f, 1) : null;
+	}
 
 }

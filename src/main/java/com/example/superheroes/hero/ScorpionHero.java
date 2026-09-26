@@ -14,6 +14,28 @@ public final class ScorpionHero implements Hero {
 	public static final ResourceLocation ID = ModId.of("scorpion");
 	public static final ResourceLocation SKIN = ModId.of("textures/entity/hero/scorpion.png");
 
+	private static final HeroTheme THEME = new HeroTheme(
+			0xE01A0A02,
+			0xD00A0301,
+			0x88FF6A14,
+			0x33FFB060,
+			0xFFFF8A2A,
+			0xFF6A1E00,
+			0xFFFFB048,
+			0x55FF8A30,
+			0xFFFFB048,
+			0xFF200800,
+			0xFFFF9A30,
+			0x55FFCC80,
+			0xFFFF9A30,
+			0x55FF6A14,
+			0xFFFFB048,
+			0xFFFFB048,
+			0xFFFFF0E0,
+			0x55FF8A30
+	);
+	private static final HeroHudConfig HUD = new HeroHudConfig("hud.superheroes.energy.hellfire", HeroHudConfig.EnergyIconType.FLAME, false, null);
+
 	@Override
 	public ResourceLocation getId() {
 		return ID;
@@ -80,11 +102,11 @@ public final class ScorpionHero implements Hero {
 
 	@Override
 	public HeroTheme getTheme() {
-		return HeroTheme.SCORPION;
+		return THEME;
 	}
 
 	@Override
 	public HeroHudConfig getHudConfig() {
-		return HeroHudConfig.SCORPION;
+		return HUD;
 	}
 }

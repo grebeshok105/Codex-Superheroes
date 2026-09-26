@@ -22,6 +22,28 @@ public final class ThanosHero implements Hero {
 	public static final ResourceLocation ID = ModId.of("thanos");
 	public static final ResourceLocation SKIN = ModId.of("textures/entity/hero/thanos.png");
 
+	private static final HeroTheme THEME = new HeroTheme(
+			0xE0140828,
+			0xD0050210,
+			0x88B44CFF,
+			0x33FFD040,
+			0xFFD58CFF,
+			0xFF3A1668,
+			0xFFB44CFF,
+			0x55D58CFF,
+			0xFFB44CFF,
+			0xFF1A0608,
+			0xFFFFAA40,
+			0x55FFCC80,
+			0xFFFFAA40,
+			0x55B44CFF,
+			0xFFFFD040,
+			0xFFFFD040,
+			0xFFFFFFFF,
+			0x55D58CFF
+	);
+	private static final HeroHudConfig HUD = new HeroHudConfig("hud.superheroes.energy.cosmic_power", HeroHudConfig.EnergyIconType.COSMIC, true, "SNAP");
+
 	@Override
 	public ResourceLocation getId() {
 		return ID;
@@ -138,12 +160,12 @@ public final class ThanosHero implements Hero {
 
 	@Override
 	public HeroTheme getTheme() {
-		return HeroTheme.THANOS;
+		return THEME;
 	}
 
 	@Override
 	public HeroHudConfig getHudConfig() {
-		return HeroHudConfig.THANOS;
+		return HUD;
 	}
 	@Override
 	public double getImpactPower() {
@@ -163,6 +185,16 @@ public final class ThanosHero implements Hero {
 	@Override
 	public void onAbilityDenied(ServerPlayer player, ResourceLocation abilityId) {
 		notifyMissingStone(player, abilityId);
+	}
+
+	@Override
+	public List<PassiveGlyph> getPassiveGlyphs() {
+		return List.of(PassiveGlyph.FIST, PassiveGlyph.SHIELD, PassiveGlyph.STAR, PassiveGlyph.COSMIC);
+	}
+
+	@Override
+	public boolean canSuperJump() {
+		return true;
 	}
 
 }

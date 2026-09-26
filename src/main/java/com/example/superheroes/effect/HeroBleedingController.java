@@ -1,6 +1,8 @@
 package com.example.superheroes.effect;
 
-import net.minecraft.resources.ResourceLocation;
+import com.example.superheroes.hero.BleedProfile;
+import com.example.superheroes.hero.Hero;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
 
@@ -16,29 +18,15 @@ public final class HeroBleedingController {
 	}
 
 	/**
-	 * @param heroId attacker's current hero ID (nullable)
+	 * @param hero attacker's current hero
+	 * @param attacker the melee attacker
 	 * @param target the melee target
-	 * @param doomsdayTier 0 if not Doomsday, else the tier level
 	 */
-	public static void tryApplyBleeding(ResourceLocation heroId, LivingEntity target, int doomsdayTier) {
-		if (heroId == null) return;
-		String path = heroId.getPath();
-		float chance;
-		int amplifier;
-		switch (path) {
-			case "battle_beast" -> { chance = 0.30f; amplifier = 0; }
-			case "kratos"       -> { chance = 0.25f; amplifier = 0; }
-			case "omniman"      -> { chance = 0.40f; amplifier = 1; }
-			case "invincible"   -> { chance = 0.20f; amplifier = 0; }
-			case "doomsday"     -> {
-				if (doomsdayTier < 3) return;
-				chance = 0.50f;
-				amplifier = 1;
-			}
-			default -> { return; }
-		}
-		if (ThreadLocalRandom.current().nextFloat() < chance) {
-			target.addEffect(new MobEffectInstance(ModEffects.BLEEDING, 80, amplifier, false, true, true));
+	public static void tryApplyBleeding(Hero hero, ServerPlayer attacker, LivingEntity target) {
+		BleedProfile bleed = hero.getMeleeBleed(attacker);
+		if (bleed == null) return;
+		if (ThreadLocalRandom.current().nextFloat() < bleed.chance()) {
+			target.addEffect(new MobEffectInstance(ModEffects.BLEEDING, 80, bleed.amplifier(), false, true, true));
 		}
 	}
 }

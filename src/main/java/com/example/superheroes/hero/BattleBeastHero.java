@@ -16,6 +16,7 @@ import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -42,6 +43,7 @@ public final class BattleBeastHero implements Hero {
 			0xFFFFFFFF,
 			0x66D04432
 	);
+	private static final HeroHudConfig HUD = new HeroHudConfig("hud.superheroes.energy.blood_curse", HeroHudConfig.EnergyIconType.BEAST, true, "BLOODLUST");
 	private static final AttributeModifierSet PASSIVES = AttributeModifierSet.builder()
 			.add(Attributes.ARMOR, ModId.of("modifiers/battle_beast/armor"), 20.0, AttributeModifier.Operation.ADD_VALUE)
 			.add(Attributes.ARMOR_TOUGHNESS, ModId.of("modifiers/battle_beast/toughness"), 8.0, AttributeModifier.Operation.ADD_VALUE)
@@ -147,7 +149,7 @@ public final class BattleBeastHero implements Hero {
 
 	@Override
 	public HeroHudConfig getHudConfig() {
-		return HeroHudConfig.BATTLE_BEAST;
+		return HUD;
 	}
 	@Override
 	public com.example.superheroes.physics.ImpactStyle getImpactStyle() {
@@ -160,6 +162,16 @@ public final class BattleBeastHero implements Hero {
 	@Override
 	public JarvisThreatClass getThreatClass() {
 		return JarvisThreatClass.S;
+	}
+
+	@Override
+	public List<PassiveGlyph> getPassiveGlyphs() {
+		return List.of(PassiveGlyph.BEAST, PassiveGlyph.FIST, PassiveGlyph.FLAME);
+	}
+
+	@Override
+	public @Nullable BleedProfile getMeleeBleed(ServerPlayer attacker) {
+		return new BleedProfile(0.30f, 0);
 	}
 
 }

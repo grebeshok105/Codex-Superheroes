@@ -2,10 +2,9 @@ package com.example.superheroes.client.hud;
 
 import com.example.superheroes.ability.Ability;
 import com.example.superheroes.ability.AbilityRegistry;
+import com.example.superheroes.hero.Hero;
+import com.example.superheroes.hero.Heroes;
 import net.minecraft.resources.ResourceLocation;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public final class AbilityDescriptions {
 	public enum Kind {
@@ -24,36 +23,12 @@ public final class AbilityDescriptions {
 		}
 	}
 
-	private static final Map<String, Integer> HERO_PASSIVE_COUNT = new HashMap<>();
-
-	static {
-		HERO_PASSIVE_COUNT.put("homelander", 3);
-		HERO_PASSIVE_COUNT.put("iron_man", 3);
-		HERO_PASSIVE_COUNT.put("regulus", 4);
-		HERO_PASSIVE_COUNT.put("sung_jinwoo", 4);
-		HERO_PASSIVE_COUNT.put("doomsday", 5);
-		HERO_PASSIVE_COUNT.put("goku", 3);
-		HERO_PASSIVE_COUNT.put("naruto", 3);
-		HERO_PASSIVE_COUNT.put("captain_america", 3);
-		HERO_PASSIVE_COUNT.put("kratos", 4);
-		HERO_PASSIVE_COUNT.put("loki", 3);
-		HERO_PASSIVE_COUNT.put("thanos", 4);
-		HERO_PASSIVE_COUNT.put("reinhard", 6);
-		HERO_PASSIVE_COUNT.put("raiden_shogun", 0);
-		HERO_PASSIVE_COUNT.put("invincible", 4);
-		HERO_PASSIVE_COUNT.put("omniman", 4);
-		HERO_PASSIVE_COUNT.put("kazuha", 3);
-		HERO_PASSIVE_COUNT.put("scaramouche", 3);
-		HERO_PASSIVE_COUNT.put("battle_beast", 3);
-		HERO_PASSIVE_COUNT.put("rem", 3);
-		HERO_PASSIVE_COUNT.put("a_train", 3);
-	}
-
 	private AbilityDescriptions() {
 	}
 
 	public static int passiveCount(ResourceLocation heroId) {
-		return HERO_PASSIVE_COUNT.getOrDefault(heroId.getPath(), 0);
+		Hero hero = Heroes.get(heroId);
+		return hero == null ? 0 : hero.getPassiveGlyphs().size();
 	}
 
 	public static String passiveKey(ResourceLocation heroId, int index) {

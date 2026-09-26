@@ -2,6 +2,8 @@ package com.example.superheroes.effect;
 
 import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.combat.TargetFilters;
+import com.example.superheroes.hero.Hero;
+import com.example.superheroes.hero.Heroes;
 import com.example.superheroes.network.HeroMeleeChargeC2SPayload;
 import com.example.superheroes.network.ScreenShakeS2CPayload;
 import com.example.superheroes.physics.CombatImpactEngine;
@@ -239,12 +241,10 @@ public final class HeroMeleeImpactController {
 		if (target instanceof ServerPlayer victim) {
 			ServerPlayNetworking.send(victim, new ScreenShakeS2CPayload(0.3f, 6));
 		}
-		HeroBleedingController.tryApplyBleeding(data.heroId(), target, getDoomsdayTier(attacker, data));
-	}
-
-	private static int getDoomsdayTier(ServerPlayer player, HeroData data) {
-		if (!com.example.superheroes.hero.DoomsdayHero.ID.equals(data.heroId())) return 0;
-		return player.getAttachedOrCreate(ModAttachments.DOOMSDAY_PROGRESS).tier();
+		Hero hero = Heroes.get(data.heroId());
+		if (hero != null) {
+			HeroBleedingController.tryApplyBleeding(hero, attacker, target);
+		}
 	}
 
 	private static void spawnWhiffFx(ServerPlayer player) {

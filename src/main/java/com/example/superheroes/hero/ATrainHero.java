@@ -35,6 +35,7 @@ public final class ATrainHero implements Hero {
 			0xFFFFFFFF,
 			0x662C8CFF
 	);
+	private static final HeroHudConfig HUD = new HeroHudConfig("hud.superheroes.energy.compound_v", HeroHudConfig.EnergyIconType.LIGHTNING, true, "HYPERSPEED");
 	private static final AttributeModifierSet PASSIVES = AttributeModifierSet.builder()
 			.add(Attributes.ARMOR, ModId.of("modifiers/a_train/armor"), 10.0, AttributeModifier.Operation.ADD_VALUE)
 			.add(Attributes.ARMOR_TOUGHNESS, ModId.of("modifiers/a_train/toughness"), 3.0, AttributeModifier.Operation.ADD_VALUE)
@@ -120,7 +121,7 @@ public final class ATrainHero implements Hero {
 
 	@Override
 	public HeroHudConfig getHudConfig() {
-		return HeroHudConfig.A_TRAIN;
+		return HUD;
 	}
 	@Override
 	public com.example.superheroes.physics.ImpactStyle getImpactStyle() {
@@ -133,6 +134,11 @@ public final class ATrainHero implements Hero {
 	@Override
 	public JarvisThreatClass getThreatClass() {
 		return JarvisThreatClass.D;
+	}
+
+	@Override
+	public List<PassiveGlyph> getPassiveGlyphs() {
+		return List.of(PassiveGlyph.BOLT, PassiveGlyph.HEART, PassiveGlyph.FIST);
 	}
 
 }

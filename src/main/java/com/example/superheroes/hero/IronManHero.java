@@ -20,6 +20,28 @@ public final class IronManHero implements Hero {
 	public static final ResourceLocation ID = ModId.of("iron_man");
 	public static final ResourceLocation SKIN = ModId.of("textures/entity/hero/ironman.png");
 
+	private static final HeroTheme THEME = new HeroTheme(
+			0xE03A0608,
+			0xD01A0204,
+			0x99FFD24A,
+			0x44FFEEAA,
+			0xFFFFE060,
+			0xFF7A0000,
+			0xFFFF3030,
+			0x66FF6060,
+			0xFFFF3838,
+			0xFF8A4A00,
+			0xFFFFC85A,
+			0x66FFE090,
+			0xFFFFC85A,
+			0x66FF8A38,
+			0xFFFFD24A,
+			0xFFFFD24A,
+			0xFFFFEFB0,
+			0x66FF8A38
+	);
+	private static final HeroHudConfig HUD = new HeroHudConfig("hud.superheroes.energy.arc_reactor", HeroHudConfig.EnergyIconType.REACTOR, true, "IRON LEGION");
+
 	@Override
 	public ResourceLocation getId() {
 		return ID;
@@ -87,7 +109,7 @@ public final class IronManHero implements Hero {
 
 	@Override
 	public HeroTheme getTheme() {
-		return HeroTheme.IRON_MAN;
+		return THEME;
 	}
 
 	@Override
@@ -144,7 +166,7 @@ public final class IronManHero implements Hero {
 
 	@Override
 	public HeroHudConfig getHudConfig() {
-		return HeroHudConfig.IRON_MAN;
+		return HUD;
 	}
 	@Override
 	public com.example.superheroes.physics.ImpactStyle getImpactStyle() {
@@ -162,6 +184,11 @@ public final class IronManHero implements Hero {
 		return !AbilityIds.UNIBEAM.equals(abilityId)
 				&& getAbilities().contains(AbilityIds.UNIBEAM)
 				&& binding == com.example.superheroes.resource.ResourceKind.ENERGY ? 100f : 0f;
+	}
+
+	@Override
+	public List<PassiveGlyph> getPassiveGlyphs() {
+		return List.of(PassiveGlyph.SHIELD, PassiveGlyph.FEATHER, PassiveGlyph.REACTOR);
 	}
 
 }
