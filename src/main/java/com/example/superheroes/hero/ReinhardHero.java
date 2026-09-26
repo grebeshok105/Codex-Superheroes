@@ -6,6 +6,8 @@ import com.example.superheroes.resource.ResourceKind;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 
 import java.util.List;
@@ -35,6 +37,30 @@ public final class ReinhardHero implements Hero {
 			0x66FF6464
 	);
 	private static final HeroHudConfig HUD = new HeroHudConfig("hud.superheroes.energy.divine_blessing", HeroHudConfig.EnergyIconType.SWORD, false, null);
+
+	private static final ResourceLocation ARMOR_ID = ModId.of("modifiers/reinhard/armor");
+	private static final ResourceLocation TOUGHNESS_ID = ModId.of("modifiers/reinhard/toughness");
+	private static final ResourceLocation DAMAGE_ID = ModId.of("modifiers/reinhard/damage");
+	private static final ResourceLocation SPEED_ID = ModId.of("modifiers/reinhard/speed");
+	private static final ResourceLocation HP_ID = ModId.of("modifiers/reinhard/max_health");
+	private static final ResourceLocation KNOCKBACK_ID = ModId.of("modifiers/reinhard/knockback_resistance");
+	private static final ResourceLocation ATTACK_SPEED_ID = ModId.of("modifiers/reinhard/attack_speed");
+	private static final ResourceLocation JUMP_ID = ModId.of("modifiers/reinhard/jump_strength");
+	private static final ResourceLocation STEP_ID = ModId.of("modifiers/reinhard/step_height");
+	private static final ResourceLocation REACH_ID = ModId.of("modifiers/reinhard/entity_reach");
+
+	private static final AttributeModifierSet PASSIVES = AttributeModifierSet.builder()
+			.add(Attributes.ARMOR, ARMOR_ID, 28.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ARMOR_TOUGHNESS, TOUGHNESS_ID, 14.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ATTACK_DAMAGE, DAMAGE_ID, 9.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.MOVEMENT_SPEED, SPEED_ID, 1.0, AttributeModifier.Operation.ADD_MULTIPLIED_BASE)
+			.add(Attributes.MAX_HEALTH, HP_ID, 60.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.KNOCKBACK_RESISTANCE, KNOCKBACK_ID, 0.7, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ATTACK_SPEED, ATTACK_SPEED_ID, 1.5, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.JUMP_STRENGTH, JUMP_ID, 0.3, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.STEP_HEIGHT, STEP_ID, 0.6, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ENTITY_INTERACTION_RANGE, REACH_ID, 0.5, AttributeModifier.Operation.ADD_VALUE)
+			.build();
 
 	@Override
 	public ResourceLocation getId() {
@@ -85,16 +111,16 @@ public final class ReinhardHero implements Hero {
 	}
 
 	@Override
-	public void applyPassives(Player player) {
-		HeroAttributes.REINHARD.apply(player);
+	public AttributeModifierSet passiveAttributes() {
+		return PASSIVES;
 	}
 
 	@Override
 	public void removePassives(Player player) {
-		HeroAttributes.REINHARD.remove(player);
-		HeroAttributes.REINHARD_DRAW.remove(player);
+		PASSIVES.remove(player);
+		AbilityScopedModifiers.REINHARD_DRAW.remove(player);
 		for (int p = 1; p <= 5; p++) {
-			HeroAttributes.buildReinhardPhaseSet(p).remove(player);
+			AbilityScopedModifiers.buildReinhardPhaseSet(p).remove(player);
 		}
 	}
 

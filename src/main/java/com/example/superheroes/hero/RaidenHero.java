@@ -6,6 +6,8 @@ import com.example.superheroes.resource.ResourceKind;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 
 import java.util.List;
@@ -35,6 +37,24 @@ public final class RaidenHero implements Hero {
 			0x66C8A0FF
 	);
 	private static final HeroHudConfig HUD = new HeroHudConfig("hud.superheroes.energy.electro", HeroHudConfig.EnergyIconType.LIGHTNING, true, "TRANSCENDENCE");
+
+	private static final ResourceLocation ARMOR_ID = ModId.of("modifiers/raiden/armor");
+	private static final ResourceLocation TOUGHNESS_ID = ModId.of("modifiers/raiden/toughness");
+	private static final ResourceLocation DAMAGE_ID = ModId.of("modifiers/raiden/damage");
+	private static final ResourceLocation SPEED_ID = ModId.of("modifiers/raiden/speed");
+	private static final ResourceLocation HP_ID = ModId.of("modifiers/raiden/max_health");
+	private static final ResourceLocation KNOCKBACK_ID = ModId.of("modifiers/raiden/knockback_resistance");
+	private static final ResourceLocation ATTACK_SPEED_ID = ModId.of("modifiers/raiden/attack_speed");
+
+	private static final AttributeModifierSet PASSIVES = AttributeModifierSet.builder()
+			.add(Attributes.ARMOR, ARMOR_ID, 20.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ARMOR_TOUGHNESS, TOUGHNESS_ID, 6.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ATTACK_DAMAGE, DAMAGE_ID, 5.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.MOVEMENT_SPEED, SPEED_ID, 0.10, AttributeModifier.Operation.ADD_MULTIPLIED_BASE)
+			.add(Attributes.MAX_HEALTH, HP_ID, 30.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.KNOCKBACK_RESISTANCE, KNOCKBACK_ID, 0.7, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ATTACK_SPEED, ATTACK_SPEED_ID, 1.0, AttributeModifier.Operation.ADD_VALUE)
+			.build();
 
 	@Override
 	public ResourceLocation getId() {
@@ -83,14 +103,14 @@ public final class RaidenHero implements Hero {
 	}
 
 	@Override
-	public void applyPassives(Player player) {
-		HeroAttributes.RAIDEN.apply(player);
+	public AttributeModifierSet passiveAttributes() {
+		return PASSIVES;
 	}
 
 	@Override
 	public void removePassives(Player player) {
-		HeroAttributes.RAIDEN.remove(player);
-		HeroAttributes.RAIDEN_BURST.remove(player);
+		PASSIVES.remove(player);
+		AbilityScopedModifiers.RAIDEN_BURST.remove(player);
 	}
 
 	@Override

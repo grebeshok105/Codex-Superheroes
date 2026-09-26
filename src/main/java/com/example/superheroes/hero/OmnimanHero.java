@@ -16,6 +16,8 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,6 +48,30 @@ public final class OmnimanHero implements Hero {
 	);
 
 	private static final HeroHudConfig HUD = new HeroHudConfig("hud.superheroes.energy.viltrumite_power", HeroHudConfig.EnergyIconType.FIST, true, "WORLD BREAKER");
+
+	private static final ResourceLocation ARMOR_ID = ModId.of("modifiers/omniman/armor");
+	private static final ResourceLocation TOUGHNESS_ID = ModId.of("modifiers/omniman/toughness");
+	private static final ResourceLocation DAMAGE_ID = ModId.of("modifiers/omniman/damage");
+	private static final ResourceLocation SPEED_ID = ModId.of("modifiers/omniman/speed");
+	private static final ResourceLocation HP_ID = ModId.of("modifiers/omniman/max_health");
+	private static final ResourceLocation KNOCKBACK_ID = ModId.of("modifiers/omniman/knockback_resistance");
+	private static final ResourceLocation ATTACK_SPEED_ID = ModId.of("modifiers/omniman/attack_speed");
+	private static final ResourceLocation JUMP_ID = ModId.of("modifiers/omniman/jump_strength");
+	private static final ResourceLocation STEP_ID = ModId.of("modifiers/omniman/step_height");
+	private static final ResourceLocation REACH_ID = ModId.of("modifiers/omniman/entity_reach");
+
+	private static final AttributeModifierSet PASSIVES = AttributeModifierSet.builder()
+			.add(Attributes.ARMOR, ARMOR_ID, 30.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ARMOR_TOUGHNESS, TOUGHNESS_ID, 16.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ATTACK_DAMAGE, DAMAGE_ID, 16.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.MOVEMENT_SPEED, SPEED_ID, 0.32, AttributeModifier.Operation.ADD_MULTIPLIED_BASE)
+			.add(Attributes.MAX_HEALTH, HP_ID, 60.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.KNOCKBACK_RESISTANCE, KNOCKBACK_ID, 1.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ATTACK_SPEED, ATTACK_SPEED_ID, 0.8, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.JUMP_STRENGTH, JUMP_ID, 0.35, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.STEP_HEIGHT, STEP_ID, 0.6, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ENTITY_INTERACTION_RANGE, REACH_ID, 0.8, AttributeModifier.Operation.ADD_VALUE)
+			.build();
 
 	@Override
 	public ResourceLocation getId() {
@@ -92,8 +118,13 @@ public final class OmnimanHero implements Hero {
 	}
 
 	@Override
+	public AttributeModifierSet passiveAttributes() {
+		return PASSIVES;
+	}
+
+	@Override
 	public void applyPassives(Player player) {
-		HeroAttributes.OMNIMAN.apply(player);
+		PASSIVES.apply(player);
 		player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, -1, 1, true, false, true));
 		player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, -1, 1, true, false, true));
 		player.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, -1, 0, true, false, true));
@@ -101,7 +132,7 @@ public final class OmnimanHero implements Hero {
 
 	@Override
 	public void removePassives(Player player) {
-		HeroAttributes.OMNIMAN.remove(player);
+		PASSIVES.remove(player);
 		player.removeEffect(MobEffects.REGENERATION);
 		player.removeEffect(MobEffects.DAMAGE_RESISTANCE);
 		player.removeEffect(MobEffects.FIRE_RESISTANCE);

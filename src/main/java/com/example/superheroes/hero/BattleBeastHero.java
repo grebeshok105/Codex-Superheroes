@@ -102,6 +102,11 @@ public final class BattleBeastHero implements Hero {
 	}
 
 	@Override
+	public AttributeModifierSet passiveAttributes() {
+		return PASSIVES;
+	}
+
+	@Override
 	public void applyPassives(Player player) {
 		PASSIVES.apply(player);
 		player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, -1, 0, true, false, true));

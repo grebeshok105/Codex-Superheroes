@@ -46,6 +46,8 @@ public final class DoomsdayHero implements Hero {
 
         private static final HeroHudConfig HUD = new HeroHudConfig("hud.superheroes.energy.rage", HeroHudConfig.EnergyIconType.SKULL, true, "DOOM GRIP");
 
+        private static final AttributeModifierSet PASSIVES = AbilityScopedModifiers.DOOMSDAY;
+
         @Override
         public ResourceLocation getId() {
                 return ID;
@@ -92,10 +94,15 @@ public final class DoomsdayHero implements Hero {
         }
 
         @Override
+        public AttributeModifierSet passiveAttributes() {
+                return PASSIVES;
+        }
+
+        @Override
         public void applyPassives(Player player) {
                 int tier = getTier(player);
-                HeroAttributes.DOOMSDAY.remove(player);
-                HeroAttributes.buildDoomsdayTierSet(tier).apply(player);
+                PASSIVES.remove(player);
+                AbilityScopedModifiers.buildDoomsdayTierSet(tier).apply(player);
                 applyTierEffects(player, tier);
                 if (player instanceof ServerPlayer sp) {
                         com.example.superheroes.effect.DoomsdayAdaptationController.reapplyDamageBonus(sp);
@@ -150,7 +157,7 @@ public final class DoomsdayHero implements Hero {
 
         @Override
         public void removePassives(Player player) {
-                HeroAttributes.DOOMSDAY.remove(player);
+                PASSIVES.remove(player);
                 player.removeEffect(MobEffects.REGENERATION);
                 player.removeEffect(MobEffects.DAMAGE_RESISTANCE);
                 player.removeEffect(MobEffects.DAMAGE_BOOST);

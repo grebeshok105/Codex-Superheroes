@@ -1,7 +1,7 @@
 package com.example.superheroes.effect;
 
 import com.example.superheroes.attachment.ModAttachments;
-import com.example.superheroes.hero.HeroAttributes;
+import com.example.superheroes.hero.AbilityScopedModifiers;
 import com.example.superheroes.hero.ThanosHero;
 import com.example.superheroes.item.InfinityGauntletItem;
 import com.example.superheroes.item.infinity.InfinityGauntletData;
@@ -115,7 +115,7 @@ public final class ThanosGauntletStateController {
 		if (server.getTickCount() % 10 != 0) return;
 		if (!ThanosHero.ID.equals(data.heroId())) {
 			if (APPLIED.remove(player.getUUID()) != null) {
-				HeroAttributes.thanosClearStoneModifiers(player);
+				AbilityScopedModifiers.thanosClearStoneModifiers(player);
 				sendStones(player, EnumSet.noneOf(InfinityStoneType.class));
 			}
 			return;

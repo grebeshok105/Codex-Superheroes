@@ -26,9 +26,24 @@ public interface Hero {
 
 	ResourceKind getDefaultBinding(ResourceLocation abilityId);
 
-	void applyPassives(Player player);
+	/**
+	 * Permanent attribute modifiers owned by this hero — what {@link #applyPassives}
+	 * and {@link #removePassives} route through by default. Heroes whose passives
+	 * carry extra logic (effects, tier-scaled values, other modifier sets) keep
+	 * custom bodies that apply this set inside them. Empty when the hero has no
+	 * attribute passives.
+	 */
+	default AttributeModifierSet passiveAttributes() {
+		return AttributeModifierSet.builder().build();
+	}
 
-	void removePassives(Player player);
+	default void applyPassives(Player player) {
+		passiveAttributes().apply(player);
+	}
+
+	default void removePassives(Player player) {
+		passiveAttributes().remove(player);
+	}
 
 	boolean cancelsFallDamage(Player player);
 

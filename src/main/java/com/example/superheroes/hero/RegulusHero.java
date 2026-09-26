@@ -14,6 +14,8 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 
 import java.util.List;
@@ -44,6 +46,14 @@ public final class RegulusHero implements Hero {
 	);
 
 	private static final HeroHudConfig HUD = new HeroHudConfig("hud.superheroes.energy.lion_heart", HeroHudConfig.EnergyIconType.LION, false, null);
+
+	private static final ResourceLocation ARMOR_ID = ModId.of("modifiers/regulus/armor");
+	private static final ResourceLocation KNOCKBACK_ID = ModId.of("modifiers/regulus/knockback_resistance");
+
+	private static final AttributeModifierSet PASSIVES = AttributeModifierSet.builder()
+			.add(Attributes.ARMOR, ARMOR_ID, 70.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.KNOCKBACK_RESISTANCE, KNOCKBACK_ID, 1.0, AttributeModifier.Operation.ADD_VALUE)
+			.build();
 
 	@Override
 	public ResourceLocation getId() {
@@ -85,8 +95,13 @@ public final class RegulusHero implements Hero {
 	}
 
 	@Override
+	public AttributeModifierSet passiveAttributes() {
+		return PASSIVES;
+	}
+
+	@Override
 	public void applyPassives(Player player) {
-		HeroAttributes.REGULUS.apply(player);
+		PASSIVES.apply(player);
 		player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, -1, 0, true, false, true));
 		player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, -1, 1, true, false, true));
 		player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, -1, 1, true, false, true));
@@ -96,7 +111,7 @@ public final class RegulusHero implements Hero {
 
 	@Override
 	public void removePassives(Player player) {
-		HeroAttributes.REGULUS.remove(player);
+		PASSIVES.remove(player);
 		player.removeEffect(MobEffects.REGENERATION);
 		player.removeEffect(MobEffects.MOVEMENT_SPEED);
 		player.removeEffect(MobEffects.DAMAGE_BOOST);

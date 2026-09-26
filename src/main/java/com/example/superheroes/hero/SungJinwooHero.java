@@ -8,6 +8,8 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 
 import java.util.List;
@@ -39,6 +41,22 @@ public final class SungJinwooHero implements Hero {
 	);
 
 	private static final HeroHudConfig HUD = new HeroHudConfig("hud.superheroes.energy.shadow_power", HeroHudConfig.EnergyIconType.SHADOW, true, "MONARCH'S DOMAIN");
+
+	private static final ResourceLocation ARMOR_ID = ModId.of("modifiers/sung_jinwoo/armor");
+	private static final ResourceLocation TOUGHNESS_ID = ModId.of("modifiers/sung_jinwoo/toughness");
+	private static final ResourceLocation DAMAGE_ID = ModId.of("modifiers/sung_jinwoo/damage");
+	private static final ResourceLocation SPEED_ID = ModId.of("modifiers/sung_jinwoo/speed");
+	private static final ResourceLocation KNOCKBACK_ID = ModId.of("modifiers/sung_jinwoo/knockback_resistance");
+	private static final ResourceLocation ATTACK_SPEED_ID = ModId.of("modifiers/sung_jinwoo/attack_speed");
+
+	private static final AttributeModifierSet PASSIVES = AttributeModifierSet.builder()
+			.add(Attributes.ARMOR, ARMOR_ID, 20.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ARMOR_TOUGHNESS, TOUGHNESS_ID, 8.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ATTACK_DAMAGE, DAMAGE_ID, 4.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.MOVEMENT_SPEED, SPEED_ID, 0.20, AttributeModifier.Operation.ADD_MULTIPLIED_BASE)
+			.add(Attributes.KNOCKBACK_RESISTANCE, KNOCKBACK_ID, 0.3, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ATTACK_SPEED, ATTACK_SPEED_ID, 1.5, AttributeModifier.Operation.ADD_VALUE)
+			.build();
 
 	@Override
 	public ResourceLocation getId() {
@@ -88,8 +106,13 @@ public final class SungJinwooHero implements Hero {
 	}
 
 	@Override
+	public AttributeModifierSet passiveAttributes() {
+		return PASSIVES;
+	}
+
+	@Override
 	public void applyPassives(Player player) {
-		HeroAttributes.SUNG_JINWOO.apply(player);
+		PASSIVES.apply(player);
 		player.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, -1, 0, true, false, false));
 		player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, -1, 0, true, false, true));
 		player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, -1, 0, true, false, true));
@@ -97,7 +120,7 @@ public final class SungJinwooHero implements Hero {
 
 	@Override
 	public void removePassives(Player player) {
-		HeroAttributes.SUNG_JINWOO.remove(player);
+		PASSIVES.remove(player);
 		player.removeEffect(MobEffects.NIGHT_VISION);
 		player.removeEffect(MobEffects.DAMAGE_RESISTANCE);
 		player.removeEffect(MobEffects.REGENERATION);

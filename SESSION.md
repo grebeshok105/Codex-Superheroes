@@ -264,11 +264,12 @@
 - First consumer migrated: `CapShieldSlamAbility` `WeakHashMap` → `OwnedSessionMap` (LEAVE+DEATH + always server-stop clear; its `clear`'s "untransform" javadoc was stale — no `onClear` registration ever existed, behavior preserved exactly). The three registrations dropped from `SuperheroesMod`.
 - Integration fix: `startRunsBeforeEndPhasesAndEarlyBeforeGlobal` asserted absolute index order — made robust to mid-tick hook registration (search relative to first "start"). qualityGate green: 67/67 gametests; worker's hand-shrunk freeze-store entries verified = canonical `allowStoreUpdate` output.
 
-## Architecture migration — stage D2a-1 (plan 03)
+## Architecture migration — stage B2 (plan 02)
 
-- First vertical slice through `HeroModule`: `core/module/` contracts verbatim (`AbilitySink`, `HeroModule`, `HeroModuleContext`, `CoreModuleContext` delegating to `AbilityRegistry`/`HeroTickDispatcher.registrar()`/`LifecycleRegistrar.global()`), `bootstrap/HeroModules` composition root (`ALL` + two-pass `bootstrap`), `hero/scorpion/ScorpionModule` (4 abilities in plan order + `ScorpionController.init()`).
-- `Heroes.SCORPION` + 4 `AbilityRegistry.SCORPION_*` fields/registers deleted; `SuperheroesMod` calls `HeroModules.bootstrap(CoreModuleContext.INSTANCE)` at the exact old `ScorpionController.init()` call site (registration moment preserved). Known temporary behavior change per plan: Scorpion registers last (command-suggestion order only; D2a-2 restores).
-- New GameTest `scorpionIsRegisteredThroughItsModule`: `Heroes.get(SCORPION_ID)` is the module's own instance + 4 abilities present. ArchUnit acceptance verified by temporarily flipping `allowEmptyShould(true→false)` on the 3 strict rules — all pass non-empty — then reverted; freeze store shrank by the 2 `Heroes.SCORPION` entries (orchestrator-committed). qualityGate green: 70/70 gametests.
+- `Hero.passiveAttributes()` returns the hero's `AttributeModifierSet`; default `applyPassives`/`removePassives` route through it. 6 fully-reducible heroes dropped both overrides (captain_america, goku, loki, naruto, scorpion, kazuha); 5 partially (atrain, rem, pandora, raiden, reinhard keep the override with extra side effects); 11 custom keep overrides but route the passive set through `PASSIVES`.
+- `HeroAttributes.java` deleted: per-hero passive sets → `PASSIVES` fields on heroes; the ability-scoped/transient members (KRATOS_RAGE, NANO_*, RAIDEN_BURST, REINHARD_*, REGULUS_MADNESS, DOOMSDAY_*, thanosClearStoneModifiers, buildReinhardPhaseSet, buildDoomsdayTierSet) moved verbatim to `hero/AbilityScopedModifiers.java` — same package, so zero new package edges and zero new frozen violations (not a concrete-hero class). `ability/` host rejected: hero files read those members → would create new `ability<->hero` cycle pair.
+- `DoomsdayHero.PASSIVES` = `AbilityScopedModifiers.DOOMSDAY` (one definition); id/value tuples diff-verified identical old-vs-new.
+- Golden `passive_modifiers.txt` (171 applied-modifier records) captured pre-migration; `passiveModifiersAreStable` compares — green. qualityGate 70/70; baseline/store delta zero.
 
 ## Architecture migration — stage D2a-1 (plan 03)
 
