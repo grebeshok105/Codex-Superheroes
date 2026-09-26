@@ -391,3 +391,12 @@
 - Gate: qualityGate green @a7aaab2 (111/111 gametests). Golden transformation_lore reordered (kunai first — registration order, content identical). ArchUnit store refrozen with 0 scorpion entries.
 - Runtime: runClient Veil + runClientNoVeil both PASSED 7/7 (transform, 4 abilities + spear pull, untransform, OwnedSessionMap ClearOn LEAVE+DEATH proven via instrumentation).
 - Reviewer: APPROVE at HEAD 1118390. Merged #85.
+
+## G1 — Reinhard server module (PR #86)
+- hero/reinhard/ full server move: module+hero+abilities(8, own ids)+items+attachments, ability/, runtime/ (10 classes), item/RoyalIcicleItem, net/ (7 payloads), sound/ReinhardSounds.
+- New core seams: C2SGuards (requireHero/requireActiveAbility), AttachmentRegistrar (persistent/transient/initializer overload).
+- Shared cleaned: AbilityIds, ModItems, ModItemGroups, ModAttachments, ModNetworking, ModSounds, AdminAbilityDebug (debugTargetsMobs via Ability contract).
+- isReinhardSwordOnly dead-code moved disconnected to ReinhardAbilities.
+- Baseline lost ability<->debug pair; golden regen (reinhard_suit first); store refrozen.
+- Gate green; reviewer APPROVE; runtime 7/7 (bounded on icicle empowered branches — pre-existing, player-scoped).
+- HeavensStrikeController.Variant.REINHARD intentionally remains (G3).

@@ -55,7 +55,7 @@
 | M1 `Motion`, `FxBroadcast`, `Targeting` | ✅ | merged #84 |
 | F1 Scorpion — сервер | ✅ | merged #85 |
 | F2 Scorpion — клиент | ✅ | merged #85 |
-| G1 Reinhard — сервер | ⏳ | |
+| G1 Reinhard — сервер | ✅ | #86 |
 | G2 Reinhard — клиент | ⏳ | |
 | G3 Reinhard — межгеройские остатки | ⏳ | |
 | H architecture review gate | ⏳ | |
