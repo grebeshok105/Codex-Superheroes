@@ -269,3 +269,11 @@
 - First vertical slice through `HeroModule`: `core/module/` contracts verbatim (`AbilitySink`, `HeroModule`, `HeroModuleContext`, `CoreModuleContext` delegating to `AbilityRegistry`/`HeroTickDispatcher.registrar()`/`LifecycleRegistrar.global()`), `bootstrap/HeroModules` composition root (`ALL` + two-pass `bootstrap`), `hero/scorpion/ScorpionModule` (4 abilities in plan order + `ScorpionController.init()`).
 - `Heroes.SCORPION` + 4 `AbilityRegistry.SCORPION_*` fields/registers deleted; `SuperheroesMod` calls `HeroModules.bootstrap(CoreModuleContext.INSTANCE)` at the exact old `ScorpionController.init()` call site (registration moment preserved). Known temporary behavior change per plan: Scorpion registers last (command-suggestion order only; D2a-2 restores).
 - New GameTest `scorpionIsRegisteredThroughItsModule`: `Heroes.get(SCORPION_ID)` is the module's own instance + 4 abilities present. ArchUnit acceptance verified by temporarily flipping `allowEmptyShould(true→false)` on the 3 strict rules — all pass non-empty — then reverted; freeze store shrank by the 2 `Heroes.SCORPION` entries (orchestrator-committed). qualityGate green: 70/70 gametests.
+
+## Architecture migration — stage D2a-1 (plan 03)
+
+- Scorpion migrated to the module pipeline: `HeroModules.bootstrap(CoreModuleContext.INSTANCE)` runs a two-pass ctor over `HeroModules.ALL` = [ScorpionModule]; `Heroes.SCORPION` + 4 `SCORPION_*` ability constants deleted — `AbilityIds` referenced instead; SuperheroesMod line 56 identical callsite preserved.
+- Contracts: `HeroModule` (id + ctor taking `HeroModuleContext`), `AbilitySink` (register(cb)), `CoreModuleContext` singleton. Strict ArchUnit rules verified non-empty via temporary `allowEmptyShould(false)` flip (13 rules pass).
+- Store shrank exactly 2 lines (Heroes.SCORPION field + clinit call); cycle baseline unchanged.
+- Gametest `scorpionIsRegisteredThroughItsModule` asserts registry↔module list identity + all 4 ability ids. qualityGate 70/70.
+- Runtime (PR head @742ecda): kunai transform, all 4 scorpion abilities (spear/eruption/breath/hellport), suggestion list, regulus sanity — PASS. Pre-existing bug found (NOT regression): Hellport never displaces — `SafeTeleport.clamp` self-collides on the caster's bounding box; files byte-identical to main. Logged for a separate fix ticket.
