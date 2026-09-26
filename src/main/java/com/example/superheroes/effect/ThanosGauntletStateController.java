@@ -1,6 +1,7 @@
 package com.example.superheroes.effect;
 
 import com.example.superheroes.attachment.ModAttachments;
+import com.example.superheroes.core.module.HeroModuleContext;
 import com.example.superheroes.hero.AbilityScopedModifiers;
 import com.example.superheroes.hero.ThanosHero;
 import com.example.superheroes.item.InfinityGauntletItem;
@@ -8,7 +9,6 @@ import com.example.superheroes.item.infinity.InfinityGauntletData;
 import com.example.superheroes.item.infinity.InfinityStoneType;
 import com.example.superheroes.network.ThanosStonesS2CPayload;
 import com.example.superheroes.transform.HeroData;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.server.level.ServerPlayer;
@@ -29,9 +29,9 @@ public final class ThanosGauntletStateController {
 	private ThanosGauntletStateController() {
 	}
 
-	public static void init() {
+	public static void register(HeroModuleContext ctx) {
 
-		ServerTickEvents.START_SERVER_TICK.register(server -> {
+		ctx.ticks().start(server -> {
 			APPLIED.keySet().removeIf(uuid -> server.getPlayerList().getPlayer(uuid) == null);
 		});
 

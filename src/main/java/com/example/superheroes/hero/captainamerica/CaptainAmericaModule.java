@@ -23,5 +23,7 @@ public final class CaptainAmericaModule implements HeroModule {
 		ctx.abilities().register(new CapShieldSlamAbility());
 		ctx.abilities().register(new CapShieldDashAbility());
 		ctx.abilities().register(new CapCounterStanceAbility());
+
+		ctx.ticks().player((server, p, data) -> CapShieldSlamAbility.serverTick(p));
 	}
 }
