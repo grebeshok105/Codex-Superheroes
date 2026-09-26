@@ -2,6 +2,9 @@ package com.example.superheroes.ability;
 
 import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.damage.ModDamageTypes;
+import com.example.superheroes.lifecycle.LifecycleRegistrar;
+import com.example.superheroes.lifecycle.OwnedSessionMap;
+import com.example.superheroes.lifecycle.OwnedSessionMap.ClearOn;
 import com.example.superheroes.particle.ModParticles;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
@@ -13,17 +16,17 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.EnumSet;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
-import java.util.WeakHashMap;
 
 public final class GokuSpiritBombAbility implements Ability {
 	private static final int CHANNEL_TICKS = 80;
 	private static final int COOLDOWN_TICKS = 900;
 	private static final double RADIUS = 12.0;
 	private static final float DAMAGE = 50f;
-	private static final Map<UUID, ActiveSpiritBomb> ACTIVE = new WeakHashMap<>();
+	private static final OwnedSessionMap<UUID, ActiveSpiritBomb> ACTIVE =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.of(ClearOn.LEAVE, ClearOn.DEATH));
 
 	@Override
 	public ResourceLocation getId() {
@@ -52,7 +55,7 @@ public final class GokuSpiritBombAbility implements Ability {
 
 	@Override
 	public boolean tryActivate(ServerPlayer player) {
-		ACTIVE.put(player.getUUID(), new ActiveSpiritBomb(player.position()));
+		ACTIVE.put(player.getUUID(), player.getUUID(), new ActiveSpiritBomb(player.position()));
 		player.serverLevel().playSound(null, player.getX(), player.getY(), player.getZ(),
 				SoundEvents.RESPAWN_ANCHOR_CHARGE, SoundSource.PLAYERS, 1.6f, 0.8f);
 		AbilityCooldowns.setCooldownTicks(player, getId(), COOLDOWN_TICKS);
@@ -73,11 +76,6 @@ public final class GokuSpiritBombAbility implements Ability {
 	/** Drop an in-progress charge/rush without firing it (leave, death, untransform). */
 	public static void clear(ServerPlayer player) {
 		ACTIVE.remove(player.getUUID());
-	}
-
-	/** World shutdown — charge sessions die with the world. */
-	public static void resetAll() {
-		ACTIVE.clear();
 	}
 
 	private static final class ActiveSpiritBomb {

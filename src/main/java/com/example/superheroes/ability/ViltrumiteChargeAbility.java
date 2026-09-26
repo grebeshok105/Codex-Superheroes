@@ -3,6 +3,9 @@ package com.example.superheroes.ability;
 import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.effect.FlightController;
+import com.example.superheroes.lifecycle.LifecycleRegistrar;
+import com.example.superheroes.lifecycle.OwnedSessionMap;
+import com.example.superheroes.lifecycle.OwnedSessionMap.ClearOn;
 import com.example.superheroes.physics.RushTerrainBreaker;
 import com.example.superheroes.transform.HeroData;
 import net.minecraft.core.particles.ParticleTypes;
@@ -17,11 +20,11 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.WeakHashMap;
 
 public final class ViltrumiteChargeAbility implements Ability {
 	private static final int COOLDOWN_TICKS = 160;
@@ -30,7 +33,8 @@ public final class ViltrumiteChargeAbility implements Ability {
 	private static final double DISTANCE = 22.0;
 	private static final double FLIGHT_DISTANCE_MULTIPLIER = 2.5;
 	private static final double KNOCKBACK = 4.8;
-	private static final WeakHashMap<UUID, ActiveCharge> ACTIVE = new WeakHashMap<>();
+	private static final OwnedSessionMap<UUID, ActiveCharge> ACTIVE =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.of(ClearOn.LEAVE, ClearOn.DEATH));
 
 	@Override
 	public ResourceLocation getId() {
@@ -71,7 +75,7 @@ public final class ViltrumiteChargeAbility implements Ability {
 		player.fallDistance = 0f;
 		player.connection.send(new ClientboundSetEntityMotionPacket(player.getId(), motion));
 
-		ACTIVE.put(player.getUUID(), new ActiveCharge(DURATION_TICKS, look, distance, new HashSet<>()));
+		ACTIVE.put(player.getUUID(), player.getUUID(), new ActiveCharge(DURATION_TICKS, look, distance, new HashSet<>()));
 
 		ServerLevel level = player.serverLevel();
 		level.playSound(null, player.getX(), player.getY(), player.getZ(),
@@ -129,11 +133,6 @@ public final class ViltrumiteChargeAbility implements Ability {
 		if (charge.ticksLeft <= 0) {
 			ACTIVE.remove(player.getUUID());
 		}
-	}
-
-	/** World shutdown — charge sessions die with the world. */
-	public static void resetAll() {
-		ACTIVE.clear();
 	}
 
 	public static void clear(ServerPlayer player) {

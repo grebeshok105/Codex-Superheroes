@@ -2,6 +2,9 @@ package com.example.superheroes.effect;
 
 import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.entity.ShadowSoldierEntity;
+import com.example.superheroes.lifecycle.LifecycleRegistrar;
+import com.example.superheroes.lifecycle.OwnedSessionMap;
+import com.example.superheroes.lifecycle.OwnedSessionMap.ClearOn;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -13,10 +16,9 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
 
+import java.util.EnumSet;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import com.example.superheroes.transform.HeroData;
 import net.minecraft.server.MinecraftServer;
 
@@ -31,23 +33,17 @@ public final class MonarchsDomainController {
 	private static final int TICK_INTERVAL = 10;
 	private static final float TICK_DAMAGE = 4.0f;
 
-	private static final Map<UUID, Long> ACTIVE_UNTIL = new ConcurrentHashMap<>();
+	private static final OwnedSessionMap<UUID, Long> ACTIVE_UNTIL =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.of(ClearOn.LEAVE, ClearOn.DEATH));
 
 	private MonarchsDomainController() {
 	}
 
 
 	public static void activate(ServerPlayer player, int durationTicks) {
-		ACTIVE_UNTIL.put(player.getUUID(), player.level().getGameTime() + durationTicks);
+		ACTIVE_UNTIL.put(player.getUUID(), player.getUUID(), player.level().getGameTime() + durationTicks);
 	}
 
-	/** World shutdown — domain deadlines are keyed to a per-world tick clock. */
-	public static void resetAll() {
-		ACTIVE_UNTIL.clear();
-	}
-	public static void clear(UUID id) {
-		ACTIVE_UNTIL.remove(id);
-	}
 
 	private static void tick(ServerPlayer player) {
 		ServerLevel level = player.serverLevel();

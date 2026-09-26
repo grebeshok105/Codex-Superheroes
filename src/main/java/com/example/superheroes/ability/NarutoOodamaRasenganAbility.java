@@ -2,6 +2,9 @@ package com.example.superheroes.ability;
 
 import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.damage.ModDamageTypes;
+import com.example.superheroes.lifecycle.LifecycleRegistrar;
+import com.example.superheroes.lifecycle.OwnedSessionMap;
+import com.example.superheroes.lifecycle.OwnedSessionMap.ClearOn;
 import com.example.superheroes.particle.ModParticles;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
@@ -13,8 +16,8 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.EnumSet;
 import java.util.UUID;
-import java.util.WeakHashMap;
 
 /**
  * Senpou: Cho Oodama Rasengan — Sage Art: Super Big Ball Rasengan.
@@ -34,7 +37,8 @@ public final class NarutoOodamaRasenganAbility implements Ability {
 	private static final double AOE_RADIUS = 6.0;
 	private static final double STRIKE_RANGE = 6.0;
 
-	private static final WeakHashMap<UUID, ActiveCharge> ACTIVE = new WeakHashMap<>();
+	private static final OwnedSessionMap<UUID, ActiveCharge> ACTIVE =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.of(ClearOn.LEAVE, ClearOn.DEATH));
 
 	@Override
 	public ResourceLocation getId() {
@@ -63,7 +67,7 @@ public final class NarutoOodamaRasenganAbility implements Ability {
 
 	@Override
 	public boolean tryActivate(ServerPlayer player) {
-		ACTIVE.put(player.getUUID(), new ActiveCharge(CHARGE_TICKS + WINDOW_TICKS, false));
+		ACTIVE.put(player.getUUID(), player.getUUID(), new ActiveCharge(CHARGE_TICKS + WINDOW_TICKS, false));
 		ServerLevel level = player.serverLevel();
 		level.playSound(null, player.getX(), player.getY(), player.getZ(),
 				SoundEvents.BEACON_ACTIVATE, SoundSource.PLAYERS, 1.6f, 0.7f);
@@ -168,11 +172,6 @@ public final class NarutoOodamaRasenganAbility implements Ability {
 	/** Drop an in-progress charge/rush without firing it (leave, death, untransform). */
 	public static void clear(ServerPlayer player) {
 		ACTIVE.remove(player.getUUID());
-	}
-
-	/** World shutdown — charge sessions die with the world. */
-	public static void resetAll() {
-		ACTIVE.clear();
 	}
 
 	private static final class ActiveCharge {

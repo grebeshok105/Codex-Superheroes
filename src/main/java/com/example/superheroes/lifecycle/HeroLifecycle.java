@@ -14,11 +14,10 @@ import java.util.function.Consumer;
  *
  * <p>{@link #onClear} subscribers drop a player's hero-scoped session state when the
  * hero runtime is torn down — hero swap and untransform. (Leave/death cleanup is a
- * lighter path that goes through {@link PlayerLifecycle}.) Hooks are registered in
- * {@code SuperheroesMod.registerPlayerLifecycle} beside the {@link PlayerLifecycle}
- * wiring so the full cleanup set stays visible in one ordered table (audit debt 1:
- * cleanup used to live in a hardcoded call list in
- * {@code HeroTransformService.clearHeroRuntimeState}).
+ * lighter path that goes through {@link PlayerLifecycle}.) Hooks subscribe through
+ * {@code ctx.lifecycle()} in the owning hero's module (D2b); the shared rows live in
+ * {@code SharedMechanics} (audit debt 1: cleanup used to live in a hardcoded call
+ * list in {@code HeroTransformService.clearHeroRuntimeState}).
  */
 public final class HeroLifecycle {
 	private static final List<Consumer<ServerPlayer>> CLEAR = new ArrayList<>();

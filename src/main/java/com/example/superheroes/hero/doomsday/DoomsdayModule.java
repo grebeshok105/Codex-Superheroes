@@ -35,6 +35,10 @@ public final class DoomsdayModule implements HeroModule {
 		DoomsdayAdaptationController.register(ctx);
 		DoomsdayTierController.register(ctx);
 		DoomsdayKryptoniteController.register(ctx);
+		ctx.lifecycle().onLeave(DoomGripController::clear);
+		ctx.lifecycle().onDeath(DoomGripController::clear);
+		ctx.lifecycle().onHeroClear(DoomGripController::clear);
+		ctx.lifecycle().onServerStopped(server -> DoomGripController.resetAll());
 		ctx.ticks().global(server -> DoomGripController.serverTick());
 		ctx.ticks().global(DoomsdayKryptoniteController::serverTick);
 		ctx.ticks().player((server, p, data) -> ChargeTackleAbility.serverTick(p));

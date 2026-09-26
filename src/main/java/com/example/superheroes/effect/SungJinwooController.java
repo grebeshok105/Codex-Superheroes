@@ -96,6 +96,8 @@ public final class SungJinwooController {
 			list.removeIf(e -> e.expiresAt() <= now);
 			list.add(new DeathEcho(entity.position(), now + DEATH_ECHO_TICKS));
 		});
+
+		ctx.lifecycle().onServerStopped(server -> SungJinwooController.resetAll());
 	}
 
 	public static boolean isSung(ServerPlayer player) {

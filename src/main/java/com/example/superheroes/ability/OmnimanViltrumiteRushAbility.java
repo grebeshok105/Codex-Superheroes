@@ -4,6 +4,9 @@ import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.effect.FlightController;
 import com.example.superheroes.effect.OmnimanMomentumController;
+import com.example.superheroes.lifecycle.LifecycleRegistrar;
+import com.example.superheroes.lifecycle.OwnedSessionMap;
+import com.example.superheroes.lifecycle.OwnedSessionMap.ClearOn;
 import com.example.superheroes.physics.RushTerrainBreaker;
 import com.example.superheroes.transform.HeroData;
 import net.minecraft.core.particles.ParticleTypes;
@@ -18,11 +21,11 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.WeakHashMap;
 
 public final class OmnimanViltrumiteRushAbility implements Ability {
 	private static final int COOLDOWN_TICKS = 140;
@@ -37,7 +40,8 @@ public final class OmnimanViltrumiteRushAbility implements Ability {
 	private static final double BASE_KNOCKBACK = 5.2;
 	private static final double BOOSTED_KNOCKBACK = 6.6;
 	private static final double HIT_SCAN_INFLATE = 1.55;
-	private static final WeakHashMap<UUID, ActiveRush> ACTIVE = new WeakHashMap<>();
+	private static final OwnedSessionMap<UUID, ActiveRush> ACTIVE =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.of(ClearOn.LEAVE, ClearOn.DEATH));
 
 	@Override
 	public ResourceLocation getId() {
@@ -76,7 +80,7 @@ public final class OmnimanViltrumiteRushAbility implements Ability {
 		player.hurtMarked = true;
 		player.fallDistance = 0f;
 		player.connection.send(new ClientboundSetEntityMotionPacket(player.getId(), motion));
-		ACTIVE.put(player.getUUID(), new ActiveRush(DURATION_TICKS, distance, boosted, airborneRush, new HashSet<>()));
+		ACTIVE.put(player.getUUID(), player.getUUID(), new ActiveRush(DURATION_TICKS, distance, boosted, airborneRush, new HashSet<>()));
 
 		ServerLevel level = player.serverLevel();
 		level.playSound(null, player.getX(), player.getY(), player.getZ(),
@@ -127,11 +131,6 @@ public final class OmnimanViltrumiteRushAbility implements Ability {
 					SoundEvents.FIREWORK_ROCKET_BLAST, SoundSource.PLAYERS,
 					rush.airborneRush ? 1.6f : rush.boosted ? 1.35f : 1.05f, rush.airborneRush ? 0.55f : 0.75f);
 		}
-	}
-
-	/** World shutdown — charge sessions die with the world. */
-	public static void resetAll() {
-		ACTIVE.clear();
 	}
 
 	public static void clear(ServerPlayer player) {

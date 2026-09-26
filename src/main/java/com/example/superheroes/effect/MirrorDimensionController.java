@@ -87,6 +87,8 @@ public final class MirrorDimensionController {
 
 	public static void register(HeroModuleContext ctx) {
 		ctx.ticks().early(MirrorDimensionController::tick);
+		ctx.lifecycle().onLeave(MirrorDimensionController::onPlayerGone);
+		ctx.lifecycle().onServerStopped(server -> MirrorDimensionController.resetAll());
 	}
 
 	/**

@@ -93,6 +93,9 @@ public final class ReinhardController {
 			}
 			return true;
 		});
+
+		ctx.lifecycle().onHeroClear(ReinhardController::clearAdaptations);
+		ctx.lifecycle().onJoin(ReinhardController::onPlayerJoin);
 	}
 
 	public static boolean isReinhard(Player player) {

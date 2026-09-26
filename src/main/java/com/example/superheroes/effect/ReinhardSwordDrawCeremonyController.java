@@ -1,7 +1,10 @@
 package com.example.superheroes.effect;
 
+import com.example.superheroes.core.module.HeroModuleContext;
 import com.example.superheroes.lifecycle.ControlLockKind;
 import com.example.superheroes.lifecycle.EntityControlLock;
+import com.example.superheroes.lifecycle.LifecycleRegistrar;
+import com.example.superheroes.lifecycle.OwnedSessionMap;
 import com.example.superheroes.transform.HeroDataStore;
 import com.example.superheroes.ability.AbilityIds;
 import com.example.superheroes.attachment.ModAttachments;
@@ -24,10 +27,8 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.server.MinecraftServer;
 import com.example.superheroes.transform.HeroData;
 
@@ -54,13 +55,21 @@ public final class ReinhardSwordDrawCeremonyController {
 	public static final double CEREMONY_RADIUS = 50.0;
 	private static final int FREEZE_EFFECT_REFRESH = 18; // re-apply slightly under 1s
 
-	private static final ConcurrentHashMap<UUID, CeremonyState> CEREMONIES = new ConcurrentHashMap<>();
-	private static final Map<UUID, Set<UUID>> FROZEN_MOBS = new ConcurrentHashMap<>();
+	// Empty ClearOn: leave/death cancellation must still see these entries — cancelCeremony
+	// thaws the mobs recorded in FROZEN_MOBS, so the drops stay inside that explicit hook.
+	private static final OwnedSessionMap<UUID, CeremonyState> CEREMONIES =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), java.util.Set.of());
+	private static final OwnedSessionMap<UUID, Set<UUID>> FROZEN_MOBS =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), java.util.Set.of());
 
 	private record CeremonyState(long startTick, long endTick) {}
 
 	private ReinhardSwordDrawCeremonyController() {}
 
+	public static void register(HeroModuleContext ctx) {
+		ctx.lifecycle().onLeave(ReinhardSwordDrawCeremonyController::cancelCeremony);
+		ctx.lifecycle().onDeath(ReinhardSwordDrawCeremonyController::cancelCeremony);
+	}
 
 	public static boolean isInCeremony(ServerPlayer player) {
 		return CEREMONIES.containsKey(player.getUUID());
@@ -72,8 +81,8 @@ public final class ReinhardSwordDrawCeremonyController {
 		if (rstate.swordDrawn()) return false;
 		long now = player.serverLevel().getGameTime();
 		CeremonyState st = new CeremonyState(now, now + CEREMONY_DURATION_TICKS);
-		CEREMONIES.put(player.getUUID(), st);
-		FROZEN_MOBS.put(player.getUUID(), new HashSet<>());
+		CEREMONIES.put(player.getUUID(), player.getUUID(), st);
+		FROZEN_MOBS.put(player.getUUID(), player.getUUID(), new HashSet<>());
 
 		ServerLevel level = player.serverLevel();
 		level.playSound(null, player.getX(), player.getY(), player.getZ(),
@@ -93,12 +102,6 @@ public final class ReinhardSwordDrawCeremonyController {
 		if (st == null) return;
 		thawNearby(player);
 		broadcastProgress(player, false, 0f);
-	}
-
-	/** World shutdown — ceremonies die with the world; entity flags restore via lock shadows. */
-	public static void resetAll() {
-		CEREMONIES.clear();
-		FROZEN_MOBS.clear();
 	}
 
 	private static void tickCeremony(ServerPlayer player, CeremonyState st) {

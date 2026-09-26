@@ -11,6 +11,7 @@
 			"com.example.superheroes.gametest.BoundWeaponGameTests",
 			"com.example.superheroes.gametest.HeroDataGameTests",
 			"com.example.superheroes.gametest.LifecycleGameTests",
+			"com.example.superheroes.gametest.LifecycleSideEffectsGameTests",
 			"com.example.superheroes.gametest.HeroSwapGameTests",
 			"com.example.superheroes.gametest.DamagePipelineGameTests",
 			"com.example.superheroes.gametest.DestructionPolicyGameTests",
@@ -27,6 +28,7 @@
 			"com.example.superheroes.gametest.CooldownGateGameTests",
 			"com.example.superheroes.gametest.TransformationLoreGameTests",
 			"com.example.superheroes.gametest.PassiveModifiersGameTests",
+			"com.example.superheroes.gametest.HeroModuleLifecycleGameTests",
 			"com.example.superheroes.gametest.AbilityAvailabilityGameTests"
 		]
 	},

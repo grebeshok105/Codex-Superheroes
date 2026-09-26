@@ -1,6 +1,9 @@
 package com.example.superheroes.effect;
 
 import com.example.superheroes.combat.TargetFilters;
+import com.example.superheroes.lifecycle.LifecycleRegistrar;
+import com.example.superheroes.lifecycle.OwnedSessionMap;
+import com.example.superheroes.lifecycle.OwnedSessionMap.ClearOn;
 import com.example.superheroes.transform.HeroDataStore;
 import com.example.superheroes.damage.ModDamageTypes;
 import com.example.superheroes.particle.ModParticles;
@@ -30,7 +33,8 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.HashMap;
+import java.util.EnumSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -66,9 +70,15 @@ public final class UnibeamController {
 			MobEffects.DARKNESS
 	);
 
-	private static final Map<UUID, ChargeState> charging = new HashMap<>();
-	private static final Map<UUID, FireState> firing = new HashMap<>();
-	private static final Map<UUID, StunState> stunned = new HashMap<>();
+	private static final OwnedSessionMap<UUID, ChargeState> charging =
+			OwnedSessionMap.create(LifecycleRegistrar.global(),
+					EnumSet.of(ClearOn.LEAVE, ClearOn.DEATH, ClearOn.HERO_CLEAR));
+	private static final OwnedSessionMap<UUID, FireState> firing =
+			OwnedSessionMap.create(LifecycleRegistrar.global(),
+					EnumSet.of(ClearOn.LEAVE, ClearOn.DEATH, ClearOn.HERO_CLEAR));
+	private static final OwnedSessionMap<UUID, StunState> stunned =
+			OwnedSessionMap.create(LifecycleRegistrar.global(),
+					EnumSet.of(ClearOn.LEAVE, ClearOn.DEATH, ClearOn.HERO_CLEAR));
 
 	private UnibeamController() {
 	}
@@ -80,7 +90,7 @@ public final class UnibeamController {
 			return false;
 		}
 		Vec3 anchor = findGroundAnchor(player);
-		charging.put(id, new ChargeState(anchor));
+		charging.put(id, id, new ChargeState(anchor));
 		ServerLevel level = player.serverLevel();
 		level.playSound(null, player.getX(), player.getY(), player.getZ(),
 				SoundEvents.BEACON_ACTIVATE, SoundSource.PLAYERS, 1.6f, 0.5f);
@@ -178,7 +188,7 @@ public final class UnibeamController {
 		if (state.progress >= CHARGE_TICKS) {
 			Vec3 dir = player.getViewVector(1f);
 			Vec3 origin = chestOf(player);
-			firing.put(player.getUUID(), new FireState(state.anchor, origin, dir));
+			firing.put(player.getUUID(), player.getUUID(), new FireState(state.anchor, origin, dir));
 			charging.remove(player.getUUID());
 			level.playSound(null, player.getX(), player.getY(), player.getZ(),
 					ModSounds.UNIBEAM_BLAST, SoundSource.PLAYERS, 4.0f, 0.9f);
@@ -217,7 +227,7 @@ public final class UnibeamController {
 		if (state.progress >= FIRE_TICKS) {
 			finalizeBlast(player, level, chest, dir);
 			firing.remove(player.getUUID());
-			stunned.put(player.getUUID(), new StunState(state.anchor));
+			stunned.put(player.getUUID(), player.getUUID(), new StunState(state.anchor));
 		}
 	}
 
@@ -503,13 +513,6 @@ public final class UnibeamController {
 		return entries;
 	}
 
-	/** World shutdown — beam sessions die with the world. */
-	public static void resetAll() {
-		charging.clear();
-		firing.clear();
-		stunned.clear();
-	}
-
 	private static final class ChargeState {
 		final Vec3 anchor;
 		int progress;
@@ -551,9 +554,17 @@ public final class UnibeamController {
 	}
 
 	public static void pruneGonePlayers(MinecraftServer server) {
-		charging.keySet().removeIf(uuid -> server.getPlayerList().getPlayer(uuid) == null);
-		firing.keySet().removeIf(uuid -> server.getPlayerList().getPlayer(uuid) == null);
-		stunned.keySet().removeIf(uuid -> server.getPlayerList().getPlayer(uuid) == null);
+		pruneGone(server, charging.iterator());
+		pruneGone(server, firing.iterator());
+		pruneGone(server, stunned.iterator());
+	}
+
+	private static void pruneGone(MinecraftServer server, Iterator<? extends Map.Entry<UUID, ?>> it) {
+		while (it.hasNext()) {
+			if (server.getPlayerList().getPlayer(it.next().getKey()) == null) {
+				it.remove();
+			}
+		}
 	}
 
 }
