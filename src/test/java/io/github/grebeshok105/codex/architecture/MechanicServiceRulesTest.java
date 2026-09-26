@@ -3,6 +3,7 @@ package io.github.grebeshok105.codex.architecture;
 import com.tngtech.archunit.library.freeze.FreezingArchRule;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.phys.Vec3;
 import org.junit.jupiter.api.Test;
 
 import static com.tngtech.archunit.core.domain.JavaCall.Predicates.target;
@@ -22,6 +23,7 @@ class MechanicServiceRulesTest {
 	void motionPacketsGoThroughMotion() {
 		FreezingArchRule.freeze(noClasses().that().doNotHaveSimpleName("Motion")
 				.should().callConstructor(ClientboundSetEntityMotionPacket.class, Entity.class)
+			.orShould().callConstructor(ClientboundSetEntityMotionPacket.class, int.class, Vec3.class)
 				.as("velocity changes go through mechanic.motion.Motion")).check(CodexClasses.main());
 	}
 
