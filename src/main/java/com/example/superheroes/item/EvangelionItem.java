@@ -5,6 +5,7 @@ import com.example.superheroes.effect.RegulusMadnessController;
 import com.example.superheroes.effect.RegulusMadnessState;
 import com.example.superheroes.hero.RegulusHero;
 import com.example.superheroes.transform.HeroData;
+import com.example.superheroes.transform.TooltipFrame;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;

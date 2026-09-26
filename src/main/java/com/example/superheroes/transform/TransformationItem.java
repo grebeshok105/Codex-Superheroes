@@ -1,6 +1,5 @@
 package com.example.superheroes.transform;
 
-import com.example.superheroes.item.TooltipFrame;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;

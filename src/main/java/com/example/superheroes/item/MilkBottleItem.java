@@ -4,6 +4,7 @@ import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.effect.ModEffects;
 import com.example.superheroes.hero.HomelanderHero;
 import com.example.superheroes.transform.HeroData;
+import com.example.superheroes.transform.TooltipFrame;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
