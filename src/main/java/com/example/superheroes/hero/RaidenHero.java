@@ -110,7 +110,7 @@ public final class RaidenHero implements Hero {
 	@Override
 	public void removePassives(Player player) {
 		PASSIVES.remove(player);
-		HeroAttributes.RAIDEN_BURST.remove(player);
+		AbilityScopedModifiers.RAIDEN_BURST.remove(player);
 	}
 
 	@Override

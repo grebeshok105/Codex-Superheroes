@@ -2,7 +2,7 @@ package com.example.superheroes.effect;
 
 import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.combat.TargetFilters;
-import com.example.superheroes.hero.HeroAttributes;
+import com.example.superheroes.hero.AbilityScopedModifiers;
 import com.example.superheroes.hero.RaidenHero;
 import com.example.superheroes.transform.HeroData;
 import com.example.superheroes.particle.ModParticles;
@@ -46,7 +46,7 @@ public final class RaidenBurstController {
 
 		long burstAt = state.burstExpireTick();
 		if (burstAt != 0L && now >= burstAt) {
-			HeroAttributes.RAIDEN_BURST.remove(player);
+			AbilityScopedModifiers.RAIDEN_BURST.remove(player);
 			player.setAttached(ModAttachments.RAIDEN_STATE, state.withBurstExpireTick(0L));
 		} else if (burstAt > now) {
 			if (now % 4 == 0) {

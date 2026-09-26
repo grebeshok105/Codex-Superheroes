@@ -14,8 +14,6 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.Pose;
-import net.minecraft.world.entity.ai.attributes.AttributeModifier;
-import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,31 +46,7 @@ public final class DoomsdayHero implements Hero {
 
         private static final HeroHudConfig HUD = new HeroHudConfig("hud.superheroes.energy.rage", HeroHudConfig.EnergyIconType.SKULL, true, "DOOM GRIP");
 
-        private static final ResourceLocation ARMOR_ID = ModId.of("modifiers/doomsday/armor");
-        private static final ResourceLocation TOUGHNESS_ID = ModId.of("modifiers/doomsday/toughness");
-        private static final ResourceLocation DAMAGE_ID = ModId.of("modifiers/doomsday/damage");
-        private static final ResourceLocation SPEED_ID = ModId.of("modifiers/doomsday/speed");
-        private static final ResourceLocation HP_ID = ModId.of("modifiers/doomsday/max_health");
-        private static final ResourceLocation KNOCKBACK_ID = ModId.of("modifiers/doomsday/knockback_resistance");
-        private static final ResourceLocation SCALE_ID = ModId.of("modifiers/doomsday/scale");
-        private static final ResourceLocation REACH_ID = ModId.of("modifiers/doomsday/entity_reach");
-        private static final ResourceLocation BLOCK_REACH_ID = ModId.of("modifiers/doomsday/block_reach");
-        private static final ResourceLocation STEP_ID = ModId.of("modifiers/doomsday/step_height");
-        private static final ResourceLocation JUMP_ID = ModId.of("modifiers/doomsday/jump_strength");
-
-        private static final AttributeModifierSet PASSIVES = AttributeModifierSet.builder()
-                .add(Attributes.ARMOR, ARMOR_ID, 30.0, AttributeModifier.Operation.ADD_VALUE)
-                .add(Attributes.ARMOR_TOUGHNESS, TOUGHNESS_ID, 20.0, AttributeModifier.Operation.ADD_VALUE)
-                .add(Attributes.ATTACK_DAMAGE, DAMAGE_ID, 20.0, AttributeModifier.Operation.ADD_VALUE)
-                .add(Attributes.MOVEMENT_SPEED, SPEED_ID, 0.25, AttributeModifier.Operation.ADD_MULTIPLIED_BASE)
-                .add(Attributes.MAX_HEALTH, HP_ID, 80.0, AttributeModifier.Operation.ADD_VALUE)
-                .add(Attributes.KNOCKBACK_RESISTANCE, KNOCKBACK_ID, 1.0, AttributeModifier.Operation.ADD_VALUE)
-                .add(Attributes.SCALE, SCALE_ID, 1.2, AttributeModifier.Operation.ADD_VALUE)
-                .add(Attributes.ENTITY_INTERACTION_RANGE, REACH_ID, 1.5, AttributeModifier.Operation.ADD_VALUE)
-                .add(Attributes.BLOCK_INTERACTION_RANGE, BLOCK_REACH_ID, 1.5, AttributeModifier.Operation.ADD_VALUE)
-                .add(Attributes.STEP_HEIGHT, STEP_ID, 1.0, AttributeModifier.Operation.ADD_VALUE)
-                .add(Attributes.JUMP_STRENGTH, JUMP_ID, 0.6, AttributeModifier.Operation.ADD_VALUE)
-                .build();
+        private static final AttributeModifierSet PASSIVES = AbilityScopedModifiers.DOOMSDAY;
 
         @Override
         public ResourceLocation getId() {
@@ -128,7 +102,7 @@ public final class DoomsdayHero implements Hero {
         public void applyPassives(Player player) {
                 int tier = getTier(player);
                 PASSIVES.remove(player);
-                HeroAttributes.buildDoomsdayTierSet(tier).apply(player);
+                AbilityScopedModifiers.buildDoomsdayTierSet(tier).apply(player);
                 applyTierEffects(player, tier);
                 if (player instanceof ServerPlayer sp) {
                         com.example.superheroes.effect.DoomsdayAdaptationController.reapplyDamageBonus(sp);

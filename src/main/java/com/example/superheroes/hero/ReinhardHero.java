@@ -118,9 +118,9 @@ public final class ReinhardHero implements Hero {
 	@Override
 	public void removePassives(Player player) {
 		PASSIVES.remove(player);
-		HeroAttributes.REINHARD_DRAW.remove(player);
+		AbilityScopedModifiers.REINHARD_DRAW.remove(player);
 		for (int p = 1; p <= 5; p++) {
-			HeroAttributes.buildReinhardPhaseSet(p).remove(player);
+			AbilityScopedModifiers.buildReinhardPhaseSet(p).remove(player);
 		}
 	}
 

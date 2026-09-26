@@ -1,7 +1,7 @@
 package com.example.superheroes.ability;
 
 import com.example.superheroes.effect.KratosRageController;
-import com.example.superheroes.hero.HeroAttributes;
+import com.example.superheroes.hero.AbilityScopedModifiers;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -42,7 +42,7 @@ public final class KratosSpartanRageAbility implements Ability {
 	@Override
 	public boolean tryActivate(ServerPlayer player) {
 		if (!KratosRageController.tryActivate(player)) return false;
-		HeroAttributes.KRATOS_RAGE.apply(player);
+		AbilityScopedModifiers.KRATOS_RAGE.apply(player);
 		player.setHealth(player.getMaxHealth());
 
 		player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, DURATION_TICKS, 2, true, false, true));
@@ -95,7 +95,7 @@ public final class KratosSpartanRageAbility implements Ability {
 
 	@Override
 	public void onDeactivate(ServerPlayer player) {
-		HeroAttributes.KRATOS_RAGE.remove(player);
+		AbilityScopedModifiers.KRATOS_RAGE.remove(player);
 		player.removeEffect(MobEffects.DAMAGE_BOOST);
 		player.removeEffect(MobEffects.DAMAGE_RESISTANCE);
 		player.removeEffect(MobEffects.ABSORPTION);

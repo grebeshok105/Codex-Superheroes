@@ -174,7 +174,7 @@ public final class ThanosHero implements Hero {
 	@Override
 	public void removePassives(Player player) {
 		PASSIVES.remove(player);
-		HeroAttributes.thanosClearStoneModifiers(player);
+		AbilityScopedModifiers.thanosClearStoneModifiers(player);
 		player.removeEffect(MobEffects.DAMAGE_RESISTANCE);
 		player.removeEffect(MobEffects.FIRE_RESISTANCE);
 	}

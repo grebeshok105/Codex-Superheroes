@@ -4,9 +4,9 @@ import com.example.superheroes.transform.HeroDataStore;
 import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.effect.ReinhardState;
 import com.example.superheroes.effect.ReinhardSwordDrawCeremonyController;
-import com.example.superheroes.hero.HeroAttributes;
 import com.example.superheroes.item.ModItems;
 import com.example.superheroes.item.bound.BoundWeapons;
+import com.example.superheroes.hero.AbilityScopedModifiers;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -69,7 +69,7 @@ public final class ReinhardSwordDrawAbility implements Ability {
 	public void onDeactivate(ServerPlayer player) {
 		ReinhardState state = player.getAttachedOrCreate(ModAttachments.REINHARD_STATE);
 		player.setAttached(ModAttachments.REINHARD_STATE, state.withSwordDrawn(false));
-		HeroAttributes.REINHARD_DRAW.remove(player);
+		AbilityScopedModifiers.REINHARD_DRAW.remove(player);
 		removeSword(player);
 		com.example.superheroes.effect.ReinhardTimeSlowController.disarmForFirstStrike(player);
 		ServerLevel level = player.serverLevel();
@@ -90,7 +90,7 @@ public final class ReinhardSwordDrawAbility implements Ability {
 		ReinhardState state = player.getAttachedOrCreate(ModAttachments.REINHARD_STATE);
 		if (!state.swordDrawn()) return;
 		player.setAttached(ModAttachments.REINHARD_STATE, state.withSwordDrawn(false));
-		HeroAttributes.REINHARD_DRAW.remove(player);
+		AbilityScopedModifiers.REINHARD_DRAW.remove(player);
 		removeSword(player);
 		com.example.superheroes.effect.ReinhardTimeSlowController.disarmForFirstStrike(player);
 		HeroDataStore.update(player, d -> d.withActive(AbilityIds.REINHARD_SWORD_DRAW, false));

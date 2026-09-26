@@ -9,6 +9,7 @@ import com.example.superheroes.item.InfinityGauntletItem;
 import com.example.superheroes.item.infinity.InfinityGauntletData;
 import com.example.superheroes.item.infinity.InfinityStoneItem;
 import com.example.superheroes.item.infinity.InfinityStoneType;
+import com.example.superheroes.hero.AbilityScopedModifiers;
 import net.minecraft.world.item.ItemStack;
 import com.example.superheroes.particle.ModParticles;
 import com.example.superheroes.sound.ModSounds;
@@ -202,7 +203,7 @@ public final class ThanosSnapAbility implements Ability {
 		if (!removed) return;
 
 		ThanosGauntletStateController.sendStones(player, java.util.EnumSet.noneOf(InfinityStoneType.class));
-		com.example.superheroes.hero.HeroAttributes.thanosClearStoneModifiers(player);
+		AbilityScopedModifiers.thanosClearStoneModifiers(player);
 
 		level.sendParticles(ParticleTypes.FLASH, cx, cy, cz, 6, 0.4, 0.4, 0.4, 0.0);
 		level.sendParticles(ModParticles.WHITE_BOOM, cx, cy, cz, 200, 2.5, 2.0, 2.5, 0.0);

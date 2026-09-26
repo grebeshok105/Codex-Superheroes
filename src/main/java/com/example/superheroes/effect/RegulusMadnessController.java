@@ -1,7 +1,7 @@
 package com.example.superheroes.effect;
 
 import com.example.superheroes.attachment.ModAttachments;
-import com.example.superheroes.hero.HeroAttributes;
+import com.example.superheroes.hero.AbilityScopedModifiers;
 import com.example.superheroes.hero.RegulusHero;
 import com.example.superheroes.network.MadnessSyncS2CPayload;
 import com.example.superheroes.network.MadnessVisualS2CPayload;
@@ -242,7 +242,7 @@ public final class RegulusMadnessController {
 		player.setAttached(ModAttachments.REGULUS_MADNESS, state);
 		player.setAttached(ModAttachments.REGULUS_BONUS_LIFE, Boolean.TRUE);
 
-		HeroAttributes.REGULUS_MADNESS.apply(player);
+		AbilityScopedModifiers.REGULUS_MADNESS.apply(player);
 		player.setHealth(player.getMaxHealth());
 		applyMadnessEffects(player);
 
@@ -257,7 +257,7 @@ public final class RegulusMadnessController {
 	}
 
 	public static void clearMadness(ServerPlayer player) {
-		HeroAttributes.REGULUS_MADNESS.remove(player);
+		AbilityScopedModifiers.REGULUS_MADNESS.remove(player);
 		// audit B12: only drop instances that look madness-applied — this hook runs on
 		// join/death/respawn for EVERY player and used to wipe potion, beacon and hero
 		// passive effects of the same holders
