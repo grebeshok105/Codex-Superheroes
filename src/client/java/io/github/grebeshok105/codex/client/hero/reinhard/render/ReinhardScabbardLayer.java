@@ -1,4 +1,4 @@
-package io.github.grebeshok105.codex.client.render;
+package io.github.grebeshok105.codex.client.hero.reinhard.render;
 
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.client.ClientHeroState;

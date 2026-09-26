@@ -1,5 +1,6 @@
-package io.github.grebeshok105.codex.client;
+package io.github.grebeshok105.codex.client.hero.reinhard.state;
 
+import io.github.grebeshok105.codex.client.ClientSessionState;
 public final class ClientReinhardSwordGateState {
 	private static volatile boolean ready;
 	private static volatile float progress;

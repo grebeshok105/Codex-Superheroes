@@ -1,6 +1,6 @@
-package io.github.grebeshok105.codex.client.hud;
+package io.github.grebeshok105.codex.client.hero.reinhard.hud;
 
-import io.github.grebeshok105.codex.client.ClientReinhardDarknessState;
+import io.github.grebeshok105.codex.client.hero.reinhard.state.ClientReinhardDarknessState;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;

@@ -1,5 +1,8 @@
 package io.github.grebeshok105.codex.client.core.module;
 
+import io.github.grebeshok105.codex.client.core.audio.ClientSoundFilters;
+import io.github.grebeshok105.codex.client.core.hud.AbilityDecoration;
+import io.github.grebeshok105.codex.client.core.hud.AbilityDecorations;
 import io.github.grebeshok105.codex.client.core.hud.HudLayer;
 import io.github.grebeshok105.codex.client.core.hud.HudLayers;
 import io.github.grebeshok105.codex.client.core.hud.MovableHud;
@@ -16,6 +19,7 @@ import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.client.renderer.entity.player.PlayerRenderer;
+import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
@@ -23,6 +27,7 @@ import net.minecraft.world.entity.EntityType;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 /** Default {@link HeroClientContext}: delegates to the real registries. One instance per module — {@link #heroId} scopes action-key filtering. */
 public final class CoreClientContext implements HeroClientContext {
@@ -65,5 +70,15 @@ public final class CoreClientContext implements HeroClientContext {
 	@Override
 	public void playerLayer(Function<PlayerRenderer, RenderLayer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>>> factory) {
 		PlayerLayers.register(factory);
+	}
+
+	@Override
+	public void soundFilter(Predicate<SoundInstance> mute) {
+		ClientSoundFilters.register(mute);
+	}
+
+	@Override
+	public void abilityDecoration(ResourceLocation abilityId, AbilityDecoration decoration) {
+		AbilityDecorations.register(abilityId, decoration);
 	}
 }

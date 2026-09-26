@@ -1,6 +1,6 @@
-package io.github.grebeshok105.codex.client.hud;
+package io.github.grebeshok105.codex.client.hero.reinhard.hud;
 
-import io.github.grebeshok105.codex.client.ClientReinhardCeremonyState;
+import io.github.grebeshok105.codex.client.hero.reinhard.state.ClientReinhardCeremonyState;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;

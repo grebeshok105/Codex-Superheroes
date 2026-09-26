@@ -1,4 +1,4 @@
-package io.github.grebeshok105.codex.client.screen;
+package io.github.grebeshok105.codex.client.hero.reinhard.screen;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.gui.GuiGraphics;
