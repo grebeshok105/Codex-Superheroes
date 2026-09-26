@@ -4,6 +4,7 @@ import com.example.superheroes.ability.AbilityIds;
 import com.example.superheroes.ability.AbilityRouter;
 import com.example.superheroes.ability.IronFistsAbility;
 import com.example.superheroes.attachment.ModAttachments;
+import com.example.superheroes.core.module.HeroModuleContext;
 import com.example.superheroes.entity.HomelanderBossEntity;
 import com.example.superheroes.network.ScreenShakeS2CPayload;
 import com.example.superheroes.physics.ShockwaveUtil;
@@ -58,7 +59,7 @@ public final class IronFistsController {
 	private IronFistsController() {
 	}
 
-	public static void init() {
+	public static void register(HeroModuleContext ctx) {
 
 		AttackEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
 			if (world.isClientSide() || !(player instanceof ServerPlayer sp)) {

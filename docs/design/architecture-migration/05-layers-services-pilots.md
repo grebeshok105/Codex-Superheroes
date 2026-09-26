@@ -81,7 +81,7 @@
 | R11 | Структурный M6: `Feedback.actionBar` | `displayClientMessage` — однострочный ванильный вызов без правил | Сервис `Feedback` не создаём (нет правила, которое могло бы разойтись). `Motion`, `Targeting`, `FxBroadcast` создаём — у них есть правила (синхронизация скорости, PvP/союзники/спектаторы, адресаты). |
 | R17 | Внешнее ревью: M1 делал `core/net` зависимым от `mechanic.fx.FxBroadcast` | Правило `coreDependsOnNothingAboveIt` запрещает `core → mechanic` | `FxBroadcast` — транспорт (кому отправить payload), поэтому живёт в `core/net`. В `mechanic/` — только `Motion` и `Targeting` |
 | R18 | Внешнее ревью: G1 заставлял модуль Reinhard вызывать `content/admin` | Правило запрещает `hero → content` | Метаданные для admin-отладки объявляет способность: трейт `Ability.debugTargetsMobs()` (default `false`); `AdminAbilityDebug` читает его из `AbilityRegistry`. Герой не знает про content |
-| R14 | Имя нового корневого пакета | `com.example.superheroes` | Предлагаемое по умолчанию: `io.github.grebeshok105.codex`. Это решение владельца; `E1` не стартует без подтверждения, остальные стадии от имени не зависят. |
+| R14 | Имя нового корневого пакета | `io.github.grebeshok105.codex` | **Подтверждено владельцем 2026-09-26** (предложение `io.github.grebeshok105.codex` принято). Остальные стадии от имени не зависят. |
 
 ## Зависимости стадий
 

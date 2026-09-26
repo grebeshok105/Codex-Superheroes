@@ -4,6 +4,7 @@ import com.example.superheroes.ability.GuardiansBreakerAbility;
 import com.example.superheroes.ability.ViltrumiteChargeAbility;
 import com.example.superheroes.core.module.HeroModule;
 import com.example.superheroes.core.module.HeroModuleContext;
+import com.example.superheroes.effect.InvincibleCombatController;
 import com.example.superheroes.hero.Hero;
 import com.example.superheroes.hero.InvincibleHero;
 
@@ -19,5 +20,8 @@ public final class InvincibleModule implements HeroModule {
 	public void register(HeroModuleContext ctx) {
 		ctx.abilities().register(new ViltrumiteChargeAbility());
 		ctx.abilities().register(new GuardiansBreakerAbility());
+		InvincibleCombatController.register(ctx);
+		ctx.ticks().global(InvincibleCombatController::serverTick);
+		ctx.ticks().player((server, p, data) -> ViltrumiteChargeAbility.serverTick(p));
 	}
 }

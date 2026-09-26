@@ -1,5 +1,6 @@
 package com.example.superheroes.effect;
 
+import com.example.superheroes.core.module.HeroModuleContext;
 import com.example.superheroes.lifecycle.ControlLockKind;
 import com.example.superheroes.lifecycle.EntityControlLock;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
@@ -46,7 +47,7 @@ public final class RegulusGreedController {
 	private RegulusGreedController() {
 	}
 
-	public static void init() {
+	public static void register(HeroModuleContext ctx) {
 
 		ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> {
 			FreezeState st = FREEZES.get(entity.getUUID());

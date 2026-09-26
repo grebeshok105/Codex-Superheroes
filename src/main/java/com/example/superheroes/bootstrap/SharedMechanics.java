@@ -1,0 +1,61 @@
+package com.example.superheroes.bootstrap;
+
+import com.example.superheroes.command.AdminBuildSyncController;
+import com.example.superheroes.core.module.HeroModuleContext;
+import com.example.superheroes.effect.AutoSaturationController;
+import com.example.superheroes.effect.FlightController;
+import com.example.superheroes.effect.HeavensStrikeController;
+import com.example.superheroes.effect.HeroEquipmentLock;
+import com.example.superheroes.effect.HeroLandingTracker;
+import com.example.superheroes.effect.HeroMeleeImpactController;
+import com.example.superheroes.effect.HeroPassiveRegenController;
+import com.example.superheroes.effect.SuperJumpController;
+import com.example.superheroes.horde.HordeManager;
+import com.example.superheroes.physics.BallisticBodyTracker;
+
+/**
+ * Wiring for hero-agnostic mechanics (composition-root side, after E2 moves these to
+ * {@code mechanic/}): the registrations that used to live in SuperheroesMod —
+ * each controller's own event listeners plus its HeroTickDispatcher rows, in the
+ * old relative order. Content-track rows (horde, admin build sync) park here until
+ * stage IC gives them a home.
+ */
+public final class SharedMechanics {
+
+	private SharedMechanics() {
+	}
+
+	public static void register(HeroModuleContext ctx) {
+		HeroLandingTracker.register(ctx);
+		ctx.ticks().global(HeroLandingTracker::pruneGonePlayers);
+		HeroEquipmentLock.register(ctx);
+		ctx.ticks().player(HeroEquipmentLock::tickPlayer);
+		ctx.ticks().player(SuperJumpController::tickPlayer);
+		ctx.ticks().player(AutoSaturationController::tickPlayer);
+		ctx.ticks().player(HeroPassiveRegenController::tickPlayer);
+		ctx.ticks().global(HeroMeleeImpactController::serverTick);
+		ctx.ticks().global(BallisticBodyTracker::tick);
+		ctx.ticks().global(FlightController::cleanup);
+		ctx.ticks().global(HeavensStrikeController::serverTick);
+		// content rows kept here until their own stage
+		ctx.ticks().level((server, level) -> HordeManager.tick(level));
+		AdminBuildSyncController.register(ctx);
+	}
+
+	/**
+	 * Shared wiring that must run AFTER the hero modules. Two old orders are kept here:
+	 * AttackEntity listeners — IronFists@64 < ... < MeleeImpact@67 — so IronFists'
+	 * consuming result still short-circuits the generic melee-impact handler;
+	 * player ticks — Unibeam@345 -> Landing@347 -> Flight@380 — so Landing reads
+	 * UnibeamController.isBusy fresh and ViltrumiteCharge/Rush read
+	 * FlightController.isFlightActive before Flight's own player tick refreshed it.
+	 */
+	public static void registerPost(HeroModuleContext ctx) {
+		HeroMeleeImpactController.register(ctx);
+		ctx.ticks().player(HeroLandingTracker::tickPlayer);
+		ctx.ticks().player(FlightController::tickPlayer);
+		// C4: recompute the synced ability_availability attachment after all hero ticks
+		// (writes only on change) — was the last row of the old PLAYERS table.
+		ctx.ticks().player(com.example.superheroes.ability.AbilityAvailabilitySync::tickPlayer);
+	}
+}

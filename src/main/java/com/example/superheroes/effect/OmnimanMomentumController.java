@@ -2,6 +2,7 @@ package com.example.superheroes.effect;
 
 import com.example.superheroes.ModId;
 import com.example.superheroes.attachment.ModAttachments;
+import com.example.superheroes.core.module.HeroModuleContext;
 import com.example.superheroes.hero.OmnimanHero;
 import com.example.superheroes.transform.HeroData;
 import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
@@ -42,7 +43,7 @@ public final class OmnimanMomentumController {
 	private OmnimanMomentumController() {
 	}
 
-	public static void init() {
+	public static void register(HeroModuleContext ctx) {
 		AttackEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
 			if (world.isClientSide() || hand != InteractionHand.MAIN_HAND || !(player instanceof ServerPlayer sp)) {
 				return InteractionResult.PASS;

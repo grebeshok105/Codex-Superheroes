@@ -1,6 +1,7 @@
 package com.example.superheroes.effect;
 
 import com.example.superheroes.attachment.ModAttachments;
+import com.example.superheroes.core.module.HeroModuleContext;
 import com.example.superheroes.transform.HeroData;
 import net.fabricmc.fabric.api.event.player.UseItemCallback;
 import net.minecraft.core.NonNullList;
@@ -17,7 +18,7 @@ public final class HeroEquipmentLock {
 	private HeroEquipmentLock() {
 	}
 
-	public static void init() {
+	public static void register(HeroModuleContext ctx) {
 		UseItemCallback.EVENT.register((player, world, hand) -> {
 			ItemStack stack = player.getItemInHand(hand);
 			if (!isLockedItem(stack)) {

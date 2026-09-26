@@ -1,6 +1,7 @@
 package com.example.superheroes.effect;
 
 import com.example.superheroes.combat.TargetFilters;
+import com.example.superheroes.core.module.HeroModuleContext;
 import com.example.superheroes.transform.HeroDataStore;
 import com.example.superheroes.ModId;
 import com.example.superheroes.ability.AbilityIds;
@@ -95,7 +96,7 @@ public final class RemDemonismController {
 	private RemDemonismController() {
 	}
 
-	public static void init() {
+	public static void register(HeroModuleContext ctx) {
 		ServerLivingEntityEvents.AFTER_DAMAGE.register((entity, source, baseDamage, damageTaken, blocked) -> {
 			if (entity instanceof ServerPlayer victim && isRem(victim) && !isActive(victim)) {
 				addCharge(victim, damageTaken * TAKEN_PER_DAMAGE);

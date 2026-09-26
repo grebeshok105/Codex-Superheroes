@@ -3,11 +3,11 @@ package com.example.superheroes.effect;
 import com.example.superheroes.ability.AbilityIds;
 import com.example.superheroes.ability.AbilityRouter;
 import com.example.superheroes.attachment.ModAttachments;
+import com.example.superheroes.core.module.HeroModuleContext;
 import com.example.superheroes.hero.PandoraHero;
 import com.example.superheroes.network.MirrorDimensionS2CPayload;
 import com.example.superheroes.network.MirrorDimensionStatusC2SPayload;
 import com.example.superheroes.transform.HeroData;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.particles.ParticleTypes;
@@ -85,8 +85,8 @@ public final class MirrorDimensionController {
 		}
 	}
 
-	public static void init() {
-		ServerTickEvents.END_SERVER_TICK.register(MirrorDimensionController::tick);
+	public static void register(HeroModuleContext ctx) {
+		ctx.ticks().early(MirrorDimensionController::tick);
 	}
 
 	/**

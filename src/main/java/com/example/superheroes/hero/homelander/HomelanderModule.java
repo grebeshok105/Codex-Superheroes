@@ -7,6 +7,12 @@ import com.example.superheroes.ability.StunningRoarAbility;
 import com.example.superheroes.ability.XRayAbility;
 import com.example.superheroes.core.module.HeroModule;
 import com.example.superheroes.core.module.HeroModuleContext;
+import com.example.superheroes.effect.HomelanderRegenController;
+import com.example.superheroes.effect.IronFistsController;
+import com.example.superheroes.effect.MadnessAftermathController;
+import com.example.superheroes.effect.MadnessFlightController;
+import com.example.superheroes.effect.UraniumDefenseController;
+import com.example.superheroes.effect.UraniumOffhandController;
 import com.example.superheroes.hero.Hero;
 import com.example.superheroes.hero.HomelanderHero;
 
@@ -25,5 +31,14 @@ public final class HomelanderModule implements HeroModule {
 		ctx.abilities().register(new IronFistsAbility());
 		ctx.abilities().register(new HandClapAbility());
 		ctx.abilities().register(new StunningRoarAbility());
+		MadnessFlightController.register(ctx);
+		IronFistsController.register(ctx);
+		ctx.ticks().global(MadnessAftermathController::pruneGonePlayers);
+		ctx.ticks().global(UraniumDefenseController::serverTick);
+		ctx.ticks().global(UraniumOffhandController::pruneGonePlayers);
+		ctx.ticks().player(MadnessAftermathController::tickPlayer);
+		ctx.ticks().player(HomelanderRegenController::tickPlayer);
+		ctx.ticks().player(IronFistsController::tickPlayer);
+		ctx.ticks().player(UraniumOffhandController::tickPlayer);
 	}
 }

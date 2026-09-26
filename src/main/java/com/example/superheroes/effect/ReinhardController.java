@@ -1,6 +1,7 @@
 package com.example.superheroes.effect;
 
 import com.example.superheroes.attachment.ModAttachments;
+import com.example.superheroes.core.module.HeroModuleContext;
 import com.example.superheroes.damage.ModDamageTypes;
 import com.example.superheroes.hero.AbilityScopedModifiers;
 import com.example.superheroes.hero.ReinhardHero;
@@ -77,7 +78,7 @@ public final class ReinhardController {
 	private ReinhardController() {
 	}
 
-	public static void init() {
+	public static void register(HeroModuleContext ctx) {
 
 		ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> {
 			if (entity instanceof ServerPlayer player && isReinhard(player)) {

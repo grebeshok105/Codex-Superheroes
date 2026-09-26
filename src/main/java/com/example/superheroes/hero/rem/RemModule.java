@@ -9,6 +9,8 @@ import com.example.superheroes.ability.RemOniKickAbility;
 import com.example.superheroes.ability.RemOniRageAbility;
 import com.example.superheroes.core.module.HeroModule;
 import com.example.superheroes.core.module.HeroModuleContext;
+import com.example.superheroes.effect.RamCompanionController;
+import com.example.superheroes.effect.RemDemonismController;
 import com.example.superheroes.hero.Hero;
 import com.example.superheroes.hero.RemHero;
 
@@ -29,5 +31,9 @@ public final class RemModule implements HeroModule {
 		ctx.abilities().register(new RemMaceCraterAbility());
 		ctx.abilities().register(new RemOniKickAbility());
 		ctx.abilities().register(new RemHumaIceSpikesAbility());
+		RemDemonismController.register(ctx);
+		ctx.ticks().global(RemDemonismController::serverTick);
+		ctx.ticks().player(RemDemonismController::tickPlayer);
+		ctx.ticks().player(RamCompanionController::tickPlayer);
 	}
 }

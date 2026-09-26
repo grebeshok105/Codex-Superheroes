@@ -2,6 +2,7 @@ package com.example.superheroes.effect;
 
 import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.attachment.SungShadowArmy;
+import com.example.superheroes.core.module.HeroModuleContext;
 import com.example.superheroes.entity.ModEntities;
 import com.example.superheroes.entity.ShadowSoldierEntity;
 import com.example.superheroes.hero.SungJinwooHero;
@@ -61,7 +62,7 @@ public final class SungJinwooController {
 	private SungJinwooController() {
 	}
 
-	public static void init() {
+	public static void register(HeroModuleContext ctx) {
 
 		ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> {
 			if (!(entity instanceof ServerPlayer player)) return true;

@@ -8,6 +8,8 @@ import com.example.superheroes.ability.ShadowExchangeAbility;
 import com.example.superheroes.ability.ShadowExtractionAbility;
 import com.example.superheroes.core.module.HeroModule;
 import com.example.superheroes.core.module.HeroModuleContext;
+import com.example.superheroes.effect.MonarchsDomainController;
+import com.example.superheroes.effect.SungJinwooController;
 import com.example.superheroes.hero.Hero;
 import com.example.superheroes.hero.SungJinwooHero;
 
@@ -27,5 +29,8 @@ public final class SungJinwooModule implements HeroModule {
 		ctx.abilities().register(new RulersAuthorityAbility());
 		ctx.abilities().register(new ShadowExtractionAbility());
 		ctx.abilities().register(new MonarchsDomainAbility());
+		SungJinwooController.register(ctx);
+		ctx.ticks().player(SungJinwooController::tickPlayer);
+		ctx.ticks().player(MonarchsDomainController::tickPlayer);
 	}
 }

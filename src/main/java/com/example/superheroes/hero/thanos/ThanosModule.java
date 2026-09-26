@@ -9,6 +9,9 @@ import com.example.superheroes.ability.ThanosSpacePortalAbility;
 import com.example.superheroes.ability.ThanosTimeRewindAbility;
 import com.example.superheroes.core.module.HeroModule;
 import com.example.superheroes.core.module.HeroModuleContext;
+import com.example.superheroes.effect.ThanosGauntletStateController;
+import com.example.superheroes.effect.ThanosSnapWindupController;
+import com.example.superheroes.effect.ThanosStoneRewardController;
 import com.example.superheroes.hero.Hero;
 import com.example.superheroes.hero.ThanosHero;
 
@@ -29,5 +32,10 @@ public final class ThanosModule implements HeroModule {
 		ctx.abilities().register(new ThanosSpacePortalAbility());
 		ctx.abilities().register(new ThanosSoulPulseAbility());
 		ctx.abilities().register(new ThanosSnapAbility());
+
+		ThanosGauntletStateController.register(ctx);
+		ThanosStoneRewardController.register(ctx);
+		ctx.ticks().global(ThanosSnapWindupController::serverTick);
+		ctx.ticks().player(ThanosGauntletStateController::tickPlayer);
 	}
 }

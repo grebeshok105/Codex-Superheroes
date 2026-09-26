@@ -1,6 +1,7 @@
 package com.example.superheroes.effect;
 
 import com.example.superheroes.attachment.ModAttachments;
+import com.example.superheroes.core.module.HeroModuleContext;
 import com.example.superheroes.hero.AbilityScopedModifiers;
 import com.example.superheroes.hero.RegulusHero;
 import com.example.superheroes.network.MadnessSyncS2CPayload;
@@ -57,7 +58,7 @@ public final class RegulusMadnessController {
 	private RegulusMadnessController() {
 	}
 
-	public static void init() {
+	public static void register(HeroModuleContext ctx) {
 
 		ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> {
 			if (!(entity instanceof ServerPlayer player)) {

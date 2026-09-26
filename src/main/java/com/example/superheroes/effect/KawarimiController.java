@@ -1,6 +1,7 @@
 package com.example.superheroes.effect;
 
 import com.example.superheroes.attachment.ModAttachments;
+import com.example.superheroes.core.module.HeroModuleContext;
 import com.example.superheroes.hero.NarutoHero;
 import com.example.superheroes.particle.ModParticles;
 import com.example.superheroes.transform.HeroData;
@@ -36,7 +37,7 @@ public final class KawarimiController {
 	private KawarimiController() {
 	}
 
-	public static void init() {
+	public static void register(HeroModuleContext ctx) {
 		// ALLOW_DEATH: срабатывает только когда урон реально летален (после всех редукций),
 		// а не на каждом предположительно смертельном ударе до щитов и i-frames.
 		ServerLivingEntityEvents.ALLOW_DEATH.register((entity, source, amount) -> {

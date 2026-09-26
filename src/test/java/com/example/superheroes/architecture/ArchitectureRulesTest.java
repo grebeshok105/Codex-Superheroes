@@ -22,6 +22,7 @@ import static com.tngtech.archunit.core.domain.properties.HasName.Predicates.nam
 import static com.tngtech.archunit.core.domain.properties.HasOwner.Predicates.With.owner;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noMethods;
 import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -122,6 +123,15 @@ class ArchitectureRulesTest {
 	}
 
 	// ---- strict: empty today, enforced from the first class
+
+	@Test
+	void controllersHaveNoStaticInit() {
+		noMethods().that().areDeclaredInClassesThat().haveSimpleNameEndingWith("Controller")
+				.and().areStatic()
+				.should().haveName("init")
+				.as("controllers are wired by their module's register(HeroModuleContext)")
+				.check(CodexClasses.main());
+	}
 
 	@Test
 	void coreDependsOnNothingAboveIt() {

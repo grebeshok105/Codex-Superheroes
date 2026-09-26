@@ -1,6 +1,7 @@
 package com.example.superheroes.ability.ironman;
 
 import com.example.superheroes.attachment.ModAttachments;
+import com.example.superheroes.core.module.HeroModuleContext;
 import com.example.superheroes.network.SuitVariantS2CPayload;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -15,7 +16,7 @@ public final class IronManSuitSyncController {
 	private IronManSuitSyncController() {
 	}
 
-	public static void init() {
+	public static void register(HeroModuleContext ctx) {
 		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
 			ServerPlayer joining = handler.getPlayer();
 			for (ServerPlayer other : server.getPlayerList().getPlayers()) {
