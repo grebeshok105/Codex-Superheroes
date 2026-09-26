@@ -46,6 +46,27 @@ public interface Hero {
 		passiveAttributes().remove(player);
 	}
 
+	/**
+	 * Whether a dead player keeps this hero: the global AFTER_DEATH untransform
+	 * skips heroes whose own death pipeline adapts through death (Doomsday).
+	 */
+	default boolean keepsHeroOnDeath() {
+		return false;
+	}
+
+	/**
+	 * Re-applies passives on a fresh player entity (relog, respawn); callers wrap
+	 * this in {@code PassiveReconciler.capture} so the declared infinite effects
+	 * stay protected. Default re-derives from scratch: {@link #removePassives}
+	 * then {@link #applyPassives}. A hero that keeps its transformation on death
+	 * overrides this to apply-only — removing would reset the progress the death
+	 * just granted (Doomsday's tier reset lives inside {@code removePassives}).
+	 */
+	default void reapplyPassivesAfterRespawn(ServerPlayer player) {
+		removePassives(player);
+		applyPassives(player);
+	}
+
 	boolean cancelsFallDamage(Player player);
 
 	@Nullable

@@ -3,7 +3,6 @@ package com.example.superheroes.transform;
 import com.example.superheroes.ability.Ability;
 import com.example.superheroes.ability.AbilityRegistry;
 import com.example.superheroes.attachment.ModAttachments;
-import com.example.superheroes.hero.DoomsdayHero;
 import com.example.superheroes.hero.Hero;
 import com.example.superheroes.hero.Heroes;
 import com.example.superheroes.network.ModNetworking;
@@ -155,17 +154,12 @@ public final class HeroTransformService {
 				reapplyLifecyclePassives(newPlayer, hero);
 			}
 		}
-		com.example.superheroes.effect.ReinhardController.onRespawn(newPlayer);
 		HeroDataStore.syncFull(newPlayer);
 	}
 
 	private static void reapplyLifecyclePassives(ServerPlayer player, Hero hero) {
-		if (DoomsdayHero.ID.equals(hero.getId())) {
-			com.example.superheroes.lifecycle.PassiveReconciler.applyAndCapture(player, hero);
-			return;
-		}
-		hero.removePassives(player);
-		com.example.superheroes.lifecycle.PassiveReconciler.applyAndCapture(player, hero);
+		com.example.superheroes.lifecycle.PassiveReconciler.capture(player, hero.getId(),
+				() -> hero.reapplyPassivesAfterRespawn(player));
 	}
 
 	/**
@@ -178,8 +172,6 @@ public final class HeroTransformService {
 		java.util.UUID id = player.getUUID();
 		// ability cooldowns intentionally persist — they live on the player attachment (audit B5)
 		com.example.superheroes.resource.EnergyLocks.clear(id);
-		com.example.superheroes.effect.RemDemonismController.clear(player);
-		com.example.superheroes.effect.UnibeamController.clearState(id);
 		if (HeroDataStore.get(player).hasHero()) {
 			HeroDataStore.update(player, HeroData::clearActive);
 		}

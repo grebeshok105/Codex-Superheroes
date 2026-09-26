@@ -116,6 +116,7 @@ public final class RemDemonismController {
 		});
 
 		ctx.lifecycle().onHeroClear(RemDemonismController::clear);
+		ctx.lifecycle().onLeave(RemDemonismController::clear);
 		ctx.lifecycle().onServerStopped(server -> RemDemonismController.resetAll());
 	}
 

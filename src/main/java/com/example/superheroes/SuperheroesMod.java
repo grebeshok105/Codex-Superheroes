@@ -3,6 +3,8 @@ package com.example.superheroes;
 import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.command.SuperheroesCommands;
 import com.example.superheroes.effect.ModEffects;
+import com.example.superheroes.hero.Hero;
+import com.example.superheroes.hero.Heroes;
 import com.example.superheroes.item.ModItemGroups;
 import com.example.superheroes.item.ModItems;
 import com.example.superheroes.lifecycle.EntityControlLock;
@@ -43,14 +45,16 @@ public class SuperheroesMod implements ModInitializer {
 
 		com.example.superheroes.lifecycle.HeroTickDispatcher.init();
 
-		// Global (not hero-owned) death handling: a dead hero untransforms — except Doomsday,
-		// whose death is handled by his own death-save pipeline (D2c will move this too).
+		// Global (not hero-owned) death handling: a dead hero untransforms — a hero that
+		// adapts through death keeps the transformation via Hero.keepsHeroOnDeath().
+		// Stays the last registered AFTER_DEATH listener: PlayerLifecycle's DEATH list
+		// (PlayerLifecycle.init above) and every module's own AFTER_DEATH hooks
+		// (HeroModules.bootstrap) all run before forceUntransform.
 		ServerLivingEntityEvents.AFTER_DEATH.register((entity, source) -> {
 			if (entity instanceof ServerPlayer serverPlayer) {
-				com.example.superheroes.transform.HeroData data = serverPlayer
-						.getAttachedOrCreate(com.example.superheroes.attachment.ModAttachments.HERO_DATA);
-				if (data.hasHero()
-						&& com.example.superheroes.hero.DoomsdayHero.ID.equals(data.heroId())) {
+				Hero hero = Heroes.get(serverPlayer
+						.getAttachedOrCreate(ModAttachments.HERO_DATA).heroId());
+				if (hero != null && hero.keepsHeroOnDeath()) {
 					return;
 				}
 				HeroTransformService.forceUntransform(serverPlayer);

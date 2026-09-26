@@ -41,6 +41,7 @@ public final class IronManModule implements HeroModule {
 		IronManJarvisController.register(ctx);
 		IronManNanoFormController.register(ctx);
 		IronManSuitSyncController.register(ctx);
+		ctx.lifecycle().onLeave(p -> UnibeamController.clearState(p.getUUID()));
 		ctx.ticks().global(UnibeamController::pruneGonePlayers);
 		ctx.ticks().global(IronManJarvisController::serverTick);
 		ctx.ticks().player((server, p, data) -> IronManNanoFormController.serverTick(p));
