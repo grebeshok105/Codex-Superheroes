@@ -53,8 +53,8 @@
 | E1 переименование корня (барьер) | ✅ | merged #81 |
 | E2 скелет `core/` и `mechanic/` | ✅ | merged #83 |
 | M1 `Motion`, `FxBroadcast`, `Targeting` | ✅ | merged #84 |
-| F1 Scorpion — сервер | ⏳ | |
-| F2 Scorpion — клиент | ⏳ | |
+| F1 Scorpion — сервер | ✅ | merged #85 |
+| F2 Scorpion — клиент | ✅ | merged #85 |
 | G1 Reinhard — сервер | ⏳ | |
 | G2 Reinhard — клиент | ⏳ | |
 | G3 Reinhard — межгеройские остатки | ⏳ | |

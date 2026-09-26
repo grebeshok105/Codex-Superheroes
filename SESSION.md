@@ -379,3 +379,15 @@
 - mechanic/targeting/{TargetFilter,Targeting} — record, all flags off by default; respectPvp/excludeAllies = gameplay change (audit B19), never enabled.
 - Frozen rules MechanicServiceRulesTest: motion-packet ctor coverage BOTH (Entity) and (int,Vec3) — reviewer caught the id-ctor gap; store refrozen 45+16 sites (all in ability/effect/physics/entity — wave debt). GameTests: Motion +4, MechanicTargeting +6 (each flag cuts exactly its case, and()-composition, pvp, allies). 107/107.
 - Reviewer note: reviewed stale HEAD once (pre-refreeze push) — pointed at fc35585 → APPROVE.
+
+## Architecture migration — stage F (plan 05)
+
+- Scorpion is now a fully self-contained hero module: `hero/scorpion/` (ScorpionModule/ScorpionHero/ScorpionItems + ability/, runtime/ScorpionController, net/, sound/, targeting/) + `client/hero/scorpion/` (ScorpionClientModule, fx/, fx/veil/). Only composition-root lines remain in HeroModules/HeroClientModules.
+- HeroModuleContext gained `content()` (ContentRegistrar→CreativeTabContents) and `payloads()` (PayloadRegistrar.FABRIC); CoreModuleContext wires both.
+- Intra-module DAG rule established (leaf packages own constants; runtime classes use local SCORPION_ID, not root-class refs) — mandatory for G1/waves.
+- ArchUnit F.4: every hero S2C payload registers a receiver in its client module.
+- Sanctioned behavior commit: OwnedSessionMap SPEAR_PULLS/BREATHS with ClearOn.LEAVE+DEATH (was static HashMaps); creative tab order = kunai after legacy items (module registration order).
+- build.gradle: `datagen` sourceSet (Veil-free classpath — fixes pre-existing runDatagen break on server env) + `clientnoveil` sourceSet + `runClientNoVeil` run config for Veil-free client checks.
+- Gate: qualityGate green @a7aaab2 (111/111 gametests). Golden transformation_lore reordered (kunai first — registration order, content identical). ArchUnit store refrozen with 0 scorpion entries.
+- Runtime: runClient Veil + runClientNoVeil both PASSED 7/7 (transform, 4 abilities + spear pull, untransform, OwnedSessionMap ClearOn LEAVE+DEATH proven via instrumentation).
+- Reviewer: APPROVE at HEAD 1118390. Merged #85.
