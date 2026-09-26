@@ -54,7 +54,7 @@
 | D2a-1 срез: Scorpion через `HeroModule` | ✅ merged | #64 |
 | D2a-2 `HeroModule` у остальных 21 героя | ✅ merged | #67 |
 | D2b-1 тики и `init()` в модули | ✅ #70 | |
-| D2b-2 lifecycle, правила, damage-слушатели в модули | ⏳ | |
+| D2b-2 lifecycle, правила, damage-слушатели в модули | ✅ merged | #75 |
 | D2c остатки hero-веток в `HeroTransformService` | ⏳ | |
 
 ## Контекст
