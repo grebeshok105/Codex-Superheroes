@@ -15,6 +15,8 @@ import com.example.superheroes.client.hud.JarvisOverlayHud;
 import com.example.superheroes.client.hud.ReactorOverlayHud;
 import com.example.superheroes.client.render.IronLegionDroneRenderer;
 import com.example.superheroes.client.render.IronManEspRenderer;
+import com.example.superheroes.client.render.IronManNanoFormLayer;
+import com.example.superheroes.client.render.NanoSuitUpLayer;
 import com.example.superheroes.client.render.RepulsorBeamRenderer;
 import com.example.superheroes.client.render.SmartMissileRenderer;
 import com.example.superheroes.entity.ModEntities;
@@ -38,6 +40,9 @@ public record IronManClientModule() implements HeroClientModule {
 
 	@Override
 	public void register(HeroClientContext ctx) {
+		ctx.skin(new IronManSkinProvider());
+		ctx.playerLayer(renderer -> new IronManNanoFormLayer(renderer));
+		ctx.playerLayer(renderer -> new NanoSuitUpLayer(renderer));
 		ctx.receive(RepulsorBlastS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> RepulsorBeamRenderer.add(payload.start(), payload.end())));
 		ctx.receive(ReactorStateS2CPayload.TYPE, (payload, context) ->

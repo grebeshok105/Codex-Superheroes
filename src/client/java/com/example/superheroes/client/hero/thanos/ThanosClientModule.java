@@ -16,6 +16,7 @@ public record ThanosClientModule() implements HeroClientModule {
 
 	@Override
 	public void register(HeroClientContext ctx) {
+		ctx.skin(new ThanosSkinProvider());
 		ctx.receive(ThanosCosmicBeamS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> CosmicBeamRenderer.add(payload.start(), payload.end())));
 		ctx.receive(ThanosStonesS2CPayload.TYPE, (payload, context) ->
