@@ -559,7 +559,7 @@ public final class UnibeamController {
 		pruneGone(server, stunned.iterator());
 	}
 
-	private static void pruneGone(MinecraftServer server, Iterator<Map.Entry<UUID, ?>> it) {
+	private static void pruneGone(MinecraftServer server, Iterator<? extends Map.Entry<UUID, ?>> it) {
 		while (it.hasNext()) {
 			if (server.getPlayerList().getPlayer(it.next().getKey()) == null) {
 				it.remove();

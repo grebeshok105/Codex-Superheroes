@@ -58,7 +58,9 @@ public final class LifecycleSideEffectsGameTests implements FabricGameTest {
 		ServerPlayer omniman = TestPlayers.join(helper, "thinkmark-owner");
 		Zombie zombie = helper.spawn(EntityType.ZOMBIE, 2, 1, 2);
 		// Face the victim: put the caster two blocks behind it along -X, looking +X.
-		omniman.teleportTo(zombie.getX() - 2.0, zombie.getY(), zombie.getZ(), -90.0F, 0.0F);
+		omniman.teleportTo(zombie.getX() - 2.0, zombie.getY(), zombie.getZ());
+		omniman.setYRot(-90.0F);
+		omniman.setXRot(0.0F);
 
 		boolean activated = new OmnimanThinkMarkAbility().tryActivate(omniman);
 		helper.assertTrue(activated, "the grab must actually start for this test to say anything");

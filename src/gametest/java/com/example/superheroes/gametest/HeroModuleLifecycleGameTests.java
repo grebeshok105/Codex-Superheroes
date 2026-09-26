@@ -116,6 +116,7 @@ public final class HeroModuleLifecycleGameTests implements FabricGameTest {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, ReinhardHero.ID);
 		Zombie zombie = helper.spawn(EntityType.ZOMBIE, 1, 1, 1);
+		player.teleportTo(zombie.getX() + 2.0, zombie.getY(), zombie.getZ());
 		helper.assertTrue(ReinhardSwordDrawCeremonyController.startCeremony(player),
 				"ceremony started");
 		helper.assertTrue(zombie.isNoAi(), "ceremony froze the mob (NoAI lock)");
@@ -140,6 +141,7 @@ public final class HeroModuleLifecycleGameTests implements FabricGameTest {
 		player.setAttached(ModAttachments.REINHARD_STATE,
 				player.getAttachedOrCreate(ModAttachments.REINHARD_STATE).withPhoenixUsed(true));
 		Zombie zombie = helper.spawn(EntityType.ZOMBIE, 1, 1, 1);
+		player.teleportTo(zombie.getX() + 2.0, zombie.getY(), zombie.getZ());
 		helper.assertTrue(ReinhardSwordDrawCeremonyController.startCeremony(player),
 				"ceremony started");
 		helper.assertTrue(zombie.isNoAi(), "ceremony froze the mob (NoAI lock)");
