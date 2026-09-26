@@ -53,6 +53,7 @@ public class SuperheroesMod implements ModInitializer {
 		ModItemGroups.init();
 		ModParticles.init();
 		ModSounds.init();
+		com.example.superheroes.bootstrap.HeroModules.bootstrap(com.example.superheroes.core.module.CoreModuleContext.INSTANCE);
 		com.example.superheroes.effect.MirrorDimensionController.init();
 		ModNetworking.init();
 		HeroDataStore.init();
