@@ -299,3 +299,13 @@
 - `ScorpionClientModule` owns the `ScorpionFxS2CPayload` receiver (handler byte-identical; `ClientNetworking` lost only that receiver + import — 35→34 in-file + 1 via `ctx.receive`). `heroId() = ScorpionHero.ID` — IN_CLIENT_HERO_MODULE is excluded from the sharedClientCode rule. `HeroClientModules.bootstrap()` runs right after `ClientNetworking.init()`.
 - New ArchUnit client rules (`clientHeroModulesAreReferencedOnlyByThemselvesAndTheModuleList`, `clientCoreDoesNotKnowHeroModules`, `sharedClientCodeDoesNotDependOnConcreteHeroes`) now non-vacuous. qualityGate 71/71.
 - Runtime: receiver proven to fire via temporary `[CL3A1-FX]` println (kind=2 hellfire pillar, kind=1 spear harpoon) — Veil 4.1.2 in classpath, handler dispatches to `VeilScorpionFx`. Kunai→scorpion transform, regulus regression PASS.
+
+## Architecture migration — stage CL3b (plan 04)
+
+- Hero keys: `RAIDEN_SWORD_DRAW` → `RaidenClientModule.actionKey`, `NANO_WEAPON`/`ESP_TOGGLE` → `IronManClientModule.actionKey`; `ModKeys` keeps only core keys (radial/bindings/tooltips/super_jump/vfx/8 slots); guard parity verified — `HeroActionKeys` fires on synced `PUBLIC_HERO`, drains clicks unconditionally.
+- HUD: 16 hero layers moved to `ctx.hud` of owner modules with orders preserved (kratos 600; regulus 900/1100/1200/1300/1500; homelander 1400; doomsday 1600; reinhard 1700/2200/2300; pandora 1900/2400; ironman jarvis_overlay 100/jarvis_detection 200/reactor_overlay 1000).
+- Renderers: `SHADOW_SOLDIER`→sungjinwoo, `KAGE_BUNSHIN`→naruto, `SHIELD_PROJECTILE`→captainamerica, `RAM`→rem, `SMART_MISSILE`/`IRON_LEGION_DRONE`→ironman via new `HeroClientContext.entityRenderer` hook (`CoreClientContext` delegates to `EntityRendererRegistry`).
+- IronMan ticks (`ClientNanoSuitUpState`, `JarvisDetectionHud`, `tickRepulsorCharge`) → module END_CLIENT_TICK regs (no ctx tick hook in plan interface — direct Fabric call is the pattern).
+- `LightningBoltAccessor` → `client/mixin/` (client mixin config); `SuperheroesClient`/`ModKeys` carry zero hero-keyed registrations.
+- Deferred to CL4 per plan: `IronManNanoFormLayer`/`NanoSuitUpLayer` (player feature layers = CL4 scope).
+- Gate: `qualityGate` green, 73/73 gametests.
