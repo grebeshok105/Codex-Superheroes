@@ -411,3 +411,10 @@
 - Variant.REINHARD deleted (dead); chargeFriendly now uses BoundWeaponItem.blocksChargedAttackTiers trait (only RoyalIcicle true) — zero hero ids in SuperheroesClient.
 - Acceptance G reached: Reinhard touches shared code only via HeroModules + HeroClientModules + beam.json + lang/assets.
 - Gate green; reviewer APPROVE; no runtime needed (dead-code + semantics-identical).
+
+## H — architecture review gate (GO)
+- Independent reviewer (not F/G author): GO on all 10 checklist items. No seam-fix PRs before waves.
+- Metrics §8 on main post-G3: 76/10 UUID maps, 30 cycle pairs, 17 .init(), 0 own-tick files, 70/318-line roots.
+- R21-R23 recorded (HeroClientContext bound ≤10; ClientSoundFilters single-consumer OK; entities/particles direct reg).
+- migrate-hero SKILL.md authored from F/G lessons (characterize→move→clean; DAG; seams; traps).
+- Wave order confirmed: I1a-c → I2a-c → I3 → I4a-d → I5a-c → I6a-b + IC1-3 → O.
