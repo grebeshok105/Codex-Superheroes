@@ -2,9 +2,9 @@ package com.example.superheroes.effect;
 
 import com.example.superheroes.ability.AbilityIds;
 import com.example.superheroes.attachment.ModAttachments;
+import com.example.superheroes.core.module.HeroModuleContext;
 import com.example.superheroes.transform.HeroData;
 import com.example.superheroes.world.WorldDestructionPolicy;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
@@ -28,8 +28,8 @@ public final class MadnessFlightController {
 	private MadnessFlightController() {
 	}
 
-	public static void init() {
-		ServerTickEvents.START_SERVER_TICK.register(server -> {
+	public static void register(HeroModuleContext ctx) {
+		ctx.ticks().start(server -> {
 			for (ServerPlayer player : server.getPlayerList().getPlayers()) {
 				tick(player);
 			}

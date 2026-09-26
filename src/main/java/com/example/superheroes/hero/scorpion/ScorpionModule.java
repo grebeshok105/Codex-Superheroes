@@ -6,6 +6,7 @@ import com.example.superheroes.ability.ScorpionHellfireAbility;
 import com.example.superheroes.ability.ScorpionSpearAbility;
 import com.example.superheroes.core.module.HeroModule;
 import com.example.superheroes.core.module.HeroModuleContext;
+import com.example.superheroes.effect.ScorpionController;
 import com.example.superheroes.hero.Hero;
 import com.example.superheroes.hero.ScorpionHero;
 
@@ -23,5 +24,7 @@ public final class ScorpionModule implements HeroModule {
 		ctx.abilities().register(new ScorpionHellfireAbility());
 		ctx.abilities().register(new ScorpionFireTeleportAbility());
 		ctx.abilities().register(new ScorpionHellBreathAbility());
+		ctx.ticks().global(ScorpionController::serverTick);
+		ctx.ticks().player(ScorpionController::tickPlayer);
 	}
 }

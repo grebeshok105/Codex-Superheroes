@@ -1,6 +1,7 @@
 package com.example.superheroes.effect;
 
 import com.example.superheroes.attachment.ModAttachments;
+import com.example.superheroes.core.module.HeroModuleContext;
 import com.example.superheroes.hero.DoomsdayHero;
 import com.example.superheroes.item.KryptoniteShardItem;
 import com.example.superheroes.item.ModItems;
@@ -37,7 +38,7 @@ public final class DoomsdayKryptoniteController {
 	private DoomsdayKryptoniteController() {
 	}
 
-	public static void init() {
+	public static void register(HeroModuleContext ctx) {
 		ServerLivingEntityEvents.AFTER_DAMAGE.register((entity, source, baseDamage, damageTaken, blocked) -> {
 			if (!(entity instanceof ServerPlayer doomsday)) return;
 			if (!isDoomsday(doomsday)) return;

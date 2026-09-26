@@ -1,5 +1,6 @@
 package com.example.superheroes.effect;
 
+import com.example.superheroes.core.module.HeroModuleContext;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.minecraft.server.level.ServerPlayer;
 
@@ -15,7 +16,7 @@ public final class GokuKiStackController {
 	private GokuKiStackController() {
 	}
 
-	public static void init() {
+	public static void register(HeroModuleContext ctx) {
 		ServerLivingEntityEvents.AFTER_DAMAGE.register((entity, source, baseDamage, damageTaken, blocked) -> {
 			if (entity instanceof ServerPlayer player && damageTaken > 0.5f) {
 				STACKS.remove(player.getUUID());

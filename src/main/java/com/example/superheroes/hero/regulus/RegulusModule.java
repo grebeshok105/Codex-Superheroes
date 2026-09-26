@@ -7,6 +7,10 @@ import com.example.superheroes.ability.LionRoarAbility;
 import com.example.superheroes.ability.ManiaOfGreedAbility;
 import com.example.superheroes.core.module.HeroModule;
 import com.example.superheroes.core.module.HeroModuleContext;
+import com.example.superheroes.effect.GreedCageController;
+import com.example.superheroes.effect.RegulusGreedController;
+import com.example.superheroes.effect.RegulusMadnessController;
+import com.example.superheroes.effect.RegulusTotemController;
 import com.example.superheroes.hero.Hero;
 import com.example.superheroes.hero.RegulusHero;
 
@@ -25,5 +29,13 @@ public final class RegulusModule implements HeroModule {
 		ctx.abilities().register(new GreedsEmbraceAbility());
 		ctx.abilities().register(new LionRoarAbility());
 		ctx.abilities().register(new CounterStrikeAbility());
+		RegulusTotemController.register(ctx);
+		RegulusGreedController.register(ctx);
+		RegulusMadnessController.register(ctx);
+		ctx.ticks().global(RegulusGreedController::tickFreezes);
+		ctx.ticks().global(GreedCageController::tick);
+		ctx.ticks().global(RegulusMadnessController::tickCounters);
+		ctx.ticks().player(RegulusGreedController::tickPlayer);
+		ctx.ticks().player(RegulusMadnessController::tickPlayer);
 	}
 }

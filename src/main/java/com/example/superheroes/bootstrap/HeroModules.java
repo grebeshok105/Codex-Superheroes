@@ -41,6 +41,7 @@ public final class HeroModules {
 			Heroes.register(module.hero());
 		}
 		SharedAbilities.register(ctx.abilities());
+		SharedMechanics.register(ctx);
 		for (HeroModule module : ALL) {
 			module.register(ctx);
 		}

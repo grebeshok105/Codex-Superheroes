@@ -1,6 +1,7 @@
 package com.example.superheroes.command;
 
 import com.example.superheroes.attachment.ModAttachments;
+import com.example.superheroes.core.module.HeroModuleContext;
 import com.example.superheroes.network.AdminBuildS2CPayload;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -14,7 +15,7 @@ public final class AdminBuildSyncController {
 	private AdminBuildSyncController() {
 	}
 
-	public static void init() {
+	public static void register(HeroModuleContext ctx) {
 		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) ->
 				send(handler.getPlayer()));
 	}

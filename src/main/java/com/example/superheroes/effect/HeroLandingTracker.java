@@ -2,6 +2,7 @@ package com.example.superheroes.effect;
 
 import com.example.superheroes.ability.AbilityIds;
 import com.example.superheroes.attachment.ModAttachments;
+import com.example.superheroes.core.module.HeroModuleContext;
 import com.example.superheroes.hero.Hero;
 import com.example.superheroes.hero.Heroes;
 import com.example.superheroes.hero.LandingImpact;
@@ -37,7 +38,7 @@ public final class HeroLandingTracker {
 		long lastLandingTick;
 	}
 
-	public static void init() {
+	public static void register(HeroModuleContext ctx) {
 
 		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
 			states.remove(handler.getPlayer().getUUID());

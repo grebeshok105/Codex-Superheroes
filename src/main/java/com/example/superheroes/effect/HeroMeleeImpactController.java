@@ -2,6 +2,7 @@ package com.example.superheroes.effect;
 
 import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.combat.TargetFilters;
+import com.example.superheroes.core.module.HeroModuleContext;
 import com.example.superheroes.hero.Hero;
 import com.example.superheroes.hero.Heroes;
 import com.example.superheroes.network.HeroMeleeChargeC2SPayload;
@@ -55,7 +56,7 @@ public final class HeroMeleeImpactController {
 	private HeroMeleeImpactController() {
 	}
 
-	public static void init() {
+	public static void register(HeroModuleContext ctx) {
 		AttackEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
 			if (world.isClientSide() || hand != InteractionHand.MAIN_HAND || !(player instanceof ServerPlayer attacker)) {
 				return InteractionResult.PASS;

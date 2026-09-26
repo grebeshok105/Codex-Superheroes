@@ -1,6 +1,7 @@
 package com.example.superheroes.effect;
 
 import com.example.superheroes.attachment.ModAttachments;
+import com.example.superheroes.core.module.HeroModuleContext;
 import com.example.superheroes.hero.DoomsdayHero;
 import com.example.superheroes.hero.AbilityScopedModifiers;
 import com.example.superheroes.transform.HeroData;
@@ -90,7 +91,7 @@ public final class DoomsdayAdaptationController {
 	private DoomsdayAdaptationController() {
 	}
 
-	public static void init() {
+	public static void register(HeroModuleContext ctx) {
 		ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> {
 			if (!(entity instanceof ServerPlayer player)) {
 				return true;
