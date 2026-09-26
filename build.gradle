@@ -67,6 +67,16 @@ sourceSets {
 		compileClasspath += main.compileClasspath + main.output
 		runtimeClasspath += main.runtimeClasspath.filter { !it.path.contains('veil') } + main.output
 	}
+	// Veil-free client run: Veil FX code paths are guarded by isModLoaded("veil"),
+	// so runtime checks without Veil need a classpath that simply lacks the jar.
+	// loom creates the split-env 'client' source set after this block evaluates,
+	// hence the eager empty set here and the lazy classpath below.
+	clientnoveil
+}
+
+afterEvaluate {
+	sourceSets.clientnoveil.compileClasspath += sourceSets.client.compileClasspath + sourceSets.client.output + sourceSets.main.output
+	sourceSets.clientnoveil.runtimeClasspath += sourceSets.client.runtimeClasspath.filter { !it.path.contains('veil') } + sourceSets.client.output + sourceSets.main.output
 }
 
 // JUnit covers pure client-side state too (Client*State session resets, cooldown clocks —
@@ -111,6 +121,14 @@ loom {
 			vmArg "-Dfabric-api.gametest"
 			vmArg "-Dfabric-api.gametest.report-file=${file("build/gametest/junit.xml")}"
 			runDir "build/gametest"
+		}
+		// Veil-free client (see the clientnoveil source set): exercises the
+		// isModLoaded("veil") fallback paths for hero FX.
+		clientNoVeil {
+			client()
+			name "Client (no Veil)"
+			source sourceSets.clientnoveil
+			runDir "build/clientnoveil"
 		}
 	}
 }
