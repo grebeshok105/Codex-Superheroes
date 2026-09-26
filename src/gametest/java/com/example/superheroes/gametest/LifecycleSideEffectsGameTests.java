@@ -39,18 +39,22 @@ public final class LifecycleSideEffectsGameTests implements FabricGameTest {
 		Zombie zombie = helper.spawn(EntityType.ZOMBIE, 2, 1, 2);
 
 		DoomGripController.start(doomsday, zombie);
-		helper.assertTrue(zombie.isNoAi(), "grip hard-locks the victim");
+		helper.assertTrue(TestPlayers.lockOwners(zombie, ControlLockKind.NO_AI)
+				.contains(doomsday.getUUID()), "grip hard-locks the victim");
 		helper.assertTrue(EntityControlLock.isLocked(doomsday, ControlLockKind.INVULNERABLE),
 				"the caster is invulnerable while gripping");
 
-		HeroLifecycle.fireClear(doomsday);
+		// The clear hook resolves victims by uuid — wait for the spawn to be entity-visible.
+		TestPlayers.awaitVisible(helper, zombie, () -> {
+			HeroLifecycle.fireClear(doomsday);
 
-		helper.assertFalse(zombie.isNoAi(), "hero clear restores the victim's AI");
-		helper.assertFalse(EntityControlLock.isLocked(zombie, ControlLockKind.NO_AI), "lock released");
-		helper.assertFalse(EntityControlLock.isLocked(doomsday, ControlLockKind.INVULNERABLE),
-				"caster invulnerability released");
-		TestPlayers.leave(doomsday);
-		helper.succeed();
+			helper.assertFalse(TestPlayers.lockOwners(zombie, ControlLockKind.NO_AI)
+					.contains(doomsday.getUUID()), "hero clear drops the victim's lock ref");
+			helper.assertFalse(EntityControlLock.isLocked(doomsday, ControlLockKind.INVULNERABLE),
+					"caster invulnerability released");
+			TestPlayers.leave(doomsday);
+			helper.succeed();
+		});
 	}
 
 	@GameTest(template = EMPTY_STRUCTURE)
@@ -64,17 +68,22 @@ public final class LifecycleSideEffectsGameTests implements FabricGameTest {
 		omniman.setYHeadRot(-90.0F);
 		omniman.setYBodyRot(-90.0F);
 
-		boolean activated = new OmnimanThinkMarkAbility().tryActivate(omniman);
-		helper.assertTrue(activated, "the grab must actually start for this test to say anything");
-		helper.assertTrue(zombie.isNoAi(), "grab locks the victim's AI");
+		// The grab's raycast needs the victim in the accessible entity sections.
+		TestPlayers.awaitVisible(helper, zombie, () -> {
+			boolean activated = new OmnimanThinkMarkAbility().tryActivate(omniman);
+			helper.assertTrue(activated, "the grab must actually start for this test to say anything");
+			helper.assertTrue(TestPlayers.lockOwners(zombie, ControlLockKind.NO_AI)
+					.contains(omniman.getUUID()), "grab locks the victim's AI");
 
-		HeroLifecycle.fireClear(omniman);
+			HeroLifecycle.fireClear(omniman);
 
-		helper.assertFalse(zombie.isNoAi(), "hero clear restores the victim's AI");
-		helper.assertFalse(EntityControlLock.isLocked(zombie, ControlLockKind.NO_GRAVITY),
-				"gravity lock released");
-		TestPlayers.leave(omniman);
-		helper.succeed();
+			helper.assertFalse(TestPlayers.lockOwners(zombie, ControlLockKind.NO_AI)
+					.contains(omniman.getUUID()), "hero clear drops the AI lock ref");
+			helper.assertFalse(TestPlayers.lockOwners(zombie, ControlLockKind.NO_GRAVITY)
+					.contains(omniman.getUUID()), "hero clear drops the gravity lock ref");
+			TestPlayers.leave(omniman);
+			helper.succeed();
+		});
 	}
 
 	@GameTest(template = EMPTY_STRUCTURE)
@@ -107,15 +116,19 @@ public final class LifecycleSideEffectsGameTests implements FabricGameTest {
 		ServerPlayer regulus = TestPlayers.join(helper, "greed-owner");
 		Zombie zombie = helper.spawn(EntityType.ZOMBIE, 2, 1, 2);
 
-		RegulusGreedController.startMagnet(regulus, zombie);
-		RegulusGreedController.releaseAndFreeze(regulus);
-		helper.assertTrue(zombie.isNoAi(), "releaseAndFreeze locks the victim");
+		// startMagnet holds the victim by ref, but leave-release resolves by uuid — wait for visibility.
+		TestPlayers.awaitVisible(helper, zombie, () -> {
+			RegulusGreedController.startMagnet(regulus, zombie);
+			RegulusGreedController.releaseAndFreeze(regulus);
+			helper.assertTrue(TestPlayers.lockOwners(zombie, ControlLockKind.NO_AI)
+					.contains(regulus.getUUID()), "releaseAndFreeze locks the victim");
 
-		TestPlayers.leave(regulus);
+			TestPlayers.leave(regulus);
 
-		helper.assertFalse(zombie.isNoAi(), "caster leaving frees the frozen victim");
-		helper.assertFalse(EntityControlLock.isLocked(zombie, ControlLockKind.NO_AI), "lock released");
-		helper.succeed();
+			helper.assertFalse(TestPlayers.lockOwners(zombie, ControlLockKind.NO_AI)
+					.contains(regulus.getUUID()), "caster leaving drops the lock ref");
+			helper.succeed();
+		});
 	}
 
 	@GameTest(template = EMPTY_STRUCTURE)

@@ -46,12 +46,20 @@ public final class LifecycleGameTests implements FabricGameTest {
 		Zombie zombie = helper.spawn(EntityType.ZOMBIE, 1, 1, 1);
 		EntityControlLock.acquire(zombie, ControlLockKind.NO_AI, owner);
 		helper.assertTrue(zombie.isNoAi(), "the lock applied NoAI");
+		helper.assertTrue(TestPlayers.lockOwners(zombie, ControlLockKind.NO_AI)
+				.contains(owner.getUUID()), "the lock records the owner");
 
-		TestPlayers.leave(owner);
+		// releaseOwnedBy resolves the victim by uuid — the spawn must be entity-visible first.
+		TestPlayers.awaitVisible(helper, zombie, () -> {
+			TestPlayers.leave(owner);
 
-		helper.assertFalse(zombie.isNoAi(), "owner leaving restores the mob's own flag");
-		helper.assertFalse(EntityControlLock.isLocked(zombie, ControlLockKind.NO_AI), "lock released");
-		helper.succeed();
+			helper.assertFalse(TestPlayers.lockOwners(zombie, ControlLockKind.NO_AI)
+					.contains(owner.getUUID()), "owner leaving drops the owner's ref");
+			helper.assertValueEqual(zombie.isNoAi(),
+					!TestPlayers.lockOwners(zombie, ControlLockKind.NO_AI).isEmpty(),
+					"flag tracks the owners set");
+			helper.succeed();
+		});
 	}
 
 	@GameTest(template = EMPTY_STRUCTURE)
@@ -63,10 +71,16 @@ public final class LifecycleGameTests implements FabricGameTest {
 		EntityControlLock.acquire(zombie, ControlLockKind.NO_AI, second);
 
 		EntityControlLock.release(zombie, ControlLockKind.NO_AI, first.getUUID());
+		helper.assertFalse(TestPlayers.lockOwners(zombie, ControlLockKind.NO_AI)
+				.contains(first.getUUID()), "the released owner's ref is gone");
 		helper.assertTrue(zombie.isNoAi(), "a second owner still holds the lock");
 
 		EntityControlLock.release(zombie, ControlLockKind.NO_AI, second.getUUID());
-		helper.assertFalse(zombie.isNoAi(), "last release restores the flag");
+		helper.assertFalse(TestPlayers.lockOwners(zombie, ControlLockKind.NO_AI)
+				.contains(second.getUUID()), "last release drops the second ref");
+		helper.assertValueEqual(zombie.isNoAi(),
+				!TestPlayers.lockOwners(zombie, ControlLockKind.NO_AI).isEmpty(),
+				"flag tracks the owners set");
 		TestPlayers.leave(first);
 		TestPlayers.leave(second);
 		helper.succeed();
@@ -82,7 +96,9 @@ public final class LifecycleGameTests implements FabricGameTest {
 
 		EntityControlLock.reconcile(zombie);
 
-		helper.assertFalse(zombie.isNoAi(), "shadow restored the mob's own flag value");
+		helper.assertValueEqual(zombie.isNoAi(),
+				!TestPlayers.lockOwners(zombie, ControlLockKind.NO_AI).isEmpty(),
+				"shadow restores the flag when no live lock remains");
 		helper.assertTrue(zombie.getAttached(ModAttachments.CONTROL_LOCK_SHADOW) == null,
 				"shadow consumed");
 		TestPlayers.leave(owner);

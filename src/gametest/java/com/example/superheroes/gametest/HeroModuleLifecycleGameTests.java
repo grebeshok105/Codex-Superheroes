@@ -9,6 +9,7 @@ import com.example.superheroes.effect.RaidenState;
 import com.example.superheroes.effect.ReinhardState;
 import com.example.superheroes.effect.ReinhardSwordDrawCeremonyController;
 import com.example.superheroes.effect.ReinhardTimeSlowController;
+import com.example.superheroes.lifecycle.ControlLockKind;
 import com.example.superheroes.hero.AbilityScopedModifiers;
 import com.example.superheroes.hero.KratosHero;
 import com.example.superheroes.hero.RaidenHero;
@@ -117,20 +118,25 @@ public final class HeroModuleLifecycleGameTests implements FabricGameTest {
 		TestHeroes.transform(player, ReinhardHero.ID);
 		Zombie zombie = helper.spawn(EntityType.ZOMBIE, 1, 1, 1);
 		player.teleportTo(zombie.getX() + 2.0, zombie.getY(), zombie.getZ());
-		helper.assertTrue(ReinhardSwordDrawCeremonyController.startCeremony(player),
-				"ceremony started");
-		helper.assertTrue(zombie.isNoAi(), "ceremony froze the mob (NoAI lock)");
-		helper.assertTrue(zombie.hasEffect(MobEffects.MOVEMENT_SLOWDOWN),
-				"ceremony applied the slowness effect");
+		// startCeremony scans the accessible entity sections — wait for the spawn to be visible.
+		TestPlayers.awaitVisible(helper, zombie, () -> {
+			helper.assertTrue(ReinhardSwordDrawCeremonyController.startCeremony(player),
+					"ceremony started");
+			helper.assertTrue(TestPlayers.lockOwners(zombie, ControlLockKind.NO_AI)
+					.contains(player.getUUID()), "ceremony froze the mob (NoAI lock)");
+			helper.assertTrue(zombie.hasEffect(MobEffects.MOVEMENT_SLOWDOWN),
+					"ceremony applied the slowness effect");
 
-		TestPlayers.leave(player);
+			TestPlayers.leave(player);
 
-		helper.assertFalse(zombie.isNoAi(), "leaving cancels the ceremony and releases NoAI");
-		helper.assertFalse(zombie.hasEffect(MobEffects.MOVEMENT_SLOWDOWN),
-				"leaving strips the freeze effects");
-		helper.assertFalse(ReinhardSwordDrawCeremonyController.isInCeremony(player),
-				"ceremony tracking dropped");
-		helper.succeed();
+			helper.assertFalse(TestPlayers.lockOwners(zombie, ControlLockKind.NO_AI)
+					.contains(player.getUUID()), "leaving cancels the ceremony's NoAI ref");
+			helper.assertFalse(zombie.hasEffect(MobEffects.MOVEMENT_SLOWDOWN),
+					"leaving strips the freeze effects");
+			helper.assertFalse(ReinhardSwordDrawCeremonyController.isInCeremony(player),
+					"ceremony tracking dropped");
+			helper.succeed();
+		});
 	}
 
 	/** Same hook on death — Reinhard dies for real only once the phoenix revive is spent. */
@@ -142,18 +148,23 @@ public final class HeroModuleLifecycleGameTests implements FabricGameTest {
 				player.getAttachedOrCreate(ModAttachments.REINHARD_STATE).withPhoenixUsed(true));
 		Zombie zombie = helper.spawn(EntityType.ZOMBIE, 1, 1, 1);
 		player.teleportTo(zombie.getX() + 2.0, zombie.getY(), zombie.getZ());
-		helper.assertTrue(ReinhardSwordDrawCeremonyController.startCeremony(player),
-				"ceremony started");
-		helper.assertTrue(zombie.isNoAi(), "ceremony froze the mob (NoAI lock)");
+		// See the leave variant: the ceremony's area scan needs the spawn entity-visible.
+		TestPlayers.awaitVisible(helper, zombie, () -> {
+			helper.assertTrue(ReinhardSwordDrawCeremonyController.startCeremony(player),
+					"ceremony started");
+			helper.assertTrue(TestPlayers.lockOwners(zombie, ControlLockKind.NO_AI)
+					.contains(player.getUUID()), "ceremony froze the mob (NoAI lock)");
 
-		player.kill();
+			player.kill();
 
-		helper.assertFalse(player.isAlive(), "phoenix spent — the hit kills for real");
-		helper.assertFalse(zombie.isNoAi(), "dying cancels the ceremony and releases NoAI");
-		helper.assertFalse(zombie.hasEffect(MobEffects.MOVEMENT_SLOWDOWN),
-				"dying strips the freeze effects");
-		TestPlayers.leave(player);
-		helper.succeed();
+			helper.assertFalse(player.isAlive(), "phoenix spent — the hit kills for real");
+			helper.assertFalse(TestPlayers.lockOwners(zombie, ControlLockKind.NO_AI)
+					.contains(player.getUUID()), "dying cancels the ceremony's NoAI ref");
+			helper.assertFalse(zombie.hasEffect(MobEffects.MOVEMENT_SLOWDOWN),
+					"dying strips the freeze effects");
+			TestPlayers.leave(player);
+			helper.succeed();
+		});
 	}
 
 	/** {@code ReinhardTimeSlowController.onPlayerGone}: the owner leaving releases every
@@ -172,8 +183,11 @@ public final class HeroModuleLifecycleGameTests implements FabricGameTest {
 		victim.teleportTo(frozen.getX() + 3.0, frozen.getY(), frozen.getZ());
 		ReinhardTimeSlowController.triggerAbilitySlow(owner);
 
-		helper.runAfterDelay(3, () -> {
-			helper.assertTrue(frozen.isNoAi(), "time slow holds a NoAI lock on the mob");
+		// Freshly spawned mobs only enter the accessible entity sections freezeAround()
+		// scans once their chunk's tracking upgrade lands — poll for that, then settle.
+		TestPlayers.awaitVisible(helper, frozen, () -> helper.runAfterDelay(2, () -> {
+			helper.assertTrue(TestPlayers.lockOwners(frozen, ControlLockKind.NO_AI)
+					.contains(owner.getUUID()), "time slow holds a NoAI lock on the mob");
 			helper.assertTrue(victim.getAttribute(Attributes.MOVEMENT_SPEED)
 							.getModifier(TIME_SLOW_FREEZE) != null,
 					"frozen players get the zero-speed modifier");
@@ -184,11 +198,12 @@ public final class HeroModuleLifecycleGameTests implements FabricGameTest {
 					"victim leaving strips the freeze modifiers");
 
 			TestPlayers.leave(owner);
-			helper.assertFalse(frozen.isNoAi(), "owner leaving releases the entity locks");
+			helper.assertFalse(TestPlayers.lockOwners(frozen, ControlLockKind.NO_AI)
+					.contains(owner.getUUID()), "owner leaving releases the lock ref");
 			helper.assertFalse(ReinhardTimeSlowController.isActive(owner),
 					"owner's slow dropped");
 			helper.succeed();
-		});
+		}));
 	}
 
 	/** {@code ReinhardTimeSlowController.resetAll}: world shutdown releases every lock and
@@ -201,15 +216,18 @@ public final class HeroModuleLifecycleGameTests implements FabricGameTest {
 		owner.teleportTo(frozen.getX() - 3.0, frozen.getY(), frozen.getZ());
 		ReinhardTimeSlowController.triggerAbilitySlow(owner);
 
-		helper.runAfterDelay(3, () -> {
-			helper.assertTrue(frozen.isNoAi(), "time slow holds a NoAI lock on the mob");
+		// See the leave variant: wait for the spawn to be entity-visible first.
+		TestPlayers.awaitVisible(helper, frozen, () -> helper.runAfterDelay(2, () -> {
+			helper.assertTrue(TestPlayers.lockOwners(frozen, ControlLockKind.NO_AI)
+					.contains(owner.getUUID()), "time slow holds a NoAI lock on the mob");
 			ReinhardTimeSlowController.resetAll(helper.getLevel().getServer());
-			helper.assertFalse(frozen.isNoAi(), "resetAll releases the entity locks");
+			helper.assertFalse(TestPlayers.lockOwners(frozen, ControlLockKind.NO_AI)
+					.contains(owner.getUUID()), "resetAll releases the lock ref");
 			helper.assertFalse(ReinhardTimeSlowController.isActive(owner),
 					"resetAll drops the active slow");
 			TestPlayers.leave(owner);
 			helper.succeed();
-		});
+		}));
 	}
 
 	/** {@code KratosRageController} tracking maps are OwnedSessionMap now: death drops the

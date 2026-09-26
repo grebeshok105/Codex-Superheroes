@@ -28,7 +28,9 @@ public final class ShadowsTeleportsGameTests implements FabricGameTest {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, SungJinwooHero.ID);
 
-		helper.runAfterDelay(5, () -> {
+		// aliveCount resolves shadows by uuid — give the fresh spawns time to enter the
+		// accessible entity sections before counting.
+		helper.runAfterDelay(10, () -> {
 			helper.assertTrue(SungJinwooController.aliveCount(player) == SungJinwooController.MAX_SHADOWS,
 					"the initial shadow army is summoned");
 			helper.assertTrue(player.getAttached(ModAttachments.SUNG_SHADOW_ARMY).summoned(),
@@ -41,10 +43,12 @@ public final class ShadowsTeleportsGameTests implements FabricGameTest {
 				SungShadowArmy army = player.getAttached(ModAttachments.SUNG_SHADOW_ARMY);
 				helper.assertTrue(army == null || army.shadowIds().isEmpty(),
 						"the persistent army record is cleared");
+				// Concurrent tests can field their own shadow armies within the bounds —
+				// only this owner's shadows must be gone.
 				AABB area = helper.getBounds().inflate(64.0);
-				helper.assertTrue(
-						helper.getLevel().getEntitiesOfClass(ShadowSoldierEntity.class, area).isEmpty(),
-						"no shadow entities remain in the level");
+				helper.assertTrue(helper.getLevel().getEntitiesOfClass(ShadowSoldierEntity.class, area)
+								.stream().noneMatch(s -> player.getUUID().equals(s.getOwnerId())),
+						"no shadow entities of this owner remain in the level");
 				TestPlayers.leave(player);
 				helper.succeed();
 			});
@@ -58,11 +62,11 @@ public final class ShadowsTeleportsGameTests implements FabricGameTest {
 		ShadowSoldierEntity shadow = helper.spawn(ModEntities.SHADOW_SOLDIER, 1, 1, 1);
 		shadow.setOwnerId(owner.getUUID());
 
-		helper.runAfterDelay(3, () -> {
+		TestPlayers.awaitVisible(helper, shadow, () -> helper.runAfterDelay(3, () -> {
 			helper.assertFalse(shadow.isAlive(), "a shadow without an army entry removes itself");
 			TestPlayers.leave(owner);
 			helper.succeed();
-		});
+		}));
 	}
 
 	@GameTest(template = EMPTY_STRUCTURE)

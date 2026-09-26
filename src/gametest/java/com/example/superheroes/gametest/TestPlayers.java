@@ -56,6 +56,42 @@ final class TestPlayers {
 	}
 
 	/**
+	 * Runs {@code body} once {@code entity} is visible to {@code ServerLevel.getEntity} /
+	 * {@code getEntitiesOfClass}. Freshly spawned entities sit in a section until the chunk's
+	 * entity-tracking upgrade lands — a few ticks in the batch environment — so any step that
+	 * relies on uuid lookups or area scans must wait for visibility first. After 40 ticks it
+	 * runs anyway, so a genuinely broken case still fails loudly instead of hanging.
+	 */
+	static void awaitVisible(GameTestHelper helper, net.minecraft.world.entity.Entity entity,
+			Runnable body) {
+		awaitVisible(helper, entity, 40, body);
+	}
+
+	private static void awaitVisible(GameTestHelper helper, net.minecraft.world.entity.Entity entity,
+			int tries, Runnable body) {
+		if (tries <= 0 || helper.getLevel().getEntity(entity.getUUID()) == entity) {
+			body.run();
+			return;
+		}
+		helper.runAfterDelay(1, () -> awaitVisible(helper, entity, tries - 1, body));
+	}
+
+	/**
+	 * Live owner set of an entity's control lock. Batch tests assert on the owner set
+	 * rather than the entity flag: a concurrent test's area freeze can legitimately hold
+	 * a second reference on the same zombie, so the flag must only restore once the set
+	 * empties — asserting the ref release is deterministic, asserting the flag is not.
+	 */
+	static java.util.Set<java.util.UUID> lockOwners(net.minecraft.world.entity.Entity victim,
+			com.example.superheroes.lifecycle.ControlLockKind kind) {
+		com.example.superheroes.lifecycle.ControlLockState state =
+				victim.getAttached(com.example.superheroes.attachment.ModAttachments.CONTROL_LOCKS);
+		com.example.superheroes.lifecycle.ControlLockState.Entry entry =
+				state == null ? null : state.get(kind);
+		return entry == null ? java.util.Set.of() : entry.owners();
+	}
+
+	/**
 	 * Mock players join with a private {@code spawnInvulnerableTime=60} that makes {@code hurt()}
 	 * return false for damage not in {@code #bypasses_invulnerability}; {@code tick()} only
 	 * decrements it by 1. Clear it when a test needs real damage to land.
