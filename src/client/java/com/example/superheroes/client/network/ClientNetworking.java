@@ -6,7 +6,6 @@ import com.example.superheroes.client.ClientFlightState;
 import com.example.superheroes.client.ClientHeroState;
 import com.example.superheroes.client.ClientMadnessState;
 import com.example.superheroes.client.ClientReactorState;
-import com.example.superheroes.client.ClientRemDemonismState;
 import com.example.superheroes.client.fx.ScreenShakeManager;
 import com.example.superheroes.client.fx.WallImpactDebrisManager;
 import com.example.superheroes.client.hud.BloodRainHud;
@@ -80,35 +79,6 @@ public final class ClientNetworking {
 		ClientPlayNetworking.registerGlobalReceiver(ThanosCosmicBeamS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> CosmicBeamRenderer.add(payload.start(), payload.end())));
 
-		ClientPlayNetworking.registerGlobalReceiver(com.example.superheroes.network.MirrorDimensionS2CPayload.TYPE, (payload, context) ->
-				context.client().execute(() -> {
-					switch (payload.action()) {
-						case com.example.superheroes.network.MirrorDimensionS2CPayload.ACTION_ON ->
-								com.example.superheroes.client.ClientMirrorDimensionState.activate(payload.mode(), payload.scale());
-						case com.example.superheroes.network.MirrorDimensionS2CPayload.ACTION_OFF ->
-								com.example.superheroes.client.ClientMirrorDimensionState.deactivate(true);
-						case com.example.superheroes.network.MirrorDimensionS2CPayload.ACTION_KEEPALIVE ->
-								com.example.superheroes.client.ClientMirrorDimensionState.keepalive();
-						case com.example.superheroes.network.MirrorDimensionS2CPayload.ACTION_SWITCH ->
-								com.example.superheroes.client.ClientMirrorDimensionState.switchMode(payload.mode(), payload.scale());
-						default -> {
-						}
-					}
-				}));
-
-		ClientPlayNetworking.registerGlobalReceiver(com.example.superheroes.network.PandoraCinematicS2CPayload.TYPE, (payload, context) ->
-				context.client().execute(() -> {
-					if (payload.phase() == com.example.superheroes.network.PandoraCinematicS2CPayload.PHASE_START) {
-						com.example.superheroes.client.ClientPandoraDeathState.start(
-								payload.pandoraId(), payload.killerId(), payload.px(), payload.py(), payload.pz());
-					} else {
-						com.example.superheroes.client.ClientPandoraDeathState.end();
-					}
-				}));
-
-		ClientPlayNetworking.registerGlobalReceiver(com.example.superheroes.network.PandoraHouseStateS2CPayload.TYPE, (payload, context) ->
-				context.client().execute(() -> com.example.superheroes.client.ClientPandoraHouseState.set(payload.open())));
-
 		ClientPlayNetworking.registerGlobalReceiver(ScreenShakeS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> ScreenShakeManager.shake(payload.intensity(), payload.durationTicks())));
 
@@ -164,9 +134,6 @@ public final class ClientNetworking {
 		ClientPlayNetworking.registerGlobalReceiver(com.example.superheroes.network.NanoFormS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> com.example.superheroes.client.ClientNanoFormState.update(payload.playerId(), payload.form())));
 
-		ClientPlayNetworking.registerGlobalReceiver(com.example.superheroes.network.ThinkMarkS2CPayload.TYPE, (payload, context) ->
-				context.client().execute(() -> com.example.superheroes.client.ClientThinkMarkState.update(payload.playerId(), payload.active())));
-
 		ClientPlayNetworking.registerGlobalReceiver(com.example.superheroes.network.HordeDebugS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> com.example.superheroes.client.hud.HordeDebugOverlay.update(payload.text())));
 
@@ -178,34 +145,6 @@ public final class ClientNetworking {
 
 		ClientPlayNetworking.registerGlobalReceiver(com.example.superheroes.network.KratosRageS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> com.example.superheroes.client.ClientKratosRageState.update(payload.rage(), payload.active())));
-
-		ClientPlayNetworking.registerGlobalReceiver(com.example.superheroes.network.RemDemonismS2CPayload.TYPE, (payload, context) ->
-				context.client().execute(() -> ClientRemDemonismState.update(
-						payload.playerId(), payload.charge(), payload.active(), payload.permanent())));
-
-		ClientPlayNetworking.registerGlobalReceiver(com.example.superheroes.network.ReinhardWishOptionsS2CPayload.TYPE, (payload, context) ->
-				context.client().execute(() -> {
-					Minecraft mc = Minecraft.getInstance();
-					mc.setScreen(com.example.superheroes.client.screen.ReinhardWishScreen.of(
-							payload.damageTypeIds(), payload.adaptedDamageTypeIds(),
-							payload.wishesUsed(), payload.wishesMax()));
-				}));
-
-		ClientPlayNetworking.registerGlobalReceiver(com.example.superheroes.network.ReinhardCeremonyS2CPayload.TYPE, (payload, context) ->
-				context.client().execute(() -> com.example.superheroes.client.ClientReinhardCeremonyState.update(
-						payload.active(), payload.progress())));
-
-		ClientPlayNetworking.registerGlobalReceiver(com.example.superheroes.network.ReinhardSwordGateS2CPayload.TYPE, (payload, context) ->
-				context.client().execute(() -> com.example.superheroes.client.ClientReinhardSwordGateState.update(
-						payload.ready(), payload.progress())));
-
-		ClientPlayNetworking.registerGlobalReceiver(com.example.superheroes.network.ReinhardSwordKillS2CPayload.TYPE, (payload, context) ->
-				context.client().execute(() -> com.example.superheroes.client.ClientReinhardSwordKillState.update(payload.active())));
-		ClientPlayNetworking.registerGlobalReceiver(com.example.superheroes.network.ReinhardDarknessS2CPayload.TYPE, (payload, context) ->
-				context.client().execute(() -> com.example.superheroes.client.ClientReinhardDarknessState.activate(payload.durationTicks())));
-
-		ClientPlayNetworking.registerGlobalReceiver(com.example.superheroes.network.ReinhardTimeSlowS2CPayload.TYPE, (payload, context) ->
-				context.client().execute(() -> com.example.superheroes.client.ClientReinhardTimeSlowState.update(payload.active())));
 	}
 
 	/**
