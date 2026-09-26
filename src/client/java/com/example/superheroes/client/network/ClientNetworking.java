@@ -4,23 +4,11 @@ import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.client.ClientAbilityCooldowns;
 import com.example.superheroes.client.ClientFlightState;
 import com.example.superheroes.client.ClientHeroState;
-import com.example.superheroes.client.ClientMadnessState;
-import com.example.superheroes.client.ClientReactorState;
 import com.example.superheroes.client.fx.ScreenShakeManager;
 import com.example.superheroes.client.fx.WallImpactDebrisManager;
-import com.example.superheroes.client.hud.BloodRainHud;
-import com.example.superheroes.client.render.CosmicBeamRenderer;
-import com.example.superheroes.client.render.LaserBeamRenderer;
-import com.example.superheroes.client.render.RepulsorBeamRenderer;
 import com.example.superheroes.flight.FlightAbilityState;
 import com.example.superheroes.network.HeroDataSyncS2CPayload;
 import com.example.superheroes.network.FlightStateS2CPayload;
-import com.example.superheroes.network.LaserFiredS2CPayload;
-import com.example.superheroes.network.ThanosCosmicBeamS2CPayload;
-import com.example.superheroes.network.MadnessSyncS2CPayload;
-import com.example.superheroes.network.MadnessVisualS2CPayload;
-import com.example.superheroes.network.ReactorStateS2CPayload;
-import com.example.superheroes.network.RepulsorBlastS2CPayload;
 import com.example.superheroes.network.ResourceUpdateS2CPayload;
 import com.example.superheroes.network.ScreenShakeS2CPayload;
 import com.example.superheroes.transform.HeroData;
@@ -70,15 +58,6 @@ public final class ClientNetworking {
 						com.example.superheroes.flight.FlightPhase.byOrdinal(payload.phase()),
 						payload.horizontalSpeed())));
 
-		ClientPlayNetworking.registerGlobalReceiver(LaserFiredS2CPayload.TYPE, (payload, context) ->
-				context.client().execute(() -> LaserBeamRenderer.add(payload.start(), payload.end())));
-
-		ClientPlayNetworking.registerGlobalReceiver(RepulsorBlastS2CPayload.TYPE, (payload, context) ->
-				context.client().execute(() -> RepulsorBeamRenderer.add(payload.start(), payload.end())));
-
-		ClientPlayNetworking.registerGlobalReceiver(ThanosCosmicBeamS2CPayload.TYPE, (payload, context) ->
-				context.client().execute(() -> CosmicBeamRenderer.add(payload.start(), payload.end())));
-
 		ClientPlayNetworking.registerGlobalReceiver(ScreenShakeS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> ScreenShakeManager.shake(payload.intensity(), payload.durationTicks())));
 
@@ -87,52 +66,11 @@ public final class ClientNetworking {
 						context.client().level, payload.position(), payload.direction(),
 						payload.intensity(), payload.blockStateIds())));
 
-		ClientPlayNetworking.registerGlobalReceiver(ReactorStateS2CPayload.TYPE, (payload, context) ->
-				context.client().execute(() -> ClientReactorState.update(payload.active(), payload.progressTicks(), payload.totalTicks(), payload.hasStock())));
-
-		ClientPlayNetworking.registerGlobalReceiver(MadnessSyncS2CPayload.TYPE, (payload, context) ->
-				context.client().execute(() -> ClientMadnessState.update(
-						payload.madness(), payload.bonusLifeAvailable(),
-						payload.readingRemainingMs(), payload.manaLockRemainingMs())));
-
-		ClientPlayNetworking.registerGlobalReceiver(MadnessVisualS2CPayload.TYPE, (payload, context) ->
-				context.client().execute(() -> {
-					if (payload.event() == MadnessVisualS2CPayload.EVENT_ENTER) {
-						BloodRainHud.trigger();
-					} else if (payload.event() == MadnessVisualS2CPayload.EVENT_EXIT) {
-						BloodRainHud.clear();
-					}
-				}));
-
-		ClientPlayNetworking.registerGlobalReceiver(com.example.superheroes.network.UraniumPressureS2CPayload.TYPE, (payload, context) ->
-				context.client().execute(() -> com.example.superheroes.client.ClientUraniumPressureState.update(payload.pressuredHomelanders())));
-
-		ClientPlayNetworking.registerGlobalReceiver(com.example.superheroes.network.UraniumThreatS2CPayload.TYPE, (payload, context) ->
-				context.client().execute(() -> com.example.superheroes.client.ClientUraniumThreatState.update(payload.self(), payload.sourceCount())));
-
-		ClientPlayNetworking.registerGlobalReceiver(com.example.superheroes.network.SungShadowArmyS2CPayload.TYPE, (payload, context) ->
-				context.client().execute(() -> com.example.superheroes.client.ClientShadowArmyState.update(
-						payload.playerId(), payload.hasShadows(), payload.count(), payload.phase2())));
-
-		ClientPlayNetworking.registerGlobalReceiver(com.example.superheroes.network.DoomsdayProgressS2CPayload.TYPE, (payload, context) ->
-				context.client().execute(() -> com.example.superheroes.client.ClientDoomsdayState.update(payload.tier(), payload.adaptations())));
-
 		ClientPlayNetworking.registerGlobalReceiver(com.example.superheroes.network.AbilityCooldownS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> ClientAbilityCooldowns.update(payload.abilityId(), payload.remainingTicks())));
 
-		ClientPlayNetworking.registerGlobalReceiver(com.example.superheroes.network.JarvisDetectionS2CPayload.TYPE, (payload, context) ->
-				context.client().execute(() -> com.example.superheroes.client.hud.JarvisDetectionHud.onDetection(
-						payload.playerName(), payload.heroId(), payload.distance(),
-						payload.threatClass(), payload.jarvisQuote())));
-
-		ClientPlayNetworking.registerGlobalReceiver(com.example.superheroes.network.ThanosStonesS2CPayload.TYPE, (payload, context) ->
-				context.client().execute(() -> com.example.superheroes.client.ClientThanosState.update(payload.playerId(), payload.bitmask())));
-
 		ClientPlayNetworking.registerGlobalReceiver(com.example.superheroes.network.SuitVariantS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> com.example.superheroes.client.ClientSuitVariantState.update(payload.playerId(), payload.variant())));
-
-		ClientPlayNetworking.registerGlobalReceiver(com.example.superheroes.network.NanoFormS2CPayload.TYPE, (payload, context) ->
-				context.client().execute(() -> com.example.superheroes.client.ClientNanoFormState.update(payload.playerId(), payload.form())));
 
 		ClientPlayNetworking.registerGlobalReceiver(com.example.superheroes.network.HordeDebugS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> com.example.superheroes.client.hud.HordeDebugOverlay.update(payload.text())));
@@ -142,9 +80,6 @@ public final class ClientNetworking {
 					com.example.superheroes.item.AdminBuildVisibility.setClientVisible(payload.enabled());
 					superheroes$rebuildSuperheroesTab(context.client());
 				}));
-
-		ClientPlayNetworking.registerGlobalReceiver(com.example.superheroes.network.KratosRageS2CPayload.TYPE, (payload, context) ->
-				context.client().execute(() -> com.example.superheroes.client.ClientKratosRageState.update(payload.rage(), payload.active())));
 	}
 
 	/**
