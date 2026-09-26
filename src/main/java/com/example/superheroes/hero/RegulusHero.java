@@ -92,10 +92,12 @@ public final class RegulusHero implements Hero {
 
 	@Override
 	public AbilityAvailability.Visibility visibility(ServerPlayer player, ResourceLocation abilityId) {
-		// COUNTER_STRIKE shows only during madness — the old client filter's one rule
-		// not keyed on the active hero, moved to its hero now that the server decides.
-		return !AbilityIds.COUNTER_STRIKE.equals(abilityId)
-				|| com.example.superheroes.effect.ModEffects.isMadness(player)
+		// COUNTER_STRIKE shows only during Regulus madness — the old client filter's one
+		// rule not keyed on the active hero, moved to its hero now that the server decides.
+		// Same flag CounterStrikeAbility.canActivate reads (NOT the Homelander MobEffect).
+		boolean madness = player.getAttachedOrCreate(
+				com.example.superheroes.attachment.ModAttachments.REGULUS_MADNESS).madness();
+		return !AbilityIds.COUNTER_STRIKE.equals(abilityId) || madness
 				? AbilityAvailability.Visibility.AVAILABLE
 				: AbilityAvailability.Visibility.HIDDEN;
 	}
