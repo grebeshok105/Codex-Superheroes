@@ -1,6 +1,6 @@
 package io.github.grebeshok105.codex.gametest;
 
-import io.github.grebeshok105.codex.transform.TransformationItem;
+import io.github.grebeshok105.codex.core.transform.TransformationItem;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.registries.BuiltInRegistries;

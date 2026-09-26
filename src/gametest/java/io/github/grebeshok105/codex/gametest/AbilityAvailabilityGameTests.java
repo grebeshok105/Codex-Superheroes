@@ -5,15 +5,16 @@ import io.github.grebeshok105.codex.ability.AbilityAvailabilitySync;
 import io.github.grebeshok105.codex.attachment.ModAttachments;
 import io.github.grebeshok105.codex.core.ability.AbilityAvailability;
 import io.github.grebeshok105.codex.core.ability.AbilityAvailability.Visibility;
+import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.effect.DoomsdayProgress;
 import io.github.grebeshok105.codex.effect.ModEffects;
 import io.github.grebeshok105.codex.effect.RegulusMadnessState;
 import io.github.grebeshok105.codex.hero.DoomsdayHero;
-import io.github.grebeshok105.codex.hero.Heroes;
+import io.github.grebeshok105.codex.core.hero.Heroes;
 import io.github.grebeshok105.codex.hero.NarutoHero;
 import io.github.grebeshok105.codex.hero.RegulusHero;
 import io.github.grebeshok105.codex.hero.RemHero;
-import io.github.grebeshok105.codex.transform.HeroTransformService;
+import io.github.grebeshok105.codex.core.transform.HeroTransformService;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -29,7 +30,7 @@ public class AbilityAvailabilityGameTests implements FabricGameTest {
 
 	private static void tickSync(ServerPlayer player) {
 		AbilityAvailabilitySync.tickPlayer(player.level().getServer(), player,
-				player.getAttachedOrCreate(ModAttachments.HERO_DATA));
+				player.getAttachedOrCreate(CoreAttachments.HERO_DATA));
 	}
 
 	@GameTest(template = EMPTY_STRUCTURE)
@@ -38,7 +39,7 @@ public class AbilityAvailabilityGameTests implements FabricGameTest {
 		TestHeroes.transform(player, DoomsdayHero.ID);
 
 		tickSync(player);
-		AbilityAvailability availability = player.getAttached(ModAttachments.ABILITY_AVAILABILITY);
+		AbilityAvailability availability = player.getAttached(CoreAttachments.ABILITY_AVAILABILITY);
 		helper.assertTrue(availability != null, "the sync task wrote the attachment");
 		helper.assertValueEqual(availability.visibilityOf(AbilityIds.DOOMSDAY_DOOM_GRIP),
 				Visibility.HIDDEN, "doom grip at tier 1");
@@ -59,7 +60,7 @@ public class AbilityAvailabilityGameTests implements FabricGameTest {
 		player.setAttached(ModAttachments.DOOMSDAY_PROGRESS, DoomsdayProgress.EMPTY.withTier(7));
 
 		tickSync(player);
-		AbilityAvailability availability = player.getAttached(ModAttachments.ABILITY_AVAILABILITY);
+		AbilityAvailability availability = player.getAttached(CoreAttachments.ABILITY_AVAILABILITY);
 		helper.assertTrue(availability == null || availability.entries().isEmpty(),
 				"tier 7 unlocks everything — attachment stays absent or empty, got " + availability);
 
@@ -74,16 +75,16 @@ public class AbilityAvailabilityGameTests implements FabricGameTest {
 		TestHeroes.transform(player, DoomsdayHero.ID);
 
 		tickSync(player);
-		AbilityAvailability first = player.getAttached(ModAttachments.ABILITY_AVAILABILITY);
+		AbilityAvailability first = player.getAttached(CoreAttachments.ABILITY_AVAILABILITY);
 		helper.assertTrue(first != null, "first tick writes");
 
 		tickSync(player);
-		helper.assertTrue(player.getAttached(ModAttachments.ABILITY_AVAILABILITY) == first,
+		helper.assertTrue(player.getAttached(CoreAttachments.ABILITY_AVAILABILITY) == first,
 				"an unchanged answer is not rewritten (same instance)");
 
 		player.setAttached(ModAttachments.DOOMSDAY_PROGRESS, DoomsdayProgress.EMPTY.withTier(7));
 		tickSync(player);
-		helper.assertTrue(player.getAttached(ModAttachments.ABILITY_AVAILABILITY) != first,
+		helper.assertTrue(player.getAttached(CoreAttachments.ABILITY_AVAILABILITY) != first,
 				"a tier change writes a new value");
 
 		helper.assertTrue(HeroTransformService.forceUntransform(player), "untransform");
@@ -97,7 +98,7 @@ public class AbilityAvailabilityGameTests implements FabricGameTest {
 		TestHeroes.transform(player, RemHero.ID);
 
 		tickSync(player);
-		AbilityAvailability availability = player.getAttached(ModAttachments.ABILITY_AVAILABILITY);
+		AbilityAvailability availability = player.getAttached(CoreAttachments.ABILITY_AVAILABILITY);
 		helper.assertTrue(availability != null, "the sync task wrote the attachment");
 		helper.assertValueEqual(availability.visibilityOf(AbilityIds.REM_MORNING_STAR),
 				Visibility.HIDDEN, "demon-only ability without demonism");
@@ -115,7 +116,7 @@ public class AbilityAvailabilityGameTests implements FabricGameTest {
 		TestHeroes.transform(player, RegulusHero.ID);
 
 		tickSync(player);
-		AbilityAvailability sane = player.getAttached(ModAttachments.ABILITY_AVAILABILITY);
+		AbilityAvailability sane = player.getAttached(CoreAttachments.ABILITY_AVAILABILITY);
 		helper.assertTrue(sane != null, "the sync task wrote the attachment");
 		helper.assertValueEqual(sane.visibilityOf(AbilityIds.COUNTER_STRIKE),
 				Visibility.HIDDEN, "counter strike hidden while sane");
@@ -124,14 +125,14 @@ public class AbilityAvailabilityGameTests implements FabricGameTest {
 				.withMadness(true);
 		player.setAttached(ModAttachments.REGULUS_MADNESS, madness);
 		tickSync(player);
-		AbilityAvailability mad = player.getAttached(ModAttachments.ABILITY_AVAILABILITY);
+		AbilityAvailability mad = player.getAttached(CoreAttachments.ABILITY_AVAILABILITY);
 		helper.assertTrue(mad == null
 				|| mad.visibilityOf(AbilityIds.COUNTER_STRIKE) == Visibility.AVAILABLE,
 				"counter strike shows once the madness flag is set");
 
 		player.setAttached(ModAttachments.REGULUS_MADNESS, madness.withMadness(false));
 		tickSync(player);
-		AbilityAvailability cleared = player.getAttached(ModAttachments.ABILITY_AVAILABILITY);
+		AbilityAvailability cleared = player.getAttached(CoreAttachments.ABILITY_AVAILABILITY);
 		helper.assertTrue(cleared != null
 				&& cleared.visibilityOf(AbilityIds.COUNTER_STRIKE) == Visibility.HIDDEN,
 				"counter strike hides again when madness ends");
@@ -148,7 +149,7 @@ public class AbilityAvailabilityGameTests implements FabricGameTest {
 		player.addEffect(new MobEffectInstance(ModEffects.VANITY_STRIPPED, 200));
 
 		tickSync(player);
-		AbilityAvailability availability = player.getAttached(ModAttachments.ABILITY_AVAILABILITY);
+		AbilityAvailability availability = player.getAttached(CoreAttachments.ABILITY_AVAILABILITY);
 		helper.assertTrue(availability != null, "the sync task wrote the attachment");
 		var abilities = Heroes.get(NarutoHero.ID).getAbilities();
 		helper.assertTrue(availability.entries().size() == abilities.size(),
@@ -166,7 +167,7 @@ public class AbilityAvailabilityGameTests implements FabricGameTest {
 		ServerPlayer player = TestPlayers.join(helper);
 
 		tickSync(player);
-		helper.assertTrue(player.getAttached(ModAttachments.ABILITY_AVAILABILITY) == null,
+		helper.assertTrue(player.getAttached(CoreAttachments.ABILITY_AVAILABILITY) == null,
 				"no hero — nothing is ever written");
 
 		TestPlayers.leave(player);

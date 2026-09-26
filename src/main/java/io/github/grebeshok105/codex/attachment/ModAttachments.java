@@ -1,48 +1,16 @@
 package io.github.grebeshok105.codex.attachment;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.core.ability.AbilityAvailability;
 import io.github.grebeshok105.codex.effect.DoomsdayProgress;
 import io.github.grebeshok105.codex.effect.RaidenState;
 import io.github.grebeshok105.codex.effect.RegulusMadnessState;
 import io.github.grebeshok105.codex.effect.ReinhardState;
-import io.github.grebeshok105.codex.item.bound.BoundWeaponIssues;
-import io.github.grebeshok105.codex.lifecycle.ControlLockShadow;
-import io.github.grebeshok105.codex.lifecycle.ControlLockState;
-import io.github.grebeshok105.codex.lifecycle.HeldLocks;
-import io.github.grebeshok105.codex.transform.HeroData;
+import io.github.grebeshok105.codex.mechanic.boundweapon.BoundWeaponIssues;
 import com.mojang.serialization.Codec;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentRegistry;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
-import net.minecraft.resources.ResourceLocation;
-
-import java.util.Map;
 
 public final class ModAttachments {
-	public static final AttachmentType<HeroData> HERO_DATA = AttachmentRegistry.create(ModId.of("hero_data"), b -> b
-			.initializer(() -> HeroData.EMPTY)
-			.persistent(HeroData.CODEC)
-			.copyOnDeath());
-
-	/**
-	 * The public hero id, synced to the owner and every tracking player (audit B14).
-	 * Written only by {@link io.github.grebeshok105.codex.transform.HeroDataStore}; {@code null}
-	 * means "no hero". Mirrors {@code HERO_DATA.heroId} — energy/mana stay private.
-	 */
-	public static final AttachmentType<ResourceLocation> PUBLIC_HERO = AttachmentRegistry.create(ModId.of("public_hero"), b -> b
-			.persistent(ResourceLocation.CODEC)
-			.copyOnDeath()
-			.syncWith(ResourceLocation.STREAM_CODEC, net.fabricmc.fabric.api.attachment.v1.AttachmentSyncPredicate.all()));
-
-	/**
-	 * Server-computed ability visibility for the owning player's HUD (stage C4 — replaces
-	 * the deleted client-side filter). Synced to the owner only; absent means "all
-	 * {@link io.github.grebeshok105.codex.core.ability.AbilityAvailability.Visibility#AVAILABLE}".
-	 * Written only by {@link io.github.grebeshok105.codex.ability.AbilityAvailabilitySync}.
-	 */
-	public static final AttachmentType<AbilityAvailability> ABILITY_AVAILABILITY = AttachmentRegistry.create(ModId.of("ability_availability"), b -> b
-			.syncWith(AbilityAvailability.STREAM_CODEC, net.fabricmc.fabric.api.attachment.v1.AttachmentSyncPredicate.targetOnly()));
-
 	public static final AttachmentType<RegulusMadnessState> REGULUS_MADNESS = AttachmentRegistry.create(ModId.of("regulus_madness"), b -> b
 			.initializer(() -> RegulusMadnessState.EMPTY));
 
@@ -82,36 +50,9 @@ public final class ModAttachments {
 			.persistent(Codec.INT)
 			.copyOnDeath());
 
-	/** Set when energy/mana changed this tick and the client still needs the update. */
-	public static final AttachmentType<Boolean> HERO_DATA_RESOURCES_DIRTY =
-			AttachmentRegistry.create(ModId.of("hero_data_resources_dirty"));
-
 	/** Current issue of each bound weapon; not persistent, so a relog or restart invalidates every old copy. */
 	public static final AttachmentType<BoundWeaponIssues> BOUND_WEAPON_ISSUES =
 			AttachmentRegistry.create(ModId.of("bound_weapon_issues"));
-
-	/** Live {@link io.github.grebeshok105.codex.lifecycle.EntityControlLock} state on a victim entity; not persistent. */
-	public static final AttachmentType<ControlLockState> CONTROL_LOCKS =
-			AttachmentRegistry.create(ModId.of("control_locks"));
-
-	/** Reverse index on the owning player of the entity locks they hold; not persistent. */
-	public static final AttachmentType<HeldLocks> HELD_LOCKS =
-			AttachmentRegistry.create(ModId.of("held_locks"));
-
-	/** Persistent record of pre-lock flag values so a reload can restore them; see {@link io.github.grebeshok105.codex.lifecycle.EntityControlLock#reconcile}. */
-	public static final AttachmentType<ControlLockShadow> CONTROL_LOCK_SHADOW = AttachmentRegistry.create(ModId.of("control_lock_shadow"), b -> b
-			.persistent(ControlLockShadow.CODEC));
-
-	/** Tick of the last hero transform/untransform; not persistent so a new world starts with no cooldown. */
-	public static final AttachmentType<Long> TRANSFORM_TICK =
-			AttachmentRegistry.create(ModId.of("transform_tick"));
-
-	/**
-	 * Ability cooldown deadlines by level game time. Persistent so a hero swap or relog cannot
-	 * reset cooldowns (audit B5); intentionally NOT copyOnDeath — death resets cooldowns.
-	 */
-	public static final AttachmentType<Map<ResourceLocation, Long>> ABILITY_COOLDOWNS = AttachmentRegistry.create(ModId.of("ability_cooldowns"), b -> b
-			.persistent(Codec.unboundedMap(ResourceLocation.CODEC, Codec.LONG)));
 
 	/** Sung Jin-Woo's shadow army: entity UUIDs + summon/phase flags; persistent so a restart re-links shadows (audit B18). */
 	public static final AttachmentType<SungShadowArmy> SUNG_SHADOW_ARMY = AttachmentRegistry.create(ModId.of("sung_shadow_army"), b -> b

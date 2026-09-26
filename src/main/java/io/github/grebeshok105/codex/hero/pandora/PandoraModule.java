@@ -13,7 +13,7 @@ import io.github.grebeshok105.codex.effect.MirrorDimensionController;
 import io.github.grebeshok105.codex.effect.ModEffects;
 import io.github.grebeshok105.codex.effect.PandoraDeathController;
 import io.github.grebeshok105.codex.effect.SpatialBindController;
-import io.github.grebeshok105.codex.hero.Hero;
+import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.hero.PandoraHero;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;

@@ -1,16 +1,17 @@
 package io.github.grebeshok105.codex.ability;
 
-import io.github.grebeshok105.codex.attachment.ModAttachments;
 import io.github.grebeshok105.codex.combat.TargetFilters;
+import io.github.grebeshok105.codex.core.ability.Ability;
+import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.damage.ModDamageTypes;
 import io.github.grebeshok105.codex.effect.ModEffects;
 import io.github.grebeshok105.codex.effect.UraniumDefenseController;
-import io.github.grebeshok105.codex.hero.Hero;
-import io.github.grebeshok105.codex.hero.Heroes;
+import io.github.grebeshok105.codex.core.hero.Hero;
+import io.github.grebeshok105.codex.core.hero.Heroes;
 import io.github.grebeshok105.codex.network.ModNetworking;
 import io.github.grebeshok105.codex.particle.ModParticles;
-import io.github.grebeshok105.codex.transform.HeroData;
-import io.github.grebeshok105.codex.world.WorldDestructionPolicy;
+import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.mechanic.world.WorldDestructionPolicy;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 
@@ -200,7 +201,7 @@ public final class EyeLasersAbility implements Ability {
 	}
 
 	private static float damagePerTick(ServerPlayer player) {
-		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
+		HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
 		float frac = 0f;
 		if (data.hasHero()) {
 			Hero hero = Heroes.get(data.heroId());

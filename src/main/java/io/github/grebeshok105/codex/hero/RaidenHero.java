@@ -2,7 +2,12 @@ package io.github.grebeshok105.codex.hero;
 
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.ability.AbilityIds;
-import io.github.grebeshok105.codex.resource.ResourceKind;
+import io.github.grebeshok105.codex.core.hero.AttributeModifierSet;
+import io.github.grebeshok105.codex.core.hero.Hero;
+import io.github.grebeshok105.codex.core.hero.HeroHudConfig;
+import io.github.grebeshok105.codex.core.hero.HeroTheme;
+import io.github.grebeshok105.codex.core.hero.ImpactStyle;
+import io.github.grebeshok105.codex.core.resource.ResourceKind;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.Pose;
@@ -133,8 +138,8 @@ public final class RaidenHero implements Hero {
 		return HUD;
 	}
 	@Override
-	public io.github.grebeshok105.codex.physics.ImpactStyle getImpactStyle() {
-		return io.github.grebeshok105.codex.physics.ImpactStyle.WEAPON;
+	public io.github.grebeshok105.codex.core.hero.ImpactStyle getImpactStyle() {
+		return io.github.grebeshok105.codex.core.hero.ImpactStyle.WEAPON;
 	}
 	@Override
 	public double getImpactPower() {

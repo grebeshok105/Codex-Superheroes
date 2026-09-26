@@ -1,13 +1,14 @@
 package io.github.grebeshok105.codex.ability;
 
-import io.github.grebeshok105.codex.transform.HeroDataStore;
-import io.github.grebeshok105.codex.attachment.ModAttachments;
+import io.github.grebeshok105.codex.core.ability.Ability;
+import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
+import io.github.grebeshok105.codex.core.transform.HeroDataStore;
 import io.github.grebeshok105.codex.effect.IronFistsController;
-import io.github.grebeshok105.codex.hero.Hero;
-import io.github.grebeshok105.codex.hero.Heroes;
-import io.github.grebeshok105.codex.resource.EnergyLocks;
+import io.github.grebeshok105.codex.core.hero.Hero;
+import io.github.grebeshok105.codex.core.hero.Heroes;
+import io.github.grebeshok105.codex.core.resource.EnergyLocks;
 import io.github.grebeshok105.codex.sound.ModSounds;
-import io.github.grebeshok105.codex.transform.HeroData;
+import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -42,7 +43,7 @@ public final class IronFistsAbility implements Ability {
 
 	@Override
 	public boolean canActivate(ServerPlayer player) {
-		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
+		HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
 		if (!data.hasHero()) return false;
 		Hero hero = Heroes.get(data.heroId());
 		if (hero == null) return false;

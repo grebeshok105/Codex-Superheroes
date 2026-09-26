@@ -1,10 +1,10 @@
 package io.github.grebeshok105.codex.effect;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.attachment.ModAttachments;
+import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.hero.OmnimanHero;
-import io.github.grebeshok105.codex.transform.HeroData;
+import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -125,7 +125,7 @@ public final class OmnimanMomentumController {
 	}
 
 	private static boolean isOmniman(ServerPlayer player) {
-		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
+		HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
 		return data.hasHero() && OmnimanHero.ID.equals(data.heroId());
 	}
 

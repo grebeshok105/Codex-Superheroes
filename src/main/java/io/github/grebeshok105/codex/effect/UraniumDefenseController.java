@@ -1,11 +1,11 @@
 package io.github.grebeshok105.codex.effect;
 
-import io.github.grebeshok105.codex.attachment.ModAttachments;
+import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.hero.HomelanderHero;
 import io.github.grebeshok105.codex.item.UraniumDaggerItem;
 import io.github.grebeshok105.codex.network.UraniumPressureS2CPayload;
 import io.github.grebeshok105.codex.network.UraniumThreatS2CPayload;
-import io.github.grebeshok105.codex.transform.HeroData;
+import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -40,7 +40,7 @@ public final class UraniumDefenseController {
 	}
 
 	public static boolean isHomelander(Player player) {
-		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
+		HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
 		return data.hasHero() && HomelanderHero.ID.equals(data.heroId());
 	}
 

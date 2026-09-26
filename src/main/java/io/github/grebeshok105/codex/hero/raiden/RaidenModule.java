@@ -13,7 +13,7 @@ import io.github.grebeshok105.codex.effect.RaidenBurstController;
 import io.github.grebeshok105.codex.effect.RaidenLifecycleController;
 import io.github.grebeshok105.codex.effect.RaidenMusouIsshinController;
 import io.github.grebeshok105.codex.effect.RaidenPlungingLandingController;
-import io.github.grebeshok105.codex.hero.Hero;
+import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.hero.RaidenHero;
 
 public final class RaidenModule implements HeroModule {

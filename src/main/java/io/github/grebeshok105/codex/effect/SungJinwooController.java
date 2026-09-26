@@ -2,12 +2,13 @@ package io.github.grebeshok105.codex.effect;
 
 import io.github.grebeshok105.codex.attachment.ModAttachments;
 import io.github.grebeshok105.codex.attachment.SungShadowArmy;
+import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.entity.ModEntities;
 import io.github.grebeshok105.codex.entity.ShadowSoldierEntity;
 import io.github.grebeshok105.codex.hero.SungJinwooHero;
 import io.github.grebeshok105.codex.network.SungShadowArmyS2CPayload;
-import io.github.grebeshok105.codex.transform.HeroData;
+import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.particles.ParticleTypes;
@@ -101,7 +102,7 @@ public final class SungJinwooController {
 	}
 
 	public static boolean isSung(ServerPlayer player) {
-		HeroData data = player.getAttached(ModAttachments.HERO_DATA);
+		HeroData data = player.getAttached(CoreAttachments.HERO_DATA);
 		return data != null && SungJinwooHero.ID.equals(data.heroId());
 	}
 

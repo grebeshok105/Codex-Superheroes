@@ -1,17 +1,17 @@
 package io.github.grebeshok105.codex.effect;
 
-import io.github.grebeshok105.codex.attachment.ModAttachments;
+import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.hero.AbilityScopedModifiers;
 import io.github.grebeshok105.codex.hero.ThanosHero;
 import io.github.grebeshok105.codex.item.InfinityGauntletItem;
 import io.github.grebeshok105.codex.item.infinity.InfinityGauntletData;
 import io.github.grebeshok105.codex.item.infinity.InfinityStoneType;
-import io.github.grebeshok105.codex.lifecycle.LifecycleRegistrar;
-import io.github.grebeshok105.codex.lifecycle.OwnedSessionMap;
-import io.github.grebeshok105.codex.lifecycle.OwnedSessionMap.ClearOn;
+import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
 import io.github.grebeshok105.codex.network.ThanosStonesS2CPayload;
-import io.github.grebeshok105.codex.transform.HeroData;
+import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.server.level.ServerPlayer;
@@ -77,7 +77,7 @@ public final class ThanosGauntletStateController {
 	}
 
 	public static EnumSet<InfinityStoneType> getCurrentStones(ServerPlayer player) {
-		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
+		HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
 		if (!ThanosHero.ID.equals(data.heroId())) {
 			return EnumSet.noneOf(InfinityStoneType.class);
 		}

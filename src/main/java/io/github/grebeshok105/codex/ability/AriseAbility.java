@@ -1,5 +1,7 @@
 package io.github.grebeshok105.codex.ability;
 
+import io.github.grebeshok105.codex.core.ability.Ability;
+import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import io.github.grebeshok105.codex.effect.SungJinwooController;
 import io.github.grebeshok105.codex.entity.ShadowSoldierEntity;
 import net.minecraft.core.particles.ParticleTypes;

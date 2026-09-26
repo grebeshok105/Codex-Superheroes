@@ -1,15 +1,15 @@
 package io.github.grebeshok105.codex.effect;
 
 import io.github.grebeshok105.codex.ability.AbilityIds;
-import io.github.grebeshok105.codex.ability.AbilityRouter;
+import io.github.grebeshok105.codex.core.ability.AbilityRouter;
 import io.github.grebeshok105.codex.ability.IronFistsAbility;
-import io.github.grebeshok105.codex.attachment.ModAttachments;
+import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.entity.HomelanderBossEntity;
-import io.github.grebeshok105.codex.network.ScreenShakeS2CPayload;
+import io.github.grebeshok105.codex.core.net.ScreenShakeS2CPayload;
 import io.github.grebeshok105.codex.physics.ShockwaveUtil;
 import io.github.grebeshok105.codex.sound.ModSounds;
-import io.github.grebeshok105.codex.transform.HeroData;
+import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.particles.ParticleTypes;
@@ -65,7 +65,7 @@ public final class IronFistsController {
 			if (world.isClientSide() || !(player instanceof ServerPlayer sp)) {
 				return InteractionResult.PASS;
 			}
-			HeroData data = sp.getAttachedOrCreate(ModAttachments.HERO_DATA);
+			HeroData data = sp.getAttachedOrCreate(CoreAttachments.HERO_DATA);
 			if (!data.isActive(AbilityIds.IRON_FISTS)) {
 				return InteractionResult.PASS;
 			}

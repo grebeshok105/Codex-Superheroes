@@ -1,10 +1,10 @@
 package io.github.grebeshok105.codex.mixin;
 
-import io.github.grebeshok105.codex.attachment.ModAttachments;
+import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.hero.DoomsdayHero;
 import io.github.grebeshok105.codex.item.KryptoniteShardItem;
 import io.github.grebeshok105.codex.item.ModItems;
-import io.github.grebeshok105.codex.transform.HeroData;
+import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -23,7 +23,7 @@ public abstract class KryptoniteShardPickupMixin {
 		ItemStack stack = self.getItem();
 		if (stack.isEmpty() || !stack.is(ModItems.KRYPTONITE_SHARD)) return;
 
-		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
+		HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
 		if (data.hasHero() && DoomsdayHero.ID.equals(data.heroId())) {
 			ci.cancel();
 			return;

@@ -1,11 +1,11 @@
 package io.github.grebeshok105.codex.effect;
 
-import io.github.grebeshok105.codex.transform.HeroDataStore;
-import io.github.grebeshok105.codex.attachment.ModAttachments;
+import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
+import io.github.grebeshok105.codex.core.transform.HeroDataStore;
 import io.github.grebeshok105.codex.hero.IronManHero;
 import io.github.grebeshok105.codex.item.ModItems;
 import io.github.grebeshok105.codex.network.ReactorStateS2CPayload;
-import io.github.grebeshok105.codex.transform.HeroData;
+import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
@@ -46,7 +46,7 @@ public final class IronManReactorTracker {
 	}
 
 	public static void tick(ServerPlayer player) {
-		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
+		HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
 		UUID id = player.getUUID();
 		if (!data.hasHero() || !IronManHero.ID.equals(data.heroId()) || !player.isAlive()) {
 			if (states.remove(id) != null) {

@@ -7,7 +7,7 @@ import io.github.grebeshok105.codex.ability.ATrainSonicBoomAbility;
 import io.github.grebeshok105.codex.core.module.HeroModule;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.hero.ATrainHero;
-import io.github.grebeshok105.codex.hero.Hero;
+import io.github.grebeshok105.codex.core.hero.Hero;
 
 public final class ATrainModule implements HeroModule {
 	private final ATrainHero hero = new ATrainHero();

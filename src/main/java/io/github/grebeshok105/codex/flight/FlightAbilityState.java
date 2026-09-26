@@ -1,7 +1,7 @@
 package io.github.grebeshok105.codex.flight;
 
 import io.github.grebeshok105.codex.ability.AbilityIds;
-import io.github.grebeshok105.codex.transform.HeroData;
+import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.minecraft.resources.ResourceLocation;
 
 public final class FlightAbilityState {

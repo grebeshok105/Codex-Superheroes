@@ -2,7 +2,7 @@ package io.github.grebeshok105.codex.bootstrap;
 
 import io.github.grebeshok105.codex.core.module.HeroModule;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
-import io.github.grebeshok105.codex.hero.Heroes;
+import io.github.grebeshok105.codex.core.hero.Heroes;
 
 import java.util.List;
 

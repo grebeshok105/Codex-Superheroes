@@ -1,8 +1,8 @@
 package io.github.grebeshok105.codex.client.hud;
 
-import io.github.grebeshok105.codex.hero.Hero;
-import io.github.grebeshok105.codex.hero.HeroHudConfig;
-import io.github.grebeshok105.codex.hero.PassiveGlyph;
+import io.github.grebeshok105.codex.core.hero.Hero;
+import io.github.grebeshok105.codex.core.hero.HeroHudConfig;
+import io.github.grebeshok105.codex.core.hero.PassiveGlyph;
 import net.minecraft.client.gui.GuiGraphics;
 
 import java.util.List;

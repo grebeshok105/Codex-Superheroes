@@ -7,11 +7,13 @@ import io.github.grebeshok105.codex.client.core.hud.HudBounds;
 import io.github.grebeshok105.codex.client.core.hud.MovableHud;
 import io.github.grebeshok105.codex.client.render.WildRenderer;
 import io.github.grebeshok105.codex.client.render.WildShaders;
-import io.github.grebeshok105.codex.hero.Hero;
-import io.github.grebeshok105.codex.hero.HeroHudConfig;
-import io.github.grebeshok105.codex.hero.HeroTheme;
-import io.github.grebeshok105.codex.hero.Heroes;
-import io.github.grebeshok105.codex.hero.PassiveGlyph;
+import io.github.grebeshok105.codex.core.ability.Ability;
+import io.github.grebeshok105.codex.core.hero.Hero;
+import io.github.grebeshok105.codex.core.hero.HeroHudConfig;
+import io.github.grebeshok105.codex.core.hero.HeroTheme;
+import io.github.grebeshok105.codex.core.hero.Heroes;
+import io.github.grebeshok105.codex.core.hero.JarvisThreatClass;
+import io.github.grebeshok105.codex.core.hero.PassiveGlyph;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
@@ -500,7 +502,7 @@ public final class HeroInfoPanelHud implements MovableHud {
 		return applyAlpha(argb, 235, 1f);
 	}
 
-	private static int threatColor(io.github.grebeshok105.codex.hero.JarvisThreatClass threat) {
+	private static int threatColor(io.github.grebeshok105.codex.core.hero.JarvisThreatClass threat) {
 		return switch (threat) {
 			case S -> 0xFFFF4A4A;
 			case A -> 0xFFFF7E4A;

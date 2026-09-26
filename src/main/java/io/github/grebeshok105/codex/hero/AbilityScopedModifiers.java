@@ -1,6 +1,8 @@
 package io.github.grebeshok105.codex.hero;
 
 import io.github.grebeshok105.codex.ModId;
+import io.github.grebeshok105.codex.core.hero.AttributeModifierSet;
+import io.github.grebeshok105.codex.core.hero.Hero;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;

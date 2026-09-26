@@ -1,6 +1,6 @@
 package io.github.grebeshok105.codex.datagen;
 
-import io.github.grebeshok105.codex.world.WorldDestructionPolicy;
+import io.github.grebeshok105.codex.mechanic.world.WorldDestructionPolicy;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricTagProvider;
 import net.minecraft.core.HolderLookup;

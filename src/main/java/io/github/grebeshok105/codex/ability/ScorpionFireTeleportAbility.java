@@ -1,6 +1,8 @@
 package io.github.grebeshok105.codex.ability;
 
 import io.github.grebeshok105.codex.combat.TargetFilters;
+import io.github.grebeshok105.codex.core.ability.Ability;
+import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import io.github.grebeshok105.codex.effect.ScorpionFx;
 import io.github.grebeshok105.codex.util.SafeTeleport;
 import net.minecraft.core.particles.ParticleTypes;

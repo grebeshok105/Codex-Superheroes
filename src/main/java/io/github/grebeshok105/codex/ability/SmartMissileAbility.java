@@ -1,6 +1,8 @@
 package io.github.grebeshok105.codex.ability;
 
 import io.github.grebeshok105.codex.combat.TargetFilters;
+import io.github.grebeshok105.codex.core.ability.Ability;
+import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import io.github.grebeshok105.codex.entity.SmartMissileEntity;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;

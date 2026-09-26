@@ -7,7 +7,7 @@ import io.github.grebeshok105.codex.ability.ScorpionSpearAbility;
 import io.github.grebeshok105.codex.core.module.HeroModule;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.effect.ScorpionController;
-import io.github.grebeshok105.codex.hero.Hero;
+import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.hero.ScorpionHero;
 
 public final class ScorpionModule implements HeroModule {

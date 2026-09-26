@@ -1,5 +1,6 @@
 package io.github.grebeshok105.codex.ability;
 
+import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.effect.GokuKiStackController;
 import io.github.grebeshok105.codex.particle.ModParticles;
 import net.minecraft.core.particles.ParticleTypes;

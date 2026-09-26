@@ -1,16 +1,17 @@
 package io.github.grebeshok105.codex.effect;
 
 import io.github.grebeshok105.codex.attachment.ModAttachments;
+import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.hero.PandoraHero;
-import io.github.grebeshok105.codex.lifecycle.ControlLockKind;
-import io.github.grebeshok105.codex.lifecycle.EntityControlLock;
-import io.github.grebeshok105.codex.lifecycle.LifecycleRegistrar;
-import io.github.grebeshok105.codex.lifecycle.OwnedSessionMap;
-import io.github.grebeshok105.codex.lifecycle.OwnedSessionMap.ClearOn;
+import io.github.grebeshok105.codex.core.lifecycle.ControlLockKind;
+import io.github.grebeshok105.codex.core.lifecycle.EntityControlLock;
+import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
 import io.github.grebeshok105.codex.network.PandoraCinematicS2CPayload;
 import io.github.grebeshok105.codex.sound.ModSounds;
-import io.github.grebeshok105.codex.transform.HeroData;
+import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.server.MinecraftServer;
@@ -100,7 +101,7 @@ public final class PandoraDeathController {
 		if (!(entity instanceof ServerPlayer player)) {
 			return false;
 		}
-		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
+		HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
 		return data.hasHero() && PandoraHero.ID.equals(data.heroId());
 	}
 

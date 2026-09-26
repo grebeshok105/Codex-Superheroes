@@ -1,6 +1,7 @@
 package io.github.grebeshok105.codex.client;
 
 import io.github.grebeshok105.codex.ability.ironman.IronManSuitVariant;
+import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.hero.IronManHero;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
@@ -127,7 +128,7 @@ public final class ClientNanoSuitUpState {
 		if (mc.player != null && player.getUUID().equals(mc.player.getUUID())) {
 			heroId = ClientHeroState.data().hasHero() ? ClientHeroState.data().heroId() : null;
 		} else {
-			heroId = player.getAttached(io.github.grebeshok105.codex.attachment.ModAttachments.PUBLIC_HERO);
+			heroId = player.getAttached(io.github.grebeshok105.codex.attachment.CoreAttachments.PUBLIC_HERO);
 		}
 		if (!IronManHero.ID.equals(heroId)) {
 			return null;

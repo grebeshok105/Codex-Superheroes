@@ -1,8 +1,10 @@
 package io.github.grebeshok105.codex.ability;
 
 import io.github.grebeshok105.codex.combat.TargetFilters;
-import io.github.grebeshok105.codex.lifecycle.ControlLockKind;
-import io.github.grebeshok105.codex.lifecycle.EntityControlLock;
+import io.github.grebeshok105.codex.core.ability.Ability;
+import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
+import io.github.grebeshok105.codex.core.lifecycle.ControlLockKind;
+import io.github.grebeshok105.codex.core.lifecycle.EntityControlLock;
 import io.github.grebeshok105.codex.network.ThinkMarkS2CPayload;
 import io.github.grebeshok105.codex.physics.RushTerrainBreaker;
 import io.github.grebeshok105.codex.physics.ShockwaveUtil;

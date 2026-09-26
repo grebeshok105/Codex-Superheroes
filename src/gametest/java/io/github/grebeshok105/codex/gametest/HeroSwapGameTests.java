@@ -1,6 +1,6 @@
 package io.github.grebeshok105.codex.gametest;
 
-import io.github.grebeshok105.codex.ability.AbilityCooldowns;
+import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import io.github.grebeshok105.codex.ability.AbilityIds;
 import io.github.grebeshok105.codex.ability.ThanosSnapAbility;
 import io.github.grebeshok105.codex.hero.RaidenHero;
@@ -8,8 +8,8 @@ import io.github.grebeshok105.codex.hero.ScaramoucheHero;
 import io.github.grebeshok105.codex.item.ModItems;
 import io.github.grebeshok105.codex.item.infinity.InfinityGauntletData;
 import io.github.grebeshok105.codex.item.infinity.InfinityStoneType;
-import io.github.grebeshok105.codex.transform.HeroDataStore;
-import io.github.grebeshok105.codex.transform.HeroTransformService;
+import io.github.grebeshok105.codex.core.transform.HeroDataStore;
+import io.github.grebeshok105.codex.core.transform.HeroTransformService;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;

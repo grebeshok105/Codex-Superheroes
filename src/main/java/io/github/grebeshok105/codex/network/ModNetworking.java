@@ -1,14 +1,11 @@
 package io.github.grebeshok105.codex.network;
 
-import io.github.grebeshok105.codex.ability.AbilityRouter;
-import io.github.grebeshok105.codex.attachment.ModAttachments;
+import io.github.grebeshok105.codex.core.net.CoreNetworking;
 import io.github.grebeshok105.codex.effect.HeroMeleeImpactController;
 import io.github.grebeshok105.codex.effect.SuperJumpController;
-import io.github.grebeshok105.codex.transform.HeroData;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
 
@@ -18,20 +15,17 @@ public final class ModNetworking {
 	}
 
 	public static void init() {
-		PayloadTypeRegistry.playC2S().register(ActivateAbilityC2SPayload.TYPE, ActivateAbilityC2SPayload.STREAM_CODEC);
-		PayloadTypeRegistry.playC2S().register(BindAbilityResourceC2SPayload.TYPE, BindAbilityResourceC2SPayload.STREAM_CODEC);
+		CoreNetworking.init();
+
 		PayloadTypeRegistry.playC2S().register(SuperJumpC2SPayload.TYPE, SuperJumpC2SPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playC2S().register(ReinhardWishConfirmC2SPayload.TYPE, ReinhardWishConfirmC2SPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playC2S().register(HeroMeleeChargeC2SPayload.TYPE, HeroMeleeChargeC2SPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playC2S().register(ThinkMarkDashC2SPayload.TYPE, ThinkMarkDashC2SPayload.STREAM_CODEC);
 
-		PayloadTypeRegistry.playS2C().register(ResourceUpdateS2CPayload.TYPE, ResourceUpdateS2CPayload.STREAM_CODEC);
-		PayloadTypeRegistry.playS2C().register(HeroDataSyncS2CPayload.TYPE, HeroDataSyncS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(FlightStateS2CPayload.TYPE, FlightStateS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(LaserFiredS2CPayload.TYPE, LaserFiredS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(RepulsorBlastS2CPayload.TYPE, RepulsorBlastS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(ThanosCosmicBeamS2CPayload.TYPE, ThanosCosmicBeamS2CPayload.STREAM_CODEC);
-		PayloadTypeRegistry.playS2C().register(ScreenShakeS2CPayload.TYPE, ScreenShakeS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(ReactorStateS2CPayload.TYPE, ReactorStateS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(MadnessSyncS2CPayload.TYPE, MadnessSyncS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(MadnessVisualS2CPayload.TYPE, MadnessVisualS2CPayload.STREAM_CODEC);
@@ -39,7 +33,6 @@ public final class ModNetworking {
 		PayloadTypeRegistry.playS2C().register(UraniumThreatS2CPayload.TYPE, UraniumThreatS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(SungShadowArmyS2CPayload.TYPE, SungShadowArmyS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(DoomsdayProgressS2CPayload.TYPE, DoomsdayProgressS2CPayload.STREAM_CODEC);
-		PayloadTypeRegistry.playS2C().register(AbilityCooldownS2CPayload.TYPE, AbilityCooldownS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(ThanosStonesS2CPayload.TYPE, ThanosStonesS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(JarvisDetectionS2CPayload.TYPE, JarvisDetectionS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(SuitVariantS2CPayload.TYPE, SuitVariantS2CPayload.STREAM_CODEC);
@@ -55,21 +48,12 @@ public final class ModNetworking {
 		PayloadTypeRegistry.playS2C().register(ReinhardSwordKillS2CPayload.TYPE, ReinhardSwordKillS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(ReinhardDarknessS2CPayload.TYPE, ReinhardDarknessS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(ReinhardTimeSlowS2CPayload.TYPE, ReinhardTimeSlowS2CPayload.STREAM_CODEC);
-		PayloadTypeRegistry.playS2C().register(WallImpactDebrisS2CPayload.TYPE, WallImpactDebrisS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(HordeDebugS2CPayload.TYPE, HordeDebugS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(MirrorDimensionS2CPayload.TYPE, MirrorDimensionS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(PandoraCinematicS2CPayload.TYPE, PandoraCinematicS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(PandoraHouseStateS2CPayload.TYPE, PandoraHouseStateS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playC2S().register(MirrorDimensionStatusC2SPayload.TYPE, MirrorDimensionStatusC2SPayload.STREAM_CODEC);
 
-		ServerPlayNetworking.registerGlobalReceiver(ActivateAbilityC2SPayload.TYPE, (payload, context) -> {
-			ServerPlayer player = context.player();
-			AbilityRouter.activate(player, payload.abilityId());
-		});
-		ServerPlayNetworking.registerGlobalReceiver(BindAbilityResourceC2SPayload.TYPE, (payload, context) -> {
-			ServerPlayer player = context.player();
-			AbilityRouter.bind(player, payload.abilityId(), payload.kind());
-		});
 		ServerPlayNetworking.registerGlobalReceiver(SuperJumpC2SPayload.TYPE, (payload, context) -> {
 			ServerPlayer player = context.player();
 			SuperJumpController.activate(player);
@@ -90,14 +74,6 @@ public final class ModNetworking {
 			ServerPlayer player = context.player();
 			io.github.grebeshok105.codex.effect.MirrorDimensionController.handleStatus(player, payload.status());
 		});
-	}
-
-	public static void syncResources(ServerPlayer player, HeroData data) {
-		ServerPlayNetworking.send(player, new ResourceUpdateS2CPayload(data.energy(), data.mana()));
-	}
-
-	public static void syncHeroData(ServerPlayer player, HeroData data) {
-		ServerPlayNetworking.send(player, new HeroDataSyncS2CPayload(data));
 	}
 
 	public static void syncFlightState(ServerPlayer player, io.github.grebeshok105.codex.flight.FlightMode mode,

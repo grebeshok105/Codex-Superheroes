@@ -1,14 +1,14 @@
 package io.github.grebeshok105.codex.effect;
 
 import io.github.grebeshok105.codex.combat.TargetFilters;
-import io.github.grebeshok105.codex.lifecycle.LifecycleRegistrar;
-import io.github.grebeshok105.codex.lifecycle.OwnedSessionMap;
-import io.github.grebeshok105.codex.lifecycle.OwnedSessionMap.ClearOn;
-import io.github.grebeshok105.codex.transform.HeroDataStore;
+import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
+import io.github.grebeshok105.codex.core.transform.HeroDataStore;
 import io.github.grebeshok105.codex.damage.ModDamageTypes;
 import io.github.grebeshok105.codex.particle.ModParticles;
 import io.github.grebeshok105.codex.sound.ModSounds;
-import io.github.grebeshok105.codex.world.WorldDestructionPolicy;
+import io.github.grebeshok105.codex.mechanic.world.WorldDestructionPolicy;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.particles.ParticleTypes;
@@ -39,7 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import net.minecraft.server.MinecraftServer;
-import io.github.grebeshok105.codex.transform.HeroData;
+import io.github.grebeshok105.codex.core.transform.HeroData;
 
 public final class UnibeamController {
 	public static final int CHARGE_TICKS = 200;

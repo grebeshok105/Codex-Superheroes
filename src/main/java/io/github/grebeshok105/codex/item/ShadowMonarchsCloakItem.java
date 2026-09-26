@@ -1,8 +1,8 @@
 package io.github.grebeshok105.codex.item;
 
 import io.github.grebeshok105.codex.hero.SungJinwooHero;
-import io.github.grebeshok105.codex.transform.TooltipFrame;
-import io.github.grebeshok105.codex.transform.TransformationItem;
+import io.github.grebeshok105.codex.core.transform.TooltipFrame;
+import io.github.grebeshok105.codex.core.transform.TransformationItem;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;

@@ -1,11 +1,11 @@
 package io.github.grebeshok105.codex.gametest;
 
 import io.github.grebeshok105.codex.ability.AbilityIds;
-import io.github.grebeshok105.codex.ability.AbilityRouter;
-import io.github.grebeshok105.codex.attachment.ModAttachments;
+import io.github.grebeshok105.codex.core.ability.AbilityRouter;
+import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.hero.RaidenHero;
 import io.github.grebeshok105.codex.item.ModItems;
-import io.github.grebeshok105.codex.item.bound.BoundWeapons;
+import io.github.grebeshok105.codex.mechanic.boundweapon.BoundWeapons;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -121,13 +121,13 @@ public final class BoundWeaponGameTests implements FabricGameTest {
 		TestPlayers.fillInventory(raiden);
 
 		AbilityRouter.activate(raiden, AbilityIds.RAIDEN_SWORD_DRAW);
-		helper.assertFalse(raiden.getAttachedOrCreate(ModAttachments.HERO_DATA).isActive(AbilityIds.RAIDEN_SWORD_DRAW),
+		helper.assertFalse(raiden.getAttachedOrCreate(CoreAttachments.HERO_DATA).isActive(AbilityIds.RAIDEN_SWORD_DRAW),
 				"no room for Yamato means the draw does not start");
 		helper.assertTrue(TestPlayers.count(raiden, ModItems.MUSOU_NO_HITOTACHI) == 0, "no sword was issued");
 
 		raiden.getInventory().items.set(raiden.getInventory().selected, ItemStack.EMPTY);
 		AbilityRouter.activate(raiden, AbilityIds.RAIDEN_SWORD_DRAW);
-		helper.assertTrue(raiden.getAttachedOrCreate(ModAttachments.HERO_DATA).isActive(AbilityIds.RAIDEN_SWORD_DRAW),
+		helper.assertTrue(raiden.getAttachedOrCreate(CoreAttachments.HERO_DATA).isActive(AbilityIds.RAIDEN_SWORD_DRAW),
 				"with a free hand the draw starts");
 		helper.assertTrue(TestPlayers.count(raiden, ModItems.MUSOU_NO_HITOTACHI) == 1, "exactly one Yamato");
 

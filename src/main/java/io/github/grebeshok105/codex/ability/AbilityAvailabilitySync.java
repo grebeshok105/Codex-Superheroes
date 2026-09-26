@@ -1,12 +1,12 @@
 package io.github.grebeshok105.codex.ability;
 
-import io.github.grebeshok105.codex.attachment.ModAttachments;
 import io.github.grebeshok105.codex.core.ability.AbilityAvailability;
 import io.github.grebeshok105.codex.core.ability.AbilityAvailability.Visibility;
+import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.effect.ModEffects;
-import io.github.grebeshok105.codex.hero.Hero;
-import io.github.grebeshok105.codex.hero.Heroes;
-import io.github.grebeshok105.codex.transform.HeroData;
+import io.github.grebeshok105.codex.core.hero.Hero;
+import io.github.grebeshok105.codex.core.hero.Heroes;
+import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -25,11 +25,11 @@ public final class AbilityAvailabilitySync {
 
 	public static void tickPlayer(MinecraftServer server, ServerPlayer player, HeroData data) {
 		AbilityAvailability next = compute(player, data);
-		AbilityAvailability prev = player.getAttached(ModAttachments.ABILITY_AVAILABILITY);
+		AbilityAvailability prev = player.getAttached(CoreAttachments.ABILITY_AVAILABILITY);
 		if (next.equals(prev) || (prev == null && next.entries().isEmpty())) {
 			return;
 		}
-		player.setAttached(ModAttachments.ABILITY_AVAILABILITY, next);
+		player.setAttached(CoreAttachments.ABILITY_AVAILABILITY, next);
 	}
 
 	private static AbilityAvailability compute(ServerPlayer player, HeroData data) {

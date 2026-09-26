@@ -1,8 +1,8 @@
 package io.github.grebeshok105.codex.gametest;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.hero.Hero;
-import io.github.grebeshok105.codex.hero.Heroes;
+import io.github.grebeshok105.codex.core.hero.Hero;
+import io.github.grebeshok105.codex.core.hero.Heroes;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;

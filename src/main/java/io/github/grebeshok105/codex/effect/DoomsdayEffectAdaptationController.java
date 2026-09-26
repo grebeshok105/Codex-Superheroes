@@ -1,8 +1,8 @@
 package io.github.grebeshok105.codex.effect;
 
-import io.github.grebeshok105.codex.attachment.ModAttachments;
+import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.hero.DoomsdayHero;
-import io.github.grebeshok105.codex.transform.HeroData;
+import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -91,7 +91,7 @@ public final class DoomsdayEffectAdaptationController {
 	}
 
 	private static boolean isDoomsday(ServerPlayer player) {
-		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
+		HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
 		return data.hasHero() && DoomsdayHero.ID.equals(data.heroId());
 	}
 }

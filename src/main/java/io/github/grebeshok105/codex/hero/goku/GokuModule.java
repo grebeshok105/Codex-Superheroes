@@ -12,7 +12,7 @@ import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.effect.GokuKiResilienceController;
 import io.github.grebeshok105.codex.effect.GokuKiStackController;
 import io.github.grebeshok105.codex.hero.GokuHero;
-import io.github.grebeshok105.codex.hero.Hero;
+import io.github.grebeshok105.codex.core.hero.Hero;
 
 public final class GokuModule implements HeroModule {
 	private final GokuHero hero = new GokuHero();

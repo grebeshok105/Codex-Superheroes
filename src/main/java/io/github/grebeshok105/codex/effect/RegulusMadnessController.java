@@ -1,13 +1,18 @@
 package io.github.grebeshok105.codex.effect;
 
 import io.github.grebeshok105.codex.attachment.ModAttachments;
+import io.github.grebeshok105.codex.core.ability.AbilityRouter;
+import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
+import io.github.grebeshok105.codex.core.lifecycle.ControlLockKind;
+import io.github.grebeshok105.codex.core.lifecycle.EntityControlLock;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
+import io.github.grebeshok105.codex.core.resource.EnergyLocks;
 import io.github.grebeshok105.codex.hero.AbilityScopedModifiers;
 import io.github.grebeshok105.codex.hero.RegulusHero;
 import io.github.grebeshok105.codex.network.MadnessSyncS2CPayload;
 import io.github.grebeshok105.codex.network.MadnessVisualS2CPayload;
-import io.github.grebeshok105.codex.transform.HeroData;
-import io.github.grebeshok105.codex.world.WorldDestructionPolicy;
+import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.mechanic.world.WorldDestructionPolicy;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.BlockPos;
@@ -17,12 +22,10 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import io.github.grebeshok105.codex.damage.ModDamageTypes;
-import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
@@ -139,15 +142,15 @@ public final class RegulusMadnessController {
 	private static void stripFlight(LivingEntity target) {
 		if (!(target instanceof ServerPlayer sp)) return;
 		try {
-			io.github.grebeshok105.codex.ability.AbilityRouter.deactivate(sp, io.github.grebeshok105.codex.ability.AbilityIds.FLIGHT);
+			io.github.grebeshok105.codex.core.ability.AbilityRouter.deactivate(sp, io.github.grebeshok105.codex.ability.AbilityIds.FLIGHT);
 		} catch (Throwable ignored) {
 		}
 		try {
-			io.github.grebeshok105.codex.ability.AbilityRouter.deactivate(sp, io.github.grebeshok105.codex.ability.AbilityIds.IRON_MAN_FLIGHT);
+			io.github.grebeshok105.codex.core.ability.AbilityRouter.deactivate(sp, io.github.grebeshok105.codex.ability.AbilityIds.IRON_MAN_FLIGHT);
 		} catch (Throwable ignored) {
 		}
 		try {
-			io.github.grebeshok105.codex.ability.AbilityRouter.deactivate(sp, io.github.grebeshok105.codex.ability.AbilityIds.SUPERSONIC);
+			io.github.grebeshok105.codex.core.ability.AbilityRouter.deactivate(sp, io.github.grebeshok105.codex.ability.AbilityIds.SUPERSONIC);
 		} catch (Throwable ignored) {
 		}
 		FlightController.stop(sp);
@@ -228,7 +231,7 @@ public final class RegulusMadnessController {
 	}
 
 	public static boolean isRegulus(ServerPlayer player) {
-		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
+		HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
 		return data.hasHero() && RegulusHero.ID.equals(data.heroId());
 	}
 
@@ -394,10 +397,10 @@ public final class RegulusMadnessController {
 				case LIFT -> {
 					if (tick == 1) {
 						liftStartY = attacker.getY();
-						io.github.grebeshok105.codex.lifecycle.EntityControlLock.acquire(
-								attacker, io.github.grebeshok105.codex.lifecycle.ControlLockKind.NO_AI, player);
-						io.github.grebeshok105.codex.lifecycle.EntityControlLock.acquire(
-								attacker, io.github.grebeshok105.codex.lifecycle.ControlLockKind.NO_GRAVITY, player);
+						io.github.grebeshok105.codex.core.lifecycle.EntityControlLock.acquire(
+								attacker, io.github.grebeshok105.codex.core.lifecycle.ControlLockKind.NO_AI, player);
+						io.github.grebeshok105.codex.core.lifecycle.EntityControlLock.acquire(
+								attacker, io.github.grebeshok105.codex.core.lifecycle.ControlLockKind.NO_GRAVITY, player);
 					}
 					double liftStep = COUNTER_LIFT_HEIGHT / (double) COUNTER_LIFT_TICKS;
 					double targetY = Math.min(liftStartY + tick * liftStep, liftStartY + COUNTER_LIFT_HEIGHT);
@@ -415,8 +418,8 @@ public final class RegulusMadnessController {
 					if (tick >= COUNTER_LIFT_TICKS) {
 						phase = Phase.ARRIVE;
 						tick = 0;
-						io.github.grebeshok105.codex.lifecycle.EntityControlLock.acquire(
-								player, io.github.grebeshok105.codex.lifecycle.ControlLockKind.NO_GRAVITY, player);
+						io.github.grebeshok105.codex.core.lifecycle.EntityControlLock.acquire(
+								player, io.github.grebeshok105.codex.core.lifecycle.ControlLockKind.NO_GRAVITY, player);
 						player.setDeltaMovement(0, 0, 0);
 						Vec3 look = attacker.getViewVector(1.0f);
 						double bx = attacker.getX() - look.x * 1.2;
@@ -476,14 +479,14 @@ public final class RegulusMadnessController {
 
 		private void releaseLocks(LivingEntity attacker, ServerPlayer player) {
 			if (attacker != null) {
-				io.github.grebeshok105.codex.lifecycle.EntityControlLock.release(
-						attacker, io.github.grebeshok105.codex.lifecycle.ControlLockKind.NO_AI, playerId);
-				io.github.grebeshok105.codex.lifecycle.EntityControlLock.release(
-						attacker, io.github.grebeshok105.codex.lifecycle.ControlLockKind.NO_GRAVITY, playerId);
+				io.github.grebeshok105.codex.core.lifecycle.EntityControlLock.release(
+						attacker, io.github.grebeshok105.codex.core.lifecycle.ControlLockKind.NO_AI, playerId);
+				io.github.grebeshok105.codex.core.lifecycle.EntityControlLock.release(
+						attacker, io.github.grebeshok105.codex.core.lifecycle.ControlLockKind.NO_GRAVITY, playerId);
 			}
 			if (player != null) {
-				io.github.grebeshok105.codex.lifecycle.EntityControlLock.release(
-						player, io.github.grebeshok105.codex.lifecycle.ControlLockKind.NO_GRAVITY, playerId);
+				io.github.grebeshok105.codex.core.lifecycle.EntityControlLock.release(
+						player, io.github.grebeshok105.codex.core.lifecycle.ControlLockKind.NO_GRAVITY, playerId);
 			}
 		}
 
@@ -493,7 +496,7 @@ public final class RegulusMadnessController {
 			RegulusMadnessController.carveCrater(level, impact, player);
 			attacker.teleportTo(impact.getX() + 0.5, impact.getY() - CRATER_DEPTH + 1, impact.getZ() + 0.5);
 			attacker.hurt(ModDamageTypes.counterStrike(level, player), 27f);
-			io.github.grebeshok105.codex.resource.EnergyLocks.lockTicks(player, 15 * 20);
+			io.github.grebeshok105.codex.core.resource.EnergyLocks.lockTicks(player, 15 * 20);
 			level.playSound(null, impact.getX(), impact.getY(), impact.getZ(),
 					SoundEvents.GENERIC_EXPLODE.value(), SoundSource.PLAYERS, 2.0f, 0.4f);
 			level.playSound(null, impact.getX(), impact.getY(), impact.getZ(),

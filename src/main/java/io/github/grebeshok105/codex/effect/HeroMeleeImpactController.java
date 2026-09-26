@@ -2,16 +2,17 @@ package io.github.grebeshok105.codex.effect;
 
 import io.github.grebeshok105.codex.attachment.ModAttachments;
 import io.github.grebeshok105.codex.combat.TargetFilters;
+import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
-import io.github.grebeshok105.codex.hero.Hero;
-import io.github.grebeshok105.codex.hero.Heroes;
+import io.github.grebeshok105.codex.core.hero.Hero;
+import io.github.grebeshok105.codex.core.hero.Heroes;
 import io.github.grebeshok105.codex.network.HeroMeleeChargeC2SPayload;
-import io.github.grebeshok105.codex.network.ScreenShakeS2CPayload;
+import io.github.grebeshok105.codex.core.net.ScreenShakeS2CPayload;
 import io.github.grebeshok105.codex.physics.CombatImpactEngine;
 import io.github.grebeshok105.codex.physics.ImpactChargeRules;
 import io.github.grebeshok105.codex.physics.ImpactProfile;
 import io.github.grebeshok105.codex.physics.ImpactTier;
-import io.github.grebeshok105.codex.transform.HeroData;
+import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.particles.ParticleOptions;
@@ -25,7 +26,6 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.AABB;
@@ -64,7 +64,7 @@ public final class HeroMeleeImpactController {
 			if (!(entity instanceof LivingEntity target) || !TargetFilters.hostileTo(attacker).test(target)) {
 				return InteractionResult.PASS;
 			}
-			HeroData data = attacker.getAttachedOrCreate(ModAttachments.HERO_DATA);
+			HeroData data = attacker.getAttachedOrCreate(CoreAttachments.HERO_DATA);
 			if (!data.hasHero()) {
 				return InteractionResult.PASS;
 			}
@@ -81,7 +81,7 @@ public final class HeroMeleeImpactController {
 	}
 
 	public static void handleChargeInput(ServerPlayer player, HeroMeleeChargeC2SPayload payload) {
-		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
+		HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
 		if (!data.hasHero()) {
 			CHARGES.remove(player.getUUID());
 			return;
@@ -199,7 +199,7 @@ public final class HeroMeleeImpactController {
 				it.remove();
 				continue;
 			}
-			HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
+			HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
 			if (!data.hasHero()) {
 				it.remove();
 				continue;

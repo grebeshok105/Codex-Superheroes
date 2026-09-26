@@ -1,10 +1,10 @@
 package io.github.grebeshok105.codex.gametest;
 
-import io.github.grebeshok105.codex.attachment.ModAttachments;
+import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.hero.NarutoHero;
-import io.github.grebeshok105.codex.transform.HeroData;
-import io.github.grebeshok105.codex.transform.HeroDataStore;
-import io.github.grebeshok105.codex.transform.HeroTransformService;
+import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.core.transform.HeroDataStore;
+import io.github.grebeshok105.codex.core.transform.HeroTransformService;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -18,11 +18,11 @@ public class PublicHeroSyncGameTests implements FabricGameTest {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, NarutoHero.ID);
 
-		helper.assertValueEqual(NarutoHero.ID, player.getAttached(ModAttachments.PUBLIC_HERO),
+		helper.assertValueEqual(NarutoHero.ID, player.getAttached(CoreAttachments.PUBLIC_HERO),
 				"transform writes the synced public hero id (audit B14)");
 
 		helper.assertTrue(HeroTransformService.forceUntransform(player), "untransform");
-		helper.assertTrue(player.getAttached(ModAttachments.PUBLIC_HERO) == null,
+		helper.assertTrue(player.getAttached(CoreAttachments.PUBLIC_HERO) == null,
 				"untransform clears the synced public hero id");
 
 		TestPlayers.leave(player);
@@ -35,12 +35,12 @@ public class PublicHeroSyncGameTests implements FabricGameTest {
 		// Legacy save: HERO_DATA written directly (pre-PUBLIC_HERO), no projection present.
 		HeroData legacy = HeroDataStore.get(player)
 				.withHero(NarutoHero.ID);
-		player.setAttached(ModAttachments.HERO_DATA, legacy);
-		helper.assertTrue(player.getAttached(ModAttachments.PUBLIC_HERO) == null,
+		player.setAttached(CoreAttachments.HERO_DATA, legacy);
+		helper.assertTrue(player.getAttached(CoreAttachments.PUBLIC_HERO) == null,
 				"precondition: no projection for a directly-written hero");
 
 		HeroDataStore.syncPublicHero(player);
-		helper.assertValueEqual(NarutoHero.ID, player.getAttached(ModAttachments.PUBLIC_HERO),
+		helper.assertValueEqual(NarutoHero.ID, player.getAttached(CoreAttachments.PUBLIC_HERO),
 				"join back-fill derives the projection from HERO_DATA");
 
 		TestPlayers.leave(player);

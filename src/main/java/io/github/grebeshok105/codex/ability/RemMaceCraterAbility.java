@@ -1,5 +1,6 @@
 package io.github.grebeshok105.codex.ability;
 
+import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.effect.RemDemonismController;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;

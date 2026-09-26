@@ -1,11 +1,12 @@
 package io.github.grebeshok105.codex.ability;
 
-import io.github.grebeshok105.codex.transform.HeroDataStore;
+import io.github.grebeshok105.codex.core.ability.Ability;
+import io.github.grebeshok105.codex.core.transform.HeroDataStore;
 import io.github.grebeshok105.codex.attachment.ModAttachments;
 import io.github.grebeshok105.codex.effect.ReinhardState;
 import io.github.grebeshok105.codex.effect.ReinhardSwordDrawCeremonyController;
 import io.github.grebeshok105.codex.item.ModItems;
-import io.github.grebeshok105.codex.item.bound.BoundWeapons;
+import io.github.grebeshok105.codex.mechanic.boundweapon.BoundWeapons;
 import io.github.grebeshok105.codex.hero.AbilityScopedModifiers;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;

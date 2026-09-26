@@ -1,17 +1,18 @@
 package io.github.grebeshok105.codex.effect;
 
 import io.github.grebeshok105.codex.attachment.ModAttachments;
+import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
+import io.github.grebeshok105.codex.core.lifecycle.PassiveReconciler;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.hero.DoomsdayHero;
 import io.github.grebeshok105.codex.hero.AbilityScopedModifiers;
 import io.github.grebeshok105.codex.network.DoomsdayProgressS2CPayload;
-import io.github.grebeshok105.codex.transform.HeroData;
+import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
@@ -20,7 +21,6 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageType;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 
@@ -92,7 +92,7 @@ public final class DoomsdayTierController {
 		DoomsdayProgress progress = player.getAttachedOrCreate(ModAttachments.DOOMSDAY_PROGRESS);
 		AbilityScopedModifiers.DOOMSDAY.remove(player);
 		AbilityScopedModifiers.buildDoomsdayTierSet(progress.tier()).apply(player);
-		io.github.grebeshok105.codex.lifecycle.PassiveReconciler.capture(player, DoomsdayHero.ID,
+		io.github.grebeshok105.codex.core.lifecycle.PassiveReconciler.capture(player, DoomsdayHero.ID,
 				() -> DoomsdayHero.applyTierEffects(player, progress.tier()));
 		DoomsdayAdaptationController.reapplyDamageBonus(player);
 		player.setHealth(player.getMaxHealth());
@@ -153,7 +153,7 @@ public final class DoomsdayTierController {
 				.map(k -> k.location().toString())
 				.orElseGet(() -> source.type().msgId());
 		if (source.getEntity() instanceof ServerPlayer attacker) {
-			HeroData attackerHero = attacker.getAttachedOrCreate(ModAttachments.HERO_DATA);
+			HeroData attackerHero = attacker.getAttachedOrCreate(CoreAttachments.HERO_DATA);
 			if (attackerHero.hasHero()) {
 				return typeKey + "@" + attackerHero.heroId().getPath();
 			}
@@ -173,7 +173,7 @@ public final class DoomsdayTierController {
 	}
 
 	private static boolean isDoomsday(ServerPlayer player) {
-		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
+		HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
 		return data.hasHero() && DoomsdayHero.ID.equals(data.heroId());
 	}
 }

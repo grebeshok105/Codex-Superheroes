@@ -1,6 +1,6 @@
 package io.github.grebeshok105.codex.mixin;
 
-import io.github.grebeshok105.codex.item.bound.BoundWeapons;
+import io.github.grebeshok105.codex.mechanic.boundweapon.BoundWeapons;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;

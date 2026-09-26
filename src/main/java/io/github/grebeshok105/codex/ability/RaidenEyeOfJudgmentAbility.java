@@ -1,6 +1,8 @@
 package io.github.grebeshok105.codex.ability;
 
 import io.github.grebeshok105.codex.attachment.ModAttachments;
+import io.github.grebeshok105.codex.core.ability.Ability;
+import io.github.grebeshok105.codex.core.ability.AbilityRouter;
 import io.github.grebeshok105.codex.effect.RaidenState;
 import io.github.grebeshok105.codex.item.MusouNoHitotachiItem;
 import io.github.grebeshok105.codex.particle.ModParticles;
@@ -81,7 +83,7 @@ public final class RaidenEyeOfJudgmentAbility implements Ability {
 		long now = player.serverLevel().getGameTime();
 		RaidenState state = player.getAttachedOrCreate(ModAttachments.RAIDEN_STATE);
 		if (state.eyeExpireTick() <= now) {
-			io.github.grebeshok105.codex.ability.AbilityRouter.deactivate(player, getId());
+			io.github.grebeshok105.codex.core.ability.AbilityRouter.deactivate(player, getId());
 			return;
 		}
 		if (now % 6 == 0) {

@@ -1,6 +1,7 @@
 package io.github.grebeshok105.codex.client.core.input;
 
-import io.github.grebeshok105.codex.attachment.ModAttachments;
+import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
+import io.github.grebeshok105.codex.core.hero.Hero;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.KeyMapping;
@@ -41,7 +42,7 @@ public final class HeroActionKeys {
 		tickInstalled = true;
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			LocalPlayer player = client.player;
-			ResourceLocation currentHero = player != null ? player.getAttached(ModAttachments.PUBLIC_HERO) : null;
+			ResourceLocation currentHero = player != null ? player.getAttached(CoreAttachments.PUBLIC_HERO) : null;
 			for (Entry entry : ENTRIES) {
 				while (entry.mapping().consumeClick()) {
 					if (entry.heroId().equals(currentHero)) {

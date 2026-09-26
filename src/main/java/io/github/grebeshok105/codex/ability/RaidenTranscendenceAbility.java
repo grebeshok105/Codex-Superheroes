@@ -1,6 +1,7 @@
 package io.github.grebeshok105.codex.ability;
 
 import io.github.grebeshok105.codex.attachment.ModAttachments;
+import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.effect.RaidenState;
 import io.github.grebeshok105.codex.particle.ModParticles;
 import net.minecraft.resources.ResourceLocation;

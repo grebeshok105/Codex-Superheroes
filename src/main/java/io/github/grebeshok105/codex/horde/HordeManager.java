@@ -4,7 +4,6 @@ import io.github.grebeshok105.codex.horde.entity.BaseHordeEntity;
 import io.github.grebeshok105.codex.horde.entity.InfectedHomelanderBossEntity;
 import io.github.grebeshok105.codex.network.HordeDebugS2CPayload;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerBossEvent;

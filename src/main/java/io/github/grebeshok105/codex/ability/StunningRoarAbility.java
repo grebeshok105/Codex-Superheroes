@@ -1,7 +1,9 @@
 package io.github.grebeshok105.codex.ability;
 
 import io.github.grebeshok105.codex.combat.TargetFilters;
-import io.github.grebeshok105.codex.network.ScreenShakeS2CPayload;
+import io.github.grebeshok105.codex.core.ability.Ability;
+import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
+import io.github.grebeshok105.codex.core.net.ScreenShakeS2CPayload;
 import io.github.grebeshok105.codex.sound.ModSounds;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;

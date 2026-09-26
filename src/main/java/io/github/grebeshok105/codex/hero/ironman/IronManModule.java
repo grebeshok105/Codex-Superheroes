@@ -17,7 +17,7 @@ import io.github.grebeshok105.codex.effect.IronManAutoEjectController;
 import io.github.grebeshok105.codex.effect.IronManJarvisController;
 import io.github.grebeshok105.codex.effect.IronManReactorTracker;
 import io.github.grebeshok105.codex.effect.UnibeamController;
-import io.github.grebeshok105.codex.hero.Hero;
+import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.hero.IronManHero;
 
 public final class IronManModule implements HeroModule {

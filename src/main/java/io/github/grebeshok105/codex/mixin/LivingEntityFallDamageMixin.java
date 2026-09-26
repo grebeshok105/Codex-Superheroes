@@ -1,11 +1,11 @@
 package io.github.grebeshok105.codex.mixin;
 
-import io.github.grebeshok105.codex.attachment.ModAttachments;
+import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.effect.RegulusMadnessController;
 import io.github.grebeshok105.codex.effect.SuperJumpController;
-import io.github.grebeshok105.codex.hero.Hero;
-import io.github.grebeshok105.codex.hero.Heroes;
-import io.github.grebeshok105.codex.transform.HeroData;
+import io.github.grebeshok105.codex.core.hero.Hero;
+import io.github.grebeshok105.codex.core.hero.Heroes;
+import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -28,7 +28,7 @@ public abstract class LivingEntityFallDamageMixin {
 			cir.setReturnValue(false);
 			return;
 		}
-		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
+		HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
 		if (!data.hasHero()) {
 			return;
 		}

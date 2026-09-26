@@ -11,7 +11,7 @@ import io.github.grebeshok105.codex.core.module.HeroModule;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.effect.RamCompanionController;
 import io.github.grebeshok105.codex.effect.RemDemonismController;
-import io.github.grebeshok105.codex.hero.Hero;
+import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.hero.RemHero;
 
 public final class RemModule implements HeroModule {

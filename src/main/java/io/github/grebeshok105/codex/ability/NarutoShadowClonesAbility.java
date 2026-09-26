@@ -1,5 +1,7 @@
 package io.github.grebeshok105.codex.ability;
 
+import io.github.grebeshok105.codex.core.ability.Ability;
+import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import io.github.grebeshok105.codex.entity.KageBunshinEntity;
 import io.github.grebeshok105.codex.entity.ModEntities;
 import io.github.grebeshok105.codex.particle.ModParticles;

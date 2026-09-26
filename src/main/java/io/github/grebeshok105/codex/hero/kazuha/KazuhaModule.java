@@ -6,7 +6,7 @@ import io.github.grebeshok105.codex.ability.KazuhaMapleStormAbility;
 import io.github.grebeshok105.codex.ability.KazuhaMidareRanzanAbility;
 import io.github.grebeshok105.codex.core.module.HeroModule;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
-import io.github.grebeshok105.codex.hero.Hero;
+import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.hero.KazuhaHero;
 
 public final class KazuhaModule implements HeroModule {

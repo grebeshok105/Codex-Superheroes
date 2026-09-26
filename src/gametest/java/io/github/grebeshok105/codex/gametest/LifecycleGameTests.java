@@ -1,24 +1,26 @@
 package io.github.grebeshok105.codex.gametest;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.ability.AbilityCooldowns;
+import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import io.github.grebeshok105.codex.ability.AbilityIds;
 import io.github.grebeshok105.codex.attachment.ModAttachments;
-import io.github.grebeshok105.codex.hero.AttributeModifierSet;
+import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
+import io.github.grebeshok105.codex.core.hero.AttributeModifierSet;
+import io.github.grebeshok105.codex.core.hero.Hero;
+import io.github.grebeshok105.codex.core.lifecycle.PlayerLifecycle;
 import io.github.grebeshok105.codex.hero.DoomsdayHero;
 import io.github.grebeshok105.codex.hero.RaidenHero;
 import io.github.grebeshok105.codex.hero.ScaramoucheHero;
-import io.github.grebeshok105.codex.lifecycle.ControlLockKind;
-import io.github.grebeshok105.codex.lifecycle.EntityControlLock;
+import io.github.grebeshok105.codex.core.lifecycle.ControlLockKind;
+import io.github.grebeshok105.codex.core.lifecycle.EntityControlLock;
 import io.github.grebeshok105.codex.effect.ModEffects;
 import io.github.grebeshok105.codex.effect.ThanosSnapWindupController;
-import io.github.grebeshok105.codex.transform.HeroTransformService;
+import io.github.grebeshok105.codex.core.transform.HeroTransformService;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
@@ -92,14 +94,14 @@ public final class LifecycleGameTests implements FabricGameTest {
 		Zombie zombie = helper.spawn(EntityType.ZOMBIE, 1, 1, 1);
 		EntityControlLock.acquire(zombie, ControlLockKind.NO_AI, owner);
 		// Unload simulation: the persisted flag and shadow survive, the live lock state does not.
-		zombie.setAttached(ModAttachments.CONTROL_LOCKS, null);
+		zombie.setAttached(CoreAttachments.CONTROL_LOCKS, null);
 
 		EntityControlLock.reconcile(zombie);
 
 		helper.assertValueEqual(zombie.isNoAi(),
 				!TestPlayers.lockOwners(zombie, ControlLockKind.NO_AI).isEmpty(),
 				"shadow restores the flag when no live lock remains");
-		helper.assertTrue(zombie.getAttached(ModAttachments.CONTROL_LOCK_SHADOW) == null,
+		helper.assertTrue(zombie.getAttached(CoreAttachments.CONTROL_LOCK_SHADOW) == null,
 				"shadow consumed");
 		TestPlayers.leave(owner);
 		helper.succeed();
@@ -135,7 +137,7 @@ public final class LifecycleGameTests implements FabricGameTest {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, RaidenHero.ID);
 
-		helper.assertTrue(player.getAttached(ModAttachments.TRANSFORM_TICK) != null,
+		helper.assertTrue(player.getAttached(CoreAttachments.TRANSFORM_TICK) != null,
 				"the cooldown marker lives on the entity, not in a static map");
 		helper.assertFalse(HeroTransformService.transform(player, ScaramoucheHero.ID),
 				"transforming again inside the cooldown is rejected");
@@ -183,14 +185,14 @@ public final class LifecycleGameTests implements FabricGameTest {
 		doomsday.kill();
 		raiden.kill();
 
-		helper.assertTrue(doomsday.getAttachedOrCreate(ModAttachments.HERO_DATA).hasHero()
+		helper.assertTrue(doomsday.getAttachedOrCreate(CoreAttachments.HERO_DATA).hasHero()
 						&& DoomsdayHero.ID.equals(
-								doomsday.getAttachedOrCreate(ModAttachments.HERO_DATA).heroId()),
+								doomsday.getAttachedOrCreate(CoreAttachments.HERO_DATA).heroId()),
 				"Doomsday keeps his transformation through death");
 		helper.assertTrue(
 				doomsday.getAttachedOrCreate(ModAttachments.DOOMSDAY_PROGRESS).tier() == 2,
 				"the death advanced his adaptation tier");
-		helper.assertFalse(raiden.getAttachedOrCreate(ModAttachments.HERO_DATA).hasHero(),
+		helper.assertFalse(raiden.getAttachedOrCreate(CoreAttachments.HERO_DATA).hasHero(),
 				"a hero without keepsHeroOnDeath untransforms on death");
 
 		HeroTransformService.onPlayerRespawn(doomsday);

@@ -10,7 +10,7 @@ import io.github.grebeshok105.codex.core.module.HeroModule;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.effect.MonarchsDomainController;
 import io.github.grebeshok105.codex.effect.SungJinwooController;
-import io.github.grebeshok105.codex.hero.Hero;
+import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.hero.SungJinwooHero;
 
 public final class SungJinwooModule implements HeroModule {

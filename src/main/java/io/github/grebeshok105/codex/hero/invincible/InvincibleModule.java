@@ -5,7 +5,7 @@ import io.github.grebeshok105.codex.ability.ViltrumiteChargeAbility;
 import io.github.grebeshok105.codex.core.module.HeroModule;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.effect.InvincibleCombatController;
-import io.github.grebeshok105.codex.hero.Hero;
+import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.hero.InvincibleHero;
 
 public final class InvincibleModule implements HeroModule {

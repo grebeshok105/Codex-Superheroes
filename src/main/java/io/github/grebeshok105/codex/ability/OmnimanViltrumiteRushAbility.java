@@ -1,14 +1,16 @@
 package io.github.grebeshok105.codex.ability;
 
-import io.github.grebeshok105.codex.attachment.ModAttachments;
 import io.github.grebeshok105.codex.combat.TargetFilters;
+import io.github.grebeshok105.codex.core.ability.Ability;
+import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
+import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.effect.FlightController;
 import io.github.grebeshok105.codex.effect.OmnimanMomentumController;
-import io.github.grebeshok105.codex.lifecycle.LifecycleRegistrar;
-import io.github.grebeshok105.codex.lifecycle.OwnedSessionMap;
-import io.github.grebeshok105.codex.lifecycle.OwnedSessionMap.ClearOn;
+import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
 import io.github.grebeshok105.codex.physics.RushTerrainBreaker;
-import io.github.grebeshok105.codex.transform.HeroData;
+import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.resources.ResourceLocation;
@@ -17,7 +19,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
@@ -200,7 +201,7 @@ public final class OmnimanViltrumiteRushAbility implements Ability {
 	}
 
 	private static boolean isAirborneRush(ServerPlayer player) {
-		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
+		HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
 		boolean airborne = !player.onGround() || player.getAbilities().flying || player.isFallFlying();
 		boolean flying = FlightController.isFlightActive(data) || player.getAbilities().flying || player.isFallFlying();
 		return airborne && flying;

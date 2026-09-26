@@ -6,7 +6,7 @@ import io.github.grebeshok105.codex.effect.SungJinwooController;
 import io.github.grebeshok105.codex.entity.ModEntities;
 import io.github.grebeshok105.codex.entity.ShadowSoldierEntity;
 import io.github.grebeshok105.codex.hero.SungJinwooHero;
-import io.github.grebeshok105.codex.transform.HeroTransformService;
+import io.github.grebeshok105.codex.core.transform.HeroTransformService;
 import io.github.grebeshok105.codex.util.SafeTeleport;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.core.BlockPos;

@@ -1,8 +1,8 @@
 package io.github.grebeshok105.codex.gametest;
 
-import io.github.grebeshok105.codex.ability.AbilityCooldowns;
+import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import io.github.grebeshok105.codex.ability.AbilityIds;
-import io.github.grebeshok105.codex.ability.AbilityRouter;
+import io.github.grebeshok105.codex.core.ability.AbilityRouter;
 import io.github.grebeshok105.codex.effect.MirrorDimensionController;
 import io.github.grebeshok105.codex.effect.ModEffects;
 import io.github.grebeshok105.codex.hero.DoomsdayHero;
@@ -10,8 +10,8 @@ import io.github.grebeshok105.codex.hero.HomelanderHero;
 import io.github.grebeshok105.codex.hero.IronManHero;
 import io.github.grebeshok105.codex.hero.PandoraHero;
 import io.github.grebeshok105.codex.hero.ScaramoucheHero;
-import io.github.grebeshok105.codex.resource.ResourceKind;
-import io.github.grebeshok105.codex.transform.HeroDataStore;
+import io.github.grebeshok105.codex.core.resource.ResourceKind;
+import io.github.grebeshok105.codex.core.transform.HeroDataStore;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;

@@ -16,7 +16,7 @@ import io.github.grebeshok105.codex.effect.ReinhardSwordDeathMarkController;
 import io.github.grebeshok105.codex.effect.ReinhardSwordDrawCeremonyController;
 import io.github.grebeshok105.codex.effect.ReinhardSwordDrawGateController;
 import io.github.grebeshok105.codex.effect.ReinhardTimeSlowController;
-import io.github.grebeshok105.codex.hero.Hero;
+import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.hero.ReinhardHero;
 
 public final class ReinhardModule implements HeroModule {

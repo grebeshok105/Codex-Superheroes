@@ -7,7 +7,7 @@ import io.github.grebeshok105.codex.ability.LokiMindCharmAbility;
 import io.github.grebeshok105.codex.ability.LokiTesseractBlinkAbility;
 import io.github.grebeshok105.codex.core.module.HeroModule;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
-import io.github.grebeshok105.codex.hero.Hero;
+import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.hero.LokiHero;
 
 public final class LokiModule implements HeroModule {

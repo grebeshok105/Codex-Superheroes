@@ -1,10 +1,10 @@
 package io.github.grebeshok105.codex.effect;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.attachment.ModAttachments;
-import io.github.grebeshok105.codex.hero.AttributeModifierSet;
+import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
+import io.github.grebeshok105.codex.core.hero.AttributeModifierSet;
 import io.github.grebeshok105.codex.hero.BattleBeastHero;
-import io.github.grebeshok105.codex.transform.HeroData;
+import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -226,7 +226,7 @@ public final class BattleBeastCurseController {
 	}
 
 	private static boolean isBattleBeast(Player player) {
-		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
+		HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
 		return BattleBeastHero.ID.equals(data.heroId());
 	}
 

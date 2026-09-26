@@ -1,11 +1,12 @@
 package io.github.grebeshok105.codex.item;
 
 import io.github.grebeshok105.codex.attachment.ModAttachments;
+import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.effect.RegulusMadnessController;
 import io.github.grebeshok105.codex.effect.RegulusMadnessState;
 import io.github.grebeshok105.codex.hero.RegulusHero;
-import io.github.grebeshok105.codex.transform.HeroData;
-import io.github.grebeshok105.codex.transform.TooltipFrame;
+import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.core.transform.TooltipFrame;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -41,7 +42,7 @@ public class EvangelionItem extends Item {
 		if (!(player instanceof ServerPlayer sp)) {
 			return InteractionResultHolder.consume(stack);
 		}
-		HeroData data = sp.getAttachedOrCreate(ModAttachments.HERO_DATA);
+		HeroData data = sp.getAttachedOrCreate(CoreAttachments.HERO_DATA);
 		if (!data.hasHero() || !RegulusHero.ID.equals(data.heroId())) {
 			sp.displayClientMessage(Component.translatable("item.superheroes.evangelion.not_regulus")
 					.withStyle(ChatFormatting.GRAY), true);

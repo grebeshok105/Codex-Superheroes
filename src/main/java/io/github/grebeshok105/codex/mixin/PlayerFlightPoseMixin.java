@@ -1,8 +1,8 @@
 package io.github.grebeshok105.codex.mixin;
 
-import io.github.grebeshok105.codex.attachment.ModAttachments;
+import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.effect.FlightController;
-import io.github.grebeshok105.codex.transform.HeroData;
+import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.player.Player;
 import org.spongepowered.asm.mixin.Mixin;
@@ -15,7 +15,7 @@ public abstract class PlayerFlightPoseMixin {
 	@Inject(method = "updatePlayerPose", at = @At("HEAD"), cancellable = true)
 	private void superheroes$forceFlightPose(CallbackInfo ci) {
 		Player self = (Player) (Object) this;
-		HeroData data = self.getAttachedOrCreate(ModAttachments.HERO_DATA);
+		HeroData data = self.getAttachedOrCreate(CoreAttachments.HERO_DATA);
 		if (!data.hasHero()) {
 			return;
 		}

@@ -1,14 +1,14 @@
 package io.github.grebeshok105.codex.effect;
 
-import io.github.grebeshok105.codex.attachment.ModAttachments;
 import io.github.grebeshok105.codex.combat.TargetFilters;
+import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.hero.RaidenHero;
 import io.github.grebeshok105.codex.item.MusouNoHitotachiItem;
-import io.github.grebeshok105.codex.network.ScreenShakeS2CPayload;
+import io.github.grebeshok105.codex.core.net.ScreenShakeS2CPayload;
 import io.github.grebeshok105.codex.particle.ModParticles;
 import io.github.grebeshok105.codex.sound.ModSounds;
-import io.github.grebeshok105.codex.transform.HeroData;
-import io.github.grebeshok105.codex.world.WorldDestructionPolicy;
+import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.mechanic.world.WorldDestructionPolicy;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.BlockPos;
@@ -335,7 +335,7 @@ public final class RaidenMusouIsshinController {
 	}
 
 	private static boolean isRaiden(ServerPlayer player) {
-		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
+		HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
 		return data.hasHero() && RaidenHero.ID.equals(data.heroId());
 	}
 

@@ -1,9 +1,9 @@
 package io.github.grebeshok105.codex.core.module;
 
-import io.github.grebeshok105.codex.ability.AbilityRegistry;
-import io.github.grebeshok105.codex.lifecycle.HeroTickDispatcher;
-import io.github.grebeshok105.codex.lifecycle.LifecycleRegistrar;
-import io.github.grebeshok105.codex.lifecycle.TickRegistrar;
+import io.github.grebeshok105.codex.core.ability.AbilityRegistry;
+import io.github.grebeshok105.codex.core.lifecycle.HeroTickDispatcher;
+import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
+import io.github.grebeshok105.codex.core.lifecycle.TickRegistrar;
 
 public final class CoreModuleContext implements HeroModuleContext {
 	public static final CoreModuleContext INSTANCE = new CoreModuleContext();

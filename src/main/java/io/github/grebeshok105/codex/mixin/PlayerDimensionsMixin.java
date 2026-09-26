@@ -1,8 +1,8 @@
 package io.github.grebeshok105.codex.mixin;
 
-import io.github.grebeshok105.codex.attachment.ModAttachments;
-import io.github.grebeshok105.codex.hero.Hero;
-import io.github.grebeshok105.codex.hero.Heroes;
+import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
+import io.github.grebeshok105.codex.core.hero.Hero;
+import io.github.grebeshok105.codex.core.hero.Heroes;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.player.Player;
@@ -18,7 +18,7 @@ public abstract class PlayerDimensionsMixin {
 		Player self = (Player) (Object) this;
 		// PUBLIC_HERO is synced to every tracking client (audit B14) — remote players
 		// get real hero dimensions instead of the vanilla hitbox.
-		net.minecraft.resources.ResourceLocation heroId = self.getAttached(ModAttachments.PUBLIC_HERO);
+		net.minecraft.resources.ResourceLocation heroId = self.getAttached(CoreAttachments.PUBLIC_HERO);
 		if (heroId == null) {
 			return;
 		}

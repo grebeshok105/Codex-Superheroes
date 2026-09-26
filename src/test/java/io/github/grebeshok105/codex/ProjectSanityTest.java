@@ -1,6 +1,9 @@
 package io.github.grebeshok105.codex;
 
-import com.google.gson.JsonArray;
+import io.github.grebeshok105.codex.core.hero.Hero;
+import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.core.transform.HeroDataStore;
+import io.github.grebeshok105.codex.mechanic.world.WorldDestructionPolicy;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -37,7 +40,7 @@ public final class ProjectSanityTest {
 
 	private static final Pattern HERO_DATA_DIRECT_WRITE = Pattern.compile(
 			"setAttached\\(\\s*(?:[\\w.]+\\.)?HERO_DATA\\b|removeAttached\\(\\s*(?:[\\w.]+\\.)?HERO_DATA\\b"
-					+ "|ModNetworking\\.sync(?:HeroData|Resources)\\(");
+					+ "|(?:ModNetworking|CoreNetworking)\\.sync(?:HeroData|Resources)\\(");
 	private static final Pattern FABRIC_IMPL_IMPORT = Pattern.compile("net\\.fabricmc\\.fabric\\.impl\\.");
 	private static final Pattern CLIENT_ONLY_IMPORT = Pattern.compile("import\\s+net\\.minecraft\\.client\\.|import\\s+net\\.fabricmc\\.fabric\\.api\\.client\\.");
 	private static final Pattern SOUND_NAME = Pattern.compile("\"" + MOD_ID + ":([^\"]+)\"");
@@ -76,8 +79,8 @@ public final class ProjectSanityTest {
 
 	// HeroData has one writer (audit B2): read-modify-write through HeroDataStore, never a stale copy.
 	private static void assertHeroDataHasSingleWriter() throws IOException {
-		Path store = MAIN_JAVA.resolve("io/github/grebeshok105/codex/transform/HeroDataStore.java");
-		Path networking = MAIN_JAVA.resolve("io/github/grebeshok105/codex/network/ModNetworking.java");
+		Path store = MAIN_JAVA.resolve("io/github/grebeshok105/codex/core/transform/HeroDataStore.java");
+		Path networking = MAIN_JAVA.resolve("io/github/grebeshok105/codex/core/net/CoreNetworking.java");
 		forEachJavaFile(MAIN_JAVA, file -> {
 			if (file.equals(store) || file.equals(networking)) {
 				return;
@@ -93,7 +96,7 @@ public final class ProjectSanityTest {
 	// protection, mobGriefing) see every change. Raw level mutations live only
 	// inside the policy itself.
 	private static void assertWorldMutationsGoThroughPolicy() throws IOException {
-		Path policy = MAIN_JAVA.resolve("io/github/grebeshok105/codex/world/WorldDestructionPolicy.java");
+		Path policy = MAIN_JAVA.resolve("io/github/grebeshok105/codex/mechanic/world/WorldDestructionPolicy.java");
 		assert Files.exists(policy) : "WorldDestructionPolicy.java is missing";
 		forEachJavaFile(MAIN_JAVA, file -> {
 			if (file.equals(policy)) {

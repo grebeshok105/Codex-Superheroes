@@ -1,5 +1,6 @@
 package io.github.grebeshok105.codex.client.core.render;
 
+import io.github.grebeshok105.codex.core.hero.Hero;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;

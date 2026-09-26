@@ -2,7 +2,7 @@ package io.github.grebeshok105.codex.entity.ai;
 
 import io.github.grebeshok105.codex.damage.ModDamageTypes;
 import io.github.grebeshok105.codex.entity.HomelanderBossEntity;
-import io.github.grebeshok105.codex.network.ScreenShakeS2CPayload;
+import io.github.grebeshok105.codex.core.net.ScreenShakeS2CPayload;
 import io.github.grebeshok105.codex.sound.ModSounds;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
