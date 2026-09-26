@@ -285,3 +285,10 @@
 - Store shrank exactly 2 lines (Heroes.SCORPION field + clinit call); cycle baseline unchanged.
 - Gametest `scorpionIsRegisteredThroughItsModule` asserts registry↔module list identity + all 4 ability ids. qualityGate 70/70.
 - Runtime (PR head @742ecda): kunai transform, all 4 scorpion abilities (spear/eruption/breath/hellport), suggestion list, regulus sanity — PASS. Pre-existing bug found (NOT regression): Hellport never displaces — `SafeTeleport.clamp` self-collides on the caster's bounding box; files byte-identical to main. Logged for a separate fix ticket.
+
+## Architecture migration — stage B3 (plan 02)
+
+- `TransformationItem(heroId, props, lore)` + `TransformationLore` record (flavor/bullets) — 15 per-item item subclasses deleted; `ModItems` registers all 15 transformation items as plain `new TransformationItem(ModId.of("<heroId>"), props, lore)` with the SAME item ids (`doctor_strange_suit` keeps id, heroId `pandora`). `TooltipFrame` moved item/ → transform/.
+- `blade_of_chaos` keeps its own subclass (`KratosBladeItem`) for the "◆ Contains stone" hint — retained per plan.
+- Item stack `appendHoverText` lore-guarded: openDivider → flavor → empty → bullets → closeDivider — output identical to the deleted overrides.
+- Runtime cross-build verification (old subclasses vs new build, same world/GUI scale, fixed hover coords): goku_gi + scorpion_kunai pixel-perfect; doctor_strange_suit content identical (≤0.78% px residual = fill bleed); blade_of_chaos stone hint identical; kunai right-click → scorpion transform + hellfire HUD PASS. qualityGate 71/71.
