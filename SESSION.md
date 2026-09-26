@@ -332,4 +332,6 @@
 - `C/ClientAbilityVisibility` reads the attachment (absent = all visible, matches old pre-sync behavior); `ClientAbilityFilter` + client tier tables deleted; 6 consumers rewired (AbilityBarHud, RadialMenuHud, AbilitiesTooltipHud, HeroInfoPanelHud, BindingsScreen, SuperheroesClient key dispatch).
 - Sync dispatcher: initially the tail of the core tick table; after merging main post-D2b-1 it registers via `SharedMechanics.registerPost` (runs after all module registers) — identical last-position in PLAYERS order.
 - GameTests +6: tier1 → HIDDEN|LOCKED, tier-up → AVAILABLE, write-on-change.
+- Runtime checklist (runClient, instrumented `[C4-VIS]` attachment-write evidence): Doomsday tiers, Thanos stones, Pandora house, Rem demonism, Regulus counterstrike-only-in-madness, vanity-strip override, no-flicker — all PASSED on 0a1131a; evidence in PR #73 comment.
+- Reviewer fix verified: Regulus COUNTER_STRIKE reads REGULUS_MADNESS attachment, not ModEffects.MADNESS (Homelander milk-madness).
 ||||||| 538416f
