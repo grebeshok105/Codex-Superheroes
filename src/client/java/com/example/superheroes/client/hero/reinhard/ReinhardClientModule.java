@@ -1,7 +1,11 @@
 package com.example.superheroes.client.hero.reinhard;
 
+import com.example.superheroes.ModId;
 import com.example.superheroes.client.core.module.HeroClientContext;
 import com.example.superheroes.client.core.module.HeroClientModule;
+import com.example.superheroes.client.hud.ReinhardCeremonyOverlay;
+import com.example.superheroes.client.hud.ReinhardDarknessOverlay;
+import com.example.superheroes.client.hud.ReinhardSwordDeathOverlay;
 import com.example.superheroes.hero.ReinhardHero;
 import com.example.superheroes.network.ReinhardCeremonyS2CPayload;
 import com.example.superheroes.network.ReinhardDarknessS2CPayload;
@@ -20,6 +24,9 @@ public record ReinhardClientModule() implements HeroClientModule {
 
 	@Override
 	public void register(HeroClientContext ctx) {
+		ctx.hud(1700, ModId.of("reinhard_ceremony"), ReinhardCeremonyOverlay::render);
+		ctx.hud(2200, ModId.of("reinhard_sword_death"), ReinhardSwordDeathOverlay::render);
+		ctx.hud(2300, ModId.of("reinhard_darkness"), ReinhardDarknessOverlay::render);
 		ctx.receive(ReinhardWishOptionsS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> {
 					Minecraft mc = Minecraft.getInstance();
