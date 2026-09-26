@@ -45,5 +45,6 @@ public final class HeroModules {
 		for (HeroModule module : ALL) {
 			module.register(ctx);
 		}
+		SharedMechanics.registerPost(ctx);
 	}
 }

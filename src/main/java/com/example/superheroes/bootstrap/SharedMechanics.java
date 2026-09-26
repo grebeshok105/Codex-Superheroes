@@ -28,7 +28,6 @@ public final class SharedMechanics {
 	public static void register(HeroModuleContext ctx) {
 		HeroLandingTracker.register(ctx);
 		ctx.ticks().global(HeroLandingTracker::pruneGonePlayers);
-		ctx.ticks().player(HeroLandingTracker::tickPlayer);
 		HeroEquipmentLock.register(ctx);
 		ctx.ticks().player(HeroEquipmentLock::tickPlayer);
 		ctx.ticks().player(SuperJumpController::tickPlayer);
@@ -38,10 +37,21 @@ public final class SharedMechanics {
 		ctx.ticks().global(HeroMeleeImpactController::serverTick);
 		ctx.ticks().global(BallisticBodyTracker::tick);
 		ctx.ticks().global(FlightController::cleanup);
-		ctx.ticks().player(FlightController::tickPlayer);
 		ctx.ticks().global(HeavensStrikeController::serverTick);
 		// content rows kept here until their own stage
 		ctx.ticks().level((server, level) -> HordeManager.tick(level));
 		AdminBuildSyncController.register(ctx);
+	}
+
+	/**
+	 * Shared player ticks that must run AFTER the hero modules, preserving the old
+	 * registerTickHandlers order: Unibeam@345 -> Landing@347 -> Flight@380.
+	 * Landing reads UnibeamController.isBusy (written by Unibeam's player tick);
+	 * ViltrumiteCharge/Rush read FlightController.isFlightActive before Flight's
+	 * own player tick refreshed it — both reads keep their old freshness here.
+	 */
+	public static void registerPost(HeroModuleContext ctx) {
+		ctx.ticks().player(HeroLandingTracker::tickPlayer);
+		ctx.ticks().player(FlightController::tickPlayer);
 	}
 }
