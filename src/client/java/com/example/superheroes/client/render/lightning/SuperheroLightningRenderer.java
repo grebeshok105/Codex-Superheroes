@@ -1,6 +1,6 @@
 package com.example.superheroes.client.render.lightning;
 
-import com.example.superheroes.mixin.LightningBoltAccessor;
+import com.example.superheroes.client.mixin.LightningBoltAccessor;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.MultiBufferSource;
