@@ -3,11 +3,11 @@ package com.example.superheroes.effect;
 import com.example.superheroes.ability.AbilityIds;
 import com.example.superheroes.ability.AbilityRouter;
 import com.example.superheroes.attachment.ModAttachments;
+import com.example.superheroes.core.module.HeroModuleContext;
 import com.example.superheroes.hero.KratosHero;
 import com.example.superheroes.network.KratosRageS2CPayload;
 import com.example.superheroes.transform.HeroData;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -33,7 +33,7 @@ public final class KratosRageController {
 	private KratosRageController() {
 	}
 
-	public static void init() {
+	public static void register(HeroModuleContext ctx) {
 		ServerLivingEntityEvents.AFTER_DAMAGE.register((entity, source, baseDamage, damageTaken, blocked) -> {
 			if (entity instanceof ServerPlayer victim && isKratos(victim) && !ACTIVE.contains(victim.getUUID())) {
 				addRage(victim, damageTaken * TAKEN_PER_DMG);
@@ -46,7 +46,7 @@ public final class KratosRageController {
 		});
 
 
-		ServerTickEvents.START_SERVER_TICK.register(server -> {
+		ctx.ticks().start(server -> {
 			RAGE.keySet().removeIf(uuid -> server.getPlayerList().getPlayer(uuid) == null);
 			ACTIVE.removeIf(uuid -> server.getPlayerList().getPlayer(uuid) == null);
 		});

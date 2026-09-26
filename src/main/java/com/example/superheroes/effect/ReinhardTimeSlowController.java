@@ -1,6 +1,7 @@
 package com.example.superheroes.effect;
 
 import com.example.superheroes.combat.TargetFilters;
+import com.example.superheroes.core.module.HeroModuleContext;
 import com.example.superheroes.lifecycle.ControlLockKind;
 import com.example.superheroes.lifecycle.EntityControlLock;
 import com.example.superheroes.network.ReinhardTimeSlowS2CPayload;
@@ -56,7 +57,7 @@ public final class ReinhardTimeSlowController {
 	private ReinhardTimeSlowController() {
 	}
 
-	public static void init() {
+	public static void register(HeroModuleContext ctx) {
 
 		// Триггер ТОЛЬКО от ручного ЛКМ (AttackEntityCallback), а не от любого источника урона.
 		// Контратаки/риспосты/AoE-абилки больше не активируют замедление.

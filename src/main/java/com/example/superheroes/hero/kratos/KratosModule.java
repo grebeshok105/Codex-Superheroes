@@ -7,6 +7,8 @@ import com.example.superheroes.ability.KratosLeviathanThrowAbility;
 import com.example.superheroes.ability.KratosSpartanRageAbility;
 import com.example.superheroes.core.module.HeroModule;
 import com.example.superheroes.core.module.HeroModuleContext;
+import com.example.superheroes.effect.KratosHandStrikeFxController;
+import com.example.superheroes.effect.KratosRageController;
 import com.example.superheroes.hero.Hero;
 import com.example.superheroes.hero.KratosHero;
 
@@ -25,5 +27,9 @@ public final class KratosModule implements HeroModule {
 		ctx.abilities().register(new KratosChainWhirlAbility());
 		ctx.abilities().register(new KratosLeviathanThrowAbility());
 		ctx.abilities().register(new KratosGodSlayerAbility());
+
+		KratosRageController.register(ctx);
+		KratosHandStrikeFxController.register(ctx);
+		ctx.ticks().global(KratosRageController::serverTick);
 	}
 }

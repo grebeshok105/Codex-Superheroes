@@ -32,7 +32,6 @@ public final class ProjectSanityTest {
 	private static final Path MAIN_RESOURCES = ROOT.resolve("src/main/resources");
 	private static final Path GENERATED_RESOURCES = ROOT.resolve("src/main/generated");
 	private static final List<Path> RESOURCE_ROOTS = List.of(MAIN_RESOURCES, GENERATED_RESOURCES);
-	private static final Path SUPERHEROES_MOD = MAIN_JAVA.resolve("com/example/superheroes/SuperheroesMod.java");
 	private static final Path FABRIC_MOD_JSON = MAIN_RESOURCES.resolve("fabric.mod.json");
 	private static final String MOD_ID = "superheroes";
 
@@ -41,7 +40,6 @@ public final class ProjectSanityTest {
 					+ "|ModNetworking\\.sync(?:HeroData|Resources)\\(");
 	private static final Pattern FABRIC_IMPL_IMPORT = Pattern.compile("net\\.fabricmc\\.fabric\\.impl\\.");
 	private static final Pattern CLIENT_ONLY_IMPORT = Pattern.compile("import\\s+net\\.minecraft\\.client\\.|import\\s+net\\.fabricmc\\.fabric\\.api\\.client\\.");
-	private static final Pattern STATIC_INIT = Pattern.compile("public static void init\\(\\)");
 	private static final Pattern SOUND_NAME = Pattern.compile("\"" + MOD_ID + ":([^\"]+)\"");
 	private static final Pattern DIRECT_WORLD_MUTATION = Pattern.compile(
 			"\\.(?:destroyBlock|removeBlock|setBlock|setBlockAndUpdate)\\(");
@@ -54,7 +52,6 @@ public final class ProjectSanityTest {
 		assertLangFilesInSync();
 		assertSoundsJsonResolvesAndAudioIsOggOnly();
 		assertItemModelsResolveToTextures();
-		assertControllersAreWired();
 		assertFabricModJsonSanity();
 		assertHeroDataHasSingleWriter();
 		assertWorldMutationsGoThroughPolicy();
@@ -250,33 +247,6 @@ public final class ProjectSanityTest {
 						: "missing entity." + MOD_ID + "." + ids.group(1) + " in en_us.json (registered in " + file + ")";
 			}
 		}
-	}
-
-	// Convention: a *Controller that declares `public static void init()` must have that init() invoked
-	// from SuperheroesMod.onInitialize() or from a hero/shared module (*Module.java). Removed in stage D2b,
-	// when ticks and lifecycle move behind HeroModuleContext and no controller keeps a static init().
-	private static void assertControllersAreWired() throws IOException {
-		StringBuilder wiring = new StringBuilder(Files.readString(SUPERHEROES_MOD));
-		try (Stream<Path> files = Files.walk(MAIN_JAVA)) {
-			for (Path module : files.filter(p -> p.getFileName().toString().endsWith("Module.java")).toList()) {
-				wiring.append('\n').append(Files.readString(module));
-			}
-		}
-		String wiringSource = wiring.toString();
-		int controllers = 0;
-		try (Stream<Path> files = Files.walk(MAIN_JAVA)) {
-			for (Path file : files.filter(path -> path.getFileName().toString().endsWith("Controller.java")).toList()) {
-				if (!STATIC_INIT.matcher(Files.readString(file)).find()) {
-					continue;
-				}
-				controllers++;
-				String name = file.getFileName().toString().replace(".java", "");
-				assert wiringSource.contains(name + ".init()")
-						: file.getFileName() + " declares public static void init() but " + name
-								+ ".init() is called neither from SuperheroesMod nor from a *Module";
-			}
-		}
-		assert controllers > 0 : "no *Controller with static init() found; this check would pass vacuously";
 	}
 
 	// The shipped descriptor must parse, carry the superheroes id, and declare both entrypoints.

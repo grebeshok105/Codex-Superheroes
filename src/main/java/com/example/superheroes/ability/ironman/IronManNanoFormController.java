@@ -1,6 +1,7 @@
 package com.example.superheroes.ability.ironman;
 
 import com.example.superheroes.attachment.ModAttachments;
+import com.example.superheroes.core.module.HeroModuleContext;
 import com.example.superheroes.hero.AbilityScopedModifiers;
 import com.example.superheroes.network.NanoFormS2CPayload;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
@@ -17,7 +18,7 @@ public final class IronManNanoFormController {
 	private IronManNanoFormController() {
 	}
 
-	public static void init() {
+	public static void register(HeroModuleContext ctx) {
 		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
 			ServerPlayer joining = handler.getPlayer();
 			for (ServerPlayer other : server.getPlayerList().getPlayers()) {

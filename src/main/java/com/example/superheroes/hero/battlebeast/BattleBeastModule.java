@@ -6,6 +6,7 @@ import com.example.superheroes.ability.BattleBeastPredatorLeapAbility;
 import com.example.superheroes.ability.BattleBeastWarRoarAbility;
 import com.example.superheroes.core.module.HeroModule;
 import com.example.superheroes.core.module.HeroModuleContext;
+import com.example.superheroes.effect.BattleBeastCurseController;
 import com.example.superheroes.hero.BattleBeastHero;
 import com.example.superheroes.hero.Hero;
 
@@ -23,5 +24,6 @@ public final class BattleBeastModule implements HeroModule {
 		ctx.abilities().register(new BattleBeastAxeCleaveAbility());
 		ctx.abilities().register(new BattleBeastWarRoarAbility());
 		ctx.abilities().register(new BattleBeastBloodlustAbility());
+		ctx.ticks().player(BattleBeastCurseController::tickPlayer);
 	}
 }

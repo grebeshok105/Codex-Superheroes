@@ -50,38 +50,8 @@ public class SuperheroesMod implements ModInitializer {
 		ModItemGroups.init();
 		ModParticles.init();
 		ModSounds.init();
-		com.example.superheroes.effect.MirrorDimensionController.init();
 		ModNetworking.init();
 		HeroDataStore.init();
-		com.example.superheroes.effect.MadnessFlightController.init();
-		com.example.superheroes.effect.HeroLandingTracker.init();
-		com.example.superheroes.effect.HeroEquipmentLock.init();
-		com.example.superheroes.effect.IronManJarvisController.init();
-		com.example.superheroes.ability.ironman.IronManNanoFormController.init();
-		com.example.superheroes.effect.RegulusTotemController.init();
-		com.example.superheroes.effect.RegulusGreedController.init();
-		com.example.superheroes.effect.RegulusMadnessController.init();
-		com.example.superheroes.effect.IronFistsController.init();
-		com.example.superheroes.effect.InvincibleCombatController.init();
-		com.example.superheroes.effect.OmnimanMomentumController.init();
-		com.example.superheroes.effect.HeroMeleeImpactController.init();
-		com.example.superheroes.effect.RemDemonismController.init();
-		com.example.superheroes.effect.SungJinwooController.init();
-		com.example.superheroes.effect.DoomsdayAdaptationController.init();
-		com.example.superheroes.effect.DoomsdayTierController.init();
-		com.example.superheroes.effect.GokuKiStackController.init();
-		com.example.superheroes.effect.KawarimiController.init();
-		com.example.superheroes.effect.ThanosGauntletStateController.init();
-		com.example.superheroes.ability.ironman.IronManSuitSyncController.init();
-		com.example.superheroes.command.AdminBuildSyncController.init();
-		com.example.superheroes.effect.KratosRageController.init();
-		com.example.superheroes.effect.KratosHandStrikeFxController.init();
-		com.example.superheroes.effect.DoomsdayKryptoniteController.init();
-		com.example.superheroes.effect.ThanosStoneRewardController.init();
-		com.example.superheroes.effect.ReinhardTimeSlowController.init();
-		com.example.superheroes.effect.ReinhardController.init();
-		com.example.superheroes.effect.ReinhardSwordDeathMarkController.init();
-		com.example.superheroes.effect.RaidenPlungingLandingController.init();
 		SuperheroesCommands.init();
 
 		registerTickHandlers();
@@ -241,167 +211,12 @@ public class SuperheroesMod implements ModInitializer {
 	 * table preserves the ordering the old inline lambda had (audit debt 3).
 	 */
 	private static void registerTickHandlers() {
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onGlobalTick(server -> com.example.superheroes.effect.DoomGripController.serverTick());
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onGlobalTick(com.example.superheroes.effect.PandoraDeathController::serverTick);
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onLevelTick((server, level) -> com.example.superheroes.horde.HordeManager.tick(level));
-
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onPlayerTick((server, p, data) -> com.example.superheroes.ability.ChargeTackleAbility.serverTick(p));
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onPlayerTick((server, p, data) -> com.example.superheroes.ability.ViltrumiteChargeAbility.serverTick(p));
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onPlayerTick((server, p, data) -> com.example.superheroes.ability.OmnimanViltrumiteRushAbility.serverTick(p));
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onPlayerTick((server, p, data) -> com.example.superheroes.ability.OmnimanThinkMarkAbility.serverTick(p));
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onPlayerTick((server, p, data) -> com.example.superheroes.ability.ironman.IronManNanoFormController.serverTick(p));
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onPlayerTick((server, p, data) -> com.example.superheroes.ability.GokuKamehamehaAbility.serverTick(p));
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onPlayerTick((server, p, data) -> com.example.superheroes.ability.GokuSpiritBombAbility.serverTick(p));
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onPlayerTick((server, p, data) -> com.example.superheroes.ability.NarutoRasenganAbility.serverTick(p));
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onPlayerTick((server, p, data) -> com.example.superheroes.ability.NarutoOodamaRasenganAbility.serverTick(p));
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onPlayerTick((server, p, data) -> com.example.superheroes.ability.NarutoRasenshurikenAbility.serverTick(p));
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onPlayerTick((server, p, data) -> com.example.superheroes.ability.CapShieldSlamAbility.serverTick(p));
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onPlayerTick((server, p, data) -> com.example.superheroes.ability.RepulsorChargeController.serverTick(p));
-
-		com.example.superheroes.lifecycle.HeroTickDispatcher.onActiveAbilityTick(
-				com.example.superheroes.ability.AbilityIds.NARUTO_SAGE_MODE,
-				(server, p, data) -> com.example.superheroes.ability.NarutoSageModeAbility.serverTick(p));
-		com.example.superheroes.lifecycle.HeroTickDispatcher.onActiveAbilityTick(
-				com.example.superheroes.ability.AbilityIds.GOKU_SUPER_SAIYAN_AURA,
-				(server, p, data) -> com.example.superheroes.ability.GokuSuperSaiyanAuraAbility.serverTick(p));
-
 		// --- audit debt 3 remainder: controllers migrated from self-registered
 		// ServerTickEvents onto HeroTickDispatcher; order mirrors init() order.
 		com.example.superheroes.lifecycle.HeroTickDispatcher
 				.onGlobalTick(com.example.superheroes.lifecycle.PassiveReconciler::serverTick);
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onGlobalTick(com.example.superheroes.effect.ScorpionController::serverTick);
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onGlobalTick(com.example.superheroes.effect.SpatialBindController::tick);
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onGlobalTick(com.example.superheroes.effect.MadnessAftermathController::pruneGonePlayers);
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onGlobalTick(com.example.superheroes.effect.UnibeamController::pruneGonePlayers);
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onGlobalTick(com.example.superheroes.effect.HeroLandingTracker::pruneGonePlayers);
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onGlobalTick(com.example.superheroes.effect.IronManJarvisController::serverTick);
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onGlobalTick(com.example.superheroes.effect.RegulusGreedController::tickFreezes);
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onGlobalTick(com.example.superheroes.effect.GreedCageController::tick);
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onGlobalTick(com.example.superheroes.effect.RegulusMadnessController::tickCounters);
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onGlobalTick(com.example.superheroes.effect.InvincibleCombatController::serverTick);
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onGlobalTick(com.example.superheroes.effect.OmnimanMomentumController::serverTick);
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onGlobalTick(com.example.superheroes.effect.HeroMeleeImpactController::serverTick);
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onGlobalTick(com.example.superheroes.physics.BallisticBodyTracker::tick);
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onGlobalTick(com.example.superheroes.effect.RemDemonismController::serverTick);
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onGlobalTick(com.example.superheroes.effect.UraniumDefenseController::serverTick);
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onGlobalTick(com.example.superheroes.effect.UraniumOffhandController::pruneGonePlayers);
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onGlobalTick(com.example.superheroes.effect.FlightController::cleanup);
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onGlobalTick(com.example.superheroes.effect.KratosRageController::serverTick);
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onGlobalTick(com.example.superheroes.effect.DoomsdayKryptoniteController::serverTick);
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onGlobalTick(com.example.superheroes.effect.ReinhardTimeSlowController::tick);
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onGlobalTick(com.example.superheroes.effect.ReinhardSwordDrawGateController::pruneGonePlayers);
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onGlobalTick(com.example.superheroes.effect.ReinhardSpeedJudgmentController::tick);
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onGlobalTick(com.example.superheroes.effect.RaidenMusouIsshinController::serverTick);
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onGlobalTick(com.example.superheroes.effect.HeavensStrikeController::serverTick);
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onGlobalTick(com.example.superheroes.effect.ThanosSnapWindupController::serverTick);
 
 		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onPlayerTick(com.example.superheroes.effect.ScorpionController::tickPlayer);
-		com.example.superheroes.lifecycle.HeroTickDispatcher
 				.onPlayerTick((server, p, data) -> com.example.superheroes.resource.ResourceController.tick(p));
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onPlayerTick(com.example.superheroes.effect.MadnessAftermathController::tickPlayer);
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onPlayerTick(com.example.superheroes.effect.UnibeamController::tickPlayer);
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onPlayerTick(com.example.superheroes.effect.HeroLandingTracker::tickPlayer);
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onPlayerTick(com.example.superheroes.effect.HeroEquipmentLock::tickPlayer);
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onPlayerTick((server, p, data) -> com.example.superheroes.effect.IronManReactorTracker.tick(p));
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onPlayerTick((server, p, data) -> com.example.superheroes.effect.IronManAutoEjectController
-						.tick(p, server.getTickCount()));
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onPlayerTick(com.example.superheroes.effect.RegulusGreedController::tickPlayer);
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onPlayerTick(com.example.superheroes.effect.RegulusMadnessController::tickPlayer);
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onPlayerTick(com.example.superheroes.effect.SuperJumpController::tickPlayer);
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onPlayerTick(com.example.superheroes.effect.AutoSaturationController::tickPlayer);
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onPlayerTick(com.example.superheroes.effect.HomelanderRegenController::tickPlayer);
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onPlayerTick(com.example.superheroes.effect.HeroPassiveRegenController::tickPlayer);
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onPlayerTick(com.example.superheroes.effect.IronFistsController::tickPlayer);
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onPlayerTick(com.example.superheroes.effect.OmnimanMomentumController::tickPlayer);
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onPlayerTick(com.example.superheroes.effect.BattleBeastCurseController::tickPlayer);
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onPlayerTick(com.example.superheroes.effect.RemDemonismController::tickPlayer);
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onPlayerTick(com.example.superheroes.effect.RamCompanionController::tickPlayer);
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onPlayerTick(com.example.superheroes.effect.UraniumOffhandController::tickPlayer);
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onPlayerTick(com.example.superheroes.effect.FlightController::tickPlayer);
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onPlayerTick(com.example.superheroes.effect.SungJinwooController::tickPlayer);
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onPlayerTick(com.example.superheroes.effect.MonarchsDomainController::tickPlayer);
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onPlayerTick((server, p, data) -> com.example.superheroes.effect.DoomsdayFootstepsController
-						.tickPlayer(p));
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onPlayerTick(com.example.superheroes.effect.GokuKiResilienceController::tickPlayer);
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onPlayerTick(com.example.superheroes.effect.NarutoWallRunController::tickPlayer);
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onPlayerTick(com.example.superheroes.effect.ThanosGauntletStateController::tickPlayer);
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onPlayerTick(com.example.superheroes.effect.ReinhardController::tickPlayer);
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onPlayerTick(com.example.superheroes.effect.ReinhardSwordDrawCeremonyController::tickPlayer);
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onPlayerTick(com.example.superheroes.effect.ReinhardSwordDrawGateController::tickPlayer);
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onPlayerTick(com.example.superheroes.effect.RaidenBurstController::tickPlayer);
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onPlayerTick(com.example.superheroes.effect.RaidenAuraController::tickPlayer);
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onPlayerTick(com.example.superheroes.effect.RaidenPlungingLandingController::tickPlayer);
 	}
 }

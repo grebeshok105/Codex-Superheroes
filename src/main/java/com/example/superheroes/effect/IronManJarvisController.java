@@ -1,6 +1,7 @@
 package com.example.superheroes.effect;
 
 import com.example.superheroes.attachment.ModAttachments;
+import com.example.superheroes.core.module.HeroModuleContext;
 import com.example.superheroes.hero.IronManHero;
 import com.example.superheroes.jarvis.JarvisQuotes;
 import com.example.superheroes.hero.JarvisThreatClass;
@@ -36,7 +37,7 @@ public final class IronManJarvisController {
 	private IronManJarvisController() {
 	}
 
-	public static void init() {
+	public static void register(HeroModuleContext ctx) {
 
 		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
 			UUID id = handler.getPlayer().getUUID();

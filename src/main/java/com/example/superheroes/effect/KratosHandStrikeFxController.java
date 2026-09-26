@@ -1,6 +1,7 @@
 package com.example.superheroes.effect;
 
 import com.example.superheroes.attachment.ModAttachments;
+import com.example.superheroes.core.module.HeroModuleContext;
 import com.example.superheroes.hero.KratosHero;
 import com.example.superheroes.particle.ModParticles;
 import com.example.superheroes.transform.HeroData;
@@ -21,7 +22,7 @@ public final class KratosHandStrikeFxController {
 	private KratosHandStrikeFxController() {
 	}
 
-	public static void init() {
+	public static void register(HeroModuleContext ctx) {
 		ServerLivingEntityEvents.AFTER_DAMAGE.register((entity, source, baseDamage, damageTaken, blocked) -> {
 			Entity src = source.getEntity();
 			if (!(src instanceof ServerPlayer attacker)) return;

@@ -1,6 +1,7 @@
 package com.example.superheroes.effect;
 
 import com.example.superheroes.attachment.ModAttachments;
+import com.example.superheroes.core.module.HeroModuleContext;
 import com.example.superheroes.hero.CaptainAmericaHero;
 import com.example.superheroes.hero.KratosHero;
 import com.example.superheroes.hero.LokiHero;
@@ -44,7 +45,7 @@ public final class ThanosStoneRewardController {
 	private ThanosStoneRewardController() {
 	}
 
-	public static void init() {
+	public static void register(HeroModuleContext ctx) {
 		ServerLivingEntityEvents.AFTER_DEATH.register((entity, source) -> {
 			if (!(entity instanceof ServerPlayer victim)) return;
 			HeroData victimData = victim.getAttachedOrCreate(ModAttachments.HERO_DATA);

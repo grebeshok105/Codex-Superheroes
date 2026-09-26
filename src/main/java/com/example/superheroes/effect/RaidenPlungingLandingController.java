@@ -2,6 +2,7 @@ package com.example.superheroes.effect;
 
 import com.example.superheroes.ability.RaidenPlungingStrikeAbility;
 import com.example.superheroes.attachment.ModAttachments;
+import com.example.superheroes.core.module.HeroModuleContext;
 import com.example.superheroes.hero.RaidenHero;
 import com.example.superheroes.transform.HeroData;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
@@ -22,7 +23,7 @@ public final class RaidenPlungingLandingController {
 	private RaidenPlungingLandingController() {
 	}
 
-	public static void init() {
+	public static void register(HeroModuleContext ctx) {
 		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) ->
 				PREV_ON_GROUND.remove(handler.getPlayer().getUUID()));
 	}

@@ -1,6 +1,7 @@
 package com.example.superheroes.effect;
 
 import com.example.superheroes.attachment.ModAttachments;
+import com.example.superheroes.core.module.HeroModuleContext;
 import com.example.superheroes.hero.DoomsdayHero;
 import com.example.superheroes.hero.AbilityScopedModifiers;
 import com.example.superheroes.network.DoomsdayProgressS2CPayload;
@@ -30,7 +31,7 @@ public final class DoomsdayTierController {
 	private DoomsdayTierController() {
 	}
 
-	public static void init() {
+	public static void register(HeroModuleContext ctx) {
 		ServerLivingEntityEvents.AFTER_DEATH.register((entity, source) -> {
 			if (!(entity instanceof ServerPlayer player)) return;
 			if (!isDoomsday(player)) return;
