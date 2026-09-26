@@ -1,10 +1,10 @@
 package io.github.grebeshok105.codex.network;
 
 import io.github.grebeshok105.codex.core.net.CoreNetworking;
+import io.github.grebeshok105.codex.core.net.FxBroadcast;
 import io.github.grebeshok105.codex.effect.HeroMeleeImpactController;
 import io.github.grebeshok105.codex.effect.SuperJumpController;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
-import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
@@ -80,48 +80,27 @@ public final class ModNetworking {
 			io.github.grebeshok105.codex.flight.FlightPhase phase, float horizontalSpeed, boolean active) {
 		FlightStateS2CPayload payload = new FlightStateS2CPayload(
 				player.getId(), active, mode.ordinal(), phase.ordinal(), horizontalSpeed);
-		ServerPlayNetworking.send(player, payload);
-		for (ServerPlayer observer : PlayerLookup.tracking(player)) {
-			if (observer != player) {
-				ServerPlayNetworking.send(observer, payload);
-			}
-		}
+		FxBroadcast.trackingAndSelf(player, payload);
 	}
 
 
 	public static void broadcastLaser(ServerPlayer shooter, Vec3 start, Vec3 end) {
 		LaserFiredS2CPayload payload = new LaserFiredS2CPayload(shooter.getUUID(), start, end);
-		for (ServerPlayer observer : PlayerLookup.tracking(shooter)) {
-			if (observer != shooter) {
-				ServerPlayNetworking.send(observer, payload);
-			}
-		}
+		FxBroadcast.tracking(shooter, payload);
 	}
 
 	public static void broadcastLaserFromEntity(net.minecraft.world.entity.Entity shooter, Vec3 start, Vec3 end) {
 		LaserFiredS2CPayload payload = new LaserFiredS2CPayload(shooter.getUUID(), start, end);
-		for (ServerPlayer observer : PlayerLookup.tracking(shooter)) {
-			ServerPlayNetworking.send(observer, payload);
-		}
+		FxBroadcast.tracking(shooter, payload);
 	}
 
 	public static void broadcastRepulsor(ServerPlayer shooter, Vec3 start, Vec3 end) {
 		RepulsorBlastS2CPayload payload = new RepulsorBlastS2CPayload(shooter.getUUID(), start, end);
-		ServerPlayNetworking.send(shooter, payload);
-		for (ServerPlayer observer : PlayerLookup.tracking(shooter)) {
-			if (observer != shooter) {
-				ServerPlayNetworking.send(observer, payload);
-			}
-		}
+		FxBroadcast.trackingAndSelf(shooter, payload);
 	}
 
 	public static void broadcastThanosCosmicBeam(ServerPlayer shooter, Vec3 start, Vec3 end) {
 		ThanosCosmicBeamS2CPayload payload = new ThanosCosmicBeamS2CPayload(shooter.getUUID(), start, end);
-		ServerPlayNetworking.send(shooter, payload);
-		for (ServerPlayer observer : PlayerLookup.tracking(shooter)) {
-			if (observer != shooter) {
-				ServerPlayNetworking.send(observer, payload);
-			}
-		}
+		FxBroadcast.trackingAndSelf(shooter, payload);
 	}
 }
