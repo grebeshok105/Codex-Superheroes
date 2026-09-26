@@ -44,7 +44,7 @@
 **Проблема.** Было: IronFists → InvincibleCombat → OmnimanMomentum → HeroMeleeImpact → ReinhardTimeSlow. Стало: IronFists → TimeSlow → InvincibleCombat → OmnimanMomentum → MeleeImpact. TimeSlow возвращает `FAIL` для замороженного атакующего, и цепочка обрывается. Замороженный Invincible или Omniman больше не запускает свои on-hit эффекты.
 
 **Сделать.** Выбрать один вариант:
-- (а) вернуть старое поведение: перенести запрет атаки замороженным в `SharedMechanics.registerPost` после MeleeImpact;
+- (а) вернуть старое поведение: исполнять запрет атаки замороженным после MeleeImpact через общий механизм упорядочивания attack-callback'ов (например, явный приоритет/фаза), без переноса hero-специфичной логики в `SharedMechanics` — прямой импорт `ReinhardTimeSlowController` в shared-wiring вернёт связь герой ↔ ядро, которую миграция убирала;
 - (б) принять новое поведение отдельным коммитом `behavior(reinhard-time-slow): …` с GameTest «замороженный Invincible не наносит on-hit эффект».
 
 **Приёмка.** GameTest фиксирует выбранное поведение. Описание в «Изменения поведения», если вариант (б).
@@ -94,13 +94,15 @@
 - писать вложение сразу при трансформации и входе игрока;
 - на клиенте не показывать способности героя, пока вложение не пришло.
 
-**Приёмка.** GameTest: сразу после трансформации в Doomsday способности выше tier 1 недоступны клиенту. Исправлено утверждение «absent = старое поведение».
+Учесть устаревшее вложение: после смены героя attachment прошлого героя непустой, и `visibilityOf` вернёт AVAILABLE для id нового героя, которых там нет. Клиентское решение должно сбрасывать/игнорировать вложение, не соответствующее текущему `HeroData` (связать attachment с heroId или очищать при смене героя).
+
+**Приёмка.** GameTest: сразу после трансформации в Doomsday способности выше tier 1 недоступны клиенту; то же при смене героя с непустым вложением. Исправлено утверждение «absent = старое поведение». Клиентскую ветку GameTest не покрывает — верификация через `runClient` или вынос `visibilityOf` в тестируемую чистую функцию.
 
 ### F7. Неописанные изменения в C4 (из #73, Minor)
 
 **Проблема.**
 - Правило COUNTER_STRIKE стало действовать только для Regulus, раньше было глобальным. Эквивалентно, только если COUNTER_STRIKE есть лишь у Regulus (проверить).
-- Панель Thanos обновляется каждый тик, раньше маска приходила раз в 10 тиков.
+- Задержка видимости способностей уменьшилась с 10 тиков до 1: `AbilityAvailabilitySync` вычисляет маску каждый тик и пишет attachment при изменении. Сама панель Thanos по-прежнему обновляется раз в 10 тиков (`% 10` в `ThanosGauntletStateController` на месте) — речь о латентности синка, не о частоте обновления UI.
 
 **Сделать.** Подтвердить эквивалентность или оформить `behavior:`. Записать в «Решения» плана 04.
 
@@ -121,7 +123,9 @@
 - серверные: `coreDependsOnNothingAboveIt`, `heroModulesDoNotDependOnContentCompatOrBootstrap`, `heroModulesAreReferencedOnlyByThemselvesAndTheModuleList`, `everyHeroModuleIsConstructedInTheModuleList`;
 - клиентские: `clientCoreDoesNotKnowHeroModules`, `clientHeroModulesAreReferencedOnlyByThemselvesAndTheModuleList`, `clientHeroModulesDoNotDependOnEachOther` (модулей уже 22).
 
-**Приёмка.** Переименование пакета `client.hero` или `hero.<id>` роняет тесты.
+`allowEmptyShould(false)` ловит только полное опустошение набора. Чтобы удаление одного модуля тоже роняло тест, связать правила со списком модулей: сверять набор пакетов/классов с `HeroModules.ALL`/`HeroClientModules.ALL` или явным списком, а не только проверять непустоту.
+
+**Приёмка.** Переименование пакета `client.hero` или `hero.<id>` роняет тесты; удаление одного модуля из `HeroModules.ALL` — тоже.
 
 ### F10. Реестры отвергают дубликаты (из #64, #67)
 
@@ -160,12 +164,13 @@
 
 ### F15. Тесты доступности способностей (из #73)
 
+Частично уже покрыто в `AbilityAvailabilityGameTests`: `remDemonAbilitiesNeedDemonism`, `regulusCounterStrikeNeedsMadness`, `vanityStrippedHidesEverything`, `attachmentIsWrittenOnlyOnChange`, `doomsdayTier1HidesDoomGrip`, `doomGripBecomesAvailableAtTier7`, `herolessPlayersNeverGetTheAttachment`. Ниже — оставшиеся пробелы.
+
 **Сделать.** GameTest для:
 - Thanos: камни и snap при 6 камнях;
 - Pandora: открытые и закрытые сессии;
-- Rem с демонизмом: способности появились, ONI_RAGE скрыта;
-- «пишется только при изменении»: и без изменения, и с изменением;
-- переходы: герой → без героя, смена героя, tier 7 → 1, промежуточный tier 4.
+- «пишется только при изменении»: сценарий без изменения есть (`attachmentIsWrittenOnlyOnChange`), дополнить сценарием с изменением;
+- переходы: смена героя на другого, tier 7 → 1, промежуточный tier 4 (герой → без героя уже покрыт `herolessPlayersNeverGetTheAttachment`).
 
 ## F-D. Архитектурный долг
 
@@ -173,7 +178,7 @@
 
 **Проблема.** B2 удалил `HeroAttributes`, но создал новый общий файл с данными 7 героев (Kratos, Reinhard, Raiden, Doomsday, Regulus, Iron Man, Thanos).
 
-**Сделать.** Перенести каждый набор к владельцу (способность, контроллер или класс героя). `DoomsdayHero.passiveAttributes()` возвращает набор текущего tier или пустой набор с комментарием. `buildDoomsdayTierSet` переезжает в `DoomsdayHero`. Убрать override `applyPassives`, которые повторяют default (Scaramouche, BattleBeast). В javadoc `passiveAttributes()` написать, что метод покрывает только модификаторы атрибутов, не эффекты.
+**Сделать.** Перенести каждый набор к владельцу (способность, контроллер или класс героя). `DoomsdayHero.passiveAttributes()` возвращает набор текущего tier или пустой набор с комментарием. `buildDoomsdayTierSet` переезжает в `DoomsdayHero`. В javadoc `passiveAttributes()` написать, что метод покрывает только модификаторы атрибутов, не эффекты. Override `applyPassives` у Scaramouche и BattleBeast НЕ убирать: они вешают эффекты (`SLOW_FALLING`, `MOVEMENT_SPEED`, `JUMP` и `DAMAGE_RESISTANCE`), а не повторяют default — удалять можно только те override'ы, которые реально сводятся к `super.applyPassives`.
 
 **Приёмка.** Файла `hero/AbilityScopedModifiers.java` нет. Id модификаторов не изменились (golden из F14 зелёный). Пары циклов `hero ↔ …` не выросли.
 
@@ -190,7 +195,7 @@
 
 - `TooltipFrame` перенести из `transform/` в нейтральный пакет (`tooltip/` или `ui/`) (из #65).
 - `AdminBuildSyncController` вынести из `SharedMechanics` в core-wiring (из #70).
-- `AbilityRouter` отклоняет способность, если `hero.visibility(...) != AVAILABLE`, либо `visibility` по умолчанию выводится из `canUseAbility` (из #73). Проверить `canActivate` у способностей Rem и COUNTER_STRIKE.
+- `AbilityRouter` отклоняет способность, если `hero.visibility(...) != AVAILABLE`, либо `visibility` по умолчанию выводится из `canUseAbility` (из #73). Важно: проверку видимости ставить ПОСЛЕ ветки деактивации тоггла (`isToggle && isActive → deactivate`) — иначе способность, ставшую HIDDEN во время работы (Rem `ONI_RAGE` при активном демонизме), нельзя выключить повторным нажатием. Проверить `canActivate` у способностей Rem и COUNTER_STRIKE; добавить регрессионный тест на deactivate при скрытой способности.
 - Thanos: обходить камни один раз за `compute`, не создавать объекты без изменений (из #73).
 - `Visibility.LOCKED`: убрать или реализовать на клиенте. `STREAM_CODEC` через `idMapper`/VarInt (из #73).
 - Записать инвариант в javadoc `HeroModuleContext`: `register(ctx)` не трогает реестры и типы пакетов сразу, только в лямбдах (из #70).
@@ -200,7 +205,7 @@
 
 ### F19. Привести документы в соответствие с кодом
 
-- `SESSION.md`: удалить маркеры конфликта (`>>>>>>> origin/main`, `||||||| 538416f`). Оставить один раздел B3, исправить `70/70`/`71/71` и `KratosBladeItem` → `BladeOfChaosItem`. Восстановить заметки D2a-1 под их заголовком (проверить). Убрать ложное утверждение про `ScorpionController.init()`.
+- `SESSION.md`: удалить маркеры конфликта (`>>>>>>> origin/main`, `||||||| 538416f`). Оставить один раздел B3, исправить `70/70`/`71/71` и `KratosBladeItem` → `BladeOfChaosItem`. Восстановить заметки D2a-1 под их заголовком (проверить). Убрать ложное утверждение про `ScorpionController.init()`. Записать, что задачи F1–F4 блокируют старт D2b-2: в спеке это заявлено, а в handoff-документе нет.
 - Раздел «Решения» в плане 03: у `ScorpionController` нет `init()`, Step 2 для Scorpion неприменим, место bootstrap; изменение порядка `AbilityRegistry.all()`; перестановка Scorpion и Pandora в `Heroes`; разделение `HeroMeleeImpact` на `register`/`registerPost`; разделение D2b на D2b-1/D2b-2.
 - План 03: `nothingDependsOnCompositionRoots` это `FreezingArchRule`, а не строгое правило.
 - План 02: откатить лишнюю правку статуса B3 из PR B2 (если ещё актуально).
