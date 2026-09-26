@@ -278,3 +278,10 @@
 - Store shrank exactly 2 lines (Heroes.SCORPION field + clinit call); cycle baseline unchanged.
 - Gametest `scorpionIsRegisteredThroughItsModule` asserts registry↔module list identity + all 4 ability ids. qualityGate 70/70.
 - Runtime (PR head @742ecda): kunai transform, all 4 scorpion abilities (spear/eruption/breath/hellport), suggestion list, regulus sanity — PASS. Pre-existing bug found (NOT regression): Hellport never displaces — `SafeTeleport.clamp` self-collides on the caster's bounding box; files byte-identical to main. Logged for a separate fix ticket.
+
+## Architecture migration — stage CL3a-1 (plan 04)
+
+- Client module contracts landed: `client/core/module/{HeroClientModule,HeroClientContext,CoreClientContext}` (plan-verbatim) + `client/bootstrap/HeroClientModules` + `client/core/input/HeroActionKeys` (one END_CLIENT_TICK drains `consumeClick()` always, fires `onPress` only when local `PUBLIC_HERO` matches; no key mappings registered yet — CL3b owns them).
+- `ScorpionClientModule` owns the `ScorpionFxS2CPayload` receiver (handler byte-identical; `ClientNetworking` lost only that receiver + import — 35→34 in-file + 1 via `ctx.receive`). `heroId() = ScorpionHero.ID` — IN_CLIENT_HERO_MODULE is excluded from the sharedClientCode rule. `HeroClientModules.bootstrap()` runs right after `ClientNetworking.init()`.
+- New ArchUnit client rules (`clientHeroModulesAreReferencedOnlyByThemselvesAndTheModuleList`, `clientCoreDoesNotKnowHeroModules`, `sharedClientCodeDoesNotDependOnConcreteHeroes`) now non-vacuous. qualityGate 71/71.
+- Runtime: receiver proven to fire via temporary `[CL3A1-FX]` println (kind=2 hellfire pillar, kind=1 spear harpoon) — Veil 4.1.2 in classpath, handler dispatches to `VeilScorpionFx`. Kunai→scorpion transform, regulus regression PASS.
