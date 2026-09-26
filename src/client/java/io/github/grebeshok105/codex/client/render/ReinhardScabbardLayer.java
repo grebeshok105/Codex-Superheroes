@@ -74,7 +74,7 @@ public final class ReinhardScabbardLayer extends RenderLayer<AbstractClientPlaye
 		if (mc.player != null && player.getUUID().equals(mc.player.getUUID())) {
 			return ReinhardHero.ID.equals(ClientHeroState.heroId());
 		}
-		ResourceLocation remote = player.getAttached(io.github.grebeshok105.codex.attachment.CoreAttachments.PUBLIC_HERO);
+		ResourceLocation remote = player.getAttached(io.github.grebeshok105.codex.core.attachment.CoreAttachments.PUBLIC_HERO);
 		return ReinhardHero.ID.equals(remote);
 	}
 

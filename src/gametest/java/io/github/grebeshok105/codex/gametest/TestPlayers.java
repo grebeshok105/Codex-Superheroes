@@ -88,7 +88,7 @@ final class TestPlayers {
 	static java.util.Set<java.util.UUID> lockOwners(net.minecraft.world.entity.Entity victim,
 			io.github.grebeshok105.codex.core.lifecycle.ControlLockKind kind) {
 		io.github.grebeshok105.codex.core.lifecycle.ControlLockState state =
-				victim.getAttached(io.github.grebeshok105.codex.attachment.CoreAttachments.CONTROL_LOCKS);
+				victim.getAttached(io.github.grebeshok105.codex.core.attachment.CoreAttachments.CONTROL_LOCKS);
 		io.github.grebeshok105.codex.core.lifecycle.ControlLockState.Entry entry =
 				state == null ? null : state.get(kind);
 		return entry == null ? java.util.Set.of() : entry.owners();
