@@ -1,6 +1,6 @@
 package io.github.grebeshok105.codex.client.hud;
 
-import io.github.grebeshok105.codex.ability.AbilityIds;
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.client.ClientAbilityCooldowns;
 import io.github.grebeshok105.codex.client.ClientAbilityVisibility;
 import io.github.grebeshok105.codex.client.ClientHeroState;
@@ -33,6 +33,8 @@ import java.util.List;
  * the wheel radius, so it never "banks up" off-screen distance.
  */
 public final class RadialMenuHud {
+	// G1 seam: the ability id lives inside hero.reinhard; the hud references the id, not the module.
+	private static final ResourceLocation REINHARD_SWORD_DRAW_ID = ModId.of("reinhard_sword_draw");
 	private static final float DEAD_ZONE = 5f;
 	private static final int OUTER_R = 98;
 	private static final int INNER_R = 42;
@@ -296,8 +298,8 @@ public final class RadialMenuHud {
 			}
 
 			// Reinhard sword-draw ready halo (small gold ring around icon)
-			boolean swordDrawReady = AbilityIds.REINHARD_SWORD_DRAW.equals(aid)
-					&& !ClientHeroState.data().isActive(AbilityIds.REINHARD_SWORD_DRAW)
+			boolean swordDrawReady = REINHARD_SWORD_DRAW_ID.equals(aid)
+					&& !ClientHeroState.data().isActive(REINHARD_SWORD_DRAW_ID)
 					&& io.github.grebeshok105.codex.client.ClientReinhardSwordGateState.ready();
 			if (swordDrawReady) {
 				float pulse = 0.55f + 0.45f * (float) Math.sin(System.currentTimeMillis() / 220.0);

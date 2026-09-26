@@ -301,7 +301,7 @@ public class SuperheroesClient implements ClientModInitializer {
 			return true;
 		}
 		if (stack.getItem() instanceof net.minecraft.world.item.BlockItem
-				|| stack.getItem() instanceof io.github.grebeshok105.codex.item.RoyalIcicleItem) {
+				|| stack.is(net.minecraft.core.registries.BuiltInRegistries.ITEM.get(ModId.of("royal_icicle")))) {
 			return false;
 		}
 		return stack.getUseAnimation() == net.minecraft.world.item.UseAnim.NONE;

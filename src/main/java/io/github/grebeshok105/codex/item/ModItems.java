@@ -172,20 +172,6 @@ public final class ModItems {
 			new KryptoniteShardItem(new Item.Properties().stacksTo(16).rarity(Rarity.RARE))
 	);
 
-	public static final TransformationItem REINHARD_SUIT = register(
-			"reinhard_suit",
-			new TransformationItem(ModId.of("reinhard"), new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC),
-					new TransformationLore(ChatFormatting.GOLD,
-							List.of(new TransformationLore.Line("item.superheroes.reinhard_suit.lore.line1", ChatFormatting.GOLD),
-									new TransformationLore.Line("item.superheroes.reinhard_suit.lore.line2", ChatFormatting.DARK_GRAY)),
-							List.of(new TransformationLore.Line("item.superheroes.reinhard_suit.lore.usage", ChatFormatting.YELLOW),
-									new TransformationLore.Line("item.superheroes.reinhard_suit.lore.untransform", ChatFormatting.RED))))
-	);
-
-	public static final RoyalIcicleItem ROYAL_ICICLE = register(
-			"royal_icicle",
-			new RoyalIcicleItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
-	);
 
 	public static final TransformationItem RAIDEN_SUIT = register(
 			"raiden_suit",

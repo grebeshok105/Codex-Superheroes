@@ -2,7 +2,7 @@ package io.github.grebeshok105.codex.gametest;
 
 import io.github.grebeshok105.codex.damage.ModDamageTypes;
 import io.github.grebeshok105.codex.effect.KawarimiController;
-import io.github.grebeshok105.codex.effect.ReinhardTimeSlowController;
+import io.github.grebeshok105.codex.hero.reinhard.runtime.ReinhardTimeSlowController;
 import io.github.grebeshok105.codex.core.lifecycle.ControlLockKind;
 import io.github.grebeshok105.codex.hero.NarutoHero;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;

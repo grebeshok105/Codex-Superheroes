@@ -5,6 +5,7 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.BootstrapContext;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.tags.TagKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageEffects;
 import net.minecraft.world.damagesource.DamageScaling;
@@ -48,6 +49,9 @@ public final class ModDamageTypes {
 	public static final ResourceKey<DamageType> HOMELANDER_ROAR_BOSS = key("homelander_roar_boss");
 	public static final ResourceKey<DamageType> HOMELANDER_MELEE = key("homelander_melee");
 	public static final ResourceKey<DamageType> SPACE_CRUSH = key("space_crush");
+
+	/** Beam-type damage — read by hero code instead of a hardcoded key list (populated by datagen). */
+	public static final TagKey<DamageType> BEAM = TagKey.create(Registries.DAMAGE_TYPE, ModId.of("beam"));
 
 	private ModDamageTypes() {
 	}

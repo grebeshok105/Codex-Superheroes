@@ -2,20 +2,23 @@ package io.github.grebeshok105.codex.gametest;
 
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.ability.RaidenSwordDrawAbility;
-import io.github.grebeshok105.codex.ability.ReinhardSwordDrawAbility;
+import io.github.grebeshok105.codex.hero.reinhard.runtime.ReinhardSword;
 import io.github.grebeshok105.codex.attachment.ModAttachments;
 import io.github.grebeshok105.codex.core.lifecycle.EntityControlLock;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
 import io.github.grebeshok105.codex.effect.KratosRageController;
 import io.github.grebeshok105.codex.effect.RaidenState;
-import io.github.grebeshok105.codex.effect.ReinhardState;
-import io.github.grebeshok105.codex.effect.ReinhardSwordDrawCeremonyController;
-import io.github.grebeshok105.codex.effect.ReinhardTimeSlowController;
+import io.github.grebeshok105.codex.hero.reinhard.runtime.ReinhardState;
+import io.github.grebeshok105.codex.hero.reinhard.runtime.ReinhardSwordDrawCeremonyController;
+import io.github.grebeshok105.codex.hero.reinhard.runtime.ReinhardTimeSlowController;
 import io.github.grebeshok105.codex.core.lifecycle.ControlLockKind;
 import io.github.grebeshok105.codex.hero.AbilityScopedModifiers;
 import io.github.grebeshok105.codex.hero.KratosHero;
 import io.github.grebeshok105.codex.hero.RaidenHero;
-import io.github.grebeshok105.codex.hero.ReinhardHero;
+import io.github.grebeshok105.codex.hero.reinhard.ReinhardHero;
+import io.github.grebeshok105.codex.hero.reinhard.ReinhardAttachments;
+import io.github.grebeshok105.codex.hero.reinhard.ReinhardItems;
+import io.github.grebeshok105.codex.hero.reinhard.runtime.ReinhardModifiers;
 import io.github.grebeshok105.codex.item.ModItems;
 import io.github.grebeshok105.codex.core.transform.HeroTransformService;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
@@ -77,36 +80,36 @@ public final class HeroModuleLifecycleGameTests implements FabricGameTest {
 	public void reinhardHeroClearResetsAdaptationsAndDraw(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, ReinhardHero.ID);
-		ReinhardState armed = player.getAttachedOrCreate(ModAttachments.REINHARD_STATE)
+		ReinhardState armed = player.getAttachedOrCreate(ReinhardAttachments.STATE)
 				.withPhase(3)
 				.withAccumulatedDamage(100f)
 				.withPhoenixUsed(true)
 				.withInSecondComing(true)
 				.withSwordDrawn(true)
 				.withAdaptedDamageTypes(List.of("minecraft:generic"));
-		player.setAttached(ModAttachments.REINHARD_STATE, armed);
-		AbilityScopedModifiers.buildReinhardPhaseSet(3).apply(player);
-		AbilityScopedModifiers.REINHARD_DRAW.apply(player);
-		AbilityScopedModifiers.REINHARD_SECOND_COMING.apply(player);
-		helper.assertTrue(ReinhardSwordDrawAbility.giveSword(player), "Royal Icicle given");
+		player.setAttached(ReinhardAttachments.STATE, armed);
+		ReinhardModifiers.buildReinhardPhaseSet(3).apply(player);
+		ReinhardModifiers.REINHARD_DRAW.apply(player);
+		ReinhardModifiers.REINHARD_SECOND_COMING.apply(player);
+		helper.assertTrue(ReinhardSword.giveSword(player), "Royal Icicle given");
 
 		HeroTransformService.forceUntransform(player);
 
-		ReinhardState after = player.getAttachedOrCreate(ModAttachments.REINHARD_STATE);
+		ReinhardState after = player.getAttachedOrCreate(ReinhardAttachments.STATE);
 		helper.assertTrue(after.phase() == 1 && after.accumulatedDamage() == 0f
 						&& !after.phoenixUsed() && !after.inSecondComing() && !after.swordDrawn()
 						&& after.adaptedDamageTypes().isEmpty() && after.recentDamageTypes().isEmpty(),
 				"hero clear resets the Reinhard attachment");
 		helper.assertTrue(player.getAttribute(Attributes.ATTACK_DAMAGE)
-						.getModifier(AbilityScopedModifiers.REINHARD_PHASE_DAMAGE) == null,
+						.getModifier(ReinhardModifiers.REINHARD_PHASE_DAMAGE) == null,
 				"phase modifiers stripped");
 		helper.assertTrue(player.getAttribute(Attributes.ATTACK_DAMAGE)
-						.getModifier(AbilityScopedModifiers.REINHARD_DRAW_DAMAGE) == null,
+						.getModifier(ReinhardModifiers.REINHARD_DRAW_DAMAGE) == null,
 				"draw modifiers stripped");
 		helper.assertTrue(player.getAttribute(Attributes.ATTACK_DAMAGE)
-						.getModifier(AbilityScopedModifiers.REINHARD_SECOND_COMING_DAMAGE) == null,
+						.getModifier(ReinhardModifiers.REINHARD_SECOND_COMING_DAMAGE) == null,
 				"second-coming modifiers stripped");
-		helper.assertTrue(TestPlayers.count(player, ModItems.ROYAL_ICICLE) == 0,
+		helper.assertTrue(TestPlayers.count(player, ReinhardItems.ROYAL_ICICLE) == 0,
 				"bound sword revoked");
 		TestPlayers.leave(player);
 		helper.succeed();
@@ -146,8 +149,8 @@ public final class HeroModuleLifecycleGameTests implements FabricGameTest {
 	public void reinhardCeremonyDeathThawsFrozenMobs(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, ReinhardHero.ID);
-		player.setAttached(ModAttachments.REINHARD_STATE,
-				player.getAttachedOrCreate(ModAttachments.REINHARD_STATE).withPhoenixUsed(true));
+		player.setAttached(ReinhardAttachments.STATE,
+				player.getAttachedOrCreate(ReinhardAttachments.STATE).withPhoenixUsed(true));
 		Zombie zombie = helper.spawn(EntityType.ZOMBIE, 1, 1, 1);
 		player.teleportTo(zombie.getX() + 2.0, zombie.getY(), zombie.getZ());
 		// See the leave variant: the ceremony's area scan needs the spawn entity-visible.

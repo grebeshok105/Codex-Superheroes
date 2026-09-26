@@ -1,14 +1,12 @@
 package io.github.grebeshok105.codex.debug;
 
-import io.github.grebeshok105.codex.ability.AbilityIds;
+import io.github.grebeshok105.codex.core.ability.Ability;
+import io.github.grebeshok105.codex.core.ability.AbilityRegistry;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Mob;
 
-import java.util.Set;
-
 public final class AdminAbilityDebug {
-	private static final Set<ResourceLocation> MOB_TARGET_ABILITIES = Set.of(AbilityIds.REINHARD_SPEED_JUDGMENT);
 	private static volatile boolean playerOnlyAbilitiesTargetMobs;
 
 	private AdminAbilityDebug() {
@@ -18,8 +16,13 @@ public final class AdminAbilityDebug {
 		return playerOnlyAbilitiesTargetMobs;
 	}
 
+	/**
+	 * Mob-targeting support is an {@link Ability} trait now (R18: debug code must not name
+	 * concrete heroes), resolved through the registry instead of a content id list.
+	 */
 	public static boolean supportsMobTargets(ResourceLocation abilityId) {
-		return MOB_TARGET_ABILITIES.contains(abilityId);
+		Ability ability = AbilityRegistry.get(abilityId);
+		return ability != null && ability.debugTargetsMobs();
 	}
 
 	public static boolean canPlayerOnlyAbilityTargetMobs(ResourceLocation abilityId) {

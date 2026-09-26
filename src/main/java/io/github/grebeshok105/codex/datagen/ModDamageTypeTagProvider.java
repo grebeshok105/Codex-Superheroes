@@ -55,5 +55,16 @@ public final class ModDamageTypeTagProvider extends FabricTagProvider<DamageType
 				ModDamageTypes.HOMELANDER_ROAR_BOSS,
 				ModDamageTypes.SPACE_CRUSH
 		);
+
+		// #superheroes:beam — beam-typed damage for a hero's adaptation check (counts even
+		// without a living attacker). Exactly the keys the old hardcoded list had.
+		getOrCreateTagBuilder(ModDamageTypes.BEAM).add(
+				ModDamageTypes.EYE_LASER,
+				ModDamageTypes.REPULSOR,
+				ModDamageTypes.UNIBEAM,
+				ModDamageTypes.HOMELANDER_EYE_LASER,
+				ModDamageTypes.HOMELANDER_HEAT_VISION,
+				ModDamageTypes.GOKU_KAMEHAMEHA
+		);
 	}
 }

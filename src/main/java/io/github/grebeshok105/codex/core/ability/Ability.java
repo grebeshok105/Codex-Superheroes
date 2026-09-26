@@ -27,6 +27,15 @@ public interface Ability {
 		return true;
 	}
 
+	/**
+	 * Whether the admin mob-targeting debug toggle may aim this ability at mobs (default false).
+	 * Read by {@code debug/AdminAbilityDebug} through the registry — debug code must not name
+	 * concrete hero abilities.
+	 */
+	default boolean debugTargetsMobs() {
+		return false;
+	}
+
 	default void onTickActive(ServerPlayer player) {
 	}
 
