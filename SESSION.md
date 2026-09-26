@@ -400,3 +400,9 @@
 - Baseline lost ability<->debug pair; golden regen (reinhard_suit first); store refrozen.
 - Gate green; reviewer APPROVE; runtime 7/7 (bounded on icicle empowered branches — pre-existing, player-scoped).
 - HeavensStrikeController.Variant.REINHARD intentionally remains (G3).
+
+## G2 — Reinhard client module (PR #87)
+- client/hero/reinhard/: state/ (5), hud/ (3), screen/WishScreen, render/ScabbardLayer; module registers muteWorldDuringTimeSlow + swordDrawReadyHalo.
+- Client core seams: ClientSoundFilters + generic SoundEngineMixin (new client.core.mixins.json), AbilityDecoration(s), ctx.soundFilter()/abilityDecoration().
+- Old SoundEngineMixin + RadialMenuHud Reinhard branch deleted; acceptance grep → HeroClientModules only.
+- Gate green; reviewer APPROVE; runtime 8/8 (darkness/sword-death bounded — render path proven, melee trigger env-blocked solo).
