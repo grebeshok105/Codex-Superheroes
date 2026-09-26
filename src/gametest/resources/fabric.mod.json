@@ -32,6 +32,7 @@
 			"io.github.grebeshok105.codex.gametest.AbilityAvailabilityGameTests",
 			"io.github.grebeshok105.codex.gametest.MotionGameTests",
 			"io.github.grebeshok105.codex.gametest.MechanicTargetingGameTests",
+			"io.github.grebeshok105.codex.gametest.ReinhardGameTests",
 			"io.github.grebeshok105.codex.gametest.ScorpionGameTests",
 			"io.github.grebeshok105.codex.gametest.ContentRegistrationGameTests"
 		]
