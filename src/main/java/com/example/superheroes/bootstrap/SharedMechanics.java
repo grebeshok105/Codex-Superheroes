@@ -33,7 +33,6 @@ public final class SharedMechanics {
 		ctx.ticks().player(SuperJumpController::tickPlayer);
 		ctx.ticks().player(AutoSaturationController::tickPlayer);
 		ctx.ticks().player(HeroPassiveRegenController::tickPlayer);
-		HeroMeleeImpactController.register(ctx);
 		ctx.ticks().global(HeroMeleeImpactController::serverTick);
 		ctx.ticks().global(BallisticBodyTracker::tick);
 		ctx.ticks().global(FlightController::cleanup);
@@ -44,13 +43,15 @@ public final class SharedMechanics {
 	}
 
 	/**
-	 * Shared player ticks that must run AFTER the hero modules, preserving the old
-	 * registerTickHandlers order: Unibeam@345 -> Landing@347 -> Flight@380.
-	 * Landing reads UnibeamController.isBusy (written by Unibeam's player tick);
-	 * ViltrumiteCharge/Rush read FlightController.isFlightActive before Flight's
-	 * own player tick refreshed it — both reads keep their old freshness here.
+	 * Shared wiring that must run AFTER the hero modules. Two old orders are kept here:
+	 * AttackEntity listeners — IronFists@64 < ... < MeleeImpact@67 — so IronFists'
+	 * consuming result still short-circuits the generic melee-impact handler;
+	 * player ticks — Unibeam@345 -> Landing@347 -> Flight@380 — so Landing reads
+	 * UnibeamController.isBusy fresh and ViltrumiteCharge/Rush read
+	 * FlightController.isFlightActive before Flight's own player tick refreshed it.
 	 */
 	public static void registerPost(HeroModuleContext ctx) {
+		HeroMeleeImpactController.register(ctx);
 		ctx.ticks().player(HeroLandingTracker::tickPlayer);
 		ctx.ticks().player(FlightController::tickPlayer);
 	}
