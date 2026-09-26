@@ -3,6 +3,7 @@ package com.example.superheroes.gametest;
 import com.example.superheroes.damage.ModDamageTypes;
 import com.example.superheroes.effect.KawarimiController;
 import com.example.superheroes.effect.ReinhardTimeSlowController;
+import com.example.superheroes.lifecycle.ControlLockKind;
 import com.example.superheroes.hero.NarutoHero;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.gametest.framework.GameTest;
@@ -49,20 +50,23 @@ public final class DamagePipelineGameTests implements FabricGameTest {
 		owner.teleportTo(frozen.getX() - 3.0, frozen.getY(), frozen.getZ());
 
 		ReinhardTimeSlowController.triggerAbilitySlow(owner);
-		helper.runAfterDelay(3, () -> {
+		// See HeroModuleLifecycleGameTests: wait for the spawn to be entity-visible first.
+		TestPlayers.awaitVisible(helper, frozen, () -> helper.runAfterDelay(2, () -> {
 			helper.assertTrue(helper.getLevel().getServer().tickRateManager().tickrate() == 20.0f,
 					"time slow must not touch the server tick rate (audit B11)");
-			helper.assertTrue(frozen.isNoAi(),
+			helper.assertTrue(TestPlayers.lockOwners(frozen, ControlLockKind.NO_AI)
+							.contains(owner.getUUID()),
 					"entities inside the freeze radius get a NoAI control lock");
 			helper.assertTrue(ReinhardTimeSlowController.isActive(owner),
 					"the slow is still active for its owner");
 
 			ReinhardTimeSlowController.onPlayerGone(owner);
-			helper.assertTrue(!frozen.isNoAi(),
-					"ending the slow releases the control locks");
+			helper.assertFalse(TestPlayers.lockOwners(frozen, ControlLockKind.NO_AI)
+							.contains(owner.getUUID()),
+					"ending the slow releases the owner's lock ref");
 			TestPlayers.leave(owner);
 			helper.succeed();
-		});
+		}));
 	}
 
 	@GameTest(template = EMPTY_STRUCTURE)

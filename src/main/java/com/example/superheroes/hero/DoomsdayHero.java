@@ -163,6 +163,21 @@ public final class DoomsdayHero implements Hero {
                 return false;
         }
 
+        /**
+         * Death is the adaptation loop: {@code DoomsdayTierController}'s death hook tiers
+         * him up, and {@code removePassives} would reset that progress — so respawn
+         * re-applies passives without removing and death never untransforms him.
+         */
+        @Override
+        public boolean keepsHeroOnDeath() {
+                return true;
+        }
+
+        @Override
+        public void reapplyPassivesAfterRespawn(ServerPlayer player) {
+                applyPassives(player);
+        }
+
         @Override
         public void removePassives(Player player) {
                 PASSIVES.remove(player);

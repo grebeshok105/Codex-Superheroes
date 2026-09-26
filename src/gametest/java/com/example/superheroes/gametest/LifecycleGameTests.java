@@ -5,6 +5,7 @@ import com.example.superheroes.ability.AbilityCooldowns;
 import com.example.superheroes.ability.AbilityIds;
 import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.hero.AttributeModifierSet;
+import com.example.superheroes.hero.DoomsdayHero;
 import com.example.superheroes.hero.RaidenHero;
 import com.example.superheroes.hero.ScaramoucheHero;
 import com.example.superheroes.lifecycle.ControlLockKind;
@@ -18,6 +19,7 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
@@ -44,12 +46,20 @@ public final class LifecycleGameTests implements FabricGameTest {
 		Zombie zombie = helper.spawn(EntityType.ZOMBIE, 1, 1, 1);
 		EntityControlLock.acquire(zombie, ControlLockKind.NO_AI, owner);
 		helper.assertTrue(zombie.isNoAi(), "the lock applied NoAI");
+		helper.assertTrue(TestPlayers.lockOwners(zombie, ControlLockKind.NO_AI)
+				.contains(owner.getUUID()), "the lock records the owner");
 
-		TestPlayers.leave(owner);
+		// releaseOwnedBy resolves the victim by uuid — the spawn must be entity-visible first.
+		TestPlayers.awaitVisible(helper, zombie, () -> {
+			TestPlayers.leave(owner);
 
-		helper.assertFalse(zombie.isNoAi(), "owner leaving restores the mob's own flag");
-		helper.assertFalse(EntityControlLock.isLocked(zombie, ControlLockKind.NO_AI), "lock released");
-		helper.succeed();
+			helper.assertFalse(TestPlayers.lockOwners(zombie, ControlLockKind.NO_AI)
+					.contains(owner.getUUID()), "owner leaving drops the owner's ref");
+			helper.assertValueEqual(zombie.isNoAi(),
+					!TestPlayers.lockOwners(zombie, ControlLockKind.NO_AI).isEmpty(),
+					"flag tracks the owners set");
+			helper.succeed();
+		});
 	}
 
 	@GameTest(template = EMPTY_STRUCTURE)
@@ -61,10 +71,16 @@ public final class LifecycleGameTests implements FabricGameTest {
 		EntityControlLock.acquire(zombie, ControlLockKind.NO_AI, second);
 
 		EntityControlLock.release(zombie, ControlLockKind.NO_AI, first.getUUID());
+		helper.assertFalse(TestPlayers.lockOwners(zombie, ControlLockKind.NO_AI)
+				.contains(first.getUUID()), "the released owner's ref is gone");
 		helper.assertTrue(zombie.isNoAi(), "a second owner still holds the lock");
 
 		EntityControlLock.release(zombie, ControlLockKind.NO_AI, second.getUUID());
-		helper.assertFalse(zombie.isNoAi(), "last release restores the flag");
+		helper.assertFalse(TestPlayers.lockOwners(zombie, ControlLockKind.NO_AI)
+				.contains(second.getUUID()), "last release drops the second ref");
+		helper.assertValueEqual(zombie.isNoAi(),
+				!TestPlayers.lockOwners(zombie, ControlLockKind.NO_AI).isEmpty(),
+				"flag tracks the owners set");
 		TestPlayers.leave(first);
 		TestPlayers.leave(second);
 		helper.succeed();
@@ -80,7 +96,9 @@ public final class LifecycleGameTests implements FabricGameTest {
 
 		EntityControlLock.reconcile(zombie);
 
-		helper.assertFalse(zombie.isNoAi(), "shadow restored the mob's own flag value");
+		helper.assertValueEqual(zombie.isNoAi(),
+				!TestPlayers.lockOwners(zombie, ControlLockKind.NO_AI).isEmpty(),
+				"shadow restores the flag when no live lock remains");
 		helper.assertTrue(zombie.getAttached(ModAttachments.CONTROL_LOCK_SHADOW) == null,
 				"shadow consumed");
 		TestPlayers.leave(owner);
@@ -143,6 +161,48 @@ public final class LifecycleGameTests implements FabricGameTest {
 				"cooldown deadlines persist — an untransform must not reset them");
 		helper.assertFalse(zombie.isNoAi(), "held control locks released with the hero");
 		TestPlayers.leave(player);
+		helper.succeed();
+	}
+
+	/**
+	 * D2c: the global AFTER_DEATH untransform asks {@code Hero.keepsHeroOnDeath()}.
+	 * Doomsday adapts through death — his own AFTER_DEATH tiers him up and the
+	 * transformation survives; a hero without the hook force-untransforms. The
+	 * respawn half of the chain is driven through the same hook the dispatcher
+	 * fires: {@code PlayerLifecycle.RESPAWN} → {@code HeroTransformService.onPlayerRespawn}
+	 * (mock players have no real respawn round-trip; the call receives the same
+	 * attachment-bearing entity the new player would).
+	 */
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void doomsdayKeepsHeroOnDeath(GameTestHelper helper) {
+		ServerPlayer doomsday = TestPlayers.join(helper, "doomsday");
+		ServerPlayer raiden = TestPlayers.join(helper, "raiden");
+		TestHeroes.transform(doomsday, DoomsdayHero.ID);
+		TestHeroes.transform(raiden, RaidenHero.ID);
+
+		doomsday.kill();
+		raiden.kill();
+
+		helper.assertTrue(doomsday.getAttachedOrCreate(ModAttachments.HERO_DATA).hasHero()
+						&& DoomsdayHero.ID.equals(
+								doomsday.getAttachedOrCreate(ModAttachments.HERO_DATA).heroId()),
+				"Doomsday keeps his transformation through death");
+		helper.assertTrue(
+				doomsday.getAttachedOrCreate(ModAttachments.DOOMSDAY_PROGRESS).tier() == 2,
+				"the death advanced his adaptation tier");
+		helper.assertFalse(raiden.getAttachedOrCreate(ModAttachments.HERO_DATA).hasHero(),
+				"a hero without keepsHeroOnDeath untransforms on death");
+
+		HeroTransformService.onPlayerRespawn(doomsday);
+
+		helper.assertTrue(
+				doomsday.getAttachedOrCreate(ModAttachments.DOOMSDAY_PROGRESS).tier() == 2,
+				"respawn re-apply keeps the tier his death granted");
+		helper.assertTrue(doomsday.hasEffect(MobEffects.REGENERATION),
+				"respawn re-applies Doomsday's tier effects");
+
+		TestPlayers.leave(doomsday);
+		TestPlayers.leave(raiden);
 		helper.succeed();
 	}
 

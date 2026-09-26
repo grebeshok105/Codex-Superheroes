@@ -51,7 +51,10 @@ public final class PassivesFallGameTests implements FabricGameTest {
 			player.removeAllEffects();
 		});
 		helper.runAfterDelay(30, () -> {
-			helper.assertTrue(!player.hasEffect(MobEffects.REGENERATION),
+			// HeroPassiveRegenController re-applies a finite REGEN to every hero every
+			// 40 server ticks, so only the infinite instance marks Regulus's passive.
+			MobEffectInstance regen = player.getEffect(MobEffects.REGENERATION);
+			helper.assertTrue(regen == null || !regen.isInfiniteDuration(),
 					"the previous hero's passives stay gone after a swap");
 			MobEffectInstance resistance = player.getEffect(MobEffects.DAMAGE_RESISTANCE);
 			helper.assertTrue(resistance != null && resistance.isInfiniteDuration(),

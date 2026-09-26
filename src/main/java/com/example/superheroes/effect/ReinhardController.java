@@ -96,6 +96,7 @@ public final class ReinhardController {
 
 		ctx.lifecycle().onHeroClear(ReinhardController::clearAdaptations);
 		ctx.lifecycle().onJoin(ReinhardController::onPlayerJoin);
+		ctx.lifecycle().onRespawn(ReinhardController::onRespawn);
 	}
 
 	public static boolean isReinhard(Player player) {
