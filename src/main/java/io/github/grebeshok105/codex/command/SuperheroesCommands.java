@@ -1,0 +1,437 @@
+package io.github.grebeshok105.codex.command;
+
+import io.github.grebeshok105.codex.transform.HeroDataStore;
+import io.github.grebeshok105.codex.attachment.ModAttachments;
+import io.github.grebeshok105.codex.debug.AdminAbilityDebug;
+import io.github.grebeshok105.codex.effect.BattleBeastCurseController;
+import io.github.grebeshok105.codex.effect.DoomsdayTierController;
+import io.github.grebeshok105.codex.hero.BattleBeastHero;
+import io.github.grebeshok105.codex.hero.DoomsdayHero;
+import io.github.grebeshok105.codex.hero.Hero;
+import io.github.grebeshok105.codex.hero.Heroes;
+import io.github.grebeshok105.codex.item.ModItemGroups;
+import io.github.grebeshok105.codex.transform.HeroData;
+import io.github.grebeshok105.codex.transform.HeroTransformService;
+import com.mojang.brigadier.arguments.FloatArgumentType;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.suggestion.SuggestionProvider;
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.commands.arguments.EntityArgument;
+import net.minecraft.commands.arguments.ResourceLocationArgument;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+
+public final class SuperheroesCommands {
+	private static final SuggestionProvider<CommandSourceStack> HERO_SUGGESTIONS =
+			(ctx, builder) -> SharedSuggestionProvider.suggestResource(Heroes.all().keySet(), builder);
+
+	private static final SuggestionProvider<CommandSourceStack> HORDE_TYPE_SUGGESTIONS =
+			(ctx, builder) -> SharedSuggestionProvider.suggest(
+					io.github.grebeshok105.codex.horde.entity.HordeEntities.SPAWNABLE.keySet(), builder);
+
+	private SuperheroesCommands() {
+	}
+
+	public static void init() {
+		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, env) ->
+				dispatcher.register(Commands.literal("superheroes")
+						.requires(src -> src.hasPermission(2))
+						.then(Commands.literal("hero")
+								.then(Commands.argument("id", ResourceLocationArgument.id())
+										.suggests(HERO_SUGGESTIONS)
+										.executes(SuperheroesCommands::setHero)))
+						.then(Commands.literal("untransform")
+								.executes(SuperheroesCommands::untransform))
+						.then(Commands.literal("energy")
+								.then(Commands.argument("amount", FloatArgumentType.floatArg(0f))
+										.executes(ctx -> setEnergy(ctx, FloatArgumentType.getFloat(ctx, "amount")))))
+						.then(Commands.literal("mana")
+								.then(Commands.argument("amount", FloatArgumentType.floatArg(0f))
+										.executes(ctx -> setMana(ctx, FloatArgumentType.getFloat(ctx, "amount")))))
+						.then(Commands.literal("doomsday")
+								.then(Commands.literal("tier")
+										.then(Commands.argument("tier", IntegerArgumentType.integer(1, 7))
+												.executes(ctx -> setDoomsdayTier(ctx, playerOrNull(ctx),
+														IntegerArgumentType.getInteger(ctx, "tier"))))
+										.then(Commands.argument("target", EntityArgument.player())
+												.then(Commands.argument("tier", IntegerArgumentType.integer(1, 7))
+														.executes(SuperheroesCommands::setDoomsdayTierForTarget)))))
+						.then(Commands.literal("battle_beast")
+								.then(Commands.literal("stage")
+										.then(Commands.argument("stage", IntegerArgumentType.integer(0, BattleBeastCurseController.MAX_STAGE))
+												.executes(ctx -> setBattleBeastStage(ctx, playerOrNull(ctx),
+														IntegerArgumentType.getInteger(ctx, "stage"))))
+										.then(Commands.argument("target", EntityArgument.player())
+												.then(Commands.argument("stage", IntegerArgumentType.integer(0, BattleBeastCurseController.MAX_STAGE))
+														.executes(SuperheroesCommands::setBattleBeastStageForTarget))))
+								.then(Commands.literal("tier")
+										.then(Commands.argument("tier", IntegerArgumentType.integer(0, BattleBeastCurseController.MAX_STAGE))
+												.executes(ctx -> setBattleBeastStage(ctx, playerOrNull(ctx),
+														IntegerArgumentType.getInteger(ctx, "tier"))))
+										.then(Commands.argument("target", EntityArgument.player())
+												.then(Commands.argument("tier", IntegerArgumentType.integer(0, BattleBeastCurseController.MAX_STAGE))
+														.executes(SuperheroesCommands::setBattleBeastTierForTarget)))))
+						.then(Commands.literal("admin")
+								.executes(SuperheroesCommands::toggleAdminBuild)
+								.then(Commands.literal("on")
+										.executes(ctx -> setAdminBuild(ctx, true)))
+								.then(Commands.literal("off")
+										.executes(ctx -> setAdminBuild(ctx, false)))
+								.then(Commands.literal("give")
+										.executes(SuperheroesCommands::giveAllAdminItems)))
+						.then(Commands.literal("debug")
+								.then(Commands.literal("mob-targets")
+										.executes(SuperheroesCommands::toggleMobTargets)
+										.then(Commands.literal("on")
+												.executes(ctx -> setMobTargets(ctx, true)))
+										.then(Commands.literal("off")
+												.executes(ctx -> setMobTargets(ctx, false)))
+										.then(Commands.literal("status")
+												.executes(SuperheroesCommands::mobTargetsStatus))))
+						.then(Commands.literal("horde")
+								.then(Commands.literal("start")
+										.executes(SuperheroesCommands::hordeStart))
+								.then(Commands.literal("stop")
+										.executes(SuperheroesCommands::hordeStop))
+								.then(Commands.literal("clear")
+										.executes(SuperheroesCommands::hordeClear))
+								.then(Commands.literal("next")
+										.executes(SuperheroesCommands::hordeNext))
+								.then(Commands.literal("status")
+										.executes(SuperheroesCommands::hordeStatus))
+								.then(Commands.literal("overlay")
+										.executes(SuperheroesCommands::hordeOverlayToggle)
+										.then(Commands.literal("on")
+												.executes(ctx -> hordeOverlaySet(ctx, true)))
+										.then(Commands.literal("off")
+												.executes(ctx -> hordeOverlaySet(ctx, false))))
+								.then(Commands.literal("spawn")
+										.then(Commands.argument("type", com.mojang.brigadier.arguments.StringArgumentType.word())
+												.suggests(HORDE_TYPE_SUGGESTIONS)
+												.executes(ctx -> hordeSpawn(ctx, 1))
+												.then(Commands.argument("count", IntegerArgumentType.integer(1, 50))
+														.executes(ctx -> hordeSpawn(ctx, IntegerArgumentType.getInteger(ctx, "count")))))))
+						.then(Commands.literal("abilities")
+								.executes(SuperheroesCommands::listAbilities))
+						.then(Commands.literal("info")
+								.executes(SuperheroesCommands::info))));
+	}
+
+	// ─────────────────────────────────────────── horde commands ───────────
+
+	private static int hordeStart(CommandContext<CommandSourceStack> ctx) {
+		ServerPlayer player = playerOrNull(ctx);
+		if (player == null) {
+			ctx.getSource().sendFailure(Component.translatable("commands.superheroes.not_a_player"));
+			return 0;
+		}
+		net.minecraft.server.level.ServerLevel level = player.serverLevel();
+		io.github.grebeshok105.codex.horde.HordeManager.startHorde(level, player.position(), player);
+		ctx.getSource().sendSuccess(() -> Component.translatable("commands.superheroes.horde.started"), true);
+		return 1;
+	}
+
+	private static int hordeStop(CommandContext<CommandSourceStack> ctx) {
+		ServerPlayer player = playerOrNull(ctx);
+		if (player == null) return 0;
+		boolean ok = io.github.grebeshok105.codex.horde.HordeManager.stopHorde(player.serverLevel());
+		ctx.getSource().sendSuccess(() -> Component.translatable(ok ? "commands.superheroes.horde.stopped" : "commands.superheroes.horde.not_active"), true);
+		return ok ? 1 : 0;
+	}
+
+	private static int hordeClear(CommandContext<CommandSourceStack> ctx) {
+		ServerPlayer player = playerOrNull(ctx);
+		if (player == null) return 0;
+		int n = io.github.grebeshok105.codex.horde.HordeManager.clearMobs(player.serverLevel());
+		ctx.getSource().sendSuccess(() -> Component.translatable("commands.superheroes.horde.mobs_removed", n), true);
+		return n;
+	}
+
+	private static int hordeNext(CommandContext<CommandSourceStack> ctx) {
+		ServerPlayer player = playerOrNull(ctx);
+		if (player == null) return 0;
+		boolean ok = io.github.grebeshok105.codex.horde.HordeManager.forceNextWave(player.serverLevel());
+		ctx.getSource().sendSuccess(() -> Component.translatable(ok ? "commands.superheroes.horde.wave_started" : "commands.superheroes.horde.not_active"), true);
+		return ok ? 1 : 0;
+	}
+
+	private static int hordeStatus(CommandContext<CommandSourceStack> ctx) {
+		ServerPlayer player = playerOrNull(ctx);
+		if (player == null) return 0;
+		String status = io.github.grebeshok105.codex.horde.HordeManager.getDebugStatus(player.serverLevel());
+		ctx.getSource().sendSuccess(() -> Component.literal(status), false);
+		return 1;
+	}
+
+	private static int hordeOverlayToggle(CommandContext<CommandSourceStack> ctx) {
+		ServerPlayer player = playerOrNull(ctx);
+		if (player == null) return 0;
+		boolean on = io.github.grebeshok105.codex.horde.HordeManager.toggleOverlay(player);
+		ctx.getSource().sendSuccess(() -> Component.translatable("commands.superheroes.horde.debug_overlay",
+					Component.translatable(on ? "commands.superheroes.state.on" : "commands.superheroes.state.off")), false);
+		return 1;
+	}
+
+	private static int hordeOverlaySet(CommandContext<CommandSourceStack> ctx, boolean enabled) {
+		ServerPlayer player = playerOrNull(ctx);
+		if (player == null) return 0;
+		io.github.grebeshok105.codex.horde.HordeManager.setOverlay(player, enabled);
+		ctx.getSource().sendSuccess(() -> Component.translatable("commands.superheroes.horde.debug_overlay",
+					Component.translatable(enabled ? "commands.superheroes.state.on" : "commands.superheroes.state.off")), false);
+		return 1;
+	}
+
+	private static int hordeSpawn(CommandContext<CommandSourceStack> ctx, int count) {
+		ServerPlayer player = playerOrNull(ctx);
+		if (player == null) return 0;
+		String type = com.mojang.brigadier.arguments.StringArgumentType.getString(ctx, "type");
+		net.minecraft.world.entity.EntityType<?> entityType =
+				io.github.grebeshok105.codex.horde.entity.HordeEntities.SPAWNABLE.get(type);
+		if (entityType == null) {
+			ctx.getSource().sendFailure(Component.translatable("commands.superheroes.horde.unknown_type", type));
+			return 0;
+		}
+		int n = io.github.grebeshok105.codex.horde.HordeManager.spawnSingle(
+				player.serverLevel(), entityType, player.position(), count);
+		ctx.getSource().sendSuccess(() -> Component.translatable("commands.superheroes.horde.spawned", n, type), true);
+		return n;
+	}
+
+	private static int setHero(CommandContext<CommandSourceStack> ctx) {
+		ServerPlayer player = playerOrNull(ctx);
+		if (player == null) {
+			return 0;
+		}
+		ResourceLocation heroId = ResourceLocationArgument.getId(ctx, "id");
+		Hero hero = Heroes.get(heroId);
+		if (hero == null) {
+			ctx.getSource().sendFailure(Component.translatable("commands.superheroes.hero.unknown", heroId.toString()));
+			return 0;
+		}
+		boolean ok = HeroTransformService.transform(player, heroId);
+		if (!ok) {
+			ctx.getSource().sendFailure(Component.translatable("commands.superheroes.hero.failed", heroId.toString()));
+			return 0;
+		}
+		ctx.getSource().sendSuccess(() -> Component.translatable("commands.superheroes.hero.success",
+				heroId.toString(), player.getScoreboardName()), true);
+		return 1;
+	}
+
+	private static int untransform(CommandContext<CommandSourceStack> ctx) {
+		ServerPlayer player = playerOrNull(ctx);
+		if (player == null) {
+			return 0;
+		}
+		boolean ok = HeroTransformService.untransform(player);
+		if (!ok) {
+			ctx.getSource().sendFailure(Component.translatable("commands.superheroes.untransform.no_hero"));
+			return 0;
+		}
+		ctx.getSource().sendSuccess(() -> Component.translatable("commands.superheroes.untransform.success",
+				player.getScoreboardName()), true);
+		return 1;
+	}
+
+	private static int setEnergy(CommandContext<CommandSourceStack> ctx, float amount) {
+		ServerPlayer player = playerOrNull(ctx);
+		if (player == null) {
+			return 0;
+		}
+		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
+		if (!data.hasHero()) {
+			ctx.getSource().sendFailure(Component.translatable("commands.superheroes.no_hero"));
+			return 0;
+		}
+		Hero hero = Heroes.get(data.heroId());
+		float clamped = hero == null ? amount : Math.min(amount, hero.getEnergyMax());
+		HeroDataStore.update(player, d -> d.withEnergy(clamped));
+		ctx.getSource().sendSuccess(() -> Component.translatable("commands.superheroes.energy.set",
+				String.format("%.1f", clamped)), false);
+		return (int) clamped;
+	}
+
+	private static int setMana(CommandContext<CommandSourceStack> ctx, float amount) {
+		ServerPlayer player = playerOrNull(ctx);
+		if (player == null) {
+			return 0;
+		}
+		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
+		if (!data.hasHero()) {
+			ctx.getSource().sendFailure(Component.translatable("commands.superheroes.no_hero"));
+			return 0;
+		}
+		Hero hero = Heroes.get(data.heroId());
+		float clamped = hero == null ? amount : Math.min(amount, hero.getManaMax());
+		HeroDataStore.update(player, d -> d.withMana(clamped));
+		ctx.getSource().sendSuccess(() -> Component.translatable("commands.superheroes.mana.set",
+				String.format("%.1f", clamped)), false);
+		return (int) clamped;
+	}
+
+	private static int setDoomsdayTierForTarget(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+		return setDoomsdayTier(ctx, EntityArgument.getPlayer(ctx, "target"),
+				IntegerArgumentType.getInteger(ctx, "tier"));
+	}
+
+	private static int setDoomsdayTier(CommandContext<CommandSourceStack> ctx, ServerPlayer target, int tier) {
+		if (target == null) {
+			return 0;
+		}
+		HeroData data = target.getAttachedOrCreate(ModAttachments.HERO_DATA);
+		if (!data.hasHero() || !DoomsdayHero.ID.equals(data.heroId())) {
+			ctx.getSource().sendFailure(Component.translatable("commands.superheroes.doomsday.not_doomsday",
+					target.getScoreboardName()));
+			return 0;
+		}
+		DoomsdayTierController.setTier(target, tier);
+		ctx.getSource().sendSuccess(() -> Component.translatable("commands.superheroes.doomsday.tier.set",
+				target.getScoreboardName(), String.valueOf(tier)), true);
+		return tier;
+	}
+
+	private static int setBattleBeastStageForTarget(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+		return setBattleBeastStage(ctx, EntityArgument.getPlayer(ctx, "target"),
+				IntegerArgumentType.getInteger(ctx, "stage"));
+	}
+
+	private static int setBattleBeastTierForTarget(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+		return setBattleBeastStage(ctx, EntityArgument.getPlayer(ctx, "target"),
+				IntegerArgumentType.getInteger(ctx, "tier"));
+	}
+
+	private static int setBattleBeastStage(CommandContext<CommandSourceStack> ctx, ServerPlayer target, int stage) {
+		if (target == null) {
+			return 0;
+		}
+		HeroData data = target.getAttachedOrCreate(ModAttachments.HERO_DATA);
+		if (!data.hasHero() || !BattleBeastHero.ID.equals(data.heroId())) {
+			ctx.getSource().sendFailure(Component.literal("Target is not Battle Beast: "
+					+ target.getScoreboardName()));
+			return 0;
+		}
+		int applied = BattleBeastCurseController.setStage(target, stage);
+		ctx.getSource().sendSuccess(() -> Component.literal("Set Battle Beast curse stage for "
+				+ target.getScoreboardName() + " to " + applied), true);
+		return applied;
+	}
+
+	private static int toggleMobTargets(CommandContext<CommandSourceStack> ctx) {
+		boolean enabled = AdminAbilityDebug.togglePlayerOnlyAbilitiesTargetMobs();
+		sendMobTargetsStatus(ctx, enabled);
+		return enabled ? 1 : 0;
+	}
+
+	private static int setMobTargets(CommandContext<CommandSourceStack> ctx, boolean enabled) {
+		AdminAbilityDebug.setPlayerOnlyAbilitiesTargetMobs(enabled);
+		sendMobTargetsStatus(ctx, enabled);
+		return enabled ? 1 : 0;
+	}
+
+	private static int mobTargetsStatus(CommandContext<CommandSourceStack> ctx) {
+		boolean enabled = AdminAbilityDebug.playerOnlyAbilitiesTargetMobs();
+		sendMobTargetsStatus(ctx, enabled);
+		return enabled ? 1 : 0;
+	}
+
+	private static void sendMobTargetsStatus(CommandContext<CommandSourceStack> ctx, boolean enabled) {
+		ctx.getSource().sendSuccess(() -> Component.translatable(enabled
+				? "commands.superheroes.debug.mob_targets.enabled"
+				: "commands.superheroes.debug.mob_targets.disabled"), true);
+	}
+
+	private static int listAbilities(CommandContext<CommandSourceStack> ctx) {
+		ServerPlayer player = playerOrNull(ctx);
+		if (player == null) {
+			return 0;
+		}
+		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
+		if (!data.hasHero()) {
+			ctx.getSource().sendFailure(Component.translatable("commands.superheroes.no_hero"));
+			return 0;
+		}
+		Hero hero = Heroes.get(data.heroId());
+		if (hero == null) {
+			return 0;
+		}
+		ctx.getSource().sendSuccess(() -> Component.translatable("commands.superheroes.abilities.header",
+				hero.getId().toString()), false);
+		for (ResourceLocation abilityId : hero.getAbilities()) {
+			boolean active = data.isActive(abilityId);
+			ctx.getSource().sendSuccess(() -> Component.translatable("commands.superheroes.abilities.row",
+					abilityId.toString(), data.binding(abilityId, hero.getDefaultBinding(abilityId)).name(),
+					active ? "ON" : "OFF"), false);
+		}
+		return hero.getAbilities().size();
+	}
+
+	private static int info(CommandContext<CommandSourceStack> ctx) {
+		ServerPlayer player = playerOrNull(ctx);
+		if (player == null) {
+			return 0;
+		}
+		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
+		String heroId = data.hasHero() ? data.heroId().toString() : "<none>";
+		ctx.getSource().sendSuccess(() -> Component.translatable("commands.superheroes.info",
+				heroId, String.format("%.1f", data.energy()), String.format("%.1f", data.mana()),
+				data.activeAbilities().size()), false);
+		return 1;
+	}
+
+	private static int toggleAdminBuild(CommandContext<CommandSourceStack> ctx) {
+		ServerPlayer player = playerOrNull(ctx);
+		if (player == null) return 0;
+		boolean current = player.getAttachedOrCreate(ModAttachments.ADMIN_BUILD);
+		return setAdminBuild(ctx, !current);
+	}
+
+	private static int setAdminBuild(CommandContext<CommandSourceStack> ctx, boolean enabled) {
+		ServerPlayer player = playerOrNull(ctx);
+		if (player == null) return 0;
+		player.setAttached(ModAttachments.ADMIN_BUILD, enabled);
+		AdminBuildSyncController.send(player);
+		if (enabled) {
+			ctx.getSource().sendSuccess(() -> Component.translatable("commands.superheroes.admin_build.on"), false);
+		} else {
+			ctx.getSource().sendSuccess(() -> Component.translatable("commands.superheroes.admin_build.off"), false);
+		}
+		return enabled ? 1 : 0;
+	}
+
+	private static int giveAllAdminItems(CommandContext<CommandSourceStack> ctx) {
+		ServerPlayer player = playerOrNull(ctx);
+		if (player == null) return 0;
+		boolean adminEnabled = player.getAttachedOrCreate(ModAttachments.ADMIN_BUILD);
+		if (!adminEnabled) {
+			ctx.getSource().sendFailure(Component.translatable("commands.superheroes.admin_build.required"));
+			return 0;
+		}
+		int count = 0;
+		for (Item item : ModItemGroups.ADMIN_ONLY_ITEMS) {
+			ItemStack stack = new ItemStack(item);
+			if (!player.getInventory().add(stack)) {
+				player.drop(stack, false);
+			}
+			count++;
+		}
+		int finalCount = count;
+		ctx.getSource().sendSuccess(() -> Component.translatable("commands.superheroes.admin_build.given", finalCount), false);
+		return count;
+	}
+
+	private static ServerPlayer playerOrNull(CommandContext<CommandSourceStack> ctx) {
+		if (!(ctx.getSource().getEntity() instanceof ServerPlayer player)) {
+			ctx.getSource().sendFailure(Component.translatable("commands.superheroes.not_a_player"));
+			return null;
+		}
+		return player;
+	}
+}

@@ -1,0 +1,224 @@
+package io.github.grebeshok105.codex.ability;
+
+import io.github.grebeshok105.codex.attachment.ModAttachments;
+import io.github.grebeshok105.codex.combat.TargetFilters;
+import io.github.grebeshok105.codex.effect.FlightController;
+import io.github.grebeshok105.codex.effect.OmnimanMomentumController;
+import io.github.grebeshok105.codex.lifecycle.LifecycleRegistrar;
+import io.github.grebeshok105.codex.lifecycle.OwnedSessionMap;
+import io.github.grebeshok105.codex.lifecycle.OwnedSessionMap.ClearOn;
+import io.github.grebeshok105.codex.physics.RushTerrainBreaker;
+import io.github.grebeshok105.codex.transform.HeroData;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+
+public final class OmnimanViltrumiteRushAbility implements Ability {
+	private static final int COOLDOWN_TICKS = 140;
+	private static final int DURATION_TICKS = 4;
+	private static final float COST = 72f;
+	private static final float MOMENTUM_COST = 25f;
+	private static final float BASE_DAMAGE = 26f;
+	private static final float BOOSTED_DAMAGE = 34f;
+	private static final double BASE_DISTANCE = 18.0;
+	private static final double BOOSTED_DISTANCE = 24.0;
+	private static final double AIRBORNE_DISTANCE_MULTIPLIER = 2.5;
+	private static final double BASE_KNOCKBACK = 5.2;
+	private static final double BOOSTED_KNOCKBACK = 6.6;
+	private static final double HIT_SCAN_INFLATE = 1.55;
+	private static final OwnedSessionMap<UUID, ActiveRush> ACTIVE =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.of(ClearOn.LEAVE, ClearOn.DEATH));
+
+	@Override
+	public ResourceLocation getId() {
+		return AbilityIds.OMNIMAN_VILTRUMITE_RUSH;
+	}
+
+	@Override
+	public boolean isToggle() {
+		return false;
+	}
+
+	@Override
+	public float costOnActivate() {
+		return COST;
+	}
+
+	@Override
+	public float costPerTick() {
+		return 0f;
+	}
+
+	@Override
+	public boolean canActivate(ServerPlayer player) {
+		return !ACTIVE.containsKey(player.getUUID());
+	}
+
+	@Override
+	public boolean tryActivate(ServerPlayer player) {
+		boolean boosted = consumeMomentum(player);
+		Vec3 direction = viewDirection(player);
+		double distance = effectiveDistance(player, boosted);
+		Vec3 motion = direction.scale(distance / DURATION_TICKS);
+		boolean airborneRush = distance > (boosted ? BOOSTED_DISTANCE : BASE_DISTANCE);
+
+		player.setDeltaMovement(motion);
+		player.hurtMarked = true;
+		player.fallDistance = 0f;
+		player.connection.send(new ClientboundSetEntityMotionPacket(player.getId(), motion));
+		ACTIVE.put(player.getUUID(), player.getUUID(), new ActiveRush(DURATION_TICKS, distance, boosted, airborneRush, new HashSet<>()));
+
+		ServerLevel level = player.serverLevel();
+		level.playSound(null, player.getX(), player.getY(), player.getZ(),
+				SoundEvents.TRIDENT_RIPTIDE_3, SoundSource.PLAYERS, airborneRush ? 2.0f : boosted ? 1.8f : 1.45f,
+				airborneRush ? 0.42f : boosted ? 0.55f : 0.68f);
+		level.playSound(null, player.getX(), player.getY(), player.getZ(),
+				SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, airborneRush ? 1.15f : boosted ? 0.9f : 0.65f,
+				airborneRush ? 1.0f : boosted ? 1.25f : 1.45f);
+		level.sendParticles(ParticleTypes.SONIC_BOOM,
+				player.getX(), player.getY() + player.getBbHeight() * 0.55, player.getZ(),
+				1, 0.0, 0.0, 0.0, 0.0);
+
+		AbilityCooldowns.setCooldownTicks(player, getId(), COOLDOWN_TICKS);
+		return true;
+	}
+
+	public static void serverTick(ServerPlayer player) {
+		ActiveRush rush = ACTIVE.get(player.getUUID());
+		if (rush == null) return;
+
+		ServerLevel level = player.serverLevel();
+		Vec3 direction = viewDirection(player);
+		Vec3 motion = direction.scale(rush.distance / DURATION_TICKS);
+		player.setDeltaMovement(motion);
+		player.hurtMarked = true;
+		player.fallDistance = 0f;
+		player.connection.send(new ClientboundSetEntityMotionPacket(player.getId(), motion));
+
+		hitTargets(player, rush, direction);
+		sendTrail(level, player, direction, rush.boosted, rush.airborneRush);
+
+		rush.ticksLeft--;
+		if (player.horizontalCollision || player.verticalCollision || player.onGround()) {
+			Vec3 contact = player.position().add(0.0, player.getBbHeight() * 0.5, 0.0);
+			int broken = RushTerrainBreaker.breakContact(level, player, contact, direction, 2.2, 90);
+			if (broken == 0 && player.horizontalCollision) {
+				// Непробиваемая стена — натиск гасится.
+				ACTIVE.remove(player.getUUID());
+				level.playSound(null, player.getX(), player.getY(), player.getZ(),
+						SoundEvents.FIREWORK_ROCKET_BLAST, SoundSource.PLAYERS,
+						rush.airborneRush ? 1.6f : rush.boosted ? 1.35f : 1.05f, rush.airborneRush ? 0.55f : 0.75f);
+				return;
+			}
+		}
+		if (rush.ticksLeft <= 0) {
+			ACTIVE.remove(player.getUUID());
+			level.playSound(null, player.getX(), player.getY(), player.getZ(),
+					SoundEvents.FIREWORK_ROCKET_BLAST, SoundSource.PLAYERS,
+					rush.airborneRush ? 1.6f : rush.boosted ? 1.35f : 1.05f, rush.airborneRush ? 0.55f : 0.75f);
+		}
+	}
+
+	public static void clear(ServerPlayer player) {
+		ACTIVE.remove(player.getUUID());
+	}
+
+	private static void hitTargets(ServerPlayer player, ActiveRush rush, Vec3 direction) {
+		ServerLevel level = player.serverLevel();
+		AABB box = player.getBoundingBox().inflate(HIT_SCAN_INFLATE);
+		List<LivingEntity> hits = level.getEntitiesOfClass(LivingEntity.class, box, TargetFilters.hostileTo(player));
+		for (LivingEntity target : hits) {
+			if (!rush.hits.add(target.getUUID())) continue;
+
+			float damage = rush.boosted ? BOOSTED_DAMAGE : BASE_DAMAGE;
+			double knockback = rush.boosted ? BOOSTED_KNOCKBACK : BASE_KNOCKBACK;
+			target.hurt(level.damageSources().playerAttack(player), damage);
+			Vec3 push = direction.scale(knockback).add(0.0, rush.boosted ? 0.75 : 0.6, 0.0);
+			target.setDeltaMovement(push);
+			target.hurtMarked = true;
+			if (target instanceof ServerPlayer targetPlayer) {
+				targetPlayer.connection.send(new ClientboundSetEntityMotionPacket(targetPlayer));
+			}
+
+			Vec3 center = target.position().add(0.0, target.getBbHeight() * 0.55, 0.0);
+			level.sendParticles(ParticleTypes.EXPLOSION, center.x, center.y, center.z,
+					rush.boosted ? 3 : 2, 0.18, 0.18, 0.18, 0.0);
+			level.sendParticles(ParticleTypes.DAMAGE_INDICATOR, center.x, center.y, center.z,
+					rush.boosted ? 24 : 18, 0.35, 0.35, 0.35, 0.0);
+			level.sendParticles(ParticleTypes.CRIT, center.x, center.y, center.z,
+					rush.boosted ? 28 : 20, 0.35, 0.35, 0.35, 0.22);
+			level.playSound(null, center.x, center.y, center.z,
+					SoundEvents.GENERIC_EXPLODE.value(), SoundSource.PLAYERS, rush.boosted ? 1.15f : 0.9f, 0.85f);
+			level.playSound(null, center.x, center.y, center.z,
+					SoundEvents.NETHERITE_BLOCK_HIT, SoundSource.PLAYERS, rush.boosted ? 1.35f : 1.1f, 0.55f);
+		}
+	}
+
+
+	private static void sendTrail(ServerLevel level, ServerPlayer player, Vec3 direction, boolean boosted, boolean airborneRush) {
+		Vec3 center = player.position().add(0.0, player.getBbHeight() * 0.5, 0.0);
+		Vec3 wake = center.subtract(direction.scale(0.85));
+		level.sendParticles(ParticleTypes.CLOUD, wake.x, wake.y, wake.z,
+				airborneRush ? 16 : boosted ? 10 : 7, 0.32, 0.25, 0.32, airborneRush ? 0.18 : boosted ? 0.12 : 0.08);
+		level.sendParticles(ParticleTypes.ELECTRIC_SPARK, center.x, center.y, center.z,
+				airborneRush ? 8 : boosted ? 5 : 3, 0.24, 0.22, 0.24, airborneRush ? 0.07 : 0.04);
+		if (boosted || airborneRush) {
+			level.sendParticles(ParticleTypes.FLASH, center.x, center.y, center.z,
+					1, 0.0, 0.0, 0.0, 0.0);
+		}
+	}
+
+	private static Vec3 viewDirection(ServerPlayer player) {
+		Vec3 direction = player.getViewVector(1f).normalize();
+		if (direction.lengthSqr() < 1.0e-4) {
+			return new Vec3(0.0, 0.0, 1.0);
+		}
+		return direction;
+	}
+
+	private static boolean consumeMomentum(ServerPlayer player) {
+		return OmnimanMomentumController.consume(player, MOMENTUM_COST);
+	}
+
+	private static double effectiveDistance(ServerPlayer player, boolean boosted) {
+		double distance = boosted ? BOOSTED_DISTANCE : BASE_DISTANCE;
+		return isAirborneRush(player) ? distance * AIRBORNE_DISTANCE_MULTIPLIER : distance;
+	}
+
+	private static boolean isAirborneRush(ServerPlayer player) {
+		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
+		boolean airborne = !player.onGround() || player.getAbilities().flying || player.isFallFlying();
+		boolean flying = FlightController.isFlightActive(data) || player.getAbilities().flying || player.isFallFlying();
+		return airborne && flying;
+	}
+
+	private static final class ActiveRush {
+		int ticksLeft;
+		final double distance;
+		final boolean boosted;
+		final boolean airborneRush;
+		final Set<UUID> hits;
+
+		ActiveRush(int ticksLeft, double distance, boolean boosted, boolean airborneRush, Set<UUID> hits) {
+			this.ticksLeft = ticksLeft;
+			this.distance = distance;
+			this.boosted = boosted;
+			this.airborneRush = airborneRush;
+			this.hits = hits;
+		}
+	}
+}
