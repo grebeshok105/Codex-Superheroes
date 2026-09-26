@@ -371,3 +371,11 @@
 - PassiveReconciler сверка: it did NOT replace the respawn path (it re-asserts captured infinite effects on tick; the explicit reapplyLifecyclePassives call remained) → `reapplyPassivesAfterRespawn` introduced per plan.
 - GameTest `doomsdayKeepsHeroOnDeath` (LifecycleGameTests): kill() drives the real AFTER_DEATH chain — Doomsday keeps his hero and tiers to 2, Raiden untransforms. Respawn half driven via `HeroTransformService.onPlayerRespawn` directly — mock players have no real respawn round-trip, and it is the exact hook PlayerLifecycle RESPAWN fires; asserts tier still 2 + REGENERATION re-applied.
 - archunit_store `8c45b479` shrunk: HeroTransformService→DoomsdayHero.ID frozen line removed. qualityGate NOT run (orchestrator runs the gate).
+
+## Architecture migration — stage M1 (plan 05)
+
+- core/net/FxBroadcast (tracking/trackingAndSelf/around over PlayerLookup — transport only); 5 ModNetworking loops migrated: syncFlightState/broadcastRepulsor/broadcastThanosCosmicBeam → trackingAndSelf (was send+tracking), broadcastLaser/broadcastLaserFromEntity → tracking (old `observer != shooter` was dead code — bytecode-verified `ChunkMap$TrackedEntity.updatePlayer` returns immediately on player==entity so self is never in seenBy). Audiences identical.
+- mechanic/motion/Motion (set/add + Sync{MARK, MARK_AND_SEND_TO_PLAYER}; mark=hurtMarked, send=packet to self when player).
+- mechanic/targeting/{TargetFilter,Targeting} — record, all flags off by default; respectPvp/excludeAllies = gameplay change (audit B19), never enabled.
+- Frozen rules MechanicServiceRulesTest: motion-packet ctor coverage BOTH (Entity) and (int,Vec3) — reviewer caught the id-ctor gap; store refrozen 45+16 sites (all in ability/effect/physics/entity — wave debt). GameTests: Motion +4, MechanicTargeting +6 (each flag cuts exactly its case, and()-composition, pvp, allies). 107/107.
+- Reviewer note: reviewed stale HEAD once (pre-refreeze push) — pointed at fc35585 → APPROVE.
