@@ -5,10 +5,14 @@ import com.example.superheroes.client.core.hud.HudLayers;
 import com.example.superheroes.client.core.hud.MovableHud;
 import com.example.superheroes.client.core.input.HeroActionKeys;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
 
 import java.util.function.Consumer;
 
@@ -38,5 +42,10 @@ public final class CoreClientContext implements HeroClientContext {
 	@Override
 	public KeyMapping actionKey(KeyMapping mapping, Consumer<Minecraft> onPress) {
 		return HeroActionKeys.register(heroId, mapping, onPress);
+	}
+
+	@Override
+	public <T extends Entity> void entityRenderer(EntityType<T> type, EntityRendererProvider<T> provider) {
+		EntityRendererRegistry.register(type, provider);
 	}
 }
