@@ -299,3 +299,12 @@
 - `ScorpionClientModule` owns the `ScorpionFxS2CPayload` receiver (handler byte-identical; `ClientNetworking` lost only that receiver + import — 35→34 in-file + 1 via `ctx.receive`). `heroId() = ScorpionHero.ID` — IN_CLIENT_HERO_MODULE is excluded from the sharedClientCode rule. `HeroClientModules.bootstrap()` runs right after `ClientNetworking.init()`.
 - New ArchUnit client rules (`clientHeroModulesAreReferencedOnlyByThemselvesAndTheModuleList`, `clientCoreDoesNotKnowHeroModules`, `sharedClientCodeDoesNotDependOnConcreteHeroes`) now non-vacuous. qualityGate 71/71.
 - Runtime: receiver proven to fire via temporary `[CL3A1-FX]` println (kind=2 hellfire pillar, kind=1 spear harpoon) — Veil 4.1.2 in classpath, handler dispatches to `VeilScorpionFx`. Kunai→scorpion transform, regulus regression PASS.
+
+## Architecture migration — stage C4 (plan 04)
+
+- New `core/ability/AbilityAvailability` (leaf package): `record(Map<ResourceLocation, Visibility>)`, `enum Visibility {AVAILABLE,LOCKED,HIDDEN}`, CODEC + STREAM_CODEC, `visibilityOf` default AVAILABLE. Sync task in `ability.AbilityAvailabilitySync` (would create `core.ability ↔ hero` cycle if placed in core).
+- `ModAttachments.ABILITY_AVAILABILITY` — non-persistent, `syncWith(STREAM_CODEC, targetOnly())` (PUBLIC_HERO pattern).
+- `Hero.visibility(ServerPlayer, ResourceLocation)` default AVAILABLE; impls: Doomsday (isAbilityUnlocked/DOOMSDAY_PROGRESS), Thanos (stones via GauntletStateController), Pandora (hasActiveHouse), Rem (demonism), Regulus (COUNTER_STRIKE hero-scoped). Vanity-strip → all HIDDEN in the sync task.
+- `C/ClientAbilityVisibility` reads the attachment (absent = all visible, matches old pre-sync behavior); `ClientAbilityFilter` + client tier tables deleted; 6 consumers rewired (AbilityBarHud, RadialMenuHud, AbilitiesTooltipHud, HeroInfoPanelHud, BindingsScreen, SuperheroesClient key dispatch).
+- Sync dispatcher row appended at the tail of the core tick table (write-only-on-change; tick-order-insensitive).
+- GameTests +6: tier1 → HIDDEN|LOCKED, tier-up → AVAILABLE, write-on-change.
