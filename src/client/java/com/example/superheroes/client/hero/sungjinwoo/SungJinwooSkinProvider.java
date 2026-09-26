@@ -8,9 +8,11 @@ import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Второй скин Сун Джин Ву. Два условия намеренно разные, см. CL4:
- * {@link #skin} повторяет проверку тела скина ({@code hasShadows}),
- * {@link #slimModel} повторяет проверку рендера руки от первого лица ({@code isPhase2}).
+ * Второй скин Сун Джин Ву. Условия намеренно разные, см. CL4:
+ * {@link #skin} (тело, видно всем) повторяет старую проверку {@code hasShadows},
+ * {@link #handSkin} (рука от первого лица) — {@code isPhase2}. Расхождение
+ * существовало до миграции и сохранено как есть; выравнивание — отдельное
+ * решение владельца героя.
  */
 final class SungJinwooSkinProvider implements SkinProvider {
 	@Override
@@ -21,7 +23,7 @@ final class SungJinwooSkinProvider implements SkinProvider {
 
 	@Override
 	@Nullable
-	public Boolean slimModel(AbstractClientPlayer player, ResourceLocation heroId) {
-		return ClientShadowArmyState.isPhase2(player.getUUID());
+	public ResourceLocation handSkin(AbstractClientPlayer player, ResourceLocation heroId) {
+		return ClientShadowArmyState.isPhase2(player.getUUID()) ? SungJinwooHero.SKIN_PHASE_2 : null;
 	}
 }
