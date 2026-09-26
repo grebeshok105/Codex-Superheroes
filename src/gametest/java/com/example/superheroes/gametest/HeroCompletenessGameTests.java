@@ -1,9 +1,12 @@
 package com.example.superheroes.gametest;
 
 import com.example.superheroes.ModId;
+import com.example.superheroes.ability.AbilityIds;
 import com.example.superheroes.ability.AbilityRegistry;
+import com.example.superheroes.bootstrap.HeroModules;
 import com.example.superheroes.hero.Hero;
 import com.example.superheroes.hero.Heroes;
+import com.example.superheroes.hero.ScorpionHero;
 import com.example.superheroes.item.ModItemGroups;
 import com.example.superheroes.item.ModItems;
 import com.google.gson.JsonObject;
@@ -71,6 +74,19 @@ public final class HeroCompletenessGameTests implements FabricGameTest {
 	public void superheroesTabIdIsStable(GameTestHelper helper) {
 		helper.assertValueEqual(BuiltInRegistries.CREATIVE_MODE_TAB.getKey(ModItemGroups.SUPERHEROES_TAB),
 				ModId.of("superheroes"), "creative tab id");
+		helper.succeed();
+	}
+
+	// D2a-1 — Scorpion is the first hero wired through a HeroModule: Heroes must hold the
+	// module's own instance, and the module must have pushed all four abilities in.
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void scorpionIsRegisteredThroughItsModule(GameTestHelper helper) {
+		helper.assertTrue(Heroes.get(ScorpionHero.ID) == HeroModules.ALL.get(0).hero(),
+				"Heroes registry must hold the ScorpionModule's hero instance");
+		for (ResourceLocation id : List.of(AbilityIds.SCORPION_SPEAR, AbilityIds.SCORPION_HELLFIRE,
+				AbilityIds.SCORPION_FIRE_TELEPORT, AbilityIds.SCORPION_HELL_BREATH)) {
+			helper.assertTrue(AbilityRegistry.get(id) != null, "ability not registered: " + id);
+		}
 		helper.succeed();
 	}
 

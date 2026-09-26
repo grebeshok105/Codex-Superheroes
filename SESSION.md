@@ -270,3 +270,11 @@
 - `HeroAttributes.java` deleted: per-hero passive sets → `PASSIVES` fields on heroes; the ability-scoped/transient members (KRATOS_RAGE, NANO_*, RAIDEN_BURST, REINHARD_*, REGULUS_MADNESS, DOOMSDAY_*, thanosClearStoneModifiers, buildReinhardPhaseSet, buildDoomsdayTierSet) moved verbatim to `hero/AbilityScopedModifiers.java` — same package, so zero new package edges and zero new frozen violations (not a concrete-hero class). `ability/` host rejected: hero files read those members → would create new `ability<->hero` cycle pair.
 - `DoomsdayHero.PASSIVES` = `AbilityScopedModifiers.DOOMSDAY` (one definition); id/value tuples diff-verified identical old-vs-new.
 - Golden `passive_modifiers.txt` (171 applied-modifier records) captured pre-migration; `passiveModifiersAreStable` compares — green. qualityGate 70/70; baseline/store delta zero.
+
+## Architecture migration — stage D2a-1 (plan 03)
+
+- Scorpion migrated to the module pipeline: `HeroModules.bootstrap(CoreModuleContext.INSTANCE)` runs a two-pass ctor over `HeroModules.ALL` = [ScorpionModule]; `Heroes.SCORPION` + 4 `SCORPION_*` ability constants deleted — `AbilityIds` referenced instead; SuperheroesMod line 56 identical callsite preserved.
+- Contracts: `HeroModule` (id + ctor taking `HeroModuleContext`), `AbilitySink` (register(cb)), `CoreModuleContext` singleton. Strict ArchUnit rules verified non-empty via temporary `allowEmptyShould(false)` flip (13 rules pass).
+- Store shrank exactly 2 lines (Heroes.SCORPION field + clinit call); cycle baseline unchanged.
+- Gametest `scorpionIsRegisteredThroughItsModule` asserts registry↔module list identity + all 4 ability ids. qualityGate 70/70.
+- Runtime (PR head @742ecda): kunai transform, all 4 scorpion abilities (spear/eruption/breath/hellport), suggestion list, regulus sanity — PASS. Pre-existing bug found (NOT regression): Hellport never displaces — `SafeTeleport.clamp` self-collides on the caster's bounding box; files byte-identical to main. Logged for a separate fix ticket.
