@@ -1,8 +1,9 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.scorpion.ability;
 
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
-import io.github.grebeshok105.codex.effect.ScorpionController;
+import io.github.grebeshok105.codex.hero.scorpion.ScorpionAbilities;
+import io.github.grebeshok105.codex.hero.scorpion.runtime.ScorpionController;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -20,7 +21,7 @@ public final class ScorpionHellBreathAbility implements Ability {
 
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.SCORPION_HELL_BREATH;
+		return ScorpionAbilities.HELL_BREATH;
 	}
 
 	@Override

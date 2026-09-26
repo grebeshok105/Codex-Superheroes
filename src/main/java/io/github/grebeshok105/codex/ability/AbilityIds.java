@@ -129,11 +129,6 @@ public final class AbilityIds {
 	public static final ResourceLocation A_TRAIN_HYPERSPEED = ModId.of("a_train_hyperspeed");
 	public static final ResourceLocation A_TRAIN_ADRENALINE_RUSH = ModId.of("a_train_adrenaline_rush");
 
-	public static final ResourceLocation SCORPION_SPEAR = ModId.of("scorpion_spear");
-	public static final ResourceLocation SCORPION_HELLFIRE = ModId.of("scorpion_hellfire");
-	public static final ResourceLocation SCORPION_FIRE_TELEPORT = ModId.of("scorpion_fire_teleport");
-	public static final ResourceLocation SCORPION_HELL_BREATH = ModId.of("scorpion_hell_breath");
-
 	// Pandora — Mirror Dimension warp
 	public static final ResourceLocation MIRROR_DIMENSION = ModId.of("mirror_dimension");
 	public static final ResourceLocation MIRROR_MODE_CYCLE = ModId.of("mirror_mode_cycle");

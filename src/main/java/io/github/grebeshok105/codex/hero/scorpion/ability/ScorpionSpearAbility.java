@@ -1,10 +1,13 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.scorpion.ability;
 
-import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
-import io.github.grebeshok105.codex.effect.ScorpionController;
-import io.github.grebeshok105.codex.effect.ScorpionFx;
+import io.github.grebeshok105.codex.hero.scorpion.ScorpionAbilities;
+import io.github.grebeshok105.codex.hero.scorpion.ScorpionSounds;
+import io.github.grebeshok105.codex.hero.scorpion.ScorpionTargeting;
+import io.github.grebeshok105.codex.hero.scorpion.net.ScorpionFx;
+import io.github.grebeshok105.codex.hero.scorpion.runtime.ScorpionController;
+import io.github.grebeshok105.codex.mechanic.targeting.Targeting;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -29,7 +32,7 @@ public final class ScorpionSpearAbility implements Ability {
 
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.SCORPION_SPEAR;
+		return ScorpionAbilities.SPEAR;
 	}
 
 	@Override
@@ -63,9 +66,9 @@ public final class ScorpionSpearAbility implements Ability {
 
 		LivingEntity best = null;
 		double bestDistance = RANGE + 1.0;
-		for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class,
+		for (LivingEntity target : Targeting.living(level,
 				new AABB(eye, eye.add(forward.scale(RANGE))).inflate(3.0),
-				TargetFilters.hostileTo(player))) {
+				ScorpionTargeting.hostileTo(player))) {
 			Vec3 center = target.position().add(0.0, target.getBbHeight() * 0.5, 0.0);
 			Vec3 toTarget = center.subtract(eye);
 			double distance = toTarget.length();
@@ -98,7 +101,7 @@ public final class ScorpionSpearAbility implements Ability {
 		ScorpionController.startSpearPull(player, best);
 		ScorpionFx.harpoon(level, eye, center);
 		level.playSound(null, player.getX(), player.getY(), player.getZ(),
-				io.github.grebeshok105.codex.sound.ModSounds.SCORPION_GET_OVER_HERE, SoundSource.PLAYERS, 1.6f, 1.0f);
+				ScorpionSounds.GET_OVER_HERE, SoundSource.PLAYERS, 1.6f, 1.0f);
 
 		for (int i = 0; i <= 16; i++) {
 			Vec3 point = eye.lerp(center, i / 16.0);

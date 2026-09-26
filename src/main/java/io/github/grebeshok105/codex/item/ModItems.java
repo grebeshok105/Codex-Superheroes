@@ -283,16 +283,6 @@ public final class ModItems {
 									new TransformationLore.Line("item.superheroes.doctor_strange_suit.lore.untransform", ChatFormatting.GOLD))))
 	);
 
-	public static final TransformationItem SCORPION_KUNAI = register(
-			"scorpion_kunai",
-			new TransformationItem(ModId.of("scorpion"), new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC),
-					new TransformationLore(ChatFormatting.GOLD,
-							List.of(new TransformationLore.Line("item.superheroes.scorpion_kunai.lore.line1", ChatFormatting.GOLD),
-									new TransformationLore.Line("item.superheroes.scorpion_kunai.lore.line2", ChatFormatting.DARK_GRAY)),
-							List.of(new TransformationLore.Line("item.superheroes.scorpion_kunai.lore.usage", ChatFormatting.RED),
-									new TransformationLore.Line("item.superheroes.scorpion_kunai.lore.untransform", ChatFormatting.RED))))
-	);
-
 	public static final MusouNoHitotachiItem MUSOU_NO_HITOTACHI = register(
 			"musou_no_hitotachi",
 			new MusouNoHitotachiItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))

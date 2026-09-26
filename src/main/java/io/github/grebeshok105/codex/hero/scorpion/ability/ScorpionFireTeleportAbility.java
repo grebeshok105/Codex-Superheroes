@@ -1,9 +1,11 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.scorpion.ability;
 
-import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
-import io.github.grebeshok105.codex.effect.ScorpionFx;
+import io.github.grebeshok105.codex.hero.scorpion.ScorpionAbilities;
+import io.github.grebeshok105.codex.hero.scorpion.ScorpionTargeting;
+import io.github.grebeshok105.codex.hero.scorpion.net.ScorpionFx;
+import io.github.grebeshok105.codex.mechanic.targeting.Targeting;
 import io.github.grebeshok105.codex.util.SafeTeleport;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
@@ -36,7 +38,7 @@ public final class ScorpionFireTeleportAbility implements Ability {
 
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.SCORPION_FIRE_TELEPORT;
+		return ScorpionAbilities.FIRE_TELEPORT;
 	}
 
 	@Override
@@ -136,8 +138,8 @@ public final class ScorpionFireTeleportAbility implements Ability {
 				eye.add(TARGET_SCAN, TARGET_SCAN, TARGET_SCAN));
 		LivingEntity best = null;
 		double bestScore = -1.0;
-		for (LivingEntity le : level.getEntitiesOfClass(LivingEntity.class, box,
-				TargetFilters.hostileTo(player))) {
+		for (LivingEntity le : Targeting.living(level, box,
+				ScorpionTargeting.hostileTo(player))) {
 			Vec3 toE = le.position().add(0, le.getBbHeight() * 0.5, 0).subtract(eye);
 			double dist = toE.length();
 			if (dist > TARGET_SCAN || dist < 0.5) {

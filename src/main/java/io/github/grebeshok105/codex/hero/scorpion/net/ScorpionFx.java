@@ -1,10 +1,7 @@
-package io.github.grebeshok105.codex.effect;
+package io.github.grebeshok105.codex.hero.scorpion.net;
 
-import io.github.grebeshok105.codex.network.ScorpionFxS2CPayload;
-import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import io.github.grebeshok105.codex.core.net.FxBroadcast;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
 
 /**
@@ -24,9 +21,7 @@ public final class ScorpionFx {
 		if (center == null) {
 			return;
 		}
-		for (ServerPlayer near : PlayerLookup.around(level, center, BROADCAST_RADIUS)) {
-			ServerPlayNetworking.send(near, payload);
-		}
+		FxBroadcast.around(level, center, BROADCAST_RADIUS, payload);
 	}
 
 	public static void harpoon(ServerLevel level, Vec3 from, Vec3 to) {

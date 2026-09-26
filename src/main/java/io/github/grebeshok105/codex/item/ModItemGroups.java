@@ -70,7 +70,6 @@ public final class ModItemGroups {
 				output.accept(ModItems.BATTLE_BEAST_MEDALLION);
 				output.accept(ModItems.REM_ONI_HORN);
 				output.accept(ModItems.A_TRAIN_SUIT);
-				output.accept(ModItems.SCORPION_KUNAI);
 				output.accept(ModItems.PANDORA_SUIT);
 
 				// Kazuha & Scaramouche are now normal, obtainable characters — their

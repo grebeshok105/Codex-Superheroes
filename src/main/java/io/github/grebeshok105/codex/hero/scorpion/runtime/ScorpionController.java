@@ -1,11 +1,15 @@
-package io.github.grebeshok105.codex.effect;
+package io.github.grebeshok105.codex.hero.scorpion.runtime;
 
-import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
-import io.github.grebeshok105.codex.hero.ScorpionHero;
+import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.effect.EffectRefresh;
+import io.github.grebeshok105.codex.hero.scorpion.ScorpionHero;
+import io.github.grebeshok105.codex.hero.scorpion.ScorpionTargeting;
+import io.github.grebeshok105.codex.hero.scorpion.net.ScorpionFx;
+import io.github.grebeshok105.codex.mechanic.motion.Motion;
+import io.github.grebeshok105.codex.mechanic.targeting.Targeting;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -52,6 +56,14 @@ public final class ScorpionController {
 	private ScorpionController() {
 	}
 
+	/** Module wiring; public because ScorpionModule lives in the parent package hero.scorpion. */
+	public static void register(HeroModuleContext ctx) {
+		ctx.ticks().early(server -> {
+			tickSpearPulls(server);
+			tickBreaths(server);
+		});
+		ctx.ticks().hero(ScorpionHero.ID, (server, player, data) -> tickPassive(player));
+	}
 
 	public static boolean isScorpion(ServerPlayer player) {
 		HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
@@ -117,11 +129,7 @@ public final class ScorpionController {
 	}
 
 	private static void setPullMotion(LivingEntity target, Vec3 motion) {
-		target.setDeltaMovement(motion);
-		target.hurtMarked = true;
-		if (target instanceof ServerPlayer targetPlayer) {
-			targetPlayer.connection.send(new ClientboundSetEntityMotionPacket(targetPlayer));
-		}
+		Motion.set(target, motion, Motion.Sync.MARK_AND_SEND_TO_PLAYER);
 	}
 
 	private static void spawnChainParticles(ServerPlayer owner, LivingEntity target) {
@@ -206,8 +214,8 @@ public final class ScorpionController {
 			return;
 		}
 		AABB box = new AABB(eye, eye.add(forward.scale(BREATH_RANGE))).inflate(2.0);
-		for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, box,
-				TargetFilters.hostileTo(player))) {
+		for (LivingEntity target : Targeting.living(level, box,
+				ScorpionTargeting.hostileTo(player))) {
 			Vec3 center = target.position().add(0.0, target.getBbHeight() * 0.5, 0.0);
 			Vec3 toTarget = center.subtract(eye);
 			double distance = toTarget.length();
@@ -225,17 +233,9 @@ public final class ScorpionController {
 
 	// -------------------------------------------------------------- passive
 
-
-	public static void serverTick(MinecraftServer server) {
-		tickSpearPulls(server);
-		tickBreaths(server);
-	}
-
-	public static void tickPlayer(MinecraftServer server, ServerPlayer player, HeroData data) {
-		long tick = server.getTickCount();
-		if (!isScorpion(player)) {
-			return;
-		}
+	// was tickPlayer(server, player, data): loop over all players + isScorpion(); the hero hook already filters by hero
+	private static void tickPassive(ServerPlayer player) {
+		long tick = player.server.getTickCount();
 		if (tick % PASSIVE_REFRESH_INTERVAL == 0) {
 			player.addEffect(new MobEffectInstance(
 					MobEffects.FIRE_RESISTANCE, 60, 0, true, false, false));
