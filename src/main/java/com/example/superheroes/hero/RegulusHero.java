@@ -101,7 +101,7 @@ public final class RegulusHero implements Hero {
 
 	@Override
 	public void applyPassives(Player player) {
-		HeroAttributes.REGULUS.apply(player);
+		PASSIVES.apply(player);
 		player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, -1, 0, true, false, true));
 		player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, -1, 1, true, false, true));
 		player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, -1, 1, true, false, true));
@@ -111,7 +111,7 @@ public final class RegulusHero implements Hero {
 
 	@Override
 	public void removePassives(Player player) {
-		HeroAttributes.REGULUS.remove(player);
+		PASSIVES.remove(player);
 		player.removeEffect(MobEffects.REGENERATION);
 		player.removeEffect(MobEffects.MOVEMENT_SPEED);
 		player.removeEffect(MobEffects.DAMAGE_BOOST);

@@ -127,7 +127,7 @@ public final class DoomsdayHero implements Hero {
         @Override
         public void applyPassives(Player player) {
                 int tier = getTier(player);
-                HeroAttributes.DOOMSDAY.remove(player);
+                PASSIVES.remove(player);
                 HeroAttributes.buildDoomsdayTierSet(tier).apply(player);
                 applyTierEffects(player, tier);
                 if (player instanceof ServerPlayer sp) {
@@ -183,7 +183,7 @@ public final class DoomsdayHero implements Hero {
 
         @Override
         public void removePassives(Player player) {
-                HeroAttributes.DOOMSDAY.remove(player);
+                PASSIVES.remove(player);
                 player.removeEffect(MobEffects.REGENERATION);
                 player.removeEffect(MobEffects.DAMAGE_RESISTANCE);
                 player.removeEffect(MobEffects.DAMAGE_BOOST);

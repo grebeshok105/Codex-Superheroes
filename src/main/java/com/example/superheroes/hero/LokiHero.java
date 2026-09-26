@@ -113,16 +113,6 @@ public final class LokiHero implements Hero {
 	}
 
 	@Override
-	public void applyPassives(Player player) {
-		HeroAttributes.LOKI.apply(player);
-	}
-
-	@Override
-	public void removePassives(Player player) {
-		HeroAttributes.LOKI.remove(player);
-	}
-
-	@Override
 	public boolean cancelsFallDamage(Player player) {
 		return true;
 	}

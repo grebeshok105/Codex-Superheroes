@@ -107,13 +107,13 @@ public final class IronManHero implements Hero {
 
 	@Override
 	public void applyPassives(Player player) {
-		HeroAttributes.IRON_MAN.apply(player);
+		PASSIVES.apply(player);
 		com.example.superheroes.ability.ironman.IronManSuitStats.apply(player);
 	}
 
 	@Override
 	public void removePassives(Player player) {
-		HeroAttributes.IRON_MAN.remove(player);
+		PASSIVES.remove(player);
 		com.example.superheroes.ability.ironman.IronManSuitStats.clear(player);
 		if (player instanceof ServerPlayer sp) {
 			com.example.superheroes.ability.ironman.IronManNanoFormController.clear(sp);

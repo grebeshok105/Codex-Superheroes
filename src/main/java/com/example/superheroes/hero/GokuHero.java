@@ -114,16 +114,6 @@ public final class GokuHero implements Hero {
 	}
 
 	@Override
-	public void applyPassives(Player player) {
-		HeroAttributes.GOKU.apply(player);
-	}
-
-	@Override
-	public void removePassives(Player player) {
-		HeroAttributes.GOKU.remove(player);
-	}
-
-	@Override
 	public boolean cancelsFallDamage(Player player) {
 		return true;
 	}

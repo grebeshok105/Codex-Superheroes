@@ -106,16 +106,6 @@ public final class CaptainAmericaHero implements Hero {
 	}
 
 	@Override
-	public void applyPassives(Player player) {
-		HeroAttributes.CAPTAIN_AMERICA.apply(player);
-	}
-
-	@Override
-	public void removePassives(Player player) {
-		HeroAttributes.CAPTAIN_AMERICA.remove(player);
-	}
-
-	@Override
 	public boolean cancelsFallDamage(Player player) {
 		return true;
 	}

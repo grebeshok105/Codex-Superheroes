@@ -112,16 +112,6 @@ public final class NarutoHero implements Hero {
 	}
 
 	@Override
-	public void applyPassives(Player player) {
-		HeroAttributes.NARUTO.apply(player);
-	}
-
-	@Override
-	public void removePassives(Player player) {
-		HeroAttributes.NARUTO.remove(player);
-	}
-
-	@Override
 	public boolean cancelsFallDamage(Player player) {
 		return true;
 	}

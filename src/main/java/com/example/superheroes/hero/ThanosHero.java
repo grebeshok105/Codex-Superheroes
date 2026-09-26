@@ -166,14 +166,14 @@ public final class ThanosHero implements Hero {
 
 	@Override
 	public void applyPassives(Player player) {
-		HeroAttributes.THANOS.apply(player);
+		PASSIVES.apply(player);
 		player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, -1, 1, true, false, true));
 		player.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, -1, 0, true, false, true));
 	}
 
 	@Override
 	public void removePassives(Player player) {
-		HeroAttributes.THANOS.remove(player);
+		PASSIVES.remove(player);
 		HeroAttributes.thanosClearStoneModifiers(player);
 		player.removeEffect(MobEffects.DAMAGE_RESISTANCE);
 		player.removeEffect(MobEffects.FIRE_RESISTANCE);

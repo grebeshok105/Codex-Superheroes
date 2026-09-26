@@ -104,16 +104,6 @@ public final class ScorpionHero implements Hero {
 	}
 
 	@Override
-	public void applyPassives(Player player) {
-		HeroAttributes.SCORPION.apply(player);
-	}
-
-	@Override
-	public void removePassives(Player player) {
-		HeroAttributes.SCORPION.remove(player);
-	}
-
-	@Override
 	public boolean cancelsFallDamage(Player player) {
 		return false;
 	}

@@ -114,13 +114,13 @@ public final class HomelanderHero implements Hero {
 
 	@Override
 	public void applyPassives(Player player) {
-		HeroAttributes.HOMELANDER.apply(player);
+		PASSIVES.apply(player);
 		player.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, -1, 0, true, false, true));
 	}
 
 	@Override
 	public void removePassives(Player player) {
-		HeroAttributes.HOMELANDER.remove(player);
+		PASSIVES.remove(player);
 		player.removeEffect(MobEffects.FIRE_RESISTANCE);
 		player.removeEffect(MobEffects.DAMAGE_RESISTANCE);
 	}

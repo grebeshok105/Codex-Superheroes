@@ -112,7 +112,7 @@ public final class SungJinwooHero implements Hero {
 
 	@Override
 	public void applyPassives(Player player) {
-		HeroAttributes.SUNG_JINWOO.apply(player);
+		PASSIVES.apply(player);
 		player.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, -1, 0, true, false, false));
 		player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, -1, 0, true, false, true));
 		player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, -1, 0, true, false, true));
@@ -120,7 +120,7 @@ public final class SungJinwooHero implements Hero {
 
 	@Override
 	public void removePassives(Player player) {
-		HeroAttributes.SUNG_JINWOO.remove(player);
+		PASSIVES.remove(player);
 		player.removeEffect(MobEffects.NIGHT_VISION);
 		player.removeEffect(MobEffects.DAMAGE_RESISTANCE);
 		player.removeEffect(MobEffects.REGENERATION);

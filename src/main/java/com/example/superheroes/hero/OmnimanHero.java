@@ -124,7 +124,7 @@ public final class OmnimanHero implements Hero {
 
 	@Override
 	public void applyPassives(Player player) {
-		HeroAttributes.OMNIMAN.apply(player);
+		PASSIVES.apply(player);
 		player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, -1, 1, true, false, true));
 		player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, -1, 1, true, false, true));
 		player.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, -1, 0, true, false, true));
@@ -132,7 +132,7 @@ public final class OmnimanHero implements Hero {
 
 	@Override
 	public void removePassives(Player player) {
-		HeroAttributes.OMNIMAN.remove(player);
+		PASSIVES.remove(player);
 		player.removeEffect(MobEffects.REGENERATION);
 		player.removeEffect(MobEffects.DAMAGE_RESISTANCE);
 		player.removeEffect(MobEffects.FIRE_RESISTANCE);

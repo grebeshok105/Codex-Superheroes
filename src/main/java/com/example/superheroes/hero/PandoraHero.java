@@ -125,15 +125,10 @@ public final class PandoraHero implements Hero {
 
 	@Override
 	public void applyPassives(Player player) {
-		HeroAttributes.PANDORA.apply(player);
+		PASSIVES.apply(player);
 		if (player instanceof net.minecraft.server.level.ServerPlayer sp) {
 			com.example.superheroes.effect.PandoraDeathController.reapplyState(sp);
 		}
-	}
-
-	@Override
-	public void removePassives(Player player) {
-		HeroAttributes.PANDORA.remove(player);
 	}
 
 	@Override

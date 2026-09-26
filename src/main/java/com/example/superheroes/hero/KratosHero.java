@@ -114,13 +114,13 @@ public final class KratosHero implements Hero {
 
 	@Override
 	public void applyPassives(Player player) {
-		HeroAttributes.KRATOS.apply(player);
+		PASSIVES.apply(player);
 		player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, -1, 0, true, false, true));
 	}
 
 	@Override
 	public void removePassives(Player player) {
-		HeroAttributes.KRATOS.remove(player);
+		PASSIVES.remove(player);
 		player.removeEffect(MobEffects.DAMAGE_RESISTANCE);
 	}
 

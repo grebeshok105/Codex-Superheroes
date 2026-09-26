@@ -97,11 +97,6 @@ public final class ATrainHero implements Hero {
 	}
 
 	@Override
-	public void applyPassives(Player player) {
-		PASSIVES.apply(player);
-	}
-
-	@Override
 	public void removePassives(Player player) {
 		PASSIVES.remove(player);
 		player.removeEffect(net.minecraft.world.effect.MobEffects.MOVEMENT_SPEED);
