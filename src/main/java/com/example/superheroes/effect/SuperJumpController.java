@@ -1,16 +1,10 @@
 package com.example.superheroes.effect;
 
 import com.example.superheroes.attachment.ModAttachments;
-import com.example.superheroes.hero.DoomsdayHero;
-import com.example.superheroes.hero.KratosHero;
-import com.example.superheroes.hero.NarutoHero;
-import com.example.superheroes.hero.RegulusHero;
-import com.example.superheroes.hero.ReinhardHero;
-import com.example.superheroes.hero.ThanosHero;
+import com.example.superheroes.hero.Hero;
+import com.example.superheroes.hero.Heroes;
 import com.example.superheroes.transform.HeroData;
-import net.minecraft.resources.ResourceLocation;
 
-import java.util.Set;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -29,28 +23,19 @@ public final class SuperJumpController {
 	private static final int COOLDOWN_TICKS = 40;
 	private static final int IMMUNITY_LIFE_TICKS = 400;
 
-	private static final Set<ResourceLocation> ALLOWED_HEROES = Set.of(
-			RegulusHero.ID,
-			DoomsdayHero.ID,
-			KratosHero.ID,
-			ThanosHero.ID,
-			NarutoHero.ID,
-			ReinhardHero.ID
-	);
-
 	private static final Map<UUID, Long> COOLDOWN = new ConcurrentHashMap<>();
 	private static final Map<UUID, Long> FALL_IMMUNITY_UNTIL = new ConcurrentHashMap<>();
 
 	private SuperJumpController() {
 	}
 
-
 	public static void activate(ServerPlayer player) {
 		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
 		if (!data.hasHero()) {
 			return;
 		}
-		if (!ALLOWED_HEROES.contains(data.heroId())) {
+		Hero hero = Heroes.get(data.heroId());
+		if (hero == null || !hero.canSuperJump()) {
 			return;
 		}
 		UUID id = player.getUUID();

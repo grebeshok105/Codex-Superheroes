@@ -14,6 +14,28 @@ public final class LokiHero implements Hero {
 	public static final ResourceLocation ID = ModId.of("loki");
 	public static final ResourceLocation SKIN = ModId.of("textures/entity/hero/loki.png");
 
+	private static final HeroTheme THEME = new HeroTheme(
+			0xE0102008,
+			0xD0040A02,
+			0x881E8030,
+			0x3360E060,
+			0xFF60E060,
+			0xFF1E5020,
+			0xFF40C040,
+			0x5560E060,
+			0xFF60E060,
+			0xFF200818,
+			0xFFFFD030,
+			0x55FFE070,
+			0xFFFFD030,
+			0x551E8030,
+			0xFFFFD030,
+			0xFFFFD030,
+			0xFFFFFFFF,
+			0x5560E060
+	);
+	private static final HeroHudConfig HUD = new HeroHudConfig("hud.superheroes.energy.magic", HeroHudConfig.EnergyIconType.MAGIC, true, "CHAOS BOLT");
+
 	@Override
 	public ResourceLocation getId() {
 		return ID;
@@ -81,12 +103,12 @@ public final class LokiHero implements Hero {
 
 	@Override
 	public HeroTheme getTheme() {
-		return HeroTheme.LOKI;
+		return THEME;
 	}
 
 	@Override
 	public HeroHudConfig getHudConfig() {
-		return HeroHudConfig.LOKI;
+		return HUD;
 	}
 	@Override
 	public double getImpactPower() {
@@ -95,6 +117,11 @@ public final class LokiHero implements Hero {
 	@Override
 	public JarvisThreatClass getThreatClass() {
 		return JarvisThreatClass.D;
+	}
+
+	@Override
+	public List<PassiveGlyph> getPassiveGlyphs() {
+		return List.of(PassiveGlyph.MAGIC, PassiveGlyph.FEATHER, PassiveGlyph.BOLT);
 	}
 
 }

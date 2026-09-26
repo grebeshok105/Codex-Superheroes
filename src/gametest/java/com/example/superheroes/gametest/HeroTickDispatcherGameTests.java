@@ -2,6 +2,7 @@ package com.example.superheroes.gametest;
 
 import com.example.superheroes.ability.AbilityIds;
 import com.example.superheroes.hero.NarutoHero;
+import com.example.superheroes.hero.ScaramoucheHero;
 import com.example.superheroes.lifecycle.HeroTickDispatcher;
 import com.example.superheroes.transform.HeroDataStore;
 import com.example.superheroes.transform.HeroTransformService;
@@ -93,5 +94,38 @@ public class HeroTickDispatcherGameTests implements FabricGameTest {
 		helper.assertTrue(HeroTransformService.forceUntransform(player), "untransform");
 		TestPlayers.leave(player);
 		helper.succeed();
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void startRunsBeforeEndPhasesAndEarlyBeforeGlobal(GameTestHelper helper) {
+		List<String> log = new java.util.concurrent.CopyOnWriteArrayList<>();
+		java.util.concurrent.atomic.AtomicBoolean armed = new java.util.concurrent.atomic.AtomicBoolean(true);
+		HeroTickDispatcher.onGlobalTick(s -> { if (armed.get()) log.add("global"); });
+		HeroTickDispatcher.onEarlyTick(s -> { if (armed.get()) log.add("early"); });
+		HeroTickDispatcher.onServerTickStart(s -> { if (armed.get()) log.add("start"); });
+		helper.runAfterDelay(2, () -> {
+			armed.set(false);
+			int start = log.indexOf("start");
+			List<String> afterStart = start < 0 ? log : log.subList(start, log.size());
+			int early = afterStart.indexOf("early");
+			int global = afterStart.indexOf("global");
+			helper.assertTrue(start >= 0 && early > 0 && global > early,
+					"START before EARLY before GLOBAL within one tick: " + log);
+			helper.succeed();
+		});
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void heroTickRunsOnlyForThatHero(GameTestHelper helper) {
+		ServerPlayer scaramouche = TestPlayers.join(helper);
+		ServerPlayer nobody = TestPlayers.join(helper);
+		TestHeroes.transform(scaramouche, ScaramoucheHero.ID);
+		Set<UUID> seen = java.util.concurrent.ConcurrentHashMap.newKeySet();
+		HeroTickDispatcher.onHeroTick(ScaramoucheHero.ID, (server, p, data) -> seen.add(p.getUUID()));
+		helper.runAfterDelay(2, () -> {
+			helper.assertTrue(seen.contains(scaramouche.getUUID()), "the hero's player ticks");
+			helper.assertFalse(seen.contains(nobody.getUUID()), "other players do not");
+			helper.succeed();
+		});
 	}
 }

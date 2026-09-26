@@ -3,6 +3,7 @@ package com.example.superheroes.client.hud;
 import com.example.superheroes.ModId;
 import com.example.superheroes.client.render.WildRenderer;
 import com.example.superheroes.client.render.WildShaders;
+import com.example.superheroes.hero.PassiveGlyph;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
 
@@ -18,13 +19,13 @@ import java.util.Map;
  */
 public final class EmojiIcons {
 	private static final int TEX_SIZE = 64;
-	private static final Map<HudIcons.PassiveGlyph, ResourceLocation> CACHE =
-			new EnumMap<>(HudIcons.PassiveGlyph.class);
+	private static final Map<PassiveGlyph, ResourceLocation> CACHE =
+			new EnumMap<>(PassiveGlyph.class);
 
 	private EmojiIcons() {
 	}
 
-	public static ResourceLocation texture(HudIcons.PassiveGlyph glyph) {
+	public static ResourceLocation texture(PassiveGlyph glyph) {
 		return CACHE.computeIfAbsent(glyph, g -> {
 			ResourceLocation loc = ModId.of("textures/gui/emoji/" + g.name().toLowerCase(Locale.ROOT) + ".png");
 			// плавное масштабирование вместо nearest — иначе эмодзи выглядят обрезанными
@@ -34,12 +35,12 @@ public final class EmojiIcons {
 		});
 	}
 
-	public static void draw(GuiGraphics g, HudIcons.PassiveGlyph glyph, int x, int y, int size) {
+	public static void draw(GuiGraphics g, PassiveGlyph glyph, int x, int y, int size) {
 		g.blit(texture(glyph), x, y, size, size, 0f, 0f, TEX_SIZE, TEX_SIZE, TEX_SIZE, TEX_SIZE);
 	}
 
 	/** Эмодзи с лёгкой неоновой подсветкой позади (мягкий шейдерный орб). */
-	public static void drawWithGlow(GuiGraphics g, HudIcons.PassiveGlyph glyph, int x, int y, int size,
+	public static void drawWithGlow(GuiGraphics g, PassiveGlyph glyph, int x, int y, int size,
 			int glowColor) {
 		if (WildShaders.rectReady()) {
 			float cx = x + size / 2f;

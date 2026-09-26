@@ -2,6 +2,9 @@ package com.example.superheroes.ability;
 
 import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.damage.ModDamageTypes;
+import com.example.superheroes.lifecycle.LifecycleRegistrar;
+import com.example.superheroes.lifecycle.OwnedSessionMap;
+import com.example.superheroes.lifecycle.OwnedSessionMap.ClearOn;
 import com.example.superheroes.particle.ModParticles;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
@@ -14,8 +17,8 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.EnumSet;
 import java.util.UUID;
-import java.util.WeakHashMap;
 
 public final class CapShieldSlamAbility implements Ability {
 	private static final int COOLDOWN_TICKS = 200;
@@ -24,7 +27,8 @@ public final class CapShieldSlamAbility implements Ability {
 	private static final int MAX_AIR_TICKS = 100;
 	private static final int MIN_AIR_TICKS_BEFORE_DETONATE = 4;
 
-	private static final WeakHashMap<UUID, Integer> JUMPING = new WeakHashMap<>();
+	private static final OwnedSessionMap<UUID, Integer> STATE =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.of(ClearOn.LEAVE, ClearOn.DEATH));
 
 	@Override
 	public ResourceLocation getId() {
@@ -48,7 +52,7 @@ public final class CapShieldSlamAbility implements Ability {
 
 	@Override
 	public boolean canActivate(ServerPlayer player) {
-		return !JUMPING.containsKey(player.getUUID());
+		return !STATE.containsKey(player.getUUID());
 	}
 
 	@Override
@@ -58,7 +62,7 @@ public final class CapShieldSlamAbility implements Ability {
 		player.setDeltaMovement(motion);
 		player.hurtMarked = true;
 		player.connection.send(new ClientboundSetEntityMotionPacket(player));
-		JUMPING.put(player.getUUID(), 0);
+		STATE.put(player.getUUID(), player.getUUID(), 0);
 		level.playSound(null, player.getX(), player.getY(), player.getZ(),
 				SoundEvents.IRON_GOLEM_DAMAGE, SoundSource.PLAYERS, 1.2f, 1.4f);
 		AbilityCooldowns.setCooldownTicks(player, getId(), COOLDOWN_TICKS);
@@ -66,18 +70,18 @@ public final class CapShieldSlamAbility implements Ability {
 	}
 
 	public static void serverTick(ServerPlayer player) {
-		Integer airTicks = JUMPING.get(player.getUUID());
+		Integer airTicks = STATE.get(player.getUUID());
 		if (airTicks == null) return;
 		if (airTicks >= MIN_AIR_TICKS_BEFORE_DETONATE && player.onGround()) {
 			detonate(player);
-			JUMPING.remove(player.getUUID());
+			STATE.remove(player.getUUID());
 			return;
 		}
 		if (airTicks >= MAX_AIR_TICKS) {
-			JUMPING.remove(player.getUUID());
+			STATE.remove(player.getUUID());
 			return;
 		}
-		JUMPING.put(player.getUUID(), airTicks + 1);
+		STATE.put(player.getUUID(), player.getUUID(), airTicks + 1);
 	}
 
 	private static void detonate(ServerPlayer player) {
@@ -112,15 +116,5 @@ public final class CapShieldSlamAbility implements Ability {
 				SoundEvents.GENERIC_EXPLODE.value(), SoundSource.PLAYERS, 1.2f, 0.7f);
 		level.playSound(null, pos.x, pos.y, pos.z,
 				SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 0.8f, 1.4f);
-	}
-
-	/** Drop an in-progress slam-jump without firing it (leave, death, untransform). */
-	public static void clear(ServerPlayer player) {
-		JUMPING.remove(player.getUUID());
-	}
-
-	/** World shutdown — slam state dies with the world. */
-	public static void resetAll() {
-		JUMPING.clear();
 	}
 }

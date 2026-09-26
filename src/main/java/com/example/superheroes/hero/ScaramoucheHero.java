@@ -38,6 +38,7 @@ public final class ScaramoucheHero implements Hero {
 			0xFFFFFFFF,
 			0x663DFFE8
 	);
+	private static final HeroHudConfig HUD = new HeroHudConfig("hud.superheroes.energy.storm_power", HeroHudConfig.EnergyIconType.LIGHTNING, true, "SKYFALL BURST");
 	private static final AttributeModifierSet PASSIVES = AttributeModifierSet.builder()
 			.add(Attributes.ARMOR, ModId.of("modifiers/scaramouche/armor"), 14.0, AttributeModifier.Operation.ADD_VALUE)
 			.add(Attributes.ARMOR_TOUGHNESS, ModId.of("modifiers/scaramouche/toughness"), 4.0, AttributeModifier.Operation.ADD_VALUE)
@@ -130,7 +131,7 @@ public final class ScaramoucheHero implements Hero {
 
 	@Override
 	public HeroHudConfig getHudConfig() {
-		return HeroHudConfig.SCARAMOUCHE;
+		return HUD;
 	}
 	@Override
 	public double getImpactPower() {
@@ -139,6 +140,11 @@ public final class ScaramoucheHero implements Hero {
 	@Override
 	public JarvisThreatClass getThreatClass() {
 		return JarvisThreatClass.D;
+	}
+
+	@Override
+	public List<PassiveGlyph> getPassiveGlyphs() {
+		return List.of(PassiveGlyph.SPIRAL, PassiveGlyph.FIST, PassiveGlyph.FEATHER);
 	}
 
 }

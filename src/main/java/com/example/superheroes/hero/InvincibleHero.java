@@ -16,6 +16,7 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.player.Player;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -42,6 +43,8 @@ public final class InvincibleHero implements Hero {
 			0xFFFFFFFF,
 			0x66FFE15A
 	);
+
+	private static final HeroHudConfig HUD = new HeroHudConfig("hud.superheroes.energy.viltrumite_power", HeroHudConfig.EnergyIconType.FIST, true, "GUARDIAN'S BREAKER");
 
 	@Override
 	public ResourceLocation getId() {
@@ -142,7 +145,7 @@ public final class InvincibleHero implements Hero {
 
 	@Override
 	public HeroHudConfig getHudConfig() {
-		return HeroHudConfig.INVINCIBLE;
+		return HUD;
 	}
 	@Override
 	public com.example.superheroes.physics.ImpactStyle getImpactStyle() {
@@ -155,6 +158,16 @@ public final class InvincibleHero implements Hero {
 	@Override
 	public JarvisThreatClass getThreatClass() {
 		return JarvisThreatClass.A;
+	}
+
+	@Override
+	public List<PassiveGlyph> getPassiveGlyphs() {
+		return List.of(PassiveGlyph.SHIELD, PassiveGlyph.FIST, PassiveGlyph.FEATHER, PassiveGlyph.HEART);
+	}
+
+	@Override
+	public @Nullable BleedProfile getMeleeBleed(ServerPlayer attacker) {
+		return new BleedProfile(0.20f, 0);
 	}
 
 }

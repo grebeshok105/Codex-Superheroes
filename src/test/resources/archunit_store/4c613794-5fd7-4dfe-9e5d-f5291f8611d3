@@ -1,4 +1,3 @@
-Method <com.example.superheroes.SuperheroesMod.onInitialize()> gets field <net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents.END_SERVER_TICK> in (SuperheroesMod.java:80)
 Method <com.example.superheroes.effect.KratosRageController.init()> gets field <net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents.START_SERVER_TICK> in (KratosRageController.java:49)
 Method <com.example.superheroes.effect.MadnessFlightController.init()> gets field <net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents.START_SERVER_TICK> in (MadnessFlightController.java:32)
 Method <com.example.superheroes.effect.MirrorDimensionController.init()> gets field <net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents.END_SERVER_TICK> in (MirrorDimensionController.java:89)
