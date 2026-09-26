@@ -1,4 +1,2 @@
 Method <io.github.grebeshok105.codex.falbiks.HeroComponentAccess.resolve(java.lang.Class)> gets field <io.github.grebeshok105.codex.SuperheroesMod.LOGGER> in (HeroComponentAccess.java:61)
-Method <io.github.grebeshok105.codex.lifecycle.PlayerLifecycle.fire(java.util.List, net.minecraft.server.level.ServerPlayer, java.lang.String)> gets field <io.github.grebeshok105.codex.SuperheroesMod.LOGGER> in (PlayerLifecycle.java:85)
-Method <io.github.grebeshok105.codex.lifecycle.PlayerLifecycle.init()> gets field <io.github.grebeshok105.codex.SuperheroesMod.LOGGER> in (PlayerLifecycle.java:74)
-Static Initializer <io.github.grebeshok105.codex.effect.ThanosCrossModSnapHook.<clinit>()> gets field <io.github.grebeshok105.codex.SuperheroesMod.LOGGER> in (ThanosCrossModSnapHook.java:47)
+Static Initializer <io.github.grebeshok105.codex.effect.ThanosCrossModSnapHook.<clinit>()> gets field <io.github.grebeshok105.codex.SuperheroesMod.LOGGER> in (ThanosCrossModSnapHook.java:46)
