@@ -4,17 +4,25 @@ import com.example.superheroes.client.core.hud.HudLayer;
 import com.example.superheroes.client.core.hud.HudLayers;
 import com.example.superheroes.client.core.hud.MovableHud;
 import com.example.superheroes.client.core.input.HeroActionKeys;
+import com.example.superheroes.client.core.render.PlayerLayers;
+import com.example.superheroes.client.core.render.SkinProvider;
+import com.example.superheroes.client.core.render.SkinResolver;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.model.PlayerModel;
+import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.entity.layers.RenderLayer;
+import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 /** Default {@link HeroClientContext}: delegates to the real registries. One instance per module — {@link #heroId} scopes action-key filtering. */
 public final class CoreClientContext implements HeroClientContext {
@@ -47,5 +55,15 @@ public final class CoreClientContext implements HeroClientContext {
 	@Override
 	public <T extends Entity> void entityRenderer(EntityType<T> type, EntityRendererProvider<T> provider) {
 		EntityRendererRegistry.register(type, provider);
+	}
+
+	@Override
+	public void skin(SkinProvider provider) {
+		SkinResolver.register(heroId, provider);
+	}
+
+	@Override
+	public void playerLayer(Function<PlayerRenderer, RenderLayer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>>> factory) {
+		PlayerLayers.register(factory);
 	}
 }

@@ -1,82 +1,37 @@
 package com.example.superheroes.client.mixin;
 
-import com.example.superheroes.ModId;
-import com.example.superheroes.client.ClientHeroState;
-import com.example.superheroes.client.ClientShadowArmyState;
-import com.example.superheroes.client.ClientUraniumPressureState;
-import com.example.superheroes.hero.Hero;
-import com.example.superheroes.hero.Heroes;
-import com.example.superheroes.hero.HomelanderHero;
-import com.example.superheroes.hero.SungJinwooHero;
-import net.minecraft.client.Minecraft;
+import com.example.superheroes.client.ClientNanoSuitUpState;
+import com.example.superheroes.client.core.render.SkinResolver;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.client.resources.PlayerSkin;
-import net.minecraft.resources.ResourceLocation;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(AbstractClientPlayer.class)
 public abstract class AbstractClientPlayerSkinMixin {
-	@Unique
-	private static final ResourceLocation WOUNDED_HOMELANDER = ModId.of("textures/entity/hero/infected_homelander_wounded.png");
-
 	@Inject(method = "getSkin", at = @At("RETURN"), cancellable = true)
 	private void superheroes$forceHeroSkin(CallbackInfoReturnable<PlayerSkin> cir) {
 		AbstractClientPlayer self = (AbstractClientPlayer) (Object) this;
 		// Пока идёт нано-сборка костюма, геройский скин не подменяется:
 		// броня постепенно проявляется слоем NanoSuitUpLayer поверх игрока.
-		if (com.example.superheroes.client.ClientNanoSuitUpState.suppressHeroSkin(self.getUUID())) {
+		if (ClientNanoSuitUpState.suppressHeroSkin(self.getUUID())) {
 			return;
 		}
-		ResourceLocation heroId = superheroes$heroIdFor(self);
-		if (heroId == null) {
+		SkinResolver.ResolvedSkin skin = SkinResolver.resolve(self);
+		if (skin == null) {
 			return;
-		}
-		ResourceLocation heroTexture = superheroes$heroTexture(heroId);
-		if (HomelanderHero.ID.equals(heroId) && ClientUraniumPressureState.isPressured(self.getUUID())) {
-			heroTexture = WOUNDED_HOMELANDER;
-		}
-		if (SungJinwooHero.ID.equals(heroId) && ClientShadowArmyState.hasShadows(self.getUUID())) {
-			heroTexture = SungJinwooHero.SKIN_PHASE_2;
-		}
-		// Thanos: gauntlet on the skin only shows stones actually collected
-		// (stone masks of every Thanos are synced to all clients)
-		if (com.example.superheroes.hero.ThanosHero.ID.equals(heroId)) {
-			heroTexture = com.example.superheroes.client.ThanosSkinTextures.textureFor(
-					com.example.superheroes.client.ClientThanosState.maskFor(self.getUUID()));
-		}
-		// Iron Man: текущий вариант костюма синхронизирован со всеми клиентами
-		if (com.example.superheroes.hero.IronManHero.ID.equals(heroId)) {
-			int variant = com.example.superheroes.client.ClientSuitVariantState.variantFor(self.getUUID());
-			heroTexture = com.example.superheroes.ability.ironman.IronManSuitVariant.get(variant).texture();
 		}
 		PlayerSkin orig = cir.getReturnValue();
 		cir.setReturnValue(new PlayerSkin(
-				heroTexture != null ? heroTexture : DefaultPlayerSkin.getDefaultTexture(),
+				skin.texture() != null ? skin.texture() : DefaultPlayerSkin.getDefaultTexture(),
 				null,
 				null,
 				null,
-				PlayerSkin.Model.WIDE,
+				Boolean.TRUE.equals(skin.slimModel()) ? PlayerSkin.Model.SLIM : PlayerSkin.Model.WIDE,
 				orig != null && orig.secure()
 		));
-	}
-
-	@Unique
-	private static ResourceLocation superheroes$heroIdFor(AbstractClientPlayer player) {
-		Minecraft mc = Minecraft.getInstance();
-		if (mc.player != null && player.getUUID().equals(mc.player.getUUID())) {
-			return ClientHeroState.data().hasHero() ? ClientHeroState.data().heroId() : null;
-		}
-		return player.getAttached(com.example.superheroes.attachment.ModAttachments.PUBLIC_HERO);
-	}
-
-	@Unique
-	private static ResourceLocation superheroes$heroTexture(ResourceLocation heroId) {
-		Hero hero = Heroes.get(heroId);
-		return hero != null ? hero.getSkinTexture() : null;
 	}
 }

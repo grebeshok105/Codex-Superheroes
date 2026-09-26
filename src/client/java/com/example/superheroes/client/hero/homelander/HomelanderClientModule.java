@@ -19,6 +19,7 @@ public record HomelanderClientModule() implements HeroClientModule {
 
 	@Override
 	public void register(HeroClientContext ctx) {
+		ctx.skin(new HomelanderSkinProvider());
 		ctx.hud(1400, ModId.of("uranium_threat"), UraniumThreatHud::render);
 		ctx.receive(LaserFiredS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> LaserBeamRenderer.add(payload.start(), payload.end())));

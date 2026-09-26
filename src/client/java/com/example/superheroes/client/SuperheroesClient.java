@@ -3,6 +3,7 @@ package com.example.superheroes.client;
 import com.example.superheroes.ModId;
 import com.example.superheroes.client.bootstrap.HeroClientModules;
 import com.example.superheroes.client.core.hud.HudLayers;
+import com.example.superheroes.client.core.render.PlayerLayers;
 import com.example.superheroes.client.hud.AbilitiesTooltipHud;
 import com.example.superheroes.client.hud.AbilityBarHud;
 import com.example.superheroes.client.hud.ChatHudMovable;
@@ -17,7 +18,6 @@ import com.example.superheroes.client.fx.ScreenShakeManager;
 import com.example.superheroes.client.fx.WallImpactDebrisManager;
 import com.example.superheroes.client.network.ClientNetworking;
 import com.example.superheroes.client.render.HomelanderBossRenderer;
-import com.example.superheroes.client.render.RemOniHornFeatureRenderer;
 import com.example.superheroes.entity.ModEntities;
 import com.example.superheroes.item.ModItems;
 import com.example.superheroes.client.render.CosmicBeamRenderer;
@@ -93,10 +93,7 @@ public class SuperheroesClient implements ClientModInitializer {
 				ctx -> new net.minecraft.client.renderer.entity.ThrownItemRenderer<>(ctx, 1.0f, false));
 		LivingEntityFeatureRendererRegistrationCallback.EVENT.register((entityType, entityRenderer, registrationHelper, context) -> {
 			if (entityRenderer instanceof PlayerRenderer playerRenderer) {
-				registrationHelper.register(new RemOniHornFeatureRenderer(playerRenderer));
-				registrationHelper.register(new com.example.superheroes.client.render.ReinhardScabbardLayer(playerRenderer));
-				registrationHelper.register(new com.example.superheroes.client.render.IronManNanoFormLayer(playerRenderer));
-				registrationHelper.register(new com.example.superheroes.client.render.NanoSuitUpLayer(playerRenderer));
+				PlayerLayers.registerAll(playerRenderer, registrationHelper);
 			}
 		});
 		ParticleFactoryRegistry.getInstance().register(ModParticles.TRANSFORM_SPARK, EndRodParticle.Provider::new);

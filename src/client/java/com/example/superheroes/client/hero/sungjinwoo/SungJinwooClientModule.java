@@ -16,6 +16,7 @@ public record SungJinwooClientModule() implements HeroClientModule {
 
 	@Override
 	public void register(HeroClientContext ctx) {
+		ctx.skin(new SungJinwooSkinProvider());
 		ctx.entityRenderer(ModEntities.SHADOW_SOLDIER, ShadowSoldierRenderer::new);
 		ctx.receive(SungShadowArmyS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> com.example.superheroes.client.ClientShadowArmyState.update(
