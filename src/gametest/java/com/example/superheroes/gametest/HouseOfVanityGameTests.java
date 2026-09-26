@@ -142,7 +142,12 @@ public final class HouseOfVanityGameTests implements FabricGameTest {
 			TestPlayers.leave(pandora);
 		});
 		helper.runAfterDelay(6, () -> {
-			helper.assertTrue(!MirrorDimensionController.isTrapped(victim),
+			// A concurrent test's House can legitimately absorb this victim into
+			// its own session — the contract here is that the caster's House is
+			// closed and this victim is no longer held by it, not that no other
+			// House exists.
+			helper.assertTrue(!MirrorDimensionController.hasActiveHouse(pandora)
+							&& !MirrorDimensionController.trappedVictims(pandora).contains(victim),
 					"victim freed the moment the caster left");
 			helper.assertTrue(!pandora.hasEffect(MobEffects.DAMAGE_RESISTANCE),
 					"caster cleared the moment the House is gone");
