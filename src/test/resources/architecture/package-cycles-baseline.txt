@@ -1,4 +1,3 @@
-ability <-> debug
 ability <-> effect
 ability <-> flight
 ability <-> hero
