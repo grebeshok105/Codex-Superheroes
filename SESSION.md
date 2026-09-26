@@ -294,7 +294,7 @@
 - Gametest `modulesCoverEveryHeroInRegistryOrder` (verbatim from plan) + index-independent `scorpionIsRegisteredThroughItsModule`. Cycle baseline: `ability<->ability.ironman` pair resolved and removed; store auto-shrank ~42 stale `Heroes.*`/`AbilityRegistry.*` entries. qualityGate 71/71.
 
 
-## Architecture migration — stage D2b-1 (plan 03, worker A: ticks + init→register)
+## Architecture migration — stage D2b-1 (plan 03)
 
 - 22 controllers renamed `init()` → `register(HeroModuleContext ctx)` verbatim (init bodies — UseItemCallback/AttackEntity/JOIN/DISCONNECT listeners — kept identical inside register). MirrorDimension self-END → `ctx.ticks().early`, MadnessFlight self-START → `ctx.ticks().start`; both lost `ServerTickEvents` imports.
 - New `bootstrap/SharedMechanics.register(ctx)` = old shared rows in old relative order: HeroLandingTracker, HeroEquipmentLock, SuperJump, AutoSaturation, HeroPassiveRegen, HeroMeleeImpact, BallisticBodyTracker, FlightController, HeavensStrike + content rows HordeManager(level), AdminBuildSync. Called from `HeroModules.bootstrap` between SharedAbilities and the per-module pass.
@@ -303,4 +303,11 @@
 - Tests: `assertControllersAreWired` deleted (STATIC_INIT scan, SUPERHEROES_MOD field); `controllersHaveNoStaticInit` strict rule added verbatim — RED until worker B removes the last 8 `*Controller.init()`.
 - Freeze store: `4c613794` −2 (my self-registered tick listeners); `8c45b479` — init()→register(ctx) descriptor rewrites (Invincible/Kawarimi/RegulusTotem) + +1 line shifts for import additions; `6ab35c1a` regenerated at current SuperheroesMod line numbers (uniform −22 from HEAD for onLeave/onDeath/onRespawn/onServerStopped; −15 vs stale store for earlier blocks).
 - Tick cross-reads (сверка): LandingTracker.tickPlayer reads Unibeam.isBusy — order flips (was Unibeam@345→Landing@347; now SharedMechanics phase first) = 1-tick-stale read, unfixed per instructions; ViltrumiteCharge reads FlightController.isFlightActive — flips (charge after flight now); UraniumDefense.isUnderUraniumThreat read stays phase-safe (GLOBAL precedes PLAYERS both schemes). Not fixed, reported.
-- qualityGate NOT run here (orchestrator runs the gate); `controllersHaveNoStaticInit` expected-red until D2b-2's worker-B commit.
+- qualityGate NOT run here (orchestrator runs the gate); `controllersHaveNoStaticInit` expected-green after worker B's init() removals landed (aab21ad) — verified at gate.
+
+## Architecture migration — stage CL3a-1 (plan 04)
+
+- Client module contracts landed: `client/core/module/{HeroClientModule,HeroClientContext,CoreClientContext}` (plan-verbatim) + `client/bootstrap/HeroClientModules` + `client/core/input/HeroActionKeys` (one END_CLIENT_TICK drains `consumeClick()` always, fires `onPress` only when local `PUBLIC_HERO` matches; no key mappings registered yet — CL3b owns them).
+- `ScorpionClientModule` owns the `ScorpionFxS2CPayload` receiver (handler byte-identical; `ClientNetworking` lost only that receiver + import — 35→34 in-file + 1 via `ctx.receive`). `heroId() = ScorpionHero.ID` — IN_CLIENT_HERO_MODULE is excluded from the sharedClientCode rule. `HeroClientModules.bootstrap()` runs right after `ClientNetworking.init()`.
+- New ArchUnit client rules (`clientHeroModulesAreReferencedOnlyByThemselvesAndTheModuleList`, `clientCoreDoesNotKnowHeroModules`, `sharedClientCodeDoesNotDependOnConcreteHeroes`) now non-vacuous. qualityGate 71/71.
+- Runtime: receiver proven to fire via temporary `[CL3A1-FX]` println (kind=2 hellfire pillar, kind=1 spear harpoon) — Veil 4.1.2 in classpath, handler dispatches to `VeilScorpionFx`. Kunai→scorpion transform, regulus regression PASS.
