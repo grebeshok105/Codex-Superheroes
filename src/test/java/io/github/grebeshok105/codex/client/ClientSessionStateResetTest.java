@@ -1,5 +1,10 @@
 package io.github.grebeshok105.codex.client;
 
+import io.github.grebeshok105.codex.client.hero.reinhard.state.ClientReinhardCeremonyState;
+import io.github.grebeshok105.codex.client.hero.reinhard.state.ClientReinhardDarknessState;
+import io.github.grebeshok105.codex.client.hero.reinhard.state.ClientReinhardSwordGateState;
+import io.github.grebeshok105.codex.client.hero.reinhard.state.ClientReinhardSwordKillState;
+import io.github.grebeshok105.codex.client.hero.reinhard.state.ClientReinhardTimeSlowState;
 import io.github.grebeshok105.codex.client.hud.MirrorWarpFlashHud;
 import net.minecraft.resources.ResourceLocation;
 import org.junit.jupiter.api.Test;

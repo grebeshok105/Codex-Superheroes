@@ -5,10 +5,10 @@ import io.github.grebeshok105.codex.hero.reinhard.ReinhardAbilities;
 import io.github.grebeshok105.codex.client.core.module.HeroClientContext;
 import io.github.grebeshok105.codex.client.core.module.HeroClientModule;
 import io.github.grebeshok105.codex.client.hud.HudUtil;
-import io.github.grebeshok105.codex.client.hud.ReinhardCeremonyOverlay;
-import io.github.grebeshok105.codex.client.hud.ReinhardDarknessOverlay;
-import io.github.grebeshok105.codex.client.hud.ReinhardSwordDeathOverlay;
-import io.github.grebeshok105.codex.client.render.ReinhardScabbardLayer;
+import io.github.grebeshok105.codex.client.hero.reinhard.hud.ReinhardCeremonyOverlay;
+import io.github.grebeshok105.codex.client.hero.reinhard.hud.ReinhardDarknessOverlay;
+import io.github.grebeshok105.codex.client.hero.reinhard.hud.ReinhardSwordDeathOverlay;
+import io.github.grebeshok105.codex.client.hero.reinhard.render.ReinhardScabbardLayer;
 import io.github.grebeshok105.codex.hero.reinhard.ReinhardHero;
 import io.github.grebeshok105.codex.hero.reinhard.net.ReinhardCeremonyS2CPayload;
 import io.github.grebeshok105.codex.hero.reinhard.net.ReinhardDarknessS2CPayload;
@@ -44,28 +44,28 @@ public record ReinhardClientModule() implements HeroClientModule {
 		ctx.receive(ReinhardWishOptionsS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> {
 					Minecraft mc = Minecraft.getInstance();
-					mc.setScreen(io.github.grebeshok105.codex.client.screen.ReinhardWishScreen.of(
+					mc.setScreen(io.github.grebeshok105.codex.client.hero.reinhard.screen.ReinhardWishScreen.of(
 							payload.damageTypeIds(), payload.adaptedDamageTypeIds(),
 							payload.wishesUsed(), payload.wishesMax(),
 							ReinhardClientModule::sendWishConfirm));
 				}));
 
 		ctx.receive(ReinhardCeremonyS2CPayload.TYPE, (payload, context) ->
-				context.client().execute(() -> io.github.grebeshok105.codex.client.ClientReinhardCeremonyState.update(
+				context.client().execute(() -> io.github.grebeshok105.codex.client.hero.reinhard.state.ClientReinhardCeremonyState.update(
 						payload.active(), payload.progress())));
 
 		ctx.receive(ReinhardSwordGateS2CPayload.TYPE, (payload, context) ->
-				context.client().execute(() -> io.github.grebeshok105.codex.client.ClientReinhardSwordGateState.update(
+				context.client().execute(() -> io.github.grebeshok105.codex.client.hero.reinhard.state.ClientReinhardSwordGateState.update(
 						payload.ready(), payload.progress())));
 
 		ctx.receive(ReinhardSwordKillS2CPayload.TYPE, (payload, context) ->
-				context.client().execute(() -> io.github.grebeshok105.codex.client.ClientReinhardSwordKillState.update(payload.active())));
+				context.client().execute(() -> io.github.grebeshok105.codex.client.hero.reinhard.state.ClientReinhardSwordKillState.update(payload.active())));
 
 		ctx.receive(ReinhardDarknessS2CPayload.TYPE, (payload, context) ->
-				context.client().execute(() -> io.github.grebeshok105.codex.client.ClientReinhardDarknessState.activate(payload.durationTicks())));
+				context.client().execute(() -> io.github.grebeshok105.codex.client.hero.reinhard.state.ClientReinhardDarknessState.activate(payload.durationTicks())));
 
 		ctx.receive(ReinhardTimeSlowS2CPayload.TYPE, (payload, context) ->
-				context.client().execute(() -> io.github.grebeshok105.codex.client.ClientReinhardTimeSlowState.update(payload.active())));
+				context.client().execute(() -> io.github.grebeshok105.codex.client.hero.reinhard.state.ClientReinhardTimeSlowState.update(payload.active())));
 
 		ctx.soundFilter(ReinhardClientModule::muteWorldDuringTimeSlow);
 		ctx.abilityDecoration(ReinhardAbilities.REINHARD_SWORD_DRAW, ReinhardClientModule::swordDrawReadyHalo);
@@ -73,7 +73,7 @@ public record ReinhardClientModule() implements HeroClientModule {
 
 	/** Time slow mutes every sound except Reinhard's own — same condition the old client mixin had. */
 	private static boolean muteWorldDuringTimeSlow(SoundInstance instance) {
-		if (!io.github.grebeshok105.codex.client.ClientReinhardTimeSlowState.active()) return false;
+		if (!io.github.grebeshok105.codex.client.hero.reinhard.state.ClientReinhardTimeSlowState.active()) return false;
 		SoundSource source = instance.getSource();
 		if (source == SoundSource.MUSIC || source == SoundSource.MASTER || source == SoundSource.VOICE) return false;
 		String soundPath = instance.getLocation().toString();
@@ -83,7 +83,7 @@ public record ReinhardClientModule() implements HeroClientModule {
 	/** Gold pulsing border around the sword-draw icon while the gate is ready and the ability isn't running. */
 	private static void swordDrawReadyHalo(GuiGraphics graphics, ResourceLocation abilityId, int iconCenterX, int iconCenterY, int iconSize) {
 		if (io.github.grebeshok105.codex.client.ClientHeroState.data().isActive(ReinhardAbilities.REINHARD_SWORD_DRAW)
-				|| !io.github.grebeshok105.codex.client.ClientReinhardSwordGateState.ready()) {
+				|| !io.github.grebeshok105.codex.client.hero.reinhard.state.ClientReinhardSwordGateState.ready()) {
 			return;
 		}
 		int half = iconSize / 2;

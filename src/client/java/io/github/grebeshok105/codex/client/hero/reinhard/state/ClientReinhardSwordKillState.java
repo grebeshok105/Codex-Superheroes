@@ -1,5 +1,6 @@
-package io.github.grebeshok105.codex.client;
+package io.github.grebeshok105.codex.client.hero.reinhard.state;
 
+import io.github.grebeshok105.codex.client.ClientSessionState;
 public final class ClientReinhardSwordKillState {
 	private static volatile boolean active;
 	private static volatile long activatedAtMs;

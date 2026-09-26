@@ -1,6 +1,6 @@
-package io.github.grebeshok105.codex.client.hud;
+package io.github.grebeshok105.codex.client.hero.reinhard.hud;
 
-import io.github.grebeshok105.codex.client.ClientReinhardSwordKillState;
+import io.github.grebeshok105.codex.client.hero.reinhard.state.ClientReinhardSwordKillState;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
@@ -11,7 +11,7 @@ import net.minecraft.network.chat.Component;
 /**
  * Полноэкранный кровавый оверлей для жертвы меча Рейнхарда.
  * Показывается, пока сервер держит игрока в state «marked for death» (между ALLOW_DAMAGE-перехватом
- * и финальным добиванием в {@link io.github.grebeshok105.codex.effect.ReinhardSwordDeathMarkController#flushDeaths}).
+ * и финальным добиванием в {@link io.github.grebeshok105.codex.hero.reinhard.runtime.ReinhardSwordDeathMarkController#flushDeaths}).
  *
  * Только для игроков — на мобах эффекта нет (server-side фильтр).
  */

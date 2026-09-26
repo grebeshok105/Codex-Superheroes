@@ -1,5 +1,6 @@
-package io.github.grebeshok105.codex.client;
+package io.github.grebeshok105.codex.client.hero.reinhard.state;
 
+import io.github.grebeshok105.codex.client.ClientSessionState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.sounds.SoundSource;
 
