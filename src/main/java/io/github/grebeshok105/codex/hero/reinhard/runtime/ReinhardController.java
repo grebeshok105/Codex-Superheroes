@@ -1,17 +1,16 @@
-package io.github.grebeshok105.codex.effect;
+package io.github.grebeshok105.codex.hero.reinhard.runtime;
 
-import io.github.grebeshok105.codex.attachment.ModAttachments;
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.damage.ModDamageTypes;
-import io.github.grebeshok105.codex.hero.AbilityScopedModifiers;
-import io.github.grebeshok105.codex.hero.ReinhardHero;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
@@ -47,6 +46,7 @@ import net.minecraft.server.MinecraftServer;
  *  - отслеживание worthy-opponent (для логики достойности — на будущее)
  */
 public final class ReinhardController {
+	private static final ResourceLocation REINHARD_ID = ModId.of("reinhard");
 	private static final int INSTA_REGEN_INTERVAL = 600; // 30 сек
 	private static final float[] PHASE_THRESHOLDS = {0f, 30f, 70f, 130f, 220f}; // вход в фазу 2/3/4/5
 	private static final float PHASE_ACCUM_PER_HIT_CAP = 15f;
@@ -102,12 +102,12 @@ public final class ReinhardController {
 
 	public static boolean isReinhard(Player player) {
 		HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
-		return ReinhardHero.ID.equals(data.heroId());
+		return REINHARD_ID.equals(data.heroId());
 	}
 
 	private static void tickReinhard(ServerPlayer player) {
 		long now = player.serverLevel().getGameTime();
-		ReinhardState state = player.getAttachedOrCreate(ModAttachments.REINHARD_STATE);
+		ReinhardState state = player.getAttachedOrCreate(ReinhardState.ATTACHMENT);
 
 		// Permanent Regen II
 		if (player.tickCount % 100 == 0) {
@@ -123,7 +123,7 @@ public final class ReinhardController {
 		long lastInsta = state.lastInstaRegenTick();
 		if (lastInsta == 0L) {
 			state = state.withLastInstaRegenTick(now);
-			player.setAttached(ModAttachments.REINHARD_STATE, state);
+			player.setAttached(ReinhardState.ATTACHMENT, state);
 		} else if (now - lastInsta >= INSTA_REGEN_INTERVAL) {
 			player.heal(player.getMaxHealth() * 0.4f);
 			player.serverLevel().sendParticles(ParticleTypes.HEART,
@@ -132,13 +132,13 @@ public final class ReinhardController {
 			player.serverLevel().playSound(null, player.getX(), player.getY(), player.getZ(),
 					SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.PLAYERS, 0.8f, 1.4f);
 			state = state.withLastInstaRegenTick(now);
-			player.setAttached(ModAttachments.REINHARD_STATE, state);
+			player.setAttached(ReinhardState.ATTACHMENT, state);
 		}
 
 		// Mark of Judgment expire + glow
 		if (state.judgmentTarget().isPresent()) {
 			if (now > state.judgmentExpireTick()) {
-				player.setAttached(ModAttachments.REINHARD_STATE,
+				player.setAttached(ReinhardState.ATTACHMENT,
 						state.withJudgmentTarget(Optional.empty(), 0L));
 			} else {
 				ServerLevel level = player.serverLevel();
@@ -152,7 +152,7 @@ public final class ReinhardController {
 								3, 0.2, 0.1, 0.2, 0.02);
 					}
 				} else {
-					player.setAttached(ModAttachments.REINHARD_STATE,
+					player.setAttached(ReinhardState.ATTACHMENT,
 							state.withJudgmentTarget(Optional.empty(), 0L));
 				}
 			}
@@ -174,12 +174,12 @@ public final class ReinhardController {
 				ReinhardState updated = state.withAccumulatedDamage(decayed);
 				if (newPhase < state.phase()) {
 					for (int p = 1; p <= 5; p++) {
-						AbilityScopedModifiers.buildReinhardPhaseSet(p).remove(player);
+						ReinhardModifiers.buildReinhardPhaseSet(p).remove(player);
 					}
-					AbilityScopedModifiers.buildReinhardPhaseSet(newPhase).apply(player);
+					ReinhardModifiers.buildReinhardPhaseSet(newPhase).apply(player);
 					updated = updated.withPhase(newPhase);
 				}
-				player.setAttached(ModAttachments.REINHARD_STATE, updated);
+				player.setAttached(ReinhardState.ATTACHMENT, updated);
 			}
 		}
 	}
@@ -208,7 +208,7 @@ public final class ReinhardController {
 	}
 
 	private static boolean onIncomingDamageInner(ServerPlayer player, DamageSource source, float amount) {
-		ReinhardState state = player.getAttachedOrCreate(ModAttachments.REINHARD_STATE);
+		ReinhardState state = player.getAttachedOrCreate(ReinhardState.ATTACHMENT);
 		String typeId = damageTypeKey(source);
 		long nowTick = player.serverLevel().getGameTime();
 
@@ -249,7 +249,7 @@ public final class ReinhardController {
 			recent.add(0, typeId);
 			while (recent.size() > RECENT_DAMAGE_LIMIT) recent.remove(recent.size() - 1);
 			state = state.withRecentDamageTypes(recent);
-			player.setAttached(ModAttachments.REINHARD_STATE, state);
+			player.setAttached(ReinhardState.ATTACHMENT, state);
 		}
 
 		// Wish penalty: после 3 желаний +30% урон
@@ -323,7 +323,7 @@ public final class ReinhardController {
 			effective *= 0.92f;
 		}
 
-		player.setAttached(ModAttachments.REINHARD_STATE, state);
+		player.setAttached(ReinhardState.ATTACHMENT, state);
 
 		if (Math.abs(effective - amount) > 0.001f) {
 			if (effective > 0.001f) {
@@ -414,16 +414,11 @@ public final class ReinhardController {
 	}
 
 	private static boolean isBeamDamage(DamageSource source) {
+		// The former 6-key foreign list is now the #superheroes:beam damage-type tag
+		// (datagen: ModDamageTypeTagProvider); the path heuristic stays generic.
+		if (source.is(ModDamageTypes.BEAM)) return true;
 		ResourceKey<DamageType> key = source.typeHolder().unwrapKey().orElse(null);
 		if (key == null) return false;
-		if (key.equals(ModDamageTypes.EYE_LASER)
-				|| key.equals(ModDamageTypes.REPULSOR)
-				|| key.equals(ModDamageTypes.UNIBEAM)
-				|| key.equals(ModDamageTypes.HOMELANDER_EYE_LASER)
-				|| key.equals(ModDamageTypes.HOMELANDER_HEAT_VISION)
-				|| key.equals(ModDamageTypes.GOKU_KAMEHAMEHA)) {
-			return true;
-		}
 		String path = key.location().getPath();
 		return path.contains("laser")
 				|| path.contains("beam")
@@ -436,9 +431,9 @@ public final class ReinhardController {
 		ServerLevel level = player.serverLevel();
 		// Снять старые phase-modifiers, поставить новые
 		for (int p = 1; p <= 5; p++) {
-			AbilityScopedModifiers.buildReinhardPhaseSet(p).remove(player);
+			ReinhardModifiers.buildReinhardPhaseSet(p).remove(player);
 		}
-		AbilityScopedModifiers.buildReinhardPhaseSet(newPhase).apply(player);
+		ReinhardModifiers.buildReinhardPhaseSet(newPhase).apply(player);
 		player.heal(4f * newPhase);
 		level.sendParticles(ParticleTypes.END_ROD,
 				player.getX(), player.getY() + 1.0, player.getZ(),
@@ -451,17 +446,17 @@ public final class ReinhardController {
 	}
 
 	private static boolean tryPhoenix(ServerPlayer player, DamageSource source) {
-		ReinhardState state = player.getAttachedOrCreate(ModAttachments.REINHARD_STATE);
+		ReinhardState state = player.getAttachedOrCreate(ReinhardState.ATTACHMENT);
 		if (state.phoenixUsed()) {
 			// Второе пришествие уже было — позволяем умереть по-настоящему.
-			AbilityScopedModifiers.REINHARD_SECOND_COMING.remove(player);
+			ReinhardModifiers.REINHARD_SECOND_COMING.remove(player);
 			return true;
 		}
 		int nextCount = state.phoenixCount() + 1;
 		// Полная регенерация — Второе пришествие
 		player.setHealth(1f);
 		player.removeAllEffects();
-		AbilityScopedModifiers.REINHARD_SECOND_COMING.apply(player);
+		ReinhardModifiers.REINHARD_SECOND_COMING.apply(player);
 		player.setHealth(player.getMaxHealth());
 		applySecondComingEffects(player);
 
@@ -489,7 +484,7 @@ public final class ReinhardController {
 				SoundEvents.TOTEM_USE, SoundSource.PLAYERS, 2.0f, 1.0f);
 		level.playSound(null, player.getX(), player.getY(), player.getZ(),
 				SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.PLAYERS, 2.0f, 0.8f);
-		player.setAttached(ModAttachments.REINHARD_STATE,
+		player.setAttached(ReinhardState.ATTACHMENT,
 				state.withPhoenixUsed(true).withPhoenixCount(nextCount).withInSecondComing(true));
 		player.displayClientMessage(
 				Component.translatable("ability.superheroes.reinhard.phoenix", nextCount),
@@ -515,20 +510,20 @@ public final class ReinhardController {
 
 	public static boolean isInSecondComing(ServerPlayer player) {
 		if (!isReinhard(player)) return false;
-		return player.getAttachedOrCreate(ModAttachments.REINHARD_STATE).inSecondComing();
+		return player.getAttachedOrCreate(ReinhardState.ATTACHMENT).inSecondComing();
 	}
 
 	public static void onDeath(ServerPlayer player) {
 		for (int p = 1; p <= 5; p++) {
-			AbilityScopedModifiers.buildReinhardPhaseSet(p).remove(player);
+			ReinhardModifiers.buildReinhardPhaseSet(p).remove(player);
 		}
-		AbilityScopedModifiers.REINHARD_DRAW.remove(player);
-		AbilityScopedModifiers.REINHARD_SECOND_COMING.remove(player);
+		ReinhardModifiers.REINHARD_DRAW.remove(player);
+		ReinhardModifiers.REINHARD_SECOND_COMING.remove(player);
 		FIRST_DODGE_USED.remove(player.getUUID());
 	}
 
 	public static void clearAdaptations(ServerPlayer player) {
-		ReinhardState state = player.getAttachedOrCreate(ModAttachments.REINHARD_STATE);
+		ReinhardState state = player.getAttachedOrCreate(ReinhardState.ATTACHMENT);
 		state = state.withAdaptedDamageTypes(List.of())
 				.withRecentDamageTypes(List.of())
 				.withAccumulatedDamage(0f)
@@ -536,16 +531,16 @@ public final class ReinhardController {
 				.withPhoenixUsed(false)
 				.withPhoenixCount(0)
 				.withInSecondComing(false);
-		player.setAttached(ModAttachments.REINHARD_STATE, state);
-		io.github.grebeshok105.codex.effect.ReinhardSwordDrawCeremonyController.cancelCeremony(player);
+		player.setAttached(ReinhardState.ATTACHMENT, state);
+		ReinhardSwordDrawCeremonyController.cancelCeremony(player);
 		for (int p = 1; p <= 5; p++) {
-			AbilityScopedModifiers.buildReinhardPhaseSet(p).remove(player);
+			ReinhardModifiers.buildReinhardPhaseSet(p).remove(player);
 		}
-		AbilityScopedModifiers.REINHARD_DRAW.remove(player);
-		AbilityScopedModifiers.REINHARD_SECOND_COMING.remove(player);
-		state = player.getAttachedOrCreate(ModAttachments.REINHARD_STATE);
-		player.setAttached(ModAttachments.REINHARD_STATE, state.withSwordDrawn(false));
-		io.github.grebeshok105.codex.ability.ReinhardSwordDrawAbility.removeSword(player);
+		ReinhardModifiers.REINHARD_DRAW.remove(player);
+		ReinhardModifiers.REINHARD_SECOND_COMING.remove(player);
+		state = player.getAttachedOrCreate(ReinhardState.ATTACHMENT);
+		player.setAttached(ReinhardState.ATTACHMENT, state.withSwordDrawn(false));
+		ReinhardSword.removeSword(player);
 		COUNTER_LOCKOUT.remove(player.getUUID());
 		LAST_DAMAGE_TICK.remove(player.getUUID());
 		FIRST_DODGE_USED.remove(player.getUUID());
@@ -559,29 +554,29 @@ public final class ReinhardController {
 	 */
 	public static void onPlayerJoin(ServerPlayer player) {
 		if (!isReinhard(player)) return;
-		ReinhardState state = player.getAttachedOrCreate(ModAttachments.REINHARD_STATE);
+		ReinhardState state = player.getAttachedOrCreate(ReinhardState.ATTACHMENT);
 		if (!state.swordDrawn()) return;
-		player.setAttached(ModAttachments.REINHARD_STATE, state.withSwordDrawn(false));
-		AbilityScopedModifiers.REINHARD_DRAW.remove(player);
-		io.github.grebeshok105.codex.ability.ReinhardSwordDrawAbility.removeSword(player);
+		player.setAttached(ReinhardState.ATTACHMENT, state.withSwordDrawn(false));
+		ReinhardModifiers.REINHARD_DRAW.remove(player);
+		ReinhardSword.removeSword(player);
 	}
 
 	public static void onRespawn(ServerPlayer player) {
 		if (!isReinhard(player)) return;
 		// На реальном респавне — сбрасываем Второе пришествие, фазы и feniks-флаг,
 		// чтобы новая жизнь начиналась чисто и Второе пришествие было снова доступно.
-		ReinhardState state = player.getAttachedOrCreate(ModAttachments.REINHARD_STATE);
+		ReinhardState state = player.getAttachedOrCreate(ReinhardState.ATTACHMENT);
 		state = state.withPhase(1)
 				.withAccumulatedDamage(0f)
 				.withPhoenixUsed(false)
 				.withInSecondComing(false)
 				.withSwordDrawn(false);
-		player.setAttached(ModAttachments.REINHARD_STATE, state);
+		player.setAttached(ReinhardState.ATTACHMENT, state);
 		for (int p = 1; p <= 5; p++) {
-			AbilityScopedModifiers.buildReinhardPhaseSet(p).remove(player);
+			ReinhardModifiers.buildReinhardPhaseSet(p).remove(player);
 		}
-		AbilityScopedModifiers.REINHARD_DRAW.remove(player);
-		AbilityScopedModifiers.REINHARD_SECOND_COMING.remove(player);
+		ReinhardModifiers.REINHARD_DRAW.remove(player);
+		ReinhardModifiers.REINHARD_SECOND_COMING.remove(player);
 		FIRST_DODGE_USED.remove(player.getUUID());
 	}
 
@@ -596,7 +591,7 @@ public final class ReinhardController {
 	}
 
 	public static boolean isJudgmentTarget(ServerPlayer reinhard, LivingEntity target) {
-		ReinhardState state = reinhard.getAttachedOrCreate(ModAttachments.REINHARD_STATE);
+		ReinhardState state = reinhard.getAttachedOrCreate(ReinhardState.ATTACHMENT);
 		return state.judgmentTarget().isPresent() && state.judgmentTarget().get().equals(target.getUUID());
 	}
 

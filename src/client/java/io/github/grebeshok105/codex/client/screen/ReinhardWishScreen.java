@@ -1,8 +1,6 @@
 package io.github.grebeshok105.codex.client.screen;
 
-import io.github.grebeshok105.codex.network.ReinhardWishConfirmC2SPayload;
 import com.mojang.blaze3d.systems.RenderSystem;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
@@ -12,6 +10,7 @@ import net.minecraft.world.item.Items;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class ReinhardWishScreen extends Screen {
 	private static final int CARD_WIDTH = 132;
@@ -22,13 +21,16 @@ public class ReinhardWishScreen extends Screen {
 	private final List<String> adapted;
 	private final int wishesUsed;
 	private final int wishesMax;
+	private final Consumer<String> onConfirm;
 
-	public ReinhardWishScreen(List<String> options, List<String> adapted, int wishesUsed, int wishesMax) {
+	public ReinhardWishScreen(List<String> options, List<String> adapted, int wishesUsed, int wishesMax,
+			Consumer<String> onConfirm) {
 		super(Component.translatable("screen.superheroes.reinhard_wish.title"));
 		this.options = List.copyOf(options);
 		this.adapted = List.copyOf(adapted);
 		this.wishesUsed = wishesUsed;
 		this.wishesMax = wishesMax;
+		this.onConfirm = onConfirm;
 	}
 
 	@Override
@@ -46,7 +48,7 @@ public class ReinhardWishScreen extends Screen {
 					buildLabel(typeId, alreadyAdapted),
 					btn -> {
 						if (!alreadyAdapted) {
-							ClientPlayNetworking.send(new ReinhardWishConfirmC2SPayload(typeId));
+							onConfirm.accept(typeId);
 						}
 						if (this.minecraft != null) this.minecraft.setScreen(null);
 					}
@@ -145,11 +147,12 @@ public class ReinhardWishScreen extends Screen {
 		return false;
 	}
 
-	public static ReinhardWishScreen of(List<String> options, List<String> adapted, int used, int max) {
+	public static ReinhardWishScreen of(List<String> options, List<String> adapted, int used, int max,
+			Consumer<String> onConfirm) {
 		List<String> opts = new ArrayList<>(options.size());
 		for (String s : options) {
 			if (s != null && !s.isEmpty()) opts.add(s);
 		}
-		return new ReinhardWishScreen(opts, adapted, used, max);
+		return new ReinhardWishScreen(opts, adapted, used, max, onConfirm);
 	}
 }

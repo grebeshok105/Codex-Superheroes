@@ -1,5 +1,6 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.reinhard.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import net.minecraft.core.particles.ParticleTypes;
@@ -16,11 +17,13 @@ import net.minecraft.world.phys.AABB;
 import java.util.List;
 
 public final class ReinhardDivineAuraAbility implements Ability {
+	public static final ResourceLocation ID = ModId.of("reinhard_divine_aura");
+
 	private static final double RADIUS = 7.0;
 
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.REINHARD_DIVINE_AURA;
+		return ID;
 	}
 
 	@Override

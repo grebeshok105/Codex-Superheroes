@@ -4,6 +4,7 @@ import io.github.grebeshok105.codex.ability.AbilityIds;
 import io.github.grebeshok105.codex.core.ability.AbilityRouter;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.hero.RaidenHero;
+import io.github.grebeshok105.codex.hero.reinhard.ReinhardItems;
 import io.github.grebeshok105.codex.item.ModItems;
 import io.github.grebeshok105.codex.mechanic.boundweapon.BoundWeapons;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
@@ -36,7 +37,7 @@ public final class BoundWeaponGameTests implements FabricGameTest {
 		TestPlayers.fillInventory(owner);
 		Inventory inventory = owner.getInventory();
 		inventory.items.set(inventory.selected, ItemStack.EMPTY);
-		helper.assertTrue(BoundWeapons.ensureHeld(owner, ModItems.ROYAL_ICICLE), "the free main hand takes the sword");
+		helper.assertTrue(BoundWeapons.ensureHeld(owner, ReinhardItems.ROYAL_ICICLE), "the free main hand takes the sword");
 
 		ItemStack sword = inventory.removeItemNoUpdate(inventory.selected);
 		inventory.items.set(inventory.selected, new ItemStack(Items.DIRT));
@@ -88,14 +89,14 @@ public final class BoundWeaponGameTests implements FabricGameTest {
 	public void copyHeldByAnotherPlayerVanishes(GameTestHelper helper) {
 		ServerPlayer owner = TestPlayers.join(helper);
 		ServerPlayer stranger = TestPlayers.join(helper);
-		BoundWeapons.ensureHeld(owner, ModItems.ROYAL_ICICLE);
+		BoundWeapons.ensureHeld(owner, ReinhardItems.ROYAL_ICICLE);
 		stranger.getInventory().add(owner.getMainHandItem().copy());
 
 		stranger.getInventory().tick();
 
-		helper.assertTrue(TestPlayers.count(stranger, ModItems.ROYAL_ICICLE) == 0,
+		helper.assertTrue(TestPlayers.count(stranger, ReinhardItems.ROYAL_ICICLE) == 0,
 				"a bound weapon is useless to anyone but its owner");
-		helper.assertTrue(TestPlayers.count(owner, ModItems.ROYAL_ICICLE) == 1, "the owner keeps theirs");
+		helper.assertTrue(TestPlayers.count(owner, ReinhardItems.ROYAL_ICICLE) == 1, "the owner keeps theirs");
 		TestPlayers.leave(stranger);
 		TestPlayers.leave(owner);
 		helper.succeed();

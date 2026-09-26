@@ -4,7 +4,6 @@ import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.effect.DoomsdayProgress;
 import io.github.grebeshok105.codex.effect.RaidenState;
 import io.github.grebeshok105.codex.effect.RegulusMadnessState;
-import io.github.grebeshok105.codex.effect.ReinhardState;
 import io.github.grebeshok105.codex.mechanic.boundweapon.BoundWeaponIssues;
 import com.mojang.serialization.Codec;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentRegistry;
@@ -22,11 +21,6 @@ public final class ModAttachments {
 	public static final AttachmentType<DoomsdayProgress> DOOMSDAY_PROGRESS = AttachmentRegistry.create(ModId.of("doomsday_progress"), b -> b
 			.initializer(() -> DoomsdayProgress.EMPTY)
 			.persistent(DoomsdayProgress.CODEC)
-			.copyOnDeath());
-
-	public static final AttachmentType<ReinhardState> REINHARD_STATE = AttachmentRegistry.create(ModId.of("reinhard_state"), b -> b
-			.initializer(() -> ReinhardState.EMPTY)
-			.persistent(ReinhardState.CODEC)
 			.copyOnDeath());
 
 	// ВАЖНО: state Райден умышленно НЕ persistent и БЕЗ copyOnDeath —

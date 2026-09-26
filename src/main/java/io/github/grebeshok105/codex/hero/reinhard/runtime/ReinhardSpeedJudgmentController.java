@@ -1,7 +1,8 @@
-package io.github.grebeshok105.codex.effect;
+package io.github.grebeshok105.codex.hero.reinhard.runtime;
 
-import io.github.grebeshok105.codex.ability.AbilityIds;
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.debug.AdminAbilityDebug;
+import net.minecraft.resources.ResourceLocation;
 import io.github.grebeshok105.codex.util.SafeTeleport;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.particles.ParticleTypes;
@@ -20,6 +21,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class ReinhardSpeedJudgmentController {
+	private static final ResourceLocation SPEED_JUDGMENT_ID = ModId.of("reinhard_speed_judgment");
 	private static final Map<UUID, PendingStrike> PENDING = new ConcurrentHashMap<>();
 
 	private ReinhardSpeedJudgmentController() {
@@ -33,7 +35,7 @@ public final class ReinhardSpeedJudgmentController {
 	}
 
 	public static boolean startDebugMob(ServerPlayer attacker, Mob target, long delayTicks, float damage) {
-		if (!AdminAbilityDebug.canTargetMob(attacker, AbilityIds.REINHARD_SPEED_JUDGMENT, target)) return false;
+		if (!AdminAbilityDebug.canTargetMob(attacker, SPEED_JUDGMENT_ID, target)) return false;
 		teleportBehind(attacker, target);
 		PENDING.put(attacker.getUUID(), new PendingStrike(target.getUUID(), attacker.serverLevel().getGameTime() + delayTicks, damage, true));
 		ReinhardTimeSlowController.triggerAbilitySlow(attacker);
@@ -89,7 +91,7 @@ public final class ReinhardSpeedJudgmentController {
 	private static boolean isValidDebugMob(ServerPlayer attacker, Mob target) {
 		if (attacker == null || !attacker.isAlive()) return false;
 		if (!ReinhardController.isReinhard(attacker)) return false;
-		return AdminAbilityDebug.canTargetMob(attacker, AbilityIds.REINHARD_SPEED_JUDGMENT, target);
+		return AdminAbilityDebug.canTargetMob(attacker, SPEED_JUDGMENT_ID, target);
 	}
 
 	private static Mob findDebugMobTarget(ServerPlayer attacker, UUID targetId) {

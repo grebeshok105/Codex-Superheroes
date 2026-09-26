@@ -1,6 +1,6 @@
-package io.github.grebeshok105.codex.effect;
+package io.github.grebeshok105.codex.hero.reinhard.runtime;
 
-import io.github.grebeshok105.codex.network.ReinhardSwordGateS2CPayload;
+import io.github.grebeshok105.codex.hero.reinhard.net.ReinhardSwordGateS2CPayload;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;

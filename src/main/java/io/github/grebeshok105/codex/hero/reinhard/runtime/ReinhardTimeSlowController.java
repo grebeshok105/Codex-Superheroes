@@ -1,12 +1,12 @@
-package io.github.grebeshok105.codex.effect;
+package io.github.grebeshok105.codex.hero.reinhard.runtime;
 
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.core.lifecycle.ControlLockKind;
 import io.github.grebeshok105.codex.core.lifecycle.EntityControlLock;
-import io.github.grebeshok105.codex.network.ReinhardTimeSlowS2CPayload;
-import io.github.grebeshok105.codex.sound.ModSounds;
+import io.github.grebeshok105.codex.hero.reinhard.net.ReinhardTimeSlowS2CPayload;
+import io.github.grebeshok105.codex.hero.reinhard.sound.ReinhardSounds;
 import net.fabricmc.fabric.api.event.player.AttackBlockCallback;
 import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
@@ -71,8 +71,8 @@ public final class ReinhardTimeSlowController {
 			if (!living.isAlive()) return InteractionResult.PASS;
 			if (!ReinhardController.isReinhard(attacker)) return InteractionResult.PASS;
 			if (!ARMED.contains(attacker.getUUID())) return InteractionResult.PASS;
-			if (!(attacker.getMainHandItem().getItem() instanceof io.github.grebeshok105.codex.item.RoyalIcicleItem)) return InteractionResult.PASS;
-			ReinhardState rstate = attacker.getAttachedOrCreate(io.github.grebeshok105.codex.attachment.ModAttachments.REINHARD_STATE);
+			if (!ReinhardSword.isRoyalIcicle(attacker.getMainHandItem())) return InteractionResult.PASS;
+			ReinhardState rstate = attacker.getAttachedOrCreate(ReinhardState.ATTACHMENT);
 			if (!rstate.swordDrawn()) return InteractionResult.PASS;
 			if (!ARMED.remove(attacker.getUUID())) return InteractionResult.PASS;
 			triggerSlow(attacker);
@@ -121,7 +121,7 @@ public final class ReinhardTimeSlowController {
 
 		ServerLevel level = player.serverLevel();
 		level.playSound(null, player.getX(), player.getY(), player.getZ(),
-				ModSounds.REINHARD_SWORD_STRIKE_VOICE, SoundSource.PLAYERS, 2.0f, 1.0f);
+				ReinhardSounds.REINHARD_SWORD_STRIKE_VOICE, SoundSource.PLAYERS, 2.0f, 1.0f);
 
 		broadcastTimeSlow(player, true);
 	}
@@ -250,7 +250,7 @@ public final class ReinhardTimeSlowController {
 	}
 
 	private static void rearmIfStillDrawn(ServerPlayer player) {
-		var attach = io.github.grebeshok105.codex.attachment.ModAttachments.REINHARD_STATE;
+		var attach = ReinhardState.ATTACHMENT;
 		ReinhardState state = player.getAttachedOrCreate(attach);
 		if (state.swordDrawn()) {
 			ARMED.add(player.getUUID());

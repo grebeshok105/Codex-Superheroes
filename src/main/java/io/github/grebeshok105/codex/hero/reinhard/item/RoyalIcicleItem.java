@@ -1,12 +1,12 @@
-package io.github.grebeshok105.codex.item;
+package io.github.grebeshok105.codex.hero.reinhard.item;
 
+import io.github.grebeshok105.codex.ModId;
+import net.minecraft.resources.ResourceLocation;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.mechanic.boundweapon.BoundWeaponItem;
-import io.github.grebeshok105.codex.attachment.ModAttachments;
-import io.github.grebeshok105.codex.effect.ReinhardState;
-import io.github.grebeshok105.codex.hero.ReinhardHero;
-import io.github.grebeshok105.codex.network.ReinhardDarknessS2CPayload;
+import io.github.grebeshok105.codex.hero.reinhard.runtime.ReinhardState;
+import io.github.grebeshok105.codex.hero.reinhard.net.ReinhardDarknessS2CPayload;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import io.github.grebeshok105.codex.core.transform.TooltipFrame;
 import net.minecraft.ChatFormatting;
@@ -42,6 +42,8 @@ import java.util.List;
  * Сам Item ничего не блокирует — только подсказывает в hurtEnemy().
  */
 public class RoyalIcicleItem extends BoundWeaponItem {
+	private static final ResourceLocation REINHARD_ID = ModId.of("reinhard");
+
 	public RoyalIcicleItem(Properties properties) {
 		super(Tiers.NETHERITE, properties.attributes(SwordItem.createAttributes(Tiers.NETHERITE, 100, -2.4f)));
 	}
@@ -58,8 +60,8 @@ public class RoyalIcicleItem extends BoundWeaponItem {
 	public boolean hurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
 		if (attacker instanceof ServerPlayer player) {
 			HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
-			if (ReinhardHero.ID.equals(data.heroId())) {
-				ReinhardState state = player.getAttachedOrCreate(ModAttachments.REINHARD_STATE);
+			if (REINHARD_ID.equals(data.heroId())) {
+				ReinhardState state = player.getAttachedOrCreate(ReinhardState.ATTACHMENT);
 				if (state.inSecondComing()) {
 					ServerLevel level = player.serverLevel();
 					DamageSource scSrc = level.damageSources().playerAttack(player);

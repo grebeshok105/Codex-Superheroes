@@ -1,10 +1,10 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.reinhard.ability;
 
-import io.github.grebeshok105.codex.attachment.ModAttachments;
+import io.github.grebeshok105.codex.ModId;
+import io.github.grebeshok105.codex.hero.reinhard.runtime.ReinhardState;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
-import io.github.grebeshok105.codex.effect.ReinhardState;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -29,13 +29,15 @@ import java.util.Optional;
  * Длится 30 секунд. Только одна метка одновременно.
  */
 public final class ReinhardJudgmentMarkAbility implements Ability {
+	public static final ResourceLocation ID = ModId.of("reinhard_judgment_mark");
+
 	private static final double RANGE = 40.0;
 	private static final int DURATION_TICKS = 600; // 30s
 	private static final int COOLDOWN_TICKS = 200; // 10s
 
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.REINHARD_JUDGMENT_MARK;
+		return ID;
 	}
 
 	@Override
@@ -73,9 +75,9 @@ public final class ReinhardJudgmentMarkAbility implements Ability {
 		if (hit == null) return false;
 		LivingEntity target = (LivingEntity) hit.getEntity();
 
-		ReinhardState state = player.getAttachedOrCreate(ModAttachments.REINHARD_STATE);
+		ReinhardState state = player.getAttachedOrCreate(ReinhardState.ATTACHMENT);
 		long expire = level.getGameTime() + DURATION_TICKS;
-		player.setAttached(ModAttachments.REINHARD_STATE,
+		player.setAttached(ReinhardState.ATTACHMENT,
 				state.withJudgmentTarget(Optional.of(target.getUUID()), expire));
 
 		level.sendParticles(ParticleTypes.SOUL_FIRE_FLAME,

@@ -1,9 +1,10 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.reinhard.ability;
 
-import io.github.grebeshok105.codex.attachment.ModAttachments;
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.ability.Ability;
-import io.github.grebeshok105.codex.effect.ReinhardState;
-import io.github.grebeshok105.codex.network.ReinhardWishOptionsS2CPayload;
+import io.github.grebeshok105.codex.core.net.C2SGuards;
+import io.github.grebeshok105.codex.hero.reinhard.runtime.ReinhardState;
+import io.github.grebeshok105.codex.hero.reinhard.net.ReinhardWishOptionsS2CPayload;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
@@ -17,12 +18,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class ReinhardWishAbility implements Ability {
+	public static final ResourceLocation ID = ModId.of("reinhard_wish");
+	private static final ResourceLocation REINHARD_ID = ModId.of("reinhard");
+
 	public static final int MAX_WISHES = 3;
 	private static final int COOLDOWN_TICKS = 600;
 
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.REINHARD_WISH;
+		return ID;
 	}
 
 	@Override
@@ -42,7 +46,7 @@ public final class ReinhardWishAbility implements Ability {
 
 	@Override
 	public boolean canActivate(ServerPlayer player) {
-		ReinhardState s = player.getAttachedOrCreate(ModAttachments.REINHARD_STATE);
+		ReinhardState s = player.getAttachedOrCreate(ReinhardState.ATTACHMENT);
 		ServerLevel level = player.serverLevel();
 		long now = level.getGameTime();
 		if (s.lastWishTick() != 0 && now - s.lastWishTick() < COOLDOWN_TICKS) return false;
@@ -53,7 +57,7 @@ public final class ReinhardWishAbility implements Ability {
 
 	@Override
 	public boolean tryActivate(ServerPlayer player) {
-		ReinhardState s = player.getAttachedOrCreate(ModAttachments.REINHARD_STATE);
+		ReinhardState s = player.getAttachedOrCreate(ReinhardState.ATTACHMENT);
 		List<String> recent = s.recentDamageTypes();
 		if (recent.isEmpty()) return false;
 
@@ -70,8 +74,17 @@ public final class ReinhardWishAbility implements Ability {
 		return true;
 	}
 
+	/**
+	 * Server-side entry point for the wish-confirm C2S payload. The hero check is the
+	 * payload's only implicit precondition, so it is enforced here explicitly.
+	 */
+	public static void handleWishConfirm(ServerPlayer player, String damageTypeId) {
+		if (!C2SGuards.requireHero(player, REINHARD_ID)) return;
+		confirm(player, damageTypeId);
+	}
+
 	public static void confirm(ServerPlayer player, String damageTypeId) {
-		ReinhardState s = player.getAttachedOrCreate(ModAttachments.REINHARD_STATE);
+		ReinhardState s = player.getAttachedOrCreate(ReinhardState.ATTACHMENT);
 		ServerLevel level = player.serverLevel();
 		long now = level.getGameTime();
 
@@ -87,7 +100,7 @@ public final class ReinhardWishAbility implements Ability {
 		ReinhardState updated = s.withAdaptedDamageTypes(adapted)
 				.withWishesUsed(s.wishesUsed() + 1)
 				.withLastWishTick(now);
-		player.setAttached(ModAttachments.REINHARD_STATE, updated);
+		player.setAttached(ReinhardState.ATTACHMENT, updated);
 
 		level.sendParticles(ParticleTypes.GLOW,
 				player.getX(), player.getY() + 1.0, player.getZ(),

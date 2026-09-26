@@ -1,8 +1,8 @@
-package io.github.grebeshok105.codex.hero;
+package io.github.grebeshok105.codex.hero.reinhard;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.ability.AbilityIds;
 import io.github.grebeshok105.codex.core.hero.AttributeModifierSet;
+import io.github.grebeshok105.codex.hero.reinhard.runtime.ReinhardModifiers;
 import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.hero.HeroHudConfig;
 import io.github.grebeshok105.codex.core.hero.HeroTheme;
@@ -100,14 +100,14 @@ public final class ReinhardHero implements Hero {
 	@Override
 	public List<ResourceLocation> getAbilities() {
 		return List.of(
-				AbilityIds.REINHARD_SWORD_DRAW,
-				AbilityIds.REINHARD_AIR_SLASH,
-				AbilityIds.REINHARD_SWORD_WAVE,
-				AbilityIds.REINHARD_COUNTER_RIPOSTE,
-				AbilityIds.REINHARD_DIVINE_AURA,
-				AbilityIds.REINHARD_SPEED_JUDGMENT,
-				AbilityIds.REINHARD_JUDGMENT_MARK,
-				AbilityIds.REINHARD_WISH
+				ReinhardAbilities.REINHARD_SWORD_DRAW,
+				ReinhardAbilities.REINHARD_AIR_SLASH,
+				ReinhardAbilities.REINHARD_SWORD_WAVE,
+				ReinhardAbilities.REINHARD_COUNTER_RIPOSTE,
+				ReinhardAbilities.REINHARD_DIVINE_AURA,
+				ReinhardAbilities.REINHARD_SPEED_JUDGMENT,
+				ReinhardAbilities.REINHARD_JUDGMENT_MARK,
+				ReinhardAbilities.REINHARD_WISH
 		);
 	}
 
@@ -124,9 +124,9 @@ public final class ReinhardHero implements Hero {
 	@Override
 	public void removePassives(Player player) {
 		PASSIVES.remove(player);
-		AbilityScopedModifiers.REINHARD_DRAW.remove(player);
+		ReinhardModifiers.REINHARD_DRAW.remove(player);
 		for (int p = 1; p <= 5; p++) {
-			AbilityScopedModifiers.buildReinhardPhaseSet(p).remove(player);
+			ReinhardModifiers.buildReinhardPhaseSet(p).remove(player);
 		}
 	}
 

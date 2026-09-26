@@ -1,11 +1,10 @@
-package io.github.grebeshok105.codex.effect;
+package io.github.grebeshok105.codex.hero.reinhard.runtime;
 
-import io.github.grebeshok105.codex.attachment.ModAttachments;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
-import io.github.grebeshok105.codex.network.ReinhardSwordKillS2CPayload;
+import io.github.grebeshok105.codex.hero.reinhard.net.ReinhardSwordKillS2CPayload;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.server.MinecraftServer;
@@ -51,8 +50,8 @@ public final class ReinhardSwordDeathMarkController {
 			if (!ReinhardController.isReinhard(attacker)) return true;
 			if (!source.is(DamageTypes.PLAYER_ATTACK)) return true;
 			if (source.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) return true;
-			if (!(attacker.getMainHandItem().getItem() instanceof io.github.grebeshok105.codex.item.RoyalIcicleItem)) return true;
-			ReinhardState astate = attacker.getAttachedOrCreate(ModAttachments.REINHARD_STATE);
+			if (!ReinhardSword.isRoyalIcicle(attacker.getMainHandItem())) return true;
+			ReinhardState astate = attacker.getAttachedOrCreate(ReinhardState.ATTACHMENT);
 			if (!astate.swordDrawn()) return true;
 			if (!ReinhardTimeSlowController.isActive(attacker)) return true;
 			if (!MARKED.containsKey(victim.getUUID())) {

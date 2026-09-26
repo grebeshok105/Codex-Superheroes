@@ -1,7 +1,9 @@
-package io.github.grebeshok105.codex.effect;
+package io.github.grebeshok105.codex.hero.reinhard.runtime;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.grebeshok105.codex.core.attachment.AttachmentRegistrar;
+import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
 
 import java.util.List;
 import java.util.Optional;
@@ -52,6 +54,16 @@ public record ReinhardState(
 			Codec.INT.optionalFieldOf("phoenix_count", 0).forGetter(ReinhardState::phoenixCount),
 			Codec.BOOL.optionalFieldOf("in_second_coming", false).forGetter(ReinhardState::inSecondComing)
 	).apply(instance, ReinhardState::new));
+
+	/**
+	 * The attachment type itself lives on this leaf class so leaf packages can reach it without
+	 * importing the module root; {@code ReinhardAttachments.STATE} re-exports it for module-external
+	 * readers. Byte-identical to the former {@code ModAttachments.REINHARD_STATE} registration
+	 * (id {@code superheroes:reinhard_state}, persistent + copyOnDeath + EMPTY initializer).
+	 * Created eagerly at class-init — see {@code ReinhardAttachments.init()}.
+	 */
+	public static final AttachmentType<ReinhardState> ATTACHMENT =
+			AttachmentRegistrar.FABRIC.persistent("reinhard_state", CODEC, true, () -> EMPTY);
 
 	public ReinhardState withPhase(int p) {
 		return new ReinhardState(p, accumulatedDamage, swordDrawn, phoenixUsed, wishesUsed, judgmentTarget,

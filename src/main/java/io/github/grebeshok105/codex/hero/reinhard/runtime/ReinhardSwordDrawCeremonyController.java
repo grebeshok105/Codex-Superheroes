@@ -1,16 +1,15 @@
-package io.github.grebeshok105.codex.effect;
+package io.github.grebeshok105.codex.hero.reinhard.runtime;
 
+import io.github.grebeshok105.codex.ModId;
+import net.minecraft.resources.ResourceLocation;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.core.lifecycle.ControlLockKind;
 import io.github.grebeshok105.codex.core.lifecycle.EntityControlLock;
 import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
 import io.github.grebeshok105.codex.core.transform.HeroDataStore;
-import io.github.grebeshok105.codex.ability.AbilityIds;
-import io.github.grebeshok105.codex.attachment.ModAttachments;
-import io.github.grebeshok105.codex.hero.AbilityScopedModifiers;
-import io.github.grebeshok105.codex.network.ReinhardCeremonyS2CPayload;
-import io.github.grebeshok105.codex.sound.ModSounds;
+import io.github.grebeshok105.codex.hero.reinhard.net.ReinhardCeremonyS2CPayload;
+import io.github.grebeshok105.codex.hero.reinhard.sound.ReinhardSounds;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
@@ -51,6 +50,7 @@ import io.github.grebeshok105.codex.core.transform.HeroData;
  * </ul>
  */
 public final class ReinhardSwordDrawCeremonyController {
+	private static final ResourceLocation SWORD_DRAW_ID = ModId.of("reinhard_sword_draw");
 	public static final int CEREMONY_DURATION_TICKS = 100;
 	public static final double CEREMONY_RADIUS = 50.0;
 	private static final int FREEZE_EFFECT_REFRESH = 18; // re-apply slightly under 1s
@@ -77,7 +77,7 @@ public final class ReinhardSwordDrawCeremonyController {
 
 	public static boolean startCeremony(ServerPlayer player) {
 		if (CEREMONIES.containsKey(player.getUUID())) return false;
-		ReinhardState rstate = player.getAttachedOrCreate(ModAttachments.REINHARD_STATE);
+		ReinhardState rstate = player.getAttachedOrCreate(ReinhardState.ATTACHMENT);
 		if (rstate.swordDrawn()) return false;
 		long now = player.serverLevel().getGameTime();
 		CeremonyState st = new CeremonyState(now, now + CEREMONY_DURATION_TICKS);
@@ -86,7 +86,7 @@ public final class ReinhardSwordDrawCeremonyController {
 
 		ServerLevel level = player.serverLevel();
 		level.playSound(null, player.getX(), player.getY(), player.getZ(),
-				ModSounds.REINHARD_SWORD_DRAW_CEREMONY, SoundSource.PLAYERS, 2.0f, 1.0f);
+				ReinhardSounds.REINHARD_SWORD_DRAW_CEREMONY, SoundSource.PLAYERS, 2.0f, 1.0f);
 		level.playSound(null, player.getX(), player.getY(), player.getZ(),
 				SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.PLAYERS, 1.6f, 0.6f);
 		level.playSound(null, player.getX(), player.getY(), player.getZ(),
@@ -144,15 +144,15 @@ public final class ReinhardSwordDrawCeremonyController {
 		CEREMONIES.remove(player.getUUID());
 		thawNearby(player);
 
-		ReinhardState state = player.getAttachedOrCreate(ModAttachments.REINHARD_STATE);
-		player.setAttached(ModAttachments.REINHARD_STATE, state.withSwordDrawn(true));
-		AbilityScopedModifiers.REINHARD_DRAW.apply(player);
-		if (!io.github.grebeshok105.codex.ability.ReinhardSwordDrawAbility.giveSword(player)) {
+		ReinhardState state = player.getAttachedOrCreate(ReinhardState.ATTACHMENT);
+		player.setAttached(ReinhardState.ATTACHMENT, state.withSwordDrawn(true));
+		ReinhardModifiers.REINHARD_DRAW.apply(player);
+		if (!ReinhardSword.giveSword(player)) {
 			player.displayClientMessage(Component.translatable("ability.superheroes.bound_weapon.no_room"), true);
 		}
 		ReinhardTimeSlowController.armForFirstStrike(player);
 
-		HeroDataStore.update(player, d -> d.withActive(AbilityIds.REINHARD_SWORD_DRAW, true));
+		HeroDataStore.update(player, d -> d.withActive(SWORD_DRAW_ID, true));
 
 		ServerLevel level = player.serverLevel();
 		level.sendParticles(ParticleTypes.END_ROD,

@@ -1,6 +1,7 @@
 package io.github.grebeshok105.codex.core.module;
 
 import io.github.grebeshok105.codex.core.ability.AbilityRegistry;
+import io.github.grebeshok105.codex.core.attachment.AttachmentRegistrar;
 import io.github.grebeshok105.codex.core.content.ContentRegistrar;
 import io.github.grebeshok105.codex.core.content.CreativeTabContents;
 import io.github.grebeshok105.codex.core.lifecycle.HeroTickDispatcher;
@@ -37,5 +38,10 @@ public final class CoreModuleContext implements HeroModuleContext {
 	@Override
 	public PayloadRegistrar payloads() {
 		return PayloadRegistrar.FABRIC;
+	}
+
+	@Override
+	public AttachmentRegistrar attachments() {
+		return AttachmentRegistrar.FABRIC;
 	}
 }

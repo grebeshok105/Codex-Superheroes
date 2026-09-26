@@ -1,10 +1,11 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.reinhard.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import io.github.grebeshok105.codex.debug.AdminAbilityDebug;
-import io.github.grebeshok105.codex.effect.ReinhardSpeedJudgmentController;
+import io.github.grebeshok105.codex.hero.reinhard.runtime.ReinhardSpeedJudgmentController;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -18,6 +19,8 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 public final class ReinhardSpeedJudgmentAbility implements Ability {
+	public static final ResourceLocation ID = ModId.of("reinhard_speed_judgment");
+
 	private static final double RADIUS = 50.0;
 	private static final double MIN_SPEED_PER_TICK = 0.03;
 	private static final long STRIKE_DELAY_TICKS = 60L;
@@ -26,7 +29,13 @@ public final class ReinhardSpeedJudgmentAbility implements Ability {
 
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.REINHARD_SPEED_JUDGMENT;
+		return ID;
+	}
+
+	/** The admin debug toggle can legitimately aim this ability at mobs (was the single entry in {@code AdminAbilityDebug.MOB_TARGET_ABILITIES}). */
+	@Override
+	public boolean debugTargetsMobs() {
+		return true;
 	}
 
 	@Override
@@ -113,12 +122,12 @@ public final class ReinhardSpeedJudgmentAbility implements Ability {
 	}
 
 	private static Mob findFastestDebugMobTarget(ServerPlayer player, ServerLevel level) {
-		if (!AdminAbilityDebug.canPlayerOnlyAbilityTargetMobs(AbilityIds.REINHARD_SPEED_JUDGMENT)) return null;
+		if (!AdminAbilityDebug.canPlayerOnlyAbilityTargetMobs(ID)) return null;
 		AABB box = player.getBoundingBox().inflate(RADIUS);
 		Mob best = null;
 		double bestScore = MIN_SPEED_PER_TICK;
 		for (Mob candidate : level.getEntitiesOfClass(Mob.class, box,
-				e -> AdminAbilityDebug.canTargetMob(player, AbilityIds.REINHARD_SPEED_JUDGMENT, e))) {
+				e -> AdminAbilityDebug.canTargetMob(player, ID, e))) {
 			double score = speedScore(candidate);
 			if (score > bestScore) {
 				bestScore = score;

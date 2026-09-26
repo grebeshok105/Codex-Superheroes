@@ -1,9 +1,8 @@
 package io.github.grebeshok105.codex.client.render;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.client.ClientHeroState;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
-import io.github.grebeshok105.codex.hero.ReinhardHero;
-import io.github.grebeshok105.codex.item.ModItems;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
@@ -15,8 +14,10 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import org.joml.Matrix4f;
@@ -29,6 +30,7 @@ import org.joml.Matrix4f;
  * Pure client visual — no gameplay impact.
  */
 public final class ReinhardScabbardLayer extends RenderLayer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> {
+	private static final ResourceLocation REINHARD_ID = ModId.of("reinhard");
 
 	public ReinhardScabbardLayer(RenderLayerParent<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> parent) {
 		super(parent);
@@ -58,7 +60,7 @@ public final class ReinhardScabbardLayer extends RenderLayer<AbstractClientPlaye
 			// -45 (not 135): hilt out the top, blade pointing DOWN inside the sheath
 			poseStack.mulPose(Axis.ZP.rotationDegrees(-45f));
 			poseStack.scale(0.85f, 0.85f, 0.85f);
-			ItemStack sword = new ItemStack(ModItems.ROYAL_ICICLE);
+			ItemStack sword = new ItemStack(royalIcicle());
 			Minecraft.getInstance().getItemRenderer().renderStatic(sword, ItemDisplayContext.FIXED,
 					packedLight, OverlayTexture.NO_OVERLAY, poseStack, bufferSource, player.level(), player.getId());
 			poseStack.popPose();
@@ -72,16 +74,24 @@ public final class ReinhardScabbardLayer extends RenderLayer<AbstractClientPlaye
 	private static boolean isReinhard(AbstractClientPlayer player) {
 		Minecraft mc = Minecraft.getInstance();
 		if (mc.player != null && player.getUUID().equals(mc.player.getUUID())) {
-			return ReinhardHero.ID.equals(ClientHeroState.heroId());
+			return REINHARD_ID.equals(ClientHeroState.heroId());
 		}
 		ResourceLocation remote = player.getAttached(io.github.grebeshok105.codex.core.attachment.CoreAttachments.PUBLIC_HERO);
-		return ReinhardHero.ID.equals(remote);
+		return REINHARD_ID.equals(remote);
 	}
 
 	/** Drawn = the real Royal Icicle is in either hand (equipment is synced to all clients). */
 	private static boolean isSwordDrawn(LivingEntity player) {
-		return player.getMainHandItem().is(ModItems.ROYAL_ICICLE)
-				|| player.getOffhandItem().is(ModItems.ROYAL_ICICLE);
+		return player.getMainHandItem().is(royalIcicle())
+				|| player.getOffhandItem().is(royalIcicle());
+	}
+
+	/**
+	 * G1 seam: the sword item object lives inside {@code hero.reinhard}, which client.render
+	 * must not reference — resolve it through the registry instead.
+	 */
+	private static Item royalIcicle() {
+		return BuiltInRegistries.ITEM.get(ModId.of("royal_icicle"));
 	}
 
 	/**
