@@ -25,7 +25,6 @@ import com.example.superheroes.network.ReactorStateS2CPayload;
 import com.example.superheroes.network.RepulsorBlastS2CPayload;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
@@ -67,8 +66,8 @@ public record IronManClientModule() implements HeroClientModule {
 
 		RepulsorBeamRenderer.register();
 		IronManEspRenderer.register();
-		EntityRendererRegistry.register(ModEntities.SMART_MISSILE, SmartMissileRenderer::new);
-		EntityRendererRegistry.register(ModEntities.IRON_LEGION_DRONE, IronLegionDroneRenderer::new);
+		ctx.entityRenderer(ModEntities.SMART_MISSILE, SmartMissileRenderer::new);
+		ctx.entityRenderer(ModEntities.IRON_LEGION_DRONE, IronLegionDroneRenderer::new);
 
 		ClientTickEvents.END_CLIENT_TICK.register(ClientNanoSuitUpState::clientTick);
 		ClientTickEvents.END_CLIENT_TICK.register(JarvisDetectionHud::tick);
