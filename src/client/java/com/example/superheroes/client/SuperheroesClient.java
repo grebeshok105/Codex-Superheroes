@@ -1,6 +1,7 @@
 package com.example.superheroes.client;
 
 import com.example.superheroes.ModId;
+import com.example.superheroes.client.bootstrap.HeroClientModules;
 import com.example.superheroes.client.core.hud.HudLayers;
 import com.example.superheroes.client.hud.AbilitiesTooltipHud;
 import com.example.superheroes.client.hud.AbilityBarHud;
@@ -68,6 +69,7 @@ public class SuperheroesClient implements ClientModInitializer {
 	public void onInitializeClient() {
 		ModKeys.init();
 		ClientNetworking.init();
+		HeroClientModules.bootstrap();
 		com.example.superheroes.client.iris.IrisShaderBridge.restoreAfterCrashIfNeeded();
 		ClientTickEvents.END_CLIENT_TICK.register(client -> com.example.superheroes.client.iris.IrisShaderBridge.tickCrashRestore());
 		ClientTickEvents.END_CLIENT_TICK.register(com.example.superheroes.client.ClientMirrorDimensionState::tick);

@@ -293,3 +293,9 @@
 - `Heroes`/`AbilityRegistry` fields + `init()` deleted; `register`/`get`/`all` kept. `SuperheroesMod`: `HeroModules.bootstrap(CoreModuleContext.INSTANCE)` at the old init site. 114 module abilities + 2 shared = 116 ids — id set identical to old init; each old ability owned by exactly one module/shared.
 - Gametest `modulesCoverEveryHeroInRegistryOrder` (verbatim from plan) + index-independent `scorpionIsRegisteredThroughItsModule`. Cycle baseline: `ability<->ability.ironman` pair resolved and removed; store auto-shrank ~42 stale `Heroes.*`/`AbilityRegistry.*` entries. qualityGate 71/71.
 
+## Architecture migration — stage CL3a-1 (plan 04)
+
+- Client module contracts landed: `client/core/module/{HeroClientModule,HeroClientContext,CoreClientContext}` (plan-verbatim) + `client/bootstrap/HeroClientModules` + `client/core/input/HeroActionKeys` (one END_CLIENT_TICK drains `consumeClick()` always, fires `onPress` only when local `PUBLIC_HERO` matches; no key mappings registered yet — CL3b owns them).
+- `ScorpionClientModule` owns the `ScorpionFxS2CPayload` receiver (handler byte-identical; `ClientNetworking` lost only that receiver + import — 35→34 in-file + 1 via `ctx.receive`). `heroId() = ScorpionHero.ID` — IN_CLIENT_HERO_MODULE is excluded from the sharedClientCode rule. `HeroClientModules.bootstrap()` runs right after `ClientNetworking.init()`.
+- New ArchUnit client rules (`clientHeroModulesAreReferencedOnlyByThemselvesAndTheModuleList`, `clientCoreDoesNotKnowHeroModules`, `sharedClientCodeDoesNotDependOnConcreteHeroes`) now non-vacuous. qualityGate 71/71.
+- Runtime: receiver proven to fire via temporary `[CL3A1-FX]` println (kind=2 hellfire pillar, kind=1 spear harpoon) — Veil 4.1.2 in classpath, handler dispatches to `VeilScorpionFx`. Kunai→scorpion transform, regulus regression PASS.

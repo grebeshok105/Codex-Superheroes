@@ -7,7 +7,6 @@ import com.example.superheroes.client.ClientHeroState;
 import com.example.superheroes.client.ClientMadnessState;
 import com.example.superheroes.client.ClientReactorState;
 import com.example.superheroes.client.ClientRemDemonismState;
-import com.example.superheroes.client.fx.ClientScorpionFx;
 import com.example.superheroes.client.fx.ScreenShakeManager;
 import com.example.superheroes.client.fx.WallImpactDebrisManager;
 import com.example.superheroes.client.hud.BloodRainHud;
@@ -81,8 +80,6 @@ public final class ClientNetworking {
 		ClientPlayNetworking.registerGlobalReceiver(ThanosCosmicBeamS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> CosmicBeamRenderer.add(payload.start(), payload.end())));
 
-		ClientPlayNetworking.registerGlobalReceiver(com.example.superheroes.network.ScorpionFxS2CPayload.TYPE, (payload, context) ->
-				context.client().execute(() -> ClientScorpionFx.play(payload)));
 		ClientPlayNetworking.registerGlobalReceiver(com.example.superheroes.network.MirrorDimensionS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> {
 					switch (payload.action()) {
