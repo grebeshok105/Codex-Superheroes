@@ -30,6 +30,10 @@
 		{
 			"config": "superheroes.client.mixins.json",
 			"environment": "client"
+		},
+		{
+			"config": "superheroes.client.core.mixins.json",
+			"environment": "client"
 		}
 	],
 	"depends": {
