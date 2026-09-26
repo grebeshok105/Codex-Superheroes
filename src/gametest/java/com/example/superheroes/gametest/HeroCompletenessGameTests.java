@@ -81,12 +81,21 @@ public final class HeroCompletenessGameTests implements FabricGameTest {
 	// module's own instance, and the module must have pushed all four abilities in.
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void scorpionIsRegisteredThroughItsModule(GameTestHelper helper) {
-		helper.assertTrue(Heroes.get(ScorpionHero.ID) == HeroModules.ALL.get(0).hero(),
+		helper.assertTrue(HeroModules.ALL.stream().anyMatch(m -> Heroes.get(ScorpionHero.ID) == m.hero()),
 				"Heroes registry must hold the ScorpionModule's hero instance");
 		for (ResourceLocation id : List.of(AbilityIds.SCORPION_SPEAR, AbilityIds.SCORPION_HELLFIRE,
 				AbilityIds.SCORPION_FIRE_TELEPORT, AbilityIds.SCORPION_HELL_BREATH)) {
 			helper.assertTrue(AbilityRegistry.get(id) != null, "ability not registered: " + id);
 		}
+		helper.succeed();
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void modulesCoverEveryHeroInRegistryOrder(GameTestHelper helper) {
+		List<ResourceLocation> fromModules = HeroModules.ALL.stream().map(m -> m.hero().getId()).toList();
+		List<ResourceLocation> registered = List.copyOf(Heroes.all().keySet());
+		helper.assertTrue(fromModules.equals(registered), "modules " + fromModules + " vs registry " + registered);
+		helper.assertTrue(registered.size() == 22, "22 heroes, got " + registered.size());
 		helper.succeed();
 	}
 

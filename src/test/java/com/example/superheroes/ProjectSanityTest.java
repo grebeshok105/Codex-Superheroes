@@ -41,8 +41,6 @@ public final class ProjectSanityTest {
 					+ "|ModNetworking\\.sync(?:HeroData|Resources)\\(");
 	private static final Pattern FABRIC_IMPL_IMPORT = Pattern.compile("net\\.fabricmc\\.fabric\\.impl\\.");
 	private static final Pattern CLIENT_ONLY_IMPORT = Pattern.compile("import\\s+net\\.minecraft\\.client\\.|import\\s+net\\.fabricmc\\.fabric\\.api\\.client\\.");
-	private static final Pattern HERO_FIELD = Pattern.compile("public static final \\w+Hero (\\w+) =", Pattern.MULTILINE);
-	private static final Pattern HERO_REGISTER = Pattern.compile("register\\(\\s*(\\w+)\\s*\\)");
 	private static final Pattern STATIC_INIT = Pattern.compile("public static void init\\(\\)");
 	private static final Pattern SOUND_NAME = Pattern.compile("\"" + MOD_ID + ":([^\"]+)\"");
 	private static final Pattern DIRECT_WORLD_MUTATION = Pattern.compile(
@@ -56,7 +54,6 @@ public final class ProjectSanityTest {
 		assertLangFilesInSync();
 		assertSoundsJsonResolvesAndAudioIsOggOnly();
 		assertItemModelsResolveToTextures();
-		assertEveryHeroRegistered();
 		assertControllersAreWired();
 		assertFabricModJsonSanity();
 		assertHeroDataHasSingleWriter();
@@ -253,27 +250,6 @@ public final class ProjectSanityTest {
 						: "missing entity." + MOD_ID + "." + ids.group(1) + " in en_us.json (registered in " + file + ")";
 			}
 		}
-	}
-
-	// Hero seam: every hero constant declared in Heroes.java must be registered.
-	private static void assertEveryHeroRegistered() throws IOException {
-		String heroes = Files.readString(MAIN_JAVA.resolve("com/example/superheroes/hero/Heroes.java"));
-		Set<String> declared = new TreeSet<>();
-		Matcher fields = HERO_FIELD.matcher(heroes);
-		while (fields.find()) {
-			declared.add(fields.group(1));
-		}
-		Set<String> registered = new TreeSet<>();
-		Matcher registers = HERO_REGISTER.matcher(heroes);
-		while (registers.find()) {
-			registered.add(registers.group(1));
-		}
-		assert !declared.isEmpty() : "no hero constants found in Heroes.java; this check would pass vacuously";
-		Set<String> missing = new TreeSet<>(declared);
-		missing.removeAll(registered);
-		assert missing.isEmpty()
-				: "heroes declared but never registered in Heroes.java: " + missing
-						+ " — every public static final XxxHero field needs a matching register(...) call";
 	}
 
 	// Convention: a *Controller that declares `public static void init()` must have that init() invoked
