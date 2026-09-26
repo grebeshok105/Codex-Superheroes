@@ -165,7 +165,7 @@ tasks.register('testProjectSanity', JavaExec) {
 	description = 'Runs resource, seam and side-separation sanity checks'
 	dependsOn tasks.named('testClasses')
 	classpath = sourceSets.test.runtimeClasspath
-	mainClass = 'com.example.superheroes.ProjectSanityTest'
+	mainClass = 'io.github.grebeshok105.codex.ProjectSanityTest'
 	maxHeapSize = '128m'
 	jvmArgs '-ea'
 }
@@ -222,12 +222,19 @@ tasks.register('auditReleaseJarIsolation') {
 		File jarFile = tasks.remapJar.archiveFile.get().asFile
 		def offenders = []
 		int entryCount = 0
+		boolean sawRootPackage = false
 		def rootDescriptorText = null
 
 		new java.util.zip.ZipFile(jarFile).withCloseable { java.util.zip.ZipFile zip ->
 			for (java.util.zip.ZipEntry entry : Collections.list(zip.entries())) {
 				String name = entry.name
 				entryCount++
+				if (name.startsWith('io/github/grebeshok105/codex/')) {
+					sawRootPackage = true
+				}
+				if (name.startsWith('com/example/')) {
+					offenders << "${name}  (class under the retired legacy root package)"
+				}
 				if (name.startsWith('org/junit/') || name.startsWith('org/jopentest4j/')
 						|| name.startsWith('org/apiguardian/')) {
 					offenders << "${name}  (test-only JUnit classes)"
@@ -255,6 +262,10 @@ tasks.register('auditReleaseJarIsolation') {
 					offenders << "fabric.mod.json  (fabric-gametest / fabric-client-gametest entrypoints present)"
 				}
 			}
+		}
+
+		if (!sawRootPackage) {
+			offenders << "(no entries under io/github/grebeshok105/codex/ — mod root package missing from jar)"
 		}
 
 		if (!offenders.isEmpty()) {

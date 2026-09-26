@@ -20,7 +20,7 @@ Codex Superheroes — Fabric-мод для Minecraft 1.21.1 про суперг�
 
 Актуальный список игровых героев определяется кодом в:
 
-`src/main/java/com/example/superheroes/hero/Heroes.java`
+`src/main/java/io/github/grebeshok105/codex/hero/Heroes.java`
 
 Основные системы проекта:
 

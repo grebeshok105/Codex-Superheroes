@@ -16,13 +16,13 @@
 	"environment": "*",
 	"entrypoints": {
 		"main": [
-			"com.example.superheroes.SuperheroesMod"
+			"io.github.grebeshok105.codex.SuperheroesMod"
 		],
 		"client": [
-			"com.example.superheroes.client.SuperheroesClient"
+			"io.github.grebeshok105.codex.client.SuperheroesClient"
 		],
 		"fabric-datagen": [
-			"com.example.superheroes.datagen.SuperheroesDataGenerator"
+			"io.github.grebeshok105.codex.datagen.SuperheroesDataGenerator"
 		]
 	},
 	"mixins": [
