@@ -1,12 +1,11 @@
 package io.github.grebeshok105.codex.item;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.attachment.ModAttachments;
-import io.github.grebeshok105.codex.combat.TargetFilters;
+import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.effect.ModEffects;
-import io.github.grebeshok105.codex.resource.ResourceController;
-import io.github.grebeshok105.codex.transform.HeroData;
-import io.github.grebeshok105.codex.transform.TooltipFrame;
+import io.github.grebeshok105.codex.core.resource.ResourceController;
+import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.core.transform.TooltipFrame;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -46,7 +45,7 @@ public class UraniumDaggerItem extends Item {
 	@Override
 	public boolean hurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
 		if (target instanceof ServerPlayer victim && victim.level() instanceof ServerLevel level) {
-			HeroData data = victim.getAttachedOrCreate(ModAttachments.HERO_DATA);
+			HeroData data = victim.getAttachedOrCreate(CoreAttachments.HERO_DATA);
 			if (data.hasHero()) {
 				victim.hurt(level.damageSources().indirectMagic(attacker, attacker), 10f);
 				victim.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 200, 4, false, true, true));

@@ -1,7 +1,7 @@
 package io.github.grebeshok105.codex.entity.ai;
 
 import io.github.grebeshok105.codex.entity.HomelanderBossEntity;
-import io.github.grebeshok105.codex.world.WorldDestructionPolicy;
+import io.github.grebeshok105.codex.mechanic.world.WorldDestructionPolicy;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;

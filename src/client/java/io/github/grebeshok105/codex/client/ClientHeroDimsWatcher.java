@@ -1,6 +1,6 @@
 package io.github.grebeshok105.codex.client;
 
-import io.github.grebeshok105.codex.attachment.ModAttachments;
+import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
@@ -33,7 +33,7 @@ public final class ClientHeroDimsWatcher {
 			return;
 		}
 		for (AbstractClientPlayer player : client.level.players()) {
-			ResourceLocation heroId = player.getAttached(ModAttachments.PUBLIC_HERO);
+			ResourceLocation heroId = player.getAttached(CoreAttachments.PUBLIC_HERO);
 			ResourceLocation previous = LAST_SEEN.put(player.getUUID(), heroId);
 			if (!Objects.equals(previous, heroId)) {
 				player.refreshDimensions();

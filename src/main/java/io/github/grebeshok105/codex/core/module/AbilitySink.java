@@ -1,6 +1,6 @@
 package io.github.grebeshok105.codex.core.module;
 
-import io.github.grebeshok105.codex.ability.Ability;
+import io.github.grebeshok105.codex.core.ability.Ability;
 
 @FunctionalInterface
 public interface AbilitySink {

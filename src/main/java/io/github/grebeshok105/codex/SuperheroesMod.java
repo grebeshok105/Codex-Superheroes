@@ -2,18 +2,21 @@ package io.github.grebeshok105.codex;
 
 import io.github.grebeshok105.codex.attachment.ModAttachments;
 import io.github.grebeshok105.codex.command.SuperheroesCommands;
+import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
+import io.github.grebeshok105.codex.core.lifecycle.HeroTickDispatcher;
+import io.github.grebeshok105.codex.core.lifecycle.PassiveReconciler;
 import io.github.grebeshok105.codex.effect.ModEffects;
-import io.github.grebeshok105.codex.hero.Hero;
-import io.github.grebeshok105.codex.hero.Heroes;
+import io.github.grebeshok105.codex.core.hero.Hero;
+import io.github.grebeshok105.codex.core.hero.Heroes;
 import io.github.grebeshok105.codex.item.ModItemGroups;
 import io.github.grebeshok105.codex.item.ModItems;
-import io.github.grebeshok105.codex.lifecycle.EntityControlLock;
-import io.github.grebeshok105.codex.lifecycle.PlayerLifecycle;
+import io.github.grebeshok105.codex.core.lifecycle.EntityControlLock;
+import io.github.grebeshok105.codex.core.lifecycle.PlayerLifecycle;
 import io.github.grebeshok105.codex.network.ModNetworking;
 import io.github.grebeshok105.codex.particle.ModParticles;
 import io.github.grebeshok105.codex.sound.ModSounds;
-import io.github.grebeshok105.codex.transform.HeroDataStore;
-import io.github.grebeshok105.codex.transform.HeroTransformService;
+import io.github.grebeshok105.codex.core.transform.HeroDataStore;
+import io.github.grebeshok105.codex.core.transform.HeroTransformService;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 
@@ -26,10 +29,11 @@ public class SuperheroesMod implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
+		CoreAttachments.init();
 		ModAttachments.init();
 		EntityControlLock.init();
 		PlayerLifecycle.init();
-		io.github.grebeshok105.codex.lifecycle.PassiveReconciler.init();
+		io.github.grebeshok105.codex.core.lifecycle.PassiveReconciler.init();
 		ModEffects.init();
 		io.github.grebeshok105.codex.bootstrap.HeroModules.bootstrap(io.github.grebeshok105.codex.core.module.CoreModuleContext.INSTANCE);
 		io.github.grebeshok105.codex.entity.ModEntities.init();
@@ -43,7 +47,7 @@ public class SuperheroesMod implements ModInitializer {
 		HeroDataStore.init();
 		SuperheroesCommands.init();
 
-		io.github.grebeshok105.codex.lifecycle.HeroTickDispatcher.init();
+		io.github.grebeshok105.codex.core.lifecycle.HeroTickDispatcher.init();
 
 		// Global (not hero-owned) death handling: a dead hero untransforms — a hero that
 		// adapts through death keeps the transformation via Hero.keepsHeroOnDeath().
@@ -53,7 +57,7 @@ public class SuperheroesMod implements ModInitializer {
 		ServerLivingEntityEvents.AFTER_DEATH.register((entity, source) -> {
 			if (entity instanceof ServerPlayer serverPlayer) {
 				Hero hero = Heroes.get(serverPlayer
-						.getAttachedOrCreate(ModAttachments.HERO_DATA).heroId());
+						.getAttachedOrCreate(CoreAttachments.HERO_DATA).heroId());
 				if (hero != null && hero.keepsHeroOnDeath()) {
 					return;
 				}

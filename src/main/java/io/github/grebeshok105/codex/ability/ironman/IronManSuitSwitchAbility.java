@@ -1,7 +1,7 @@
 package io.github.grebeshok105.codex.ability.ironman;
 
-import io.github.grebeshok105.codex.ability.Ability;
-import io.github.grebeshok105.codex.ability.AbilityCooldowns;
+import io.github.grebeshok105.codex.core.ability.Ability;
+import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import io.github.grebeshok105.codex.ability.AbilityIds;
 import io.github.grebeshok105.codex.attachment.ModAttachments;
 import io.github.grebeshok105.codex.sound.ModSounds;

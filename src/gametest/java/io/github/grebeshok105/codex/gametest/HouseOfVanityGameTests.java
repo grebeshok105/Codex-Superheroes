@@ -1,7 +1,7 @@
 package io.github.grebeshok105.codex.gametest;
 
 import io.github.grebeshok105.codex.ability.AbilityIds;
-import io.github.grebeshok105.codex.ability.AbilityRouter;
+import io.github.grebeshok105.codex.core.ability.AbilityRouter;
 import io.github.grebeshok105.codex.effect.MirrorDimensionController;
 import io.github.grebeshok105.codex.hero.PandoraHero;
 import io.github.grebeshok105.codex.network.MirrorDimensionStatusC2SPayload;

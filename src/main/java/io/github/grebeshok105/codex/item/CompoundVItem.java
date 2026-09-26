@@ -1,11 +1,11 @@
 package io.github.grebeshok105.codex.item;
 
-import io.github.grebeshok105.codex.transform.HeroDataStore;
-import io.github.grebeshok105.codex.attachment.ModAttachments;
-import io.github.grebeshok105.codex.hero.Hero;
-import io.github.grebeshok105.codex.hero.Heroes;
-import io.github.grebeshok105.codex.transform.HeroData;
-import io.github.grebeshok105.codex.transform.TooltipFrame;
+import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
+import io.github.grebeshok105.codex.core.transform.HeroDataStore;
+import io.github.grebeshok105.codex.core.hero.Hero;
+import io.github.grebeshok105.codex.core.hero.Heroes;
+import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.core.transform.TooltipFrame;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -46,7 +46,7 @@ public class CompoundVItem extends Item {
 		if (!(player instanceof ServerPlayer serverPlayer)) {
 			return InteractionResultHolder.pass(stack);
 		}
-		HeroData data = serverPlayer.getAttachedOrCreate(ModAttachments.HERO_DATA);
+		HeroData data = serverPlayer.getAttachedOrCreate(CoreAttachments.HERO_DATA);
 		if (!data.hasHero()) {
 			return InteractionResultHolder.fail(stack);
 		}

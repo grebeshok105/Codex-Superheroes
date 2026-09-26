@@ -1,5 +1,6 @@
 package io.github.grebeshok105.codex.physics;
 
+import io.github.grebeshok105.codex.core.hero.ImpactStyle;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
 

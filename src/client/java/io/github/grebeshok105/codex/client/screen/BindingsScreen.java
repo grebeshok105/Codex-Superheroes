@@ -2,8 +2,8 @@ package io.github.grebeshok105.codex.client.screen;
 
 import io.github.grebeshok105.codex.client.ClientAbilityVisibility;
 import io.github.grebeshok105.codex.client.ClientHeroState;
-import io.github.grebeshok105.codex.network.BindAbilityResourceC2SPayload;
-import io.github.grebeshok105.codex.resource.ResourceKind;
+import io.github.grebeshok105.codex.core.net.BindAbilityResourceC2SPayload;
+import io.github.grebeshok105.codex.core.resource.ResourceKind;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;

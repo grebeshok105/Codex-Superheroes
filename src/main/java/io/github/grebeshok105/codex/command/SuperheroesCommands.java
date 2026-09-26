@@ -1,17 +1,18 @@
 package io.github.grebeshok105.codex.command;
 
-import io.github.grebeshok105.codex.transform.HeroDataStore;
+import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
+import io.github.grebeshok105.codex.core.transform.HeroDataStore;
 import io.github.grebeshok105.codex.attachment.ModAttachments;
 import io.github.grebeshok105.codex.debug.AdminAbilityDebug;
 import io.github.grebeshok105.codex.effect.BattleBeastCurseController;
 import io.github.grebeshok105.codex.effect.DoomsdayTierController;
 import io.github.grebeshok105.codex.hero.BattleBeastHero;
 import io.github.grebeshok105.codex.hero.DoomsdayHero;
-import io.github.grebeshok105.codex.hero.Hero;
-import io.github.grebeshok105.codex.hero.Heroes;
+import io.github.grebeshok105.codex.core.hero.Hero;
+import io.github.grebeshok105.codex.core.hero.Heroes;
 import io.github.grebeshok105.codex.item.ModItemGroups;
-import io.github.grebeshok105.codex.transform.HeroData;
-import io.github.grebeshok105.codex.transform.HeroTransformService;
+import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.core.transform.HeroTransformService;
 import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -246,7 +247,7 @@ public final class SuperheroesCommands {
 		if (player == null) {
 			return 0;
 		}
-		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
+		HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
 		if (!data.hasHero()) {
 			ctx.getSource().sendFailure(Component.translatable("commands.superheroes.no_hero"));
 			return 0;
@@ -264,7 +265,7 @@ public final class SuperheroesCommands {
 		if (player == null) {
 			return 0;
 		}
-		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
+		HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
 		if (!data.hasHero()) {
 			ctx.getSource().sendFailure(Component.translatable("commands.superheroes.no_hero"));
 			return 0;
@@ -286,7 +287,7 @@ public final class SuperheroesCommands {
 		if (target == null) {
 			return 0;
 		}
-		HeroData data = target.getAttachedOrCreate(ModAttachments.HERO_DATA);
+		HeroData data = target.getAttachedOrCreate(CoreAttachments.HERO_DATA);
 		if (!data.hasHero() || !DoomsdayHero.ID.equals(data.heroId())) {
 			ctx.getSource().sendFailure(Component.translatable("commands.superheroes.doomsday.not_doomsday",
 					target.getScoreboardName()));
@@ -312,7 +313,7 @@ public final class SuperheroesCommands {
 		if (target == null) {
 			return 0;
 		}
-		HeroData data = target.getAttachedOrCreate(ModAttachments.HERO_DATA);
+		HeroData data = target.getAttachedOrCreate(CoreAttachments.HERO_DATA);
 		if (!data.hasHero() || !BattleBeastHero.ID.equals(data.heroId())) {
 			ctx.getSource().sendFailure(Component.literal("Target is not Battle Beast: "
 					+ target.getScoreboardName()));
@@ -353,7 +354,7 @@ public final class SuperheroesCommands {
 		if (player == null) {
 			return 0;
 		}
-		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
+		HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
 		if (!data.hasHero()) {
 			ctx.getSource().sendFailure(Component.translatable("commands.superheroes.no_hero"));
 			return 0;
@@ -378,7 +379,7 @@ public final class SuperheroesCommands {
 		if (player == null) {
 			return 0;
 		}
-		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
+		HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
 		String heroId = data.hasHero() ? data.heroId().toString() : "<none>";
 		ctx.getSource().sendSuccess(() -> Component.translatable("commands.superheroes.info",
 				heroId, String.format("%.1f", data.energy()), String.format("%.1f", data.mana()),

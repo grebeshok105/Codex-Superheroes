@@ -1,6 +1,9 @@
 package io.github.grebeshok105.codex.ability;
 
-import io.github.grebeshok105.codex.transform.HeroDataStore;
+import io.github.grebeshok105.codex.core.ability.Ability;
+import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
+import io.github.grebeshok105.codex.core.hero.Heroes;
+import io.github.grebeshok105.codex.core.transform.HeroDataStore;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -45,7 +48,7 @@ public final class ShadowExtractionAbility implements Ability {
 
 		// Возвращаем 5 ENERGY (charges) — net cost 5
 		HeroDataStore.update(player, d -> {
-			var hero = io.github.grebeshok105.codex.hero.Heroes.get(d.heroId());
+			var hero = io.github.grebeshok105.codex.core.hero.Heroes.get(d.heroId());
 			return d.withEnergy(Math.min(d.energy() + 5f, hero != null ? hero.getEnergyMax() : 100f));
 		});
 

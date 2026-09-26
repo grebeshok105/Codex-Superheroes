@@ -1,7 +1,7 @@
 package io.github.grebeshok105.codex.effect;
 
-import io.github.grebeshok105.codex.attachment.ModAttachments;
-import io.github.grebeshok105.codex.transform.HeroData;
+import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
+import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.boss.wither.WitherBoss;
 import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
@@ -18,7 +18,7 @@ public final class ReinhardWorthyOpponent {
 	public static boolean isWorthy(LivingEntity target) {
 		if (target == null || !target.isAlive()) return false;
 		if (target instanceof Player p) {
-			HeroData data = p.getAttachedOrCreate(ModAttachments.HERO_DATA);
+			HeroData data = p.getAttachedOrCreate(CoreAttachments.HERO_DATA);
 			return data.hasHero() || true;
 		}
 		if (target instanceof WitherBoss) return true;

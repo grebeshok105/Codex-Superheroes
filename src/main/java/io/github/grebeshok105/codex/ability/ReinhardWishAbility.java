@@ -1,6 +1,7 @@
 package io.github.grebeshok105.codex.ability;
 
 import io.github.grebeshok105.codex.attachment.ModAttachments;
+import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.effect.ReinhardState;
 import io.github.grebeshok105.codex.network.ReinhardWishOptionsS2CPayload;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;

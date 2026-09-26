@@ -1,9 +1,9 @@
 package io.github.grebeshok105.codex.effect;
 
-import io.github.grebeshok105.codex.attachment.ModAttachments;
+import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.hero.RegulusHero;
-import io.github.grebeshok105.codex.transform.HeroData;
+import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
@@ -28,7 +28,7 @@ public final class RegulusTotemController {
 			if (!(entity instanceof ServerPlayer player)) {
 				return true;
 			}
-			HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
+			HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
 			if (!data.hasHero() || !RegulusHero.ID.equals(data.heroId())) {
 				return true;
 			}

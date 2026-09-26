@@ -6,7 +6,7 @@ import io.github.grebeshok105.codex.client.core.hud.HudBounds;
 import io.github.grebeshok105.codex.client.core.hud.MovableHud;
 import io.github.grebeshok105.codex.client.render.WildRenderer;
 import io.github.grebeshok105.codex.client.render.WildShaders;
-import io.github.grebeshok105.codex.hero.HeroTheme;
+import io.github.grebeshok105.codex.core.hero.HeroTheme;
 import io.github.grebeshok105.codex.physics.ImpactChargeRules;
 import net.minecraft.ChatFormatting;
 import net.minecraft.Util;

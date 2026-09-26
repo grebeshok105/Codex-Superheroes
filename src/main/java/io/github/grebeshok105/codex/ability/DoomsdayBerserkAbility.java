@@ -1,12 +1,12 @@
 package io.github.grebeshok105.codex.ability;
 
+import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.hero.AbilityScopedModifiers;
 import net.minecraft.core.Holder;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;

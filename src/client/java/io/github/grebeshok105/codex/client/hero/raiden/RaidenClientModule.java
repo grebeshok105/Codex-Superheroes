@@ -6,7 +6,7 @@ import io.github.grebeshok105.codex.client.ModKeys;
 import io.github.grebeshok105.codex.client.core.module.HeroClientContext;
 import io.github.grebeshok105.codex.client.core.module.HeroClientModule;
 import io.github.grebeshok105.codex.hero.RaidenHero;
-import io.github.grebeshok105.codex.network.ActivateAbilityC2SPayload;
+import io.github.grebeshok105.codex.core.net.ActivateAbilityC2SPayload;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.KeyMapping;

@@ -1,7 +1,7 @@
 package io.github.grebeshok105.codex.effect;
 
-import io.github.grebeshok105.codex.hero.BleedProfile;
-import io.github.grebeshok105.codex.hero.Hero;
+import io.github.grebeshok105.codex.core.hero.BleedProfile;
+import io.github.grebeshok105.codex.core.hero.Hero;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;

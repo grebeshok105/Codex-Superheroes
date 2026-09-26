@@ -1,8 +1,7 @@
 package io.github.grebeshok105.codex.ability;
 
-import io.github.grebeshok105.codex.attachment.ModAttachments;
 import io.github.grebeshok105.codex.combat.TargetFilters;
-import io.github.grebeshok105.codex.effect.ReinhardState;
+import io.github.grebeshok105.codex.core.ability.Ability;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;

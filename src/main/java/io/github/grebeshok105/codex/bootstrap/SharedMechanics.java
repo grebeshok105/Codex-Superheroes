@@ -1,7 +1,8 @@
 package io.github.grebeshok105.codex.bootstrap;
 
-import io.github.grebeshok105.codex.ability.AbilityCooldowns;
+import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import io.github.grebeshok105.codex.command.AdminBuildSyncController;
+import io.github.grebeshok105.codex.core.lifecycle.HeroTickDispatcher;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.effect.AutoSaturationController;
 import io.github.grebeshok105.codex.effect.FlightController;
@@ -13,13 +14,13 @@ import io.github.grebeshok105.codex.effect.HeroPassiveRegenController;
 import io.github.grebeshok105.codex.effect.HeroReactionController;
 import io.github.grebeshok105.codex.effect.SuperJumpController;
 import io.github.grebeshok105.codex.horde.HordeManager;
-import io.github.grebeshok105.codex.lifecycle.EntityControlLock;
-import io.github.grebeshok105.codex.lifecycle.PassiveReconciler;
+import io.github.grebeshok105.codex.core.lifecycle.EntityControlLock;
+import io.github.grebeshok105.codex.core.lifecycle.PassiveReconciler;
 import io.github.grebeshok105.codex.physics.BallisticBodyTracker;
-import io.github.grebeshok105.codex.resource.EnergyLocks;
-import io.github.grebeshok105.codex.resource.ResourceController;
-import io.github.grebeshok105.codex.transform.HeroDataStore;
-import io.github.grebeshok105.codex.transform.HeroTransformService;
+import io.github.grebeshok105.codex.core.resource.EnergyLocks;
+import io.github.grebeshok105.codex.core.resource.ResourceController;
+import io.github.grebeshok105.codex.core.transform.HeroDataStore;
+import io.github.grebeshok105.codex.core.transform.HeroTransformService;
 
 /**
  * Wiring for hero-agnostic mechanics (composition-root side, after E2 moves these to

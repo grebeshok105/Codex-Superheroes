@@ -1,13 +1,13 @@
 package io.github.grebeshok105.codex.effect;
 
 import io.github.grebeshok105.codex.ability.AbilityIds;
-import io.github.grebeshok105.codex.ability.AbilityRouter;
-import io.github.grebeshok105.codex.attachment.ModAttachments;
+import io.github.grebeshok105.codex.core.ability.AbilityRouter;
+import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.hero.PandoraHero;
 import io.github.grebeshok105.codex.network.MirrorDimensionS2CPayload;
 import io.github.grebeshok105.codex.network.MirrorDimensionStatusC2SPayload;
-import io.github.grebeshok105.codex.transform.HeroData;
+import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.particles.ParticleTypes;
@@ -469,7 +469,7 @@ public final class MirrorDimensionController {
 		if (caster == null || caster.isRemoved() || caster.isDeadOrDying()) {
 			return false;
 		}
-		HeroData data = caster.getAttachedOrCreate(ModAttachments.HERO_DATA);
+		HeroData data = caster.getAttachedOrCreate(CoreAttachments.HERO_DATA);
 		if (!data.hasHero() || !PandoraHero.ID.equals(data.heroId())) {
 			return false;
 		}

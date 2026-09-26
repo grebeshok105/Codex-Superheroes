@@ -8,7 +8,7 @@ import io.github.grebeshok105.codex.core.module.HeroModule;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.effect.BattleBeastCurseController;
 import io.github.grebeshok105.codex.hero.BattleBeastHero;
-import io.github.grebeshok105.codex.hero.Hero;
+import io.github.grebeshok105.codex.core.hero.Hero;
 
 public final class BattleBeastModule implements HeroModule {
 	private final BattleBeastHero hero = new BattleBeastHero();

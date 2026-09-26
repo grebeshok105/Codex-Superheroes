@@ -14,7 +14,7 @@ import io.github.grebeshok105.codex.effect.DoomsdayFootstepsController;
 import io.github.grebeshok105.codex.effect.DoomsdayKryptoniteController;
 import io.github.grebeshok105.codex.effect.DoomsdayTierController;
 import io.github.grebeshok105.codex.hero.DoomsdayHero;
-import io.github.grebeshok105.codex.hero.Hero;
+import io.github.grebeshok105.codex.core.hero.Hero;
 
 public final class DoomsdayModule implements HeroModule {
 	private final DoomsdayHero hero = new DoomsdayHero();

@@ -1,7 +1,9 @@
 package io.github.grebeshok105.codex.ability;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.hero.AttributeModifierSet;
+import io.github.grebeshok105.codex.core.ability.Ability;
+import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
+import io.github.grebeshok105.codex.core.hero.AttributeModifierSet;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;

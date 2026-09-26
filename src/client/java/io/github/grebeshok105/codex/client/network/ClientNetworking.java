@@ -1,17 +1,19 @@
 package io.github.grebeshok105.codex.client.network;
 
-import io.github.grebeshok105.codex.attachment.ModAttachments;
 import io.github.grebeshok105.codex.client.ClientAbilityCooldowns;
 import io.github.grebeshok105.codex.client.ClientFlightState;
 import io.github.grebeshok105.codex.client.ClientHeroState;
 import io.github.grebeshok105.codex.client.fx.ScreenShakeManager;
 import io.github.grebeshok105.codex.client.fx.WallImpactDebrisManager;
+import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
+import io.github.grebeshok105.codex.core.net.AbilityCooldownS2CPayload;
+import io.github.grebeshok105.codex.core.net.WallImpactDebrisS2CPayload;
 import io.github.grebeshok105.codex.flight.FlightAbilityState;
-import io.github.grebeshok105.codex.network.HeroDataSyncS2CPayload;
+import io.github.grebeshok105.codex.core.net.HeroDataSyncS2CPayload;
 import io.github.grebeshok105.codex.network.FlightStateS2CPayload;
-import io.github.grebeshok105.codex.network.ResourceUpdateS2CPayload;
-import io.github.grebeshok105.codex.network.ScreenShakeS2CPayload;
-import io.github.grebeshok105.codex.transform.HeroData;
+import io.github.grebeshok105.codex.core.net.ResourceUpdateS2CPayload;
+import io.github.grebeshok105.codex.core.net.ScreenShakeS2CPayload;
+import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -30,8 +32,8 @@ public final class ClientNetworking {
 					ClientHeroState.update(data);
 					LocalPlayer self = Minecraft.getInstance().player;
 					if (self != null) {
-						HeroData previous = self.getAttachedOrCreate(ModAttachments.HERO_DATA);
-						self.setAttached(ModAttachments.HERO_DATA, data);
+						HeroData previous = self.getAttachedOrCreate(CoreAttachments.HERO_DATA);
+						self.setAttached(CoreAttachments.HERO_DATA, data);
 						if (previous.hasHero() != data.hasHero()
 								|| (data.hasHero() && !data.heroId().equals(previous.heroId()))) {
 							self.refreshDimensions();
@@ -61,12 +63,12 @@ public final class ClientNetworking {
 		ClientPlayNetworking.registerGlobalReceiver(ScreenShakeS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> ScreenShakeManager.shake(payload.intensity(), payload.durationTicks())));
 
-		ClientPlayNetworking.registerGlobalReceiver(io.github.grebeshok105.codex.network.WallImpactDebrisS2CPayload.TYPE, (payload, context) ->
+		ClientPlayNetworking.registerGlobalReceiver(io.github.grebeshok105.codex.core.net.WallImpactDebrisS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> WallImpactDebrisManager.spawn(
 						context.client().level, payload.position(), payload.direction(),
 						payload.intensity(), payload.blockStateIds())));
 
-		ClientPlayNetworking.registerGlobalReceiver(io.github.grebeshok105.codex.network.AbilityCooldownS2CPayload.TYPE, (payload, context) ->
+		ClientPlayNetworking.registerGlobalReceiver(io.github.grebeshok105.codex.core.net.AbilityCooldownS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> ClientAbilityCooldowns.update(payload.abilityId(), payload.remainingTicks())));
 
 		ClientPlayNetworking.registerGlobalReceiver(io.github.grebeshok105.codex.network.SuitVariantS2CPayload.TYPE, (payload, context) ->

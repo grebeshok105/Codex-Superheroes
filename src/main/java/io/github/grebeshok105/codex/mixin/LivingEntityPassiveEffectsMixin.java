@@ -1,6 +1,6 @@
 package io.github.grebeshok105.codex.mixin;
 
-import io.github.grebeshok105.codex.lifecycle.PassiveReconciler;
+import io.github.grebeshok105.codex.core.lifecycle.PassiveReconciler;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;

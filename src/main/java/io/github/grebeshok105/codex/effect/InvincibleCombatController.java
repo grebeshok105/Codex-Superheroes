@@ -2,11 +2,11 @@ package io.github.grebeshok105.codex.effect;
 
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.ability.AbilityIds;
-import io.github.grebeshok105.codex.attachment.ModAttachments;
+import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.hero.InvincibleHero;
 import io.github.grebeshok105.codex.sound.ModSounds;
-import io.github.grebeshok105.codex.transform.HeroData;
+import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
@@ -52,7 +52,7 @@ public final class InvincibleCombatController {
 			if (target instanceof Player targetPlayer && (targetPlayer.isCreative() || targetPlayer.isSpectator())) {
 				return InteractionResult.PASS;
 			}
-			HeroData data = sp.getAttachedOrCreate(ModAttachments.HERO_DATA);
+			HeroData data = sp.getAttachedOrCreate(CoreAttachments.HERO_DATA);
 			if (!InvincibleHero.ID.equals(data.heroId()) || data.isActive(AbilityIds.IRON_FISTS)) {
 				return InteractionResult.PASS;
 			}

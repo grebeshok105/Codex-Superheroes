@@ -3,7 +3,7 @@ package io.github.grebeshok105.codex.client.hud;
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.client.render.WildRenderer;
 import io.github.grebeshok105.codex.client.render.WildShaders;
-import io.github.grebeshok105.codex.hero.PassiveGlyph;
+import io.github.grebeshok105.codex.core.hero.PassiveGlyph;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
 

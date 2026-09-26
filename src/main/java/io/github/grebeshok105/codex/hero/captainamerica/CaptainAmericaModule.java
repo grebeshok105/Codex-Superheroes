@@ -7,7 +7,7 @@ import io.github.grebeshok105.codex.ability.CapShieldThrowAbility;
 import io.github.grebeshok105.codex.core.module.HeroModule;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.hero.CaptainAmericaHero;
-import io.github.grebeshok105.codex.hero.Hero;
+import io.github.grebeshok105.codex.core.hero.Hero;
 
 public final class CaptainAmericaModule implements HeroModule {
 	private final CaptainAmericaHero hero = new CaptainAmericaHero();

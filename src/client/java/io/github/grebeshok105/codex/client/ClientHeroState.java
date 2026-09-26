@@ -1,10 +1,10 @@
 package io.github.grebeshok105.codex.client;
 
-import io.github.grebeshok105.codex.hero.Hero;
-import io.github.grebeshok105.codex.hero.HeroTheme;
-import io.github.grebeshok105.codex.hero.Heroes;
+import io.github.grebeshok105.codex.core.hero.Hero;
+import io.github.grebeshok105.codex.core.hero.HeroTheme;
+import io.github.grebeshok105.codex.core.hero.Heroes;
 import io.github.grebeshok105.codex.client.hud.ScreenFlashHud;
-import io.github.grebeshok105.codex.transform.HeroData;
+import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.List;

@@ -2,9 +2,10 @@ package io.github.grebeshok105.codex.effect;
 
 import io.github.grebeshok105.codex.ability.RaidenPlungingStrikeAbility;
 import io.github.grebeshok105.codex.attachment.ModAttachments;
+import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.hero.RaidenHero;
-import io.github.grebeshok105.codex.transform.HeroData;
+import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.server.level.ServerPlayer;
 
@@ -29,7 +30,7 @@ public final class RaidenPlungingLandingController {
 	}
 
 	private static void tick(ServerPlayer player) {
-		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
+		HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
 		boolean onGround = player.onGround();
 		Boolean prev = PREV_ON_GROUND.put(player.getUUID(), onGround);
 		if (!data.hasHero() || !RaidenHero.ID.equals(data.heroId())) return;

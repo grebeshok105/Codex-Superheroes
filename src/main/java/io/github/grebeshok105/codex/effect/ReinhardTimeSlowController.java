@@ -1,9 +1,10 @@
 package io.github.grebeshok105.codex.effect;
 
 import io.github.grebeshok105.codex.combat.TargetFilters;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
-import io.github.grebeshok105.codex.lifecycle.ControlLockKind;
-import io.github.grebeshok105.codex.lifecycle.EntityControlLock;
+import io.github.grebeshok105.codex.core.lifecycle.ControlLockKind;
+import io.github.grebeshok105.codex.core.lifecycle.EntityControlLock;
 import io.github.grebeshok105.codex.network.ReinhardTimeSlowS2CPayload;
 import io.github.grebeshok105.codex.sound.ModSounds;
 import net.fabricmc.fabric.api.event.player.AttackBlockCallback;

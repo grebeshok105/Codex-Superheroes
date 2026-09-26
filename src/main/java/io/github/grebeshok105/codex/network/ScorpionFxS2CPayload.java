@@ -1,6 +1,7 @@
 package io.github.grebeshok105.codex.network;
 
 import io.github.grebeshok105.codex.ModId;
+import io.github.grebeshok105.codex.core.net.StreamCodecs;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;

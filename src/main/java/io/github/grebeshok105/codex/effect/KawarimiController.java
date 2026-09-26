@@ -1,10 +1,10 @@
 package io.github.grebeshok105.codex.effect;
 
-import io.github.grebeshok105.codex.attachment.ModAttachments;
+import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.hero.NarutoHero;
 import io.github.grebeshok105.codex.particle.ModParticles;
-import io.github.grebeshok105.codex.transform.HeroData;
+import io.github.grebeshok105.codex.core.transform.HeroData;
 import io.github.grebeshok105.codex.util.SafeTeleport;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.minecraft.core.particles.ParticleTypes;
@@ -12,7 +12,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
@@ -42,7 +41,7 @@ public final class KawarimiController {
 		// а не на каждом предположительно смертельном ударе до щитов и i-frames.
 		ServerLivingEntityEvents.ALLOW_DEATH.register((entity, source, amount) -> {
 			if (!(entity instanceof ServerPlayer player)) return true;
-			HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
+			HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
 			if (!data.hasHero() || !NarutoHero.ID.equals(data.heroId())) return true;
 			long now = player.serverLevel().getGameTime();
 			Long last = LAST_TRIGGER.get(player.getUUID());

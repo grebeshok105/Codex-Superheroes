@@ -1,5 +1,8 @@
 package io.github.grebeshok105.codex.gametest;
 
+import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
+import io.github.grebeshok105.codex.core.lifecycle.ControlLockKind;
+import io.github.grebeshok105.codex.core.lifecycle.ControlLockState;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.DisconnectionDetails;
 import net.minecraft.network.chat.Component;
@@ -83,10 +86,10 @@ final class TestPlayers {
 	 * empties — asserting the ref release is deterministic, asserting the flag is not.
 	 */
 	static java.util.Set<java.util.UUID> lockOwners(net.minecraft.world.entity.Entity victim,
-			io.github.grebeshok105.codex.lifecycle.ControlLockKind kind) {
-		io.github.grebeshok105.codex.lifecycle.ControlLockState state =
-				victim.getAttached(io.github.grebeshok105.codex.attachment.ModAttachments.CONTROL_LOCKS);
-		io.github.grebeshok105.codex.lifecycle.ControlLockState.Entry entry =
+			io.github.grebeshok105.codex.core.lifecycle.ControlLockKind kind) {
+		io.github.grebeshok105.codex.core.lifecycle.ControlLockState state =
+				victim.getAttached(io.github.grebeshok105.codex.core.attachment.CoreAttachments.CONTROL_LOCKS);
+		io.github.grebeshok105.codex.core.lifecycle.ControlLockState.Entry entry =
 				state == null ? null : state.get(kind);
 		return entry == null ? java.util.Set.of() : entry.owners();
 	}

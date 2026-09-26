@@ -1,6 +1,6 @@
 package io.github.grebeshok105.codex.gametest;
 
-import io.github.grebeshok105.codex.transform.HeroTransformService;
+import io.github.grebeshok105.codex.core.transform.HeroTransformService;
 import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;

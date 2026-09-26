@@ -2,10 +2,10 @@ package io.github.grebeshok105.codex.gametest;
 
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.ability.AbilityIds;
-import io.github.grebeshok105.codex.ability.AbilityRegistry;
+import io.github.grebeshok105.codex.core.ability.AbilityRegistry;
 import io.github.grebeshok105.codex.bootstrap.HeroModules;
-import io.github.grebeshok105.codex.hero.Hero;
-import io.github.grebeshok105.codex.hero.Heroes;
+import io.github.grebeshok105.codex.core.hero.Hero;
+import io.github.grebeshok105.codex.core.hero.Heroes;
 import io.github.grebeshok105.codex.hero.ScorpionHero;
 import io.github.grebeshok105.codex.item.ModItemGroups;
 import io.github.grebeshok105.codex.item.ModItems;

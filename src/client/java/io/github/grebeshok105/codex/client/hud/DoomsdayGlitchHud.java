@@ -1,6 +1,5 @@
 package io.github.grebeshok105.codex.client.hud;
 
-import io.github.grebeshok105.codex.ability.AbilityIds;
 import io.github.grebeshok105.codex.client.ClientDoomsdayState;
 import io.github.grebeshok105.codex.client.ClientHeroState;
 import io.github.grebeshok105.codex.hero.DoomsdayHero;
@@ -9,7 +8,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
 
 public final class DoomsdayGlitchHud {

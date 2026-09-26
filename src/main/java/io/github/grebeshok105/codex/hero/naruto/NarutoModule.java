@@ -11,7 +11,7 @@ import io.github.grebeshok105.codex.core.module.HeroModule;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.effect.KawarimiController;
 import io.github.grebeshok105.codex.effect.NarutoWallRunController;
-import io.github.grebeshok105.codex.hero.Hero;
+import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.hero.NarutoHero;
 
 public final class NarutoModule implements HeroModule {

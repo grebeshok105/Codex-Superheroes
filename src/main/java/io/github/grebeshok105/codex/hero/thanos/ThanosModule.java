@@ -15,7 +15,7 @@ import io.github.grebeshok105.codex.effect.ModEffects;
 import io.github.grebeshok105.codex.effect.ThanosGauntletStateController;
 import io.github.grebeshok105.codex.effect.ThanosSnapWindupController;
 import io.github.grebeshok105.codex.effect.ThanosStoneRewardController;
-import io.github.grebeshok105.codex.hero.Hero;
+import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.hero.ThanosHero;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;

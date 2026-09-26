@@ -1,13 +1,14 @@
 package io.github.grebeshok105.codex.item;
 
 import io.github.grebeshok105.codex.combat.TargetFilters;
-import io.github.grebeshok105.codex.item.bound.BoundWeaponItem;
+import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
+import io.github.grebeshok105.codex.mechanic.boundweapon.BoundWeaponItem;
 import io.github.grebeshok105.codex.attachment.ModAttachments;
 import io.github.grebeshok105.codex.effect.ReinhardState;
 import io.github.grebeshok105.codex.hero.ReinhardHero;
 import io.github.grebeshok105.codex.network.ReinhardDarknessS2CPayload;
-import io.github.grebeshok105.codex.transform.HeroData;
-import io.github.grebeshok105.codex.transform.TooltipFrame;
+import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.core.transform.TooltipFrame;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
@@ -19,20 +20,16 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.SwordItem;
-import net.minecraft.world.item.Tier;
 import net.minecraft.world.item.Tiers;
 import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.item.component.Tool;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Reid — драконий меч Рейнхарда. Обычная атака — около ванильного netherite-меча.
@@ -60,7 +57,7 @@ public class RoyalIcicleItem extends BoundWeaponItem {
 	@Override
 	public boolean hurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
 		if (attacker instanceof ServerPlayer player) {
-			HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
+			HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
 			if (ReinhardHero.ID.equals(data.heroId())) {
 				ReinhardState state = player.getAttachedOrCreate(ModAttachments.REINHARD_STATE);
 				if (state.inSecondComing()) {

@@ -1,6 +1,6 @@
 package io.github.grebeshok105.codex.core.module;
 
-import io.github.grebeshok105.codex.hero.Hero;
+import io.github.grebeshok105.codex.core.hero.Hero;
 
 /**
  * Bootstrap-time wiring of one hero: registers its hero, abilities, ticks and lifecycle hooks through narrow

@@ -1,6 +1,6 @@
 package io.github.grebeshok105.codex.jarvis;
 
-import io.github.grebeshok105.codex.hero.JarvisThreatClass;
+import io.github.grebeshok105.codex.core.hero.JarvisThreatClass;
 
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;

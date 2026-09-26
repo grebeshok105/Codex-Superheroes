@@ -1,8 +1,11 @@
 package io.github.grebeshok105.codex.physics;
 
 import io.github.grebeshok105.codex.combat.TargetFilters;
-import io.github.grebeshok105.codex.network.ScreenShakeS2CPayload;
-import io.github.grebeshok105.codex.network.WallImpactDebrisS2CPayload;
+import io.github.grebeshok105.codex.core.hero.Hero;
+import io.github.grebeshok105.codex.core.hero.Heroes;
+import io.github.grebeshok105.codex.core.hero.ImpactStyle;
+import io.github.grebeshok105.codex.core.net.ScreenShakeS2CPayload;
+import io.github.grebeshok105.codex.core.net.WallImpactDebrisS2CPayload;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.particles.ParticleTypes;
@@ -14,7 +17,6 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
@@ -262,12 +264,12 @@ public final class CombatImpactEngine {
 	}
 
 	private static ImpactStyle styleFor(ResourceLocation heroId) {
-		io.github.grebeshok105.codex.hero.Hero hero = io.github.grebeshok105.codex.hero.Heroes.get(heroId);
+		io.github.grebeshok105.codex.core.hero.Hero hero = io.github.grebeshok105.codex.core.hero.Heroes.get(heroId);
 		return hero != null ? hero.getImpactStyle() : ImpactStyle.DEFAULT;
 	}
 
 	private static double heroPower(ResourceLocation heroId) {
-		io.github.grebeshok105.codex.hero.Hero hero = io.github.grebeshok105.codex.hero.Heroes.get(heroId);
+		io.github.grebeshok105.codex.core.hero.Hero hero = io.github.grebeshok105.codex.core.hero.Heroes.get(heroId);
 		return hero != null ? hero.getImpactPower() : 1.0;
 	}
 

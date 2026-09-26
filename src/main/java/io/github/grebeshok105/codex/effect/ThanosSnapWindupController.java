@@ -1,9 +1,9 @@
 package io.github.grebeshok105.codex.effect;
 
 import io.github.grebeshok105.codex.ability.ThanosSnapAbility;
-import io.github.grebeshok105.codex.lifecycle.LifecycleRegistrar;
-import io.github.grebeshok105.codex.lifecycle.OwnedSessionMap;
-import io.github.grebeshok105.codex.lifecycle.OwnedSessionMap.ClearOn;
+import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.EnumSet;

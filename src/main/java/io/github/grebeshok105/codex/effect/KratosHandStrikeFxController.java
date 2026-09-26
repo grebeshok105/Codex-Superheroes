@@ -1,10 +1,10 @@
 package io.github.grebeshok105.codex.effect;
 
-import io.github.grebeshok105.codex.attachment.ModAttachments;
+import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.hero.KratosHero;
 import io.github.grebeshok105.codex.particle.ModParticles;
-import io.github.grebeshok105.codex.transform.HeroData;
+import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.server.level.ServerLevel;
@@ -35,7 +35,7 @@ public final class KratosHandStrikeFxController {
 	}
 
 	private static boolean isKratos(ServerPlayer p) {
-		HeroData data = p.getAttachedOrCreate(ModAttachments.HERO_DATA);
+		HeroData data = p.getAttachedOrCreate(CoreAttachments.HERO_DATA);
 		return KratosHero.ID.equals(data.heroId());
 	}
 

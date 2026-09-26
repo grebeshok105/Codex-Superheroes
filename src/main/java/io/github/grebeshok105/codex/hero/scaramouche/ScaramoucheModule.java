@@ -6,7 +6,7 @@ import io.github.grebeshok105.codex.ability.ScaramoucheWindPrisonAbility;
 import io.github.grebeshok105.codex.ability.ScaramoucheWindstepAbility;
 import io.github.grebeshok105.codex.core.module.HeroModule;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
-import io.github.grebeshok105.codex.hero.Hero;
+import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.hero.ScaramoucheHero;
 
 public final class ScaramoucheModule implements HeroModule {

@@ -1,8 +1,8 @@
 package io.github.grebeshok105.codex.client;
 
-import io.github.grebeshok105.codex.attachment.ModAttachments;
 import io.github.grebeshok105.codex.core.ability.AbilityAvailability;
 import io.github.grebeshok105.codex.core.ability.AbilityAvailability.Visibility;
+import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 
@@ -22,7 +22,7 @@ public final class ClientAbilityVisibility {
 	public static List<ResourceLocation> visibleFor(List<ResourceLocation> base) {
 		Minecraft mc = Minecraft.getInstance();
 		AbilityAvailability availability = mc.player == null ? null
-				: mc.player.getAttached(ModAttachments.ABILITY_AVAILABILITY);
+				: mc.player.getAttached(CoreAttachments.ABILITY_AVAILABILITY);
 		if (availability == null || availability.entries().isEmpty()) {
 			return new ArrayList<>(base);
 		}

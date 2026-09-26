@@ -1,9 +1,9 @@
 package io.github.grebeshok105.codex.client.core.render;
 
-import io.github.grebeshok105.codex.attachment.ModAttachments;
 import io.github.grebeshok105.codex.client.ClientHeroState;
-import io.github.grebeshok105.codex.hero.Hero;
-import io.github.grebeshok105.codex.hero.Heroes;
+import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
+import io.github.grebeshok105.codex.core.hero.Hero;
+import io.github.grebeshok105.codex.core.hero.Heroes;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.resources.ResourceLocation;
@@ -37,7 +37,7 @@ public final class SkinResolver {
 	/**
 	 * Resolves the hero view of {@code player}, or {@code null} when the player has no hero.
 	 * The hero id comes from the same source the pre-CL4 mixins used: {@code ClientHeroState}
-	 * for the local player, the synced {@code ModAttachments.PUBLIC_HERO} attachment for everyone else.
+	 * for the local player, the synced {@code CoreAttachments.PUBLIC_HERO} attachment for everyone else.
 	 */
 	@Nullable
 	public static ResolvedSkin resolve(AbstractClientPlayer player) {
@@ -64,7 +64,7 @@ public final class SkinResolver {
 		if (mc.player != null && player.getUUID().equals(mc.player.getUUID())) {
 			return ClientHeroState.heroId();
 		}
-		return player.getAttached(ModAttachments.PUBLIC_HERO);
+		return player.getAttached(CoreAttachments.PUBLIC_HERO);
 	}
 
 	/**

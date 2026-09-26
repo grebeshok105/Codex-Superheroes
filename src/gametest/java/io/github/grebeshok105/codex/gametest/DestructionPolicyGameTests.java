@@ -2,7 +2,7 @@ package io.github.grebeshok105.codex.gametest;
 
 import io.github.grebeshok105.codex.effect.RegulusMadnessController;
 import io.github.grebeshok105.codex.physics.RushTerrainBreaker;
-import io.github.grebeshok105.codex.world.WorldDestructionPolicy;
+import io.github.grebeshok105.codex.mechanic.world.WorldDestructionPolicy;
 import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.core.BlockPos;

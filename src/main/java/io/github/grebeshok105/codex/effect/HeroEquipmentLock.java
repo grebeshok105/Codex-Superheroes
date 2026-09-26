@@ -1,8 +1,8 @@
 package io.github.grebeshok105.codex.effect;
 
-import io.github.grebeshok105.codex.attachment.ModAttachments;
+import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
-import io.github.grebeshok105.codex.transform.HeroData;
+import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.fabricmc.fabric.api.event.player.UseItemCallback;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.chat.Component;
@@ -24,7 +24,7 @@ public final class HeroEquipmentLock {
 			if (!isLockedItem(stack)) {
 				return InteractionResultHolder.pass(stack);
 			}
-			HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
+			HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
 			if (!data.hasHero()) {
 				return InteractionResultHolder.pass(stack);
 			}
@@ -36,7 +36,7 @@ public final class HeroEquipmentLock {
 	}
 
 	private static void stripIfHero(ServerPlayer player) {
-		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
+		HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
 		if (!data.hasHero()) {
 			return;
 		}

@@ -16,7 +16,7 @@ import io.github.grebeshok105.codex.effect.MadnessFlightController;
 import io.github.grebeshok105.codex.effect.ModEffects;
 import io.github.grebeshok105.codex.effect.UraniumDefenseController;
 import io.github.grebeshok105.codex.effect.UraniumOffhandController;
-import io.github.grebeshok105.codex.hero.Hero;
+import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.hero.HomelanderHero;
 
 public final class HomelanderModule implements HeroModule {

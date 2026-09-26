@@ -1,6 +1,6 @@
 package io.github.grebeshok105.codex.effect;
 
-import io.github.grebeshok105.codex.attachment.ModAttachments;
+import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.hero.CaptainAmericaHero;
 import io.github.grebeshok105.codex.hero.KratosHero;
@@ -12,7 +12,7 @@ import io.github.grebeshok105.codex.hero.ThanosHero;
 import io.github.grebeshok105.codex.item.ModItems;
 import io.github.grebeshok105.codex.item.infinity.InfinityGauntletData;
 import io.github.grebeshok105.codex.item.infinity.InfinityStoneType;
-import io.github.grebeshok105.codex.transform.HeroData;
+import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
@@ -21,9 +21,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 
@@ -48,7 +46,7 @@ public final class ThanosStoneRewardController {
 	public static void register(HeroModuleContext ctx) {
 		ServerLivingEntityEvents.AFTER_DEATH.register((entity, source) -> {
 			if (!(entity instanceof ServerPlayer victim)) return;
-			HeroData victimData = victim.getAttachedOrCreate(ModAttachments.HERO_DATA);
+			HeroData victimData = victim.getAttachedOrCreate(CoreAttachments.HERO_DATA);
 			if (!victimData.hasHero()) return;
 			InfinityStoneType stone = HERO_TO_STONE.get(victimData.heroId());
 			if (stone == null) return;
@@ -56,7 +54,7 @@ public final class ThanosStoneRewardController {
 			Entity killerEntity = source.getEntity();
 			if (!(killerEntity instanceof ServerPlayer killer)) return;
 			if (killer.getUUID().equals(victim.getUUID())) return;
-			HeroData killerData = killer.getAttachedOrCreate(ModAttachments.HERO_DATA);
+			HeroData killerData = killer.getAttachedOrCreate(CoreAttachments.HERO_DATA);
 			if (!killerData.hasHero() || !ThanosHero.ID.equals(killerData.heroId())) return;
 
 			if (alreadyHasStone(killer, stone)) return;

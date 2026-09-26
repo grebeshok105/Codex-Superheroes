@@ -1,6 +1,14 @@
 package io.github.grebeshok105.codex.architecture;
 
-import io.github.grebeshok105.codex.hero.Hero;
+import io.github.grebeshok105.codex.core.ability.Ability;
+import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
+import io.github.grebeshok105.codex.core.ability.AbilityRouter;
+import io.github.grebeshok105.codex.core.hero.Hero;
+import io.github.grebeshok105.codex.core.lifecycle.HeroLifecycle;
+import io.github.grebeshok105.codex.core.lifecycle.HeroTickDispatcher;
+import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
+import io.github.grebeshok105.codex.core.lifecycle.PlayerLifecycle;
+import io.github.grebeshok105.codex.core.transform.HeroDataStore;
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.Dependency;
 import com.tngtech.archunit.core.domain.JavaClass;
@@ -115,8 +123,8 @@ class ArchitectureRulesTest {
 
 	@Test
 	void abilitiesDoNotCheckTheirOwnCooldown() {
-		FreezingArchRule.freeze(noClasses().that().implement(io.github.grebeshok105.codex.ability.Ability.class)
-				.should().callMethod(io.github.grebeshok105.codex.ability.AbilityCooldowns.class, "isOnCooldown",
+		FreezingArchRule.freeze(noClasses().that().implement(io.github.grebeshok105.codex.core.ability.Ability.class)
+				.should().callMethod(io.github.grebeshok105.codex.core.ability.AbilityCooldowns.class, "isOnCooldown",
 						net.minecraft.server.level.ServerPlayer.class, net.minecraft.resources.ResourceLocation.class)
 				.as("AbilityRouter owns the cooldown check; an ability may only check another ability's cooldown"))
 				.check(CodexClasses.main());

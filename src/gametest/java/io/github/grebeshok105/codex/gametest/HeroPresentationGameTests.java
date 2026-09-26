@@ -2,11 +2,11 @@ package io.github.grebeshok105.codex.gametest;
 
 import io.github.grebeshok105.codex.attachment.ModAttachments;
 import io.github.grebeshok105.codex.effect.DoomsdayProgress;
-import io.github.grebeshok105.codex.hero.BleedProfile;
+import io.github.grebeshok105.codex.core.hero.BleedProfile;
 import io.github.grebeshok105.codex.hero.DoomsdayHero;
-import io.github.grebeshok105.codex.hero.Hero;
-import io.github.grebeshok105.codex.hero.Heroes;
-import io.github.grebeshok105.codex.hero.PassiveGlyph;
+import io.github.grebeshok105.codex.core.hero.Hero;
+import io.github.grebeshok105.codex.core.hero.Heroes;
+import io.github.grebeshok105.codex.core.hero.PassiveGlyph;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;

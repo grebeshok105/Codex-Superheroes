@@ -1,7 +1,7 @@
 package io.github.grebeshok105.codex.item;
 
 import io.github.grebeshok105.codex.entity.HomelanderBossEntity;
-import io.github.grebeshok105.codex.transform.TooltipFrame;
+import io.github.grebeshok105.codex.core.transform.TooltipFrame;
 import io.github.grebeshok105.codex.entity.ModEntities;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;

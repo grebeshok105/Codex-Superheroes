@@ -11,7 +11,7 @@ import io.github.grebeshok105.codex.flight.FlightPhase;
 import io.github.grebeshok105.codex.flight.FlightProfiles;
 import io.github.grebeshok105.codex.flight.FlightTuning;
 import io.github.grebeshok105.codex.flight.FlightVector;
-import io.github.grebeshok105.codex.transform.HeroData;
+import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.player.Player;

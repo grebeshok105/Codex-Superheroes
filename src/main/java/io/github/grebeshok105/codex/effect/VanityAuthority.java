@@ -1,5 +1,6 @@
 package io.github.grebeshok105.codex.effect;
 
+import io.github.grebeshok105.codex.core.ability.AbilityRouter;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;

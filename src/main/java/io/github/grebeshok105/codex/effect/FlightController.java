@@ -1,18 +1,18 @@
 package io.github.grebeshok105.codex.effect;
 
-import io.github.grebeshok105.codex.transform.HeroDataStore;
+import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
+import io.github.grebeshok105.codex.core.transform.HeroDataStore;
 import io.github.grebeshok105.codex.ability.AbilityIds;
-import io.github.grebeshok105.codex.ability.AbilityRouter;
-import io.github.grebeshok105.codex.attachment.ModAttachments;
+import io.github.grebeshok105.codex.core.ability.AbilityRouter;
 import io.github.grebeshok105.codex.flight.FlightAbilityState;
 import io.github.grebeshok105.codex.flight.FlightMode;
 import io.github.grebeshok105.codex.flight.FlightPhase;
 import io.github.grebeshok105.codex.flight.FlightPhaseResolver;
-import io.github.grebeshok105.codex.hero.Hero;
-import io.github.grebeshok105.codex.hero.Heroes;
+import io.github.grebeshok105.codex.core.hero.Hero;
+import io.github.grebeshok105.codex.core.hero.Heroes;
 import io.github.grebeshok105.codex.network.ModNetworking;
 import io.github.grebeshok105.codex.particle.ModParticles;
-import io.github.grebeshok105.codex.transform.HeroData;
+import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -87,7 +87,7 @@ public final class FlightController {
 	}
 
 	public static void stop(ServerPlayer player, ResourceLocation deactivatedAbility) {
-		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
+		HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
 		FlightMode remaining = FlightAbilityState.activeModeExcept(data, deactivatedAbility);
 		if (remaining == null) {
 			stop(player);
@@ -132,7 +132,7 @@ public final class FlightController {
 	}
 
 	public static void tickPlayer(ServerPlayer player) {
-		HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
+		HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
 		FlightMode mode = data.hasHero() ? activeMode(data) : null;
 		if (mode == null) {
 			clearIfPresent(player);

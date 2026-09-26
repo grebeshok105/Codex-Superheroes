@@ -11,7 +11,7 @@ import io.github.grebeshok105.codex.effect.GreedCageController;
 import io.github.grebeshok105.codex.effect.RegulusGreedController;
 import io.github.grebeshok105.codex.effect.RegulusMadnessController;
 import io.github.grebeshok105.codex.effect.RegulusTotemController;
-import io.github.grebeshok105.codex.hero.Hero;
+import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.hero.RegulusHero;
 
 public final class RegulusModule implements HeroModule {

@@ -1,12 +1,13 @@
 package io.github.grebeshok105.codex.item;
 
 import io.github.grebeshok105.codex.combat.TargetFilters;
-import io.github.grebeshok105.codex.item.bound.BoundWeaponItem;
+import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
+import io.github.grebeshok105.codex.mechanic.boundweapon.BoundWeaponItem;
 import io.github.grebeshok105.codex.attachment.ModAttachments;
 import io.github.grebeshok105.codex.effect.RaidenState;
 import io.github.grebeshok105.codex.hero.RaidenHero;
 import io.github.grebeshok105.codex.particle.ModParticles;
-import io.github.grebeshok105.codex.transform.HeroData;
+import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -21,7 +22,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.SwordItem;
 import net.minecraft.world.item.Tiers;
 import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
 
@@ -51,7 +51,7 @@ public class MusouNoHitotachiItem extends BoundWeaponItem {
 	@Override
 	public boolean hurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
 		if (attacker instanceof ServerPlayer player) {
-			HeroData data = player.getAttachedOrCreate(ModAttachments.HERO_DATA);
+			HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
 			if (RaidenHero.ID.equals(data.heroId())) {
 				RaidenState state = player.getAttachedOrCreate(ModAttachments.RAIDEN_STATE);
 				long now = player.serverLevel().getGameTime();
