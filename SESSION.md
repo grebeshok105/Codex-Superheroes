@@ -263,3 +263,10 @@
 - New `lifecycle/` types verbatim per plan: `LifecycleRegistrar` (7 hooks + `global()`), `GlobalLifecycleRegistrar` delegating to `PlayerLifecycle` (BF3) + `HeroLifecycle` (BF11), `OwnedSessionMap` (`create(lifecycle, Set<ClearOn>)`, `ClearOn{LEAVE,DEATH,HERO_CLEAR}`, null-rejecting `put`) + `OwnedSessionMapTest` (3 JUnit tests).
 - First consumer migrated: `CapShieldSlamAbility` `WeakHashMap` → `OwnedSessionMap` (LEAVE+DEATH + always server-stop clear; its `clear`'s "untransform" javadoc was stale — no `onClear` registration ever existed, behavior preserved exactly). The three registrations dropped from `SuperheroesMod`.
 - Integration fix: `startRunsBeforeEndPhasesAndEarlyBeforeGlobal` asserted absolute index order — made robust to mid-tick hook registration (search relative to first "start"). qualityGate green: 67/67 gametests; worker's hand-shrunk freeze-store entries verified = canonical `allowStoreUpdate` output.
+
+## Architecture migration — stage B3 (plan 02)
+
+- `TransformationLore` record (`transform/`) + `TransformationItem(heroId, props, lore)` ctor; new `appendHoverText` emits openDivider→flavor→empty→bullets→closeDivider via `TooltipFrame`, null-guarded so the 7 remaining subclasses keep working.
+- 15 lore-only subclasses deleted; `ModItems` now constructs them inline with identical keys/colors/order/props. Hero ids passed as `ModId.of("…")` literals — `<Hero>.ID` class reads would have added 15 new frozen-rule violations (`sharedCodeDoesNotDependOnConcreteHeroes` can't grow); convention confirmed by plan 06 I5a («id героев строками»). Pandora keeps `doctor_strange_suit` id + comment.
+- Integration fixes: `item.TooltipFrame` moved to `transform/` (TransformationItem's tooltip dep created a new `item <-> transform` package cycle — ratchet caught it; move is acyclic since `item.infinity` never imports `transform`). Freeze store −16 (all removed entries = deleted subclasses' hero-id reads, zero additions).
+- Golden `transformation_lore.txt` (22 items) captured pre-migration; `transformationItemLoreIsStable` now compares against it — green post-migration. qualityGate: 70/70 gametests.
