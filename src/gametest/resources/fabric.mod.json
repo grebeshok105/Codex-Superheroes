@@ -26,7 +26,8 @@
 			"com.example.superheroes.gametest.HeroPresentationGameTests",
 			"com.example.superheroes.gametest.CooldownGateGameTests",
 			"com.example.superheroes.gametest.TransformationLoreGameTests",
-			"com.example.superheroes.gametest.PassiveModifiersGameTests"
+			"com.example.superheroes.gametest.PassiveModifiersGameTests",
+			"com.example.superheroes.gametest.HeroModuleLifecycleGameTests"
 		]
 	},
 	"depends": {
