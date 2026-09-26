@@ -22,4 +22,8 @@ public abstract class BoundWeaponItem extends SwordItem {
 			BoundWeapons.discardIfInvalid(stack, holder);
 		}
 	}
+
+	public boolean blocksChargedAttackTiers() {
+		return false;
+	}
 }
