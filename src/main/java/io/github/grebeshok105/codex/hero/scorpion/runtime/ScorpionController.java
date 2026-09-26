@@ -1,6 +1,8 @@
 package io.github.grebeshok105.codex.hero.scorpion.runtime;
 
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
+import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import io.github.grebeshok105.codex.effect.EffectRefresh;
@@ -22,7 +24,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.HashMap;
+import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
@@ -50,8 +52,10 @@ public final class ScorpionController {
 	private record Breath(UUID playerId, long endsAt) {
 	}
 
-	private static final Map<UUID, SpearPull> SPEAR_PULLS = new HashMap<>();
-	private static final Map<UUID, Breath> BREATHS = new HashMap<>();
+	private static final OwnedSessionMap<UUID, SpearPull> SPEAR_PULLS = OwnedSessionMap.create(
+			LifecycleRegistrar.global(), EnumSet.of(OwnedSessionMap.ClearOn.LEAVE, OwnedSessionMap.ClearOn.DEATH));
+	private static final OwnedSessionMap<UUID, Breath> BREATHS = OwnedSessionMap.create(
+			LifecycleRegistrar.global(), EnumSet.of(OwnedSessionMap.ClearOn.LEAVE, OwnedSessionMap.ClearOn.DEATH));
 
 	private ScorpionController() {
 	}
@@ -76,7 +80,7 @@ public final class ScorpionController {
 		if (player == null || target == null || !target.isAlive()) {
 			return;
 		}
-		SPEAR_PULLS.put(target.getUUID(), new SpearPull(
+		SPEAR_PULLS.put(target.getUUID(), player.getUUID(), new SpearPull(
 				player.getUUID(), player.serverLevel().getGameTime()));
 		if (tickSpearPull(player, target)) {
 			stopSpearPull(target);
@@ -84,11 +88,15 @@ public final class ScorpionController {
 		}
 	}
 
+	public static boolean isPulled(LivingEntity target) {
+		return SPEAR_PULLS.containsKey(target.getUUID());
+	}
+
 	private static void tickSpearPulls(MinecraftServer server) {
-		if (SPEAR_PULLS.isEmpty()) {
+		if (SPEAR_PULLS.size() == 0) {
 			return;
 		}
-		Iterator<Map.Entry<UUID, SpearPull>> it = SPEAR_PULLS.entrySet().iterator();
+		Iterator<Map.Entry<UUID, SpearPull>> it = SPEAR_PULLS.iterator();
 		while (it.hasNext()) {
 			Map.Entry<UUID, SpearPull> entry = it.next();
 			SpearPull pull = entry.getValue();
@@ -154,7 +162,7 @@ public final class ScorpionController {
 	// --------------------------------------------------------------- breath
 
 	public static void startBreath(ServerPlayer player) {
-		BREATHS.put(player.getUUID(), new Breath(
+		BREATHS.put(player.getUUID(), player.getUUID(), new Breath(
 				player.getUUID(), player.serverLevel().getGameTime() + BREATH_DURATION_TICKS));
 	}
 
@@ -164,10 +172,10 @@ public final class ScorpionController {
 	}
 
 	private static void tickBreaths(MinecraftServer server) {
-		if (BREATHS.isEmpty()) {
+		if (BREATHS.size() == 0) {
 			return;
 		}
-		Iterator<Map.Entry<UUID, Breath>> it = BREATHS.entrySet().iterator();
+		Iterator<Map.Entry<UUID, Breath>> it = BREATHS.iterator();
 		while (it.hasNext()) {
 			Map.Entry<UUID, Breath> entry = it.next();
 			ServerPlayer player = server.getPlayerList().getPlayer(entry.getKey());

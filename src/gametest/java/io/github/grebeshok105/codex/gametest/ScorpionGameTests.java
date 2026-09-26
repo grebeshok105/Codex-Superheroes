@@ -11,6 +11,8 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.monster.Zombie;
 
 import java.util.List;
 
@@ -38,5 +40,16 @@ public final class ScorpionGameTests implements FabricGameTest {
 			helper.assertFalse(ScorpionController.isBreathing(player), "50-tick breath is over");
 			helper.succeed();
 		});
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void spearPullIsReleasedWhenScorpionLeaves(GameTestHelper helper) {
+		ServerPlayer scorpion = TestPlayers.join(helper);
+		TestHeroes.transform(scorpion, ModId.of("scorpion"));
+		Zombie zombie = helper.spawn(EntityType.ZOMBIE, 3, 1, 3);
+		ScorpionController.startSpearPull(scorpion, zombie);
+		TestPlayers.leave(scorpion);
+		helper.assertFalse(ScorpionController.isPulled(zombie), "pull dies with its owner's session");
+		helper.succeed();
 	}
 }
