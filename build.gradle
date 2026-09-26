@@ -62,6 +62,11 @@ sourceSets {
 		// Veil hard-depends on client-only Fabric modules, so it cannot load on a dedicated server.
 		runtimeClasspath += main.runtimeClasspath.filter { !it.path.contains('veil') } + main.output
 	}
+	// Datagen runs a server environment: same Veil exclusion as the GameTest classpath.
+	datagen {
+		compileClasspath += main.compileClasspath + main.output
+		runtimeClasspath += main.runtimeClasspath.filter { !it.path.contains('veil') } + main.output
+	}
 }
 
 // JUnit covers pure client-side state too (Client*State session resets, cooldown clocks —
@@ -91,6 +96,7 @@ loom {
 	runs {
 		datagen {
 			inherit server
+			source sourceSets.datagen
 			name "Data Generation"
 			vmArg "-Dfabric-api.datagen"
 			vmArg "-Dfabric-api.datagen.output-dir=${file("src/main/generated")}"
