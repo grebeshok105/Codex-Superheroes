@@ -1,12 +1,12 @@
-package io.github.grebeshok105.codex.hero;
+package io.github.grebeshok105.codex.hero.scorpion;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.ability.AbilityIds;
 import io.github.grebeshok105.codex.core.hero.AttributeModifierSet;
 import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.hero.HeroHudConfig;
 import io.github.grebeshok105.codex.core.hero.HeroTheme;
 import io.github.grebeshok105.codex.core.resource.ResourceKind;
+import io.github.grebeshok105.codex.hero.scorpion.ability.ScorpionAbilities;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.Pose;
@@ -90,10 +90,10 @@ public final class ScorpionHero implements Hero {
 	@Override
 	public List<ResourceLocation> getAbilities() {
 		return List.of(
-				AbilityIds.SCORPION_SPEAR,
-				AbilityIds.SCORPION_HELLFIRE,
-				AbilityIds.SCORPION_FIRE_TELEPORT,
-				AbilityIds.SCORPION_HELL_BREATH
+				ScorpionAbilities.SPEAR,
+				ScorpionAbilities.HELLFIRE,
+				ScorpionAbilities.FIRE_TELEPORT,
+				ScorpionAbilities.HELL_BREATH
 		);
 	}
 

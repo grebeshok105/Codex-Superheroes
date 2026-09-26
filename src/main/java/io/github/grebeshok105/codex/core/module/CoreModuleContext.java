@@ -1,9 +1,12 @@
 package io.github.grebeshok105.codex.core.module;
 
 import io.github.grebeshok105.codex.core.ability.AbilityRegistry;
+import io.github.grebeshok105.codex.core.content.ContentRegistrar;
+import io.github.grebeshok105.codex.core.content.CreativeTabContents;
 import io.github.grebeshok105.codex.core.lifecycle.HeroTickDispatcher;
 import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
 import io.github.grebeshok105.codex.core.lifecycle.TickRegistrar;
+import io.github.grebeshok105.codex.core.net.PayloadRegistrar;
 
 public final class CoreModuleContext implements HeroModuleContext {
 	public static final CoreModuleContext INSTANCE = new CoreModuleContext();
@@ -24,5 +27,15 @@ public final class CoreModuleContext implements HeroModuleContext {
 	@Override
 	public LifecycleRegistrar lifecycle() {
 		return LifecycleRegistrar.global();
+	}
+
+	@Override
+	public ContentRegistrar content() {
+		return CreativeTabContents::add;
+	}
+
+	@Override
+	public PayloadRegistrar payloads() {
+		return PayloadRegistrar.FABRIC;
 	}
 }

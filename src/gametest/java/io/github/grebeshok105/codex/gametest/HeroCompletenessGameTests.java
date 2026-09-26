@@ -1,12 +1,12 @@
 package io.github.grebeshok105.codex.gametest;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.ability.AbilityIds;
 import io.github.grebeshok105.codex.core.ability.AbilityRegistry;
 import io.github.grebeshok105.codex.bootstrap.HeroModules;
 import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.hero.Heroes;
-import io.github.grebeshok105.codex.hero.ScorpionHero;
+import io.github.grebeshok105.codex.hero.scorpion.ability.ScorpionAbilities;
+import io.github.grebeshok105.codex.hero.scorpion.ScorpionHero;
 import io.github.grebeshok105.codex.item.ModItemGroups;
 import io.github.grebeshok105.codex.item.ModItems;
 import com.google.gson.JsonObject;
@@ -83,8 +83,8 @@ public final class HeroCompletenessGameTests implements FabricGameTest {
 	public void scorpionIsRegisteredThroughItsModule(GameTestHelper helper) {
 		helper.assertTrue(HeroModules.ALL.stream().anyMatch(m -> Heroes.get(ScorpionHero.ID) == m.hero()),
 				"Heroes registry must hold the ScorpionModule's hero instance");
-		for (ResourceLocation id : List.of(AbilityIds.SCORPION_SPEAR, AbilityIds.SCORPION_HELLFIRE,
-				AbilityIds.SCORPION_FIRE_TELEPORT, AbilityIds.SCORPION_HELL_BREATH)) {
+		for (ResourceLocation id : List.of(ScorpionAbilities.SPEAR, ScorpionAbilities.HELLFIRE,
+				ScorpionAbilities.FIRE_TELEPORT, ScorpionAbilities.HELL_BREATH)) {
 			helper.assertTrue(AbilityRegistry.get(id) != null, "ability not registered: " + id);
 		}
 		helper.succeed();

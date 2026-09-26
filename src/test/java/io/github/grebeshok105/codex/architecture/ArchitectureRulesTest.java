@@ -195,4 +195,28 @@ class ArchitectureRulesTest {
 					}
 				}).allowEmptyShould(true).check(CodexClasses.main());
 	}
+
+	@Test
+	void everyHeroS2CPayloadHasARegisteredReceiver() {
+		classes().that(IN_HERO_MODULE).and().haveSimpleNameEndingWith("S2CPayload")
+				.should(new ArchCondition<>("have its TYPE passed to HeroClientContext.receive in its client module") {
+					@Override
+					public void check(JavaClass payload, ConditionEvents events) {
+						String clientModule = ROOT + ".client.hero." + heroId(payload.getPackageName(), ROOT + ".hero.");
+						boolean registered = payload.tryGetField("TYPE").map(type -> type.getAccessesToSelf().stream()
+								.map(com.tngtech.archunit.core.domain.JavaFieldAccess::getOrigin)
+								.anyMatch(origin -> origin.getOwner().getPackageName().startsWith(clientModule)
+										&& origin.getMethodCallsFromSelf().stream().anyMatch(call ->
+												call.getTargetOwner().getName().equals(ROOT + ".client.core.module.HeroClientContext")
+														&& call.getName().equals("receive"))))
+								.orElse(false);
+						if (!registered) {
+							events.add(SimpleConditionEvent.violated(payload,
+									payload.getName() + " is not registered through HeroClientContext.receive in " + clientModule));
+						}
+					}
+				})
+				.allowEmptyShould(true)
+				.check(CodexClasses.mainAndClient());
+	}
 }

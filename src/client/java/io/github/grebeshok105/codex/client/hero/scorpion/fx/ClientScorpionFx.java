@@ -1,6 +1,7 @@
-package io.github.grebeshok105.codex.client.fx;
+package io.github.grebeshok105.codex.client.hero.scorpion.fx;
 
-import io.github.grebeshok105.codex.network.ScorpionFxS2CPayload;
+import io.github.grebeshok105.codex.client.hero.scorpion.fx.veil.VeilScorpionFx;
+import io.github.grebeshok105.codex.hero.scorpion.net.ScorpionFxS2CPayload;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.world.phys.Vec3;
 

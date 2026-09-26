@@ -1,9 +1,10 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.scorpion.ability;
 
-import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
-import io.github.grebeshok105.codex.effect.ScorpionFx;
+import io.github.grebeshok105.codex.hero.scorpion.targeting.ScorpionTargeting;
+import io.github.grebeshok105.codex.hero.scorpion.net.ScorpionFx;
+import io.github.grebeshok105.codex.mechanic.targeting.Targeting;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -29,7 +30,7 @@ public final class ScorpionHellfireAbility implements Ability {
 
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.SCORPION_HELLFIRE;
+		return ScorpionAbilities.HELLFIRE;
 	}
 
 	@Override
@@ -79,8 +80,8 @@ public final class ScorpionHellfireAbility implements Ability {
 				SoundEvents.FIRECHARGE_USE, SoundSource.PLAYERS, 1.2f, 0.7f);
 
 		AABB area = new AABB(center, center).inflate(BLAST_RADIUS, BLAST_RADIUS + 1.0, BLAST_RADIUS);
-		for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, area,
-				TargetFilters.hostileTo(player))) {
+		for (LivingEntity target : Targeting.living(level, area,
+				ScorpionTargeting.hostileTo(player))) {
 			target.invulnerableTime = 0;
 			target.hurt(level.damageSources().playerAttack(player), DAMAGE);
 			target.igniteForSeconds(5f);

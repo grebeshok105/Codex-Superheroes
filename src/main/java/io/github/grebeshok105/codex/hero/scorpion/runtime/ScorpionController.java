@@ -1,11 +1,18 @@
-package io.github.grebeshok105.codex.effect;
+package io.github.grebeshok105.codex.hero.scorpion.runtime;
 
-import io.github.grebeshok105.codex.combat.TargetFilters;
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
-import io.github.grebeshok105.codex.hero.ScorpionHero;
+import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
+import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.effect.EffectRefresh;
+import io.github.grebeshok105.codex.hero.scorpion.targeting.ScorpionTargeting;
+import io.github.grebeshok105.codex.hero.scorpion.net.ScorpionFx;
+import io.github.grebeshok105.codex.mechanic.motion.Motion;
+import io.github.grebeshok105.codex.mechanic.targeting.Targeting;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -18,7 +25,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.HashMap;
+import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
@@ -40,22 +47,34 @@ public final class ScorpionController {
 
 	private static final int PASSIVE_REFRESH_INTERVAL = 20;
 
+	private static final ResourceLocation SCORPION_ID = ModId.of("scorpion");
+
 	private record SpearPull(UUID owner, long startedAt) {
 	}
 
 	private record Breath(UUID playerId, long endsAt) {
 	}
 
-	private static final Map<UUID, SpearPull> SPEAR_PULLS = new HashMap<>();
-	private static final Map<UUID, Breath> BREATHS = new HashMap<>();
+	private static final OwnedSessionMap<UUID, SpearPull> SPEAR_PULLS = OwnedSessionMap.create(
+			LifecycleRegistrar.global(), EnumSet.of(OwnedSessionMap.ClearOn.LEAVE, OwnedSessionMap.ClearOn.DEATH));
+	private static final OwnedSessionMap<UUID, Breath> BREATHS = OwnedSessionMap.create(
+			LifecycleRegistrar.global(), EnumSet.of(OwnedSessionMap.ClearOn.LEAVE, OwnedSessionMap.ClearOn.DEATH));
 
 	private ScorpionController() {
 	}
 
+	/** Module wiring; public because ScorpionModule lives in the parent package hero.scorpion. */
+	public static void register(HeroModuleContext ctx) {
+		ctx.ticks().early(server -> {
+			tickSpearPulls(server);
+			tickBreaths(server);
+		});
+		ctx.ticks().hero(SCORPION_ID, (server, player, data) -> tickPassive(player));
+	}
 
 	public static boolean isScorpion(ServerPlayer player) {
 		HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
-		return data.hasHero() && ScorpionHero.ID.equals(data.heroId());
+		return data.hasHero() && SCORPION_ID.equals(data.heroId());
 	}
 
 	// ---------------------------------------------------------------- spear
@@ -64,7 +83,7 @@ public final class ScorpionController {
 		if (player == null || target == null || !target.isAlive()) {
 			return;
 		}
-		SPEAR_PULLS.put(target.getUUID(), new SpearPull(
+		SPEAR_PULLS.put(target.getUUID(), player.getUUID(), new SpearPull(
 				player.getUUID(), player.serverLevel().getGameTime()));
 		if (tickSpearPull(player, target)) {
 			stopSpearPull(target);
@@ -72,11 +91,15 @@ public final class ScorpionController {
 		}
 	}
 
+	public static boolean isPulled(LivingEntity target) {
+		return SPEAR_PULLS.containsKey(target.getUUID());
+	}
+
 	private static void tickSpearPulls(MinecraftServer server) {
-		if (SPEAR_PULLS.isEmpty()) {
+		if (SPEAR_PULLS.size() == 0) {
 			return;
 		}
-		Iterator<Map.Entry<UUID, SpearPull>> it = SPEAR_PULLS.entrySet().iterator();
+		Iterator<Map.Entry<UUID, SpearPull>> it = SPEAR_PULLS.iterator();
 		while (it.hasNext()) {
 			Map.Entry<UUID, SpearPull> entry = it.next();
 			SpearPull pull = entry.getValue();
@@ -117,11 +140,7 @@ public final class ScorpionController {
 	}
 
 	private static void setPullMotion(LivingEntity target, Vec3 motion) {
-		target.setDeltaMovement(motion);
-		target.hurtMarked = true;
-		if (target instanceof ServerPlayer targetPlayer) {
-			targetPlayer.connection.send(new ClientboundSetEntityMotionPacket(targetPlayer));
-		}
+		Motion.set(target, motion, Motion.Sync.MARK_AND_SEND_TO_PLAYER);
 	}
 
 	private static void spawnChainParticles(ServerPlayer owner, LivingEntity target) {
@@ -146,7 +165,7 @@ public final class ScorpionController {
 	// --------------------------------------------------------------- breath
 
 	public static void startBreath(ServerPlayer player) {
-		BREATHS.put(player.getUUID(), new Breath(
+		BREATHS.put(player.getUUID(), player.getUUID(), new Breath(
 				player.getUUID(), player.serverLevel().getGameTime() + BREATH_DURATION_TICKS));
 	}
 
@@ -156,10 +175,10 @@ public final class ScorpionController {
 	}
 
 	private static void tickBreaths(MinecraftServer server) {
-		if (BREATHS.isEmpty()) {
+		if (BREATHS.size() == 0) {
 			return;
 		}
-		Iterator<Map.Entry<UUID, Breath>> it = BREATHS.entrySet().iterator();
+		Iterator<Map.Entry<UUID, Breath>> it = BREATHS.iterator();
 		while (it.hasNext()) {
 			Map.Entry<UUID, Breath> entry = it.next();
 			ServerPlayer player = server.getPlayerList().getPlayer(entry.getKey());
@@ -206,8 +225,8 @@ public final class ScorpionController {
 			return;
 		}
 		AABB box = new AABB(eye, eye.add(forward.scale(BREATH_RANGE))).inflate(2.0);
-		for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, box,
-				TargetFilters.hostileTo(player))) {
+		for (LivingEntity target : Targeting.living(level, box,
+				ScorpionTargeting.hostileTo(player))) {
 			Vec3 center = target.position().add(0.0, target.getBbHeight() * 0.5, 0.0);
 			Vec3 toTarget = center.subtract(eye);
 			double distance = toTarget.length();
@@ -225,17 +244,9 @@ public final class ScorpionController {
 
 	// -------------------------------------------------------------- passive
 
-
-	public static void serverTick(MinecraftServer server) {
-		tickSpearPulls(server);
-		tickBreaths(server);
-	}
-
-	public static void tickPlayer(MinecraftServer server, ServerPlayer player, HeroData data) {
-		long tick = server.getTickCount();
-		if (!isScorpion(player)) {
-			return;
-		}
+	// was tickPlayer(server, player, data): loop over all players + isScorpion(); the hero hook already filters by hero
+	private static void tickPassive(ServerPlayer player) {
+		long tick = player.server.getTickCount();
 		if (tick % PASSIVE_REFRESH_INTERVAL == 0) {
 			player.addEffect(new MobEffectInstance(
 					MobEffects.FIRE_RESISTANCE, 60, 0, true, false, false));

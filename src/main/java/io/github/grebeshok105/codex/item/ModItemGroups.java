@@ -1,6 +1,7 @@
 package io.github.grebeshok105.codex.item;
 
 import io.github.grebeshok105.codex.ModId;
+import io.github.grebeshok105.codex.core.content.CreativeTabContents;
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -10,6 +11,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ItemLike;
 
 import java.util.List;
 
@@ -68,13 +70,17 @@ public final class ModItemGroups {
 				output.accept(ModItems.BATTLE_BEAST_MEDALLION);
 				output.accept(ModItems.REM_ONI_HORN);
 				output.accept(ModItems.A_TRAIN_SUIT);
-				output.accept(ModItems.SCORPION_KUNAI);
 				output.accept(ModItems.PANDORA_SUIT);
 
 				// Kazuha & Scaramouche are now normal, obtainable characters — their
 				// transformation items live in the regular creative tab (no longer admin-only).
 				output.accept(ModItems.KAZUHA_VISION);
 				output.accept(ModItems.SCARAMOUCHE_VISION);
+
+				// Hero modules append their items here, in module registration order.
+				for (ItemLike item : CreativeTabContents.all()) {
+					output.accept(item);
+				}
 
 				// Админ-предметы показываются в этой же вкладке, когда у игрока
 				// включён /superheroes admin (клиент пересобирает вкладку по пакету)
