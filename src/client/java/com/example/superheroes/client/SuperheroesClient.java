@@ -23,7 +23,6 @@ import com.example.superheroes.item.ModItems;
 import com.example.superheroes.client.render.CosmicBeamRenderer;
 import com.example.superheroes.client.render.LaserBeamRenderer;
 import com.example.superheroes.client.render.LocalLaserOverlay;
-import com.example.superheroes.client.render.RepulsorBeamRenderer;
 import com.example.superheroes.client.render.lightning.SuperheroLightningRenderer;
 import com.example.superheroes.client.screen.BindingsScreen;
 import com.example.superheroes.network.ActivateAbilityC2SPayload;
@@ -61,8 +60,6 @@ public class SuperheroesClient implements ClientModInitializer {
 		ClientTickEvents.END_CLIENT_TICK.register(client -> com.example.superheroes.client.ClientPandoraDeathState.tick());
 		com.example.superheroes.client.render.WildShaders.register();
 		LaserBeamRenderer.register();
-		RepulsorBeamRenderer.register();
-		com.example.superheroes.client.render.IronManEspRenderer.register();
 		CosmicBeamRenderer.register();
 		LocalLaserOverlay.register();
 		EntityRendererRegistry.register(EntityType.LIGHTNING_BOLT, SuperheroLightningRenderer::new);
@@ -175,8 +172,6 @@ public class SuperheroesClient implements ClientModInitializer {
 
 		ClientTickEvents.START_CLIENT_TICK.register(SuperheroesClient::tickHeroMeleeCharge);
 		ClientTickEvents.START_CLIENT_TICK.register(SuperheroesClient::tickThinkMarkDash);
-		ClientTickEvents.END_CLIENT_TICK.register(com.example.superheroes.client.ClientNanoSuitUpState::clientTick);
-		ClientTickEvents.END_CLIENT_TICK.register(com.example.superheroes.client.hud.JarvisDetectionHud::tick);
 
 		// "HUD" button in the pause menu -> drag editor for all HUD elements
 		net.fabricmc.fabric.api.client.screen.v1.ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
