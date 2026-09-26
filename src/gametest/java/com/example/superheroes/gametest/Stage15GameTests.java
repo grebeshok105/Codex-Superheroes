@@ -22,6 +22,13 @@ public final class Stage15GameTests implements FabricGameTest {
 	public void hordePausesWithoutAudience(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		ServerLevel level = helper.getLevel();
+		// Structures sit within earshot of each other — players leaked by an earlier
+		// test (e.g. one that failed mid-body) would count as audience here.
+		for (ServerPlayer other : new java.util.ArrayList<>(level.getServer().getPlayerList().getPlayers())) {
+			if (other != player) {
+				TestPlayers.leave(other);
+			}
+		}
 		Vec3 center = helper.absoluteVec(new Vec3(1.5, 2.0, 1.5));
 		// Far enough that the horde has no audience (> 96 blocks).
 		player.teleportTo(center.x + 200, center.y, center.z + 200);

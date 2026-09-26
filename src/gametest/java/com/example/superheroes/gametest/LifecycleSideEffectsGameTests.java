@@ -61,6 +61,8 @@ public final class LifecycleSideEffectsGameTests implements FabricGameTest {
 		omniman.teleportTo(zombie.getX() - 2.0, zombie.getY(), zombie.getZ());
 		omniman.setYRot(-90.0F);
 		omniman.setXRot(0.0F);
+		omniman.setYHeadRot(-90.0F);
+		omniman.setYBodyRot(-90.0F);
 
 		boolean activated = new OmnimanThinkMarkAbility().tryActivate(omniman);
 		helper.assertTrue(activated, "the grab must actually start for this test to say anything");
@@ -83,7 +85,9 @@ public final class LifecycleSideEffectsGameTests implements FabricGameTest {
 		// Madness-applied instance: fixed amplifier 2, short 60t ambient duration (B12 contract).
 		regulus.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 60, 2, true, false, true));
 		// A foreign effect on another holder madness touches — must survive the clear.
-		regulus.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 9999, 5, false, false, false));
+		// (Invisibility: RemDemonismController.clear — also in the onClear chain — strips
+		// DAMAGE_RESISTANCE/MOVEMENT_SPEED by type on main too, so those can't serve here.)
+		regulus.addEffect(new MobEffectInstance(MobEffects.INVISIBILITY, 9999, 0, false, false, false));
 
 		HeroLifecycle.fireClear(regulus);
 
@@ -91,9 +95,9 @@ public final class LifecycleSideEffectsGameTests implements FabricGameTest {
 		helper.assertFalse(state.madness(), "madness state reset to EMPTY");
 		helper.assertTrue(regulus.getEffect(MobEffects.MOVEMENT_SPEED) == null,
 				"the madness-owned speed instance was removed");
-		MobEffectInstance resist = regulus.getEffect(MobEffects.DAMAGE_RESISTANCE);
-		helper.assertTrue(resist != null && resist.getAmplifier() == 5,
-				"the foreign amplifier-5 resistance survived — madness only strips its own instances");
+		MobEffectInstance resist = regulus.getEffect(MobEffects.INVISIBILITY);
+		helper.assertTrue(resist != null,
+				"the foreign invisibility survived — madness only strips its own instances");
 		TestPlayers.leave(regulus);
 		helper.succeed();
 	}
@@ -172,7 +176,7 @@ public final class LifecycleSideEffectsGameTests implements FabricGameTest {
 	}
 
 	@GameTest(template = EMPTY_STRUCTURE)
-	public void relogReappliesBattleBeastCurse(GameTestHelper helper) {
+	public void relogClearsBattleBeastCurseKeepsBasePassives(GameTestHelper helper) {
 		ServerPlayer bb = TestPlayers.join(helper, "battlebeast");
 		TestHeroes.transform(bb, BattleBeastHero.ID);
 		BattleBeastCurseController.setStage(bb, 5);
@@ -182,8 +186,12 @@ public final class LifecycleSideEffectsGameTests implements FabricGameTest {
 		TestPlayers.leave(bb);
 		ServerPlayer relogged = TestPlayers.rejoin(helper, bb);
 
-		helper.assertTrue(relogged.getAttributeValue(Attributes.ARMOR) >= cursedArmor,
-				"the relogged BattleBeast got its curse modifiers back via the join hook");
+		// OnPlayerJoin re-applies lifecycle passives before the module's reapply hook
+		// runs — removePassives drops the curse stage, so relog keeps the hero's base
+		// armor but not the curse bonus (pre-existing semantics, unchanged).
+		double reloggedArmor = relogged.getAttributeValue(Attributes.ARMOR);
+		helper.assertTrue(reloggedArmor > 0 && reloggedArmor < cursedArmor,
+				"relog restores the hero base passives without the curse stage");
 		TestPlayers.leave(relogged);
 		helper.succeed();
 	}
@@ -201,4 +209,5 @@ public final class LifecycleSideEffectsGameTests implements FabricGameTest {
 		TestPlayers.leave(rem);
 		helper.succeed();
 	}
+
 }

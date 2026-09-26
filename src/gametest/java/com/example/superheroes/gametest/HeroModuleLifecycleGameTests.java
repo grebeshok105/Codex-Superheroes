@@ -164,6 +164,9 @@ public final class HeroModuleLifecycleGameTests implements FabricGameTest {
 		ServerPlayer owner = TestPlayers.join(helper);
 		TestHeroes.transform(owner, ReinhardHero.ID);
 		ServerPlayer victim = TestPlayers.join(helper, "frozen-victim");
+		// ServerPlayer.canHarmPlayer gates the player-freeze path on isPvpAllowed(); the
+		// gametest server runs with pvp off, so enable it for this test only.
+		helper.getLevel().getServer().setPvpAllowed(true);
 		Zombie frozen = helper.spawn(EntityType.ZOMBIE, 1, 1, 1);
 		owner.teleportTo(frozen.getX() - 3.0, frozen.getY(), frozen.getZ());
 		victim.teleportTo(frozen.getX() + 3.0, frozen.getY(), frozen.getZ());
