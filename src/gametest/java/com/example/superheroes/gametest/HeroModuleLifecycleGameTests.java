@@ -207,7 +207,7 @@ public final class HeroModuleLifecycleGameTests implements FabricGameTest {
 			helper.assertFalse(ReinhardTimeSlowController.isActive(owner),
 					"owner's slow dropped");
 			helper.succeed();
-		}));
+		})));
 	}
 
 	/** {@code ReinhardTimeSlowController.resetAll}: world shutdown releases every lock and
