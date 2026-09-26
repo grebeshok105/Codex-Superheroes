@@ -6,6 +6,8 @@ import com.example.superheroes.resource.ResourceKind;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 
 import java.util.List;
@@ -14,7 +16,7 @@ import java.util.List;
  * Pandora (Re:Zero). The Mirror Dimension feature
  * becomes the "House of Vanity" (Дом тщеславия): inside it Pandora wields her
  * Authority of Greed. The body is rendered at 75% of a vanilla Steve via the
- * vanilla {@code minecraft:generic.scale} attribute (see {@link HeroAttributes#PANDORA}),
+ * vanilla {@code minecraft:generic.scale} attribute (the {@code PASSIVES} set below),
  * which scales both the visual model and the hitbox/eye-height in one shot.
  *
  * <p>Skin is a classic/4px (WIDE) player skin override — the client skin mixin
@@ -45,6 +47,15 @@ public final class PandoraHero implements Hero {
 			0xFFFFFFFF,
 			0x66FFFFFF
 	);
+
+	// Pandora is a "naked Steve": vanilla 20 HP, no armor / toughness / damage
+	// bonuses. Her power comes entirely from the House of Vanity, not raw stats.
+	// (Only the 75% body scale is kept — purely visual/hitbox, not a combat buff.)
+	private static final ResourceLocation SCALE_ID = ModId.of("modifiers/pandora/body_scale");
+
+	private static final AttributeModifierSet PASSIVES = AttributeModifierSet.builder()
+			.add(Attributes.SCALE, SCALE_ID, -0.25, AttributeModifier.Operation.ADD_VALUE)
+			.build();
 
 	@Override
 	public ResourceLocation getId() {
@@ -105,6 +116,11 @@ public final class PandoraHero implements Hero {
 	@Override
 	public ResourceKind getDefaultBinding(ResourceLocation abilityId) {
 		return ResourceKind.ENERGY;
+	}
+
+	@Override
+	public AttributeModifierSet passiveAttributes() {
+		return PASSIVES;
 	}
 
 	@Override

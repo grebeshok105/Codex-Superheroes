@@ -97,6 +97,11 @@ public final class KazuhaHero implements Hero {
 	}
 
 	@Override
+	public AttributeModifierSet passiveAttributes() {
+		return PASSIVES;
+	}
+
+	@Override
 	public void applyPassives(Player player) {
 		PASSIVES.apply(player);
 	}

@@ -12,6 +12,8 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 
 import java.util.EnumSet;
@@ -43,6 +45,30 @@ public final class ThanosHero implements Hero {
 			0x55D58CFF
 	);
 	private static final HeroHudConfig HUD = new HeroHudConfig("hud.superheroes.energy.cosmic_power", HeroHudConfig.EnergyIconType.COSMIC, true, "SNAP");
+
+	private static final ResourceLocation ARMOR_ID = ModId.of("modifiers/thanos/armor");
+	private static final ResourceLocation TOUGHNESS_ID = ModId.of("modifiers/thanos/toughness");
+	private static final ResourceLocation DAMAGE_ID = ModId.of("modifiers/thanos/damage");
+	private static final ResourceLocation HP_ID = ModId.of("modifiers/thanos/max_health");
+	private static final ResourceLocation KNOCKBACK_ID = ModId.of("modifiers/thanos/knockback_resistance");
+	private static final ResourceLocation SPEED_ID = ModId.of("modifiers/thanos/speed");
+	private static final ResourceLocation REACH_ID = ModId.of("modifiers/thanos/entity_reach");
+	private static final ResourceLocation STEP_ID = ModId.of("modifiers/thanos/step_height");
+	private static final ResourceLocation JUMP_ID = ModId.of("modifiers/thanos/jump_strength");
+	private static final ResourceLocation SCALE_ID = ModId.of("modifiers/thanos/scale");
+
+	private static final AttributeModifierSet PASSIVES = AttributeModifierSet.builder()
+			.add(Attributes.ARMOR, ARMOR_ID, 20.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ARMOR_TOUGHNESS, TOUGHNESS_ID, 8.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ATTACK_DAMAGE, DAMAGE_ID, 10.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.MAX_HEALTH, HP_ID, 30.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.KNOCKBACK_RESISTANCE, KNOCKBACK_ID, 1.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.MOVEMENT_SPEED, SPEED_ID, 0.40, AttributeModifier.Operation.ADD_MULTIPLIED_BASE)
+			.add(Attributes.ENTITY_INTERACTION_RANGE, REACH_ID, 1.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.STEP_HEIGHT, STEP_ID, 1.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.JUMP_STRENGTH, JUMP_ID, 0.4, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.SCALE, SCALE_ID, 0.25, AttributeModifier.Operation.ADD_VALUE)
+			.build();
 
 	@Override
 	public ResourceLocation getId() {
@@ -131,6 +157,11 @@ public final class ThanosHero implements Hero {
 	@Override
 	public ResourceKind getDefaultBinding(ResourceLocation abilityId) {
 		return ResourceKind.ENERGY;
+	}
+
+	@Override
+	public AttributeModifierSet passiveAttributes() {
+		return PASSIVES;
 	}
 
 	@Override

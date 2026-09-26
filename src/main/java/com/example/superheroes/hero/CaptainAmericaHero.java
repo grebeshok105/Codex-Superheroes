@@ -6,6 +6,8 @@ import com.example.superheroes.resource.ResourceKind;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 
 import java.util.List;
@@ -35,6 +37,24 @@ public final class CaptainAmericaHero implements Hero {
 			0x556090FF
 	);
 	private static final HeroHudConfig HUD = new HeroHudConfig("hud.superheroes.energy.super_serum", HeroHudConfig.EnergyIconType.SHIELD, true, "COUNTER STANCE");
+
+	private static final ResourceLocation ARMOR_ID = ModId.of("modifiers/captain_america/armor");
+	private static final ResourceLocation TOUGHNESS_ID = ModId.of("modifiers/captain_america/toughness");
+	private static final ResourceLocation DAMAGE_ID = ModId.of("modifiers/captain_america/damage");
+	private static final ResourceLocation HP_ID = ModId.of("modifiers/captain_america/max_health");
+	private static final ResourceLocation KNOCKBACK_ID = ModId.of("modifiers/captain_america/knockback_resistance");
+	private static final ResourceLocation SPEED_ID = ModId.of("modifiers/captain_america/speed");
+	private static final ResourceLocation ATTACK_SPEED_ID = ModId.of("modifiers/captain_america/attack_speed");
+
+	private static final AttributeModifierSet PASSIVES = AttributeModifierSet.builder()
+			.add(Attributes.ARMOR, ARMOR_ID, 18.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ARMOR_TOUGHNESS, TOUGHNESS_ID, 6.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ATTACK_DAMAGE, DAMAGE_ID, 8.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ATTACK_SPEED, ATTACK_SPEED_ID, 2.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.MAX_HEALTH, HP_ID, 12.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.MOVEMENT_SPEED, SPEED_ID, 0.15, AttributeModifier.Operation.ADD_MULTIPLIED_BASE)
+			.add(Attributes.KNOCKBACK_RESISTANCE, KNOCKBACK_ID, 0.6, AttributeModifier.Operation.ADD_VALUE)
+			.build();
 
 	@Override
 	public ResourceLocation getId() {
@@ -78,6 +98,11 @@ public final class CaptainAmericaHero implements Hero {
 	@Override
 	public ResourceKind getDefaultBinding(ResourceLocation abilityId) {
 		return ResourceKind.ENERGY;
+	}
+
+	@Override
+	public AttributeModifierSet passiveAttributes() {
+		return PASSIVES;
 	}
 
 	@Override

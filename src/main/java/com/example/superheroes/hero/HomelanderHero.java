@@ -14,6 +14,8 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 
 import java.util.List;
@@ -43,6 +45,22 @@ public final class HomelanderHero implements Hero {
 			0x55FFD27A
 	);
 	private static final HeroHudConfig HUD = new HeroHudConfig("hud.superheroes.energy.laser_power", HeroHudConfig.EnergyIconType.LIGHTNING, true, "STUNNING ROAR");
+
+	private static final ResourceLocation ARMOR_ID = ModId.of("modifiers/homelander/armor");
+	private static final ResourceLocation TOUGHNESS_ID = ModId.of("modifiers/homelander/toughness");
+	private static final ResourceLocation DAMAGE_ID = ModId.of("modifiers/homelander/damage");
+	private static final ResourceLocation SPEED_ID = ModId.of("modifiers/homelander/speed");
+	private static final ResourceLocation HP_ID = ModId.of("modifiers/homelander/max_health");
+	private static final ResourceLocation KNOCKBACK_ID = ModId.of("modifiers/homelander/knockback_resistance");
+
+	private static final AttributeModifierSet PASSIVES = AttributeModifierSet.builder()
+			.add(Attributes.ARMOR, ARMOR_ID, 20.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ARMOR_TOUGHNESS, TOUGHNESS_ID, 8.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ATTACK_DAMAGE, DAMAGE_ID, 6.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.MOVEMENT_SPEED, SPEED_ID, 0.20, AttributeModifier.Operation.ADD_MULTIPLIED_BASE)
+			.add(Attributes.MAX_HEALTH, HP_ID, 20.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.KNOCKBACK_RESISTANCE, KNOCKBACK_ID, 1.0, AttributeModifier.Operation.ADD_VALUE)
+			.build();
 
 	@Override
 	public ResourceLocation getId() {
@@ -87,6 +105,11 @@ public final class HomelanderHero implements Hero {
 	@Override
 	public ResourceKind getDefaultBinding(ResourceLocation abilityId) {
 		return ResourceKind.ENERGY;
+	}
+
+	@Override
+	public AttributeModifierSet passiveAttributes() {
+		return PASSIVES;
 	}
 
 	@Override

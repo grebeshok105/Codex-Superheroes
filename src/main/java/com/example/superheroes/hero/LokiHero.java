@@ -6,6 +6,8 @@ import com.example.superheroes.resource.ResourceKind;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 
 import java.util.List;
@@ -35,6 +37,30 @@ public final class LokiHero implements Hero {
 			0x5560E060
 	);
 	private static final HeroHudConfig HUD = new HeroHudConfig("hud.superheroes.energy.magic", HeroHudConfig.EnergyIconType.MAGIC, true, "CHAOS BOLT");
+
+	private static final ResourceLocation ARMOR_ID = ModId.of("modifiers/loki/armor");
+	private static final ResourceLocation TOUGHNESS_ID = ModId.of("modifiers/loki/toughness");
+	private static final ResourceLocation DAMAGE_ID = ModId.of("modifiers/loki/damage");
+	private static final ResourceLocation ATTACK_SPEED_ID = ModId.of("modifiers/loki/attack_speed");
+	private static final ResourceLocation SPEED_ID = ModId.of("modifiers/loki/speed");
+	private static final ResourceLocation HP_ID = ModId.of("modifiers/loki/max_health");
+	private static final ResourceLocation JUMP_ID = ModId.of("modifiers/loki/jump_strength");
+	private static final ResourceLocation KNOCKBACK_ID = ModId.of("modifiers/loki/knockback_resistance");
+	private static final ResourceLocation SAFE_FALL_ID = ModId.of("modifiers/loki/safe_fall");
+	private static final ResourceLocation REACH_ID = ModId.of("modifiers/loki/reach");
+
+	private static final AttributeModifierSet PASSIVES = AttributeModifierSet.builder()
+			.add(Attributes.ARMOR, ARMOR_ID, 18.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ARMOR_TOUGHNESS, TOUGHNESS_ID, 6.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ATTACK_DAMAGE, DAMAGE_ID, 12.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ATTACK_SPEED, ATTACK_SPEED_ID, 2.2, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.MOVEMENT_SPEED, SPEED_ID, 0.60, AttributeModifier.Operation.ADD_MULTIPLIED_BASE)
+			.add(Attributes.MAX_HEALTH, HP_ID, 24.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.JUMP_STRENGTH, JUMP_ID, 0.7, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.KNOCKBACK_RESISTANCE, KNOCKBACK_ID, 0.85, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.SAFE_FALL_DISTANCE, SAFE_FALL_ID, 16.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ENTITY_INTERACTION_RANGE, REACH_ID, 0.8, AttributeModifier.Operation.ADD_VALUE)
+			.build();
 
 	@Override
 	public ResourceLocation getId() {
@@ -79,6 +105,11 @@ public final class LokiHero implements Hero {
 	@Override
 	public ResourceKind getDefaultBinding(ResourceLocation abilityId) {
 		return ResourceKind.ENERGY;
+	}
+
+	@Override
+	public AttributeModifierSet passiveAttributes() {
+		return PASSIVES;
 	}
 
 	@Override
