@@ -2,6 +2,9 @@ package com.example.superheroes.effect;
 
 import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.core.module.HeroModuleContext;
+import com.example.superheroes.lifecycle.LifecycleRegistrar;
+import com.example.superheroes.lifecycle.OwnedSessionMap;
+import com.example.superheroes.lifecycle.OwnedSessionMap.ClearOn;
 import com.example.superheroes.network.ReinhardSwordKillS2CPayload;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -10,11 +13,10 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.damagesource.DamageTypes;
 
+import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Когда меч Рейнхарда наносит игроку летальный удар, мы:
@@ -27,10 +29,14 @@ import java.util.concurrent.ConcurrentHashMap;
  * На обычных мобах НЕ работает (та же ALLOW_DAMAGE listener фильтрует instanceof ServerPlayer).
  */
 public final class ReinhardSwordDeathMarkController {
-	/** victim UUID -> attacker UUID. */
-	private static final Map<UUID, UUID> MARKED = new ConcurrentHashMap<>();
-	private static final Set<UUID> FINALIZING = ConcurrentHashMap.newKeySet();
-	private static final Set<UUID> BYPASS = ConcurrentHashMap.newKeySet();
+	/** victim UUID -> attacker UUID. Victim leaving or dying drops the mark (audit B17:
+	 * a mark must never execute on a respawned or relogged player). */
+	private static final OwnedSessionMap<UUID, UUID> MARKED =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.of(ClearOn.LEAVE, ClearOn.DEATH));
+	private static final OwnedSessionMap<UUID, Boolean> FINALIZING =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.of(ClearOn.LEAVE, ClearOn.DEATH));
+	private static final OwnedSessionMap<UUID, Boolean> BYPASS =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.of(ClearOn.LEAVE, ClearOn.DEATH));
 
 	private ReinhardSwordDeathMarkController() {
 	}
@@ -38,8 +44,8 @@ public final class ReinhardSwordDeathMarkController {
 	public static void register(HeroModuleContext ctx) {
 		ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> {
 			if (!(entity instanceof ServerPlayer victim)) return true;
-			if (BYPASS.contains(victim.getUUID())) return true;
-			if (FINALIZING.contains(victim.getUUID())) return true;
+			if (BYPASS.containsKey(victim.getUUID())) return true;
+			if (FINALIZING.containsKey(victim.getUUID())) return true;
 			if (!(source.getEntity() instanceof ServerPlayer attacker)) return true;
 			if (attacker == victim) return true;
 			if (!ReinhardController.isReinhard(attacker)) return true;
@@ -50,7 +56,7 @@ public final class ReinhardSwordDeathMarkController {
 			if (!astate.swordDrawn()) return true;
 			if (!ReinhardTimeSlowController.isActive(attacker)) return true;
 			if (!MARKED.containsKey(victim.getUUID())) {
-				MARKED.put(victim.getUUID(), attacker.getUUID());
+				MARKED.put(victim.getUUID(), victim.getUUID(), attacker.getUUID());
 			}
 			victim.setAbsorptionAmount(0.0f);
 			victim.setHealth(1.0f);
@@ -60,7 +66,7 @@ public final class ReinhardSwordDeathMarkController {
 	}
 
 	public static boolean hurtBypassingMark(ServerPlayer victim, net.minecraft.world.damagesource.DamageSource source, float amount) {
-		BYPASS.add(victim.getUUID());
+		BYPASS.put(victim.getUUID(), victim.getUUID(), Boolean.TRUE);
 		try {
 			return victim.hurt(source, amount);
 		} finally {
@@ -68,27 +74,9 @@ public final class ReinhardSwordDeathMarkController {
 		}
 	}
 
-	/**
-	 * Leave/death hook for the VICTIM — a mark must never execute on a respawned or relogged
-	 * player (audit B17: the old code let {@link #flushDeaths} hit the fresh entity with
-	 * {@code Float.MAX_VALUE} damage after the victim respawned).
-	 */
-	public static void cancelVictim(java.util.UUID victimId) {
-		MARKED.remove(victimId);
-		FINALIZING.remove(victimId);
-		BYPASS.remove(victimId);
-	}
-
-	/** World shutdown — marks die with the world. */
-	public static void resetAll() {
-		MARKED.clear();
-		FINALIZING.clear();
-		BYPASS.clear();
-	}
-
 	public static void flushDeaths(MinecraftServer server) {
-		if (MARKED.isEmpty()) return;
-		Iterator<Map.Entry<UUID, UUID>> it = MARKED.entrySet().iterator();
+		if (MARKED.size() == 0) return;
+		Iterator<Map.Entry<UUID, UUID>> it = MARKED.iterator();
 		while (it.hasNext()) {
 			Map.Entry<UUID, UUID> entry = it.next();
 			it.remove();
@@ -100,7 +88,7 @@ public final class ReinhardSwordDeathMarkController {
 					? victim.serverLevel().damageSources().playerAttack(attacker)
 					: victim.serverLevel().damageSources().genericKill();
 			victim.invulnerableTime = 0;
-			FINALIZING.add(victim.getUUID());
+			FINALIZING.put(victim.getUUID(), victim.getUUID(), Boolean.TRUE);
 			try {
 				victim.hurt(damage, Float.MAX_VALUE);
 			} finally {

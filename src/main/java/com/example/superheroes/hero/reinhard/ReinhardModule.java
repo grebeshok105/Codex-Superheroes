@@ -38,6 +38,9 @@ public final class ReinhardModule implements HeroModule {
 		ctx.abilities().register(new ReinhardJudgmentMarkAbility());
 		ctx.abilities().register(new ReinhardWishAbility());
 
+		// Ceremony registers first: its cancelCeremony must run before TimeSlow's onPlayerGone
+		// in the leave/death hook lists (former registerPlayerLifecycle row order).
+		ReinhardSwordDrawCeremonyController.register(ctx);
 		ReinhardTimeSlowController.register(ctx);
 		ReinhardController.register(ctx);
 		ReinhardSwordDeathMarkController.register(ctx);

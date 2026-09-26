@@ -10,6 +10,7 @@ import com.example.superheroes.core.module.HeroModule;
 import com.example.superheroes.core.module.HeroModuleContext;
 import com.example.superheroes.effect.RaidenAuraController;
 import com.example.superheroes.effect.RaidenBurstController;
+import com.example.superheroes.effect.RaidenLifecycleController;
 import com.example.superheroes.effect.RaidenMusouIsshinController;
 import com.example.superheroes.effect.RaidenPlungingLandingController;
 import com.example.superheroes.hero.Hero;
@@ -32,6 +33,7 @@ public final class RaidenModule implements HeroModule {
 		ctx.abilities().register(new RaidenPlungingStrikeAbility());
 		ctx.abilities().register(new RaidenTranscendenceAbility());
 
+		RaidenLifecycleController.register(ctx);
 		RaidenPlungingLandingController.register(ctx);
 		ctx.ticks().global(RaidenMusouIsshinController::serverTick);
 		ctx.ticks().player(RaidenBurstController::tickPlayer);

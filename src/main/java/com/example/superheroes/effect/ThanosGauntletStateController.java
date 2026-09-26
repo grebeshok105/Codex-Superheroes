@@ -7,6 +7,9 @@ import com.example.superheroes.hero.ThanosHero;
 import com.example.superheroes.item.InfinityGauntletItem;
 import com.example.superheroes.item.infinity.InfinityGauntletData;
 import com.example.superheroes.item.infinity.InfinityStoneType;
+import com.example.superheroes.lifecycle.LifecycleRegistrar;
+import com.example.superheroes.lifecycle.OwnedSessionMap;
+import com.example.superheroes.lifecycle.OwnedSessionMap.ClearOn;
 import com.example.superheroes.network.ThanosStonesS2CPayload;
 import com.example.superheroes.transform.HeroData;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
@@ -17,44 +20,45 @@ import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.EnumSet;
-import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import net.minecraft.server.MinecraftServer;
 
 public final class ThanosGauntletStateController {
-	private static final Map<UUID, EnumSet<InfinityStoneType>> APPLIED = new HashMap<>();
+	// Not ClearOn.HERO_CLEAR: a non-Thanos entry must survive untransform so tickPlayer's
+	// swap path sees it, strips the stone modifiers and broadcasts an empty set.
+	private static final OwnedSessionMap<UUID, EnumSet<InfinityStoneType>> APPLIED =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.of(ClearOn.LEAVE, ClearOn.DEATH));
 
 	private ThanosGauntletStateController() {
 	}
 
 	public static void register(HeroModuleContext ctx) {
 
+		// Respawn hook — the fresh entity needs APPLIED reset for the next 10-tick
+		// scan to re-apply the transient stone modifiers (leave/death drop it via ClearOn).
+		ctx.lifecycle().onRespawn(ThanosGauntletStateController::onPlayerReset);
+
 		ctx.ticks().start(server -> {
-			APPLIED.keySet().removeIf(uuid -> server.getPlayerList().getPlayer(uuid) == null);
+			for (Iterator<Map.Entry<UUID, EnumSet<InfinityStoneType>>> it = APPLIED.iterator(); it.hasNext();) {
+				if (server.getPlayerList().getPlayer(it.next().getKey()) == null) {
+					it.remove();
+				}
+			}
 		});
 
 		// Joining players get every Thanos' current stone set so remote skins render correctly
 		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
-			for (Map.Entry<UUID, EnumSet<InfinityStoneType>> entry : APPLIED.entrySet()) {
+			for (Map.Entry<UUID, EnumSet<InfinityStoneType>> entry : APPLIED) {
 				ServerPlayNetworking.send(handler.getPlayer(), new ThanosStonesS2CPayload(entry.getKey(), maskOf(entry.getValue())));
 			}
 		});
 	}
 
-	/**
-	 * Death/respawn hook — stone buffs are transient modifiers now, so the fresh entity needs
-	 * {@link #APPLIED} reset for the next 10-tick scan to re-apply them (the old permanent
-	 * modifiers died with the entity anyway, but {@code APPLIED} wrongly claimed they remained).
-	 */
 	public static void onPlayerReset(ServerPlayer player) {
 		APPLIED.remove(player.getUUID());
-	}
-
-	/** World shutdown — applied-set tracking dies with the world. */
-	public static void resetAll() {
-		APPLIED.clear();
 	}
 
 	public static void sendStones(ServerPlayer player, Set<InfinityStoneType> stones) {
@@ -121,7 +125,11 @@ public final class ThanosGauntletStateController {
 			return;
 		}
 		EnumSet<InfinityStoneType> wanted = scan(player);
-		EnumSet<InfinityStoneType> applied = APPLIED.computeIfAbsent(player.getUUID(), id -> EnumSet.noneOf(InfinityStoneType.class));
+		EnumSet<InfinityStoneType> applied = APPLIED.get(player.getUUID());
+		if (applied == null) {
+			applied = EnumSet.noneOf(InfinityStoneType.class);
+			APPLIED.put(player.getUUID(), player.getUUID(), applied);
+		}
 		if (!wanted.equals(applied)) {
 			applyDelta(player, applied, wanted);
 			applied.clear();

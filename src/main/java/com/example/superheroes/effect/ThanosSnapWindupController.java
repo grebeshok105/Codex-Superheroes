@@ -1,16 +1,22 @@
 package com.example.superheroes.effect;
 
 import com.example.superheroes.ability.ThanosSnapAbility;
+import com.example.superheroes.lifecycle.LifecycleRegistrar;
+import com.example.superheroes.lifecycle.OwnedSessionMap;
+import com.example.superheroes.lifecycle.OwnedSessionMap.ClearOn;
 import net.minecraft.server.level.ServerPlayer;
 
+import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.server.MinecraftServer;
 
 public final class ThanosSnapWindupController {
-	private static final Map<UUID, Pending> PENDING = new ConcurrentHashMap<>();
+	// Leave/death drop the pending snap — a snap must never fire from a corpse or after relog
+	// (audit B17).
+	private static final OwnedSessionMap<UUID, Pending> PENDING =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.of(ClearOn.LEAVE, ClearOn.DEATH));
 
 	private ThanosSnapWindupController() {
 	}
@@ -18,22 +24,12 @@ public final class ThanosSnapWindupController {
 
 	public static void schedule(ServerPlayer player, int snapInTicks, int totalTicks) {
 		long now = player.serverLevel().getGameTime();
-		PENDING.put(player.getUUID(), new Pending(now + snapInTicks, now + totalTicks));
+		PENDING.put(player.getUUID(), player.getUUID(), new Pending(now + snapInTicks, now + totalTicks));
 	}
 
 	public static boolean isWindingUp(ServerPlayer player) {
 		Pending p = PENDING.get(player.getUUID());
 		return p != null && !p.snapped;
-	}
-
-	/** Leave/death hook — a pending snap must never fire from a corpse or after relog. */
-	public static void cancel(java.util.UUID playerId) {
-		PENDING.remove(playerId);
-	}
-
-	/** World shutdown — pending snaps die with the world. */
-	public static void resetAll() {
-		PENDING.clear();
 	}
 
 	private static final class Pending {
@@ -48,8 +44,8 @@ public final class ThanosSnapWindupController {
 	}
 
 	public static void serverTick(MinecraftServer server) {
-			if (PENDING.isEmpty()) return;
-			Iterator<Map.Entry<UUID, Pending>> it = PENDING.entrySet().iterator();
+			if (PENDING.size() == 0) return;
+			Iterator<Map.Entry<UUID, Pending>> it = PENDING.iterator();
 			while (it.hasNext()) {
 				Map.Entry<UUID, Pending> e = it.next();
 				ServerPlayer player = server.getPlayerList().getPlayer(e.getKey());

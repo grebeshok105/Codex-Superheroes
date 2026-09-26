@@ -86,6 +86,12 @@ public final class ReinhardTimeSlowController {
 						: InteractionResultHolder.pass(player.getItemInHand(hand)));
 		UseBlockCallback.EVENT.register((player, world, hand, hitResult) ->
 				(player instanceof ServerPlayer sp && isFrozen(sp)) ? InteractionResult.FAIL : InteractionResult.PASS);
+
+		// Not OwnedSessionMap: entries carry release obligations — ACTIVE holds the frozen-entity
+		// ids releaseSlow() must unlock, so the drops stay inside the explicit hooks.
+		ctx.lifecycle().onLeave(ReinhardTimeSlowController::onPlayerGone);
+		ctx.lifecycle().onDeath(ReinhardTimeSlowController::onPlayerGone);
+		ctx.lifecycle().onServerStopped(ReinhardTimeSlowController::resetAll);
 	}
 
 	public static void armForFirstStrike(ServerPlayer player) {

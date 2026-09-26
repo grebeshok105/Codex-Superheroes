@@ -99,15 +99,12 @@ public class SuperheroesMod implements ModInitializer {
 		com.example.superheroes.lifecycle.HeroLifecycle.onClear(p -> com.example.superheroes.effect.UnibeamController.clearState(p.getUUID()));
 		com.example.superheroes.lifecycle.HeroLifecycle.onClear(p -> com.example.superheroes.effect.RegulusTotemController.clear(p.getUUID()));
 		com.example.superheroes.lifecycle.HeroLifecycle.onClear(com.example.superheroes.effect.RegulusMadnessController::clearMadness);
-		com.example.superheroes.lifecycle.HeroLifecycle.onClear(com.example.superheroes.effect.ReinhardController::clearAdaptations);
-		com.example.superheroes.lifecycle.HeroLifecycle.onClear(com.example.superheroes.effect.RaidenLifecycleController::clearOnUntransform);
 		com.example.superheroes.lifecycle.HeroLifecycle.onClear(com.example.superheroes.effect.RemDemonismController::clear);
 		com.example.superheroes.lifecycle.HeroLifecycle.onClear(com.example.superheroes.effect.PandoraDeathController::resetOnHeroTaken);
 		com.example.superheroes.lifecycle.HeroLifecycle.onClear(com.example.superheroes.effect.DoomGripController::clear);
 		com.example.superheroes.lifecycle.HeroLifecycle.onClear(com.example.superheroes.ability.OmnimanThinkMarkAbility::clear);
 		com.example.superheroes.lifecycle.HeroLifecycle.onClear(EntityControlLock::releaseOwnedBy);
 		com.example.superheroes.lifecycle.HeroLifecycle.onTransformed(com.example.superheroes.effect.HeroReactionController::onTransformed);
-		PlayerLifecycle.onJoin(com.example.superheroes.effect.ReinhardController::onPlayerJoin);
 		PlayerLifecycle.onJoin(com.example.superheroes.effect.BattleBeastCurseController::reapplyOnJoin);
 		PlayerLifecycle.onJoin(com.example.superheroes.effect.RegulusMadnessController::clearMadness);
 		PlayerLifecycle.onJoin(com.example.superheroes.ability.AbilityCooldowns::syncAll);
@@ -118,16 +115,10 @@ public class SuperheroesMod implements ModInitializer {
 		PlayerLifecycle.onLeave(com.example.superheroes.effect.PandoraDeathController::onPlayerLeave);
 		PlayerLifecycle.onLeave(com.example.superheroes.effect.DoomGripController::clear);
 		PlayerLifecycle.onLeave(com.example.superheroes.ability.OmnimanThinkMarkAbility::clear);
-		PlayerLifecycle.onLeave(com.example.superheroes.effect.ReinhardSwordDrawCeremonyController::cancelCeremony);
 		PlayerLifecycle.onLeave(com.example.superheroes.effect.RegulusGreedController::onPlayerGone);
 		PlayerLifecycle.onLeave(com.example.superheroes.effect.RegulusMadnessController::clearMadness);
-		PlayerLifecycle.onLeave(com.example.superheroes.effect.KratosRageController::onPlayerGone);
-		PlayerLifecycle.onLeave(com.example.superheroes.effect.ReinhardTimeSlowController::onPlayerGone);
-		PlayerLifecycle.onLeave(com.example.superheroes.effect.ThanosGauntletStateController::onPlayerReset);
 		PlayerLifecycle.onLeave(p -> com.example.superheroes.effect.UnibeamController.clearState(p.getUUID()));
 		PlayerLifecycle.onLeave(p -> com.example.superheroes.effect.MonarchsDomainController.clear(p.getUUID()));
-		PlayerLifecycle.onLeave(p -> com.example.superheroes.effect.ThanosSnapWindupController.cancel(p.getUUID()));
-		PlayerLifecycle.onLeave(p -> com.example.superheroes.effect.ReinhardSwordDeathMarkController.cancelVictim(p.getUUID()));
 		PlayerLifecycle.onLeave(com.example.superheroes.ability.RepulsorChargeController::reset);
 		PlayerLifecycle.onLeave(com.example.superheroes.ability.ChargeTackleAbility::clear);
 		PlayerLifecycle.onLeave(com.example.superheroes.ability.ViltrumiteChargeAbility::clear);
@@ -144,16 +135,10 @@ public class SuperheroesMod implements ModInitializer {
 		PlayerLifecycle.onDeath(EntityControlLock::releaseOwnedBy);
 		PlayerLifecycle.onDeath(com.example.superheroes.effect.DoomGripController::clear);
 		PlayerLifecycle.onDeath(com.example.superheroes.ability.OmnimanThinkMarkAbility::clear);
-		PlayerLifecycle.onDeath(com.example.superheroes.effect.ReinhardSwordDrawCeremonyController::cancelCeremony);
 		PlayerLifecycle.onDeath(com.example.superheroes.effect.RegulusGreedController::onPlayerGone);
 		PlayerLifecycle.onDeath(com.example.superheroes.effect.RegulusMadnessController::clearMadness);
-		PlayerLifecycle.onDeath(com.example.superheroes.effect.KratosRageController::onPlayerGone);
-		PlayerLifecycle.onDeath(com.example.superheroes.effect.ReinhardTimeSlowController::onPlayerGone);
-		PlayerLifecycle.onDeath(com.example.superheroes.effect.ThanosGauntletStateController::onPlayerReset);
 		PlayerLifecycle.onDeath(p -> com.example.superheroes.effect.UnibeamController.clearState(p.getUUID()));
 		PlayerLifecycle.onDeath(p -> com.example.superheroes.effect.MonarchsDomainController.clear(p.getUUID()));
-		PlayerLifecycle.onDeath(p -> com.example.superheroes.effect.ThanosSnapWindupController.cancel(p.getUUID()));
-		PlayerLifecycle.onDeath(p -> com.example.superheroes.effect.ReinhardSwordDeathMarkController.cancelVictim(p.getUUID()));
 		PlayerLifecycle.onDeath(com.example.superheroes.ability.RepulsorChargeController::reset);
 		PlayerLifecycle.onDeath(com.example.superheroes.ability.ChargeTackleAbility::clear);
 		PlayerLifecycle.onDeath(com.example.superheroes.ability.ViltrumiteChargeAbility::clear);
@@ -167,7 +152,6 @@ public class SuperheroesMod implements ModInitializer {
 
 		// respawn — reconcile the fresh entity with state that outlives death.
 		PlayerLifecycle.onRespawn(HeroTransformService::onPlayerRespawn);
-		PlayerLifecycle.onRespawn(com.example.superheroes.effect.ThanosGauntletStateController::onPlayerReset);
 		PlayerLifecycle.onRespawn(com.example.superheroes.effect.RegulusMadnessController::clearMadness);
 
 		// world shutdown — static session state must not leak into a new world (audit B8).
@@ -178,17 +162,11 @@ public class SuperheroesMod implements ModInitializer {
 			com.example.superheroes.resource.EnergyLocks.resetAll();
 			com.example.superheroes.effect.RemDemonismController.resetAll();
 			com.example.superheroes.effect.UnibeamController.resetAll();
-			com.example.superheroes.effect.ThanosSnapWindupController.resetAll();
-			com.example.superheroes.effect.ReinhardSwordDeathMarkController.resetAll();
-			com.example.superheroes.effect.ReinhardSwordDrawCeremonyController.resetAll();
 			com.example.superheroes.effect.RegulusGreedController.resetAll();
 			com.example.superheroes.effect.RegulusMadnessController.resetAll();
-			com.example.superheroes.effect.ReinhardTimeSlowController.resetAll(server);
 			com.example.superheroes.effect.DoomGripController.resetAll();
 			com.example.superheroes.ability.OmnimanThinkMarkAbility.resetAll();
-			com.example.superheroes.effect.KratosRageController.resetAll();
 			com.example.superheroes.effect.BattleBeastCurseController.resetAll();
-			com.example.superheroes.effect.ThanosGauntletStateController.resetAll();
 			com.example.superheroes.effect.PandoraDeathController.resetAll();
 			com.example.superheroes.ability.RepulsorChargeController.resetAll();
 			com.example.superheroes.ability.ChargeTackleAbility.resetAll();
