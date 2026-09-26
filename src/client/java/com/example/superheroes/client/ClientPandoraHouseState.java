@@ -1,8 +1,9 @@
 package com.example.superheroes.client;
 
 /**
- * Client-side mirror of whether the local Pandora's House of Vanity is open (#2). Drives which
- * Pandora abilities are visible — see {@link ClientAbilityFilter}.
+ * Client-side mirror of whether the local Pandora's House of Vanity is open (#2). Fed to
+ * Pandora's client module and HUD effects; the ability list itself follows the server-synced
+ * {@code ability_availability} attachment — see {@link ClientAbilityVisibility}.
  */
 public final class ClientPandoraHouseState {
 	private static volatile boolean open;

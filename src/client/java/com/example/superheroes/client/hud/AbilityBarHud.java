@@ -1,7 +1,7 @@
 package com.example.superheroes.client.hud;
 
 import com.example.superheroes.client.ClientAbilityCooldowns;
-import com.example.superheroes.client.ClientAbilityFilter;
+import com.example.superheroes.client.ClientAbilityVisibility;
 import com.example.superheroes.client.ClientHeroState;
 import com.example.superheroes.client.config.SuperheroesClientConfig;
 import com.example.superheroes.client.core.hud.HudBounds;
@@ -79,7 +79,7 @@ public final class AbilityBarHud implements MovableHud {
 
 		HeroTheme theme = ClientHeroState.theme();
 		HeroHudConfig hudConfig = hero.getHudConfig();
-		List<ResourceLocation> abilities = ClientAbilityFilter.visibleFor(ClientHeroState.abilities(), heroId);
+		List<ResourceLocation> abilities = ClientAbilityVisibility.visibleFor(ClientHeroState.abilities());
 		int n = abilities.size();
 		if (n == 0) {
 			return;

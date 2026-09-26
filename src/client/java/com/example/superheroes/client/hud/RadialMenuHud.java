@@ -2,7 +2,7 @@ package com.example.superheroes.client.hud;
 
 import com.example.superheroes.ability.AbilityIds;
 import com.example.superheroes.client.ClientAbilityCooldowns;
-import com.example.superheroes.client.ClientAbilityFilter;
+import com.example.superheroes.client.ClientAbilityVisibility;
 import com.example.superheroes.client.ClientHeroState;
 import com.example.superheroes.client.ClientSessionState;
 import com.example.superheroes.client.ClientThanosState;
@@ -168,7 +168,7 @@ public final class RadialMenuHud {
 	}
 
 	private static List<ResourceLocation> visibleAbilities() {
-		return ClientAbilityFilter.visibleFor(ClientHeroState.abilities(), ClientHeroState.heroId());
+		return ClientAbilityVisibility.visibleFor(ClientHeroState.abilities());
 	}
 
 	// Animation state

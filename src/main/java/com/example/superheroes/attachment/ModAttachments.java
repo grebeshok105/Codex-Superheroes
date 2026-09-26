@@ -1,6 +1,7 @@
 package com.example.superheroes.attachment;
 
 import com.example.superheroes.ModId;
+import com.example.superheroes.core.ability.AbilityAvailability;
 import com.example.superheroes.effect.DoomsdayProgress;
 import com.example.superheroes.effect.RaidenState;
 import com.example.superheroes.effect.RegulusMadnessState;
@@ -32,6 +33,15 @@ public final class ModAttachments {
 			.persistent(ResourceLocation.CODEC)
 			.copyOnDeath()
 			.syncWith(ResourceLocation.STREAM_CODEC, net.fabricmc.fabric.api.attachment.v1.AttachmentSyncPredicate.all()));
+
+	/**
+	 * Server-computed ability visibility for the owning player's HUD (stage C4 — replaces
+	 * the deleted client-side filter). Synced to the owner only; absent means "all
+	 * {@link com.example.superheroes.core.ability.AbilityAvailability.Visibility#AVAILABLE}".
+	 * Written only by {@link com.example.superheroes.ability.AbilityAvailabilitySync}.
+	 */
+	public static final AttachmentType<AbilityAvailability> ABILITY_AVAILABILITY = AttachmentRegistry.create(ModId.of("ability_availability"), b -> b
+			.syncWith(AbilityAvailability.STREAM_CODEC, net.fabricmc.fabric.api.attachment.v1.AttachmentSyncPredicate.targetOnly()));
 
 	public static final AttachmentType<RegulusMadnessState> REGULUS_MADNESS = AttachmentRegistry.create(ModId.of("regulus_madness"), b -> b
 			.initializer(() -> RegulusMadnessState.EMPTY));

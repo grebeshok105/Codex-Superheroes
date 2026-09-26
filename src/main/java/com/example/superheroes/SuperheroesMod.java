@@ -403,5 +403,8 @@ public class SuperheroesMod implements ModInitializer {
 				.onPlayerTick(com.example.superheroes.effect.RaidenAuraController::tickPlayer);
 		com.example.superheroes.lifecycle.HeroTickDispatcher
 				.onPlayerTick(com.example.superheroes.effect.RaidenPlungingLandingController::tickPlayer);
+		// C4: recompute the synced ability_availability attachment (writes only on change).
+		com.example.superheroes.lifecycle.HeroTickDispatcher
+				.onPlayerTick(com.example.superheroes.ability.AbilityAvailabilitySync::tickPlayer);
 	}
 }

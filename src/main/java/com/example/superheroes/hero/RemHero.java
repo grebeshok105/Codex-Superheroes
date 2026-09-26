@@ -2,6 +2,7 @@ package com.example.superheroes.hero;
 
 import com.example.superheroes.ModId;
 import com.example.superheroes.ability.AbilityIds;
+import com.example.superheroes.core.ability.AbilityAvailability;
 import com.example.superheroes.resource.ResourceKind;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityDimensions;
@@ -147,7 +148,7 @@ public final class RemHero implements Hero {
 	}
 
 	/**
-	 * HUD visibility table shared with {@code ClientAbilityFilter}: demon-only abilities
+	 * HUD visibility table read by {@link #visibility}: demon-only abilities
 	 * show while demonism is active, {@code REM_ONI_RAGE} hides itself inside it.
 	 */
 	public static boolean isVisibleIn(ResourceLocation abilityId, boolean demonismActive) {
@@ -155,6 +156,14 @@ public final class RemHero implements Hero {
 			return false;
 		}
 		return !isDemonOnly(abilityId) || demonismActive;
+	}
+
+	@Override
+	public AbilityAvailability.Visibility visibility(net.minecraft.server.level.ServerPlayer player,
+			ResourceLocation abilityId) {
+		return isVisibleIn(abilityId, com.example.superheroes.effect.RemDemonismController.isActive(player))
+				? AbilityAvailability.Visibility.AVAILABLE
+				: AbilityAvailability.Visibility.HIDDEN;
 	}
 
 	@Override

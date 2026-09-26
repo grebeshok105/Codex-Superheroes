@@ -2,6 +2,7 @@ package com.example.superheroes.hero;
 
 import com.example.superheroes.ModId;
 import com.example.superheroes.ability.AbilityIds;
+import com.example.superheroes.core.ability.AbilityAvailability;
 import com.example.superheroes.physics.ShockwaveUtil;
 import com.example.superheroes.resource.ResourceKind;
 import net.minecraft.core.particles.ParticleTypes;
@@ -140,10 +141,17 @@ public final class DoomsdayHero implements Hero {
                 return isUnlockedAtTier(getTier(player), abilityId);
         }
 
+        @Override
+        public AbilityAvailability.Visibility visibility(ServerPlayer player, ResourceLocation abilityId) {
+                return isAbilityUnlocked(player, abilityId)
+                                ? AbilityAvailability.Visibility.AVAILABLE
+                                : AbilityAvailability.Visibility.HIDDEN;
+        }
+
         /**
          * Tier-gated ability table — shared by the server gate ({@link #isAbilityUnlocked},
-         * which reads the live tier from {@code DOOMSDAY_PROGRESS}) and the client HUD
-         * ({@code ClientAbilityFilter}, which reads {@code ClientDoomsdayState}).
+         * which reads the live tier from {@code DOOMSDAY_PROGRESS}) and the owner HUD
+         * ({@link #visibility}, synced through the {@code ability_availability} attachment).
          */
         public static boolean isUnlockedAtTier(int tier, ResourceLocation abilityId) {
                 if (AbilityIds.DOOMSDAY_SMASH.equals(abilityId)) return tier >= 2;
