@@ -2,7 +2,7 @@ package com.example.superheroes.effect;
 
 import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.damage.ModDamageTypes;
-import com.example.superheroes.hero.HeroAttributes;
+import com.example.superheroes.hero.AbilityScopedModifiers;
 import com.example.superheroes.hero.ReinhardHero;
 import com.example.superheroes.transform.HeroData;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
@@ -168,9 +168,9 @@ public final class ReinhardController {
 				ReinhardState updated = state.withAccumulatedDamage(decayed);
 				if (newPhase < state.phase()) {
 					for (int p = 1; p <= 5; p++) {
-						HeroAttributes.buildReinhardPhaseSet(p).remove(player);
+						AbilityScopedModifiers.buildReinhardPhaseSet(p).remove(player);
 					}
-					HeroAttributes.buildReinhardPhaseSet(newPhase).apply(player);
+					AbilityScopedModifiers.buildReinhardPhaseSet(newPhase).apply(player);
 					updated = updated.withPhase(newPhase);
 				}
 				player.setAttached(ModAttachments.REINHARD_STATE, updated);
@@ -430,9 +430,9 @@ public final class ReinhardController {
 		ServerLevel level = player.serverLevel();
 		// Снять старые phase-modifiers, поставить новые
 		for (int p = 1; p <= 5; p++) {
-			HeroAttributes.buildReinhardPhaseSet(p).remove(player);
+			AbilityScopedModifiers.buildReinhardPhaseSet(p).remove(player);
 		}
-		HeroAttributes.buildReinhardPhaseSet(newPhase).apply(player);
+		AbilityScopedModifiers.buildReinhardPhaseSet(newPhase).apply(player);
 		player.heal(4f * newPhase);
 		level.sendParticles(ParticleTypes.END_ROD,
 				player.getX(), player.getY() + 1.0, player.getZ(),
@@ -448,14 +448,14 @@ public final class ReinhardController {
 		ReinhardState state = player.getAttachedOrCreate(ModAttachments.REINHARD_STATE);
 		if (state.phoenixUsed()) {
 			// Второе пришествие уже было — позволяем умереть по-настоящему.
-			HeroAttributes.REINHARD_SECOND_COMING.remove(player);
+			AbilityScopedModifiers.REINHARD_SECOND_COMING.remove(player);
 			return true;
 		}
 		int nextCount = state.phoenixCount() + 1;
 		// Полная регенерация — Второе пришествие
 		player.setHealth(1f);
 		player.removeAllEffects();
-		HeroAttributes.REINHARD_SECOND_COMING.apply(player);
+		AbilityScopedModifiers.REINHARD_SECOND_COMING.apply(player);
 		player.setHealth(player.getMaxHealth());
 		applySecondComingEffects(player);
 
@@ -514,10 +514,10 @@ public final class ReinhardController {
 
 	public static void onDeath(ServerPlayer player) {
 		for (int p = 1; p <= 5; p++) {
-			HeroAttributes.buildReinhardPhaseSet(p).remove(player);
+			AbilityScopedModifiers.buildReinhardPhaseSet(p).remove(player);
 		}
-		HeroAttributes.REINHARD_DRAW.remove(player);
-		HeroAttributes.REINHARD_SECOND_COMING.remove(player);
+		AbilityScopedModifiers.REINHARD_DRAW.remove(player);
+		AbilityScopedModifiers.REINHARD_SECOND_COMING.remove(player);
 		FIRST_DODGE_USED.remove(player.getUUID());
 	}
 
@@ -533,10 +533,10 @@ public final class ReinhardController {
 		player.setAttached(ModAttachments.REINHARD_STATE, state);
 		com.example.superheroes.effect.ReinhardSwordDrawCeremonyController.cancelCeremony(player);
 		for (int p = 1; p <= 5; p++) {
-			HeroAttributes.buildReinhardPhaseSet(p).remove(player);
+			AbilityScopedModifiers.buildReinhardPhaseSet(p).remove(player);
 		}
-		HeroAttributes.REINHARD_DRAW.remove(player);
-		HeroAttributes.REINHARD_SECOND_COMING.remove(player);
+		AbilityScopedModifiers.REINHARD_DRAW.remove(player);
+		AbilityScopedModifiers.REINHARD_SECOND_COMING.remove(player);
 		state = player.getAttachedOrCreate(ModAttachments.REINHARD_STATE);
 		player.setAttached(ModAttachments.REINHARD_STATE, state.withSwordDrawn(false));
 		com.example.superheroes.ability.ReinhardSwordDrawAbility.removeSword(player);
@@ -556,7 +556,7 @@ public final class ReinhardController {
 		ReinhardState state = player.getAttachedOrCreate(ModAttachments.REINHARD_STATE);
 		if (!state.swordDrawn()) return;
 		player.setAttached(ModAttachments.REINHARD_STATE, state.withSwordDrawn(false));
-		HeroAttributes.REINHARD_DRAW.remove(player);
+		AbilityScopedModifiers.REINHARD_DRAW.remove(player);
 		com.example.superheroes.ability.ReinhardSwordDrawAbility.removeSword(player);
 	}
 
@@ -572,10 +572,10 @@ public final class ReinhardController {
 				.withSwordDrawn(false);
 		player.setAttached(ModAttachments.REINHARD_STATE, state);
 		for (int p = 1; p <= 5; p++) {
-			HeroAttributes.buildReinhardPhaseSet(p).remove(player);
+			AbilityScopedModifiers.buildReinhardPhaseSet(p).remove(player);
 		}
-		HeroAttributes.REINHARD_DRAW.remove(player);
-		HeroAttributes.REINHARD_SECOND_COMING.remove(player);
+		AbilityScopedModifiers.REINHARD_DRAW.remove(player);
+		AbilityScopedModifiers.REINHARD_SECOND_COMING.remove(player);
 		FIRST_DODGE_USED.remove(player.getUUID());
 	}
 

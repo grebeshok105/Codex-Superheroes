@@ -2,7 +2,7 @@ package com.example.superheroes.effect;
 
 import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.hero.DoomsdayHero;
-import com.example.superheroes.hero.HeroAttributes;
+import com.example.superheroes.hero.AbilityScopedModifiers;
 import com.example.superheroes.transform.HeroData;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.minecraft.ChatFormatting;
@@ -192,7 +192,7 @@ public final class DoomsdayAdaptationController {
 			if (next <= 0) {
 				ADAPT_COUNT.remove(doomsday.getUUID());
 				AttributeInstance inst = doomsday.getAttribute(Attributes.ATTACK_DAMAGE);
-				if (inst != null) inst.removeModifier(HeroAttributes.DOOMSDAY_ADAPT_DAMAGE);
+				if (inst != null) inst.removeModifier(AbilityScopedModifiers.DOOMSDAY_ADAPT_DAMAGE);
 			} else {
 				ADAPT_COUNT.put(doomsday.getUUID(), next);
 				applyDamageBonus(doomsday, next);
@@ -234,7 +234,7 @@ public final class DoomsdayAdaptationController {
 		if (inst == null) return;
 		double amount = ADAPT_DAMAGE_BONUS * count;
 		inst.addOrReplacePermanentModifier(new AttributeModifier(
-				HeroAttributes.DOOMSDAY_ADAPT_DAMAGE, amount, AttributeModifier.Operation.ADD_VALUE));
+				AbilityScopedModifiers.DOOMSDAY_ADAPT_DAMAGE, amount, AttributeModifier.Operation.ADD_VALUE));
 	}
 
 	/** Вызывать на респавне — attribute modifier сбрасывается при remove/apply набора. */
@@ -265,7 +265,7 @@ public final class DoomsdayAdaptationController {
 		ADAPT_COUNT.remove(id);
 		AttributeInstance inst = player.getAttribute(Attributes.ATTACK_DAMAGE);
 		if (inst != null) {
-			inst.removeModifier(HeroAttributes.DOOMSDAY_ADAPT_DAMAGE);
+			inst.removeModifier(AbilityScopedModifiers.DOOMSDAY_ADAPT_DAMAGE);
 		}
 	}
 

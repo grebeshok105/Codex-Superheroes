@@ -2,7 +2,7 @@ package com.example.superheroes.effect;
 
 import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.hero.DoomsdayHero;
-import com.example.superheroes.hero.HeroAttributes;
+import com.example.superheroes.hero.AbilityScopedModifiers;
 import com.example.superheroes.network.DoomsdayProgressS2CPayload;
 import com.example.superheroes.transform.HeroData;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
@@ -89,8 +89,8 @@ public final class DoomsdayTierController {
 
 	public static void applyProgress(ServerPlayer player) {
 		DoomsdayProgress progress = player.getAttachedOrCreate(ModAttachments.DOOMSDAY_PROGRESS);
-		HeroAttributes.DOOMSDAY.remove(player);
-		HeroAttributes.buildDoomsdayTierSet(progress.tier()).apply(player);
+		AbilityScopedModifiers.DOOMSDAY.remove(player);
+		AbilityScopedModifiers.buildDoomsdayTierSet(progress.tier()).apply(player);
 		com.example.superheroes.lifecycle.PassiveReconciler.capture(player, DoomsdayHero.ID,
 				() -> DoomsdayHero.applyTierEffects(player, progress.tier()));
 		DoomsdayAdaptationController.reapplyDamageBonus(player);
@@ -167,7 +167,7 @@ public final class DoomsdayTierController {
 
 	public static void resetProgress(ServerPlayer player) {
 		player.setAttached(ModAttachments.DOOMSDAY_PROGRESS, DoomsdayProgress.EMPTY);
-		HeroAttributes.DOOMSDAY.remove(player);
+		AbilityScopedModifiers.DOOMSDAY.remove(player);
 		sync(player);
 	}
 

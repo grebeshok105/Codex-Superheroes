@@ -101,6 +101,11 @@ public final class ScaramoucheHero implements Hero {
 	}
 
 	@Override
+	public AttributeModifierSet passiveAttributes() {
+		return PASSIVES;
+	}
+
+	@Override
 	public void applyPassives(Player player) {
 		PASSIVES.apply(player);
 		player.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, -1, 0, true, false, true));

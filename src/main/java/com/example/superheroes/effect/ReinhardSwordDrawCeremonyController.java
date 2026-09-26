@@ -5,7 +5,7 @@ import com.example.superheroes.lifecycle.EntityControlLock;
 import com.example.superheroes.transform.HeroDataStore;
 import com.example.superheroes.ability.AbilityIds;
 import com.example.superheroes.attachment.ModAttachments;
-import com.example.superheroes.hero.HeroAttributes;
+import com.example.superheroes.hero.AbilityScopedModifiers;
 import com.example.superheroes.network.ReinhardCeremonyS2CPayload;
 import com.example.superheroes.sound.ModSounds;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -143,7 +143,7 @@ public final class ReinhardSwordDrawCeremonyController {
 
 		ReinhardState state = player.getAttachedOrCreate(ModAttachments.REINHARD_STATE);
 		player.setAttached(ModAttachments.REINHARD_STATE, state.withSwordDrawn(true));
-		HeroAttributes.REINHARD_DRAW.apply(player);
+		AbilityScopedModifiers.REINHARD_DRAW.apply(player);
 		if (!com.example.superheroes.ability.ReinhardSwordDrawAbility.giveSword(player)) {
 			player.displayClientMessage(Component.translatable("ability.superheroes.bound_weapon.no_room"), true);
 		}

@@ -265,6 +265,12 @@
 - Integration fix: `startRunsBeforeEndPhasesAndEarlyBeforeGlobal` asserted absolute index order — made robust to mid-tick hook registration (search relative to first "start"). qualityGate green: 67/67 gametests; worker's hand-shrunk freeze-store entries verified = canonical `allowStoreUpdate` output.
 
 ## Architecture migration — stage B3 (plan 02)
+## Architecture migration — stage B2 (plan 02)
+
+- `Hero.passiveAttributes()` returns the hero's `AttributeModifierSet`; default `applyPassives`/`removePassives` route through it. 6 fully-reducible heroes dropped both overrides (captain_america, goku, loki, naruto, scorpion, kazuha); 5 partially (atrain, rem, pandora, raiden, reinhard keep the override with extra side effects); 11 custom keep overrides but route the passive set through `PASSIVES`.
+- `HeroAttributes.java` deleted: per-hero passive sets → `PASSIVES` fields on heroes; the ability-scoped/transient members (KRATOS_RAGE, NANO_*, RAIDEN_BURST, REINHARD_*, REGULUS_MADNESS, DOOMSDAY_*, thanosClearStoneModifiers, buildReinhardPhaseSet, buildDoomsdayTierSet) moved verbatim to `hero/AbilityScopedModifiers.java` — same package, so zero new package edges and zero new frozen violations (not a concrete-hero class). `ability/` host rejected: hero files read those members → would create new `ability<->hero` cycle pair.
+- `DoomsdayHero.PASSIVES` = `AbilityScopedModifiers.DOOMSDAY` (one definition); id/value tuples diff-verified identical old-vs-new.
+- Golden `passive_modifiers.txt` (171 applied-modifier records) captured pre-migration; `passiveModifiersAreStable` compares — green. qualityGate 70/70; baseline/store delta zero.
 
 - `TransformationLore` record (`transform/`) + `TransformationItem(heroId, props, lore)` ctor; new `appendHoverText` emits openDivider→flavor→empty→bullets→closeDivider via `TooltipFrame`, null-guarded so the 7 remaining subclasses keep working.
 - 15 lore-only subclasses deleted; `ModItems` now constructs them inline with identical keys/colors/order/props. Hero ids passed as `ModId.of("…")` literals — `<Hero>.ID` class reads would have added 15 new frozen-rule violations (`sharedCodeDoesNotDependOnConcreteHeroes` can't grow); convention confirmed by plan 06 I5a («id героев строками»). Pandora keeps `doctor_strange_suit` id + comment.

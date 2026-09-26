@@ -12,6 +12,8 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 
 import java.util.List;
@@ -41,6 +43,22 @@ public final class IronManHero implements Hero {
 			0x66FF8A38
 	);
 	private static final HeroHudConfig HUD = new HeroHudConfig("hud.superheroes.energy.arc_reactor", HeroHudConfig.EnergyIconType.REACTOR, true, "IRON LEGION");
+
+	private static final ResourceLocation ARMOR_ID = ModId.of("modifiers/iron_man/armor");
+	private static final ResourceLocation TOUGHNESS_ID = ModId.of("modifiers/iron_man/toughness");
+	private static final ResourceLocation DAMAGE_ID = ModId.of("modifiers/iron_man/damage");
+	private static final ResourceLocation SPEED_ID = ModId.of("modifiers/iron_man/speed");
+	private static final ResourceLocation HP_ID = ModId.of("modifiers/iron_man/max_health");
+	private static final ResourceLocation KNOCKBACK_ID = ModId.of("modifiers/iron_man/knockback_resistance");
+
+	private static final AttributeModifierSet PASSIVES = AttributeModifierSet.builder()
+			.add(Attributes.ARMOR, ARMOR_ID, 22.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ARMOR_TOUGHNESS, TOUGHNESS_ID, 6.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ATTACK_DAMAGE, DAMAGE_ID, 7.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.MOVEMENT_SPEED, SPEED_ID, 0.15, AttributeModifier.Operation.ADD_MULTIPLIED_BASE)
+			.add(Attributes.MAX_HEALTH, HP_ID, 10.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.KNOCKBACK_RESISTANCE, KNOCKBACK_ID, 0.6, AttributeModifier.Operation.ADD_VALUE)
+			.build();
 
 	@Override
 	public ResourceLocation getId() {
@@ -83,14 +101,19 @@ public final class IronManHero implements Hero {
 	}
 
 	@Override
+	public AttributeModifierSet passiveAttributes() {
+		return PASSIVES;
+	}
+
+	@Override
 	public void applyPassives(Player player) {
-		HeroAttributes.IRON_MAN.apply(player);
+		PASSIVES.apply(player);
 		com.example.superheroes.ability.ironman.IronManSuitStats.apply(player);
 	}
 
 	@Override
 	public void removePassives(Player player) {
-		HeroAttributes.IRON_MAN.remove(player);
+		PASSIVES.remove(player);
 		com.example.superheroes.ability.ironman.IronManSuitStats.clear(player);
 		if (player instanceof ServerPlayer sp) {
 			com.example.superheroes.ability.ironman.IronManNanoFormController.clear(sp);

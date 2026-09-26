@@ -92,8 +92,8 @@ public final class ATrainHero implements Hero {
 	}
 
 	@Override
-	public void applyPassives(Player player) {
-		PASSIVES.apply(player);
+	public AttributeModifierSet passiveAttributes() {
+		return PASSIVES;
 	}
 
 	@Override

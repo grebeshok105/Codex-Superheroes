@@ -15,6 +15,8 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,6 +47,28 @@ public final class InvincibleHero implements Hero {
 	);
 
 	private static final HeroHudConfig HUD = new HeroHudConfig("hud.superheroes.energy.viltrumite_power", HeroHudConfig.EnergyIconType.FIST, true, "GUARDIAN'S BREAKER");
+
+	private static final ResourceLocation ARMOR_ID = ModId.of("modifiers/invincible/armor");
+	private static final ResourceLocation TOUGHNESS_ID = ModId.of("modifiers/invincible/toughness");
+	private static final ResourceLocation DAMAGE_ID = ModId.of("modifiers/invincible/damage");
+	private static final ResourceLocation SPEED_ID = ModId.of("modifiers/invincible/speed");
+	private static final ResourceLocation HP_ID = ModId.of("modifiers/invincible/max_health");
+	private static final ResourceLocation KNOCKBACK_ID = ModId.of("modifiers/invincible/knockback_resistance");
+	private static final ResourceLocation ATTACK_SPEED_ID = ModId.of("modifiers/invincible/attack_speed");
+	private static final ResourceLocation JUMP_ID = ModId.of("modifiers/invincible/jump_strength");
+	private static final ResourceLocation STEP_ID = ModId.of("modifiers/invincible/step_height");
+
+	private static final AttributeModifierSet PASSIVES = AttributeModifierSet.builder()
+			.add(Attributes.ARMOR, ARMOR_ID, 26.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ARMOR_TOUGHNESS, TOUGHNESS_ID, 12.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ATTACK_DAMAGE, DAMAGE_ID, 12.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.MOVEMENT_SPEED, SPEED_ID, 0.25, AttributeModifier.Operation.ADD_MULTIPLIED_BASE)
+			.add(Attributes.MAX_HEALTH, HP_ID, 40.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.KNOCKBACK_RESISTANCE, KNOCKBACK_ID, 1.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ATTACK_SPEED, ATTACK_SPEED_ID, 0.6, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.JUMP_STRENGTH, JUMP_ID, 0.3, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.STEP_HEIGHT, STEP_ID, 0.5, AttributeModifier.Operation.ADD_VALUE)
+			.build();
 
 	@Override
 	public ResourceLocation getId() {
@@ -90,8 +114,13 @@ public final class InvincibleHero implements Hero {
 	}
 
 	@Override
+	public AttributeModifierSet passiveAttributes() {
+		return PASSIVES;
+	}
+
+	@Override
 	public void applyPassives(Player player) {
-		HeroAttributes.INVINCIBLE.apply(player);
+		PASSIVES.apply(player);
 		player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, -1, 0, true, false, true));
 		player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, -1, 0, true, false, true));
 		player.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, -1, 0, true, false, true));
@@ -99,7 +128,7 @@ public final class InvincibleHero implements Hero {
 
 	@Override
 	public void removePassives(Player player) {
-		HeroAttributes.INVINCIBLE.remove(player);
+		PASSIVES.remove(player);
 		player.removeEffect(MobEffects.REGENERATION);
 		player.removeEffect(MobEffects.DAMAGE_RESISTANCE);
 		player.removeEffect(MobEffects.FIRE_RESISTANCE);

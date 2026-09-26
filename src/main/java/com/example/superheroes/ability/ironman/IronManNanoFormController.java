@@ -1,7 +1,7 @@
 package com.example.superheroes.ability.ironman;
 
 import com.example.superheroes.attachment.ModAttachments;
-import com.example.superheroes.hero.HeroAttributes;
+import com.example.superheroes.hero.AbilityScopedModifiers;
 import com.example.superheroes.network.NanoFormS2CPayload;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -65,8 +65,8 @@ public final class IronManNanoFormController {
 
 	private static void applyFormAttributes(ServerPlayer player, IronManNanoForm form) {
 		switch (form) {
-			case BLADE -> HeroAttributes.NANO_BLADE.apply(player);
-			case SHIELD -> HeroAttributes.NANO_SHIELD.apply(player);
+			case BLADE -> AbilityScopedModifiers.NANO_BLADE.apply(player);
+			case SHIELD -> AbilityScopedModifiers.NANO_SHIELD.apply(player);
 			default -> {
 			}
 		}
@@ -74,8 +74,8 @@ public final class IronManNanoFormController {
 
 	private static void removeFormAttributes(ServerPlayer player, IronManNanoForm form) {
 		switch (form) {
-			case BLADE -> HeroAttributes.NANO_BLADE.remove(player);
-			case SHIELD -> HeroAttributes.NANO_SHIELD.remove(player);
+			case BLADE -> AbilityScopedModifiers.NANO_BLADE.remove(player);
+			case SHIELD -> AbilityScopedModifiers.NANO_SHIELD.remove(player);
 			default -> {
 			}
 		}

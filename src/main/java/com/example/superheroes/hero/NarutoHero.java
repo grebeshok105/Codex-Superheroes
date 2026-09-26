@@ -6,6 +6,8 @@ import com.example.superheroes.resource.ResourceKind;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 
 import java.util.List;
@@ -35,6 +37,28 @@ public final class NarutoHero implements Hero {
 			0x55FFE070
 	);
 	private static final HeroHudConfig HUD = new HeroHudConfig("hud.superheroes.energy.chakra", HeroHudConfig.EnergyIconType.SPIRAL, true, "BIJUUDAMA");
+
+	private static final ResourceLocation ARMOR_ID = ModId.of("modifiers/naruto/armor");
+	private static final ResourceLocation TOUGHNESS_ID = ModId.of("modifiers/naruto/toughness");
+	private static final ResourceLocation DAMAGE_ID = ModId.of("modifiers/naruto/damage");
+	private static final ResourceLocation SPEED_ID = ModId.of("modifiers/naruto/speed");
+	private static final ResourceLocation ATTACK_SPEED_ID = ModId.of("modifiers/naruto/attack_speed");
+	private static final ResourceLocation HP_ID = ModId.of("modifiers/naruto/max_health");
+	private static final ResourceLocation KNOCKBACK_ID = ModId.of("modifiers/naruto/knockback_resistance");
+	private static final ResourceLocation JUMP_ID = ModId.of("modifiers/naruto/jump_strength");
+	private static final ResourceLocation STEP_ID = ModId.of("modifiers/naruto/step_height");
+
+	private static final AttributeModifierSet PASSIVES = AttributeModifierSet.builder()
+			.add(Attributes.ARMOR, ARMOR_ID, 22.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ARMOR_TOUGHNESS, TOUGHNESS_ID, 8.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ATTACK_DAMAGE, DAMAGE_ID, 12.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.MOVEMENT_SPEED, SPEED_ID, 0.55, AttributeModifier.Operation.ADD_MULTIPLIED_BASE)
+			.add(Attributes.ATTACK_SPEED, ATTACK_SPEED_ID, 3.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.MAX_HEALTH, HP_ID, 40.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.KNOCKBACK_RESISTANCE, KNOCKBACK_ID, 0.7, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.JUMP_STRENGTH, JUMP_ID, 0.6, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.STEP_HEIGHT, STEP_ID, 1.0, AttributeModifier.Operation.ADD_VALUE)
+			.build();
 
 	@Override
 	public ResourceLocation getId() {
@@ -83,13 +107,8 @@ public final class NarutoHero implements Hero {
 	}
 
 	@Override
-	public void applyPassives(Player player) {
-		HeroAttributes.NARUTO.apply(player);
-	}
-
-	@Override
-	public void removePassives(Player player) {
-		HeroAttributes.NARUTO.remove(player);
+	public AttributeModifierSet passiveAttributes() {
+		return PASSIVES;
 	}
 
 	@Override

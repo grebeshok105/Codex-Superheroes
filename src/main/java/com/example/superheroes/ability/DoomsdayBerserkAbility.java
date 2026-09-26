@@ -1,6 +1,6 @@
 package com.example.superheroes.ability;
 
-import com.example.superheroes.hero.HeroAttributes;
+import com.example.superheroes.hero.AbilityScopedModifiers;
 import net.minecraft.core.Holder;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
@@ -62,18 +62,18 @@ public final class DoomsdayBerserkAbility implements Ability {
 	}
 
 	private static void applyBuff(ServerPlayer player) {
-		modify(player, Attributes.ATTACK_DAMAGE, HeroAttributes.DOOMSDAY_BERSERK_DAMAGE,
+		modify(player, Attributes.ATTACK_DAMAGE, AbilityScopedModifiers.DOOMSDAY_BERSERK_DAMAGE,
 				12.0, AttributeModifier.Operation.ADD_VALUE);
-		modify(player, Attributes.ARMOR, HeroAttributes.DOOMSDAY_BERSERK_ARMOR,
+		modify(player, Attributes.ARMOR, AbilityScopedModifiers.DOOMSDAY_BERSERK_ARMOR,
 				-15.0, AttributeModifier.Operation.ADD_VALUE);
-		modify(player, Attributes.MOVEMENT_SPEED, HeroAttributes.DOOMSDAY_BERSERK_SPEED,
+		modify(player, Attributes.MOVEMENT_SPEED, AbilityScopedModifiers.DOOMSDAY_BERSERK_SPEED,
 				0.15, AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
 	}
 
 	public static void clearBuff(ServerPlayer player) {
-		remove(player, Attributes.ATTACK_DAMAGE, HeroAttributes.DOOMSDAY_BERSERK_DAMAGE);
-		remove(player, Attributes.ARMOR, HeroAttributes.DOOMSDAY_BERSERK_ARMOR);
-		remove(player, Attributes.MOVEMENT_SPEED, HeroAttributes.DOOMSDAY_BERSERK_SPEED);
+		remove(player, Attributes.ATTACK_DAMAGE, AbilityScopedModifiers.DOOMSDAY_BERSERK_DAMAGE);
+		remove(player, Attributes.ARMOR, AbilityScopedModifiers.DOOMSDAY_BERSERK_ARMOR);
+		remove(player, Attributes.MOVEMENT_SPEED, AbilityScopedModifiers.DOOMSDAY_BERSERK_SPEED);
 	}
 
 	private static void modify(ServerPlayer player, Holder<Attribute> attribute,

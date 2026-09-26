@@ -2,9 +2,9 @@ package com.example.superheroes.ability;
 
 import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.effect.RaidenState;
-import com.example.superheroes.hero.HeroAttributes;
 import com.example.superheroes.item.MusouNoHitotachiItem;
 import com.example.superheroes.particle.ModParticles;
+import com.example.superheroes.hero.AbilityScopedModifiers;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -67,7 +67,7 @@ public final class RaidenMusouShinsetsuAbility implements Ability {
 		player.setAttached(ModAttachments.RAIDEN_STATE,
 				state.withBurstExpireTick(expireAt).withBurstFinalSlashTick(expireAt));
 
-		HeroAttributes.RAIDEN_BURST.apply(player);
+		AbilityScopedModifiers.RAIDEN_BURST.apply(player);
 		AbilityCooldowns.setCooldownTicks(player, getId(), COOLDOWN_TICKS);
 
 		ServerLevel level = player.serverLevel();
