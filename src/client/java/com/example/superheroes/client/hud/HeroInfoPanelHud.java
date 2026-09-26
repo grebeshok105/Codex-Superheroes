@@ -1,7 +1,7 @@
 package com.example.superheroes.client.hud;
 
 import com.example.superheroes.client.ClientAbilityCooldowns;
-import com.example.superheroes.client.ClientAbilityFilter;
+import com.example.superheroes.client.ClientAbilityVisibility;
 import com.example.superheroes.client.ClientHeroState;
 import com.example.superheroes.client.core.hud.HudBounds;
 import com.example.superheroes.client.core.hud.MovableHud;
@@ -383,7 +383,7 @@ public final class HeroInfoPanelHud implements MovableHud {
 	 */
 	private static void drawReadyList(GuiGraphics g, Minecraft mc, int x, int y, int w,
 			ResourceLocation heroId, HeroHudConfig hudConfig, HeroTheme theme) {
-		List<ResourceLocation> abilities = ClientAbilityFilter.visibleFor(ClientHeroState.abilities(), heroId);
+		List<ResourceLocation> abilities = ClientAbilityVisibility.visibleFor(ClientHeroState.abilities());
 		if (abilities.isEmpty()) {
 			return;
 		}

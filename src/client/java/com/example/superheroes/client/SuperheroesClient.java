@@ -224,7 +224,7 @@ public class SuperheroesClient implements ClientModInitializer {
 				// Ability keys always fire; 3/4/5 also switch hotbar slots — intended.
 				if (RawKeys.pressed(ModKeys.ABILITY_SLOTS[i])
 						&& client.player != null && ClientHeroState.data().hasHero()) {
-					List<ResourceLocation> abilities = ClientAbilityFilter.visible();
+					List<ResourceLocation> abilities = ClientAbilityVisibility.visible();
 					if (i < abilities.size()) {
 						ClientPlayNetworking.send(new ActivateAbilityC2SPayload(abilities.get(i)));
 					}

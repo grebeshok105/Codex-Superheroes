@@ -2,6 +2,7 @@ package com.example.superheroes.hero;
 
 import com.example.superheroes.ModId;
 import com.example.superheroes.ability.AbilityIds;
+import com.example.superheroes.core.ability.AbilityAvailability;
 import com.example.superheroes.resource.ResourceKind;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityDimensions;
@@ -151,6 +152,15 @@ public final class PandoraHero implements Hero {
 			com.example.superheroes.transform.HeroData data, ResourceLocation abilityId) {
 		return !isDimensionOnly(abilityId)
 				|| com.example.superheroes.effect.MirrorDimensionController.hasActiveHouse(player);
+	}
+
+	@Override
+	public AbilityAvailability.Visibility visibility(net.minecraft.server.level.ServerPlayer player,
+			ResourceLocation abilityId) {
+		return (!isDimensionOnly(abilityId)
+				|| com.example.superheroes.effect.MirrorDimensionController.hasActiveHouse(player))
+				? AbilityAvailability.Visibility.AVAILABLE
+				: AbilityAvailability.Visibility.HIDDEN;
 	}
 
 	@Override

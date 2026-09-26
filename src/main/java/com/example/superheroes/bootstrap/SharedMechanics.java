@@ -54,5 +54,8 @@ public final class SharedMechanics {
 		HeroMeleeImpactController.register(ctx);
 		ctx.ticks().player(HeroLandingTracker::tickPlayer);
 		ctx.ticks().player(FlightController::tickPlayer);
+		// C4: recompute the synced ability_availability attachment after all hero ticks
+		// (writes only on change) — was the last row of the old PLAYERS table.
+		ctx.ticks().player(com.example.superheroes.ability.AbilityAvailabilitySync::tickPlayer);
 	}
 }

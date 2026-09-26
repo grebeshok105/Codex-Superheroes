@@ -2,6 +2,7 @@ package com.example.superheroes.hero;
 
 import com.example.superheroes.ModId;
 import com.example.superheroes.ability.AbilityIds;
+import com.example.superheroes.core.ability.AbilityAvailability;
 import com.example.superheroes.physics.ShockwaveUtil;
 import com.example.superheroes.resource.ResourceKind;
 import net.minecraft.core.particles.ParticleTypes;
@@ -87,6 +88,18 @@ public final class RegulusHero implements Hero {
 	@Override
 	public List<ResourceLocation> getAbilities() {
 		return List.of(AbilityIds.LION_HEART, AbilityIds.MANIA_OF_GREED, AbilityIds.GREEDS_EMBRACE, AbilityIds.LION_ROAR, AbilityIds.COUNTER_STRIKE);
+	}
+
+	@Override
+	public AbilityAvailability.Visibility visibility(ServerPlayer player, ResourceLocation abilityId) {
+		// COUNTER_STRIKE shows only during Regulus madness — the old client filter's one
+		// rule not keyed on the active hero, moved to its hero now that the server decides.
+		// Same flag CounterStrikeAbility.canActivate reads (NOT the Homelander MobEffect).
+		boolean madness = player.getAttachedOrCreate(
+				com.example.superheroes.attachment.ModAttachments.REGULUS_MADNESS).madness();
+		return !AbilityIds.COUNTER_STRIKE.equals(abilityId) || madness
+				? AbilityAvailability.Visibility.AVAILABLE
+				: AbilityAvailability.Visibility.HIDDEN;
 	}
 
 	@Override

@@ -321,3 +321,15 @@
 - `LightningBoltAccessor` → `client/mixin/` (client mixin config); `SuperheroesClient`/`ModKeys` carry zero hero-keyed registrations.
 - Deferred to CL4 per plan: `IronManNanoFormLayer`/`NanoSuitUpLayer` (player feature layers = CL4 scope).
 - Gate: `qualityGate` green, 73/73 gametests.
+>>>>>>> origin/main
+
+
+## Architecture migration — stage C4 (plan 04)
+
+- New `core/ability/AbilityAvailability` (leaf package): `record(Map<ResourceLocation, Visibility>)`, `enum Visibility {AVAILABLE,LOCKED,HIDDEN}`, CODEC + STREAM_CODEC, `visibilityOf` default AVAILABLE. Sync task in `ability.AbilityAvailabilitySync` (would create `core.ability ↔ hero` cycle if placed in core).
+- `ModAttachments.ABILITY_AVAILABILITY` — non-persistent, `syncWith(STREAM_CODEC, targetOnly())` (PUBLIC_HERO pattern).
+- `Hero.visibility(ServerPlayer, ResourceLocation)` default AVAILABLE; impls: Doomsday (isAbilityUnlocked/DOOMSDAY_PROGRESS), Thanos (stones via GauntletStateController), Pandora (hasActiveHouse), Rem (demonism), Regulus (COUNTER_STRIKE hero-scoped). Vanity-strip → all HIDDEN in the sync task.
+- `C/ClientAbilityVisibility` reads the attachment (absent = all visible, matches old pre-sync behavior); `ClientAbilityFilter` + client tier tables deleted; 6 consumers rewired (AbilityBarHud, RadialMenuHud, AbilitiesTooltipHud, HeroInfoPanelHud, BindingsScreen, SuperheroesClient key dispatch).
+- Sync dispatcher: initially the tail of the core tick table; after merging main post-D2b-1 it registers via `SharedMechanics.registerPost` (runs after all module registers) — identical last-position in PLAYERS order.
+- GameTests +6: tier1 → HIDDEN|LOCKED, tier-up → AVAILABLE, write-on-change.
+||||||| 538416f

@@ -1,5 +1,6 @@
 package com.example.superheroes.hero;
 
+import com.example.superheroes.core.ability.AbilityAvailability;
 import com.example.superheroes.resource.ResourceKind;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -108,6 +109,17 @@ public interface Hero {
 
 	/** Feedback when {@link #canUseAbility} denied activation (message/sound). */
 	default void onAbilityDenied(ServerPlayer player, ResourceLocation abilityId) {
+	}
+
+	/**
+	 * Server-side visibility of {@code abilityId} on this player's HUD, synced to the owner
+	 * through the {@code ability_availability} attachment (stage C4 — the hook that replaced
+	 * the deleted client-side filter). Default {@code AVAILABLE}; heroes hiding abilities
+	 * behind progression (Doomsday tiers, Thanos stones, Pandora's house, Rem's demonism,
+	 * Regulus's madness) return {@code HIDDEN}/{@code LOCKED} instead.
+	 */
+	default AbilityAvailability.Visibility visibility(ServerPlayer player, ResourceLocation abilityId) {
+		return AbilityAvailability.Visibility.AVAILABLE;
 	}
 
 	/**
