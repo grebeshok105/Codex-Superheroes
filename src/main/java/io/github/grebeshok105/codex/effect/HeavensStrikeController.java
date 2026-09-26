@@ -37,7 +37,6 @@ public final class HeavensStrikeController {
 
 	public record Variant(int depth, int radius, float shakeIntensity, float damage,
 	                      float pitch, double pillarRadius, double pillarHeight) {
-		public static final Variant REINHARD = new Variant(15, 7, 6.0f, 1500f, 0.55f, 1.6, 90.0);
 		public static final Variant RAIDEN = new Variant(8, 5, 3.5f, 60f, 0.78f, 0.9, 65.0);
 	}
 
