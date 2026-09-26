@@ -22,28 +22,25 @@ public final class Stage15GameTests implements FabricGameTest {
 	public void hordePausesWithoutAudience(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		ServerLevel level = helper.getLevel();
-		// Structures sit within earshot of each other — players leaked by an earlier
-		// test (e.g. one that failed mid-body) would count as audience here.
-		for (ServerPlayer other : new java.util.ArrayList<>(level.getServer().getPlayerList().getPlayers())) {
-			if (other != player) {
-				TestPlayers.leave(other);
-			}
-		}
-		Vec3 center = helper.absoluteVec(new Vec3(1.5, 2.0, 1.5));
-		// Far enough that the horde has no audience (> 96 blocks).
-		player.teleportTo(center.x + 200, center.y, center.z + 200);
+		// The audience check is a 3D radius around the horde centre — raise the centre
+		// 200 blocks so no player of any concurrently running test can count as audience.
+		// (Disconnecting other players would kill their tests mid-flight.)
+		Vec3 center = helper.absoluteVec(new Vec3(1.5, 2.0, 1.5)).add(0, 200, 0);
 		HordeManager.startHorde(level, center, player);
 
 		helper.runAfterDelay(100, () -> {
 			helper.assertTrue(HordeManager.liveMobCount(level) == 0,
 					"with nobody around the horde must not start waves");
 
-			// Player walks into the arena — the horde resumes on its own.
-			player.teleportTo(center.x, center.y + 1, center.z);
+			// Player flies up to the arena — the horde resumes on its own.
+			net.minecraft.core.BlockPos perch = net.minecraft.core.BlockPos.containing(center.x, center.y - 1, center.z);
+			level.setBlockAndUpdate(perch, net.minecraft.world.level.block.Blocks.STONE.defaultBlockState());
+			player.teleportTo(center.x, center.y, center.z);
 			helper.runAfterDelay(100, () -> {
 				helper.assertTrue(HordeManager.liveMobCount(level) > 0,
 						"an audience near the centre resumes the horde");
 				HordeManager.stopHorde(level);
+				level.setBlockAndUpdate(perch, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState());
 				TestPlayers.leave(player);
 				helper.succeed();
 			});
