@@ -5,8 +5,11 @@ import com.example.superheroes.client.core.hud.MovableHud;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
 
 import java.util.function.Consumer;
 
@@ -22,4 +25,7 @@ public interface HeroClientContext {
 	 * hero. The mapping's name must stay the one already in players' options.txt.
 	 */
 	KeyMapping actionKey(KeyMapping mapping, Consumer<Minecraft> onPress);
+
+	/** Registers the renderer of an entity type owned by this module's hero. */
+	<T extends Entity> void entityRenderer(EntityType<T> type, EntityRendererProvider<T> provider);
 }

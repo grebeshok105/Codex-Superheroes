@@ -21,7 +21,8 @@
 		"PandoraCinematicMouseTurnMixin",
 		"PandoraCinematicMousePressMixin",
 		"PandoraCinematicKeyboardMixin",
-		"PandoraCinematicInputFreezeMixin"
+		"PandoraCinematicInputFreezeMixin",
+		"LightningBoltAccessor"
 	],
 	"injectors": {
 		"defaultRequire": 1

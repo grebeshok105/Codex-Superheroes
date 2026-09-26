@@ -1,7 +1,10 @@
 package com.example.superheroes.client.hero.pandora;
 
+import com.example.superheroes.ModId;
 import com.example.superheroes.client.core.module.HeroClientContext;
 import com.example.superheroes.client.core.module.HeroClientModule;
+import com.example.superheroes.client.hud.MirrorWarpFlashHud;
+import com.example.superheroes.client.hud.PandoraDeathTitleHud;
 import com.example.superheroes.hero.PandoraHero;
 import com.example.superheroes.network.MirrorDimensionS2CPayload;
 import com.example.superheroes.network.PandoraCinematicS2CPayload;
@@ -16,6 +19,8 @@ public record PandoraClientModule() implements HeroClientModule {
 
 	@Override
 	public void register(HeroClientContext ctx) {
+		ctx.hud(1900, ModId.of("pandora_death_title"), PandoraDeathTitleHud::render);
+		ctx.hud(2400, ModId.of("mirror_warp_flash"), MirrorWarpFlashHud::render);
 		ctx.receive(MirrorDimensionS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> {
 					switch (payload.action()) {
