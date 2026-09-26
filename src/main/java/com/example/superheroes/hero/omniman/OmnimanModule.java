@@ -23,6 +23,10 @@ public final class OmnimanModule implements HeroModule {
 		ctx.abilities().register(new OmnimanThinkMarkAbility());
 		ctx.abilities().register(new OmnimanWorldBreakerAbility());
 		OmnimanMomentumController.register(ctx);
+		ctx.lifecycle().onLeave(OmnimanThinkMarkAbility::clear);
+		ctx.lifecycle().onDeath(OmnimanThinkMarkAbility::clear);
+		ctx.lifecycle().onHeroClear(OmnimanThinkMarkAbility::clear);
+		ctx.lifecycle().onServerStopped(server -> OmnimanThinkMarkAbility.resetAll());
 		ctx.ticks().global(OmnimanMomentumController::serverTick);
 		ctx.ticks().player((server, p, data) -> OmnimanViltrumiteRushAbility.serverTick(p));
 		ctx.ticks().player((server, p, data) -> OmnimanThinkMarkAbility.serverTick(p));

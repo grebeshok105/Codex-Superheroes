@@ -29,7 +29,15 @@ final class TestPlayers {
 	 * hardcodes {@code isCreative() = true} and shares the name "test-mock-player").
 	 */
 	static ServerPlayer join(GameTestHelper helper, String name) {
-		com.mojang.authlib.GameProfile profile = new com.mojang.authlib.GameProfile(java.util.UUID.randomUUID(), name);
+		return join(helper, new com.mojang.authlib.GameProfile(java.util.UUID.randomUUID(), name));
+	}
+
+	/** Re-joins under the same profile (same UUID) — the real relog path. */
+	static ServerPlayer rejoin(GameTestHelper helper, ServerPlayer previous) {
+		return join(helper, previous.getGameProfile());
+	}
+
+	static ServerPlayer join(GameTestHelper helper, com.mojang.authlib.GameProfile profile) {
 		net.minecraft.server.network.CommonListenerCookie cookie =
 				net.minecraft.server.network.CommonListenerCookie.createInitial(profile, false);
 		ServerPlayer player = new ServerPlayer(helper.getLevel().getServer(), helper.getLevel(),

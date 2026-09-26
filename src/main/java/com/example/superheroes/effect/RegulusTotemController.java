@@ -57,6 +57,8 @@ public final class RegulusTotemController {
 					SoundEvents.TOTEM_USE, SoundSource.PLAYERS, 1f, 1f);
 			return false;
 		});
+
+		ctx.lifecycle().onHeroClear(p -> RegulusTotemController.clear(p.getUUID()));
 	}
 
 	public static void clear(UUID playerId) {

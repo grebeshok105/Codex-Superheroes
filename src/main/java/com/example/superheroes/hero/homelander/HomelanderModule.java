@@ -5,12 +5,15 @@ import com.example.superheroes.ability.HandClapAbility;
 import com.example.superheroes.ability.IronFistsAbility;
 import com.example.superheroes.ability.StunningRoarAbility;
 import com.example.superheroes.ability.XRayAbility;
+import com.example.superheroes.core.ability.AbilityDenial;
+import com.example.superheroes.core.ability.AbilityRules;
 import com.example.superheroes.core.module.HeroModule;
 import com.example.superheroes.core.module.HeroModuleContext;
 import com.example.superheroes.effect.HomelanderRegenController;
 import com.example.superheroes.effect.IronFistsController;
 import com.example.superheroes.effect.MadnessAftermathController;
 import com.example.superheroes.effect.MadnessFlightController;
+import com.example.superheroes.effect.ModEffects;
 import com.example.superheroes.effect.UraniumDefenseController;
 import com.example.superheroes.effect.UraniumOffhandController;
 import com.example.superheroes.hero.Hero;
@@ -40,5 +43,9 @@ public final class HomelanderModule implements HeroModule {
 		ctx.ticks().player(HomelanderRegenController::tickPlayer);
 		ctx.ticks().player(IronFistsController::tickPlayer);
 		ctx.ticks().player(UraniumOffhandController::tickPlayer);
+		// Homelander's own ability rules: his MADNESS_AFTERMATH blocks casting silently;
+		// while MADNESS (milk) is up his abilities are free. Order preserved.
+		AbilityRules.blocker((player, id) -> ModEffects.isAftermath(player) ? AbilityDenial.SILENT : null);
+		AbilityRules.freeCost(ModEffects::isMadness);
 	}
 }

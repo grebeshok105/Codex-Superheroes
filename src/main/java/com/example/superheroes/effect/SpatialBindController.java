@@ -1,5 +1,9 @@
 package com.example.superheroes.effect;
 
+import com.example.superheroes.lifecycle.LifecycleRegistrar;
+import com.example.superheroes.lifecycle.OwnedSessionMap;
+import com.example.superheroes.lifecycle.OwnedSessionMap.ClearOn;
+
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.MinecraftServer;
@@ -10,7 +14,7 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
 
-import java.util.HashMap;
+import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
@@ -36,7 +40,8 @@ public final class SpatialBindController {
 	/** Horizontal reach of the four ground anchors. */
 	private static final double GROUND_ANCHOR_OUT = 5.0;
 
-	private static final Map<UUID, Bound> BOUND = new HashMap<>();
+	private static final OwnedSessionMap<UUID, Bound> BOUND =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.of(ClearOn.LEAVE));
 
 	private SpatialBindController() {
 	}
@@ -55,7 +60,7 @@ public final class SpatialBindController {
 
 	/** Binds (roots) the given victim to their current spot on behalf of the caster. */
 	public static void bind(ServerPlayer caster, ServerPlayer victim) {
-		BOUND.put(victim.getUUID(), new Bound(caster.getUUID(), victim.position()));
+		BOUND.put(victim.getUUID(), victim.getUUID(), new Bound(caster.getUUID(), victim.position()));
 		// Visual/audio punch on the moment of binding.
 		ServerLevel level = victim.serverLevel();
 		level.sendParticles(ParticleTypes.CRIMSON_SPORE, victim.getX(), victim.getY() + 1.0, victim.getZ(),
@@ -74,24 +79,19 @@ public final class SpatialBindController {
 
 	/** Releases every victim bound by the given caster (House closed / Pandora gone). */
 	public static void releaseAllOf(UUID casterId) {
-		BOUND.values().removeIf(b -> b.caster.equals(casterId));
-	}
-
-	/** Lifecycle hook: a leaving victim's ropes fall away deterministically. */
-	public static void onPlayerGone(ServerPlayer player) {
-		BOUND.remove(player.getUUID());
-	}
-
-	/** World shutdown — no rope state may leak into the next world. */
-	public static void resetAll() {
-		BOUND.clear();
+		Iterator<Map.Entry<UUID, Bound>> it = BOUND.iterator();
+		while (it.hasNext()) {
+			if (it.next().getValue().caster.equals(casterId)) {
+				it.remove();
+			}
+		}
 	}
 
 	public static void tick(MinecraftServer server) {
-		if (BOUND.isEmpty()) {
+		if (BOUND.size() == 0) {
 			return;
 		}
-		Iterator<Map.Entry<UUID, Bound>> it = BOUND.entrySet().iterator();
+		Iterator<Map.Entry<UUID, Bound>> it = BOUND.iterator();
 		while (it.hasNext()) {
 			Map.Entry<UUID, Bound> e = it.next();
 			ServerPlayer victim = server.getPlayerList().getPlayer(e.getKey());

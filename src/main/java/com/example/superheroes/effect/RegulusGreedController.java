@@ -57,6 +57,10 @@ public final class RegulusGreedController {
 			st.queuedDamage.add(new QueuedDamage(source, amount));
 			return false;
 		});
+
+		ctx.lifecycle().onLeave(RegulusGreedController::onPlayerGone);
+		ctx.lifecycle().onDeath(RegulusGreedController::onPlayerGone);
+		ctx.lifecycle().onServerStopped(server -> RegulusGreedController.resetAll());
 	}
 
 	public static boolean isFrozen(LivingEntity entity) {

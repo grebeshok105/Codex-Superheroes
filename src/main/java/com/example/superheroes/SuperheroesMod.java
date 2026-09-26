@@ -2,8 +2,6 @@ package com.example.superheroes;
 
 import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.command.SuperheroesCommands;
-import com.example.superheroes.core.ability.AbilityDenial;
-import com.example.superheroes.core.ability.AbilityRules;
 import com.example.superheroes.effect.ModEffects;
 import com.example.superheroes.item.ModItemGroups;
 import com.example.superheroes.item.ModItems;
@@ -11,15 +9,12 @@ import com.example.superheroes.lifecycle.EntityControlLock;
 import com.example.superheroes.lifecycle.PlayerLifecycle;
 import com.example.superheroes.network.ModNetworking;
 import com.example.superheroes.particle.ModParticles;
-import com.example.superheroes.resource.ResourceController;
 import com.example.superheroes.sound.ModSounds;
 import com.example.superheroes.transform.HeroDataStore;
 import com.example.superheroes.transform.HeroTransformService;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 
-import net.minecraft.ChatFormatting;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,15 +28,7 @@ public class SuperheroesMod implements ModInitializer {
 		EntityControlLock.init();
 		PlayerLifecycle.init();
 		com.example.superheroes.lifecycle.PassiveReconciler.init();
-		registerPlayerLifecycle();
 		ModEffects.init();
-		// Owned by the heroes whose effects they are; moved into their modules in D2b.
-		AbilityRules.blocker((player, id) -> ModEffects.isAftermath(player) ? AbilityDenial.SILENT : null);
-		AbilityRules.blocker((player, id) -> player.hasEffect(ModEffects.DISABLED_ABILITIES)
-				? AbilityDenial.of(Component.translatable("ability.superheroes.disabled_by_snap").withStyle(ChatFormatting.DARK_PURPLE)) : null);
-		AbilityRules.blocker((player, id) -> player.hasEffect(ModEffects.VANITY_STRIPPED)
-				? AbilityDenial.of(Component.translatable("ability.superheroes.vanity_stripped").withStyle(ChatFormatting.DARK_PURPLE)) : null);
-		AbilityRules.freeCost(ModEffects::isMadness);
 		com.example.superheroes.bootstrap.HeroModules.bootstrap(com.example.superheroes.core.module.CoreModuleContext.INSTANCE);
 		com.example.superheroes.entity.ModEntities.init();
 		com.example.superheroes.horde.entity.HordeEntities.init();
@@ -54,21 +41,10 @@ public class SuperheroesMod implements ModInitializer {
 		HeroDataStore.init();
 		SuperheroesCommands.init();
 
-		registerTickHandlers();
 		com.example.superheroes.lifecycle.HeroTickDispatcher.init();
 
-		ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> {
-			// Pandora never dies — lethal hits trigger her cinematic instead (#7).
-			return com.example.superheroes.effect.PandoraDeathController.allowDamage(entity, source, amount);
-		});
-
-		ServerLivingEntityEvents.ALLOW_DEATH.register((entity, source, amount) -> {
-			if (entity instanceof ServerPlayer serverPlayer) {
-				return com.example.superheroes.effect.PandoraDeathController.allowDeath(serverPlayer, source);
-			}
-			return true;
-		});
-
+		// Global (not hero-owned) death handling: a dead hero untransforms — except Doomsday,
+		// whose death is handled by his own death-save pipeline (D2c will move this too).
 		ServerLivingEntityEvents.AFTER_DEATH.register((entity, source) -> {
 			if (entity instanceof ServerPlayer serverPlayer) {
 				com.example.superheroes.transform.HeroData data = serverPlayer
@@ -82,119 +58,5 @@ public class SuperheroesMod implements ModInitializer {
 		});
 
 		LOGGER.info("Superheroes mod initialized");
-	}
-
-	/**
-	 * Every controller cleanup routed through {@link PlayerLifecycle} — the single dispatch
-	 * point wired to server-thread events ({@code LEAVE} fires before the player is saved and
-	 * removed, unlike {@code DISCONNECT} which may run on the Netty thread).
-	 */
-	private static void registerPlayerLifecycle() {
-		// join — server thread; reconcile session-scoped state on the relogged entity.
-		PlayerLifecycle.onJoin(HeroTransformService::onPlayerJoin);
-		PlayerLifecycle.onJoin(HeroDataStore::syncPublicHero);
-
-		// hero clear — hero-scoped session state dropped on swap/untransform/leave/death.
-		// Ordering is visible here; add new clears to this table (audit debt 1).
-		com.example.superheroes.lifecycle.HeroLifecycle.onClear(p -> com.example.superheroes.effect.UnibeamController.clearState(p.getUUID()));
-		com.example.superheroes.lifecycle.HeroLifecycle.onClear(p -> com.example.superheroes.effect.RegulusTotemController.clear(p.getUUID()));
-		com.example.superheroes.lifecycle.HeroLifecycle.onClear(com.example.superheroes.effect.RegulusMadnessController::clearMadness);
-		com.example.superheroes.lifecycle.HeroLifecycle.onClear(com.example.superheroes.effect.RemDemonismController::clear);
-		com.example.superheroes.lifecycle.HeroLifecycle.onClear(com.example.superheroes.effect.PandoraDeathController::resetOnHeroTaken);
-		com.example.superheroes.lifecycle.HeroLifecycle.onClear(com.example.superheroes.effect.DoomGripController::clear);
-		com.example.superheroes.lifecycle.HeroLifecycle.onClear(com.example.superheroes.ability.OmnimanThinkMarkAbility::clear);
-		com.example.superheroes.lifecycle.HeroLifecycle.onClear(EntityControlLock::releaseOwnedBy);
-		com.example.superheroes.lifecycle.HeroLifecycle.onTransformed(com.example.superheroes.effect.HeroReactionController::onTransformed);
-		PlayerLifecycle.onJoin(com.example.superheroes.effect.BattleBeastCurseController::reapplyOnJoin);
-		PlayerLifecycle.onJoin(com.example.superheroes.effect.RegulusMadnessController::clearMadness);
-		PlayerLifecycle.onJoin(com.example.superheroes.ability.AbilityCooldowns::syncAll);
-
-		// leave — drop session-scoped state; never runs gameplay deactivate side-effects.
-		PlayerLifecycle.onLeave(HeroTransformService::onPlayerLeave);
-		PlayerLifecycle.onLeave(EntityControlLock::releaseOwnedBy);
-		PlayerLifecycle.onLeave(com.example.superheroes.effect.PandoraDeathController::onPlayerLeave);
-		PlayerLifecycle.onLeave(com.example.superheroes.effect.DoomGripController::clear);
-		PlayerLifecycle.onLeave(com.example.superheroes.ability.OmnimanThinkMarkAbility::clear);
-		PlayerLifecycle.onLeave(com.example.superheroes.effect.RegulusGreedController::onPlayerGone);
-		PlayerLifecycle.onLeave(com.example.superheroes.effect.RegulusMadnessController::clearMadness);
-		PlayerLifecycle.onLeave(p -> com.example.superheroes.effect.UnibeamController.clearState(p.getUUID()));
-		PlayerLifecycle.onLeave(p -> com.example.superheroes.effect.MonarchsDomainController.clear(p.getUUID()));
-		PlayerLifecycle.onLeave(com.example.superheroes.ability.RepulsorChargeController::reset);
-		PlayerLifecycle.onLeave(com.example.superheroes.ability.ChargeTackleAbility::clear);
-		PlayerLifecycle.onLeave(com.example.superheroes.ability.ViltrumiteChargeAbility::clear);
-		PlayerLifecycle.onLeave(com.example.superheroes.ability.OmnimanViltrumiteRushAbility::clear);
-		PlayerLifecycle.onLeave(com.example.superheroes.ability.GokuKamehamehaAbility::clear);
-		PlayerLifecycle.onLeave(com.example.superheroes.ability.GokuSpiritBombAbility::clear);
-		PlayerLifecycle.onLeave(com.example.superheroes.ability.NarutoRasenganAbility::clear);
-		PlayerLifecycle.onLeave(com.example.superheroes.ability.NarutoOodamaRasenganAbility::clear);
-		PlayerLifecycle.onLeave(com.example.superheroes.ability.NarutoRasenshurikenAbility::clear);
-		PlayerLifecycle.onLeave(com.example.superheroes.effect.MirrorDimensionController::onPlayerGone);
-		PlayerLifecycle.onLeave(com.example.superheroes.effect.SpatialBindController::onPlayerGone);
-
-		// death — charge/lock/session state must not outlive the entity (audit B17).
-		PlayerLifecycle.onDeath(EntityControlLock::releaseOwnedBy);
-		PlayerLifecycle.onDeath(com.example.superheroes.effect.DoomGripController::clear);
-		PlayerLifecycle.onDeath(com.example.superheroes.ability.OmnimanThinkMarkAbility::clear);
-		PlayerLifecycle.onDeath(com.example.superheroes.effect.RegulusGreedController::onPlayerGone);
-		PlayerLifecycle.onDeath(com.example.superheroes.effect.RegulusMadnessController::clearMadness);
-		PlayerLifecycle.onDeath(p -> com.example.superheroes.effect.UnibeamController.clearState(p.getUUID()));
-		PlayerLifecycle.onDeath(p -> com.example.superheroes.effect.MonarchsDomainController.clear(p.getUUID()));
-		PlayerLifecycle.onDeath(com.example.superheroes.ability.RepulsorChargeController::reset);
-		PlayerLifecycle.onDeath(com.example.superheroes.ability.ChargeTackleAbility::clear);
-		PlayerLifecycle.onDeath(com.example.superheroes.ability.ViltrumiteChargeAbility::clear);
-		PlayerLifecycle.onDeath(com.example.superheroes.ability.OmnimanViltrumiteRushAbility::clear);
-		PlayerLifecycle.onDeath(com.example.superheroes.ability.GokuKamehamehaAbility::clear);
-		PlayerLifecycle.onDeath(com.example.superheroes.ability.GokuSpiritBombAbility::clear);
-		PlayerLifecycle.onDeath(com.example.superheroes.ability.NarutoRasenganAbility::clear);
-		PlayerLifecycle.onDeath(com.example.superheroes.ability.NarutoOodamaRasenganAbility::clear);
-		PlayerLifecycle.onDeath(com.example.superheroes.ability.NarutoRasenshurikenAbility::clear);
-		PlayerLifecycle.onDeath(com.example.superheroes.ability.AbilityCooldowns::clearAndSync);
-
-		// respawn — reconcile the fresh entity with state that outlives death.
-		PlayerLifecycle.onRespawn(HeroTransformService::onPlayerRespawn);
-		PlayerLifecycle.onRespawn(com.example.superheroes.effect.RegulusMadnessController::clearMadness);
-
-		// world shutdown — static session state must not leak into a new world (audit B8).
-		PlayerLifecycle.onServerStopped(server -> {
-			com.example.superheroes.horde.HordeManager.resetAll();
-			com.example.superheroes.effect.SungJinwooController.resetAll();
-			com.example.superheroes.effect.MonarchsDomainController.resetAll();
-			com.example.superheroes.resource.EnergyLocks.resetAll();
-			com.example.superheroes.effect.RemDemonismController.resetAll();
-			com.example.superheroes.effect.UnibeamController.resetAll();
-			com.example.superheroes.effect.RegulusGreedController.resetAll();
-			com.example.superheroes.effect.RegulusMadnessController.resetAll();
-			com.example.superheroes.effect.DoomGripController.resetAll();
-			com.example.superheroes.ability.OmnimanThinkMarkAbility.resetAll();
-			com.example.superheroes.effect.BattleBeastCurseController.resetAll();
-			com.example.superheroes.effect.PandoraDeathController.resetAll();
-			com.example.superheroes.ability.RepulsorChargeController.resetAll();
-			com.example.superheroes.ability.ChargeTackleAbility.resetAll();
-			com.example.superheroes.ability.ViltrumiteChargeAbility.resetAll();
-			com.example.superheroes.ability.OmnimanViltrumiteRushAbility.resetAll();
-			com.example.superheroes.ability.GokuKamehamehaAbility.resetAll();
-			com.example.superheroes.ability.GokuSpiritBombAbility.resetAll();
-			com.example.superheroes.ability.NarutoRasenganAbility.resetAll();
-			com.example.superheroes.ability.NarutoOodamaRasenganAbility.resetAll();
-			com.example.superheroes.ability.NarutoRasenshurikenAbility.resetAll();
-			com.example.superheroes.effect.MirrorDimensionController.resetAll();
-			com.example.superheroes.effect.SpatialBindController.resetAll();
-		});
-	}
-
-	/**
-	 * Tick wiring for {@link com.example.superheroes.lifecycle.HeroTickDispatcher} — the
-	 * single {@code END_SERVER_TICK} registration. Phase order is GLOBAL → LEVELS →
-	 * PLAYERS → ABILITY_ACTIVE; within a phase tasks run in registration order, so this
-	 * table preserves the ordering the old inline lambda had (audit debt 3).
-	 */
-	private static void registerTickHandlers() {
-		// --- audit debt 3 remainder: controllers migrated from self-registered
-		// ServerTickEvents onto HeroTickDispatcher; order mirrors init() order.
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onGlobalTick(com.example.superheroes.lifecycle.PassiveReconciler::serverTick);
-
-		com.example.superheroes.lifecycle.HeroTickDispatcher
-				.onPlayerTick((server, p, data) -> com.example.superheroes.resource.ResourceController.tick(p));
 	}
 }

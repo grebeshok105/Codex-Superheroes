@@ -3,6 +3,9 @@ package com.example.superheroes.ability;
 import com.example.superheroes.combat.TargetFilters;
 import com.example.superheroes.damage.ModDamageTypes;
 import com.example.superheroes.effect.GokuKiStackController;
+import com.example.superheroes.lifecycle.LifecycleRegistrar;
+import com.example.superheroes.lifecycle.OwnedSessionMap;
+import com.example.superheroes.lifecycle.OwnedSessionMap.ClearOn;
 import com.example.superheroes.particle.ModParticles;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
@@ -18,10 +21,10 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
-import java.util.WeakHashMap;
 
 public final class GokuKamehamehaAbility implements Ability {
 	private static final int CHARGE_TICKS = 40;
@@ -31,7 +34,8 @@ public final class GokuKamehamehaAbility implements Ability {
 	private static final float BASE_DAMAGE = 14.0f;
 	private static final float STACK_BONUS = 0.5f;
 
-	private static final WeakHashMap<UUID, ActiveBeam> ACTIVE = new WeakHashMap<>();
+	private static final OwnedSessionMap<UUID, ActiveBeam> ACTIVE =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.of(ClearOn.LEAVE, ClearOn.DEATH));
 
 	@Override
 	public ResourceLocation getId() {
@@ -62,7 +66,7 @@ public final class GokuKamehamehaAbility implements Ability {
 	public boolean tryActivate(ServerPlayer player) {
 		int stacks = GokuKiStackController.consume(player);
 		float multiplier = 1.0f + STACK_BONUS * stacks;
-		ACTIVE.put(player.getUUID(), new ActiveBeam(CHARGE_TICKS + BEAM_TICKS, stacks, multiplier, new HashSet<>()));
+		ACTIVE.put(player.getUUID(), player.getUUID(), new ActiveBeam(CHARGE_TICKS + BEAM_TICKS, stacks, multiplier, new HashSet<>()));
 
 		ServerLevel level = player.serverLevel();
 		level.playSound(null, player.getX(), player.getY(), player.getZ(),
@@ -167,11 +171,6 @@ public final class GokuKamehamehaAbility implements Ability {
 	/** Drop an in-progress charge/rush without firing it (leave, death, untransform). */
 	public static void clear(ServerPlayer player) {
 		ACTIVE.remove(player.getUUID());
-	}
-
-	/** World shutdown — charge sessions die with the world. */
-	public static void resetAll() {
-		ACTIVE.clear();
 	}
 
 	private static final class ActiveBeam {

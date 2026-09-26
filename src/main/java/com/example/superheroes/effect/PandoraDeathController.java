@@ -1,12 +1,17 @@
 package com.example.superheroes.effect;
 
 import com.example.superheroes.attachment.ModAttachments;
+import com.example.superheroes.core.module.HeroModuleContext;
 import com.example.superheroes.hero.PandoraHero;
 import com.example.superheroes.lifecycle.ControlLockKind;
 import com.example.superheroes.lifecycle.EntityControlLock;
+import com.example.superheroes.lifecycle.LifecycleRegistrar;
+import com.example.superheroes.lifecycle.OwnedSessionMap;
+import com.example.superheroes.lifecycle.OwnedSessionMap.ClearOn;
 import com.example.superheroes.network.PandoraCinematicS2CPayload;
 import com.example.superheroes.sound.ModSounds;
 import com.example.superheroes.transform.HeroData;
+import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -17,10 +22,10 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Pandora — scripted «she never dies» revival cut-scene (reworked V4).
@@ -48,9 +53,27 @@ public final class PandoraDeathController {
 	/** HP threshold that triggers the cut-scene instead of death. */
 	private static final float TRIGGER_HP = 0.5f;
 
-	private static final Map<UUID, Session> ACTIVE = new ConcurrentHashMap<>();
+	private static final OwnedSessionMap<UUID, Session> ACTIVE =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.of(ClearOn.LEAVE));
 
 	private PandoraDeathController() {
+	}
+
+	/** Pandora's own listeners — registered from {@code PandoraModule} (bootstrap runs once). */
+	public static void register(HeroModuleContext ctx) {
+		ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> {
+			// Pandora never dies — lethal hits trigger her cinematic instead (#7).
+			return PandoraDeathController.allowDamage(entity, source, amount);
+		});
+
+		ServerLivingEntityEvents.ALLOW_DEATH.register((entity, source, amount) -> {
+			if (entity instanceof ServerPlayer serverPlayer) {
+				return PandoraDeathController.allowDeath(serverPlayer, source);
+			}
+			return true;
+		});
+
+		ctx.lifecycle().onHeroClear(PandoraDeathController::resetOnHeroTaken);
 	}
 
 	private static final class Session {
@@ -139,7 +162,7 @@ public final class PandoraDeathController {
 		if (killer != null && killer.serverLevel() == pandora.serverLevel()) {
 			session.killerId = killer.getUUID();
 		}
-		ACTIVE.put(pandora.getUUID(), session);
+		ACTIVE.put(pandora.getUUID(), pandora.getUUID(), session);
 
 		// Keep her alive, pinned and untouchable for the whole sequence.
 		pandora.setHealth(pandora.getMaxHealth());
@@ -160,10 +183,10 @@ public final class PandoraDeathController {
 
 	/** Driven from the server END tick. */
 	public static void serverTick(MinecraftServer server) {
-		if (ACTIVE.isEmpty()) {
+		if (ACTIVE.size() == 0) {
 			return;
 		}
-		Iterator<Map.Entry<UUID, Session>> it = ACTIVE.entrySet().iterator();
+		Iterator<Map.Entry<UUID, Session>> it = ACTIVE.iterator();
 		while (it.hasNext()) {
 			Session session = it.next().getValue();
 			ServerPlayer pandora = server.getPlayerList().getPlayer(session.pandoraId);
@@ -266,13 +289,4 @@ public final class PandoraDeathController {
 		}
 	}
 
-	/** Server-thread leave hook — drops the cinematic session; the revived attachment persists. */
-	public static void onPlayerLeave(ServerPlayer player) {
-		ACTIVE.remove(player.getUUID());
-	}
-
-	/** World shutdown — sessions die with the world; revived state is attachment-persistent. */
-	public static void resetAll() {
-		ACTIVE.clear();
-	}
 }

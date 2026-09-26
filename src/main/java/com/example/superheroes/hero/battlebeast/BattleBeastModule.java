@@ -24,6 +24,8 @@ public final class BattleBeastModule implements HeroModule {
 		ctx.abilities().register(new BattleBeastAxeCleaveAbility());
 		ctx.abilities().register(new BattleBeastWarRoarAbility());
 		ctx.abilities().register(new BattleBeastBloodlustAbility());
+		ctx.lifecycle().onJoin(BattleBeastCurseController::reapplyOnJoin);
+		ctx.lifecycle().onServerStopped(server -> BattleBeastCurseController.resetAll());
 		ctx.ticks().player(BattleBeastCurseController::tickPlayer);
 	}
 }

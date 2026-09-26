@@ -1,12 +1,14 @@
 package com.example.superheroes.ability;
 
 import com.example.superheroes.hero.IronManHero;
+import com.example.superheroes.lifecycle.LifecycleRegistrar;
+import com.example.superheroes.lifecycle.OwnedSessionMap;
+import com.example.superheroes.lifecycle.OwnedSessionMap.ClearOn;
 import com.example.superheroes.transform.HeroDataStore;
 import net.minecraft.server.level.ServerPlayer;
 
-import java.util.Map;
+import java.util.EnumSet;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Серверный счётчик динамического заряда репульсоров Железного Человека.
@@ -19,14 +21,16 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class RepulsorChargeController {
 	public static final int FULL_TICKS = 30;
-	private static final Map<UUID, Float> CHARGE = new ConcurrentHashMap<>();
+	private static final OwnedSessionMap<UUID, Float> CHARGE =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.of(ClearOn.LEAVE, ClearOn.DEATH));
 
 	private RepulsorChargeController() {
 	}
 
 	public static void serverTick(ServerPlayer player) {
 		boolean ironMan = IronManHero.ID.equals(HeroDataStore.get(player).heroId());
-		float c = CHARGE.getOrDefault(player.getUUID(), 0f);
+		Float stored = CHARGE.get(player.getUUID());
+		float c = stored == null ? 0f : stored;
 		if (ironMan && player.isShiftKeyDown()) {
 			c = Math.min(1f, c + 1f / FULL_TICKS);
 		} else {
@@ -35,20 +39,17 @@ public final class RepulsorChargeController {
 		if (c <= 0.0001f) {
 			CHARGE.remove(player.getUUID());
 		} else {
-			CHARGE.put(player.getUUID(), c);
+			CHARGE.put(player.getUUID(), player.getUUID(), c);
 		}
 	}
 
 	public static float charge(ServerPlayer player) {
-		return CHARGE.getOrDefault(player.getUUID(), 0f);
+		Float stored = CHARGE.get(player.getUUID());
+		return stored == null ? 0f : stored;
 	}
 
 	public static void reset(ServerPlayer player) {
 		CHARGE.remove(player.getUUID());
 	}
 
-	/** World shutdown — charge progress dies with the world. */
-	public static void resetAll() {
-		CHARGE.clear();
-	}
 }

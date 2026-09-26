@@ -88,6 +88,13 @@ public final class RegulusMadnessController {
 				LAST_DAMAGER_TICK.put(player.getUUID(), player.level().getGameTime());
 			}
 		});
+
+		ctx.lifecycle().onJoin(RegulusMadnessController::clearMadness);
+		ctx.lifecycle().onLeave(RegulusMadnessController::clearMadness);
+		ctx.lifecycle().onDeath(RegulusMadnessController::clearMadness);
+		ctx.lifecycle().onRespawn(RegulusMadnessController::clearMadness);
+		ctx.lifecycle().onHeroClear(RegulusMadnessController::clearMadness);
+		ctx.lifecycle().onServerStopped(server -> RegulusMadnessController.resetAll());
 	}
 
 	public static LivingEntity getLastDamager(ServerPlayer player) {

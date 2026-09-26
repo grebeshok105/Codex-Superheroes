@@ -115,6 +115,8 @@ public final class RemDemonismController {
 			return true;
 		});
 
+		ctx.lifecycle().onHeroClear(RemDemonismController::clear);
+		ctx.lifecycle().onServerStopped(server -> RemDemonismController.resetAll());
 	}
 
 	public static boolean tryActivate(ServerPlayer player) {
