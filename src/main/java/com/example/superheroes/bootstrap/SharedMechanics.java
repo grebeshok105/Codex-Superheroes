@@ -79,6 +79,10 @@ public final class SharedMechanics {
 		ctx.ticks().player(HeroLandingTracker::tickPlayer);
 		ctx.ticks().player(FlightController::tickPlayer);
 
+		// C4: recompute the synced ability_availability attachment after all hero ticks
+		// (writes only on change) — was the last row of the old PLAYERS table.
+		ctx.ticks().player(com.example.superheroes.ability.AbilityAvailabilitySync::tickPlayer);
+
 		// Core lifecycle rows that closed their lists in the old table — they keep
 		// running after every hero-owned hook (registerPost is called post-modules).
 		ctx.lifecycle().onJoin(AbilityCooldowns::syncAll);
@@ -87,6 +91,7 @@ public final class SharedMechanics {
 
 		// The two rows of the old registerTickHandlers() — they used to register after
 		// all module ticks, so they sit at the end of the post-module call.
+		// ResourceController.tick stays the last player-phase tick, after AASync.
 		ctx.ticks().global(PassiveReconciler::serverTick);
 		ctx.ticks().player((server, p, data) -> ResourceController.tick(p));
 	}

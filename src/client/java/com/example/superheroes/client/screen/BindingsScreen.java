@@ -1,6 +1,6 @@
 package com.example.superheroes.client.screen;
 
-import com.example.superheroes.client.ClientAbilityFilter;
+import com.example.superheroes.client.ClientAbilityVisibility;
 import com.example.superheroes.client.ClientHeroState;
 import com.example.superheroes.network.BindAbilityResourceC2SPayload;
 import com.example.superheroes.resource.ResourceKind;
@@ -23,7 +23,7 @@ public class BindingsScreen extends Screen {
 
 	@Override
 	protected void init() {
-		List<ResourceLocation> abilities = ClientAbilityFilter.visible();
+		List<ResourceLocation> abilities = ClientAbilityVisibility.visible();
 		int rows = abilities.size();
 		int totalHeight = rows * BUTTON_HEIGHT + Math.max(0, rows - 1) * ROW_GAP;
 		int yStart = this.height / 2 - totalHeight / 2;

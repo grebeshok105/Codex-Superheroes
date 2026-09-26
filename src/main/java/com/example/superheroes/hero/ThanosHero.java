@@ -2,6 +2,7 @@ package com.example.superheroes.hero;
 
 import com.example.superheroes.ModId;
 import com.example.superheroes.ability.AbilityIds;
+import com.example.superheroes.core.ability.AbilityAvailability;
 import com.example.superheroes.effect.ThanosGauntletStateController;
 import com.example.superheroes.item.infinity.InfinityStoneType;
 import com.example.superheroes.resource.ResourceKind;
@@ -138,6 +139,13 @@ public final class ThanosHero implements Hero {
 		InfinityStoneType req = ABILITY_STONE.get(abilityId);
 		if (req == null) return true;
 		return stones.contains(req);
+	}
+
+	@Override
+	public AbilityAvailability.Visibility visibility(ServerPlayer player, ResourceLocation abilityId) {
+		return isAbilityUnlocked(player, abilityId)
+				? AbilityAvailability.Visibility.AVAILABLE
+				: AbilityAvailability.Visibility.HIDDEN;
 	}
 
 	public static void notifyMissingStone(ServerPlayer player, ResourceLocation abilityId) {

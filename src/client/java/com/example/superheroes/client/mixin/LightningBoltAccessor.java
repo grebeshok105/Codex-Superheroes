@@ -1,4 +1,4 @@
-package com.example.superheroes.mixin;
+package com.example.superheroes.client.mixin;
 
 import net.minecraft.world.entity.LightningBolt;
 import org.spongepowered.asm.mixin.Mixin;

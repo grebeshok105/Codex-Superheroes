@@ -321,7 +321,7 @@
 - AbilityRules attribution (old order preserved as module order): isAftermath blocker + isMadness freeCost → HomelanderModule (MADNESS is applied by Homelander-only MilkBottleItem — сверка correction, not Regulus); VANITY_STRIPPED → PandoraModule; DISABLED_ABILITIES (applied by ThanosSnap/SoulPulse) → ThanosModule — B's push missed it; restored by worker A post-rebase.
 - §6.3 GameTests (`LifecycleSideEffectsGameTests`, registered in gametest fabric.mod.json): DoomGrip heroClear releases victim NO_AI+caster INVULNERABLE; ThinkMark heroClear restores victim AI/gravity; madness heroClear resets REGULUS_MADNESS + strips only madness-owned effect instances (foreign DAMAGE_RESISTANCE amp-5 survives); Greed owner-leave frees frozen victim; MirrorHouse caster-leave closes + victim-leave releases; Pandora heroClear drops PANDORA_REVIVED + permanent INVULNERABLE; relog reapplies BattleBeast curse (real save/load path via new `TestPlayers.rejoin` — same GameProfile). DoomGrip/ThinkMark start() are unguarded — tests drive them without transforms.
 - Cross-read сверка: none — every hook touches only its own hero's state. Order flips vs old table (all plan-accepted module order): respawn ThanosGauntlet→RegulusMadness became Regulus→Thanos (independent attachments); onLeave/onDeath hero rows now run in HeroModules.ALL position instead of table order.
-- qualityGate NOT run (orchestrator runs the gate). Frozen store 6ab35c1a untouched (orchestrator-owned, §380) — its 70 stale lines all reference the deleted method; orchestrator regenerates/shrinks.
+- qualityGate NOT run (orchestrator runs the gate). Frozen store 6ab35c1a: orchestrator regenerated it to EMPTY post-integration — all 70 stale lines referenced the deleted registerTickHandlers/registerPlayerLifecycle tables (ratchet only shrinks).
 - Integration: B pushed first (contrary to plan order); rebased worker-A commit onto `origin/arch-mig/D2b-2` — one conflict (SuperheroesMod: his truncated table vs my full rewrite → took the rewrite) + `fabric.mod.json` auto-merged (both test classes registered). B's commit did NOT carry the `DISABLED_ABILITIES` rule — restored it in `ThanosModule.register` post-rebase (thanos sits at module position 10, keeping the old blocker order aftermath → disabled → vanity).
 
 ## Architecture migration — stage D2b-2 orchestrator fixes + verification (plan 03)
@@ -331,3 +331,26 @@
 - Characterization corrections vs worker's assumptions: madness-clear test — the foreign effect must not be DAMAGE_RESISTANCE et al because `RemDemonismController.clear` (global onClear chain) strips those types REGARDLESS of ownership — byte-identical on main → pre-existing bug, nit backlog; test now uses INVISIBILITY. `relogReappliesBattleBeastCurse` renamed `relogClearsBattleBeastCurseKeepsBasePassives`: instrumentation proved `onPlayerJoin → reapplyLifecyclePassives → hero.removePassives → BattleBeastCurseController.clear` wipes STAGES before the module's reapplyOnJoin runs — `reapplyOnJoin` is dead code on main too (curse never survived relog) → pre-existing dead-hook bug, nit backlog + fix-ticket candidate.
 - New ArchUnit rule `controllersHaveNoStaticInit` green; archunit_store `6ab35c1a` regenerated empty (tick/lifecycle store gone). `onInitialize` ≤60 lines, no registerTickHandlers/registerPlayerLifecycle tables.
 - qualityGate FULL PASS at c3b83d5: build + JUnit + ProjectSanityTest + jar isolation + runGametest 89/89 + verifyArchitectureBaseline.
+
+## Architecture migration — stage CL3b (plan 04)
+
+- Hero keys: `RAIDEN_SWORD_DRAW` → `RaidenClientModule.actionKey`, `NANO_WEAPON`/`ESP_TOGGLE` → `IronManClientModule.actionKey`; `ModKeys` keeps only core keys (radial/bindings/tooltips/super_jump/vfx/8 slots); guard parity verified — `HeroActionKeys` fires on synced `PUBLIC_HERO`, drains clicks unconditionally.
+- HUD: 16 hero layers moved to `ctx.hud` of owner modules with orders preserved (kratos 600; regulus 900/1100/1200/1300/1500; homelander 1400; doomsday 1600; reinhard 1700/2200/2300; pandora 1900/2400; ironman jarvis_overlay 100/jarvis_detection 200/reactor_overlay 1000).
+- Renderers: `SHADOW_SOLDIER`→sungjinwoo, `KAGE_BUNSHIN`→naruto, `SHIELD_PROJECTILE`→captainamerica, `RAM`→rem, `SMART_MISSILE`/`IRON_LEGION_DRONE`→ironman via new `HeroClientContext.entityRenderer` hook (`CoreClientContext` delegates to `EntityRendererRegistry`).
+- IronMan ticks (`ClientNanoSuitUpState`, `JarvisDetectionHud`, `tickRepulsorCharge`) → module END_CLIENT_TICK regs (no ctx tick hook in plan interface — direct Fabric call is the pattern).
+- `LightningBoltAccessor` → `client/mixin/` (client mixin config); `SuperheroesClient`/`ModKeys` carry zero hero-keyed registrations.
+- Deferred to CL4 per plan: `IronManNanoFormLayer`/`NanoSuitUpLayer` (player feature layers = CL4 scope).
+- Gate: `qualityGate` green, 73/73 gametests.
+>>>>>>> origin/main
+
+
+## Architecture migration — stage C4 (plan 04)
+
+- New `core/ability/AbilityAvailability` (leaf package): `record(Map<ResourceLocation, Visibility>)`, `enum Visibility {AVAILABLE,LOCKED,HIDDEN}`, CODEC + STREAM_CODEC, `visibilityOf` default AVAILABLE. Sync task in `ability.AbilityAvailabilitySync` (would create `core.ability ↔ hero` cycle if placed in core).
+- `ModAttachments.ABILITY_AVAILABILITY` — non-persistent, `syncWith(STREAM_CODEC, targetOnly())` (PUBLIC_HERO pattern).
+- `Hero.visibility(ServerPlayer, ResourceLocation)` default AVAILABLE; impls: Doomsday (isAbilityUnlocked/DOOMSDAY_PROGRESS), Thanos (stones via GauntletStateController), Pandora (hasActiveHouse), Rem (demonism), Regulus (COUNTER_STRIKE hero-scoped). Vanity-strip → all HIDDEN in the sync task.
+- `C/ClientAbilityVisibility` reads the attachment (absent = all visible, matches old pre-sync behavior); `ClientAbilityFilter` + client tier tables deleted; 6 consumers rewired (AbilityBarHud, RadialMenuHud, AbilitiesTooltipHud, HeroInfoPanelHud, BindingsScreen, SuperheroesClient key dispatch).
+- Sync dispatcher: initially the tail of the core tick table; after merging main post-D2b-1 it registers via `SharedMechanics.registerPost` (runs after all module registers) — identical last-position in PLAYERS order.
+- GameTests +6: tier1 → HIDDEN|LOCKED, tier-up → AVAILABLE, write-on-change.
+- Runtime checklist (runClient, instrumented `[C4-VIS]` attachment-write evidence): Doomsday tiers, Thanos stones, Pandora house, Rem demonism, Regulus counterstrike-only-in-madness, vanity-strip override, no-flicker — all PASSED on 0a1131a; evidence in PR #73 comment.
+- Reviewer fix verified: Regulus COUNTER_STRIKE reads REGULUS_MADNESS attachment, not ModEffects.MADNESS (Homelander milk-madness).
