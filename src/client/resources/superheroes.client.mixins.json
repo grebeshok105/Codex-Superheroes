@@ -10,7 +10,6 @@
 		"PlayerModelPoseMixin",
 		"GameRendererFovMixin",
 		"GuiVanillaGlitchMixin",
-		"SoundEngineMixin",
 		"MinecraftHeroMeleeChargeMixin",
 		"GuiHotbarMixin",
 		"GuiOverlayMessageMixin",

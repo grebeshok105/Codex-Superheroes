@@ -1,12 +1,12 @@
 package io.github.grebeshok105.codex.client.hud;
 
-import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.client.ClientAbilityCooldowns;
 import io.github.grebeshok105.codex.client.ClientAbilityVisibility;
 import io.github.grebeshok105.codex.client.ClientHeroState;
 import io.github.grebeshok105.codex.client.ClientSessionState;
 import io.github.grebeshok105.codex.client.ClientThanosState;
 import io.github.grebeshok105.codex.client.ModKeys;
+import io.github.grebeshok105.codex.client.core.hud.AbilityDecorations;
 import io.github.grebeshok105.codex.client.render.WildRenderer;
 import io.github.grebeshok105.codex.client.render.WildShaders;
 import io.github.grebeshok105.codex.hero.ThanosHero;
@@ -33,8 +33,6 @@ import java.util.List;
  * the wheel radius, so it never "banks up" off-screen distance.
  */
 public final class RadialMenuHud {
-	// G1 seam: the ability id lives inside hero.reinhard; the hud references the id, not the module.
-	private static final ResourceLocation REINHARD_SWORD_DRAW_ID = ModId.of("reinhard_sword_draw");
 	private static final float DEAD_ZONE = 5f;
 	private static final int OUTER_R = 98;
 	private static final int INNER_R = 42;
@@ -297,16 +295,8 @@ public final class RadialMenuHud {
 				drawThanosStoneBadge(graphics, mc, aid, ix, iy - half - 6);
 			}
 
-			// Reinhard sword-draw ready halo (small gold ring around icon)
-			boolean swordDrawReady = REINHARD_SWORD_DRAW_ID.equals(aid)
-					&& !ClientHeroState.data().isActive(REINHARD_SWORD_DRAW_ID)
-					&& io.github.grebeshok105.codex.client.ClientReinhardSwordGateState.ready();
-			if (swordDrawReady) {
-				float pulse = 0.55f + 0.45f * (float) Math.sin(System.currentTimeMillis() / 220.0);
-				int a = Math.max(70, Math.min(255, (int) (200 * pulse)));
-				HudUtil.roundedRectBorder(graphics, ix - half - 2, iy - half - 6, iconSize + 4, iconSize + 4,
-						(a << 24) | 0x00FFD24A);
-			}
+			// Hero-registered decorations (ready halos, badges) around the slot's icon
+			AbilityDecorations.render(graphics, aid, ix, iy, iconSize);
 		}
 
 		// Clean empty glass hub — deliberately NO text inside
