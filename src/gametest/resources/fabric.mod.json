@@ -29,7 +29,8 @@
 			"io.github.grebeshok105.codex.gametest.TransformationLoreGameTests",
 			"io.github.grebeshok105.codex.gametest.PassiveModifiersGameTests",
 			"io.github.grebeshok105.codex.gametest.HeroModuleLifecycleGameTests",
-			"io.github.grebeshok105.codex.gametest.AbilityAvailabilityGameTests"
+			"io.github.grebeshok105.codex.gametest.AbilityAvailabilityGameTests",
+			"io.github.grebeshok105.codex.gametest.MotionGameTests"
 		]
 	},
 	"depends": {
