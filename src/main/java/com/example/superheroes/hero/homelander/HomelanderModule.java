@@ -1,0 +1,29 @@
+package com.example.superheroes.hero.homelander;
+
+import com.example.superheroes.ability.EyeLasersAbility;
+import com.example.superheroes.ability.HandClapAbility;
+import com.example.superheroes.ability.IronFistsAbility;
+import com.example.superheroes.ability.StunningRoarAbility;
+import com.example.superheroes.ability.XRayAbility;
+import com.example.superheroes.core.module.HeroModule;
+import com.example.superheroes.core.module.HeroModuleContext;
+import com.example.superheroes.hero.Hero;
+import com.example.superheroes.hero.HomelanderHero;
+
+public final class HomelanderModule implements HeroModule {
+	private final HomelanderHero hero = new HomelanderHero();
+
+	@Override
+	public Hero hero() {
+		return hero;
+	}
+
+	@Override
+	public void register(HeroModuleContext ctx) {
+		ctx.abilities().register(new EyeLasersAbility());
+		ctx.abilities().register(new XRayAbility());
+		ctx.abilities().register(new IronFistsAbility());
+		ctx.abilities().register(new HandClapAbility());
+		ctx.abilities().register(new StunningRoarAbility());
+	}
+}

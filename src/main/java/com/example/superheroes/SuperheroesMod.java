@@ -1,12 +1,10 @@
 package com.example.superheroes;
 
-import com.example.superheroes.ability.AbilityRegistry;
 import com.example.superheroes.attachment.ModAttachments;
 import com.example.superheroes.command.SuperheroesCommands;
 import com.example.superheroes.core.ability.AbilityDenial;
 import com.example.superheroes.core.ability.AbilityRules;
 import com.example.superheroes.effect.ModEffects;
-import com.example.superheroes.hero.Heroes;
 import com.example.superheroes.item.ModItemGroups;
 import com.example.superheroes.item.ModItems;
 import com.example.superheroes.lifecycle.EntityControlLock;
@@ -44,8 +42,7 @@ public class SuperheroesMod implements ModInitializer {
 		AbilityRules.blocker((player, id) -> player.hasEffect(ModEffects.VANITY_STRIPPED)
 				? AbilityDenial.of(Component.translatable("ability.superheroes.vanity_stripped").withStyle(ChatFormatting.DARK_PURPLE)) : null);
 		AbilityRules.freeCost(ModEffects::isMadness);
-		Heroes.init();
-		AbilityRegistry.init();
+		com.example.superheroes.bootstrap.HeroModules.bootstrap(com.example.superheroes.core.module.CoreModuleContext.INSTANCE);
 		com.example.superheroes.entity.ModEntities.init();
 		com.example.superheroes.horde.entity.HordeEntities.init();
 		com.example.superheroes.item.ModDataComponents.init();
@@ -53,7 +50,6 @@ public class SuperheroesMod implements ModInitializer {
 		ModItemGroups.init();
 		ModParticles.init();
 		ModSounds.init();
-		com.example.superheroes.bootstrap.HeroModules.bootstrap(com.example.superheroes.core.module.CoreModuleContext.INSTANCE);
 		com.example.superheroes.effect.MirrorDimensionController.init();
 		ModNetworking.init();
 		HeroDataStore.init();
