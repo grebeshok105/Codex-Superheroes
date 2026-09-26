@@ -1,4 +1,4 @@
-package io.github.grebeshok105.codex.client.fx;
+package io.github.grebeshok105.codex.client.hero.scorpion.fx.veil;
 
 import io.github.grebeshok105.codex.ModId;
 import foundry.veil.api.client.render.VeilRenderSystem;
