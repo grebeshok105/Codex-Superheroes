@@ -341,7 +341,6 @@
 - `LightningBoltAccessor` → `client/mixin/` (client mixin config); `SuperheroesClient`/`ModKeys` carry zero hero-keyed registrations.
 - Deferred to CL4 per plan: `IronManNanoFormLayer`/`NanoSuitUpLayer` (player feature layers = CL4 scope).
 - Gate: `qualityGate` green, 73/73 gametests.
->>>>>>> origin/main
 
 
 ## Architecture migration — stage C4 (plan 04)
