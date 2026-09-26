@@ -16,20 +16,18 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
 /**
- * B3 snapshot phase: dumps every transformation item's appendHoverText output to
- * {@code build/golden/transformation_lore.txt} (relative to the gametest working
- * directory, so it lands under {@code build/gametest/}). The orchestrator copies
- * this file and diffs it against the post-migration dump — it is a snapshot
- * writer, not a comparison golden.
+ * B3 comparison phase: regenerates every transformation item's appendHoverText
+ * output and compares it line-by-line against the golden file captured before
+ * the migration ({@code /golden/transformation_lore.txt}). Any difference fails
+ * the test with the full expected-vs-actual block.
  *
  * <p>Format: one line per item, {@code itemId|line1|line2|...} where each line is
  * {@code key@COLOR}, {@code EMPTY}, or {@code DIVIDER}. Lines with several
@@ -37,11 +35,9 @@ import java.util.Objects;
  * with {@code +}.
  */
 public final class TransformationLoreGameTests implements FabricGameTest {
-	private static final Path GOLDEN = Path.of("build/golden", "transformation_lore.txt");
-
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void transformationItemLoreIsStable(GameTestHelper helper) throws IOException {
-		List<String> out = new ArrayList<>();
+		List<String> actual = new ArrayList<>();
 		for (Item item : BuiltInRegistries.ITEM) {
 			if (!(item instanceof TransformationItem)) {
 				continue;
@@ -53,12 +49,38 @@ public final class TransformationLoreGameTests implements FabricGameTest {
 			for (Component line : tooltip) {
 				lines.add(serializeLine(line));
 			}
-			out.add(itemId + "|" + String.join("|", lines));
+			actual.add(itemId + "|" + String.join("|", lines));
 		}
-		helper.assertFalse(out.isEmpty(), "no transformation items found in the item registry");
-		Files.createDirectories(GOLDEN.getParent());
-		Files.write(GOLDEN, out, StandardCharsets.UTF_8);
+		helper.assertFalse(actual.isEmpty(), "no transformation items found in the item registry");
+		List<String> expected = goldenLines();
+		if (!expected.equals(actual)) {
+			int firstDiff = 0;
+			while (firstDiff < Math.min(expected.size(), actual.size()) && expected.get(firstDiff).equals(actual.get(firstDiff))) {
+				firstDiff++;
+			}
+			helper.assertTrue(false,
+					"transformation item lore differs from golden/transformation_lore.txt (first differing line "
+							+ (firstDiff + 1) + ", expected " + expected.size() + " lines, got " + actual.size() + ")"
+							+ "\n=== expected ===\n" + String.join("\n", expected)
+							+ "\n=== actual ===\n" + String.join("\n", actual));
+		}
 		helper.succeed();
+	}
+
+	private static List<String> goldenLines() throws IOException {
+		String path = "/golden/transformation_lore.txt";
+		try (InputStream in = TransformationLoreGameTests.class.getResourceAsStream(path)) {
+			if (in == null) {
+				throw new IllegalStateException("missing " + path);
+			}
+			List<String> lines = new ArrayList<>();
+			for (String line : new String(in.readAllBytes(), StandardCharsets.UTF_8).split("\n")) {
+				if (!line.isEmpty()) {
+					lines.add(line);
+				}
+			}
+			return lines;
+		}
 	}
 
 	private static String serializeLine(Component line) {
