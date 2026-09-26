@@ -57,7 +57,7 @@
 | F2 Scorpion — клиент | ✅ | merged #85 |
 | G1 Reinhard — сервер | ✅ | #86 |
 | G2 Reinhard — клиент | ✅ | #87 |
-| G3 Reinhard — межгеройские остатки | ⏳ | |
+| G3 Reinhard — межгеройские остатки | ✅ | #88 |
 | H architecture review gate | ⏳ | |
 
 ## Контекст

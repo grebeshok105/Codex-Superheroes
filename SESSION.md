@@ -406,3 +406,8 @@
 - Client core seams: ClientSoundFilters + generic SoundEngineMixin (new client.core.mixins.json), AbilityDecoration(s), ctx.soundFilter()/abilityDecoration().
 - Old SoundEngineMixin + RadialMenuHud Reinhard branch deleted; acceptance grep → HeroClientModules only.
 - Gate green; reviewer APPROVE; runtime 8/8 (darkness/sword-death bounded — render path proven, melee trigger env-blocked solo).
+
+## G3 — Reinhard leftovers (PR #88)
+- Variant.REINHARD deleted (dead); chargeFriendly now uses BoundWeaponItem.blocksChargedAttackTiers trait (only RoyalIcicle true) — zero hero ids in SuperheroesClient.
+- Acceptance G reached: Reinhard touches shared code only via HeroModules + HeroClientModules + beam.json + lang/assets.
+- Gate green; reviewer APPROVE; no runtime needed (dead-code + semantics-identical).
