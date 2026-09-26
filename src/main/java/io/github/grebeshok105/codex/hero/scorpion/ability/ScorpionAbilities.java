@@ -1,4 +1,4 @@
-package io.github.grebeshok105.codex.hero.scorpion;
+package io.github.grebeshok105.codex.hero.scorpion.ability;
 
 import io.github.grebeshok105.codex.ModId;
 import net.minecraft.resources.ResourceLocation;

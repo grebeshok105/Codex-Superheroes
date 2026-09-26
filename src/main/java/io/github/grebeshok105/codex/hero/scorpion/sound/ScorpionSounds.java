@@ -1,4 +1,4 @@
-package io.github.grebeshok105.codex.hero.scorpion;
+package io.github.grebeshok105.codex.hero.scorpion.sound;
 
 import io.github.grebeshok105.codex.core.content.ModContent;
 import net.minecraft.sounds.SoundEvent;

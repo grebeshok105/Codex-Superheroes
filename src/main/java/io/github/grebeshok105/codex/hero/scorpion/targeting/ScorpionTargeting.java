@@ -1,4 +1,4 @@
-package io.github.grebeshok105.codex.hero.scorpion;
+package io.github.grebeshok105.codex.hero.scorpion.targeting;
 
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.mechanic.targeting.TargetFilter;

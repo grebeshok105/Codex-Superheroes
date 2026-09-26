@@ -1,17 +1,18 @@
 package io.github.grebeshok105.codex.hero.scorpion.runtime;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import io.github.grebeshok105.codex.effect.EffectRefresh;
-import io.github.grebeshok105.codex.hero.scorpion.ScorpionHero;
-import io.github.grebeshok105.codex.hero.scorpion.ScorpionTargeting;
+import io.github.grebeshok105.codex.hero.scorpion.targeting.ScorpionTargeting;
 import io.github.grebeshok105.codex.hero.scorpion.net.ScorpionFx;
 import io.github.grebeshok105.codex.mechanic.motion.Motion;
 import io.github.grebeshok105.codex.mechanic.targeting.Targeting;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -46,6 +47,8 @@ public final class ScorpionController {
 
 	private static final int PASSIVE_REFRESH_INTERVAL = 20;
 
+	private static final ResourceLocation SCORPION_ID = ModId.of("scorpion");
+
 	private record SpearPull(UUID owner, long startedAt) {
 	}
 
@@ -66,12 +69,12 @@ public final class ScorpionController {
 			tickSpearPulls(server);
 			tickBreaths(server);
 		});
-		ctx.ticks().hero(ScorpionHero.ID, (server, player, data) -> tickPassive(player));
+		ctx.ticks().hero(SCORPION_ID, (server, player, data) -> tickPassive(player));
 	}
 
 	public static boolean isScorpion(ServerPlayer player) {
 		HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
-		return data.hasHero() && ScorpionHero.ID.equals(data.heroId());
+		return data.hasHero() && SCORPION_ID.equals(data.heroId());
 	}
 
 	// ---------------------------------------------------------------- spear

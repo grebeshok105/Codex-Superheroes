@@ -2,9 +2,8 @@ package io.github.grebeshok105.codex.hero.scorpion.ability;
 
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
-import io.github.grebeshok105.codex.hero.scorpion.ScorpionAbilities;
-import io.github.grebeshok105.codex.hero.scorpion.ScorpionSounds;
-import io.github.grebeshok105.codex.hero.scorpion.ScorpionTargeting;
+import io.github.grebeshok105.codex.hero.scorpion.sound.ScorpionSounds;
+import io.github.grebeshok105.codex.hero.scorpion.targeting.ScorpionTargeting;
 import io.github.grebeshok105.codex.hero.scorpion.net.ScorpionFx;
 import io.github.grebeshok105.codex.hero.scorpion.runtime.ScorpionController;
 import io.github.grebeshok105.codex.mechanic.targeting.Targeting;

@@ -9,6 +9,7 @@ import io.github.grebeshok105.codex.hero.scorpion.ability.ScorpionHellfireAbilit
 import io.github.grebeshok105.codex.hero.scorpion.ability.ScorpionSpearAbility;
 import io.github.grebeshok105.codex.hero.scorpion.net.ScorpionFxS2CPayload;
 import io.github.grebeshok105.codex.hero.scorpion.runtime.ScorpionController;
+import io.github.grebeshok105.codex.hero.scorpion.sound.ScorpionSounds;
 
 public final class ScorpionModule implements HeroModule {
 	private final ScorpionHero hero = new ScorpionHero();
