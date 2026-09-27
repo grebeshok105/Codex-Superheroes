@@ -6,7 +6,7 @@ import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.mechanic.boundweapon.BoundWeaponItem;
 import io.github.grebeshok105.codex.hero.raiden.runtime.RaidenState;
 import io.github.grebeshok105.codex.particle.ModParticles;
-import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.core.model.HeroData;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;

@@ -8,7 +8,7 @@ import io.github.grebeshok105.codex.hero.kratos.net.KratosRageS2CPayload;
 import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
-import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.core.model.HeroData;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.server.level.ServerPlayer;

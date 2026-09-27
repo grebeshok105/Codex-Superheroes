@@ -1,7 +1,7 @@
 package io.github.grebeshok105.codex.mechanic.flight;
 
 import io.github.grebeshok105.codex.mechanic.ability.SharedAbilityIds;
-import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.core.model.HeroData;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;

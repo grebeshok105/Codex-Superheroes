@@ -14,7 +14,7 @@ import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusMadnessState;
 import io.github.grebeshok105.codex.hero.battlebeast.BattleBeastHero;
 import io.github.grebeshok105.codex.hero.rem.RemItems;
 import io.github.grebeshok105.codex.hero.rem.runtime.RemDemonismController;
-import io.github.grebeshok105.codex.core.lifecycle.ControlLockKind;
+import io.github.grebeshok105.codex.core.model.ControlLockKind;
 import io.github.grebeshok105.codex.core.lifecycle.EntityControlLock;
 import io.github.grebeshok105.codex.core.lifecycle.HeroLifecycle;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;

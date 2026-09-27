@@ -5,7 +5,7 @@ import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.mechanic.boundweapon.BoundWeaponItem;
 import io.github.grebeshok105.codex.mechanic.effect.ModEffects;
 import io.github.grebeshok105.codex.hero.rem.runtime.RemDemonismController;
-import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.core.model.HeroData;
 import io.github.grebeshok105.codex.core.transform.TooltipFrame;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.particles.ParticleTypes;

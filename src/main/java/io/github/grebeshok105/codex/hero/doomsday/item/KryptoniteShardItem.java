@@ -3,7 +3,7 @@ package io.github.grebeshok105.codex.hero.doomsday.item;
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.content.OwnerGatedItem;
-import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.core.model.HeroData;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.component.DataComponents;

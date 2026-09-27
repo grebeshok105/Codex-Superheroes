@@ -2,6 +2,7 @@ package io.github.grebeshok105.codex.core.transform;
 
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
+import io.github.grebeshok105.codex.core.model.HeroData;
 import io.github.grebeshok105.codex.core.net.CoreNetworking;
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;

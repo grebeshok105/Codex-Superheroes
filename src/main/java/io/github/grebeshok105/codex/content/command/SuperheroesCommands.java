@@ -8,7 +8,7 @@ import io.github.grebeshok105.codex.content.admin.AdminBuildSyncController;
 import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.hero.Heroes;
 import io.github.grebeshok105.codex.item.ModItemGroups;
-import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.core.model.HeroData;
 import io.github.grebeshok105.codex.core.transform.HeroTransformService;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.FloatArgumentType;

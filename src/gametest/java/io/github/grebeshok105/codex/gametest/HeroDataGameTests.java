@@ -5,7 +5,7 @@ import io.github.grebeshok105.codex.core.ability.AbilityRouter;
 import io.github.grebeshok105.codex.core.resource.ResourceController;
 import io.github.grebeshok105.codex.hero.scaramouche.ScaramoucheAbilities;
 import io.github.grebeshok105.codex.hero.scaramouche.ScaramoucheHero;
-import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.core.model.HeroData;
 import io.github.grebeshok105.codex.core.transform.HeroDataStore;
 import io.github.grebeshok105.codex.core.transform.HeroTransformService;
 import com.mojang.serialization.DataResult;

@@ -1,4 +1,4 @@
-package io.github.grebeshok105.codex.core.ability;
+package io.github.grebeshok105.codex.core.model;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;

@@ -44,7 +44,7 @@ public class HordeSpitterEntity extends BaseHordeEntity implements RangedAttackM
 	@Override
 	public void performRangedAttack(LivingEntity target, float velocity) {
 		// Lob an arcing fire bomb (ignite blast on impact, no block damage).
-		HordeFireBombEntity bomb = new HordeFireBombEntity(this, level());
+		HordeFireBombEntity bomb = new HordeFireBombEntity(HordeEntities.FIRE_BOMB, this, level());
 		double dx = target.getX() - getX();
 		double dy = target.getY(0.5) - bomb.getY();
 		double dz = target.getZ() - getZ();

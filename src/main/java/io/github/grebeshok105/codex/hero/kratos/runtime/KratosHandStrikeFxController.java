@@ -5,7 +5,7 @@ import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.hero.kratos.registry.KratosParticles;
 import io.github.grebeshok105.codex.particle.ModParticles;
-import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.core.model.HeroData;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.server.level.ServerLevel;

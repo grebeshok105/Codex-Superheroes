@@ -1,5 +1,7 @@
 package io.github.grebeshok105.codex.core.resource;
 
+import io.github.grebeshok105.codex.core.model.ResourceKind;
+
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

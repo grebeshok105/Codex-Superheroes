@@ -7,7 +7,7 @@ import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.mechanic.flight.FlightController;
 import io.github.grebeshok105.codex.mechanic.falls.SuperJumpController;
 import io.github.grebeshok105.codex.hero.doomsday.net.DoomsdayProgressS2CPayload;
-import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.core.model.HeroData;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;

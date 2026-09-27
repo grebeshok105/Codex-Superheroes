@@ -3,8 +3,11 @@ package io.github.grebeshok105.codex.bootstrap;
 import io.github.grebeshok105.codex.compat.falbiks.FalbiksSnapCompat;
 import io.github.grebeshok105.codex.core.ability.AbilityAvailabilitySync;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
+import io.github.grebeshok105.codex.core.ability.AbilityRouter;
 import io.github.grebeshok105.codex.core.lifecycle.HeroTickDispatcher;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
+import io.github.grebeshok105.codex.core.net.ActivateAbilityC2SPayload;
+import io.github.grebeshok105.codex.core.net.BindAbilityResourceC2SPayload;
 import io.github.grebeshok105.codex.core.net.HeroMeleeChargeC2SPayload;
 import io.github.grebeshok105.codex.core.net.SuperJumpC2SPayload;
 import io.github.grebeshok105.codex.mechanic.flight.FlightStateS2CPayload;
@@ -41,14 +44,22 @@ public final class SharedMechanics {
 		// closed a list (cooldown sync/clear, EntityControlLock hero-clear) live in
 		// registerPost. Rows in between are hero-owned and moved to their modules.
 		ctx.lifecycle().onJoin(HeroTransformService::onPlayerJoin);
+		// The ability layer's onDeactivate sweep behind transform's seam — transform may not
+		// reach into core.ability, so the registration lands here at the composition root.
+		HeroTransformService.abilityDeactivator(AbilityRouter::deactivateAll);
+
 		ctx.lifecycle().onJoin(HeroDataStore::syncPublicHero);
 		ctx.lifecycle().onLeave(HeroTransformService::onPlayerLeave);
 		ctx.lifecycle().onLeave(EntityControlLock::releaseOwnedBy);
 		ctx.lifecycle().onDeath(EntityControlLock::releaseOwnedBy);
 		ctx.lifecycle().onRespawn(HeroTransformService::onPlayerRespawn);
 
-		// Shared payload wiring: the receivers live on mechanic classes, which
-		// core.net may not depend on, so they register through the module context.
+		// Shared payload wiring: the receivers live on classes core.net may not depend on,
+		// so they register through the module context.
+		ctx.payloads().c2s(ActivateAbilityC2SPayload.TYPE, ActivateAbilityC2SPayload.STREAM_CODEC,
+				(payload, context) -> AbilityRouter.activate(context.player(), payload.abilityId()));
+		ctx.payloads().c2s(BindAbilityResourceC2SPayload.TYPE, BindAbilityResourceC2SPayload.STREAM_CODEC,
+				(payload, context) -> AbilityRouter.bind(context.player(), payload.abilityId(), payload.kind()));
 		ctx.payloads().c2s(SuperJumpC2SPayload.TYPE, SuperJumpC2SPayload.STREAM_CODEC,
 				(payload, context) -> SuperJumpController.activate(context.player()));
 		ctx.payloads().c2s(HeroMeleeChargeC2SPayload.TYPE, HeroMeleeChargeC2SPayload.STREAM_CODEC,
@@ -95,8 +106,10 @@ public final class SharedMechanics {
 
 		// The two rows of the old registerTickHandlers() — they used to register after
 		// all module ticks, so they sit at the end of the post-module call.
-		// ResourceController.tick stays the last player-phase tick, after AASync.
+		// ResourceController.tick + AbilityRouter.tickActive stay the last player-phase ticks,
+		// after AASync; regen lands before the per-ability drain like the old single row did.
 		ctx.ticks().global(PassiveReconciler::serverTick);
 		ctx.ticks().player((server, p, data) -> ResourceController.tick(p));
+		ctx.ticks().player((server, p, data) -> AbilityRouter.tickActive(p));
 	}
 }

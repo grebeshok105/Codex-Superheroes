@@ -9,7 +9,7 @@ import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.hero.pandora.net.MirrorDimensionS2CPayload;
 import io.github.grebeshok105.codex.hero.pandora.net.MirrorDimensionStatusC2SPayload;
-import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.core.model.HeroData;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.particles.ParticleTypes;

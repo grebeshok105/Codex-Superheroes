@@ -6,7 +6,7 @@ import io.github.grebeshok105.codex.core.ability.AbilityRegistry;
 import io.github.grebeshok105.codex.core.ability.AbilityRouter;
 import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.hero.Heroes;
-import io.github.grebeshok105.codex.core.lifecycle.ControlLockKind;
+import io.github.grebeshok105.codex.core.model.ControlLockKind;
 import io.github.grebeshok105.codex.core.resource.EnergyLocks;
 import io.github.grebeshok105.codex.core.transform.HeroDataStore;
 import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusGreedController;

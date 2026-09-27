@@ -1,7 +1,7 @@
 package io.github.grebeshok105.codex.client;
 
-import io.github.grebeshok105.codex.core.ability.AbilityAvailability;
-import io.github.grebeshok105.codex.core.ability.AbilityAvailability.Visibility;
+import io.github.grebeshok105.codex.core.model.AbilityAvailability;
+import io.github.grebeshok105.codex.core.model.AbilityAvailability.Visibility;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;

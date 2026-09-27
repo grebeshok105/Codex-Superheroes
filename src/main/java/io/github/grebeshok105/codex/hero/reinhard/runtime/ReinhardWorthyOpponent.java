@@ -1,7 +1,7 @@
 package io.github.grebeshok105.codex.hero.reinhard.runtime;
 
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
-import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.core.model.HeroData;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.boss.wither.WitherBoss;
 import net.minecraft.world.entity.boss.enderdragon.EnderDragon;

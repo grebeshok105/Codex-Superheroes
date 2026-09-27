@@ -1,7 +1,7 @@
 package io.github.grebeshok105.codex.hero.regulus.runtime;
 
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
-import io.github.grebeshok105.codex.core.lifecycle.ControlLockKind;
+import io.github.grebeshok105.codex.core.model.ControlLockKind;
 import io.github.grebeshok105.codex.core.lifecycle.EntityControlLock;
 import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
-import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.core.model.HeroData;
 import net.minecraft.server.MinecraftServer;
 
 public final class RegulusGreedController {

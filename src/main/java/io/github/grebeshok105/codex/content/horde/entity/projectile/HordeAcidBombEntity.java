@@ -1,6 +1,5 @@
 package io.github.grebeshok105.codex.content.horde.entity.projectile;
 
-import io.github.grebeshok105.codex.content.horde.entity.HordeEntities;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -25,8 +24,8 @@ public class HordeAcidBombEntity extends HordeBombEntity {
 		super(type, level);
 	}
 
-	public HordeAcidBombEntity(LivingEntity shooter, Level level) {
-		super(HordeEntities.ACID_BOMB, shooter, level);
+	public HordeAcidBombEntity(EntityType<? extends HordeAcidBombEntity> type, LivingEntity shooter, Level level) {
+		super(type, shooter, level);
 	}
 
 	@Override

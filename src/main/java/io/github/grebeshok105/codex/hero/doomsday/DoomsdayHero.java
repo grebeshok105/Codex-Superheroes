@@ -1,7 +1,7 @@
 package io.github.grebeshok105.codex.hero.doomsday;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.core.ability.AbilityAvailability;
+import io.github.grebeshok105.codex.core.model.AbilityAvailability;
 import io.github.grebeshok105.codex.core.hero.AttributeModifierSet;
 import io.github.grebeshok105.codex.core.hero.BleedProfile;
 import io.github.grebeshok105.codex.core.hero.Hero;
@@ -11,7 +11,7 @@ import io.github.grebeshok105.codex.core.hero.ImpactStyle;
 import io.github.grebeshok105.codex.core.hero.JarvisThreatClass;
 import io.github.grebeshok105.codex.core.hero.LandingImpact;
 import io.github.grebeshok105.codex.core.hero.PassiveGlyph;
-import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.core.model.HeroData;
 import io.github.grebeshok105.codex.hero.doomsday.ability.ChargeTackleAbility;
 import io.github.grebeshok105.codex.hero.doomsday.ability.DoomsdayBerserkAbility;
 import io.github.grebeshok105.codex.hero.doomsday.runtime.DoomGripController;
@@ -21,7 +21,7 @@ import io.github.grebeshok105.codex.hero.doomsday.runtime.DoomsdayModifiers;
 import io.github.grebeshok105.codex.hero.doomsday.runtime.DoomsdayProgress;
 import io.github.grebeshok105.codex.hero.doomsday.runtime.DoomsdayTierController;
 import io.github.grebeshok105.codex.mechanic.shockwave.ShockwaveUtil;
-import io.github.grebeshok105.codex.core.resource.ResourceKind;
+import io.github.grebeshok105.codex.core.model.ResourceKind;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -258,7 +258,7 @@ public final class DoomsdayHero implements Hero {
 	}
 
         @Override
-        public boolean canUseAbility(ServerPlayer player, io.github.grebeshok105.codex.core.transform.HeroData data,
+        public boolean canUseAbility(ServerPlayer player, io.github.grebeshok105.codex.core.model.HeroData data,
                         ResourceLocation abilityId) {
                 return isAbilityUnlocked(player, abilityId);
         }

@@ -7,7 +7,7 @@ import io.github.grebeshok105.codex.hero.thanos.item.InfinityGauntletData;
 import io.github.grebeshok105.codex.hero.thanos.item.InfinityGauntletItem;
 import io.github.grebeshok105.codex.hero.thanos.item.InfinityStoneType;
 import io.github.grebeshok105.codex.hero.thanos.item.InfinityStones;
-import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.core.model.HeroData;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;

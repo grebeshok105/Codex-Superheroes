@@ -1,7 +1,7 @@
 package io.github.grebeshok105.codex.hero.homelander.runtime;
 
 import io.github.grebeshok105.codex.hero.homelander.effect.HomelanderEffects;
-import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.core.model.HeroData;
 import io.github.grebeshok105.codex.mechanic.flight.FlightController;
 import io.github.grebeshok105.codex.mechanic.flight.FlightModifier;
 import net.minecraft.server.level.ServerPlayer;

@@ -3,7 +3,7 @@ package io.github.grebeshok105.codex.hero.homelander.item;
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.hero.homelander.effect.HomelanderEffects;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
-import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.core.model.HeroData;
 import io.github.grebeshok105.codex.core.transform.TooltipFrame;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;

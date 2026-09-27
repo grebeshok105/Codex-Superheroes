@@ -7,7 +7,7 @@ import io.github.grebeshok105.codex.hero.homelander.HomelanderAbilityIds;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import io.github.grebeshok105.codex.core.ability.AbilityRegistry;
 import io.github.grebeshok105.codex.core.ability.AbilityRouter;
-import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.core.model.HeroData;
 import io.github.grebeshok105.codex.core.transform.HeroDataStore;
 import io.github.grebeshok105.codex.core.transform.HeroTransformService;
 import io.github.grebeshok105.codex.core.hero.Heroes;

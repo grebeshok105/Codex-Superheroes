@@ -9,7 +9,7 @@ import io.github.grebeshok105.codex.mechanic.strike.QueuedStrikes;
 import io.github.grebeshok105.codex.mechanic.strike.StrikeSession;
 import io.github.grebeshok105.codex.particle.ModParticles;
 import io.github.grebeshok105.codex.sound.ModSounds;
-import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.core.model.HeroData;
 import io.github.grebeshok105.codex.mechanic.world.WorldDestructionPolicy;
 import io.github.grebeshok105.codex.core.net.FxBroadcast;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;

@@ -4,7 +4,7 @@ import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.particle.ModParticles;
-import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.core.model.HeroData;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;

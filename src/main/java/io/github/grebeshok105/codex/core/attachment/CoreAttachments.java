@@ -1,11 +1,11 @@
 package io.github.grebeshok105.codex.core.attachment;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.core.ability.AbilityAvailability;
-import io.github.grebeshok105.codex.core.lifecycle.ControlLockShadow;
-import io.github.grebeshok105.codex.core.lifecycle.ControlLockState;
-import io.github.grebeshok105.codex.core.lifecycle.HeldLocks;
-import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.core.model.AbilityAvailability;
+import io.github.grebeshok105.codex.core.model.ControlLockShadow;
+import io.github.grebeshok105.codex.core.model.ControlLockState;
+import io.github.grebeshok105.codex.core.model.HeldLocks;
+import io.github.grebeshok105.codex.core.model.HeroData;
 import com.mojang.serialization.Codec;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentRegistry;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
@@ -37,7 +37,7 @@ public final class CoreAttachments {
 	/**
 	 * Server-computed ability visibility for the owning player's HUD (stage C4 — replaces
 	 * the deleted client-side filter). Synced to the owner only; absent means "all
-	 * {@link io.github.grebeshok105.codex.core.ability.AbilityAvailability.Visibility#AVAILABLE}".
+	 * {@link io.github.grebeshok105.codex.core.model.AbilityAvailability.Visibility#AVAILABLE}".
 	 * Written only by {@link io.github.grebeshok105.codex.core.ability.AbilityAvailabilitySync}.
 	 */
 	public static final AttachmentType<AbilityAvailability> ABILITY_AVAILABILITY = AttachmentRegistry.create(ModId.of("ability_availability"), b -> b

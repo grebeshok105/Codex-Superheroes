@@ -5,7 +5,7 @@ import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
-import io.github.grebeshok105.codex.core.lifecycle.ControlLockKind;
+import io.github.grebeshok105.codex.core.model.ControlLockKind;
 import io.github.grebeshok105.codex.core.lifecycle.EntityControlLock;
 import io.github.grebeshok105.codex.hero.reinhard.net.ReinhardTimeSlowS2CPayload;
 import io.github.grebeshok105.codex.hero.reinhard.sound.ReinhardSounds;

@@ -7,7 +7,7 @@ import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.hero.naruto.registry.NarutoParticles;
-import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.core.model.HeroData;
 import io.github.grebeshok105.codex.util.SafeTeleport;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.minecraft.resources.ResourceLocation;
