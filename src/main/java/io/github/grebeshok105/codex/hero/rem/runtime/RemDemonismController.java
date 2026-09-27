@@ -14,15 +14,15 @@ import io.github.grebeshok105.codex.effect.EffectRefresh;
 import io.github.grebeshok105.codex.effect.ModEffects;
 import io.github.grebeshok105.codex.mechanic.boundweapon.BoundWeaponItem;
 import io.github.grebeshok105.codex.mechanic.boundweapon.BoundWeapons;
+import io.github.grebeshok105.codex.mechanic.motion.Motion;
 import io.github.grebeshok105.codex.hero.rem.net.RemDemonismS2CPayload;
+import io.github.grebeshok105.codex.core.net.FxBroadcast;
 import io.github.grebeshok105.codex.core.net.ScreenShakeS2CPayload;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
-import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -383,11 +383,7 @@ public final class RemDemonismController {
 			target.hurt(source, CRATER_DAMAGE * falloff);
 			target.addEffect(new MobEffectInstance(ModEffects.BLEEDING, 10 * 20, 0, false, true, true));
 			Vec3 push = target.position().subtract(player.position()).normalize().scale(1.6).add(0.0, 0.18, 0.0);
-			target.push(push.x, push.y, push.z);
-			target.hurtMarked = true;
-			if (target instanceof ServerPlayer targetPlayer) {
-				targetPlayer.connection.send(new ClientboundSetEntityMotionPacket(targetPlayer));
-			}
+			Motion.add(target, push, Motion.Sync.MARK_AND_SEND_TO_PLAYER);
 		}
 		carveCrater(level, center, player);
 		level.sendParticles(ParticleTypes.EXPLOSION_EMITTER, impact.x, center.getY() + 0.35, impact.z, 2, 0.4, 0.2, 0.4, 0.0);
@@ -395,9 +391,7 @@ public final class RemDemonismController {
 		level.sendParticles(ParticleTypes.DAMAGE_INDICATOR, impact.x, center.getY() + 0.8, impact.z, 30, 1.0, 0.4, 1.0, 0.12);
 		level.playSound(null, impact.x, center.getY(), impact.z, SoundEvents.GENERIC_EXPLODE.value(), SoundSource.PLAYERS, 1.8f, 0.55f);
 		level.playSound(null, impact.x, center.getY(), impact.z, SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 0.9f, 0.75f);
-		for (ServerPlayer nearby : PlayerLookup.around(level, impact, 34.0)) {
-			ServerPlayNetworking.send(nearby, new ScreenShakeS2CPayload(1.8f, 24));
-		}
+		FxBroadcast.around(level, impact, 34.0, new ScreenShakeS2CPayload(1.8f, 24));
 	}
 
 	private static void carveCrater(ServerLevel level, BlockPos center, ServerPlayer player) {
@@ -456,11 +450,7 @@ public final class RemDemonismController {
 	}
 
 	private static void setMorningStarPullMotion(LivingEntity target, Vec3 motion) {
-		target.setDeltaMovement(motion);
-		target.hurtMarked = true;
-		if (target instanceof ServerPlayer targetPlayer) {
-			targetPlayer.connection.send(new ClientboundSetEntityMotionPacket(targetPlayer));
-		}
+		Motion.set(target, motion, Motion.Sync.MARK_AND_SEND_TO_PLAYER);
 	}
 
 	private static void spawnIceBand(ServerLevel level, ServerPlayer player, IceSpikeWave wave, int band) {
@@ -517,11 +507,7 @@ public final class RemDemonismController {
 			target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 100, 0, true, true, true));
 			target.addEffect(new MobEffectInstance(MobEffects.DIG_SLOWDOWN, 100, 1, true, true, true));
 			Vec3 push = wave.forward.scale(0.45).add(0.0, 0.12, 0.0);
-			target.push(push.x, push.y, push.z);
-			target.hurtMarked = true;
-			if (target instanceof ServerPlayer targetPlayer) {
-				targetPlayer.connection.send(new ClientboundSetEntityMotionPacket(targetPlayer));
-			}
+			Motion.add(target, push, Motion.Sync.MARK_AND_SEND_TO_PLAYER);
 			level.sendParticles(ParticleTypes.SNOWFLAKE,
 					targetCenter.x, targetCenter.y, targetCenter.z, 28, 0.4, 0.45, 0.4, 0.08);
 		}
@@ -631,7 +617,7 @@ public final class RemDemonismController {
 		RemDemonismS2CPayload payload = new RemDemonismS2CPayload(
 				player.getUUID(), getCharge(player), isActive(player), isPermanent(player));
 		ServerPlayNetworking.send(player, payload);
-		for (ServerPlayer observer : PlayerLookup.tracking(player)) {
+		for (ServerPlayer observer : FxBroadcast.trackingAudience(player)) {
 			if (observer != player) {
 				ServerPlayNetworking.send(observer, payload);
 			}

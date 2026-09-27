@@ -5,8 +5,8 @@ import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import io.github.grebeshok105.codex.hero.rem.runtime.RemDemonismController;
+import io.github.grebeshok105.codex.mechanic.motion.Motion;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -58,10 +58,8 @@ public final class RemOniKickAbility implements Ability {
 			forward = new Vec3(0.0, 0.0, 1.0);
 		}
 		Vec3 motion = new Vec3(forward.x * 2.6, Math.max(0.03, forward.y * 0.12), forward.z * 2.6);
-		player.setDeltaMovement(motion);
-		player.hurtMarked = true;
+		Motion.set(player, motion, Motion.Sync.MARK_AND_SEND_TO_PLAYER);
 		player.fallDistance = 0f;
-		player.connection.send(new ClientboundSetEntityMotionPacket(player.getId(), motion));
 
 		Vec3 from = player.position();
 		Vec3 to = from.add(forward.scale(DISTANCE));
@@ -71,11 +69,7 @@ public final class RemOniKickAbility implements Ability {
 			target.hurt(level.damageSources().playerAttack(player), DAMAGE);
 			target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 60, 1, true, true, true));
 			Vec3 push = forward.scale(2.1).add(0.0, 0.3, 0.0);
-			target.push(push.x, push.y, push.z);
-			target.hurtMarked = true;
-			if (target instanceof ServerPlayer targetPlayer) {
-				targetPlayer.connection.send(new ClientboundSetEntityMotionPacket(targetPlayer));
-			}
+			Motion.add(target, push, Motion.Sync.MARK_AND_SEND_TO_PLAYER);
 			level.sendParticles(ParticleTypes.CRIT,
 					target.getX(), target.getY() + target.getBbHeight() * 0.5, target.getZ(),
 					16, 0.25, 0.3, 0.25, 0.14);
