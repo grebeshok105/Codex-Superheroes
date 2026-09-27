@@ -1,11 +1,12 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.kazuha.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
+import io.github.grebeshok105.codex.mechanic.motion.Motion;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -27,9 +28,11 @@ public final class KazuhaChihayaburuAbility implements Ability {
 	private static final float DAMAGE = 5.0f;
 	private static final DustParticleOptions MAPLE_DUST = new DustParticleOptions(new Vector3f(1.0f, 0.45f, 0.18f), 1.25f);
 
+	public static final ResourceLocation ID = ModId.of("kazuha_chihayaburu");
+
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.KAZUHA_CHIHAYABURU;
+		return ID;
 	}
 
 	@Override
@@ -61,10 +64,8 @@ public final class KazuhaChihayaburuAbility implements Ability {
 			look = new Vec3(0, 0, 1);
 		}
 		Vec3 launch = look.scale(0.55).add(0, 1.05, 0);
-		player.setDeltaMovement(launch);
-		player.hurtMarked = true;
+		Motion.set(player, launch, Motion.Sync.MARK_AND_SEND_TO_PLAYER);
 		player.fallDistance = 0f;
-		player.connection.send(new ClientboundSetEntityMotionPacket(player.getId(), launch));
 
 		List<LivingEntity> targets = level.getEntitiesOfClass(LivingEntity.class,
 				new AABB(center, center).inflate(RADIUS),
@@ -75,12 +76,7 @@ public final class KazuhaChihayaburuAbility implements Ability {
 			target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 80, 1, true, true, true));
 			target.addEffect(new MobEffectInstance(MobEffects.LEVITATION, 24, 0, true, true, true));
 			Vec3 motion = pullMotion(center, target);
-			target.setDeltaMovement(motion);
-			target.hurtMarked = true;
-			target.hasImpulse = true;
-			if (target instanceof ServerPlayer targetPlayer) {
-				targetPlayer.connection.send(new ClientboundSetEntityMotionPacket(targetPlayer));
-			}
+			Motion.set(target, motion, Motion.Sync.MARK_AND_SEND_TO_PLAYER);
 		}
 
 		level.sendParticles(ParticleTypes.GUST_EMITTER_LARGE, center.x, center.y, center.z, 1, 0, 0, 0, 0);

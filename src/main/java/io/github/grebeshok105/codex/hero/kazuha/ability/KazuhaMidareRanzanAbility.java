@@ -1,11 +1,12 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.kazuha.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
+import io.github.grebeshok105.codex.mechanic.motion.Motion;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -32,9 +33,11 @@ public final class KazuhaMidareRanzanAbility implements Ability {
 	private static final DustParticleOptions ANEMO_DUST = new DustParticleOptions(new Vector3f(0.34f, 1.0f, 0.74f), 1.45f);
 	private static final DustParticleOptions MAPLE_DUST = new DustParticleOptions(new Vector3f(1.0f, 0.34f, 0.12f), 1.25f);
 
+	public static final ResourceLocation ID = ModId.of("kazuha_midare_ranzan");
+
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.KAZUHA_MIDARE_RANZAN;
+		return ID;
 	}
 
 	@Override
@@ -73,9 +76,7 @@ public final class KazuhaMidareRanzanAbility implements Ability {
 
 		if (airborne) {
 			Vec3 plunge = dir.scale(0.35).add(0, -0.95, 0);
-			player.setDeltaMovement(plunge);
-			player.hurtMarked = true;
-			player.connection.send(new ClientboundSetEntityMotionPacket(player.getId(), plunge));
+			Motion.set(player, plunge, Motion.Sync.MARK_AND_SEND_TO_PLAYER);
 		}
 		player.fallDistance = 0f;
 
@@ -88,12 +89,7 @@ public final class KazuhaMidareRanzanAbility implements Ability {
 			target.hurt(level.damageSources().playerAttack(player), damage);
 			target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 90, 0, true, true, true));
 			Vec3 push = pushFrom(impact, target, airborne ? 1.45 : 1.05, airborne ? 0.55 : 0.35);
-			target.setDeltaMovement(push);
-			target.hurtMarked = true;
-			target.hasImpulse = true;
-			if (target instanceof ServerPlayer targetPlayer) {
-				targetPlayer.connection.send(new ClientboundSetEntityMotionPacket(targetPlayer));
-			}
+			Motion.set(target, push, Motion.Sync.MARK_AND_SEND_TO_PLAYER);
 		}
 
 		spawnSlash(level, eye, impact);

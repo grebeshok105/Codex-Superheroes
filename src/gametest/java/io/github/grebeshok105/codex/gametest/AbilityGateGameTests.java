@@ -9,7 +9,8 @@ import io.github.grebeshok105.codex.hero.DoomsdayHero;
 import io.github.grebeshok105.codex.hero.HomelanderHero;
 import io.github.grebeshok105.codex.hero.IronManHero;
 import io.github.grebeshok105.codex.hero.PandoraHero;
-import io.github.grebeshok105.codex.hero.ScaramoucheHero;
+import io.github.grebeshok105.codex.hero.scaramouche.ScaramoucheAbilities;
+import io.github.grebeshok105.codex.hero.scaramouche.ScaramoucheHero;
 import io.github.grebeshok105.codex.core.resource.ResourceKind;
 import io.github.grebeshok105.codex.core.transform.HeroDataStore;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
@@ -33,8 +34,8 @@ public final class AbilityGateGameTests implements FabricGameTest {
 		TestHeroes.transform(player, ScaramoucheHero.ID);
 		player.addEffect(new MobEffectInstance(ModEffects.DISABLED_ABILITIES, 200));
 		float before = HeroDataStore.get(player).energy();
-		AbilityRouter.activate(player, AbilityIds.SCARAMOUCHE_WIND_PRISON);
-		helper.assertFalse(HeroDataStore.get(player).isActive(AbilityIds.SCARAMOUCHE_WIND_PRISON), "blocked by Snap");
+		AbilityRouter.activate(player, ScaramoucheAbilities.SCARAMOUCHE_WIND_PRISON);
+		helper.assertFalse(HeroDataStore.get(player).isActive(ScaramoucheAbilities.SCARAMOUCHE_WIND_PRISON), "blocked by Snap");
 		helper.assertTrue(HeroDataStore.get(player).energy() == before, "nothing charged");
 		helper.succeed();
 	}
@@ -56,8 +57,8 @@ public final class AbilityGateGameTests implements FabricGameTest {
 		TestHeroes.transform(player, ScaramoucheHero.ID);
 		player.addEffect(new MobEffectInstance(ModEffects.VANITY_STRIPPED, 200));
 		float before = HeroDataStore.get(player).energy();
-		AbilityRouter.activate(player, AbilityIds.SCARAMOUCHE_WIND_PRISON);
-		helper.assertFalse(HeroDataStore.get(player).isActive(AbilityIds.SCARAMOUCHE_WIND_PRISON),
+		AbilityRouter.activate(player, ScaramoucheAbilities.SCARAMOUCHE_WIND_PRISON);
+		helper.assertFalse(HeroDataStore.get(player).isActive(ScaramoucheAbilities.SCARAMOUCHE_WIND_PRISON),
 				"blocked by Vanity strip");
 		helper.assertTrue(HeroDataStore.get(player).energy() == before, "nothing charged");
 		TestPlayers.leave(player);
@@ -70,8 +71,8 @@ public final class AbilityGateGameTests implements FabricGameTest {
 		TestHeroes.transform(player, ScaramoucheHero.ID);
 		player.addEffect(new MobEffectInstance(ModEffects.MADNESS_AFTERMATH, 200));
 		float before = HeroDataStore.get(player).energy();
-		AbilityRouter.activate(player, AbilityIds.SCARAMOUCHE_WIND_PRISON);
-		helper.assertFalse(HeroDataStore.get(player).isActive(AbilityIds.SCARAMOUCHE_WIND_PRISON),
+		AbilityRouter.activate(player, ScaramoucheAbilities.SCARAMOUCHE_WIND_PRISON);
+		helper.assertFalse(HeroDataStore.get(player).isActive(ScaramoucheAbilities.SCARAMOUCHE_WIND_PRISON),
 				"aftermath blocks activation");
 		helper.assertTrue(HeroDataStore.get(player).energy() == before, "nothing charged");
 		TestPlayers.leave(player);

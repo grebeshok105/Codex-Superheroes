@@ -1,11 +1,12 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.kazuha.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
+import io.github.grebeshok105.codex.mechanic.motion.Motion;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -27,9 +28,11 @@ public final class KazuhaMapleStormAbility implements Ability {
 	private static final DustParticleOptions ANEMO_DUST = new DustParticleOptions(new Vector3f(0.36f, 1.0f, 0.78f), 1.7f);
 	private static final DustParticleOptions MAPLE_DUST = new DustParticleOptions(new Vector3f(1.0f, 0.28f, 0.08f), 1.55f);
 
+	public static final ResourceLocation ID = ModId.of("kazuha_maple_storm");
+
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.KAZUHA_MAPLE_STORM;
+		return ID;
 	}
 
 	@Override
@@ -70,12 +73,7 @@ public final class KazuhaMapleStormAbility implements Ability {
 			target.addEffect(new MobEffectInstance(MobEffects.LEVITATION, 45, 0, true, true, true));
 			target.addEffect(new MobEffectInstance(MobEffects.GLOWING, 100, 0, true, false, true));
 			Vec3 motion = pullMotion(center, target);
-			target.setDeltaMovement(motion);
-			target.hurtMarked = true;
-			target.hasImpulse = true;
-			if (target instanceof ServerPlayer targetPlayer) {
-				targetPlayer.connection.send(new ClientboundSetEntityMotionPacket(targetPlayer));
-			}
+			Motion.set(target, motion, Motion.Sync.MARK_AND_SEND_TO_PLAYER);
 		}
 
 		level.sendParticles(ParticleTypes.FLASH, center.x, center.y + 0.5, center.z, 2, 0.2, 0.2, 0.2, 0);

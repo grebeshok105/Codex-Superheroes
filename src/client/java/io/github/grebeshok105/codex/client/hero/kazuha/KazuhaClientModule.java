@@ -2,7 +2,7 @@ package io.github.grebeshok105.codex.client.hero.kazuha;
 
 import io.github.grebeshok105.codex.client.core.module.HeroClientContext;
 import io.github.grebeshok105.codex.client.core.module.HeroClientModule;
-import io.github.grebeshok105.codex.hero.KazuhaHero;
+import io.github.grebeshok105.codex.hero.kazuha.KazuhaHero;
 import net.minecraft.resources.ResourceLocation;
 
 public record KazuhaClientModule() implements HeroClientModule {

@@ -1,9 +1,11 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.scaramouche.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import io.github.grebeshok105.codex.core.ability.AbilityRouter;
+import io.github.grebeshok105.codex.mechanic.motion.Motion;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
@@ -36,9 +38,11 @@ public final class ScaramoucheWindPrisonAbility implements Ability {
 	private static final DustParticleOptions ELECTRO_DUST = new DustParticleOptions(new Vector3f(0.56f, 0.36f, 1.0f), 1.0f);
 	private static final Map<UUID, ActiveZone> ACTIVE = new WeakHashMap<>();
 
+	public static final ResourceLocation ID = ModId.of("scaramouche_wind_prison");
+
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.SCARAMOUCHE_WIND_PRISON;
+		return ID;
 	}
 
 	@Override
@@ -107,8 +111,7 @@ public final class ScaramoucheWindPrisonAbility implements Ability {
 			if (distance > RADIUS + 1.5 || distance < 0.001) continue;
 
 			Vec3 pull = toCenter.scale(0.075).add(0.0, 0.025, 0.0);
-			target.setDeltaMovement(target.getDeltaMovement().add(pull));
-			target.hurtMarked = true;
+			Motion.add(target, pull, Motion.Sync.MARK);
 			if (target instanceof ServerPlayer targetPlayer && player.tickCount % 4 == 0) {
 				targetPlayer.connection.send(new ClientboundSetEntityMotionPacket(targetPlayer));
 			}

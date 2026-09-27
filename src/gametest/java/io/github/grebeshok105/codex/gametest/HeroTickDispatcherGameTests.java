@@ -2,7 +2,7 @@ package io.github.grebeshok105.codex.gametest;
 
 import io.github.grebeshok105.codex.ability.AbilityIds;
 import io.github.grebeshok105.codex.hero.NarutoHero;
-import io.github.grebeshok105.codex.hero.ScaramoucheHero;
+import io.github.grebeshok105.codex.hero.scaramouche.ScaramoucheHero;
 import io.github.grebeshok105.codex.core.lifecycle.HeroTickDispatcher;
 import io.github.grebeshok105.codex.core.transform.HeroDataStore;
 import io.github.grebeshok105.codex.core.transform.HeroTransformService;

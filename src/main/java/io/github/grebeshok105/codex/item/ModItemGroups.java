@@ -71,11 +71,6 @@ public final class ModItemGroups {
 				output.accept(ModItems.A_TRAIN_SUIT);
 				output.accept(ModItems.PANDORA_SUIT);
 
-				// Kazuha & Scaramouche are now normal, obtainable characters — their
-				// transformation items live in the regular creative tab (no longer admin-only).
-				output.accept(ModItems.KAZUHA_VISION);
-				output.accept(ModItems.SCARAMOUCHE_VISION);
-
 				// Hero modules append their items here, in module registration order.
 				for (ItemLike item : CreativeTabContents.all()) {
 					output.accept(item);
