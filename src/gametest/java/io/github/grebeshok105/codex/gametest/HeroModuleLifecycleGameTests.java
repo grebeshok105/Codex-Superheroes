@@ -185,16 +185,18 @@ public final class HeroModuleLifecycleGameTests implements FabricGameTest {
 		// gametest server runs with pvp off, so enable it for this test only and
 		// restore it — the flag is global to every concurrent test in the batch.
 		boolean oldPvp = helper.getLevel().getServer().isPvpAllowed();
-		helper.getLevel().getServer().setPvpAllowed(true);
 		Zombie frozen = helper.spawn(EntityType.ZOMBIE, 1, 1, 1);
 		owner.teleportTo(frozen.getX() - 3.0, frozen.getY(), frozen.getZ());
 		victim.teleportTo(frozen.getX() + 3.0, frozen.getY(), frozen.getZ());
-		ReinhardTimeSlowController.triggerAbilitySlow(owner);
 
 		// Freshly joined players and spawned mobs only enter the accessible entity
 		// sections freezeAround() scans once their chunk's tracking upgrade lands —
-		// poll for both, then settle.
+		// trigger AFTER both are visible: firing earlier misses the mob, and the
+		// wait window would let a sibling test's resetAll() (global, all slows)
+		// strip our locks before the assertions run.
 		TestPlayers.awaitVisible(helper, victim, () -> TestPlayers.awaitVisible(helper, frozen, () -> helper.runAfterDelay(2, () -> {
+			helper.getLevel().getServer().setPvpAllowed(true);
+			ReinhardTimeSlowController.triggerAbilitySlow(owner);
 			helper.assertTrue(TestPlayers.lockOwners(frozen, ControlLockKind.NO_AI)
 					.contains(owner.getUUID()), "time slow holds a NoAI lock on the mob");
 			helper.assertTrue(victim.getAttribute(Attributes.MOVEMENT_SPEED)
@@ -224,10 +226,11 @@ public final class HeroModuleLifecycleGameTests implements FabricGameTest {
 		TestHeroes.transform(owner, ReinhardHero.ID);
 		Zombie frozen = helper.spawn(EntityType.ZOMBIE, 1, 1, 1);
 		owner.teleportTo(frozen.getX() - 3.0, frozen.getY(), frozen.getZ());
-		ReinhardTimeSlowController.triggerAbilitySlow(owner);
 
-		// See the leave variant: wait for the spawn to be entity-visible first.
+		// See the leave variant: trigger only once the spawn is entity-visible,
+		// otherwise freezeAround()'s section scan misses it.
 		TestPlayers.awaitVisible(helper, frozen, () -> helper.runAfterDelay(2, () -> {
+			ReinhardTimeSlowController.triggerAbilitySlow(owner);
 			helper.assertTrue(TestPlayers.lockOwners(frozen, ControlLockKind.NO_AI)
 					.contains(owner.getUUID()), "time slow holds a NoAI lock on the mob");
 			ReinhardTimeSlowController.resetAll(helper.getLevel().getServer());
