@@ -4,8 +4,8 @@ import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
+import io.github.grebeshok105.codex.mechanic.motion.Motion;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -71,11 +71,7 @@ public final class ATrainSonicBoomAbility implements Ability {
 			target.addEffect(new MobEffectInstance(MobEffects.CONFUSION, 100, 0, true, true, true));
 			target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 90, 0, true, true, true));
 			Vec3 push = forward.scale(2.0).add(0.0, 0.35, 0.0);
-			target.push(push.x, push.y, push.z);
-			target.hurtMarked = true;
-			if (target instanceof ServerPlayer targetPlayer) {
-				targetPlayer.connection.send(new ClientboundSetEntityMotionPacket(targetPlayer));
-			}
+			Motion.add(target, push, Motion.Sync.MARK_AND_SEND_TO_PLAYER);
 		}
 		Vec3 origin = eye.add(forward.scale(0.8));
 		level.sendParticles(ParticleTypes.SONIC_BOOM, origin.x, origin.y, origin.z, 1, 0, 0, 0, 0);
