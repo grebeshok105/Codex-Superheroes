@@ -142,7 +142,7 @@ public final class RegulusMadnessController {
 	private static void stripFlight(LivingEntity target) {
 		if (!(target instanceof ServerPlayer sp)) return;
 		try {
-			io.github.grebeshok105.codex.core.ability.AbilityRouter.deactivate(sp, io.github.grebeshok105.codex.ability.AbilityIds.FLIGHT);
+			io.github.grebeshok105.codex.core.ability.AbilityRouter.deactivate(sp, io.github.grebeshok105.codex.mechanic.ability.SharedAbilityIds.FLIGHT);
 		} catch (Throwable ignored) {
 		}
 		try {

@@ -1,9 +1,11 @@
-package io.github.grebeshok105.codex.effect;
+package io.github.grebeshok105.codex.hero.omniman.runtime;
 
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
+import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
-import io.github.grebeshok105.codex.hero.OmnimanHero;
+import io.github.grebeshok105.codex.hero.omniman.OmnimanHero;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
 import net.minecraft.resources.ResourceLocation;
@@ -17,11 +19,9 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import net.minecraft.server.MinecraftServer;
 
@@ -37,8 +37,10 @@ public final class OmnimanMomentumController {
 	private static final double MAX_BONUS_KNOCKBACK = 1.35;
 	private static final ResourceLocation DAMAGE_PROC = ModId.of("modifiers/omniman/momentum_proc_damage");
 	private static final ResourceLocation KNOCKBACK_PROC = ModId.of("modifiers/omniman/momentum_proc_knockback");
-	private static final Map<UUID, Float> MOMENTUM = new HashMap<>();
-	private static final Set<UUID> ACTIVE_MODIFIERS = new HashSet<>();
+	private static final OwnedSessionMap<UUID, Float> MOMENTUM =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.of(OwnedSessionMap.ClearOn.LEAVE));
+	private static final OwnedSessionMap<UUID, Boolean> ACTIVE_MODIFIERS =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.of(OwnedSessionMap.ClearOn.LEAVE));
 
 	private OmnimanMomentumController() {
 	}
@@ -68,7 +70,8 @@ public final class OmnimanMomentumController {
 	}
 
 	public static float momentum(ServerPlayer player) {
-		return MOMENTUM.getOrDefault(player.getUUID(), 0f);
+		Float stored = MOMENTUM.get(player.getUUID());
+		return stored == null ? 0f : stored;
 	}
 
 	public static boolean consume(ServerPlayer player, float amount) {
@@ -95,6 +98,7 @@ public final class OmnimanMomentumController {
 		removeAttackModifiers(player);
 		ACTIVE_MODIFIERS.remove(player.getUUID());
 	}
+
 
 	private static void tickPlayer(ServerPlayer player) {
 		if (!isOmniman(player) || !player.isAlive()) {
@@ -146,7 +150,7 @@ public final class OmnimanMomentumController {
 			knockback.addTransientModifier(new AttributeModifier(
 					KNOCKBACK_PROC, knockbackBonus, AttributeModifier.Operation.ADD_VALUE));
 		}
-		ACTIVE_MODIFIERS.add(player.getUUID());
+		ACTIVE_MODIFIERS.put(player.getUUID(), player.getUUID(), Boolean.TRUE);
 	}
 
 	private static void removeAttackModifiers(ServerPlayer player) {
@@ -166,20 +170,19 @@ public final class OmnimanMomentumController {
 			MOMENTUM.remove(player.getUUID());
 			return;
 		}
-		MOMENTUM.put(player.getUUID(), clamped);
+		MOMENTUM.put(player.getUUID(), player.getUUID(), clamped);
 	}
 
 	public static void serverTick(MinecraftServer server) {
-		Iterator<UUID> activeIt = ACTIVE_MODIFIERS.iterator();
+		Iterator<Map.Entry<UUID, Boolean>> activeIt = ACTIVE_MODIFIERS.iterator();
 		while (activeIt.hasNext()) {
-			UUID id = activeIt.next();
+			UUID id = activeIt.next().getKey();
 			ServerPlayer player = server.getPlayerList().getPlayer(id);
 			if (player != null) {
 				removeAttackModifiers(player);
 			}
 			activeIt.remove();
 		}
-		MOMENTUM.keySet().removeIf(id -> server.getPlayerList().getPlayer(id) == null);
 	}
 
 	public static void tickPlayer(MinecraftServer server, ServerPlayer player, HeroData data) {

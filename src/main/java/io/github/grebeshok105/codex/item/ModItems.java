@@ -183,26 +183,6 @@ public final class ModItems {
 									new TransformationLore.Line("item.superheroes.raiden_suit.lore.untransform", ChatFormatting.RED))))
 	);
 
-	public static final TransformationItem INVINCIBLE_SUIT = register(
-			"invincible_suit",
-			new TransformationItem(ModId.of("invincible"), new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC),
-					new TransformationLore(ChatFormatting.BLUE,
-							List.of(new TransformationLore.Line("item.superheroes.invincible_suit.lore.line1", ChatFormatting.YELLOW),
-									new TransformationLore.Line("item.superheroes.invincible_suit.lore.line2", ChatFormatting.DARK_GRAY)),
-							List.of(new TransformationLore.Line("item.superheroes.invincible_suit.lore.usage", ChatFormatting.AQUA),
-									new TransformationLore.Line("item.superheroes.invincible_suit.lore.untransform", ChatFormatting.RED))))
-	);
-
-	public static final TransformationItem OMNIMAN_SUIT = register(
-			"omniman_suit",
-			new TransformationItem(ModId.of("omniman"), new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC),
-					new TransformationLore(ChatFormatting.DARK_RED,
-							List.of(new TransformationLore.Line("item.superheroes.omniman_suit.lore.line1", ChatFormatting.RED),
-									new TransformationLore.Line("item.superheroes.omniman_suit.lore.line2", ChatFormatting.DARK_GRAY)),
-							List.of(new TransformationLore.Line("item.superheroes.omniman_suit.lore.usage", ChatFormatting.GOLD),
-									new TransformationLore.Line("item.superheroes.omniman_suit.lore.untransform", ChatFormatting.RED))))
-	);
-
 	public static final TransformationItem BATTLE_BEAST_MEDALLION = register(
 			"battle_beast_medallion",
 			new TransformationItem(ModId.of("battle_beast"), new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC),

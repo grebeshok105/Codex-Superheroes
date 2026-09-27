@@ -1,11 +1,12 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.omniman.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
-import io.github.grebeshok105.codex.effect.OmnimanMomentumController;
+import io.github.grebeshok105.codex.hero.omniman.runtime.OmnimanMomentumController;
+import io.github.grebeshok105.codex.mechanic.motion.Motion;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -31,9 +32,11 @@ public final class OmnimanWorldBreakerAbility implements Ability {
 	private static final double SHOCKWAVE_UPWARD_KNOCKBACK = 0.55;
 	private static final float MOMENTUM_COST = 35f;
 
+	public static final ResourceLocation ID = ModId.of("omniman_world_breaker");
+
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.OMNIMAN_WORLD_BREAKER;
+		return ID;
 	}
 
 	@Override
@@ -145,11 +148,8 @@ public final class OmnimanWorldBreakerAbility implements Ability {
 
 
 	private static void push(LivingEntity target, Vec3 direction, double strength, double upward) {
-		target.setDeltaMovement(direction.x * strength, upward, direction.z * strength);
-		target.hurtMarked = true;
-		if (target instanceof ServerPlayer targetPlayer) {
-			targetPlayer.connection.send(new ClientboundSetEntityMotionPacket(targetPlayer));
-		}
+		Motion.set(target, new Vec3(direction.x * strength, upward, direction.z * strength),
+				Motion.Sync.MARK_AND_SEND_TO_PLAYER);
 	}
 
 	private static void playTargetEffects(ServerLevel level, ServerPlayer player, LivingEntity target, Vec3 direction, float boost) {

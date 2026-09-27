@@ -2,7 +2,7 @@ package io.github.grebeshok105.codex.gametest;
 
 import com.mojang.authlib.GameProfile;
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.ability.OmnimanThinkMarkAbility;
+import io.github.grebeshok105.codex.hero.omniman.ability.OmnimanThinkMarkAbility;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import io.github.grebeshok105.codex.core.ability.AbilityRegistry;
@@ -10,7 +10,7 @@ import io.github.grebeshok105.codex.core.ability.AbilityRouter;
 import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.hero.Heroes;
 import io.github.grebeshok105.codex.core.lifecycle.ControlLockKind;
-import io.github.grebeshok105.codex.network.ThinkMarkS2CPayload;
+import io.github.grebeshok105.codex.hero.omniman.net.ThinkMarkS2CPayload;
 import io.netty.channel.embedded.EmbeddedChannel;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.gametest.framework.GameTest;

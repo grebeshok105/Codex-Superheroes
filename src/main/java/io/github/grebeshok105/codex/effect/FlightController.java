@@ -2,7 +2,7 @@ package io.github.grebeshok105.codex.effect;
 
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.transform.HeroDataStore;
-import io.github.grebeshok105.codex.ability.AbilityIds;
+import io.github.grebeshok105.codex.mechanic.ability.SharedAbilityIds;
 import io.github.grebeshok105.codex.core.ability.AbilityRouter;
 import io.github.grebeshok105.codex.flight.FlightAbilityState;
 import io.github.grebeshok105.codex.flight.FlightMode;
@@ -203,7 +203,7 @@ public final class FlightController {
 		UUID id = player.getUUID();
 		URANIUM_ACTIVE_SINCE.remove(id);
 		URANIUM_COOLDOWN_UNTIL.put(id, player.level().getGameTime() + URANIUM_COOLDOWN_TICKS);
-		AbilityRouter.deactivate(player, AbilityIds.FLIGHT);
+		AbilityRouter.deactivate(player, SharedAbilityIds.FLIGHT);
 	}
 
 	private static void tickIronManEffects(ServerPlayer player, HeroData data) {

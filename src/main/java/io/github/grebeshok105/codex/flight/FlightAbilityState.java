@@ -1,6 +1,7 @@
 package io.github.grebeshok105.codex.flight;
 
 import io.github.grebeshok105.codex.ability.AbilityIds;
+import io.github.grebeshok105.codex.mechanic.ability.SharedAbilityIds;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.minecraft.resources.ResourceLocation;
 
@@ -9,7 +10,7 @@ public final class FlightAbilityState {
 	}
 
 	public static boolean isFlightAbility(ResourceLocation abilityId) {
-		return AbilityIds.FLIGHT.equals(abilityId)
+		return SharedAbilityIds.FLIGHT.equals(abilityId)
 				|| AbilityIds.IRON_MAN_FLIGHT.equals(abilityId)
 				|| AbilityIds.SUPERSONIC.equals(abilityId);
 	}
@@ -33,8 +34,8 @@ public final class FlightAbilityState {
 				return FlightMode.IRON_MAN;
 			}
 		}
-		if (data.isActive(AbilityIds.FLIGHT)) {
-			if (!AbilityIds.FLIGHT.equals(removedAbility)) {
+		if (data.isActive(SharedAbilityIds.FLIGHT)) {
+			if (!SharedAbilityIds.FLIGHT.equals(removedAbility)) {
 				return FlightMode.NORMAL;
 			}
 		}

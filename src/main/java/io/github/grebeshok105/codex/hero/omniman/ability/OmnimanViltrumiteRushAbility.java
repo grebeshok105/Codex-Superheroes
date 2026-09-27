@@ -1,18 +1,19 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.omniman.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.effect.FlightController;
-import io.github.grebeshok105.codex.effect.OmnimanMomentumController;
+import io.github.grebeshok105.codex.hero.omniman.runtime.OmnimanMomentumController;
+import io.github.grebeshok105.codex.mechanic.motion.Motion;
 import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
 import io.github.grebeshok105.codex.physics.RushTerrainBreaker;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -43,10 +44,11 @@ public final class OmnimanViltrumiteRushAbility implements Ability {
 	private static final double HIT_SCAN_INFLATE = 1.55;
 	private static final OwnedSessionMap<UUID, ActiveRush> ACTIVE =
 			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.of(ClearOn.LEAVE, ClearOn.DEATH));
+	public static final ResourceLocation ID = ModId.of("omniman_viltrumite_rush");
 
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.OMNIMAN_VILTRUMITE_RUSH;
+		return ID;
 	}
 
 	@Override
@@ -77,10 +79,8 @@ public final class OmnimanViltrumiteRushAbility implements Ability {
 		Vec3 motion = direction.scale(distance / DURATION_TICKS);
 		boolean airborneRush = distance > (boosted ? BOOSTED_DISTANCE : BASE_DISTANCE);
 
-		player.setDeltaMovement(motion);
-		player.hurtMarked = true;
+		Motion.set(player, motion, Motion.Sync.MARK_AND_SEND_TO_PLAYER);
 		player.fallDistance = 0f;
-		player.connection.send(new ClientboundSetEntityMotionPacket(player.getId(), motion));
 		ACTIVE.put(player.getUUID(), player.getUUID(), new ActiveRush(DURATION_TICKS, distance, boosted, airborneRush, new HashSet<>()));
 
 		ServerLevel level = player.serverLevel();
@@ -105,10 +105,8 @@ public final class OmnimanViltrumiteRushAbility implements Ability {
 		ServerLevel level = player.serverLevel();
 		Vec3 direction = viewDirection(player);
 		Vec3 motion = direction.scale(rush.distance / DURATION_TICKS);
-		player.setDeltaMovement(motion);
-		player.hurtMarked = true;
+		Motion.set(player, motion, Motion.Sync.MARK_AND_SEND_TO_PLAYER);
 		player.fallDistance = 0f;
-		player.connection.send(new ClientboundSetEntityMotionPacket(player.getId(), motion));
 
 		hitTargets(player, rush, direction);
 		sendTrail(level, player, direction, rush.boosted, rush.airborneRush);
@@ -149,11 +147,7 @@ public final class OmnimanViltrumiteRushAbility implements Ability {
 			double knockback = rush.boosted ? BOOSTED_KNOCKBACK : BASE_KNOCKBACK;
 			target.hurt(level.damageSources().playerAttack(player), damage);
 			Vec3 push = direction.scale(knockback).add(0.0, rush.boosted ? 0.75 : 0.6, 0.0);
-			target.setDeltaMovement(push);
-			target.hurtMarked = true;
-			if (target instanceof ServerPlayer targetPlayer) {
-				targetPlayer.connection.send(new ClientboundSetEntityMotionPacket(targetPlayer));
-			}
+			Motion.set(target, push, Motion.Sync.MARK_AND_SEND_TO_PLAYER);
 
 			Vec3 center = target.position().add(0.0, target.getBbHeight() * 0.55, 0.0);
 			level.sendParticles(ParticleTypes.EXPLOSION, center.x, center.y, center.z,

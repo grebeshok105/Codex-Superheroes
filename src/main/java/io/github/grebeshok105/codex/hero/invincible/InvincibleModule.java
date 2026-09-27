@@ -1,12 +1,11 @@
 package io.github.grebeshok105.codex.hero.invincible;
 
-import io.github.grebeshok105.codex.ability.GuardiansBreakerAbility;
-import io.github.grebeshok105.codex.ability.ViltrumiteChargeAbility;
+import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.module.HeroModule;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
-import io.github.grebeshok105.codex.effect.InvincibleCombatController;
-import io.github.grebeshok105.codex.core.hero.Hero;
-import io.github.grebeshok105.codex.hero.InvincibleHero;
+import io.github.grebeshok105.codex.hero.invincible.ability.GuardiansBreakerAbility;
+import io.github.grebeshok105.codex.hero.invincible.runtime.InvincibleCombatController;
+import io.github.grebeshok105.codex.mechanic.ability.ViltrumiteChargeAbility;
 
 public final class InvincibleModule implements HeroModule {
 	private final InvincibleHero hero = new InvincibleHero();
@@ -18,7 +17,7 @@ public final class InvincibleModule implements HeroModule {
 
 	@Override
 	public void register(HeroModuleContext ctx) {
-		ctx.abilities().register(new ViltrumiteChargeAbility());
+		InvincibleItems.register(ctx.content());
 		ctx.abilities().register(new GuardiansBreakerAbility());
 		InvincibleCombatController.register(ctx);
 		ctx.ticks().global(InvincibleCombatController::serverTick);

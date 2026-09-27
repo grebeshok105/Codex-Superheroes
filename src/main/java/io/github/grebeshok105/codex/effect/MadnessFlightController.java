@@ -1,6 +1,6 @@
 package io.github.grebeshok105.codex.effect;
 
-import io.github.grebeshok105.codex.ability.AbilityIds;
+import io.github.grebeshok105.codex.mechanic.ability.SharedAbilityIds;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.core.transform.HeroData;
@@ -41,7 +41,7 @@ public final class MadnessFlightController {
 			return;
 		}
 		HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
-		if (!data.hasHero() || !data.isActive(AbilityIds.FLIGHT)) {
+		if (!data.hasHero() || !data.isActive(SharedAbilityIds.FLIGHT)) {
 			return;
 		}
 		Vec3 motion = player.getDeltaMovement();
