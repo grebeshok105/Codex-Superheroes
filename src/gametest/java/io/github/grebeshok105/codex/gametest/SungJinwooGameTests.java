@@ -177,7 +177,8 @@ public final class SungJinwooGameTests implements FabricGameTest {
 					List<UUID> ids = player.getAttachedOrCreate(SungJinwooAttachments.ARMY).shadowIds();
 					Entity raised = player.serverLevel().getEntity(ids.get(ids.size() - 1));
 					helper.assertTrue(raised instanceof ShadowSoldierEntity ss && ss.isAlive(),
-							"the raised shadow resolves as a live army member");
+							"the raised shadow resolves as a live army member, ids=" + ids.size()
+									+ " raised=" + raised + " aliveCount=" + SungJinwooController.aliveCount(player));
 					TestPlayers.leave(player);
 					helper.succeed();
 				});
