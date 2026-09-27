@@ -1,6 +1,7 @@
 package io.github.grebeshok105.codex.core.lifecycle;
 
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
 import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.minecraft.core.Holder;
