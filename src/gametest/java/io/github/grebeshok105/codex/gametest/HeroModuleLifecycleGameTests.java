@@ -185,18 +185,16 @@ public final class HeroModuleLifecycleGameTests implements FabricGameTest {
 		// gametest server runs with pvp off, so enable it for this test only and
 		// restore it — the flag is global to every concurrent test in the batch.
 		boolean oldPvp = helper.getLevel().getServer().isPvpAllowed();
+		helper.getLevel().getServer().setPvpAllowed(true);
 		Zombie frozen = helper.spawn(EntityType.ZOMBIE, 1, 1, 1);
 		owner.teleportTo(frozen.getX() - 3.0, frozen.getY(), frozen.getZ());
 		victim.teleportTo(frozen.getX() + 3.0, frozen.getY(), frozen.getZ());
+		ReinhardTimeSlowController.triggerAbilitySlow(owner);
 
 		// Freshly joined players and spawned mobs only enter the accessible entity
 		// sections freezeAround() scans once their chunk's tracking upgrade lands —
-		// trigger AFTER both are visible: firing earlier misses the mob, and the
-		// wait window would let a sibling test's resetAll() (global, all slows)
-		// strip our locks before the assertions run.
+		// poll for both, then settle.
 		TestPlayers.awaitVisible(helper, victim, () -> TestPlayers.awaitVisible(helper, frozen, () -> helper.runAfterDelay(2, () -> {
-			helper.getLevel().getServer().setPvpAllowed(true);
-			ReinhardTimeSlowController.triggerAbilitySlow(owner);
 			helper.assertTrue(TestPlayers.lockOwners(frozen, ControlLockKind.NO_AI)
 					.contains(owner.getUUID()), "time slow holds a NoAI lock on the mob");
 			helper.assertTrue(victim.getAttribute(Attributes.MOVEMENT_SPEED)
@@ -227,19 +225,22 @@ public final class HeroModuleLifecycleGameTests implements FabricGameTest {
 		Zombie frozen = helper.spawn(EntityType.ZOMBIE, 1, 1, 1);
 		owner.teleportTo(frozen.getX() - 3.0, frozen.getY(), frozen.getZ());
 
-		// See the leave variant: trigger only once the spawn is entity-visible,
-		// otherwise freezeAround()'s section scan misses it.
-		TestPlayers.awaitVisible(helper, frozen, () -> helper.runAfterDelay(2, () -> {
+		// resetAll() releases EVERY active slow globally — triggering early in the
+		// batch lets this test's reset land inside the leave variant's assert
+		// window (and DamagePipeline's). Fire ours well after the siblings finish.
+		helper.runAfterDelay(30, () -> TestPlayers.awaitVisible(helper, frozen, () -> {
 			ReinhardTimeSlowController.triggerAbilitySlow(owner);
-			helper.assertTrue(TestPlayers.lockOwners(frozen, ControlLockKind.NO_AI)
-					.contains(owner.getUUID()), "time slow holds a NoAI lock on the mob");
-			ReinhardTimeSlowController.resetAll(helper.getLevel().getServer());
-			helper.assertFalse(TestPlayers.lockOwners(frozen, ControlLockKind.NO_AI)
-					.contains(owner.getUUID()), "resetAll releases the lock ref");
-			helper.assertFalse(ReinhardTimeSlowController.isActive(owner),
-					"resetAll drops the active slow");
-			TestPlayers.leave(owner);
-			helper.succeed();
+			helper.runAfterDelay(1, () -> {
+				helper.assertTrue(TestPlayers.lockOwners(frozen, ControlLockKind.NO_AI)
+						.contains(owner.getUUID()), "time slow holds a NoAI lock on the mob");
+				ReinhardTimeSlowController.resetAll(helper.getLevel().getServer());
+				helper.assertFalse(TestPlayers.lockOwners(frozen, ControlLockKind.NO_AI)
+						.contains(owner.getUUID()), "resetAll releases the lock ref");
+				helper.assertFalse(ReinhardTimeSlowController.isActive(owner),
+						"resetAll drops the active slow");
+				TestPlayers.leave(owner);
+				helper.succeed();
+			});
 		}));
 	}
 
