@@ -1,7 +1,7 @@
 package io.github.grebeshok105.codex.gametest;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.ability.CapShieldSlamAbility;
+import io.github.grebeshok105.codex.hero.captainamerica.ability.CapShieldSlamAbility;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import io.github.grebeshok105.codex.core.ability.AbilityRegistry;
@@ -10,7 +10,7 @@ import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.hero.Heroes;
 import io.github.grebeshok105.codex.core.lifecycle.HeroTickDispatcher;
 import io.github.grebeshok105.codex.core.transform.HeroDataStore;
-import io.github.grebeshok105.codex.entity.ShieldProjectileEntity;
+import io.github.grebeshok105.codex.hero.captainamerica.entity.ShieldProjectileEntity;
 import io.github.grebeshok105.codex.item.ModItems;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.core.registries.BuiltInRegistries;

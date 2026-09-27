@@ -1,10 +1,11 @@
-package io.github.grebeshok105.codex.item;
+package io.github.grebeshok105.codex.hero.captainamerica.item;
 
-import io.github.grebeshok105.codex.hero.CaptainAmericaHero;
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.transform.TooltipFrame;
 import io.github.grebeshok105.codex.core.transform.TransformationItem;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
@@ -12,8 +13,10 @@ import net.minecraft.world.item.TooltipFlag;
 import java.util.List;
 
 public class CaptainAmericaSuitItem extends TransformationItem {
+	private static final ResourceLocation CAPTAIN_AMERICA_ID = ModId.of("captain_america");
+
 	public CaptainAmericaSuitItem(Properties properties) {
-		super(CaptainAmericaHero.ID, properties);
+		super(CAPTAIN_AMERICA_ID, properties);
 	}
 
 	@Override

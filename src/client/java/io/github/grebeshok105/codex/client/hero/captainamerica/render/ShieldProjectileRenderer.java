@@ -1,7 +1,7 @@
-package io.github.grebeshok105.codex.client.render;
+package io.github.grebeshok105.codex.client.hero.captainamerica.render;
 
-import io.github.grebeshok105.codex.entity.ShieldProjectileEntity;
-import io.github.grebeshok105.codex.item.ModItems;
+import io.github.grebeshok105.codex.ModId;
+import io.github.grebeshok105.codex.hero.captainamerica.entity.ShieldProjectileEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
@@ -10,6 +10,7 @@ import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
@@ -36,7 +37,8 @@ public class ShieldProjectileRenderer extends EntityRenderer<ShieldProjectileEnt
 
 		Minecraft mc = Minecraft.getInstance();
 		ItemRenderer itemRenderer = mc.getItemRenderer();
-		ItemStack stack = entity.getShieldStack().isEmpty() ? new ItemStack(ModItems.VIBRANIUM_SHIELD) : entity.getShieldStack();
+		ItemStack stack = entity.getShieldStack().isEmpty()
+				? new ItemStack(BuiltInRegistries.ITEM.get(ModId.of("vibranium_shield"))) : entity.getShieldStack();
 		itemRenderer.renderStatic(stack, ItemDisplayContext.FIXED, packedLight,
 				OverlayTexture.NO_OVERLAY, pose, buffers, entity.level(), entity.getId());
 

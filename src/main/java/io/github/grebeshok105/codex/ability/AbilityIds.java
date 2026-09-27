@@ -39,11 +39,6 @@ public final class AbilityIds {
 	public static final ResourceLocation DOOMSDAY_CHARGE_TACKLE = ModId.of("doomsday_charge_tackle");
 	public static final ResourceLocation DOOMSDAY_DOOM_GRIP = ModId.of("doomsday_doom_grip");
 
-	public static final ResourceLocation CAP_SHIELD_THROW = ModId.of("cap_shield_throw");
-	public static final ResourceLocation CAP_SHIELD_SLAM = ModId.of("cap_shield_slam");
-	public static final ResourceLocation CAP_SHIELD_DASH = ModId.of("cap_shield_dash");
-	public static final ResourceLocation CAP_COUNTER_STANCE = ModId.of("cap_counter_stance");
-
 	public static final ResourceLocation KRATOS_SPARTAN_RAGE = ModId.of("kratos_spartan_rage");
 	public static final ResourceLocation KRATOS_BLADE_STORM = ModId.of("kratos_blade_storm");
 	public static final ResourceLocation KRATOS_CHAIN_WHIRL = ModId.of("kratos_chain_whirl");

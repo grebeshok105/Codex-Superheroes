@@ -1,7 +1,6 @@
-package io.github.grebeshok105.codex.hero;
+package io.github.grebeshok105.codex.hero.captainamerica;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.ability.AbilityIds;
 import io.github.grebeshok105.codex.core.hero.AttributeModifierSet;
 import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.hero.HeroHudConfig;
@@ -94,10 +93,10 @@ public final class CaptainAmericaHero implements Hero {
 	@Override
 	public List<ResourceLocation> getAbilities() {
 		return List.of(
-				AbilityIds.CAP_SHIELD_THROW,
-				AbilityIds.CAP_SHIELD_SLAM,
-				AbilityIds.CAP_SHIELD_DASH,
-				AbilityIds.CAP_COUNTER_STANCE
+				CaptainAmericaAbilities.CAP_SHIELD_THROW,
+				CaptainAmericaAbilities.CAP_SHIELD_SLAM,
+				CaptainAmericaAbilities.CAP_SHIELD_DASH,
+				CaptainAmericaAbilities.CAP_COUNTER_STANCE
 		);
 	}
 
