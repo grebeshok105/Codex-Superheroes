@@ -39,20 +39,6 @@ public final class AbilityIds {
 	public static final ResourceLocation DOOMSDAY_CHARGE_TACKLE = ModId.of("doomsday_charge_tackle");
 	public static final ResourceLocation DOOMSDAY_DOOM_GRIP = ModId.of("doomsday_doom_grip");
 
-	public static final ResourceLocation GOKU_KAMEHAMEHA = ModId.of("goku_kamehameha");
-	public static final ResourceLocation GOKU_INSTANT_TRANSMISSION = ModId.of("goku_instant_transmission");
-	public static final ResourceLocation GOKU_KI_CHARGE = ModId.of("goku_ki_charge");
-	public static final ResourceLocation GOKU_SOLAR_FLARE = ModId.of("goku_solar_flare");
-	public static final ResourceLocation GOKU_SPIRIT_BOMB = ModId.of("goku_spirit_bomb");
-	public static final ResourceLocation GOKU_SUPER_SAIYAN_AURA = ModId.of("goku_super_saiyan_aura");
-
-	public static final ResourceLocation NARUTO_RASENGAN = ModId.of("naruto_rasengan");
-	public static final ResourceLocation NARUTO_SHADOW_CLONES = ModId.of("naruto_shadow_clones");
-	public static final ResourceLocation NARUTO_RASENSHURIKEN = ModId.of("naruto_rasenshuriken");
-	public static final ResourceLocation NARUTO_SAGE_MODE = ModId.of("naruto_sage_mode");
-	public static final ResourceLocation NARUTO_OODAMA_RASENGAN = ModId.of("naruto_oodama_rasengan");
-	public static final ResourceLocation NARUTO_BIJUUDAMA = ModId.of("naruto_bijuudama");
-
 	public static final ResourceLocation CAP_SHIELD_THROW = ModId.of("cap_shield_throw");
 	public static final ResourceLocation CAP_SHIELD_SLAM = ModId.of("cap_shield_slam");
 	public static final ResourceLocation CAP_SHIELD_DASH = ModId.of("cap_shield_dash");

@@ -1,4 +1,4 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.naruto.ability;
 
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.ability.Ability;
@@ -14,6 +14,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 
 public final class NarutoSageModeAbility implements Ability {
+	public static final ResourceLocation ID = ModId.of("naruto_sage_mode");
 	private static final int EXIT_COOLDOWN_TICKS = 200;
 	private static final ResourceLocation SAGE_DAMAGE = ModId.of("modifiers/naruto/sage_damage");
 	private static final ResourceLocation SAGE_SPEED = ModId.of("modifiers/naruto/sage_speed");
@@ -27,7 +28,7 @@ public final class NarutoSageModeAbility implements Ability {
 
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.NARUTO_SAGE_MODE;
+		return ID;
 	}
 
 	@Override

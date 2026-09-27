@@ -1,10 +1,11 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.goku.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.ability.Ability;
-import io.github.grebeshok105.codex.effect.GokuKiStackController;
-import io.github.grebeshok105.codex.particle.ModParticles;
+import io.github.grebeshok105.codex.hero.goku.runtime.GokuKiStackController;
+import io.github.grebeshok105.codex.hero.goku.registry.GokuParticles;
+import io.github.grebeshok105.codex.mechanic.motion.Motion;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -15,11 +16,12 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.phys.Vec3;
 
 public final class GokuKiChargeAbility implements Ability {
+	public static final ResourceLocation ID = ModId.of("goku_ki_charge");
 	private static final int TICKS_PER_STACK = 20;
 
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.GOKU_KI_CHARGE;
+		return ID;
 	}
 
 	@Override
@@ -49,9 +51,7 @@ public final class GokuKiChargeAbility implements Ability {
 	public void onTickActive(ServerPlayer player) {
 		ServerLevel level = player.serverLevel();
 		Vec3 motion = player.getDeltaMovement();
-		player.setDeltaMovement(0, Math.max(motion.y, -0.05), 0);
-		player.hurtMarked = true;
-		player.connection.send(new ClientboundSetEntityMotionPacket(player));
+		Motion.set(player, new Vec3(0, Math.max(motion.y, -0.05), 0), Motion.Sync.MARK_AND_SEND_TO_PLAYER);
 
 		player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 5, 4, true, false, false));
 
@@ -60,7 +60,7 @@ public final class GokuKiChargeAbility implements Ability {
 		for (int i = 0; i < 3 + stacks; i++) {
 			double angle = Math.random() * Math.PI * 2;
 			double r = aRadius * (0.6 + Math.random() * 0.4);
-			level.sendParticles(ModParticles.GOKU_KI_AURA,
+			level.sendParticles(GokuParticles.GOKU_KI_AURA,
 					player.getX() + Math.cos(angle) * r,
 					player.getY() + Math.random() * 1.8,
 					player.getZ() + Math.sin(angle) * r,

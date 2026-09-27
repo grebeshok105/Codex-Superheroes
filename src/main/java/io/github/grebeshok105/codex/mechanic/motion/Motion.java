@@ -26,6 +26,10 @@ public final class Motion {
 	}
 
 	public static void add(Entity entity, Vec3 delta, Sync sync) {
-		set(entity, entity.getDeltaMovement().add(delta), sync);
+		entity.push(delta);
+		entity.hurtMarked = true;
+		if (sync == Sync.MARK_AND_SEND_TO_PLAYER && entity instanceof ServerPlayer player) {
+			player.connection.send(new ClientboundSetEntityMotionPacket(player));
+		}
 	}
 }

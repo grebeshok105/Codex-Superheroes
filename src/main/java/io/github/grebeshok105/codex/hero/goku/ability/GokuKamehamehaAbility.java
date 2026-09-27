@@ -1,14 +1,13 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.goku.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
-import io.github.grebeshok105.codex.damage.ModDamageTypes;
-import io.github.grebeshok105.codex.effect.GokuKiStackController;
-import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
-import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
-import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
-import io.github.grebeshok105.codex.particle.ModParticles;
+import io.github.grebeshok105.codex.hero.goku.registry.GokuDamageTypes;
+import io.github.grebeshok105.codex.hero.goku.registry.GokuParticles;
+import io.github.grebeshok105.codex.hero.goku.runtime.GokuKiStackController;
+import io.github.grebeshok105.codex.mechanic.charge.ChargeSession;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -23,12 +22,13 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
 public final class GokuKamehamehaAbility implements Ability {
+	public static final ResourceLocation ID = ModId.of("goku_kamehameha");
+
 	private static final int CHARGE_TICKS = 40;
 	private static final int BEAM_TICKS = 30;
 	private static final int COOLDOWN_TICKS = 200;
@@ -36,12 +36,11 @@ public final class GokuKamehamehaAbility implements Ability {
 	private static final float BASE_DAMAGE = 14.0f;
 	private static final float STACK_BONUS = 0.5f;
 
-	private static final OwnedSessionMap<UUID, ActiveBeam> ACTIVE =
-			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.of(ClearOn.LEAVE, ClearOn.DEATH));
+	private static final ChargeSession.Track<ActiveBeam> SESSION = ChargeSession.track(CHARGE_TICKS, BEAM_TICKS);
 
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.GOKU_KAMEHAMEHA;
+		return ID;
 	}
 
 	@Override
@@ -61,14 +60,14 @@ public final class GokuKamehamehaAbility implements Ability {
 
 	@Override
 	public boolean canActivate(ServerPlayer player) {
-		return !ACTIVE.containsKey(player.getUUID());
+		return !SESSION.active(player);
 	}
 
 	@Override
 	public boolean tryActivate(ServerPlayer player) {
 		int stacks = GokuKiStackController.consume(player);
 		float multiplier = 1.0f + STACK_BONUS * stacks;
-		ACTIVE.put(player.getUUID(), player.getUUID(), new ActiveBeam(CHARGE_TICKS + BEAM_TICKS, stacks, multiplier, new HashSet<>()));
+		SESSION.begin(player, new ActiveBeam(stacks, multiplier, new HashSet<>()));
 
 		ServerLevel level = player.serverLevel();
 		level.playSound(null, player.getX(), player.getY(), player.getZ(),
@@ -81,19 +80,21 @@ public final class GokuKamehamehaAbility implements Ability {
 	}
 
 	public static void serverTick(ServerPlayer player) {
-		ActiveBeam ab = ACTIVE.get(player.getUUID());
-		if (ab == null) return;
-		ServerLevel level = player.serverLevel();
-		int remaining = ab.ticksLeft;
-		int phase = (CHARGE_TICKS + BEAM_TICKS) - remaining;
+		SESSION.tick(player, GokuKamehamehaAbility::tickBeam);
+	}
 
-		if (phase < CHARGE_TICKS) {
+	private static boolean tickBeam(ServerPlayer player, ChargeSession.Progress<ActiveBeam> progress) {
+		ActiveBeam ab = progress.payload();
+		ServerLevel level = player.serverLevel();
+
+		if (progress.charging()) {
+			int phase = progress.phase();
 			Vec3 hand = player.getEyePosition().add(player.getViewVector(1f).scale(0.6));
 			float radius = 0.3f + (float) phase / CHARGE_TICKS * 1.4f;
 			for (int i = 0; i < 4; i++) {
 				double angle = Math.random() * Math.PI * 2;
 				double r = Math.random() * radius;
-				level.sendParticles(ModParticles.GOKU_KAMEHAMEHA_CORE,
+				level.sendParticles(GokuParticles.GOKU_KAMEHAMEHA_CORE,
 						hand.x + Math.cos(angle) * r,
 						hand.y + (Math.random() - 0.5) * radius,
 						hand.z + Math.sin(angle) * r,
@@ -104,18 +105,13 @@ public final class GokuKamehamehaAbility implements Ability {
 						SoundEvents.BEACON_AMBIENT, SoundSource.PLAYERS, 0.6f, 0.5f + phase * 0.02f);
 			}
 		} else {
-			int beamPhase = phase - CHARGE_TICKS;
-			if (beamPhase == 0) {
+			if (progress.releasePhase() == 0) {
 				level.playSound(null, player.getX(), player.getY(), player.getZ(),
 						SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 1.6f, 0.9f);
 			}
 			fireBeam(player, ab);
 		}
-
-		ab.ticksLeft--;
-		if (ab.ticksLeft <= 0) {
-			ACTIVE.remove(player.getUUID());
-		}
+		return true;
 	}
 
 	private static void fireBeam(ServerPlayer player, ActiveBeam ab) {
@@ -132,7 +128,7 @@ public final class GokuKamehamehaAbility implements Ability {
 		for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, box,
 				TargetFilters.hostileTo(player).and(e -> distanceToBeam(e, eye, dir) < 1.5))) {
 			if (ab.alreadyHit.add(target.getUUID())) {
-				target.hurt(ModDamageTypes.gokuKamehameha(level, player), damage);
+				target.hurt(GokuDamageTypes.kamehameha(level, player), damage);
 				target.igniteForSeconds(2f);
 			}
 		}
@@ -151,9 +147,9 @@ public final class GokuKamehamehaAbility implements Ability {
 			double hx = Math.abs(dir.x) * stepLen * (count - 1) * 0.5 + 0.1;
 			double hy = Math.abs(dir.y) * stepLen * (count - 1) * 0.5 + 0.1;
 			double hz = Math.abs(dir.z) * stepLen * (count - 1) * 0.5 + 0.1;
-			level.sendParticles(ModParticles.GOKU_KAMEHAMEHA_CORE,
+			level.sendParticles(GokuParticles.GOKU_KAMEHAMEHA_CORE,
 					p.x, p.y, p.z, count, hx, hy, hz, 0.0);
-			level.sendParticles(ModParticles.GOKU_KAMEHAMEHA_TRAIL,
+			level.sendParticles(GokuParticles.GOKU_KAMEHAMEHA_TRAIL,
 					p.x, p.y, p.z, count, hx * 2, hy * 2, hz * 2, 0.02);
 			level.sendParticles(ParticleTypes.END_ROD,
 					p.x, p.y, p.z, count, hx, hy, hz, 0.0);
@@ -169,20 +165,12 @@ public final class GokuKamehamehaAbility implements Ability {
 		return entity.position().add(0, entity.getBbHeight() / 2.0, 0).distanceTo(onLine);
 	}
 
-
-	/** Drop an in-progress charge/rush without firing it (leave, death, untransform). */
-	public static void clear(ServerPlayer player) {
-		ACTIVE.remove(player.getUUID());
-	}
-
 	private static final class ActiveBeam {
-		int ticksLeft;
 		final int stacks;
 		final float multiplier;
 		final Set<UUID> alreadyHit;
 
-		ActiveBeam(int ticksLeft, int stacks, float multiplier, Set<UUID> alreadyHit) {
-			this.ticksLeft = ticksLeft;
+		ActiveBeam(int stacks, float multiplier, Set<UUID> alreadyHit) {
 			this.stacks = stacks;
 			this.multiplier = multiplier;
 			this.alreadyHit = alreadyHit;

@@ -1,7 +1,7 @@
-package io.github.grebeshok105.codex.client.render;
+package io.github.grebeshok105.codex.client.hero.naruto.render;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.entity.KageBunshinEntity;
+import io.github.grebeshok105.codex.hero.naruto.entity.KageBunshinEntity;
 import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.model.geom.ModelLayers;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;

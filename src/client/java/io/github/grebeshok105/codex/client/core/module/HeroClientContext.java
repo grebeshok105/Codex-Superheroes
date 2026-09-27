@@ -5,6 +5,7 @@ import io.github.grebeshok105.codex.client.core.hud.HudLayer;
 import io.github.grebeshok105.codex.client.core.hud.MovableHud;
 import io.github.grebeshok105.codex.client.core.render.SkinProvider;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.PlayerModel;
@@ -13,6 +14,8 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraft.client.resources.sounds.SoundInstance;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.particles.ParticleType;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
@@ -37,6 +40,9 @@ public interface HeroClientContext {
 
 	/** Registers the renderer of an entity type owned by this module's hero. */
 	<T extends Entity> void entityRenderer(EntityType<T> type, EntityRendererProvider<T> provider);
+
+	/** Registers the client factory of a particle type owned by this module's hero. */
+	<T extends ParticleOptions> void particle(ParticleType<T> type, ParticleFactoryRegistry.PendingParticleFactory<T> factory);
 
 	/**
 	 * Registers the {@link SkinProvider} that picks this module's hero skin. The provider must preserve the

@@ -1,13 +1,13 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.naruto.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
-import io.github.grebeshok105.codex.damage.ModDamageTypes;
-import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
-import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
-import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
-import io.github.grebeshok105.codex.particle.ModParticles;
+import io.github.grebeshok105.codex.hero.naruto.registry.NarutoDamageTypes;
+import io.github.grebeshok105.codex.hero.naruto.registry.NarutoParticles;
+import io.github.grebeshok105.codex.mechanic.charge.ChargeSession;
+import io.github.grebeshok105.codex.mechanic.motion.Motion;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -18,10 +18,9 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.EnumSet;
-import java.util.UUID;
-
 public final class NarutoRasenganAbility implements Ability {
+	public static final ResourceLocation ID = ModId.of("naruto_rasengan");
+
 	private static final int CHARGE_TICKS = 30;
 	private static final int WINDOW_TICKS = 100;
 	private static final int COOLDOWN_TICKS = 200;
@@ -29,12 +28,11 @@ public final class NarutoRasenganAbility implements Ability {
 	private static final double AOE_RADIUS = 3.0;
 	private static final double STRIKE_RANGE = 4.0;
 
-	private static final OwnedSessionMap<UUID, ActiveRasengan> ACTIVE =
-			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.of(ClearOn.LEAVE, ClearOn.DEATH));
+	private static final ChargeSession.Track<ActiveRasengan> SESSION = ChargeSession.track(CHARGE_TICKS, WINDOW_TICKS);
 
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.NARUTO_RASENGAN;
+		return ID;
 	}
 
 	@Override
@@ -54,12 +52,12 @@ public final class NarutoRasenganAbility implements Ability {
 
 	@Override
 	public boolean canActivate(ServerPlayer player) {
-		return !ACTIVE.containsKey(player.getUUID());
+		return !SESSION.active(player);
 	}
 
 	@Override
 	public boolean tryActivate(ServerPlayer player) {
-		ACTIVE.put(player.getUUID(), player.getUUID(), new ActiveRasengan(CHARGE_TICKS + WINDOW_TICKS, false));
+		SESSION.begin(player, new ActiveRasengan());
 		ServerLevel level = player.serverLevel();
 		level.playSound(null, player.getX(), player.getY(), player.getZ(),
 				SoundEvents.BEACON_ACTIVATE, SoundSource.PLAYERS, 1.4f, 1.5f);
@@ -68,28 +66,29 @@ public final class NarutoRasenganAbility implements Ability {
 	}
 
 	public static void serverTick(ServerPlayer player) {
-		ActiveRasengan ar = ACTIVE.get(player.getUUID());
-		if (ar == null) return;
+		SESSION.tick(player, NarutoRasenganAbility::tickRasengan);
+	}
+
+	private static boolean tickRasengan(ServerPlayer player, ChargeSession.Progress<ActiveRasengan> progress) {
+		ActiveRasengan ar = progress.payload();
 		ServerLevel level = player.serverLevel();
-		int total = CHARGE_TICKS + WINDOW_TICKS;
-		int phase = total - ar.ticksLeft;
 
 		Vec3 hand = player.position().add(player.getLookAngle().scale(0.6))
 				.add(0, 1.2, 0);
 
-		if (phase < CHARGE_TICKS) {
-			float t = (float) phase / CHARGE_TICKS;
+		if (progress.charging()) {
+			float t = (float) progress.phase() / CHARGE_TICKS;
 			double radius = 0.2 + t * 0.4;
 			for (int i = 0; i < 6; i++) {
 				double angle = (player.tickCount * 0.6 + i * Math.PI / 3) % (Math.PI * 2);
 				double r = radius;
-				level.sendParticles(ModParticles.NARUTO_RASENGAN_SWIRL,
+				level.sendParticles(NarutoParticles.NARUTO_RASENGAN_SWIRL,
 						hand.x + Math.cos(angle) * r,
 						hand.y + Math.sin(angle * 2) * r * 0.3,
 						hand.z + Math.sin(angle) * r,
 						1, 0, 0, 0, 0.0);
 			}
-			if (phase == CHARGE_TICKS - 1) {
+			if (progress.phase() == CHARGE_TICKS - 1) {
 				level.playSound(null, hand.x, hand.y, hand.z,
 						SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.PLAYERS, 1.4f, 1.2f);
 			}
@@ -97,7 +96,7 @@ public final class NarutoRasenganAbility implements Ability {
 			// Ready to strike
 			for (int i = 0; i < 8; i++) {
 				double angle = (player.tickCount * 0.8 + i * Math.PI / 4) % (Math.PI * 2);
-				level.sendParticles(ModParticles.NARUTO_RASENGAN_SWIRL,
+				level.sendParticles(NarutoParticles.NARUTO_RASENGAN_SWIRL,
 						hand.x + Math.cos(angle) * 0.6,
 						hand.y + Math.sin(angle * 2) * 0.2,
 						hand.z + Math.sin(angle) * 0.6,
@@ -118,11 +117,7 @@ public final class NarutoRasenganAbility implements Ability {
 				detonate(player, target, ar);
 			}
 		}
-
-		ar.ticksLeft--;
-		if (ar.ticksLeft <= 0) {
-			ACTIVE.remove(player.getUUID());
-		}
+		return true;
 	}
 
 	private static void detonate(ServerPlayer player, LivingEntity primary, ActiveRasengan ar) {
@@ -130,21 +125,20 @@ public final class NarutoRasenganAbility implements Ability {
 		ServerLevel level = player.serverLevel();
 		Vec3 hit = primary.position().add(0, primary.getBbHeight() / 2, 0);
 
-		primary.hurt(ModDamageTypes.narutoRasengan(level, player), DAMAGE);
+		primary.hurt(NarutoDamageTypes.rasengan(level, player), DAMAGE);
 		Vec3 push = player.getLookAngle();
-		primary.setDeltaMovement(push.x * 1.6, 0.5, push.z * 1.6);
-		primary.hurtMarked = true;
+		Motion.set(primary, new Vec3(push.x * 1.6, 0.5, push.z * 1.6), Motion.Sync.MARK);
 
 		AABB aoe = new AABB(hit.x - AOE_RADIUS, hit.y - AOE_RADIUS, hit.z - AOE_RADIUS,
 				hit.x + AOE_RADIUS, hit.y + AOE_RADIUS, hit.z + AOE_RADIUS);
 		for (LivingEntity nearby : level.getEntitiesOfClass(LivingEntity.class, aoe,
 				TargetFilters.hostileTo(player).and(e -> e != primary))) {
-			nearby.hurt(ModDamageTypes.narutoRasengan(level, player), DAMAGE * 0.4f);
+			nearby.hurt(NarutoDamageTypes.rasengan(level, player), DAMAGE * 0.4f);
 			Vec3 away = nearby.position().subtract(hit).normalize();
 			nearby.push(away.x * 0.8, 0.3, away.z * 0.8);
 		}
 
-		level.sendParticles(ModParticles.NARUTO_RASENGAN_SWIRL,
+		level.sendParticles(NarutoParticles.NARUTO_RASENGAN_SWIRL,
 				hit.x, hit.y, hit.z, 40, AOE_RADIUS * 0.5, AOE_RADIUS * 0.5, AOE_RADIUS * 0.5, 0.4);
 		level.sendParticles(ParticleTypes.SOUL_FIRE_FLAME,
 				hit.x, hit.y, hit.z, 30, AOE_RADIUS * 0.4, AOE_RADIUS * 0.4, AOE_RADIUS * 0.4, 0.2);
@@ -156,19 +150,7 @@ public final class NarutoRasenganAbility implements Ability {
 				SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 0.7f, 1.4f);
 	}
 
-
-	/** Drop an in-progress charge/rush without firing it (leave, death, untransform). */
-	public static void clear(ServerPlayer player) {
-		ACTIVE.remove(player.getUUID());
-	}
-
 	private static final class ActiveRasengan {
-		int ticksLeft;
 		boolean detonated;
-
-		ActiveRasengan(int ticksLeft, boolean detonated) {
-			this.ticksLeft = ticksLeft;
-			this.detonated = detonated;
-		}
 	}
 }

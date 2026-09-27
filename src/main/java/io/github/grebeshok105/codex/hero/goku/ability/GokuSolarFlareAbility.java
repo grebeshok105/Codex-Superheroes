@@ -1,5 +1,6 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.goku.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
@@ -16,12 +17,13 @@ import net.minecraft.world.entity.LivingEntity;
 import java.util.List;
 
 public final class GokuSolarFlareAbility implements Ability {
+	public static final ResourceLocation ID = ModId.of("goku_solar_flare");
 	private static final int COOLDOWN_TICKS = 500;
 	private static final double RADIUS = 20.0;
 
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.GOKU_SOLAR_FLARE;
+		return ID;
 	}
 
 	@Override

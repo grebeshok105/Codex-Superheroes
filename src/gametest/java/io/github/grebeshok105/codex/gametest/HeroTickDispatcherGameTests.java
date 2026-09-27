@@ -1,7 +1,7 @@
 package io.github.grebeshok105.codex.gametest;
 
-import io.github.grebeshok105.codex.ability.AbilityIds;
-import io.github.grebeshok105.codex.hero.NarutoHero;
+import io.github.grebeshok105.codex.hero.naruto.NarutoAbilities;
+import io.github.grebeshok105.codex.hero.naruto.NarutoHero;
 import io.github.grebeshok105.codex.hero.scaramouche.ScaramoucheHero;
 import io.github.grebeshok105.codex.core.lifecycle.HeroTickDispatcher;
 import io.github.grebeshok105.codex.core.transform.HeroDataStore;
@@ -50,7 +50,7 @@ public class HeroTickDispatcherGameTests implements FabricGameTest {
 	public void activeAbilityTasksRouteByIsActive(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		AtomicInteger calls = new AtomicInteger();
-		HeroTickDispatcher.onActiveAbilityTick(AbilityIds.NARUTO_SAGE_MODE,
+		HeroTickDispatcher.onActiveAbilityTick(NarutoAbilities.NARUTO_SAGE_MODE,
 				(server, p, data) -> calls.incrementAndGet());
 		var server = player.level().getServer();
 
@@ -61,7 +61,7 @@ public class HeroTickDispatcherGameTests implements FabricGameTest {
 		HeroTickDispatcher.tick(server);
 		helper.assertTrue(calls.get() == 0, "ability task stays gated on isActive");
 
-		HeroDataStore.update(player, d -> d.withActive(AbilityIds.NARUTO_SAGE_MODE, true));
+		HeroDataStore.update(player, d -> d.withActive(NarutoAbilities.NARUTO_SAGE_MODE, true));
 		HeroTickDispatcher.tick(server);
 		helper.assertTrue(calls.get() == 1, "ability task runs once for the active ability");
 
@@ -74,13 +74,13 @@ public class HeroTickDispatcherGameTests implements FabricGameTest {
 	public void phasesRunInEnumOrder(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, NarutoHero.ID);
-		HeroDataStore.update(player, d -> d.withActive(AbilityIds.NARUTO_SAGE_MODE, true));
+		HeroDataStore.update(player, d -> d.withActive(NarutoAbilities.NARUTO_SAGE_MODE, true));
 
 		List<HeroTickDispatcher.Phase> order = new ArrayList<>();
 		HeroTickDispatcher.onGlobalTick(server -> order.add(HeroTickDispatcher.Phase.GLOBAL));
 		HeroTickDispatcher.onLevelTick((server, level) -> order.add(HeroTickDispatcher.Phase.LEVELS));
 		HeroTickDispatcher.onPlayerTick((server, p, data) -> order.add(HeroTickDispatcher.Phase.PLAYERS));
-		HeroTickDispatcher.onActiveAbilityTick(AbilityIds.NARUTO_SAGE_MODE,
+		HeroTickDispatcher.onActiveAbilityTick(NarutoAbilities.NARUTO_SAGE_MODE,
 				(server, p, data) -> order.add(HeroTickDispatcher.Phase.ABILITY_ACTIVE));
 
 		HeroTickDispatcher.tick(player.level().getServer());

@@ -1,10 +1,11 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.naruto.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
-import io.github.grebeshok105.codex.entity.KageBunshinEntity;
-import io.github.grebeshok105.codex.entity.ModEntities;
-import io.github.grebeshok105.codex.particle.ModParticles;
+import io.github.grebeshok105.codex.hero.naruto.entity.KageBunshinEntity;
+import io.github.grebeshok105.codex.hero.naruto.entity.NarutoEntities;
+import io.github.grebeshok105.codex.hero.naruto.registry.NarutoParticles;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -23,6 +24,7 @@ import net.minecraft.world.phys.Vec3;
 import java.util.concurrent.ThreadLocalRandom;
 
 public final class NarutoShadowClonesAbility implements Ability {
+	public static final ResourceLocation ID = ModId.of("naruto_shadow_clones");
 	private static final int COOLDOWN_TICKS = 240;
 	private static final int CLONE_COUNT = 15;
 	private static final double SPAWN_RADIUS = 10.0;
@@ -32,7 +34,7 @@ public final class NarutoShadowClonesAbility implements Ability {
 
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.NARUTO_SHADOW_CLONES;
+		return ID;
 	}
 
 	@Override
@@ -68,7 +70,7 @@ public final class NarutoShadowClonesAbility implements Ability {
 			double spawnZ = pos.z + Math.sin(angle) * dist;
 			double spawnY = pos.y;
 
-			KageBunshinEntity clone = ModEntities.KAGE_BUNSHIN.create(level);
+			KageBunshinEntity clone = NarutoEntities.KAGE_BUNSHIN.create(level);
 			if (clone == null) continue;
 
 			float randomYaw = rng.nextFloat() * 360f - 180f;
@@ -80,7 +82,7 @@ public final class NarutoShadowClonesAbility implements Ability {
 					MobSpawnType.MOB_SUMMONED, null);
 			level.addFreshEntity(clone);
 
-			level.sendParticles(ModParticles.NARUTO_CLONE_POOF,
+			level.sendParticles(NarutoParticles.NARUTO_CLONE_POOF,
 					spawnX, spawnY + 1.0, spawnZ, 20, 0.4, 0.6, 0.4, 0.05);
 			level.sendParticles(ParticleTypes.CLOUD,
 					spawnX, spawnY + 1.0, spawnZ, 24, 0.4, 0.6, 0.4, 0.05);

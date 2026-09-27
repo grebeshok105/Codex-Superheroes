@@ -1,7 +1,7 @@
-package io.github.grebeshok105.codex.hero;
+package io.github.grebeshok105.codex.hero.goku;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.ability.AbilityIds;
+import io.github.grebeshok105.codex.hero.goku.GokuAbilities;
 import io.github.grebeshok105.codex.core.hero.AttributeModifierSet;
 import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.hero.HeroHudConfig;
@@ -100,12 +100,12 @@ public final class GokuHero implements Hero {
 	@Override
 	public List<ResourceLocation> getAbilities() {
 		return List.of(
-				AbilityIds.GOKU_KAMEHAMEHA,
-				AbilityIds.GOKU_INSTANT_TRANSMISSION,
-				AbilityIds.GOKU_KI_CHARGE,
-				AbilityIds.GOKU_SOLAR_FLARE,
-				AbilityIds.GOKU_SPIRIT_BOMB,
-				AbilityIds.GOKU_SUPER_SAIYAN_AURA
+				GokuAbilities.GOKU_KAMEHAMEHA,
+				GokuAbilities.GOKU_INSTANT_TRANSMISSION,
+				GokuAbilities.GOKU_KI_CHARGE,
+				GokuAbilities.GOKU_SOLAR_FLARE,
+				GokuAbilities.GOKU_SPIRIT_BOMB,
+				GokuAbilities.GOKU_SUPER_SAIYAN_AURA
 		);
 	}
 

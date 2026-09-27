@@ -1,10 +1,11 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.goku.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
-import io.github.grebeshok105.codex.damage.ModDamageTypes;
-import io.github.grebeshok105.codex.particle.ModParticles;
+import io.github.grebeshok105.codex.hero.goku.registry.GokuDamageTypes;
+import io.github.grebeshok105.codex.hero.goku.registry.GokuParticles;
 import io.github.grebeshok105.codex.util.SafeTeleport;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
@@ -21,13 +22,14 @@ import java.util.List;
 import java.util.Set;
 
 public final class GokuInstantTransmissionAbility implements Ability {
+	public static final ResourceLocation ID = ModId.of("goku_instant_transmission");
 	private static final int COOLDOWN_TICKS = 160;
 	private static final double SEARCH_RANGE = 30.0;
 	private static final float STRIKE_DAMAGE = 8.0f;
 
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.GOKU_INSTANT_TRANSMISSION;
+		return ID;
 	}
 
 	@Override
@@ -82,7 +84,7 @@ public final class GokuInstantTransmissionAbility implements Ability {
 				SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS, 1.2f, 1.6f);
 
 		if (strike && target != null) {
-			target.hurt(ModDamageTypes.gokuInstantStrike(level, player), STRIKE_DAMAGE);
+			target.hurt(GokuDamageTypes.instantStrike(level, player), STRIKE_DAMAGE);
 			Vec3 push = player.getLookAngle().scale(0.3);
 			target.push(push.x, 0.2, push.z);
 			level.playSound(null, dest.x, dest.y, dest.z,
@@ -96,7 +98,7 @@ public final class GokuInstantTransmissionAbility implements Ability {
 	private static void spawnParticles(ServerLevel level, Vec3 pos) {
 		level.sendParticles(ParticleTypes.PORTAL,
 				pos.x, pos.y + 1.0, pos.z, 40, 0.4, 0.8, 0.4, 0.5);
-		level.sendParticles(ModParticles.GOKU_KI_AURA,
+		level.sendParticles(GokuParticles.GOKU_KI_AURA,
 				pos.x, pos.y + 1.0, pos.z, 14, 0.4, 0.6, 0.4, 0.05);
 		level.sendParticles(ParticleTypes.END_ROD,
 				pos.x, pos.y + 1.0, pos.z, 10, 0.3, 0.6, 0.3, 0.05);
