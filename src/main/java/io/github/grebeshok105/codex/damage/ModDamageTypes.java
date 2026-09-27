@@ -21,10 +21,6 @@ public final class ModDamageTypes {
 	public static final ResourceKey<DamageType> LION_ROAR = key("lion_roar");
 	public static final ResourceKey<DamageType> SHADOW_ATTACK = key("shadow_attack");
 	public static final ResourceKey<DamageType> LOKI_CHAOS = key("loki_chaos");
-	public static final ResourceKey<DamageType> THANOS_SNAP = key("thanos_snap");
-	public static final ResourceKey<DamageType> THANOS_COSMIC_SLAM = key("thanos_cosmic_slam");
-	public static final ResourceKey<DamageType> THANOS_MIND_PULSE = key("thanos_mind_pulse");
-	public static final ResourceKey<DamageType> THANOS_REALITY_TEAR = key("thanos_reality_tear");
 	public static final ResourceKey<DamageType> CAP_SHIELD_THROW = key("cap_shield_throw");
 	public static final ResourceKey<DamageType> CAP_SHIELD_SLAM = key("cap_shield_slam");
 	public static final ResourceKey<DamageType> SPACE_CRUSH = key("space_crush");
@@ -47,10 +43,6 @@ public final class ModDamageTypes {
 		context.register(LION_ROAR, new DamageType("lion_roar", DamageScaling.NEVER, 0.0F));
 		context.register(SHADOW_ATTACK, new DamageType("shadow_attack", DamageScaling.WHEN_CAUSED_BY_LIVING_NON_PLAYER, 0.0F));
 		context.register(LOKI_CHAOS, new DamageType("loki_chaos", DamageScaling.NEVER, 0.0F));
-		context.register(THANOS_SNAP, new DamageType("thanos_snap", DamageScaling.NEVER, 0.0F));
-		context.register(THANOS_COSMIC_SLAM, new DamageType("thanos_cosmic_slam", DamageScaling.NEVER, 0.0F));
-		context.register(THANOS_MIND_PULSE, new DamageType("thanos_mind_pulse", DamageScaling.NEVER, 0.0F));
-		context.register(THANOS_REALITY_TEAR, new DamageType("thanos_reality_tear", DamageScaling.NEVER, 0.0F));
 		context.register(CAP_SHIELD_THROW, new DamageType("cap_shield_throw", DamageScaling.NEVER, 0.0F));
 		context.register(CAP_SHIELD_SLAM, new DamageType("cap_shield_slam", DamageScaling.NEVER, 0.0F));
 		context.register(SPACE_CRUSH, new DamageType("space_crush", DamageScaling.NEVER, 0.0F));
@@ -82,22 +74,6 @@ public final class ModDamageTypes {
 
 	public static DamageSource lokiChaos(ServerLevel level, Entity attacker) {
 		return source(level, LOKI_CHAOS, attacker);
-	}
-
-	public static DamageSource thanosSnap(ServerLevel level, Entity attacker) {
-		return source(level, THANOS_SNAP, attacker);
-	}
-
-	public static DamageSource thanosCosmicSlam(ServerLevel level, Entity attacker) {
-		return source(level, THANOS_COSMIC_SLAM, attacker);
-	}
-
-	public static DamageSource thanosMindPulse(ServerLevel level, Entity attacker) {
-		return source(level, THANOS_MIND_PULSE, attacker);
-	}
-
-	public static DamageSource thanosRealityTear(ServerLevel level, Entity attacker) {
-		return source(level, THANOS_REALITY_TEAR, attacker);
 	}
 
 	public static DamageSource capShieldThrow(ServerLevel level, Entity attacker) {

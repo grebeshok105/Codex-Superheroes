@@ -42,15 +42,6 @@ public final class AbilityScopedModifiers {
 			.abilityScoped()
 			.build();
 
-	public static void thanosClearStoneModifiers(net.minecraft.world.entity.LivingEntity entity) {
-		for (io.github.grebeshok105.codex.item.infinity.InfinityStoneType t : io.github.grebeshok105.codex.item.infinity.InfinityStoneType.values()) {
-			net.minecraft.world.entity.ai.attributes.AttributeInstance instance = entity.getAttribute(t.getAttribute());
-			if (instance != null) {
-				instance.removeModifier(t.getModifierId());
-			}
-		}
-	}
-
 	private AbilityScopedModifiers() {
 	}
 }

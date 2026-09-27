@@ -10,7 +10,7 @@
 		"hero.doomsday.LivingEntityEffectMixin",
 		"LivingEntityPassiveEffectsMixin",
 		"LivingEntityHealBlockMixin",
-		"ThanosBlockBreakingMixin",
+		"hero.thanos.ThanosBlockBreakingMixin",
 		"hero.doomsday.KryptoniteShardPickupMixin",
 		"PlayerBoundWeaponDropMixin",
 		"falbiks.HeroComponentStripMixin"

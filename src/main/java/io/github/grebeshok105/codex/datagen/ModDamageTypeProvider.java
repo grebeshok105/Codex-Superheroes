@@ -26,10 +26,6 @@ public final class ModDamageTypeProvider extends FabricDynamicRegistryProvider {
 		entries.add(lookup, ModDamageTypes.LION_ROAR);
 		entries.add(lookup, ModDamageTypes.SHADOW_ATTACK);
 		entries.add(lookup, ModDamageTypes.LOKI_CHAOS);
-		entries.add(lookup, ModDamageTypes.THANOS_SNAP);
-		entries.add(lookup, ModDamageTypes.THANOS_COSMIC_SLAM);
-		entries.add(lookup, ModDamageTypes.THANOS_MIND_PULSE);
-		entries.add(lookup, ModDamageTypes.THANOS_REALITY_TEAR);
 		entries.add(lookup, ModDamageTypes.CAP_SHIELD_THROW);
 		entries.add(lookup, ModDamageTypes.CAP_SHIELD_SLAM);
 		entries.add(lookup, ModDamageTypes.SPACE_CRUSH);

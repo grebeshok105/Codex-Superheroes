@@ -1,5 +1,6 @@
 package io.github.grebeshok105.codex.bootstrap;
 
+import io.github.grebeshok105.codex.compat.falbiks.FalbiksSnapCompat;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import io.github.grebeshok105.codex.core.lifecycle.HeroTickDispatcher;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
@@ -57,6 +58,10 @@ public final class SharedMechanics {
 		ctx.ticks().global(HeroMeleeImpactController::serverTick);
 		ctx.ticks().global(BallisticBodyTracker::tick);
 		ctx.ticks().global(FlightController::cleanup);
+
+		// compat bridges subscribe their CrossModHooks listeners here — compat sees
+		// only the seam, hero code fires it.
+		FalbiksSnapCompat.init();
 	}
 
 	/**
