@@ -18,8 +18,9 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.ArrayList;
 import java.util.EnumSet;
-import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -49,15 +50,22 @@ public final class ReinhardSpeedJudgmentController {
 	public static void tick(MinecraftServer server) {
 		if (PENDING.size() == 0) return;
 		long now = server.overworld().getGameTime();
-		Iterator<Map.Entry<UUID, PendingStrike>> it = PENDING.iterator();
-		while (it.hasNext()) {
-			Map.Entry<UUID, PendingStrike> entry = it.next();
+		// Snapshot: strike() can kill a player, which fires LEAVE/DEATH/HERO_CLEAR drops
+		// on PENDING — its iterator is fail-fast, so the loop re-checks each entry against
+		// the live map and removes consumed keys explicitly.
+		List<Map.Entry<UUID, PendingStrike>> snapshot = new ArrayList<>();
+		for (Map.Entry<UUID, PendingStrike> e : PENDING) {
+			snapshot.add(e);
+		}
+		for (Map.Entry<UUID, PendingStrike> entry : snapshot) {
+			UUID ownerId = entry.getKey();
 			PendingStrike pending = entry.getValue();
-			ServerPlayer attacker = server.getPlayerList().getPlayer(entry.getKey());
+			if (PENDING.get(ownerId) != pending) continue;
+			ServerPlayer attacker = server.getPlayerList().getPlayer(ownerId);
 			if (pending.debugMobTarget()) {
 				Mob target = findDebugMobTarget(attacker, pending.targetId());
 				if (!isValidDebugMob(attacker, target)) {
-					it.remove();
+					PENDING.remove(ownerId);
 					continue;
 				}
 				if (now < pending.strikeAtTick()) {
@@ -66,13 +74,13 @@ public final class ReinhardSpeedJudgmentController {
 				}
 				teleportBehind(attacker, target);
 				strikeDebugMob(attacker, target, pending.damage());
-				it.remove();
+				PENDING.remove(ownerId);
 				continue;
 			}
 
 			ServerPlayer target = server.getPlayerList().getPlayer(pending.targetId());
 			if (!isValid(attacker, target)) {
-				it.remove();
+				PENDING.remove(ownerId);
 				continue;
 			}
 			if (now < pending.strikeAtTick()) {
@@ -81,7 +89,7 @@ public final class ReinhardSpeedJudgmentController {
 			}
 			teleportBehind(attacker, target);
 			strike(attacker, target, pending.damage());
-			it.remove();
+			PENDING.remove(ownerId);
 		}
 	}
 
