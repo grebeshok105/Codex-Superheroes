@@ -1,11 +1,12 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.scaramouche.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
+import io.github.grebeshok105.codex.mechanic.motion.Motion;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -27,9 +28,11 @@ public final class ScaramoucheElectroSwirlAbility implements Ability {
 	private static final DustParticleOptions ANEMO_DUST = new DustParticleOptions(new Vector3f(0.28f, 1.0f, 0.84f), 1.25f);
 	private static final DustParticleOptions ELECTRO_DUST = new DustParticleOptions(new Vector3f(0.58f, 0.36f, 1.0f), 1.1f);
 
+	public static final ResourceLocation ID = ModId.of("scaramouche_electro_swirl");
+
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.SCARAMOUCHE_ELECTRO_SWIRL;
+		return ID;
 	}
 
 	@Override
@@ -80,11 +83,7 @@ public final class ScaramoucheElectroSwirlAbility implements Ability {
 			target.addEffect(new MobEffectInstance(MobEffects.GLOWING, 60, 0, true, true, true));
 
 			Vec3 push = forward.scale(0.85).add(0.0, 0.28, 0.0);
-			target.push(push.x, push.y, push.z);
-			target.hurtMarked = true;
-			if (target instanceof ServerPlayer targetPlayer) {
-				targetPlayer.connection.send(new ClientboundSetEntityMotionPacket(targetPlayer));
-			}
+			Motion.add(target, push, Motion.Sync.MARK_AND_SEND_TO_PLAYER);
 
 			level.sendParticles(ELECTRO_DUST,
 					targetCenter.x, targetCenter.y, targetCenter.z, 28, 0.35, 0.45, 0.35, 0.0);

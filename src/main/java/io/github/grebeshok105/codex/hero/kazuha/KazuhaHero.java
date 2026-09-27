@@ -1,7 +1,6 @@
-package io.github.grebeshok105.codex.hero;
+package io.github.grebeshok105.codex.hero.kazuha;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.ability.AbilityIds;
 import io.github.grebeshok105.codex.core.hero.AttributeModifierSet;
 import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.hero.HeroHudConfig;
@@ -90,10 +89,10 @@ public final class KazuhaHero implements Hero {
 	@Override
 	public List<ResourceLocation> getAbilities() {
 		return List.of(
-				AbilityIds.KAZUHA_CHIHAYABURU,
-				AbilityIds.KAZUHA_MIDARE_RANZAN,
-				AbilityIds.KAZUHA_AUTUMN_WHIRLWIND,
-				AbilityIds.KAZUHA_MAPLE_STORM
+				KazuhaAbilities.KAZUHA_CHIHAYABURU,
+				KazuhaAbilities.KAZUHA_MIDARE_RANZAN,
+				KazuhaAbilities.KAZUHA_AUTUMN_WHIRLWIND,
+				KazuhaAbilities.KAZUHA_MAPLE_STORM
 		);
 	}
 

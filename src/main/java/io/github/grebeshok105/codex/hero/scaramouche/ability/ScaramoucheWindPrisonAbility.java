@@ -1,12 +1,16 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.scaramouche.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import io.github.grebeshok105.codex.core.ability.AbilityRouter;
+import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
+import io.github.grebeshok105.codex.mechanic.motion.Motion;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -22,9 +26,8 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
 
-import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
-import java.util.WeakHashMap;
 
 public final class ScaramoucheWindPrisonAbility implements Ability {
 	private static final int DURATION_TICKS = 8 * 20;
@@ -34,11 +37,14 @@ public final class ScaramoucheWindPrisonAbility implements Ability {
 	private static final float TICK_DAMAGE = 3.0f;
 	private static final DustParticleOptions ANEMO_DUST = new DustParticleOptions(new Vector3f(0.26f, 1.0f, 0.82f), 1.3f);
 	private static final DustParticleOptions ELECTRO_DUST = new DustParticleOptions(new Vector3f(0.56f, 0.36f, 1.0f), 1.0f);
-	private static final Map<UUID, ActiveZone> ACTIVE = new WeakHashMap<>();
+	private static final OwnedSessionMap<UUID, ActiveZone> ACTIVE = OwnedSessionMap.create(
+			LifecycleRegistrar.global(), Set.of(ClearOn.LEAVE, ClearOn.DEATH, ClearOn.HERO_CLEAR));
+
+	public static final ResourceLocation ID = ModId.of("scaramouche_wind_prison");
 
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.SCARAMOUCHE_WIND_PRISON;
+		return ID;
 	}
 
 	@Override
@@ -73,7 +79,7 @@ public final class ScaramoucheWindPrisonAbility implements Ability {
 		BlockHitResult hit = level.clip(new ClipContext(eye, end,
 				ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player));
 		Vec3 center = hit.getType() == HitResult.Type.BLOCK ? hit.getLocation() : eye.add(forward.scale(10.0));
-		ACTIVE.put(player.getUUID(), new ActiveZone(center, level.getGameTime() + DURATION_TICKS));
+		ACTIVE.put(player.getUUID(), player.getUUID(), new ActiveZone(center, level.getGameTime() + DURATION_TICKS));
 
 		level.sendParticles(ANEMO_DUST,
 				center.x, center.y + 1.0, center.z, 120, RADIUS * 0.28, 0.8, RADIUS * 0.28, 0.0);
@@ -107,11 +113,8 @@ public final class ScaramoucheWindPrisonAbility implements Ability {
 			if (distance > RADIUS + 1.5 || distance < 0.001) continue;
 
 			Vec3 pull = toCenter.scale(0.075).add(0.0, 0.025, 0.0);
-			target.setDeltaMovement(target.getDeltaMovement().add(pull));
-			target.hurtMarked = true;
-			if (target instanceof ServerPlayer targetPlayer && player.tickCount % 4 == 0) {
-				targetPlayer.connection.send(new ClientboundSetEntityMotionPacket(targetPlayer));
-			}
+			Motion.add(target, pull, player.tickCount % 4 == 0
+					? Motion.Sync.MARK_AND_SEND_TO_PLAYER : Motion.Sync.MARK);
 			target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 30, 2, true, true, true));
 			if (player.tickCount % 10 == 0) {
 				target.invulnerableTime = 0;

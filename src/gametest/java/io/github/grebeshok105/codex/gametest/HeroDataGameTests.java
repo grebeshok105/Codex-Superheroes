@@ -1,10 +1,10 @@
 package io.github.grebeshok105.codex.gametest;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.ability.AbilityIds;
 import io.github.grebeshok105.codex.core.ability.AbilityRouter;
 import io.github.grebeshok105.codex.core.resource.ResourceController;
-import io.github.grebeshok105.codex.hero.ScaramoucheHero;
+import io.github.grebeshok105.codex.hero.scaramouche.ScaramoucheAbilities;
+import io.github.grebeshok105.codex.hero.scaramouche.ScaramoucheHero;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import io.github.grebeshok105.codex.core.transform.HeroDataStore;
 import io.github.grebeshok105.codex.core.transform.HeroTransformService;
@@ -27,14 +27,14 @@ public final class HeroDataGameTests implements FabricGameTest {
 	public void windPrisonEndsWhenItsZoneExpires(GameTestHelper helper) {
 		ServerPlayer scaramouche = TestPlayers.join(helper);
 		TestHeroes.transform(scaramouche, ScaramoucheHero.ID);
-		AbilityRouter.activate(scaramouche, AbilityIds.SCARAMOUCHE_WIND_PRISON);
-		helper.assertTrue(HeroDataStore.get(scaramouche).isActive(AbilityIds.SCARAMOUCHE_WIND_PRISON),
+		AbilityRouter.activate(scaramouche, ScaramoucheAbilities.SCARAMOUCHE_WIND_PRISON);
+		helper.assertTrue(HeroDataStore.get(scaramouche).isActive(ScaramoucheAbilities.SCARAMOUCHE_WIND_PRISON),
 				"Wind Prison starts");
 
 		// Before the fix ResourceController wrote its tick-start copy back after onTickActive had
 		// deactivated the expired zone, so the ability stayed "active" forever (cost 1.2 < regen 1.6).
 		helper.runAfterDelay(WIND_PRISON_DURATION_TICKS + 20, () -> {
-			helper.assertFalse(HeroDataStore.get(scaramouche).isActive(AbilityIds.SCARAMOUCHE_WIND_PRISON),
+			helper.assertFalse(HeroDataStore.get(scaramouche).isActive(ScaramoucheAbilities.SCARAMOUCHE_WIND_PRISON),
 					"Wind Prison ends with its zone");
 			TestPlayers.leave(scaramouche);
 			helper.succeed();
@@ -45,11 +45,11 @@ public final class HeroDataGameTests implements FabricGameTest {
 	public void deactivationIsNotUndoneByTheSameTick(GameTestHelper helper) {
 		ServerPlayer scaramouche = TestPlayers.join(helper);
 		HeroTransformService.transform(scaramouche, ScaramoucheHero.ID);
-		AbilityRouter.activate(scaramouche, AbilityIds.SCARAMOUCHE_WIND_PRISON);
-		AbilityRouter.deactivate(scaramouche, AbilityIds.SCARAMOUCHE_WIND_PRISON);
+		AbilityRouter.activate(scaramouche, ScaramoucheAbilities.SCARAMOUCHE_WIND_PRISON);
+		AbilityRouter.deactivate(scaramouche, ScaramoucheAbilities.SCARAMOUCHE_WIND_PRISON);
 
 		helper.runAfterDelay(5, () -> {
-			helper.assertFalse(HeroDataStore.get(scaramouche).isActive(AbilityIds.SCARAMOUCHE_WIND_PRISON),
+			helper.assertFalse(HeroDataStore.get(scaramouche).isActive(ScaramoucheAbilities.SCARAMOUCHE_WIND_PRISON),
 					"a deactivated toggle stays off across ticks");
 			TestPlayers.leave(scaramouche);
 			helper.succeed();

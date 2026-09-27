@@ -1,13 +1,12 @@
 package io.github.grebeshok105.codex.hero.kazuha;
 
-import io.github.grebeshok105.codex.ability.KazuhaAutumnWhirlwindAbility;
-import io.github.grebeshok105.codex.ability.KazuhaChihayaburuAbility;
-import io.github.grebeshok105.codex.ability.KazuhaMapleStormAbility;
-import io.github.grebeshok105.codex.ability.KazuhaMidareRanzanAbility;
 import io.github.grebeshok105.codex.core.module.HeroModule;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.core.hero.Hero;
-import io.github.grebeshok105.codex.hero.KazuhaHero;
+import io.github.grebeshok105.codex.hero.kazuha.ability.KazuhaAutumnWhirlwindAbility;
+import io.github.grebeshok105.codex.hero.kazuha.ability.KazuhaChihayaburuAbility;
+import io.github.grebeshok105.codex.hero.kazuha.ability.KazuhaMapleStormAbility;
+import io.github.grebeshok105.codex.hero.kazuha.ability.KazuhaMidareRanzanAbility;
 
 public final class KazuhaModule implements HeroModule {
 	private final KazuhaHero hero = new KazuhaHero();
@@ -23,5 +22,6 @@ public final class KazuhaModule implements HeroModule {
 		ctx.abilities().register(new KazuhaMidareRanzanAbility());
 		ctx.abilities().register(new KazuhaAutumnWhirlwindAbility());
 		ctx.abilities().register(new KazuhaMapleStormAbility());
+		KazuhaItems.register(ctx.content());
 	}
 }

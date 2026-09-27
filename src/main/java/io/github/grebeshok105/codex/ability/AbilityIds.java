@@ -92,16 +92,6 @@ public final class AbilityIds {
 	public static final ResourceLocation RAIDEN_TRANSCENDENCE = ModId.of("raiden_transcendence");
 	public static final ResourceLocation RAIDEN_MUSOU_ISSHIN = ModId.of("raiden_musou_isshin");
 
-	public static final ResourceLocation KAZUHA_CHIHAYABURU = ModId.of("kazuha_chihayaburu");
-	public static final ResourceLocation KAZUHA_MIDARE_RANZAN = ModId.of("kazuha_midare_ranzan");
-	public static final ResourceLocation KAZUHA_AUTUMN_WHIRLWIND = ModId.of("kazuha_autumn_whirlwind");
-	public static final ResourceLocation KAZUHA_MAPLE_STORM = ModId.of("kazuha_maple_storm");
-
-	public static final ResourceLocation SCARAMOUCHE_WINDSTEP = ModId.of("scaramouche_windstep");
-	public static final ResourceLocation SCARAMOUCHE_ELECTRO_SWIRL = ModId.of("scaramouche_electro_swirl");
-	public static final ResourceLocation SCARAMOUCHE_WIND_PRISON = ModId.of("scaramouche_wind_prison");
-	public static final ResourceLocation SCARAMOUCHE_SKYFALL_BURST = ModId.of("scaramouche_skyfall_burst");
-
 	public static final ResourceLocation BATTLE_BEAST_PREDATOR_LEAP = ModId.of("battle_beast_predator_leap");
 	public static final ResourceLocation BATTLE_BEAST_AXE_CLEAVE = ModId.of("battle_beast_axe_cleave");
 	public static final ResourceLocation BATTLE_BEAST_WAR_ROAR = ModId.of("battle_beast_war_roar");

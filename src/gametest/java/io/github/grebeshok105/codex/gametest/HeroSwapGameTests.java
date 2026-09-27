@@ -4,7 +4,7 @@ import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import io.github.grebeshok105.codex.ability.AbilityIds;
 import io.github.grebeshok105.codex.ability.ThanosSnapAbility;
 import io.github.grebeshok105.codex.hero.RaidenHero;
-import io.github.grebeshok105.codex.hero.ScaramoucheHero;
+import io.github.grebeshok105.codex.hero.scaramouche.ScaramoucheHero;
 import io.github.grebeshok105.codex.item.ModItems;
 import io.github.grebeshok105.codex.item.infinity.InfinityGauntletData;
 import io.github.grebeshok105.codex.item.infinity.InfinityStoneType;

@@ -203,26 +203,6 @@ public final class ModItems {
 									new TransformationLore.Line("item.superheroes.omniman_suit.lore.untransform", ChatFormatting.RED))))
 	);
 
-	public static final TransformationItem KAZUHA_VISION = register(
-			"kazuha_vision",
-			new TransformationItem(ModId.of("kazuha"), new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC),
-					new TransformationLore(ChatFormatting.GREEN,
-							List.of(new TransformationLore.Line("item.superheroes.kazuha_vision.lore.line1", ChatFormatting.GOLD),
-									new TransformationLore.Line("item.superheroes.kazuha_vision.lore.line2", ChatFormatting.DARK_GRAY)),
-							List.of(new TransformationLore.Line("item.superheroes.kazuha_vision.lore.usage", ChatFormatting.AQUA),
-									new TransformationLore.Line("item.superheroes.kazuha_vision.lore.untransform", ChatFormatting.RED))))
-	);
-
-	public static final TransformationItem SCARAMOUCHE_VISION = register(
-			"scaramouche_vision",
-			new TransformationItem(ModId.of("scaramouche"), new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC),
-					new TransformationLore(ChatFormatting.DARK_AQUA,
-							List.of(new TransformationLore.Line("item.superheroes.scaramouche_vision.lore.line1", ChatFormatting.AQUA),
-									new TransformationLore.Line("item.superheroes.scaramouche_vision.lore.line2", ChatFormatting.DARK_GRAY)),
-							List.of(new TransformationLore.Line("item.superheroes.scaramouche_vision.lore.usage", ChatFormatting.AQUA),
-									new TransformationLore.Line("item.superheroes.scaramouche_vision.lore.untransform", ChatFormatting.RED))))
-	);
-
 	public static final TransformationItem BATTLE_BEAST_MEDALLION = register(
 			"battle_beast_medallion",
 			new TransformationItem(ModId.of("battle_beast"), new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC),

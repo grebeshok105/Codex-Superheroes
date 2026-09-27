@@ -1,11 +1,12 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.scaramouche.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
+import io.github.grebeshok105.codex.mechanic.motion.Motion;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -24,9 +25,11 @@ public final class ScaramoucheWindstepAbility implements Ability {
 	private static final float DAMAGE = 7.0f;
 	private static final DustParticleOptions ANEMO_DUST = new DustParticleOptions(new Vector3f(0.32f, 1.0f, 0.86f), 1.35f);
 
+	public static final ResourceLocation ID = ModId.of("scaramouche_windstep");
+
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.SCARAMOUCHE_WINDSTEP;
+		return ID;
 	}
 
 	@Override
@@ -61,9 +64,7 @@ public final class ScaramoucheWindstepAbility implements Ability {
 		Vec3 motion = new Vec3(current.x * 0.25, Math.max(current.y, 0.0), current.z * 0.25)
 				.add(forward.scale(1.35))
 				.add(0.0, player.onGround() ? 0.88 : 0.58, 0.0);
-		player.setDeltaMovement(motion);
-		player.hurtMarked = true;
-		player.connection.send(new ClientboundSetEntityMotionPacket(player.getId(), motion));
+		Motion.set(player, motion, Motion.Sync.MARK_AND_SEND_TO_PLAYER);
 		player.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, 60, 0, true, false, true));
 		player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 80, 1, true, false, true));
 
@@ -73,12 +74,9 @@ public final class ScaramoucheWindstepAbility implements Ability {
 			Vec3 away = target.position().subtract(player.position());
 			double horizontal = Math.max(0.01, Math.sqrt(away.x * away.x + away.z * away.z));
 			target.hurt(level.damageSources().playerAttack(player), DAMAGE);
-			target.push(away.x / horizontal * 1.15, 0.45, away.z / horizontal * 1.15);
+			Motion.add(target, new Vec3(away.x / horizontal * 1.15, 0.45, away.z / horizontal * 1.15),
+					Motion.Sync.MARK_AND_SEND_TO_PLAYER);
 			target.addEffect(new MobEffectInstance(MobEffects.LEVITATION, 24, 0, true, true, true));
-			target.hurtMarked = true;
-			if (target instanceof ServerPlayer targetPlayer) {
-				targetPlayer.connection.send(new ClientboundSetEntityMotionPacket(targetPlayer));
-			}
 		}
 
 		level.sendParticles(ANEMO_DUST,
