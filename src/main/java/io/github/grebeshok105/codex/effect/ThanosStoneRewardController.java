@@ -2,7 +2,6 @@ package io.github.grebeshok105.codex.effect;
 
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
-import io.github.grebeshok105.codex.hero.CaptainAmericaHero;
 import io.github.grebeshok105.codex.hero.RegulusHero;
 import io.github.grebeshok105.codex.hero.SungJinwooHero;
 import io.github.grebeshok105.codex.hero.ThanosHero;
@@ -30,7 +29,6 @@ public final class ThanosStoneRewardController {
 
 	static {
 		HERO_TO_STONE.put(SungJinwooHero.ID, InfinityStoneType.REALITY);
-		HERO_TO_STONE.put(CaptainAmericaHero.ID, InfinityStoneType.SOUL);
 		HERO_TO_STONE.put(RegulusHero.ID, InfinityStoneType.TIME);
 	}
 

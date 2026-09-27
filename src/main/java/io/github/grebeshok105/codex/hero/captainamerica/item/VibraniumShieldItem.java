@@ -1,4 +1,4 @@
-package io.github.grebeshok105.codex.item;
+package io.github.grebeshok105.codex.hero.captainamerica.item;
 
 import io.github.grebeshok105.codex.core.transform.TooltipFrame;
 import net.minecraft.ChatFormatting;

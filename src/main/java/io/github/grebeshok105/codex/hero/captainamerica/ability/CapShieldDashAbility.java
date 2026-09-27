@@ -1,5 +1,6 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.captainamerica.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
@@ -23,6 +24,7 @@ import java.util.List;
  * PvP-инструмент: позволяет догнать летающего/убегающего врага и сбить с ритма.
  */
 public final class CapShieldDashAbility implements Ability {
+	public static final ResourceLocation ID = ModId.of("cap_shield_dash");
 	private static final int COOLDOWN_TICKS = 200; // 10s
 	private static final double DASH_BLOCKS = 8.0;
 	private static final double HIT_RADIUS = 1.6;
@@ -30,7 +32,7 @@ public final class CapShieldDashAbility implements Ability {
 
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.CAP_SHIELD_DASH;
+		return ID;
 	}
 
 	@Override

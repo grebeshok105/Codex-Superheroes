@@ -1,8 +1,8 @@
-package io.github.grebeshok105.codex.entity;
+package io.github.grebeshok105.codex.hero.captainamerica.entity;
 
 import io.github.grebeshok105.codex.combat.TargetFilters;
-import io.github.grebeshok105.codex.damage.ModDamageTypes;
-import io.github.grebeshok105.codex.particle.ModParticles;
+import io.github.grebeshok105.codex.hero.captainamerica.registry.CaptainAmericaDamageTypes;
+import io.github.grebeshok105.codex.hero.captainamerica.registry.CaptainAmericaParticles;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -52,7 +52,7 @@ public class ShieldProjectileEntity extends Projectile {
 	}
 
 	public static ShieldProjectileEntity throwFrom(LivingEntity owner, Level level, ItemStack savedStack, InteractionHand savedHand) {
-		ShieldProjectileEntity proj = new ShieldProjectileEntity(ModEntities.SHIELD_PROJECTILE, level);
+		ShieldProjectileEntity proj = new ShieldProjectileEntity(CaptainAmericaEntities.SHIELD_PROJECTILE, level);
 		proj.setOwner(owner);
 		proj.savedOwnerUuid = owner.getUUID();
 		Vec3 eye = owner.getEyePosition();
@@ -134,7 +134,7 @@ public class ShieldProjectileEntity extends Projectile {
 
 		if (this.level().isClientSide && this.tickCount % 1 == 0) {
 			Level level = this.level();
-			level.addParticle(ModParticles.CAP_SHIELD_TRAIL,
+			level.addParticle(CaptainAmericaParticles.CAP_SHIELD_TRAIL,
 					this.getX(), this.getY() + 0.2, this.getZ(),
 					0, 0, 0);
 			if (this.tickCount % 3 == 0) {
@@ -149,7 +149,7 @@ public class ShieldProjectileEntity extends Projectile {
 		alreadyHit.add(target.getUUID());
 		float dmg = DAMAGE - bounces * 2.0f;
 		if (owner != null) {
-			target.hurt(ModDamageTypes.capShieldThrow(server, owner), dmg);
+			target.hurt(CaptainAmericaDamageTypes.capShieldThrow(server, owner), dmg);
 		} else {
 			target.hurt(server.damageSources().generic(), dmg);
 		}

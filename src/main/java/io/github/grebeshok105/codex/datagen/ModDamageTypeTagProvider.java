@@ -38,8 +38,6 @@ public final class ModDamageTypeTagProvider extends FabricTagProvider<DamageType
 				ModDamageTypes.THANOS_COSMIC_SLAM,
 				ModDamageTypes.THANOS_MIND_PULSE,
 				ModDamageTypes.THANOS_REALITY_TEAR,
-				ModDamageTypes.CAP_SHIELD_THROW,
-				ModDamageTypes.CAP_SHIELD_SLAM,
 				ModDamageTypes.HOMELANDER_EYE_LASER,
 				ModDamageTypes.HOMELANDER_HEAT_VISION,
 				ModDamageTypes.HOMELANDER_HAND_CLAP,

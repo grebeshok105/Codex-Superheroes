@@ -1,5 +1,6 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.captainamerica.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -14,11 +15,13 @@ import net.minecraft.world.effect.MobEffects;
  * Расход энергии: 4/тик (~80/сек), пока в стойке.
  */
 public final class CapCounterStanceAbility implements Ability {
+	public static final ResourceLocation ID = ModId.of("cap_counter_stance");
+
 	private static final int EFFECT_DURATION = 40;
 
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.CAP_COUNTER_STANCE;
+		return ID;
 	}
 
 	@Override

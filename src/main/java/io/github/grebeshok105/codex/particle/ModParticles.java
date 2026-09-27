@@ -12,9 +12,6 @@ public final class ModParticles {
 	public static final SimpleParticleType REPULSOR_SPARK = register("repulsor_spark", FabricParticleTypes.simple());
 	public static final SimpleParticleType UNIBEAM_SPARK = register("unibeam_spark", FabricParticleTypes.simple());
 
-	public static final SimpleParticleType CAP_SHIELD_TRAIL = register("cap_shield_trail", FabricParticleTypes.simple());
-	public static final SimpleParticleType CAP_SHIELD_SLAM_BURST = register("cap_shield_slam_burst", FabricParticleTypes.simple());
-
 	public static final SimpleParticleType WHITE_BOOM = register("white_boom", FabricParticleTypes.simple());
 	public static final SimpleParticleType SWORD_EXPLOSION = register("sword_explosion", FabricParticleTypes.simple());
 	public static final SimpleParticleType SPARKS = register("sparks", FabricParticleTypes.simple());

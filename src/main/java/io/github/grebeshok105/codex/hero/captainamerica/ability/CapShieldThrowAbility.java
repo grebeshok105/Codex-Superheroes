@@ -1,9 +1,10 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.captainamerica.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
-import io.github.grebeshok105.codex.entity.ShieldProjectileEntity;
-import io.github.grebeshok105.codex.item.ModItems;
+import io.github.grebeshok105.codex.hero.captainamerica.entity.ShieldProjectileEntity;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -13,11 +14,14 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 
 public final class CapShieldThrowAbility implements Ability {
+	public static final ResourceLocation ID = ModId.of("cap_shield_throw");
+
 	private static final int COOLDOWN_TICKS = 100;
+	private static final ResourceLocation VIBRANIUM_SHIELD = ModId.of("vibranium_shield");
 
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.CAP_SHIELD_THROW;
+		return ID;
 	}
 
 	@Override
@@ -61,8 +65,8 @@ public final class CapShieldThrowAbility implements Ability {
 	}
 
 	private static InteractionHand findShieldHand(ServerPlayer player) {
-		if (player.getOffhandItem().is(ModItems.VIBRANIUM_SHIELD)) return InteractionHand.OFF_HAND;
-		if (player.getMainHandItem().is(ModItems.VIBRANIUM_SHIELD)) return InteractionHand.MAIN_HAND;
+		if (player.getOffhandItem().is(BuiltInRegistries.ITEM.get(VIBRANIUM_SHIELD))) return InteractionHand.OFF_HAND;
+		if (player.getMainHandItem().is(BuiltInRegistries.ITEM.get(VIBRANIUM_SHIELD))) return InteractionHand.MAIN_HAND;
 		return null;
 	}
 }
