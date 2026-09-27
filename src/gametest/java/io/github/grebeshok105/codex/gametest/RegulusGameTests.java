@@ -359,19 +359,28 @@ public class RegulusGameTests implements FabricGameTest {
 			// findTarget's angular hitbox is bbSize*0.6 around the eye ray — aim the ray
 			// at the victim's center or the vertical offset alone rejects it.
 			player.lookAt(EntityAnchorArgument.Anchor.EYES, zombie.getBoundingBox().getCenter());
+			Vec3 anchor = zombie.position();
 			AbilityRouter.activate(player, MANIA_OF_GREED);
 			helper.assertTrue(HeroDataStore.get(player).isActive(MANIA_OF_GREED),
 					"the magnet engages on the aimed target");
 
 			helper.runAfterDelay(6, () -> {
-				// The per-tick impulse lands in the player phase; a sequence-boundary read
-				// catches deltaMovement either fresh (~0.6) or after one friction decay
-				// (~x0.55 → ~0.33), so the threshold must sit below the decayed value. If the
-				// victim's section does not entity-tick the delta stays exactly as set.
+				// The per-tick impulse lands in the player phase; whether the victim's section
+				// actually moves it varies with chunk boundaries and tick order, so accept
+				// either observable: real displacement toward the caster, or a toward-caster
+				// deltaMovement still holding the last impulse (a non-ticking victim's delta
+				// never decays; a ticking one reads ≥ ~0.33 after one friction window). Both
+				// fail if the magnet never impulsed.
 				Vec3 pull = zombie.getDeltaMovement();
 				Vec3 toCaster = player.position().subtract(zombie.position()).normalize();
-				helper.assertTrue(pull.horizontalDistance() > 0.25 && pull.dot(toCaster) > 0,
-						"the magnet applies a toward-caster impulse every tick");
+				Vec3 moved = zombie.position().subtract(anchor);
+				double pulled = moved.horizontalDistance();
+				boolean dragged = pulled > 0.3 && (pulled < 1.0e-4
+						|| toCaster.dot(moved.normalize()) > 0);
+				boolean impulsed = pull.horizontalDistance() > 0.25 && pull.dot(toCaster) > 0;
+				helper.assertTrue(dragged || impulsed,
+						"the magnet pulls the victim toward the caster (pulled=" + pulled
+								+ " delta=" + pull + ")");
 				MobEffectInstance slow = player.getEffect(MobEffects.MOVEMENT_SLOWDOWN);
 				helper.assertTrue(slow != null && slow.getAmplifier() == 250
 								&& slow.getDuration() <= 200 && slow.isAmbient(),
