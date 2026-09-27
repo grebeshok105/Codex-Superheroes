@@ -4,7 +4,7 @@ import io.github.grebeshok105.codex.mechanic.flight.FlightController;
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.ability.AbilityRouter;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
-import io.github.grebeshok105.codex.core.lifecycle.ControlLockKind;
+import io.github.grebeshok105.codex.core.model.ControlLockKind;
 import io.github.grebeshok105.codex.core.lifecycle.EntityControlLock;
 import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
@@ -18,7 +18,7 @@ import io.github.grebeshok105.codex.hero.regulus.net.MadnessSyncS2CPayload;
 import io.github.grebeshok105.codex.hero.regulus.net.MadnessVisualS2CPayload;
 import io.github.grebeshok105.codex.hero.regulus.registry.RegulusDamageTypes;
 import io.github.grebeshok105.codex.mechanic.falls.FallDamageHandlers;
-import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.core.model.HeroData;
 import io.github.grebeshok105.codex.mechanic.world.WorldDestructionPolicy;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -411,9 +411,9 @@ public final class RegulusMadnessController {
 					if (tick == 1) {
 						liftStartY = attacker.getY();
 						io.github.grebeshok105.codex.core.lifecycle.EntityControlLock.acquire(
-								attacker, io.github.grebeshok105.codex.core.lifecycle.ControlLockKind.NO_AI, player);
+								attacker, io.github.grebeshok105.codex.core.model.ControlLockKind.NO_AI, player);
 						io.github.grebeshok105.codex.core.lifecycle.EntityControlLock.acquire(
-								attacker, io.github.grebeshok105.codex.core.lifecycle.ControlLockKind.NO_GRAVITY, player);
+								attacker, io.github.grebeshok105.codex.core.model.ControlLockKind.NO_GRAVITY, player);
 					}
 					double liftStep = COUNTER_LIFT_HEIGHT / (double) COUNTER_LIFT_TICKS;
 					double targetY = Math.min(liftStartY + tick * liftStep, liftStartY + COUNTER_LIFT_HEIGHT);
@@ -432,7 +432,7 @@ public final class RegulusMadnessController {
 						phase = Phase.ARRIVE;
 						tick = 0;
 						io.github.grebeshok105.codex.core.lifecycle.EntityControlLock.acquire(
-								player, io.github.grebeshok105.codex.core.lifecycle.ControlLockKind.NO_GRAVITY, player);
+								player, io.github.grebeshok105.codex.core.model.ControlLockKind.NO_GRAVITY, player);
 						player.setDeltaMovement(0, 0, 0);
 						Vec3 look = attacker.getViewVector(1.0f);
 						double bx = attacker.getX() - look.x * 1.2;
@@ -493,13 +493,13 @@ public final class RegulusMadnessController {
 		private void releaseLocks(LivingEntity attacker, ServerPlayer player) {
 			if (attacker != null) {
 				io.github.grebeshok105.codex.core.lifecycle.EntityControlLock.release(
-						attacker, io.github.grebeshok105.codex.core.lifecycle.ControlLockKind.NO_AI, playerId);
+						attacker, io.github.grebeshok105.codex.core.model.ControlLockKind.NO_AI, playerId);
 				io.github.grebeshok105.codex.core.lifecycle.EntityControlLock.release(
-						attacker, io.github.grebeshok105.codex.core.lifecycle.ControlLockKind.NO_GRAVITY, playerId);
+						attacker, io.github.grebeshok105.codex.core.model.ControlLockKind.NO_GRAVITY, playerId);
 			}
 			if (player != null) {
 				io.github.grebeshok105.codex.core.lifecycle.EntityControlLock.release(
-						player, io.github.grebeshok105.codex.core.lifecycle.ControlLockKind.NO_GRAVITY, playerId);
+						player, io.github.grebeshok105.codex.core.model.ControlLockKind.NO_GRAVITY, playerId);
 			}
 		}
 

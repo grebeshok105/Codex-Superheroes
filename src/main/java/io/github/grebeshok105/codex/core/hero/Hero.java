@@ -1,10 +1,9 @@
 package io.github.grebeshok105.codex.core.hero;
 
-import io.github.grebeshok105.codex.core.ability.AbilityAvailability;
-import io.github.grebeshok105.codex.core.ability.AbilityRouter;
+import io.github.grebeshok105.codex.core.model.AbilityAvailability;
 import io.github.grebeshok105.codex.core.lifecycle.PassiveReconciler;
-import io.github.grebeshok105.codex.core.resource.ResourceKind;
-import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.core.model.ResourceKind;
+import io.github.grebeshok105.codex.core.model.HeroData;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EntityDimensions;
@@ -152,7 +151,7 @@ public interface Hero {
 	 * collected-stone gates, Pandora's dimension-only powers) live here, not in the router.
 	 * On {@code false}, {@link #onAbilityDenied} runs for player feedback.
 	 */
-	default boolean canUseAbility(ServerPlayer player, io.github.grebeshok105.codex.core.transform.HeroData data,
+	default boolean canUseAbility(ServerPlayer player, io.github.grebeshok105.codex.core.model.HeroData data,
 			ResourceLocation abilityId) {
 		return true;
 	}
@@ -176,7 +175,7 @@ public interface Hero {
 	 * While-stance suppression: deny an ability because another one is active
 	 * (Homelander's Iron Fists locks out everything else).
 	 */
-	default boolean isAbilitySuppressedBy(io.github.grebeshok105.codex.core.transform.HeroData data,
+	default boolean isAbilitySuppressedBy(io.github.grebeshok105.codex.core.model.HeroData data,
 			ResourceLocation abilityId) {
 		return false;
 	}
@@ -187,7 +186,7 @@ public interface Hero {
 	 * (Iron Man reserves 100 for Unibeam).
 	 */
 	default float getEnergyReserveFor(ResourceLocation abilityId,
-			io.github.grebeshok105.codex.core.resource.ResourceKind binding) {
+			io.github.grebeshok105.codex.core.model.ResourceKind binding) {
 		return 0f;
 	}
 

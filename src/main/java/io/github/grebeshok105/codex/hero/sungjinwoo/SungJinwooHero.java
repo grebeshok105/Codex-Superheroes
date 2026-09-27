@@ -8,7 +8,7 @@ import io.github.grebeshok105.codex.core.hero.HeroHudConfig;
 import io.github.grebeshok105.codex.core.hero.HeroTheme;
 import io.github.grebeshok105.codex.core.hero.JarvisThreatClass;
 import io.github.grebeshok105.codex.core.hero.PassiveGlyph;
-import io.github.grebeshok105.codex.core.resource.ResourceKind;
+import io.github.grebeshok105.codex.core.model.ResourceKind;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;

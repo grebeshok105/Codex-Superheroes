@@ -40,7 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import net.minecraft.server.MinecraftServer;
-import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.core.model.HeroData;
 
 public final class UnibeamController {
 	public static final int CHARGE_TICKS = 200;

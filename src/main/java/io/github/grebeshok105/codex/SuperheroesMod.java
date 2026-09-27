@@ -32,7 +32,7 @@ public class SuperheroesMod implements ModInitializer {
 		ModEffects.init();
 		io.github.grebeshok105.codex.bootstrap.HeroModules.bootstrap(io.github.grebeshok105.codex.core.module.CoreModuleContext.INSTANCE);
 		io.github.grebeshok105.codex.bootstrap.ContentModules.bootstrap(io.github.grebeshok105.codex.core.module.CoreModuleContext.INSTANCE);
-		io.github.grebeshok105.codex.item.ModDataComponents.init();
+		io.github.grebeshok105.codex.mechanic.boundweapon.BoundWeapons.init();
 		ModItems.init();
 		ModItemGroups.init();
 		ModParticles.init();

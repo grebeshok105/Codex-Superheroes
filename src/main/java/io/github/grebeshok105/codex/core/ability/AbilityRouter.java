@@ -4,12 +4,16 @@ import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.hero.Heroes;
 import io.github.grebeshok105.codex.core.resource.EnergyLocks;
 import io.github.grebeshok105.codex.core.resource.ResourceController;
-import io.github.grebeshok105.codex.core.resource.ResourceKind;
+import io.github.grebeshok105.codex.core.model.ResourceKind;
 import io.github.grebeshok105.codex.core.resource.ResourcePayment;
-import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.core.model.HeroData;
 import io.github.grebeshok105.codex.core.transform.HeroDataStore;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 
 public final class AbilityRouter {
 	private AbilityRouter() {
@@ -97,6 +101,65 @@ public final class AbilityRouter {
 		}
 	}
 
+	/**
+	 * Per-player ability tick: charges every active toggle's cost-per-tick and runs its
+	 * {@code onTickActive}. Registered after {@code ResourceController.tick} so regen lands
+	 * before the drain.
+	 */
+	public static void tickActive(ServerPlayer player) {
+		HeroData data = HeroDataStore.get(player);
+		if (!data.hasHero()) {
+			return;
+		}
+		ResourceLocation heroId = data.heroId();
+		Hero hero = Heroes.get(heroId);
+		if (hero == null) {
+			return;
+		}
+		boolean free = ResourceController.isFree(player);
+		List<ResourceLocation> active = new ArrayList<>(data.activeAbilities());
+		active.sort(Comparator.comparing(ResourceLocation::toString));
+		for (ResourceLocation abilityId : active) {
+			// Re-read every time: an earlier callback may have deactivated abilities, spent resources or
+			// even untransformed the player. Writing back the tick-start copy is what resurrected B2.
+			HeroData current = HeroDataStore.get(player);
+			if (!heroId.equals(current.heroId())) {
+				return;
+			}
+			if (!current.isActive(abilityId)) {
+				continue;
+			}
+			Ability ability = AbilityRegistry.get(abilityId);
+			if (ability == null) {
+				continue;
+			}
+			float cost = free ? 0f : ability.costPerTick();
+			if (cost > 0f) {
+				ResourceKind kind = current.binding(abilityId, hero.getDefaultBinding(abilityId));
+				ResourcePayment payment = ResourcePayment.pay(current.energy(), current.mana(), kind, cost);
+				if (!payment.success()) {
+					deactivate(player, abilityId);
+					continue;
+				}
+				HeroDataStore.update(player, d -> d.withResources(payment.energy(), payment.mana()));
+			}
+			ability.onTickActive(player);
+		}
+	}
+
+	/**
+	 * Runs {@code onDeactivate} on every active ability without touching the active set —
+	 * transform fires it through {@code HeroTransformService}'s deactivator seam.
+	 */
+	public static void deactivateAll(ServerPlayer player, HeroData data) {
+		for (ResourceLocation activeId : data.activeAbilities()) {
+			Ability ability = AbilityRegistry.get(activeId);
+			if (ability != null) {
+				ability.onDeactivate(player);
+			}
+		}
+	}
+
 	public static void bind(ServerPlayer player, ResourceLocation abilityId, ResourceKind kind) {
 		HeroData data = HeroDataStore.get(player);
 		if (!data.hasHero()) {
@@ -111,7 +174,7 @@ public final class AbilityRouter {
 
 	private static boolean canPayActivationCost(ServerPlayer player, HeroData data, Hero hero,
 			ResourceLocation abilityId, ResourceKind binding, float cost) {
-		if (cost <= 0f || AbilityRules.isFree(player)) {
+		if (cost <= 0f || ResourceController.isFree(player)) {
 			return true;
 		}
 		if (binding == ResourceKind.ENERGY

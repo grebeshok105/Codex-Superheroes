@@ -10,9 +10,9 @@ import io.github.grebeshok105.codex.core.hero.ImpactStyle;
 import io.github.grebeshok105.codex.core.hero.JarvisThreatClass;
 import io.github.grebeshok105.codex.core.hero.LandingImpact;
 import io.github.grebeshok105.codex.core.hero.PassiveGlyph;
-import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.core.model.HeroData;
 import io.github.grebeshok105.codex.mechanic.shockwave.ShockwaveUtil;
-import io.github.grebeshok105.codex.core.resource.ResourceKind;
+import io.github.grebeshok105.codex.core.model.ResourceKind;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -213,7 +213,7 @@ public final class HomelanderHero implements Hero {
 	}
 
 	@Override
-	public boolean isAbilitySuppressedBy(io.github.grebeshok105.codex.core.transform.HeroData data,
+	public boolean isAbilitySuppressedBy(io.github.grebeshok105.codex.core.model.HeroData data,
 			ResourceLocation abilityId) {
 		// While Iron Fists stance is up, every other ability is locked out.
 		return data.isActive(HomelanderAbilityIds.IRON_FISTS) && !HomelanderAbilityIds.IRON_FISTS.equals(abilityId);

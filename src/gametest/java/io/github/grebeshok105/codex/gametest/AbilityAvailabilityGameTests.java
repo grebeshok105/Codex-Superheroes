@@ -2,8 +2,8 @@ package io.github.grebeshok105.codex.gametest;
 
 import io.github.grebeshok105.codex.hero.pandora.runtime.VanityStrippedMobEffect;
 import io.github.grebeshok105.codex.core.ability.AbilityAvailabilitySync;
-import io.github.grebeshok105.codex.core.ability.AbilityAvailability;
-import io.github.grebeshok105.codex.core.ability.AbilityAvailability.Visibility;
+import io.github.grebeshok105.codex.core.model.AbilityAvailability;
+import io.github.grebeshok105.codex.core.model.AbilityAvailability.Visibility;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.hero.doomsday.runtime.DoomsdayProgress;
 import io.github.grebeshok105.codex.mechanic.effect.ModEffects;

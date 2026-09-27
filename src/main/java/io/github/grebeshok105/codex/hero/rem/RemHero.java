@@ -1,14 +1,14 @@
 package io.github.grebeshok105.codex.hero.rem;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.core.ability.AbilityAvailability;
+import io.github.grebeshok105.codex.core.model.AbilityAvailability;
 import io.github.grebeshok105.codex.core.hero.AttributeModifierSet;
 import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.hero.HeroHudConfig;
 import io.github.grebeshok105.codex.core.hero.HeroTheme;
 import io.github.grebeshok105.codex.core.hero.ImpactStyle;
 import io.github.grebeshok105.codex.core.hero.PassiveGlyph;
-import io.github.grebeshok105.codex.core.resource.ResourceKind;
+import io.github.grebeshok105.codex.core.model.ResourceKind;
 import io.github.grebeshok105.codex.hero.rem.runtime.RemDemonismController;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityDimensions;

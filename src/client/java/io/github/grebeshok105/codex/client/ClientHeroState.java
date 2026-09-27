@@ -3,7 +3,7 @@ package io.github.grebeshok105.codex.client;
 import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.hero.HeroTheme;
 import io.github.grebeshok105.codex.core.hero.Heroes;
-import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.core.model.HeroData;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.List;

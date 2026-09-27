@@ -10,7 +10,7 @@ import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.hero.Heroes;
 import io.github.grebeshok105.codex.core.hero.ImpactStyle;
 import io.github.grebeshok105.codex.core.hero.JarvisThreatClass;
-import io.github.grebeshok105.codex.core.lifecycle.ControlLockKind;
+import io.github.grebeshok105.codex.core.model.ControlLockKind;
 import io.github.grebeshok105.codex.core.transform.HeroDataStore;
 import io.github.grebeshok105.codex.core.transform.HeroTransformService;
 import io.github.grebeshok105.codex.hero.homelander.registry.HomelanderDamageTypes;

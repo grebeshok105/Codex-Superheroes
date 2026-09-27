@@ -3,7 +3,7 @@ package io.github.grebeshok105.codex.hero.reinhard.runtime;
 import io.github.grebeshok105.codex.ModId;
 import net.minecraft.resources.ResourceLocation;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
-import io.github.grebeshok105.codex.core.lifecycle.ControlLockKind;
+import io.github.grebeshok105.codex.core.model.ControlLockKind;
 import io.github.grebeshok105.codex.core.lifecycle.EntityControlLock;
 import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
@@ -29,7 +29,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 import net.minecraft.server.MinecraftServer;
-import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.core.model.HeroData;
 
 /**
  * Ceremonial sword draw for Reinhard. Lasts 10 seconds (200 ticks):

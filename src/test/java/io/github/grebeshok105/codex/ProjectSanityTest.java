@@ -1,7 +1,7 @@
 package io.github.grebeshok105.codex;
 
 import io.github.grebeshok105.codex.core.hero.Hero;
-import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.core.model.HeroData;
 import io.github.grebeshok105.codex.core.transform.HeroDataStore;
 import io.github.grebeshok105.codex.mechanic.world.WorldDestructionPolicy;
 import com.google.gson.JsonElement;

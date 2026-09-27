@@ -1,5 +1,7 @@
 package io.github.grebeshok105.codex.core.resource;
 
+import io.github.grebeshok105.codex.core.model.ResourceKind;
+
 /**
  * Result of paying a cost from the dual Energy/Mana pool: the preferred resource pays first and the
  * other one covers any shortfall. Pure, so the fallback rule is unit-tested.

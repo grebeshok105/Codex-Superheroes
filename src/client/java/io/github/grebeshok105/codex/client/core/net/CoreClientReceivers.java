@@ -13,7 +13,7 @@ import io.github.grebeshok105.codex.core.net.HeroDataSyncS2CPayload;
 import io.github.grebeshok105.codex.core.net.ResourceUpdateS2CPayload;
 import io.github.grebeshok105.codex.core.net.ScreenShakeS2CPayload;
 import io.github.grebeshok105.codex.core.net.WallImpactDebrisS2CPayload;
-import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.core.model.HeroData;
 import io.github.grebeshok105.codex.mechanic.flight.FlightAbilityState;
 import io.github.grebeshok105.codex.mechanic.flight.FlightStateS2CPayload;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;

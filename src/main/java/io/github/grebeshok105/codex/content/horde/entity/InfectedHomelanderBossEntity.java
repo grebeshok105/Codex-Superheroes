@@ -1,7 +1,6 @@
 package io.github.grebeshok105.codex.content.horde.entity;
 
 import io.github.grebeshok105.codex.mechanic.effect.ModEffects;
-import io.github.grebeshok105.codex.content.horde.HordeManager;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerBossEvent;
@@ -265,7 +264,7 @@ public class InfectedHomelanderBossEntity extends Monster {
 		super.die(source);
 		bossEvent.removeAllPlayers();
 		if (!level().isClientSide() && hordeId != null) {
-			HordeManager.onMobDied(hordeId, getUUID());
+			HordeDeaths.fireMobDied(hordeId, getUUID());
 		}
 		broadcastDeathMessage();
 	}

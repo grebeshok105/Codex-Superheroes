@@ -1,7 +1,6 @@
 package io.github.grebeshok105.codex.core.lifecycle;
 
 import io.github.grebeshok105.codex.core.hero.Hero;
-import io.github.grebeshok105.codex.core.transform.HeroTransformService;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 
