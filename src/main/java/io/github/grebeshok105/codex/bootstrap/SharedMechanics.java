@@ -48,7 +48,6 @@ public final class SharedMechanics {
 		// Cross-hero reaction broadcast (Homelander <-> Omniman) — global by design.
 		ctx.lifecycle().onHeroTransformed(HeroReactionController::onTransformed);
 		ctx.lifecycle().onServerStopped(server -> EnergyLocks.resetAll());
-		ctx.lifecycle().onServerStopped(server -> io.github.grebeshok105.codex.content.horde.HordeManager.resetAll());
 
 		HeroLandingTracker.register(ctx);
 		ctx.ticks().global(HeroLandingTracker::pruneGonePlayers);

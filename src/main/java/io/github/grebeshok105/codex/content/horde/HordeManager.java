@@ -3,6 +3,8 @@ package io.github.grebeshok105.codex.content.horde;
 import io.github.grebeshok105.codex.content.horde.entity.BaseHordeEntity;
 import io.github.grebeshok105.codex.content.horde.entity.InfectedHomelanderBossEntity;
 import io.github.grebeshok105.codex.content.horde.net.HordeDebugS2CPayload;
+import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
@@ -21,6 +23,8 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,9 +42,12 @@ import java.util.concurrent.ThreadLocalRandom;
  * UUIDs and leashes strays back toward the centre.</p>
  */
 public final class HordeManager {
-	private static final Map<UUID, HordeInstance> ACTIVE = new ConcurrentHashMap<>();
+	/** Owner = the activator; a horde is dropped only on server stop, never on player lifecycle. */
+	private static final OwnedSessionMap<UUID, HordeInstance> ACTIVE =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.noneOf(OwnedSessionMap.ClearOn.class));
 	/** Players who toggled the debug overlay on (server-wide). */
-	private static final Set<UUID> OVERLAY_PLAYERS = ConcurrentHashMap.newKeySet();
+	private static final OwnedSessionMap<UUID, Boolean> OVERLAY_PLAYERS =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.noneOf(OwnedSessionMap.ClearOn.class));
 
 	private static final int INTER_WAVE_TICKS = 300; // 15 seconds between waves
 	private static final double SPAWN_RING_MIN = 20.0;
@@ -120,7 +127,7 @@ public final class HordeManager {
 				instance.waveBossBar.addPlayer(p);
 			}
 		}
-		ACTIVE.put(id, instance);
+		ACTIVE.put(id, activator != null ? activator.getUUID() : id, instance);
 		broadcastMessage(level, center, "§c§l⚠ ОРДА ПАРАЗИТОВ АКТИВИРОВАНА! Приготовьтесь!");
 		level.playSound(null, center.x, center.y, center.z,
 				SoundEvents.ENDER_DRAGON_GROWL, SoundSource.HOSTILE, 2.0f, 0.5f);
@@ -128,15 +135,16 @@ public final class HordeManager {
 	}
 
 	public static void tick(ServerLevel level) {
-		ACTIVE.values().removeIf(inst -> {
-			if (inst.level != level) return false;
+		for (Iterator<Map.Entry<UUID, HordeInstance>> it = ACTIVE.iterator(); it.hasNext();) {
+			HordeInstance inst = it.next().getValue();
+			if (inst.level != level) continue;
 			if (inst.finished) {
 				inst.waveBossBar.removeAllPlayers();
-				return true;
+				it.remove();
+				continue;
 			}
 			tickInstance(inst);
-			return false;
-		});
+		}
 	}
 
 	private static void tickInstance(HordeInstance inst) {
@@ -423,7 +431,8 @@ public final class HordeManager {
 	}
 
 	private static HordeInstance activeIn(ServerLevel level) {
-		for (HordeInstance inst : ACTIVE.values()) {
+		for (Map.Entry<UUID, HordeInstance> e : ACTIVE) {
+			HordeInstance inst = e.getValue();
 			if (inst.level == level && !inst.finished) {
 				return inst;
 			}
@@ -537,11 +546,11 @@ public final class HordeManager {
 
 	public static boolean toggleOverlay(ServerPlayer player) {
 		boolean nowOn;
-		if (OVERLAY_PLAYERS.contains(player.getUUID())) {
+		if (OVERLAY_PLAYERS.containsKey(player.getUUID())) {
 			OVERLAY_PLAYERS.remove(player.getUUID());
 			nowOn = false;
 		} else {
-			OVERLAY_PLAYERS.add(player.getUUID());
+			OVERLAY_PLAYERS.put(player.getUUID(), player.getUUID(), Boolean.TRUE);
 			nowOn = true;
 		}
 		if (!nowOn) {
@@ -552,7 +561,7 @@ public final class HordeManager {
 
 	public static void setOverlay(ServerPlayer player, boolean enabled) {
 		if (enabled) {
-			OVERLAY_PLAYERS.add(player.getUUID());
+			OVERLAY_PLAYERS.put(player.getUUID(), player.getUUID(), Boolean.TRUE);
 		} else {
 			OVERLAY_PLAYERS.remove(player.getUUID());
 			ServerPlayNetworking.send(player, new HordeDebugS2CPayload(""));
@@ -560,12 +569,12 @@ public final class HordeManager {
 	}
 
 	private static void pushOverlay(HordeInstance inst) {
-		if (OVERLAY_PLAYERS.isEmpty()) return;
+		if (OVERLAY_PLAYERS.size() == 0) return;
 		if (++inst.overlayTimer < OVERLAY_INTERVAL) return;
 		inst.overlayTimer = 0;
 		String text = buildOverlayText(inst);
 		for (ServerPlayer p : inst.level.getServer().getPlayerList().getPlayers()) {
-			if (OVERLAY_PLAYERS.contains(p.getUUID()) && p.level() == inst.level) {
+			if (OVERLAY_PLAYERS.containsKey(p.getUUID()) && p.level() == inst.level) {
 				ServerPlayNetworking.send(p, new HordeDebugS2CPayload(text));
 			}
 		}
@@ -604,7 +613,13 @@ public final class HordeManager {
 	}
 
 	public static boolean hasActiveHorde(Level level) {
-		return ACTIVE.values().stream().anyMatch(i -> i.level == level && !i.finished);
+		for (Map.Entry<UUID, HordeInstance> e : ACTIVE) {
+			HordeInstance i = e.getValue();
+			if (i.level == level && !i.finished) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/** World shutdown — hordes hold level references that would leak into a new world. */
