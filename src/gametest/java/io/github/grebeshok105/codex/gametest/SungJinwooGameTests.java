@@ -145,11 +145,13 @@ public final class SungJinwooGameTests implements FabricGameTest {
 		player.teleportTo(isoX, inside.y, isoZ);
 
 		helper.runAfterDelay(10, () -> {
-			Zombie zombie = helper.spawn(EntityType.ZOMBIE, 7, 1, 7);
-			zombie.teleportTo(isoX + 2, inside.y, isoZ + 2);
+			// Fresh spawn at the isolated spot: a teleport can lag a chunk-section
+			// update and arise's bounding-box scan then misses the mob.
+			Zombie zombie = new Zombie(EntityType.ZOMBIE, helper.getLevel());
+			helper.getLevel().getChunk(BlockPos.containing(isoX + 2, inside.y, isoZ + 2));
+			zombie.moveTo(isoX + 2, inside.y, isoZ + 2, 0f, 0f);
+			helper.getLevel().addFreshEntity(zombie);
 			zombie.setHealth(4f); // 4/20 < 25% — the weakened-finish path
-			// Settle one tick so the chunk section registers the teleported zombie
-			// before arise's bounding-box scan runs.
 			helper.runAfterDelay(1, () -> TestPlayers.awaitVisible(helper, zombie, () -> {
 				AbilityRouter.activate(player, ARISE);
 				helper.assertFalse(zombie.isAlive(), "arise finishes the weakened mob");
