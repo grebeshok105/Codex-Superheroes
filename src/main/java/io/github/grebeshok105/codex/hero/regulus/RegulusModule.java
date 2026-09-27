@@ -4,7 +4,6 @@ import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.module.HeroModule;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.damage.DamageTypeSpec;
-import io.github.grebeshok105.codex.effect.ThanosStoneRewardController;
 import io.github.grebeshok105.codex.hero.regulus.ability.CounterStrikeAbility;
 import io.github.grebeshok105.codex.hero.regulus.ability.GreedsEmbraceAbility;
 import io.github.grebeshok105.codex.hero.regulus.ability.LionHeartAbility;
@@ -17,7 +16,6 @@ import io.github.grebeshok105.codex.hero.regulus.runtime.GreedCageController;
 import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusGreedController;
 import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusMadnessController;
 import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusTotemController;
-import io.github.grebeshok105.codex.item.infinity.InfinityStoneType;
 
 import java.util.List;
 
@@ -40,8 +38,8 @@ public final class RegulusModule implements HeroModule {
 		RegulusItems.register(ctx.content());
 		ctx.payloads().s2c(MadnessSyncS2CPayload.TYPE, MadnessSyncS2CPayload.STREAM_CODEC);
 		ctx.payloads().s2c(MadnessVisualS2CPayload.TYPE, MadnessVisualS2CPayload.STREAM_CODEC);
-		// Regulus→TIME stone reward, registered by the hero that owns the drop row.
-		ThanosStoneRewardController.registerHeroStone(RegulusHero.ID, InfinityStoneType.TIME);
+		// Regulus→TIME stone reward row lives in InfinityStones' static table (hero.thanos
+		// owns the stone registry — heroes never import sibling heroes).
 		ctx.abilities().register(new LionHeartAbility());
 		ctx.abilities().register(new ManiaOfGreedAbility());
 		ctx.abilities().register(new GreedsEmbraceAbility());

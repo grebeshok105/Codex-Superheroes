@@ -238,7 +238,7 @@
 
 ## Known issues / follow-ups
 
-- `runServer` in dev fails mod resolution while Veil is on the runtime classpath (audit N2); decide whether to make Veil `modCompileOnly` + client-only runtime.
+- ~~`runServer` in dev fails mod resolution while Veil is on the runtime classpath~~ — fixed: `server` run config now uses a `servernoveil` source set with Veil filtered out (same exclusion as gametest/datagen). Veil is client-only by design and can never load on a dedicated server; `recommends` (not `depends`) in fabric.mod.json stays correct even if the mod ports fully onto Veil — server installs simply omit it.
 - `auto-approve-pr.yml` still auto-approves green PRs (audit §3); left as a repository-owner decision, not changed by this work.
 - Execute the plans in `docs/design/architecture-migration/` stage by stage; the canonical stage graph is `00-overview.md` §2.1 and each plan's «Статус стадий» table is its tracker. First stage: plan 1 `A1` once every bugfix PR (#37–#40, #42–#49) and #41 are on `main`.
 - The bugfix stack merged as a single linear history (`integrate/main` → `main`): the hazards called out here were real (`fabric.mod.json` GameTest unions, `RemoteHeroSkins` deletion vs stage-7 references, `ServerTickEvents` removal vs later imports) and were resolved during the restack — `RemoteHeroSkins` references dropped, GameTest entrypoints unioned to 13, `TargetFilters`/`SafeTeleport`/`WorldDestructionPolicy` imports kept where still used.

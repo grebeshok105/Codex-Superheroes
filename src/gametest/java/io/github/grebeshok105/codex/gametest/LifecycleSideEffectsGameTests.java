@@ -6,7 +6,7 @@ import io.github.grebeshok105.codex.hero.omniman.ability.OmnimanThinkMarkAbility
 import io.github.grebeshok105.codex.attachment.ModAttachments;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
 import io.github.grebeshok105.codex.hero.battlebeast.runtime.BattleBeastCurseController;
-import io.github.grebeshok105.codex.effect.DoomGripController;
+import io.github.grebeshok105.codex.hero.doomsday.runtime.DoomGripController;
 import io.github.grebeshok105.codex.effect.MirrorDimensionController;
 import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusGreedController;
 import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusMadnessState;

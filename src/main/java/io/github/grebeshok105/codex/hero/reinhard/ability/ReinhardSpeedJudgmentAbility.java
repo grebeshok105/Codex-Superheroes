@@ -4,7 +4,7 @@ import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
-import io.github.grebeshok105.codex.debug.AdminAbilityDebug;
+import io.github.grebeshok105.codex.core.ability.MobTargetDebug;
 import io.github.grebeshok105.codex.hero.reinhard.runtime.ReinhardSpeedJudgmentController;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
@@ -32,7 +32,7 @@ public final class ReinhardSpeedJudgmentAbility implements Ability {
 		return ID;
 	}
 
-	/** The admin debug toggle can legitimately aim this ability at mobs (was the single entry in {@code AdminAbilityDebug.MOB_TARGET_ABILITIES}). */
+	/** The admin debug toggle can legitimately aim this ability at mobs (was the single entry in {@code MobTargetDebug.MOB_TARGET_ABILITIES}). */
 	@Override
 	public boolean debugTargetsMobs() {
 		return true;
@@ -69,7 +69,7 @@ public final class ReinhardSpeedJudgmentAbility implements Ability {
 			target = mobTarget;
 		}
 		if (target == null) {
-			player.displayClientMessage(Component.translatable(AdminAbilityDebug.canPlayerOnlyAbilityTargetMobs(getId())
+			player.displayClientMessage(Component.translatable(MobTargetDebug.canPlayerOnlyAbilityTargetMobs(getId())
 					? "ability.superheroes.reinhard_speed_judgment.no_target_debug"
 					: "ability.superheroes.reinhard_speed_judgment.no_target"), true);
 			return false;
@@ -122,12 +122,12 @@ public final class ReinhardSpeedJudgmentAbility implements Ability {
 	}
 
 	private static Mob findFastestDebugMobTarget(ServerPlayer player, ServerLevel level) {
-		if (!AdminAbilityDebug.canPlayerOnlyAbilityTargetMobs(ID)) return null;
+		if (!MobTargetDebug.canPlayerOnlyAbilityTargetMobs(ID)) return null;
 		AABB box = player.getBoundingBox().inflate(RADIUS);
 		Mob best = null;
 		double bestScore = MIN_SPEED_PER_TICK;
 		for (Mob candidate : level.getEntitiesOfClass(Mob.class, box,
-				e -> AdminAbilityDebug.canTargetMob(player, ID, e))) {
+				e -> MobTargetDebug.canTargetMob(player, ID, e))) {
 			double score = speedScore(candidate);
 			if (score > bestScore) {
 				bestScore = score;

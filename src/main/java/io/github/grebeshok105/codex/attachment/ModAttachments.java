@@ -1,23 +1,13 @@
 package io.github.grebeshok105.codex.attachment;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.effect.DoomsdayProgress;
+
 import io.github.grebeshok105.codex.mechanic.boundweapon.BoundWeaponIssues;
 import com.mojang.serialization.Codec;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentRegistry;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
 
 public final class ModAttachments {
-	public static final AttachmentType<DoomsdayProgress> DOOMSDAY_PROGRESS = AttachmentRegistry.create(ModId.of("doomsday_progress"), b -> b
-			.initializer(() -> DoomsdayProgress.EMPTY)
-			.persistent(DoomsdayProgress.CODEC)
-			.copyOnDeath());
-
-	public static final AttachmentType<Boolean> ADMIN_BUILD = AttachmentRegistry.create(ModId.of("admin_build"), b -> b
-			.initializer(() -> Boolean.FALSE)
-			.persistent(Codec.BOOL)
-			.copyOnDeath());
-
 	public static final AttachmentType<Integer> SUIT_VARIANT = AttachmentRegistry.create(ModId.of("suit_variant"), b -> b
 			.initializer(() -> 0)
 			.persistent(Codec.INT)
@@ -33,10 +23,6 @@ public final class ModAttachments {
 	public static final AttachmentType<BoundWeaponIssues> BOUND_WEAPON_ISSUES =
 			AttachmentRegistry.create(ModId.of("bound_weapon_issues"));
 
-	/** Sung Jin-Woo's shadow army: entity UUIDs + summon/phase flags; persistent so a restart re-links shadows (audit B18). */
-	public static final AttachmentType<SungShadowArmy> SUNG_SHADOW_ARMY = AttachmentRegistry.create(ModId.of("sung_shadow_army"), b -> b
-			.initializer(() -> SungShadowArmy.EMPTY)
-			.persistent(SungShadowArmy.CODEC));
 
 	/** Pandora has played her revival cinematic and is permanently un-hittable until she drops the hero. */
 	public static final AttachmentType<Boolean> PANDORA_REVIVED = AttachmentRegistry.create(ModId.of("pandora_revived"), b -> b

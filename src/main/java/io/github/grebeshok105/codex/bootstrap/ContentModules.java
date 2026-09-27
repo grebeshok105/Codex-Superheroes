@@ -13,7 +13,9 @@ import java.util.List;
 public final class ContentModules {
 	public static final List<ContentModule> ALL = List.of(
 			new io.github.grebeshok105.codex.content.horde.HordeModule(),
-			new io.github.grebeshok105.codex.content.boss.homelander.HomelanderBossModule()
+			new io.github.grebeshok105.codex.content.boss.homelander.HomelanderBossModule(),
+			new io.github.grebeshok105.codex.content.admin.AdminModule(),
+			new io.github.grebeshok105.codex.content.command.CommandModule()
 	);
 
 	private ContentModules() {

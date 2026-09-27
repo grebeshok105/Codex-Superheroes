@@ -19,7 +19,6 @@ core.hero <-> core.transform
 core.lifecycle <-> core.transform
 core.net <-> core.transform
 core.resource <-> core.transform
-effect <-> entity
 effect <-> hero
 effect <-> item
 effect <-> network

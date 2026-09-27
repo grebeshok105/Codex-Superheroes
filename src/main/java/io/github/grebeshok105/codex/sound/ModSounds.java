@@ -19,8 +19,6 @@ public final class ModSounds {
 	public static final SoundEvent HOMELANDER_HAND_CLAP = register("homelander.hand_clap");
 	public static final SoundEvent HOMELANDER_IRON_FISTS_IMPACT = register("homelander.iron_fists.impact");
 	public static final SoundEvent HOMELANDER_IRON_FISTS_CHARGE = register("homelander.iron_fists.charge");
-	public static final SoundEvent DOOMSDAY_ROAR = register("doomsday.roar");
-	public static final SoundEvent THANOS_SNAP_VOICE = register("thanos.snap.voice");
 	public static final SoundEvent HOMELANDER_OMNIMAN_REACT = register("homelander.omniman_react");
 	public static final SoundEvent IRONMAN_JARVIS_DETECT = register("ironman.jarvis_detect");
 	public static final SoundEvent IRONMAN_JARVIS_DETECT_EXCITED = register("ironman.jarvis_detect_excited");

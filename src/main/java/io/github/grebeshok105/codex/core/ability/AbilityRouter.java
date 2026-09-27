@@ -29,7 +29,7 @@ public final class AbilityRouter {
 		if (hero == null || !hero.getAbilities().contains(abilityId)) {
 			return;
 		}
-		// Hero-specific gates live on the hero (audit debt 4): Doomsday tiers, Thanos
+		// Hero-specific gates live on the hero (audit debt 4): Doomsday tiers, stone
 		// stones, Pandora's dimension-only powers.
 		if (!hero.canUseAbility(player, data, abilityId)) {
 			hero.onAbilityDenied(player, abilityId);
