@@ -57,7 +57,6 @@ public final class SharedMechanics {
 		ctx.ticks().global(HeroMeleeImpactController::serverTick);
 		ctx.ticks().global(BallisticBodyTracker::tick);
 		ctx.ticks().global(FlightController::cleanup);
-		ctx.ticks().global(HeavensStrikeController::serverTick);
 	}
 
 	/**
