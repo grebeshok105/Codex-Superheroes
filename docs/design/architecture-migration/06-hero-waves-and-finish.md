@@ -54,8 +54,8 @@
 | I1b Loki + A-Train | ✅ | #93 |
 | I1c Battle Beast | ⏳ | |
 | I2a Goku + Naruto | ✅ | #91 |
-| I2b Kratos | ⏳ | |
-| I2c Captain America | ⏳ | |
+| I2b Kratos | ✅ | #97 |
+| I2c Captain America | ✅ | #95 |
 | I3 Invincible + Omni-Man | ✅ | #92 |
 | I4a Sung Jinwoo | ⏳ | |
 | I4b Rem | ⏳ | |
