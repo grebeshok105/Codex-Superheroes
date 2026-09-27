@@ -31,7 +31,6 @@ public final class ThanosStoneRewardController {
 	static {
 		HERO_TO_STONE.put(KratosHero.ID, InfinityStoneType.POWER);
 		HERO_TO_STONE.put(SungJinwooHero.ID, InfinityStoneType.REALITY);
-		HERO_TO_STONE.put(LokiHero.ID, InfinityStoneType.MIND);
 		HERO_TO_STONE.put(RegulusHero.ID, InfinityStoneType.TIME);
 	}
 
