@@ -1,9 +1,10 @@
-package io.github.grebeshok105.codex.effect;
+package io.github.grebeshok105.codex.hero.battlebeast.runtime;
 
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.hero.AttributeModifierSet;
-import io.github.grebeshok105.codex.hero.BattleBeastHero;
+import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
@@ -18,8 +19,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.EnumSet;
 import java.util.UUID;
 import net.minecraft.server.MinecraftServer;
 
@@ -44,8 +44,12 @@ public final class BattleBeastCurseController {
 	private static final ResourceLocation CURSE_REACH = ModId.of("modifiers/battle_beast/curse_reach");
 	private static final ResourceLocation CURSE_STEP = ModId.of("modifiers/battle_beast/curse_step_height");
 
-	private static final Map<UUID, Long> START_TICKS = new HashMap<>();
-	private static final Map<UUID, Integer> STAGES = new HashMap<>();
+	private static final ResourceLocation BATTLE_BEAST_ID = ModId.of("battle_beast");
+
+	private static final OwnedSessionMap<UUID, Long> START_TICKS =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.noneOf(OwnedSessionMap.ClearOn.class));
+	private static final OwnedSessionMap<UUID, Integer> STAGES =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.noneOf(OwnedSessionMap.ClearOn.class));
 
 	private BattleBeastCurseController() {
 	}
@@ -70,22 +74,16 @@ public final class BattleBeastCurseController {
 		}
 	}
 
-	/** World shutdown — stage tracking and tick-clock starts die with the world. */
-	public static void resetAll() {
-		START_TICKS.clear();
-		STAGES.clear();
-	}
-
 	public static int setStage(ServerPlayer player, int stage) {
 		int clamped = clampStage(stage);
 		UUID id = player.getUUID();
 		long now = player.serverLevel().getGameTime();
-		START_TICKS.put(id, now - clamped * STEP_TICKS);
+		START_TICKS.put(id, id, now - clamped * STEP_TICKS);
 		removeCurse(player);
 		if (clamped > 0) {
 			buildCurseSet(clamped).apply(player);
 		}
-		STAGES.put(id, clamped);
+		STAGES.put(id, id, clamped);
 		healAfterStageChange(player, clamped);
 		refreshEffects(player, clamped);
 		if (clamped > 0) {
@@ -99,7 +97,8 @@ public final class BattleBeastCurseController {
 	}
 
 	public static float damageMultiplier(ServerPlayer player) {
-		int stage = STAGES.getOrDefault(player.getUUID(), 0);
+		Integer stored = STAGES.get(player.getUUID());
+		int stage = stored == null ? 0 : stored;
 		if (stage <= 0) {
 			return 1.0f;
 		}
@@ -110,17 +109,18 @@ public final class BattleBeastCurseController {
 		UUID id = player.getUUID();
 		long now = player.serverLevel().getGameTime();
 		if (!START_TICKS.containsKey(id)) {
-			START_TICKS.put(id, now);
+			START_TICKS.put(id, id, now);
 			removeCurse(player);
 		}
 		int stage = Math.min(MAX_STAGE, (int) ((now - START_TICKS.get(id)) / STEP_TICKS));
-		int oldStage = STAGES.getOrDefault(id, -1);
+		Integer oldStageValue = STAGES.get(id);
+		int oldStage = oldStageValue == null ? -1 : oldStageValue;
 		if (stage != oldStage) {
 			removeCurse(player);
 			if (stage > 0) {
 				buildCurseSet(stage).apply(player);
 			}
-			STAGES.put(id, stage);
+			STAGES.put(id, id, stage);
 			if (stage > 0) {
 				announceStage(player, stage);
 			}
@@ -227,7 +227,7 @@ public final class BattleBeastCurseController {
 
 	private static boolean isBattleBeast(Player player) {
 		HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
-		return BattleBeastHero.ID.equals(data.heroId());
+		return BATTLE_BEAST_ID.equals(data.heroId());
 	}
 
 	private record Stats(double armor, double toughness, double damage, double attackSpeed,

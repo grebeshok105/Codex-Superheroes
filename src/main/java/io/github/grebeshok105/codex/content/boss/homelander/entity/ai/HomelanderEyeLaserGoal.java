@@ -1,7 +1,7 @@
-package io.github.grebeshok105.codex.entity.ai;
+package io.github.grebeshok105.codex.content.boss.homelander.entity.ai;
 
 import io.github.grebeshok105.codex.effect.UraniumDefenseController;
-import io.github.grebeshok105.codex.entity.HomelanderBossEntity;
+import io.github.grebeshok105.codex.content.boss.homelander.api.HomelanderBossApi;
 import io.github.grebeshok105.codex.network.ModNetworking;
 import io.github.grebeshok105.codex.particle.ModParticles;
 import net.minecraft.server.level.ServerLevel;
@@ -31,10 +31,10 @@ public class HomelanderEyeLaserGoal extends Goal {
 	private static final float MAX_DPS = 30.0f;
 	private static final float DAMAGE_MULT = 14.0f;
 
-	private final HomelanderBossEntity boss;
+	private final HomelanderBossApi boss;
 	private int phaseTick;
 
-	public HomelanderEyeLaserGoal(HomelanderBossEntity boss) {
+	public HomelanderEyeLaserGoal(HomelanderBossApi boss) {
 		this.boss = boss;
 		this.setFlags(EnumSet.of(Goal.Flag.LOOK));
 	}
@@ -111,12 +111,12 @@ public class HomelanderEyeLaserGoal extends Goal {
 		Vec3 end = eye.add(forward.scale(RANGE));
 
 		BlockHitResult blockHit = level.clip(new ClipContext(
-				eye, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, boss));
+				eye, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, boss.asMob()));
 		Vec3 entitySearchEnd = blockHit.getType() == HitResult.Type.BLOCK
 				? blockHit.getLocation() : end;
 		AABB box = boss.getBoundingBox().expandTowards(forward.scale(RANGE)).inflate(1.0);
 		EntityHitResult hit = ProjectileUtil.getEntityHitResult(
-				level, boss, eye, entitySearchEnd, box,
+				level, boss.asMob(), eye, entitySearchEnd, box,
 				e -> e instanceof LivingEntity && e.isAlive() && e != boss && !e.isSpectator());
 
 		Vec3 actualEnd = entitySearchEnd;
@@ -127,7 +127,7 @@ public class HomelanderEyeLaserGoal extends Goal {
 		}
 		if (hit != null) {
 			LivingEntity hitTarget = (LivingEntity) hit.getEntity();
-			DamageSource ds = io.github.grebeshok105.codex.damage.ModDamageTypes.homelanderEyeLaser((net.minecraft.server.level.ServerLevel) boss.level(), boss);
+			DamageSource ds = io.github.grebeshok105.codex.content.boss.homelander.registry.HomelanderBossDamageTypes.eyeLaser((net.minecraft.server.level.ServerLevel) boss.level(), boss.asMob());
 			hitTarget.hurt(ds, damage);
 			actualEnd = new Vec3(hitTarget.getX(),
 					hitTarget.getY() + hitTarget.getBbHeight() * CHEST_FRACTION,
@@ -136,7 +136,7 @@ public class HomelanderEyeLaserGoal extends Goal {
 					actualEnd.x, actualEnd.y, actualEnd.z,
 					3, 0.10, 0.10, 0.10, 0.04);
 		}
-		ModNetworking.broadcastLaserFromEntity(boss, eye, actualEnd);
+		ModNetworking.broadcastLaserFromEntity(boss.asMob(), eye, actualEnd);
 	}
 
 	private float damagePerTick() {

@@ -16,9 +16,7 @@ import io.github.grebeshok105.codex.client.hud.ScreenFlashHud;
 import io.github.grebeshok105.codex.client.fx.ScreenShakeManager;
 import io.github.grebeshok105.codex.client.fx.WallImpactDebrisManager;
 import io.github.grebeshok105.codex.client.network.ClientNetworking;
-import io.github.grebeshok105.codex.client.render.HomelanderBossRenderer;
 import io.github.grebeshok105.codex.core.ability.Ability;
-import io.github.grebeshok105.codex.entity.ModEntities;
 import io.github.grebeshok105.codex.mechanic.boundweapon.BoundWeaponItem;
 import io.github.grebeshok105.codex.client.render.CosmicBeamRenderer;
 import io.github.grebeshok105.codex.client.render.LaserBeamRenderer;
@@ -64,7 +62,6 @@ public class SuperheroesClient implements ClientModInitializer {
 		CosmicBeamRenderer.register();
 		LocalLaserOverlay.register();
 		EntityRendererRegistry.register(EntityType.LIGHTNING_BOLT, SuperheroLightningRenderer::new);
-		EntityRendererRegistry.register(ModEntities.HOMELANDER_BOSS, HomelanderBossRenderer::new);
 		LivingEntityFeatureRendererRegistrationCallback.EVENT.register((entityType, entityRenderer, registrationHelper, context) -> {
 			if (entityRenderer instanceof PlayerRenderer playerRenderer) {
 				PlayerLayers.registerAll(playerRenderer, registrationHelper);

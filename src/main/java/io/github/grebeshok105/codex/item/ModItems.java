@@ -1,7 +1,6 @@
 package io.github.grebeshok105.codex.item;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.entity.ModEntities;
 import io.github.grebeshok105.codex.item.infinity.InfinityStoneItem;
 import io.github.grebeshok105.codex.item.infinity.InfinityStoneType;
 import io.github.grebeshok105.codex.core.transform.TransformationItem;
@@ -11,7 +10,6 @@ import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Rarity;
-import net.minecraft.world.item.SpawnEggItem;
 
 import java.util.List;
 
@@ -69,17 +67,6 @@ public final class ModItems {
 	public static final EvangelionItem EVANGELION = register(
 			"evangelion",
 			new EvangelionItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
-	);
-
-	public static final VoughtSignalItem VOUGHT_SIGNAL = register(
-			"vought_signal",
-			new VoughtSignalItem(new Item.Properties().stacksTo(4).rarity(Rarity.EPIC))
-	);
-
-	public static final SpawnEggItem HOMELANDER_BOSS_SPAWN_EGG = register(
-			"homelander_boss_spawn_egg",
-			new SpawnEggItem(ModEntities.HOMELANDER_BOSS, 0x2FB200, 0x6BD43A,
-					new Item.Properties().rarity(Rarity.EPIC))
 	);
 
 	public static final ShadowMonarchsCloakItem SHADOW_MONARCHS_CLOAK = register(
@@ -147,17 +134,6 @@ public final class ModItems {
 							List.of(new TransformationLore.Line("item.superheroes.raiden_suit.lore.usage", ChatFormatting.YELLOW),
 									new TransformationLore.Line("item.superheroes.raiden_suit.lore.untransform", ChatFormatting.RED))))
 	);
-
-	public static final TransformationItem BATTLE_BEAST_MEDALLION = register(
-			"battle_beast_medallion",
-			new TransformationItem(ModId.of("battle_beast"), new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC),
-					new TransformationLore(ChatFormatting.DARK_RED,
-							List.of(new TransformationLore.Line("item.superheroes.battle_beast_medallion.lore.line1", ChatFormatting.RED),
-									new TransformationLore.Line("item.superheroes.battle_beast_medallion.lore.line2", ChatFormatting.DARK_GRAY)),
-							List.of(new TransformationLore.Line("item.superheroes.battle_beast_medallion.lore.usage", ChatFormatting.GOLD),
-									new TransformationLore.Line("item.superheroes.battle_beast_medallion.lore.untransform", ChatFormatting.RED))))
-	);
-
 
 	// persisted id kept from the Doctor Strange era — do not rename the string.
 	public static final TransformationItem PANDORA_SUIT = register(

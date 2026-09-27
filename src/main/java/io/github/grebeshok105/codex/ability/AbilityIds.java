@@ -54,11 +54,6 @@ public final class AbilityIds {
 	public static final ResourceLocation RAIDEN_TRANSCENDENCE = ModId.of("raiden_transcendence");
 	public static final ResourceLocation RAIDEN_MUSOU_ISSHIN = ModId.of("raiden_musou_isshin");
 
-	public static final ResourceLocation BATTLE_BEAST_PREDATOR_LEAP = ModId.of("battle_beast_predator_leap");
-	public static final ResourceLocation BATTLE_BEAST_AXE_CLEAVE = ModId.of("battle_beast_axe_cleave");
-	public static final ResourceLocation BATTLE_BEAST_WAR_ROAR = ModId.of("battle_beast_war_roar");
-	public static final ResourceLocation BATTLE_BEAST_BLOODLUST = ModId.of("battle_beast_bloodlust");
-
 	// Pandora — Mirror Dimension warp
 	public static final ResourceLocation MIRROR_DIMENSION = ModId.of("mirror_dimension");
 	public static final ResourceLocation MIRROR_MODE_CYCLE = ModId.of("mirror_mode_cycle");
