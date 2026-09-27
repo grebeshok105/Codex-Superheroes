@@ -22,6 +22,7 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.phys.Vec3;
@@ -162,9 +163,12 @@ public final class SungJinwooGameTests implements FabricGameTest {
 						"the suppressed death leaves no echo behind");
 
 				helper.runAfterDelay(10, () -> {
-					List<ShadowSoldierEntity> shadows = SungJinwooController.aliveShadows(player);
-					helper.assertTrue(shadows.size() == SungJinwooController.MAX_SHADOWS + 1,
-							"the raised shadow is among the live army");
+					// The slot shadows stayed at the grid and despawn once the owner
+					// is 128+ blocks away — pin the freshly raised shadow by id.
+					List<UUID> ids = player.getAttachedOrCreate(SungJinwooAttachments.ARMY).shadowIds();
+					Entity raised = player.serverLevel().getEntity(ids.get(ids.size() - 1));
+					helper.assertTrue(raised instanceof ShadowSoldierEntity ss && ss.isAlive(),
+							"the raised shadow resolves as a live army member");
 					TestPlayers.leave(player);
 					helper.succeed();
 				});
