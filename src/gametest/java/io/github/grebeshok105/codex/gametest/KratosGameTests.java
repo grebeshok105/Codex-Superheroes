@@ -262,6 +262,11 @@ public final class KratosGameTests implements FabricGameTest {
 	public void godSlayerFailsWithoutTarget(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, ModId.of("kratos"));
+		// Far outside the structure grid: adjacent tests' entities (structures sit
+		// ~10-40 blocks apart, all tests tick concurrently) can land in the
+		// 16-block nearest-hostile scan both near spawn and inside this structure.
+		var pos = helper.absolutePos(net.minecraft.core.BlockPos.containing(1, 1, 1));
+		player.teleportTo(pos.getX() + 5000.5, -60.0, pos.getZ() + 5000.5);
 		Vec3 before = player.position();
 		float energyBefore = HeroDataStore.get(player).energy();
 
@@ -282,6 +287,10 @@ public final class KratosGameTests implements FabricGameTest {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, ModId.of("kratos"));
 		Zombie zombie = helper.spawn(EntityType.ZOMBIE, 4, 1, 4);
+		// Move the player to the zombie (inside this test's structure) instead of
+		// the zombie to the player: the shared world spawn may hold leftovers that
+		// win the nearest-hostile pick.
+		player.teleportTo(zombie.getX() - 4.0, zombie.getY(), zombie.getZ());
 		Vec3 before = player.position();
 
 		TestPlayers.awaitVisible(helper, zombie, () -> {
