@@ -171,7 +171,7 @@ public final class HomelanderBossGameTests implements FabricGameTest {
 				"vought_signal useOn must return CONSUME, got " + result);
 		helper.assertTrue(stack.getCount() == 3,
 				"a survival summon must shrink the stack by one, got " + stack.getCount());
-		awaitBoss(helper, box(pos), found -> {
+		awaitBoss(helper, pos, box(pos), found -> {
 			helper.assertTrue(found != null,
 					"vought_signal must summon a homelander_boss above the clicked block");
 			found.discard();
@@ -193,7 +193,7 @@ public final class HomelanderBossGameTests implements FabricGameTest {
 				"the spawn egg useOn must return CONSUME, got " + result);
 		helper.assertTrue(stack.getCount() == 0,
 				"a survival spawn-egg use must consume the egg, got " + stack.getCount());
-		awaitBoss(helper, box(pos), found -> {
+		awaitBoss(helper, pos, box(pos), found -> {
 			helper.assertTrue(found != null,
 					"homelander_boss_spawn_egg must spawn a homelander_boss");
 			helper.assertTrue(found.getType() == HomelanderBossEntities.HOMELANDER_BOSS,
@@ -292,8 +292,15 @@ public final class HomelanderBossGameTests implements FabricGameTest {
 			helper.assertTrue(boss.getTarget() == player,
 					"the boss must target the player inside its structure, got " + boss.getTarget());
 			ServerBossEvent bar = bossEventOf(boss);
+			// Mock connections never enter real chunk tracking, so vanilla never invokes
+			// startSeenByPlayer here; pin the migrated wiring itself instead.
+			boss.startSeenByPlayer(player);
 			helper.assertTrue(bar.getPlayers().contains(player),
-					"the boss bar must attach to the tracking player");
+					"startSeenByPlayer must attach the player to the boss bar");
+			boss.stopSeenByPlayer(player);
+			helper.assertTrue(!bar.getPlayers().contains(player),
+					"stopSeenByPlayer must detach the player from the boss bar");
+			boss.startSeenByPlayer(player);
 			helper.assertTrue(bar.getColor() == BossEvent.BossBarColor.GREEN,
 					"boss bar color must stay GREEN, got " + bar.getColor());
 			helper.assertTrue(bar.getOverlay() == BossEvent.BossBarOverlay.NOTCHED_10,
@@ -314,17 +321,22 @@ public final class HomelanderBossGameTests implements FabricGameTest {
 	 * Fresh {@code addFreshEntity} spawns sit in a section until chunk tracking upgrades —
 	 * poll for the boss like {@link TestPlayers#awaitVisible} polls for a uuid.
 	 */
-	private static void awaitBoss(GameTestHelper helper, AABB box, Consumer<HomelanderBossEntity> body) {
-		awaitBoss(helper, box, 40, body);
+	private static void awaitBoss(GameTestHelper helper, BlockPos pos, AABB box,
+			Consumer<HomelanderBossEntity> body) {
+		awaitBoss(helper, pos, box, 40, body);
 	}
 
-	private static void awaitBoss(GameTestHelper helper, AABB box, int tries, Consumer<HomelanderBossEntity> body) {
-		List<HomelanderBossEntity> found = helper.getLevel().getEntitiesOfClass(HomelanderBossEntity.class, box);
+	private static void awaitBoss(GameTestHelper helper, BlockPos pos, AABB box, int tries,
+			Consumer<HomelanderBossEntity> body) {
+		// Neighbouring tests can hold their own boss inside a generous box; only the one
+		// summoned at pos belongs to this test.
+		List<HomelanderBossEntity> found = helper.getLevel().getEntitiesOfClass(HomelanderBossEntity.class, box,
+				e -> e.distanceToSqr(Vec3.atCenterOf(pos.above())) <= 36.0);
 		if (tries <= 0 || !found.isEmpty()) {
 			body.accept(found.isEmpty() ? null : found.get(0));
 			return;
 		}
-		helper.runAfterDelay(1, () -> awaitBoss(helper, box, tries - 1, body));
+		helper.runAfterDelay(1, () -> awaitBoss(helper, pos, box, tries - 1, body));
 	}
 
 	private static GoalSelector selectorOf(Mob mob, String name) {
