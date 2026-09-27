@@ -17,6 +17,7 @@ import io.github.grebeshok105.codex.effect.ModEffects;
 import io.github.grebeshok105.codex.effect.PandoraDeathController;
 import io.github.grebeshok105.codex.effect.SpatialBindController;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.core.BlockPos;
@@ -176,11 +177,13 @@ public final class PandoraGameTests implements FabricGameTest {
 			helper.assertTrue(pandora.getHealth() == pandora.getMaxHealth(),
 					"level-5 resistance reduces the hit to zero damage");
 			AbilityRouter.deactivate(pandora, AbilityIds.MIRROR_DIMENSION);
-		});
-		awaitTrue(helper, () -> !pandora.hasEffect(MobEffects.DAMAGE_RESISTANCE), 40, () -> {
-			helper.assertFalse(MirrorDimensionController.hasActiveHouse(pandora), "the House is closed");
-			TestPlayers.leave(pandora);
-			helper.succeed();
+			// The poll must start only after the buff exists and the close was issued —
+			// awaiting !hasEffect from registration time would fire immediately.
+			awaitTrue(helper, () -> !pandora.hasEffect(MobEffects.DAMAGE_RESISTANCE), 40, () -> {
+				helper.assertFalse(MirrorDimensionController.hasActiveHouse(pandora), "the House is closed");
+				TestPlayers.leave(pandora);
+				helper.succeed();
+			});
 		});
 	}
 
@@ -220,16 +223,17 @@ public final class PandoraGameTests implements FabricGameTest {
 			AbilityRouter.activate(pandora, AbilityIds.VANITY_STRIP); // second press toggles off
 			helper.assertFalse(HeroDataStore.get(pandora).isActive(AbilityIds.VANITY_STRIP),
 					"the strip toggled off");
-		});
-		awaitTrue(helper, () -> !victim.hasEffect(ModEffects.VANITY_STRIPPED), 90, () -> {
-			AbilityRouter.activate(victim, WIND_PRISON);
-			helper.assertTrue(HeroDataStore.get(victim).isActive(WIND_PRISON),
-					"the victim's powers return after the strip");
-			AbilityRouter.deactivate(victim, WIND_PRISON);
-			AbilityRouter.deactivate(pandora, AbilityIds.MIRROR_DIMENSION);
-			TestPlayers.leave(victim);
-			TestPlayers.leave(pandora);
-			helper.succeed();
+			// Nested so the poll only starts once the marker is actually on the victim.
+			awaitTrue(helper, () -> !victim.hasEffect(ModEffects.VANITY_STRIPPED), 90, () -> {
+				AbilityRouter.activate(victim, WIND_PRISON);
+				helper.assertTrue(HeroDataStore.get(victim).isActive(WIND_PRISON),
+						"the victim's powers return after the strip");
+				AbilityRouter.deactivate(victim, WIND_PRISON);
+				AbilityRouter.deactivate(pandora, AbilityIds.MIRROR_DIMENSION);
+				TestPlayers.leave(victim);
+				TestPlayers.leave(pandora);
+				helper.succeed();
+			});
 		});
 	}
 
@@ -314,9 +318,12 @@ public final class PandoraGameTests implements FabricGameTest {
 		} finally {
 			helper.getLevel().getServer().setPvpAllowed(oldPvp);
 		}
+		// Latch: the poll predicate may not satisfy until the cinematic was observed once.
+		AtomicBoolean seen = new AtomicBoolean();
 
 		helper.runAfterDelay(10, () -> {
 			helper.assertTrue(PandoraDeathController.isInCinematic(pandora), "the cinematic is running");
+			seen.set(true);
 			helper.assertTrue(pandora.getHealth() == pandora.getMaxHealth(), "health is pinned at max");
 			helper.assertTrue(TestPlayers.lockOwners(pandora, ControlLockKind.INVULNERABLE)
 							.contains(pandora.getUUID()),
@@ -331,7 +338,7 @@ public final class PandoraGameTests implements FabricGameTest {
 			helper.assertTrue(pandora.distanceToSqr(anchor.x, anchor.y, anchor.z) < 0.5,
 					"the cinematic re-anchors her every tick");
 		});
-		awaitTrue(helper, () -> !PandoraDeathController.isInCinematic(pandora), 150, () -> {
+		awaitTrue(helper, () -> seen.get() && !PandoraDeathController.isInCinematic(pandora), 150, () -> {
 			helper.assertTrue(Boolean.TRUE.equals(pandora.getAttached(ModAttachments.PANDORA_REVIVED)),
 					"the pandora_revived attachment persisted");
 			helper.assertTrue(TestPlayers.lockOwners(pandora, ControlLockKind.INVULNERABLE)
@@ -364,8 +371,10 @@ public final class PandoraGameTests implements FabricGameTest {
 		helper.assertFalse(pandora.hurt(helper.getLevel().damageSources().generic(), 1000f),
 				"lethal generic damage starts the cinematic");
 		helper.assertTrue(PandoraDeathController.isInCinematic(pandora), "the cinematic is running");
+		// Latch: the poll predicate may not satisfy until the cinematic was observed once.
+		AtomicBoolean seen = new AtomicBoolean(true);
 
-		awaitTrue(helper, () -> !PandoraDeathController.isInCinematic(pandora), 150, () -> {
+		awaitTrue(helper, () -> seen.get() && !PandoraDeathController.isInCinematic(pandora), 150, () -> {
 			helper.assertTrue(pandora.distanceToSqr(anchor.x, anchor.y, anchor.z) < 0.5,
 					"with no killer she reappears at the anchor");
 			helper.assertTrue(Boolean.TRUE.equals(pandora.getAttached(ModAttachments.PANDORA_REVIVED)),
