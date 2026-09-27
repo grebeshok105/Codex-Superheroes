@@ -11,6 +11,7 @@ import io.github.grebeshok105.codex.core.transform.HeroDataStore;
 import io.github.grebeshok105.codex.core.transform.HeroTransformService;
 import io.github.grebeshok105.codex.core.transform.TransformationItem;
 import io.github.grebeshok105.codex.effect.ModEffects;
+import io.github.grebeshok105.codex.effect.SungJinwooController;
 import io.github.grebeshok105.codex.hero.thanos.runtime.ThanosGauntletStateController;
 import io.github.grebeshok105.codex.hero.thanos.ability.ThanosSnapAbility;
 import io.github.grebeshok105.codex.hero.thanos.runtime.ThanosSnapWindupController;
@@ -141,9 +142,13 @@ public final class ThanosGameTests implements FabricGameTest {
 					TestPlayers.clearSpawnInvulnerability(victim);
 					kill(thanos, victim);
 					for (int retry = 0; victim.isAlive() && retry < 6; retry++) {
-						// Death-saves are real mechanics: kawarimi substitution, sung's shadow
-						// diversion… each consumes one hit; drain them (i-frames cleared
-						// between hits). A row still alive after 6 is a real signal.
+						// Death-saves are real mechanics (kawarimi substitution, sung's shadow
+						// diversion) — drain them. Sung auto-summons an initial army on first
+						// tick (5 grounded + 5 flying) and each diverted hit kills one shadow,
+						// so drop the army first. aliveShadows filters dead/discarded, making
+						// this a no-op for every other row.
+						SungJinwooController.aliveShadows(victim)
+								.forEach(net.minecraft.world.entity.Entity::discard);
 						victim.invulnerableTime = 0;
 						kill(thanos, victim);
 					}
