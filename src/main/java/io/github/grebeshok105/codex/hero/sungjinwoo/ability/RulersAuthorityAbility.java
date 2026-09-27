@@ -1,5 +1,6 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.sungjinwoo.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
@@ -27,13 +28,14 @@ import java.util.List;
  *  - CD: 300t (15с)
  */
 public final class RulersAuthorityAbility implements Ability {
+	public static final ResourceLocation ID = ModId.of("rulers_authority");
 	private static final double RANGE = 15.0;
 	private static final int COOLDOWN_TICKS = 300;
 	private static final float DAMAGE = 6.0f;
 
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.RULERS_AUTHORITY;
+		return ID;
 	}
 
 	@Override
@@ -84,7 +86,7 @@ public final class RulersAuthorityAbility implements Ability {
 		level.playSound(null, p.x, p.y, p.z, SoundEvents.ENDER_DRAGON_FLAP, SoundSource.PLAYERS, 1.0f, 0.7f);
 		level.playSound(null, p.x, p.y, p.z, SoundEvents.SOUL_ESCAPE.value(), SoundSource.PLAYERS, 1.2f, 0.6f);
 
-		AbilityCooldowns.setCooldownTicks(player, AbilityIds.RULERS_AUTHORITY, COOLDOWN_TICKS);
+		AbilityCooldowns.setCooldownTicks(player, ID, COOLDOWN_TICKS);
 		return true;
 	}
 }

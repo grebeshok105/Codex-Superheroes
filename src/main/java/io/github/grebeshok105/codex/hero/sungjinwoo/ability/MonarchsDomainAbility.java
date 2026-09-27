@@ -1,8 +1,10 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.sungjinwoo.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
-import io.github.grebeshok105.codex.effect.MonarchsDomainController;
+import io.github.grebeshok105.codex.hero.sungjinwoo.runtime.MonarchsDomainController;
+import io.github.grebeshok105.codex.hero.sungjinwoo.runtime.SungJinwooController;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -22,12 +24,13 @@ import net.minecraft.world.effect.MobEffects;
  *  - CD: 3600t (180с)
  */
 public final class MonarchsDomainAbility implements Ability {
+	public static final ResourceLocation ID = ModId.of("monarchs_domain");
 	public static final int DURATION_TICKS = 200; // 10s
 	public static final int COOLDOWN_TICKS = 3600;
 
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.MONARCHS_DOMAIN;
+		return ID;
 	}
 
 	@Override
@@ -51,7 +54,7 @@ public final class MonarchsDomainAbility implements Ability {
 		player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, DURATION_TICKS, 1, true, true, true));
 
 		MonarchsDomainController.activate(player, DURATION_TICKS);
-		io.github.grebeshok105.codex.effect.SungJinwooController.enterPhase2(player);
+		SungJinwooController.enterPhase2(player);
 
 		level.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, player.getX(), player.getY() + 1, player.getZ(),
 				200, 1.5, 1.5, 1.5, 0.2);
@@ -62,7 +65,7 @@ public final class MonarchsDomainAbility implements Ability {
 		level.playSound(null, player.getX(), player.getY(), player.getZ(),
 				SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 1.6f, 0.7f);
 
-		AbilityCooldowns.setCooldownTicks(player, AbilityIds.MONARCHS_DOMAIN, COOLDOWN_TICKS);
+		AbilityCooldowns.setCooldownTicks(player, ID, COOLDOWN_TICKS);
 		return true;
 	}
 }

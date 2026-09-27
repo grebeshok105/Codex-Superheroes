@@ -1,6 +1,8 @@
-package io.github.grebeshok105.codex.entity;
+package io.github.grebeshok105.codex.hero.sungjinwoo.entity;
 
-import io.github.grebeshok105.codex.damage.ModDamageTypes;
+import io.github.grebeshok105.codex.hero.sungjinwoo.registry.SungJinwooDamageTypes;
+import io.github.grebeshok105.codex.hero.sungjinwoo.runtime.SungJinwooController;
+import io.github.grebeshok105.codex.mechanic.summon.OwnableEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
@@ -45,7 +47,7 @@ import java.util.UUID;
  *  - Атакует: focus → последний хёрт-моб владельца → последний агрессор владельца.
  *  - Урон от хозяина игнорирует.
  */
-public class ShadowSoldierEntity extends PathfinderMob {
+public class ShadowSoldierEntity extends PathfinderMob implements OwnableEntity {
 	public static final int VARIANT_COUNT = 3;
 	public static final double FOLLOW_RADIUS = 6.0;
 
@@ -132,11 +134,13 @@ public class ShadowSoldierEntity extends PathfinderMob {
 		this.slotCount = Math.max(1, count);
 	}
 
+	@Override
 	@Nullable
 	public UUID getOwnerId() {
 		return this.entityData.get(DATA_OWNER).orElse(null);
 	}
 
+	@Override
 	public void setOwnerId(@Nullable UUID id) {
 		this.entityData.set(DATA_OWNER, Optional.ofNullable(id));
 	}
@@ -150,6 +154,7 @@ public class ShadowSoldierEntity extends PathfinderMob {
 		this.entityData.set(DATA_FOCUS, Optional.ofNullable(id));
 	}
 
+	@Override
 	@Nullable
 	public Player getOwner() {
 		UUID id = getOwnerId();
@@ -236,7 +241,7 @@ public class ShadowSoldierEntity extends PathfinderMob {
 		// Иначе это сохранённая копия из прошлой сессии или пережиток disband —
 		// удаляемся, как это сделал бы disbandAll для выгруженной тени.
 		if (!(owner instanceof ServerPlayer ownerSp)
-				|| !io.github.grebeshok105.codex.effect.SungJinwooController.isArmyMember(ownerSp, this.getUUID())) {
+				|| !SungJinwooController.isArmyMember(ownerSp, this.getUUID())) {
 			this.discard();
 			return;
 		}
@@ -303,11 +308,6 @@ public class ShadowSoldierEntity extends PathfinderMob {
 		if (flyAttr != null) flyAttr.addTransientModifier(mod);
 	}
 
-	private boolean isOwner(LivingEntity e) {
-		UUID id = getOwnerId();
-		return id != null && id.equals(e.getUUID());
-	}
-
 	private Vec3 computeSlotPosition(Player owner) {
 		double radius = isGrounded() ? 3.0 : 4.0;
 		// Полукруг сзади хозяина: yaw + 180 ± 90°
@@ -357,7 +357,7 @@ public class ShadowSoldierEntity extends PathfinderMob {
 			return super.doHurtTarget(target);
 		}
 		float damage = (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE);
-		boolean dealt = target.hurt(ModDamageTypes.shadowAttack(sl, this), damage);
+		boolean dealt = target.hurt(SungJinwooDamageTypes.shadowAttack(sl, this), damage);
 		if (dealt) {
 			this.setLastHurtMob(target);
 		}

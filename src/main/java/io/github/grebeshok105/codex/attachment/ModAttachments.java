@@ -48,10 +48,6 @@ public final class ModAttachments {
 	public static final AttachmentType<BoundWeaponIssues> BOUND_WEAPON_ISSUES =
 			AttachmentRegistry.create(ModId.of("bound_weapon_issues"));
 
-	/** Sung Jin-Woo's shadow army: entity UUIDs + summon/phase flags; persistent so a restart re-links shadows (audit B18). */
-	public static final AttachmentType<SungShadowArmy> SUNG_SHADOW_ARMY = AttachmentRegistry.create(ModId.of("sung_shadow_army"), b -> b
-			.initializer(() -> SungShadowArmy.EMPTY)
-			.persistent(SungShadowArmy.CODEC));
 
 	/** Pandora has played her revival cinematic and is permanently un-hittable until she drops the hero. */
 	public static final AttachmentType<Boolean> PANDORA_REVIVED = AttachmentRegistry.create(ModId.of("pandora_revived"), b -> b

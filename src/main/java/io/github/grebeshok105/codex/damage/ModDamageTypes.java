@@ -24,7 +24,6 @@ public final class ModDamageTypes {
 	public static final ResourceKey<DamageType> DOOMSDAY_BONE_SPIKE = key("doomsday_bone_spike");
 	public static final ResourceKey<DamageType> DOOMSDAY_CHARGE_TACKLE = key("doomsday_charge_tackle");
 	public static final ResourceKey<DamageType> DOOMSDAY_DOOM_GRIP = key("doomsday_doom_grip");
-	public static final ResourceKey<DamageType> SHADOW_ATTACK = key("shadow_attack");
 	public static final ResourceKey<DamageType> LOKI_CHAOS = key("loki_chaos");
 	public static final ResourceKey<DamageType> THANOS_SNAP = key("thanos_snap");
 	public static final ResourceKey<DamageType> THANOS_COSMIC_SLAM = key("thanos_cosmic_slam");
@@ -61,7 +60,6 @@ public final class ModDamageTypes {
 		context.register(DOOMSDAY_BONE_SPIKE, new DamageType("doomsday_bone_spike", DamageScaling.NEVER, 0.0F));
 		context.register(DOOMSDAY_CHARGE_TACKLE, new DamageType("doomsday_charge_tackle", DamageScaling.NEVER, 0.0F));
 		context.register(DOOMSDAY_DOOM_GRIP, new DamageType("doomsday_doom_grip", DamageScaling.NEVER, 0.0F));
-		context.register(SHADOW_ATTACK, new DamageType("shadow_attack", DamageScaling.WHEN_CAUSED_BY_LIVING_NON_PLAYER, 0.0F));
 		context.register(LOKI_CHAOS, new DamageType("loki_chaos", DamageScaling.NEVER, 0.0F));
 		context.register(THANOS_SNAP, new DamageType("thanos_snap", DamageScaling.NEVER, 0.0F));
 		context.register(THANOS_COSMIC_SLAM, new DamageType("thanos_cosmic_slam", DamageScaling.NEVER, 0.0F));
@@ -118,9 +116,6 @@ public final class ModDamageTypes {
 		return source(level, DOOMSDAY_DOOM_GRIP, attacker);
 	}
 
-	public static DamageSource shadowAttack(ServerLevel level, Entity attacker) {
-		return source(level, SHADOW_ATTACK, attacker);
-	}
 
 	public static DamageSource lokiChaos(ServerLevel level, Entity attacker) {
 		return source(level, LOKI_CHAOS, attacker);

@@ -17,16 +17,6 @@ public final class ModEntities {
 					.build("homelander_boss")
 	);
 
-	public static final EntityType<ShadowSoldierEntity> SHADOW_SOLDIER = Registry.register(
-			BuiltInRegistries.ENTITY_TYPE,
-			ModId.of("shadow_soldier"),
-			EntityType.Builder.of(ShadowSoldierEntity::new, MobCategory.MONSTER)
-					.sized(0.6f, 1.85f)
-					.clientTrackingRange(10)
-					.fireImmune()
-					.build("shadow_soldier")
-	);
-
 	public static final EntityType<RamEntity> RAM = Registry.register(
 			BuiltInRegistries.ENTITY_TYPE,
 			ModId.of("ram"),
@@ -61,7 +51,6 @@ public final class ModEntities {
 
 	public static void init() {
 		FabricDefaultAttributeRegistry.register(HOMELANDER_BOSS, HomelanderBossEntity.createAttributes());
-		FabricDefaultAttributeRegistry.register(SHADOW_SOLDIER, ShadowSoldierEntity.createAttributes());
 		FabricDefaultAttributeRegistry.register(RAM, RamEntity.createAttributes());
 		FabricDefaultAttributeRegistry.register(IRON_LEGION_DRONE, IronLegionDroneEntity.createAttributes());
 	}

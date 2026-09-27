@@ -1,17 +1,19 @@
-package io.github.grebeshok105.codex.effect;
+package io.github.grebeshok105.codex.hero.sungjinwoo.runtime;
 
-import io.github.grebeshok105.codex.attachment.ModAttachments;
-import io.github.grebeshok105.codex.attachment.SungShadowArmy;
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
+import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
-import io.github.grebeshok105.codex.entity.ModEntities;
-import io.github.grebeshok105.codex.entity.ShadowSoldierEntity;
-import io.github.grebeshok105.codex.hero.SungJinwooHero;
-import io.github.grebeshok105.codex.network.SungShadowArmyS2CPayload;
+import io.github.grebeshok105.codex.hero.sungjinwoo.entity.ShadowSoldierEntity;
+import io.github.grebeshok105.codex.hero.sungjinwoo.entity.SungJinwooEntities;
+import io.github.grebeshok105.codex.hero.sungjinwoo.net.SungShadowArmyS2CPayload;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -22,14 +24,16 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.server.MinecraftServer;
@@ -52,8 +56,14 @@ import net.minecraft.server.MinecraftServer;
 public final class SungJinwooController {
 	public static final int MAX_SHADOWS = 10;
 
-	private static final Map<ServerLevel, List<DeathEcho>> DEATH_ECHOES = new ConcurrentHashMap<>();
-	private static final Set<UUID> SUPPRESSED_DEATH_ECHOES = ConcurrentHashMap.newKeySet();
+	// Leaf classes carry their own hero id (leaves never import the module root).
+	private static final ResourceLocation SUNG_ID = ModId.of("sung_jinwoo");
+
+	// §6.3: level-keyed statics hold ResourceKey<Level>, never ServerLevel refs.
+	private static final Map<ResourceKey<Level>, List<DeathEcho>> DEATH_ECHOES = new ConcurrentHashMap<>();
+	/** Victim-keyed suppress flags; owner = the Sung who triggered the kill (§6.3). */
+	private static final OwnedSessionMap<UUID, Boolean> SUPPRESSED_DEATH_ECHOES =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.of(ClearOn.LEAVE, ClearOn.DEATH, ClearOn.HERO_CLEAR));
 	private static final Random RNG = new Random();
 	/** TTL для буфера смертей: 30 минут (фактически не теряем эхо до Arise). */
 	private static final long DEATH_ECHO_TICKS = 20L * 60L * 30L;
@@ -91,8 +101,8 @@ public final class SungJinwooController {
 		ServerLivingEntityEvents.AFTER_DEATH.register((entity, source) -> {
 			if (!(entity.level() instanceof ServerLevel level)) return;
 			if (entity instanceof Player || entity instanceof ShadowSoldierEntity) return;
-			if (SUPPRESSED_DEATH_ECHOES.remove(entity.getUUID())) return;
-			List<DeathEcho> list = DEATH_ECHOES.computeIfAbsent(level, l -> new ArrayList<>());
+			if (SUPPRESSED_DEATH_ECHOES.remove(entity.getUUID()) != null) return;
+			List<DeathEcho> list = DEATH_ECHOES.computeIfAbsent(level.dimension(), d -> new ArrayList<>());
 			long now = level.getGameTime();
 			list.removeIf(e -> e.expiresAt() <= now);
 			list.add(new DeathEcho(entity.position(), now + DEATH_ECHO_TICKS));
@@ -103,16 +113,16 @@ public final class SungJinwooController {
 
 	public static boolean isSung(ServerPlayer player) {
 		HeroData data = player.getAttached(CoreAttachments.HERO_DATA);
-		return data != null && SungJinwooHero.ID.equals(data.heroId());
+		return data != null && SUNG_ID.equals(data.heroId());
 	}
 
 	private static SungShadowArmy army(ServerPlayer player) {
-		SungShadowArmy a = player.getAttached(ModAttachments.SUNG_SHADOW_ARMY);
+		SungShadowArmy a = player.getAttached(SungShadowArmy.ATTACHMENT);
 		return a == null ? SungShadowArmy.EMPTY : a;
 	}
 
 	private static void saveArmy(ServerPlayer player, SungShadowArmy army) {
-		player.setAttached(ModAttachments.SUNG_SHADOW_ARMY, army);
+		player.setAttached(SungShadowArmy.ATTACHMENT, army);
 	}
 
 	/** Legitimacy check a shadow entity can run on itself: owner is Sung and lists it. */
@@ -215,7 +225,7 @@ public final class SungJinwooController {
 
 	public static ShadowSoldierEntity spawnConfiguredShadowAt(ServerLevel level, ServerPlayer owner,
 			Vec3 pos, int slotIndex, int slotCount, boolean grounded) {
-		ShadowSoldierEntity shadow = ModEntities.SHADOW_SOLDIER.create(level);
+		ShadowSoldierEntity shadow = SungJinwooEntities.SHADOW_SOLDIER.create(level);
 		if (shadow == null) return null;
 		shadow.moveTo(pos.x, pos.y, pos.z, owner.getYRot(), 0f);
 		shadow.setOwnerId(owner.getUUID());
@@ -262,7 +272,7 @@ public final class SungJinwooController {
 	}
 
 	public static Vec3 nearestDeathEcho(ServerPlayer player, double range) {
-		List<DeathEcho> list = DEATH_ECHOES.get(player.serverLevel());
+		List<DeathEcho> list = DEATH_ECHOES.get(player.serverLevel().dimension());
 		if (list == null) return null;
 		long now = player.serverLevel().getGameTime();
 		list.removeIf(e -> e.expiresAt() <= now);
@@ -279,7 +289,7 @@ public final class SungJinwooController {
 	 * Используется Arise для одномоментного подъёма всех мертвых в зоне.
 	 */
 	public static List<Vec3> drainDeathEchoesInRange(ServerPlayer player, double range) {
-		List<DeathEcho> list = DEATH_ECHOES.get(player.serverLevel());
+		List<DeathEcho> list = DEATH_ECHOES.get(player.serverLevel().dimension());
 		List<Vec3> drained = new ArrayList<>();
 		if (list == null || list.isEmpty()) return drained;
 		long now = player.serverLevel().getGameTime();
@@ -297,7 +307,7 @@ public final class SungJinwooController {
 	}
 
 	public static int countDeathEchoesInRange(ServerPlayer player, double range) {
-		List<DeathEcho> list = DEATH_ECHOES.get(player.serverLevel());
+		List<DeathEcho> list = DEATH_ECHOES.get(player.serverLevel().dimension());
 		if (list == null || list.isEmpty()) return 0;
 		long now = player.serverLevel().getGameTime();
 		list.removeIf(e -> e.expiresAt() <= now);
@@ -311,13 +321,13 @@ public final class SungJinwooController {
 	}
 
 	public static void consumeDeathEcho(ServerPlayer player, Vec3 pos) {
-		List<DeathEcho> list = DEATH_ECHOES.get(player.serverLevel());
+		List<DeathEcho> list = DEATH_ECHOES.get(player.serverLevel().dimension());
 		if (list == null) return;
 		list.removeIf(e -> e.pos().distanceToSqr(pos) < 0.01);
 	}
 
-	public static void suppressDeathEcho(LivingEntity entity) {
-		SUPPRESSED_DEATH_ECHOES.add(entity.getUUID());
+	public static void suppressDeathEcho(ServerPlayer owner, LivingEntity entity) {
+		SUPPRESSED_DEATH_ECHOES.put(entity.getUUID(), owner.getUUID(), Boolean.TRUE);
 	}
 
 	public static void registerExtraShadow(ServerPlayer owner, ShadowSoldierEntity shadow) {
@@ -352,15 +362,20 @@ public final class SungJinwooController {
 		}
 	}
 
-	/** Last army state sent per owner — broadcast only on change (audit §3). */
-	private static final Map<UUID, ArmyState> LAST_SENT = new ConcurrentHashMap<>();
+	/** Last army state sent per owner — broadcast only on change (audit §3).
+	 *  No per-owner clear policy: the old map kept entries across relogs and only
+	 *  reset on server stop; periodic + disband removes stay explicit. */
+	private static final OwnedSessionMap<UUID, ArmyState> LAST_SENT =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.noneOf(ClearOn.class));
 
 	private record ArmyState(boolean hasShadows, int count, boolean phase2) {
 	}
 
 	private static void broadcastArmyState(ServerPlayer player, boolean hasShadows, int count) {
 		ArmyState state = new ArmyState(hasShadows, count, army(player).phase2());
-		if (state.equals(LAST_SENT.put(player.getUUID(), state))) {
+		ArmyState previous = LAST_SENT.get(player.getUUID());
+		LAST_SENT.put(player.getUUID(), player.getUUID(), state);
+		if (state.equals(previous)) {
 			return;
 		}
 		SungShadowArmyS2CPayload payload = new SungShadowArmyS2CPayload(

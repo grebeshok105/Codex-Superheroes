@@ -1,18 +1,18 @@
 package io.github.grebeshok105.codex.gametest;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.attachment.ModAttachments;
-import io.github.grebeshok105.codex.attachment.SungShadowArmy;
+import io.github.grebeshok105.codex.hero.sungjinwoo.SungJinwooAttachments;
+import io.github.grebeshok105.codex.hero.sungjinwoo.runtime.SungShadowArmy;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import io.github.grebeshok105.codex.core.ability.AbilityRegistry;
 import io.github.grebeshok105.codex.core.ability.AbilityRouter;
 import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.hero.Heroes;
 import io.github.grebeshok105.codex.core.transform.HeroDataStore;
-import io.github.grebeshok105.codex.effect.MonarchsDomainController;
-import io.github.grebeshok105.codex.effect.SungJinwooController;
-import io.github.grebeshok105.codex.entity.ShadowSoldierEntity;
-import io.github.grebeshok105.codex.network.SungShadowArmyS2CPayload;
+import io.github.grebeshok105.codex.hero.sungjinwoo.runtime.MonarchsDomainController;
+import io.github.grebeshok105.codex.hero.sungjinwoo.runtime.SungJinwooController;
+import io.github.grebeshok105.codex.hero.sungjinwoo.entity.ShadowSoldierEntity;
+import io.github.grebeshok105.codex.hero.sungjinwoo.net.SungShadowArmyS2CPayload;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
@@ -70,7 +70,7 @@ public final class SungJinwooGameTests implements FabricGameTest {
 		player.teleportTo(inside.x, inside.y, inside.z);
 
 		helper.runAfterDelay(10, () -> {
-			SungShadowArmy army = player.getAttachedOrCreate(ModAttachments.SUNG_SHADOW_ARMY);
+			SungShadowArmy army = player.getAttachedOrCreate(SungJinwooAttachments.ARMY);
 			helper.assertTrue(army.summoned(), "the summon is recorded in the persistent attachment");
 			helper.assertFalse(army.phase2(), "phase2 starts cleared");
 			helper.assertTrue(army.shadowIds().size() == SungJinwooController.MAX_SHADOWS,
@@ -111,7 +111,7 @@ public final class SungJinwooGameTests implements FabricGameTest {
 
 			float energyBefore = HeroDataStore.get(player).energy();
 			AbilityRouter.activate(player, ARISE);
-			helper.assertTrue(player.getAttachedOrCreate(ModAttachments.SUNG_SHADOW_ARMY).shadowIds().size()
+			helper.assertTrue(player.getAttachedOrCreate(SungJinwooAttachments.ARMY).shadowIds().size()
 							>= SungJinwooController.MAX_SHADOWS + 1,
 					"arise adds the raised shadow to the army");
 			Vec3 after = SungJinwooController.nearestDeathEcho(player, 5);
@@ -144,7 +144,7 @@ public final class SungJinwooGameTests implements FabricGameTest {
 			TestPlayers.awaitVisible(helper, zombie, () -> {
 				AbilityRouter.activate(player, ARISE);
 				helper.assertFalse(zombie.isAlive(), "arise finishes the weakened mob");
-				helper.assertTrue(player.getAttachedOrCreate(ModAttachments.SUNG_SHADOW_ARMY).shadowIds().size()
+				helper.assertTrue(player.getAttachedOrCreate(SungJinwooAttachments.ARMY).shadowIds().size()
 								== SungJinwooController.MAX_SHADOWS + 1,
 						"the finished mob joins the army");
 				helper.assertTrue(SungJinwooController.countDeathEchoesInRange(player, SungJinwooController.ARISE_RANGE) == 0,
@@ -176,7 +176,7 @@ public final class SungJinwooGameTests implements FabricGameTest {
 					"nothing to raise — no cooldown");
 			helper.assertTrue(HeroDataStore.get(player).energy() == energyBefore,
 					"nothing to raise — no energy spent");
-			helper.assertTrue(player.getAttachedOrCreate(ModAttachments.SUNG_SHADOW_ARMY).shadowIds().size()
+			helper.assertTrue(player.getAttachedOrCreate(SungJinwooAttachments.ARMY).shadowIds().size()
 							== SungJinwooController.MAX_SHADOWS,
 					"army unchanged");
 			TestPlayers.leave(player);
@@ -253,7 +253,7 @@ public final class SungJinwooGameTests implements FabricGameTest {
 
 				helper.assertTrue(zombie.getHealth() < zombie.getMaxHealth() || !zombie.isAlive(),
 						"the blast damages nearby hostiles");
-				helper.assertTrue(player.getAttachedOrCreate(ModAttachments.SUNG_SHADOW_ARMY).shadowIds().isEmpty(),
+				helper.assertTrue(player.getAttachedOrCreate(SungJinwooAttachments.ARMY).shadowIds().isEmpty(),
 						"the army attachment is emptied");
 				helper.assertTrue(SungJinwooController.aliveCount(player) == 0, "no live shadows remain");
 				helper.assertTrue(HeroDataStore.get(player).energy() == energyBefore - 30f,

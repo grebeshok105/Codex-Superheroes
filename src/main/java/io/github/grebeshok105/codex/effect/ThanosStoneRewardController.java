@@ -3,7 +3,6 @@ package io.github.grebeshok105.codex.effect;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.hero.RegulusHero;
-import io.github.grebeshok105.codex.hero.SungJinwooHero;
 import io.github.grebeshok105.codex.hero.ThanosHero;
 import io.github.grebeshok105.codex.item.ModItems;
 import io.github.grebeshok105.codex.item.infinity.InfinityGauntletData;
@@ -28,7 +27,6 @@ public final class ThanosStoneRewardController {
 	private static final Map<ResourceLocation, InfinityStoneType> HERO_TO_STONE = new HashMap<>();
 
 	static {
-		HERO_TO_STONE.put(SungJinwooHero.ID, InfinityStoneType.REALITY);
 		HERO_TO_STONE.put(RegulusHero.ID, InfinityStoneType.TIME);
 	}
 

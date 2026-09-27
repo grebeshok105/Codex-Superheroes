@@ -1,9 +1,10 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.sungjinwoo.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
-import io.github.grebeshok105.codex.effect.SungJinwooController;
-import io.github.grebeshok105.codex.entity.ShadowSoldierEntity;
+import io.github.grebeshok105.codex.hero.sungjinwoo.runtime.SungJinwooController;
+import io.github.grebeshok105.codex.hero.sungjinwoo.entity.ShadowSoldierEntity;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -30,11 +31,12 @@ import java.util.List;
  *  - Спавнит ОДНОВРЕМЕННО всех теней (без cap), регистрирует их в армии Сона.
  */
 public final class AriseAbility implements Ability {
+	public static final ResourceLocation ID = ModId.of("arise");
 	private static final int COOLDOWN_TICKS = 40;
 
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.ARISE;
+		return ID;
 	}
 
 	@Override
@@ -79,7 +81,7 @@ public final class AriseAbility implements Ability {
 						&& e.getHealth() / e.getMaxHealth() < 0.25f);
 		for (LivingEntity victim : weakened) {
 			Vec3 pos = victim.position();
-			SungJinwooController.suppressDeathEcho(victim);
+			SungJinwooController.suppressDeathEcho(player, victim);
 			victim.kill();
 			spawnPositions.add(pos);
 		}
@@ -100,7 +102,7 @@ public final class AriseAbility implements Ability {
 		level.playSound(null, center.x, center.y, center.z, SoundEvents.WARDEN_EMERGE, SoundSource.PLAYERS, 0.7f, 0.6f);
 		level.playSound(null, center.x, center.y, center.z, SoundEvents.SOUL_ESCAPE.value(), SoundSource.PLAYERS, 1.2f, 0.6f);
 
-		AbilityCooldowns.setCooldownTicks(player, AbilityIds.ARISE, COOLDOWN_TICKS);
+		AbilityCooldowns.setCooldownTicks(player, ID, COOLDOWN_TICKS);
 		return true;
 	}
 }
