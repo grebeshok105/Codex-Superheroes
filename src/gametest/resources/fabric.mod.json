@@ -53,7 +53,8 @@
 			"io.github.grebeshok105.codex.gametest.RegulusGameTests",
 			"io.github.grebeshok105.codex.gametest.DoomsdayGameTests",
 			"io.github.grebeshok105.codex.gametest.SuperheroesCommandsGameTests",
-			"io.github.grebeshok105.codex.gametest.ThanosGameTests"
+			"io.github.grebeshok105.codex.gametest.ThanosGameTests",
+			"io.github.grebeshok105.codex.gametest.PandoraGameTests"
 		]
 	},
 	"depends": {

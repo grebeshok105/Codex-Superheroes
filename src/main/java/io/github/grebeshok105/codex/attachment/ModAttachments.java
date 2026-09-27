@@ -24,11 +24,6 @@ public final class ModAttachments {
 			AttachmentRegistry.create(ModId.of("bound_weapon_issues"));
 
 
-	/** Pandora has played her revival cinematic and is permanently un-hittable until she drops the hero. */
-	public static final AttachmentType<Boolean> PANDORA_REVIVED = AttachmentRegistry.create(ModId.of("pandora_revived"), b -> b
-			.initializer(() -> Boolean.FALSE)
-			.persistent(Codec.BOOL)
-			.copyOnDeath());
 
 	private ModAttachments() {
 	}

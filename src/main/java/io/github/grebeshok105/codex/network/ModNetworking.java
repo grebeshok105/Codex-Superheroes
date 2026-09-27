@@ -30,10 +30,6 @@ public final class ModNetworking {
 		PayloadTypeRegistry.playS2C().register(JarvisDetectionS2CPayload.TYPE, JarvisDetectionS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(SuitVariantS2CPayload.TYPE, SuitVariantS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(NanoFormS2CPayload.TYPE, NanoFormS2CPayload.STREAM_CODEC);
-		PayloadTypeRegistry.playS2C().register(MirrorDimensionS2CPayload.TYPE, MirrorDimensionS2CPayload.STREAM_CODEC);
-		PayloadTypeRegistry.playS2C().register(PandoraCinematicS2CPayload.TYPE, PandoraCinematicS2CPayload.STREAM_CODEC);
-		PayloadTypeRegistry.playS2C().register(PandoraHouseStateS2CPayload.TYPE, PandoraHouseStateS2CPayload.STREAM_CODEC);
-		PayloadTypeRegistry.playC2S().register(MirrorDimensionStatusC2SPayload.TYPE, MirrorDimensionStatusC2SPayload.STREAM_CODEC);
 
 		ServerPlayNetworking.registerGlobalReceiver(SuperJumpC2SPayload.TYPE, (payload, context) -> {
 			ServerPlayer player = context.player();
@@ -42,10 +38,6 @@ public final class ModNetworking {
 		ServerPlayNetworking.registerGlobalReceiver(HeroMeleeChargeC2SPayload.TYPE, (payload, context) -> {
 			ServerPlayer player = context.player();
 			HeroMeleeImpactController.handleChargeInput(player, payload);
-		});
-		ServerPlayNetworking.registerGlobalReceiver(MirrorDimensionStatusC2SPayload.TYPE, (payload, context) -> {
-			ServerPlayer player = context.player();
-			io.github.grebeshok105.codex.effect.MirrorDimensionController.handleStatus(player, payload.status());
 		});
 	}
 

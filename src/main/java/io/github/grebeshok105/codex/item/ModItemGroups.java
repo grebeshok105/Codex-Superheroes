@@ -33,8 +33,6 @@ public final class ModItemGroups {
 				output.accept(ModItems.URANIUM_ISOTOPE);
 				output.accept(ModItems.URANIUM_DAGGER);
 
-				output.accept(ModItems.PANDORA_SUIT);
-
 				// Hero modules append their items here, in module registration order.
 				for (ItemLike item : CreativeTabContents.all()) {
 					output.accept(item);

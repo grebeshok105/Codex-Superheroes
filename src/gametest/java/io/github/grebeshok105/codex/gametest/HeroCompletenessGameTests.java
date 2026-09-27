@@ -8,7 +8,7 @@ import io.github.grebeshok105.codex.core.hero.Heroes;
 import io.github.grebeshok105.codex.hero.scorpion.ability.ScorpionAbilities;
 import io.github.grebeshok105.codex.hero.scorpion.ScorpionHero;
 import io.github.grebeshok105.codex.item.ModItemGroups;
-import io.github.grebeshok105.codex.item.ModItems;
+import io.github.grebeshok105.codex.hero.pandora.PandoraItems;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
@@ -102,7 +102,7 @@ public final class HeroCompletenessGameTests implements FabricGameTest {
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void pandoraSuitIdIsStable(GameTestHelper helper) {
 		// The registry id is persisted in player saves; it keeps the old name forever.
-		ResourceLocation id = BuiltInRegistries.ITEM.getKey(ModItems.PANDORA_SUIT);
+		ResourceLocation id = BuiltInRegistries.ITEM.getKey(PandoraItems.PANDORA_SUIT);
 		helper.assertTrue(ModId.of("doctor_strange_suit").equals(id),
 				"Pandora suit registry id drifted: " + id);
 		helper.succeed();

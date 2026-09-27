@@ -10,7 +10,9 @@ import io.github.grebeshok105.codex.client.hero.reinhard.state.ClientReinhardDar
 import io.github.grebeshok105.codex.client.hero.reinhard.state.ClientReinhardSwordGateState;
 import io.github.grebeshok105.codex.client.hero.reinhard.state.ClientReinhardSwordKillState;
 import io.github.grebeshok105.codex.client.hero.reinhard.state.ClientReinhardTimeSlowState;
-import io.github.grebeshok105.codex.client.hud.MirrorWarpFlashHud;
+import io.github.grebeshok105.codex.client.hero.pandora.hud.MirrorWarpFlashHud;
+import io.github.grebeshok105.codex.client.hero.pandora.state.ClientPandoraDeathState;
+import io.github.grebeshok105.codex.client.hero.pandora.state.ClientPandoraHouseState;
 import net.minecraft.resources.ResourceLocation;
 import org.junit.jupiter.api.Test;
 

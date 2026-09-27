@@ -13,7 +13,6 @@
 		"hero.thanos.ThanosBlockBreakingMixin",
 		"hero.doomsday.KryptoniteShardPickupMixin",
 		"PlayerBoundWeaponDropMixin",
-		"falbiks.HeroComponentStripMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

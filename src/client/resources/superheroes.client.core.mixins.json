@@ -5,7 +5,12 @@
 	"client": [
 		"GameRendererFovMixin",
 		"GuiVanillaGlitchMixin",
-		"SoundEngineMixin"
+		"SoundEngineMixin",
+		"InputLockKeyboardInputMixin",
+		"InputLockKeyboardMixin",
+		"InputLockMousePressMixin",
+		"InputLockMouseTurnMixin",
+		"FontObfuscationMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

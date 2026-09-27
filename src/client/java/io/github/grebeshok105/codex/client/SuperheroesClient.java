@@ -52,11 +52,7 @@ public class SuperheroesClient implements ClientModInitializer {
 		ClientNetworking.init();
 		HeroClientModules.bootstrap();
 		io.github.grebeshok105.codex.client.bootstrap.ContentClientModules.bootstrap();
-		io.github.grebeshok105.codex.client.iris.IrisShaderBridge.restoreAfterCrashIfNeeded();
-		ClientTickEvents.END_CLIENT_TICK.register(client -> io.github.grebeshok105.codex.client.iris.IrisShaderBridge.tickCrashRestore());
-		ClientTickEvents.END_CLIENT_TICK.register(io.github.grebeshok105.codex.client.ClientMirrorDimensionState::tick);
 		ClientHeroDimsWatcher.init();
-		ClientTickEvents.END_CLIENT_TICK.register(client -> io.github.grebeshok105.codex.client.ClientPandoraDeathState.tick());
 		io.github.grebeshok105.codex.client.render.WildShaders.register();
 		LaserBeamRenderer.register();
 		CosmicBeamRenderer.register();

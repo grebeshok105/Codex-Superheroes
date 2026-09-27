@@ -1,16 +1,17 @@
 package io.github.grebeshok105.codex.gametest;
 
-import io.github.grebeshok105.codex.ability.MirrorDimensionAbility;
+import io.github.grebeshok105.codex.hero.pandora.PandoraAttachments;
+import io.github.grebeshok105.codex.hero.pandora.ability.MirrorDimensionAbility;
 import io.github.grebeshok105.codex.hero.regulus.RegulusAttachments;
 import io.github.grebeshok105.codex.hero.omniman.ability.OmnimanThinkMarkAbility;
 import io.github.grebeshok105.codex.attachment.ModAttachments;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
 import io.github.grebeshok105.codex.hero.battlebeast.runtime.BattleBeastCurseController;
 import io.github.grebeshok105.codex.hero.doomsday.runtime.DoomGripController;
-import io.github.grebeshok105.codex.effect.MirrorDimensionController;
+import io.github.grebeshok105.codex.hero.pandora.runtime.MirrorDimensionController;
+import io.github.grebeshok105.codex.hero.pandora.runtime.SpatialBindController;
 import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusGreedController;
 import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusMadnessState;
-import io.github.grebeshok105.codex.effect.SpatialBindController;
 import io.github.grebeshok105.codex.hero.battlebeast.BattleBeastHero;
 import io.github.grebeshok105.codex.hero.rem.RemItems;
 import io.github.grebeshok105.codex.hero.rem.runtime.RemDemonismController;
@@ -175,14 +176,14 @@ public final class LifecycleSideEffectsGameTests implements FabricGameTest {
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void heroClearStripsPandoraRevival(GameTestHelper helper) {
 		ServerPlayer pandora = TestPlayers.join(helper, "pandora-owner");
-		pandora.setAttached(ModAttachments.PANDORA_REVIVED, Boolean.TRUE);
+		pandora.setAttached(PandoraAttachments.PANDORA_REVIVED, Boolean.TRUE);
 		EntityControlLock.acquire(pandora, ControlLockKind.INVULNERABLE, pandora);
 		helper.assertTrue(EntityControlLock.isLocked(pandora, ControlLockKind.INVULNERABLE),
 				"revival invulnerability held");
 
 		HeroLifecycle.fireClear(pandora);
 
-		helper.assertTrue(pandora.getAttached(ModAttachments.PANDORA_REVIVED) == null,
+		helper.assertTrue(pandora.getAttached(PandoraAttachments.PANDORA_REVIVED) == null,
 				"revived attachment cleared on hero clear");
 		helper.assertFalse(EntityControlLock.isLocked(pandora, ControlLockKind.INVULNERABLE),
 				"permanent invulnerability released");
