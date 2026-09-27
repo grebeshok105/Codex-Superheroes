@@ -138,16 +138,6 @@ public final class ModItems {
 	);
 
 
-	public static final TransformationItem RAIDEN_SUIT = register(
-			"raiden_suit",
-			new TransformationItem(ModId.of("raiden_shogun"), new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC),
-					new TransformationLore(ChatFormatting.LIGHT_PURPLE,
-							List.of(new TransformationLore.Line("item.superheroes.raiden_suit.lore.line1", ChatFormatting.LIGHT_PURPLE),
-									new TransformationLore.Line("item.superheroes.raiden_suit.lore.line2", ChatFormatting.DARK_GRAY)),
-							List.of(new TransformationLore.Line("item.superheroes.raiden_suit.lore.usage", ChatFormatting.YELLOW),
-									new TransformationLore.Line("item.superheroes.raiden_suit.lore.untransform", ChatFormatting.RED))))
-	);
-
 	public static final TransformationItem REM_ONI_HORN = register(
 			"rem_oni_horn",
 			new TransformationItem(ModId.of("rem"), new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC),
@@ -172,11 +162,6 @@ public final class ModItems {
 									new TransformationLore.Line("item.superheroes.doctor_strange_suit.lore.line2", ChatFormatting.DARK_GRAY)),
 							List.of(new TransformationLore.Line("item.superheroes.doctor_strange_suit.lore.usage", ChatFormatting.YELLOW),
 									new TransformationLore.Line("item.superheroes.doctor_strange_suit.lore.untransform", ChatFormatting.GOLD))))
-	);
-
-	public static final MusouNoHitotachiItem MUSOU_NO_HITOTACHI = register(
-			"musou_no_hitotachi",
-			new MusouNoHitotachiItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
 	);
 
 	private ModItems() {

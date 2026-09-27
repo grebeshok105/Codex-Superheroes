@@ -1,11 +1,12 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.raiden.ability;
 
-import io.github.grebeshok105.codex.attachment.ModAttachments;
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.ability.Ability;
-import io.github.grebeshok105.codex.effect.RaidenState;
-import io.github.grebeshok105.codex.item.ModItems;
+import io.github.grebeshok105.codex.hero.raiden.runtime.RaidenState;
+import io.github.grebeshok105.codex.mechanic.boundweapon.BoundWeaponItem;
 import io.github.grebeshok105.codex.mechanic.boundweapon.BoundWeapons;
 import io.github.grebeshok105.codex.particle.ModParticles;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -19,9 +20,12 @@ import net.minecraft.sounds.SoundSource;
  * Деактивация — Ямато исчезает (рассыпается на молнии).
  */
 public final class RaidenSwordDrawAbility implements Ability {
+	public static final ResourceLocation ID = ModId.of("raiden_sword_draw");
+	private static final ResourceLocation YAMATO_ID = ModId.of("musou_no_hitotachi");
+
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.RAIDEN_SWORD_DRAW;
+		return ID;
 	}
 
 	@Override
@@ -50,8 +54,8 @@ public final class RaidenSwordDrawAbility implements Ability {
 			player.displayClientMessage(Component.translatable("ability.superheroes.bound_weapon.no_room"), true);
 			return false;
 		}
-		RaidenState state = player.getAttachedOrCreate(ModAttachments.RAIDEN_STATE);
-		player.setAttached(ModAttachments.RAIDEN_STATE, state.withSwordDrawn(true));
+		RaidenState state = player.getAttachedOrCreate(RaidenState.ATTACHMENT);
+		player.setAttached(RaidenState.ATTACHMENT, state.withSwordDrawn(true));
 		ServerLevel level = player.serverLevel();
 		level.sendParticles(ModParticles.SWORD_EXPLOSION,
 				player.getX(), player.getY() + 1.0, player.getZ(),
@@ -68,8 +72,8 @@ public final class RaidenSwordDrawAbility implements Ability {
 
 	@Override
 	public void onDeactivate(ServerPlayer player) {
-		RaidenState state = player.getAttachedOrCreate(ModAttachments.RAIDEN_STATE);
-		player.setAttached(ModAttachments.RAIDEN_STATE, state.withSwordDrawn(false));
+		RaidenState state = player.getAttachedOrCreate(RaidenState.ATTACHMENT);
+		player.setAttached(RaidenState.ATTACHMENT, state.withSwordDrawn(false));
 		removeSword(player);
 		ServerLevel level = player.serverLevel();
 		level.sendParticles(ModParticles.BLUE_FLAME,
@@ -80,10 +84,14 @@ public final class RaidenSwordDrawAbility implements Ability {
 	}
 
 	public static boolean giveSword(ServerPlayer player) {
-		return BoundWeapons.ensureHeld(player, ModItems.MUSOU_NO_HITOTACHI);
+		return BoundWeapons.ensureHeld(player, yamato());
 	}
 
 	public static void removeSword(ServerPlayer player) {
-		BoundWeapons.revoke(player, ModItems.MUSOU_NO_HITOTACHI);
+		BoundWeapons.revoke(player, yamato());
+	}
+
+	private static BoundWeaponItem yamato() {
+		return (BoundWeaponItem) BuiltInRegistries.ITEM.get(YAMATO_ID);
 	}
 }

@@ -1,11 +1,11 @@
-package io.github.grebeshok105.codex.effect;
+package io.github.grebeshok105.codex.hero.raiden.runtime;
 
-import io.github.grebeshok105.codex.ability.AbilityIds;
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
-import io.github.grebeshok105.codex.hero.RaidenHero;
 import io.github.grebeshok105.codex.particle.ModParticles;
 import io.github.grebeshok105.codex.core.transform.HeroData;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -27,18 +27,21 @@ public final class RaidenAuraController {
 	private static final float ZAP_DAMAGE_PLAYER = 4f;
 	private static final float ZAP_DAMAGE_MOB = 2f;
 
+	private static final ResourceLocation RAIDEN_ID = ModId.of("raiden_shogun");
+	private static final ResourceLocation TRANSCENDENCE_ID = ModId.of("raiden_transcendence");
+
 	private RaidenAuraController() {
 	}
 
 
 	private static boolean isRaiden(ServerPlayer player) {
 		HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
-		return data.hasHero() && RaidenHero.ID.equals(data.heroId());
+		return data.hasHero() && RAIDEN_ID.equals(data.heroId());
 	}
 
 	private static void tick(ServerPlayer player) {
 		HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
-		if (!data.activeAbilities().contains(AbilityIds.RAIDEN_TRANSCENDENCE)) return;
+		if (!data.activeAbilities().contains(TRANSCENDENCE_ID)) return;
 		long now = player.serverLevel().getGameTime();
 		if (now % ZAP_INTERVAL != 0) return;
 

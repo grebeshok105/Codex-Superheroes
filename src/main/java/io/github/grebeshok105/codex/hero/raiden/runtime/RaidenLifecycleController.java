@@ -1,9 +1,7 @@
-package io.github.grebeshok105.codex.effect;
+package io.github.grebeshok105.codex.hero.raiden.runtime;
 
-import io.github.grebeshok105.codex.ability.RaidenSwordDrawAbility;
-import io.github.grebeshok105.codex.attachment.ModAttachments;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
-import io.github.grebeshok105.codex.hero.AbilityScopedModifiers;
+import io.github.grebeshok105.codex.hero.raiden.ability.RaidenSwordDrawAbility;
 import net.minecraft.server.level.ServerPlayer;
 
 /**
@@ -21,7 +19,7 @@ public final class RaidenLifecycleController {
 
 	public static void clearOnUntransform(ServerPlayer player) {
 		RaidenSwordDrawAbility.removeSword(player);
-		AbilityScopedModifiers.RAIDEN_BURST.remove(player);
-		player.setAttached(ModAttachments.RAIDEN_STATE, RaidenState.EMPTY);
+		RaidenModifiers.RAIDEN_BURST.remove(player);
+		player.setAttached(RaidenState.ATTACHMENT, RaidenState.EMPTY);
 	}
 }

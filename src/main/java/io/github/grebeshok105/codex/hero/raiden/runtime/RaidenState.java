@@ -1,7 +1,10 @@
-package io.github.grebeshok105.codex.effect;
+package io.github.grebeshok105.codex.hero.raiden.runtime;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.grebeshok105.codex.ModId;
+import net.fabricmc.fabric.api.attachment.v1.AttachmentRegistry;
+import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
 
 /**
  * Состояние Райден Сёгун (Архонт Электро).
@@ -31,6 +34,20 @@ public record RaidenState(
 			Codec.LONG.optionalFieldOf("transcendence_until_tick", 0L).forGetter(RaidenState::transcendenceUntilTick),
 			Codec.LONG.optionalFieldOf("plunging_armed_until_tick", 0L).forGetter(RaidenState::plungingArmedUntilTick)
 	).apply(instance, RaidenState::new));
+
+	/**
+	 * The state attachment itself — created on this leaf so leaf code never imports the module
+	 * root; {@code RaidenAttachments.STATE} re-exports it for module-external readers.
+	 * Byte-identical to the former {@code ModAttachments.RAIDEN_STATE} registration
+	 * (id {@code superheroes:raiden_state}, initializer, deliberately NOT persistent and
+	 * without copyOnDeath — death/leave fully resets Eye/Burst timers, as requested).
+	 * The AttachmentRegistrar seam has no transient-with-initializer overload, so this stays
+	 * a direct {@link AttachmentRegistry#create} call like {@code ModAttachments} had.
+	 * Created eagerly at class-init — see {@code RaidenAttachments.init()}.
+	 */
+	public static final AttachmentType<RaidenState> ATTACHMENT =
+			AttachmentRegistry.create(ModId.of("raiden_state"), b -> b
+					.initializer(() -> RaidenState.EMPTY));
 
 	public RaidenState withEyeExpireTick(long v) {
 		return new RaidenState(v, burstExpireTick, burstFinalSlashTick, swordDrawn, transcendenceUntilTick, plungingArmedUntilTick);

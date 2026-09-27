@@ -1,19 +1,21 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.raiden.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
-import io.github.grebeshok105.codex.effect.HeavensStrikeController;
+import io.github.grebeshok105.codex.hero.raiden.runtime.HeavensStrikeController;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 
 public final class RaidenPlungingStrikeAbility implements Ability {
+	public static final ResourceLocation ID = ModId.of("raiden_plunging_strike");
 	private static final float COST = 280f;
 	private static final int COOLDOWN_TICKS = 18 * 20;
 
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.RAIDEN_PLUNGING_STRIKE;
+		return ID;
 	}
 
 	@Override
