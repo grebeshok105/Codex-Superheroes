@@ -350,8 +350,11 @@ public final class GokuNarutoChargeGameTests implements FabricGameTest {
 		var server = helper.getLevel().getServer();
 		player.tickCount = 39;
 		HeroTickDispatcher.tick(server);
-		helper.assertTrue(!player.hasEffect(MobEffects.REGENERATION),
-				"no regen refresh on a non-multiple-of-40 tick");
+		// HeroPassiveRegenController refreshes REGEN(100) on serverTick % 40 — unrelated
+		// to player.tickCount. Sage's own refresh writes duration 60; pin that instead.
+		var regen39 = player.getEffect(MobEffects.REGENERATION);
+		helper.assertTrue(regen39 == null || regen39.getDuration() != 60,
+				"no sage regen refresh on a non-multiple-of-40 player tick");
 		player.tickCount = 40;
 		HeroTickDispatcher.tick(server);
 		helper.assertTrue(player.hasEffect(MobEffects.REGENERATION),

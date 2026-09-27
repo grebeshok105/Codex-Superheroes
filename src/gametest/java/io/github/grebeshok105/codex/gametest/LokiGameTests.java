@@ -9,6 +9,7 @@ import io.github.grebeshok105.codex.core.hero.Heroes;
 import io.github.grebeshok105.codex.core.transform.HeroDataStore;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.gametest.framework.GameTest;
+import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -40,6 +41,9 @@ public final class LokiGameTests implements FabricGameTest {
 		var level = player.serverLevel();
 		Zombie zombie = new Zombie(EntityType.ZOMBIE, level);
 		var pos = player.position().add(player.getLookAngle().multiply(1, 0, 1).normalize().scale(dist));
+		// Force-load the destination chunk first: in an unloaded chunk the entity is
+		// never registered for area scans.
+		level.getChunk(BlockPos.containing(pos.x, pos.y, pos.z));
 		zombie.moveTo(pos.x, pos.y, pos.z, 0f, 0f);
 		level.addFreshEntity(zombie);
 		return zombie;
@@ -166,6 +170,12 @@ public final class LokiGameTests implements FabricGameTest {
 		player.setXRot(0.0F);
 		player.setYHeadRot(-90.0F);
 		player.setYBodyRot(-90.0F);
+		// Isolate actor + victim from the shared level: foreign AoE damage grants the
+		// zombie its 10-tick invulnerability window and the backstab then no-ops.
+		double isoX = player.getX() + 2000.0;
+		double isoZ = player.getZ() + 2000.0;
+		helper.getLevel().getChunk(BlockPos.containing(isoX, player.getY(), isoZ));
+		player.teleportTo(isoX, player.getY(), isoZ);
 		Zombie zombie = spawnZombieAhead(player, 4.0);
 
 		TestPlayers.awaitVisible(helper, zombie, () -> {

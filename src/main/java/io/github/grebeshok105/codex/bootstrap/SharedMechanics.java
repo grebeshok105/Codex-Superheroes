@@ -5,7 +5,6 @@ import io.github.grebeshok105.codex.core.lifecycle.HeroTickDispatcher;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.effect.AutoSaturationController;
 import io.github.grebeshok105.codex.effect.FlightController;
-import io.github.grebeshok105.codex.effect.HeavensStrikeController;
 import io.github.grebeshok105.codex.effect.HeroEquipmentLock;
 import io.github.grebeshok105.codex.effect.HeroLandingTracker;
 import io.github.grebeshok105.codex.effect.HeroMeleeImpactController;

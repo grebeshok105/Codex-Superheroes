@@ -1,13 +1,13 @@
-package io.github.grebeshok105.codex.hero;
+package io.github.grebeshok105.codex.hero.raiden;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.ability.AbilityIds;
 import io.github.grebeshok105.codex.core.hero.AttributeModifierSet;
 import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.hero.HeroHudConfig;
 import io.github.grebeshok105.codex.core.hero.HeroTheme;
 import io.github.grebeshok105.codex.core.hero.ImpactStyle;
 import io.github.grebeshok105.codex.core.resource.ResourceKind;
+import io.github.grebeshok105.codex.hero.raiden.runtime.RaidenModifiers;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.Pose;
@@ -92,14 +92,7 @@ public final class RaidenHero implements Hero {
 
 	@Override
 	public List<ResourceLocation> getAbilities() {
-		return List.of(
-				AbilityIds.RAIDEN_SWORD_DRAW,
-				AbilityIds.RAIDEN_EYE_OF_JUDGMENT,
-				AbilityIds.RAIDEN_MUSOU_SHINSETSU,
-				AbilityIds.RAIDEN_MUSOU_ISSHIN,
-				AbilityIds.RAIDEN_PLUNGING_STRIKE,
-				AbilityIds.RAIDEN_TRANSCENDENCE
-		);
+		return RaidenAbilities.ALL;
 	}
 
 	@Override
@@ -115,7 +108,7 @@ public final class RaidenHero implements Hero {
 	@Override
 	public void removePassives(Player player) {
 		PASSIVES.remove(player);
-		AbilityScopedModifiers.RAIDEN_BURST.remove(player);
+		RaidenModifiers.RAIDEN_BURST.remove(player);
 	}
 
 	@Override
