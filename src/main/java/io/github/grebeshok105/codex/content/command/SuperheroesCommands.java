@@ -6,7 +6,7 @@ import io.github.grebeshok105.codex.content.admin.AdminAbilityDebug;
 import io.github.grebeshok105.codex.content.admin.AdminAttachments;
 import io.github.grebeshok105.codex.content.admin.AdminBuildSyncController;
 import io.github.grebeshok105.codex.effect.DoomsdayTierController;
-import io.github.grebeshok105.codex.hero.DoomsdayHero;
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.hero.Heroes;
 import io.github.grebeshok105.codex.item.ModItemGroups;
@@ -277,7 +277,8 @@ final class SuperheroesCommands {
 			return 0;
 		}
 		HeroData data = target.getAttachedOrCreate(CoreAttachments.HERO_DATA);
-		if (!data.hasHero() || !DoomsdayHero.ID.equals(data.heroId())) {
+		// doomsday branch stays in the shared root until I4d extracts it; the id is a literal so content/ never references hero/
+		if (!data.hasHero() || !ModId.of("doomsday").equals(data.heroId())) {
 			ctx.getSource().sendFailure(Component.translatable("commands.superheroes.doomsday.not_doomsday",
 					target.getScoreboardName()));
 			return 0;
