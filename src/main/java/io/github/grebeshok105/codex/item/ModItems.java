@@ -1,8 +1,5 @@
 package io.github.grebeshok105.codex.item;
 
-import io.github.grebeshok105.codex.hero.homelander.item.MilkBottleItem;
-import io.github.grebeshok105.codex.hero.homelander.item.UraniumDaggerItem;
-import io.github.grebeshok105.codex.hero.homelander.item.UraniumIsotopeItem;
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.transform.TransformationItem;
 import io.github.grebeshok105.codex.core.transform.TransformationLore;
@@ -40,25 +37,13 @@ public final class ModItems {
 			new CompoundVItem(new Item.Properties().stacksTo(16).rarity(Rarity.UNCOMMON))
 	);
 
-	public static final MilkBottleItem MILK_BOTTLE = register(
-			"milk_bottle",
-			new MilkBottleItem(new Item.Properties().stacksTo(8).rarity(Rarity.RARE))
-	);
 
 	public static final IronManReactorItem IRON_MAN_REACTOR = register(
 			"iron_man_reactor",
 			new IronManReactorItem(new Item.Properties().stacksTo(4).rarity(Rarity.RARE))
 	);
 
-	public static final UraniumIsotopeItem URANIUM_ISOTOPE = register(
-			"uranium_isotope",
-			new UraniumIsotopeItem(new Item.Properties().stacksTo(16).rarity(Rarity.RARE))
-	);
 
-	public static final UraniumDaggerItem URANIUM_DAGGER = register(
-			"uranium_dagger",
-			new UraniumDaggerItem(new Item.Properties().stacksTo(1).durability(250).rarity(Rarity.EPIC))
-	);
 
 	private ModItems() {
 	}

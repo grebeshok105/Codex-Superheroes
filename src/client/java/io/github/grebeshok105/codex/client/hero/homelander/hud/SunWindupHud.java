@@ -1,6 +1,6 @@
 package io.github.grebeshok105.codex.client.hero.homelander.hud;
 
-import io.github.grebeshok105.codex.effect.ModEffects;
+import io.github.grebeshok105.codex.hero.homelander.effect.HomelanderEffects;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -19,7 +19,7 @@ public final class SunWindupHud {
 		if (player == null) {
 			return;
 		}
-		MobEffectInstance instance = player.getEffect(ModEffects.MADNESS_AFTERMATH);
+		MobEffectInstance instance = player.getEffect(HomelanderEffects.MADNESS_AFTERMATH);
 		if (instance == null) {
 			return;
 		}

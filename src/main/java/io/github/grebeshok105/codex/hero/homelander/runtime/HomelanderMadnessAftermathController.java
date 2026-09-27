@@ -1,6 +1,6 @@
 package io.github.grebeshok105.codex.hero.homelander.runtime;
 
-import io.github.grebeshok105.codex.effect.ModEffects;
+import io.github.grebeshok105.codex.hero.homelander.effect.HomelanderEffects;
 import io.github.grebeshok105.codex.core.ability.AbilityRouter;
 import io.github.grebeshok105.codex.core.transform.HeroDataStore;
 import io.github.grebeshok105.codex.sound.ModSounds;
@@ -39,7 +39,7 @@ public final class HomelanderMadnessAftermathController {
 
 
 	private static void triggerAftermath(ServerPlayer player) {
-		player.addEffect(new MobEffectInstance(ModEffects.MADNESS_AFTERMATH, AFTERMATH_TICKS, 0, false, false, true));
+		player.addEffect(new MobEffectInstance(HomelanderEffects.MADNESS_AFTERMATH, AFTERMATH_TICKS, 0, false, false, true));
 		player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, AFTERMATH_TICKS, 4, false, false, true));
 		player.setDeltaMovement(Vec3.ZERO);
 		player.hurtMarked = true;
@@ -55,7 +55,7 @@ public final class HomelanderMadnessAftermathController {
 	}
 
 	private static void tickAftermath(ServerPlayer player) {
-		MobEffectInstance effect = player.getEffect(ModEffects.MADNESS_AFTERMATH);
+		MobEffectInstance effect = player.getEffect(HomelanderEffects.MADNESS_AFTERMATH);
 		if (effect == null) {
 			return;
 		}
@@ -149,13 +149,13 @@ public final class HomelanderMadnessAftermathController {
 	}
 
 	public static void tickPlayer(MinecraftServer server, ServerPlayer player, HeroData data) {
-		boolean madness = ModEffects.isMadness(player);
+		boolean madness = HomelanderEffects.isMadness(player);
 		if (madness) {
 			hadMadnessLastTick.add(player.getUUID());
 		} else if (hadMadnessLastTick.remove(player.getUUID())) {
 			triggerAftermath(player);
 		}
-		if (ModEffects.isAftermath(player)) {
+		if (HomelanderEffects.isAftermath(player)) {
 			tickAftermath(player);
 		}
 	}

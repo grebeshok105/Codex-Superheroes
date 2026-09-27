@@ -1,6 +1,6 @@
 package io.github.grebeshok105.codex.hero.homelander.runtime;
 
-import io.github.grebeshok105.codex.effect.ModEffects;
+import io.github.grebeshok105.codex.hero.homelander.effect.HomelanderEffects;
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
@@ -40,7 +40,7 @@ public final class HomelanderMadnessFlightController {
 	}
 
 	private static void tick(ServerPlayer player) {
-		if (!ModEffects.isMadness(player)) {
+		if (!HomelanderEffects.isMadness(player)) {
 			return;
 		}
 		HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);

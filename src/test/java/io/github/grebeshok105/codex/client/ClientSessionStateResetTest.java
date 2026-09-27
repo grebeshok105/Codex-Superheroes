@@ -1,6 +1,8 @@
 package io.github.grebeshok105.codex.client;
 
 import io.github.grebeshok105.codex.client.hero.doomsday.state.ClientDoomsdayState;
+import io.github.grebeshok105.codex.client.hero.homelander.state.ClientUraniumPressureState;
+import io.github.grebeshok105.codex.client.hero.homelander.state.ClientUraniumThreatState;
 import io.github.grebeshok105.codex.client.hero.kratos.state.ClientKratosRageState;
 import io.github.grebeshok105.codex.client.hero.rem.state.ClientRemDemonismState;
 import io.github.grebeshok105.codex.client.hero.regulus.state.ClientMadnessState;

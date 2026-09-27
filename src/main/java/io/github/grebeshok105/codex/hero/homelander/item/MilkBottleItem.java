@@ -1,8 +1,8 @@
 package io.github.grebeshok105.codex.hero.homelander.item;
 
+import io.github.grebeshok105.codex.ModId;
+import io.github.grebeshok105.codex.hero.homelander.effect.HomelanderEffects;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
-import io.github.grebeshok105.codex.effect.ModEffects;
-import io.github.grebeshok105.codex.hero.homelander.HomelanderHero;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import io.github.grebeshok105.codex.core.transform.TooltipFrame;
 import net.minecraft.ChatFormatting;
@@ -24,6 +24,8 @@ import net.minecraft.world.level.Level;
 import java.util.List;
 
 public class MilkBottleItem extends Item {
+	private static final net.minecraft.resources.ResourceLocation HOMELANDER_ID = ModId.of("homelander");
+
 	private static final int DRINK_TICKS = 32;
 	private static final int MADNESS_DURATION_TICKS = 15 * 20;
 
@@ -85,7 +87,7 @@ public class MilkBottleItem extends Item {
 		if (!isHomelander(serverPlayer)) {
 			return stack;
 		}
-		serverPlayer.addEffect(new MobEffectInstance(ModEffects.MADNESS, MADNESS_DURATION_TICKS, 0, false, true, true));
+		serverPlayer.addEffect(new MobEffectInstance(HomelanderEffects.MADNESS, MADNESS_DURATION_TICKS, 0, false, true, true));
 		serverPlayer.serverLevel().playSound(null,
 				serverPlayer.getX(), serverPlayer.getY(), serverPlayer.getZ(),
 				SoundEvents.WITHER_SPAWN, net.minecraft.sounds.SoundSource.PLAYERS, 0.4f, 1.6f);
@@ -104,6 +106,6 @@ public class MilkBottleItem extends Item {
 
 	private static boolean isHomelander(Player player) {
 		HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
-		return data.hasHero() && HomelanderHero.ID.equals(data.heroId());
+		return data.hasHero() && HOMELANDER_ID.equals(data.heroId());
 	}
 }

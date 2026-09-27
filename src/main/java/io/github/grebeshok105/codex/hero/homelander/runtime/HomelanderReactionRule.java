@@ -2,7 +2,6 @@ package io.github.grebeshok105.codex.hero.homelander.runtime;
 
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
-import io.github.grebeshok105.codex.hero.homelander.HomelanderHero;
 import io.github.grebeshok105.codex.sound.ModSounds;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.minecraft.resources.ResourceLocation;
@@ -16,6 +15,8 @@ import net.minecraft.sounds.SoundSource;
  * ВСЕ игроки на сервере.
  */
 public final class HomelanderReactionRule {
+	private static final net.minecraft.resources.ResourceLocation HOMELANDER_ID = ModId.of("homelander");
+
 
 	private HomelanderReactionRule() {
 	}
@@ -25,7 +26,7 @@ public final class HomelanderReactionRule {
 		// only the Homelander direction remains here until the Homelander wave
 		// moves it and renames this hook off the shared controller. The paired
 		// hero id is a string literal — no foreign import.
-		if (HomelanderHero.ID.equals(heroId)) {
+		if (HOMELANDER_ID.equals(heroId)) {
 			if (anyOtherWithHero(player, ModId.of("omniman"))) {
 				broadcastReaction(player);
 			}

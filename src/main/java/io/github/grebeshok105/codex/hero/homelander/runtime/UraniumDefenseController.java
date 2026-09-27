@@ -1,8 +1,8 @@
 package io.github.grebeshok105.codex.hero.homelander.runtime;
 
-import io.github.grebeshok105.codex.effect.ModEffects;
+import io.github.grebeshok105.codex.ModId;
+import io.github.grebeshok105.codex.hero.homelander.effect.HomelanderEffects;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
-import io.github.grebeshok105.codex.hero.homelander.HomelanderHero;
 import io.github.grebeshok105.codex.hero.homelander.item.UraniumDaggerItem;
 import io.github.grebeshok105.codex.hero.homelander.net.UraniumPressureS2CPayload;
 import io.github.grebeshok105.codex.hero.homelander.net.UraniumThreatS2CPayload;
@@ -26,6 +26,8 @@ import java.util.UUID;
 import net.minecraft.server.MinecraftServer;
 
 public final class UraniumDefenseController {
+	private static final net.minecraft.resources.ResourceLocation HOMELANDER_ID = ModId.of("homelander");
+
 	private static final int SCAN_INTERVAL_TICKS = 20;
 	private static final double THREAT_RADIUS = 64.0;
 	private static int tickCounter = 0;
@@ -42,7 +44,7 @@ public final class UraniumDefenseController {
 
 	public static boolean isHomelander(Player player) {
 		HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
-		return data.hasHero() && HomelanderHero.ID.equals(data.heroId());
+		return data.hasHero() && HOMELANDER_ID.equals(data.heroId());
 	}
 
 	public static boolean hasUraniumDagger(Player player) {
@@ -68,7 +70,7 @@ public final class UraniumDefenseController {
 		ServerPlayNetworking.send(player, new UraniumPressureS2CPayload(ids));
 		if (isHomelander(player)) {
 			int count = lastSourceCount.getOrDefault(player.getUUID(), 0);
-			boolean self = count > 0 && !ModEffects.isMadness(player);
+			boolean self = count > 0 && !HomelanderEffects.isMadness(player);
 			ServerPlayNetworking.send(player, new UraniumThreatS2CPayload(self, count));
 		}
 	}
@@ -82,7 +84,7 @@ public final class UraniumDefenseController {
 			List<ServerPlayer> players = server.getPlayerList().getPlayers();
 			for (ServerPlayer homelander : players) {
 				if (!isHomelander(homelander)) continue;
-				if (ModEffects.isMadness(homelander)) {
+				if (HomelanderEffects.isMadness(homelander)) {
 					sourceCounts.put(homelander.getUUID(), 0);
 					continue;
 				}
@@ -115,7 +117,7 @@ public final class UraniumDefenseController {
 				int count = sourceCounts.getOrDefault(homelander.getUUID(), 0);
 				Integer prev = lastSourceCount.get(homelander.getUUID());
 				if (prev == null || prev != count) {
-					boolean self = count > 0 && !ModEffects.isMadness(homelander);
+					boolean self = count > 0 && !HomelanderEffects.isMadness(homelander);
 					ServerPlayNetworking.send(homelander, new UraniumThreatS2CPayload(self, count));
 					if (self && (prev == null || prev == 0)) {
 						ServerLevel l = homelander.serverLevel();

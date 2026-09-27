@@ -1,6 +1,6 @@
 package io.github.grebeshok105.codex.hero.homelander.runtime;
 
-import io.github.grebeshok105.codex.hero.homelander.HomelanderHero;
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -17,6 +17,8 @@ import net.minecraft.server.MinecraftServer;
  * регенерации (которая поддерживается {@link io.github.grebeshok105.codex.effect.HeroPassiveRegenController}).
  */
 public final class HomelanderRegenController {
+	private static final net.minecraft.resources.ResourceLocation HOMELANDER_ID = ModId.of("homelander");
+
 	private static final float LOW_HP_THRESHOLD = 20.0f;
 	private static final int CHECK_INTERVAL = 20;
 	private static final int EFFECT_DURATION = 60;
@@ -50,7 +52,7 @@ public final class HomelanderRegenController {
 
 	public static void tickPlayer(MinecraftServer server, ServerPlayer player, HeroData data) {
 		boolean checkRegen = server.getTickCount() % CHECK_INTERVAL == 0;
-		boolean isHomelander = data.hasHero() && HomelanderHero.ID.equals(data.heroId());
+		boolean isHomelander = data.hasHero() && HOMELANDER_ID.equals(data.heroId());
 		if (isHomelander) {
 			player.getFoodData().setSaturation(0f);
 		}

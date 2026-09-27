@@ -1,6 +1,7 @@
 package io.github.grebeshok105.codex.gametest;
 
 import com.mojang.authlib.GameProfile;
+import io.github.grebeshok105.codex.hero.homelander.effect.HomelanderEffects;
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.hero.homelander.HomelanderAbilityIds;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
@@ -14,7 +15,7 @@ import io.github.grebeshok105.codex.mechanic.flight.FlightController;
 import io.github.grebeshok105.codex.effect.ModEffects;
 import io.github.grebeshok105.codex.hero.homelander.runtime.UraniumDefenseController;
 import io.github.grebeshok105.codex.hero.homelander.HomelanderHero;
-import io.github.grebeshok105.codex.item.ModItems;
+import io.github.grebeshok105.codex.hero.homelander.HomelanderItems;
 import io.github.grebeshok105.codex.mechanic.ability.SharedAbilityIds;
 import io.github.grebeshok105.codex.hero.homelander.net.UraniumPressureS2CPayload;
 import io.github.grebeshok105.codex.hero.homelander.net.UraniumThreatS2CPayload;
@@ -113,15 +114,15 @@ public final class HomelanderGameTests implements FabricGameTest {
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void milkBottleRefusesNonHomelander(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
-		player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ModItems.MILK_BOTTLE));
+		player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(HomelanderItems.MILK_BOTTLE));
 		InteractionResultHolder<ItemStack> result =
-				ModItems.MILK_BOTTLE.use(helper.getLevel(), player, InteractionHand.MAIN_HAND);
+				HomelanderItems.MILK_BOTTLE.use(helper.getLevel(), player, InteractionHand.MAIN_HAND);
 		helper.assertTrue(result.getResult() == InteractionResult.FAIL,
 				"use() refuses a non-homelander");
-		ItemStack out = ModItems.MILK_BOTTLE.finishUsingItem(
+		ItemStack out = HomelanderItems.MILK_BOTTLE.finishUsingItem(
 				player.getItemInHand(InteractionHand.MAIN_HAND), helper.getLevel(), player);
-		helper.assertTrue(out.is(ModItems.MILK_BOTTLE), "finishUsingItem returns the bottle untouched");
-		helper.assertFalse(player.hasEffect(ModEffects.MADNESS), "no madness for outsiders");
+		helper.assertTrue(out.is(HomelanderItems.MILK_BOTTLE), "finishUsingItem returns the bottle untouched");
+		helper.assertFalse(player.hasEffect(HomelanderEffects.MADNESS), "no madness for outsiders");
 		TestPlayers.leave(player);
 		helper.succeed();
 	}
@@ -131,16 +132,16 @@ public final class HomelanderGameTests implements FabricGameTest {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, HomelanderHero.ID);
 		HeroDataStore.update(player, d -> d.withResources(10f, 10f));
-		player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ModItems.MILK_BOTTLE));
+		player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(HomelanderItems.MILK_BOTTLE));
 
 		InteractionResultHolder<ItemStack> result =
-				ModItems.MILK_BOTTLE.use(helper.getLevel(), player, InteractionHand.MAIN_HAND);
+				HomelanderItems.MILK_BOTTLE.use(helper.getLevel(), player, InteractionHand.MAIN_HAND);
 		helper.assertTrue(result.getResult() == InteractionResult.CONSUME,
 				"use() starts drinking for homelander");
-		ItemStack out = ModItems.MILK_BOTTLE.finishUsingItem(
+		ItemStack out = HomelanderItems.MILK_BOTTLE.finishUsingItem(
 				player.getItemInHand(InteractionHand.MAIN_HAND), helper.getLevel(), player);
 
-		MobEffectInstance madness = player.getEffect(ModEffects.MADNESS);
+		MobEffectInstance madness = player.getEffect(HomelanderEffects.MADNESS);
 		helper.assertTrue(madness != null, "drinking milk grants madness");
 		helper.assertTrue(madness.getDuration() == 300,
 				"madness lasts 300 ticks, got " + madness.getDuration());
@@ -160,16 +161,16 @@ public final class HomelanderGameTests implements FabricGameTest {
 	public void madnessExpiryTriggersAftermath(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, HomelanderHero.ID);
-		player.addEffect(new MobEffectInstance(ModEffects.MADNESS, 600));
+		player.addEffect(new MobEffectInstance(HomelanderEffects.MADNESS, 600));
 		AbilityRouter.activate(player, HomelanderAbilityIds.X_RAY);
 		helper.assertTrue(data(player).isActive(HomelanderAbilityIds.X_RAY), "x_ray toggles on in madness");
 		// The aftermath is an edge detector: at least one tick must see MADNESS present
 		// before its removal counts.
-		helper.runAfterDelay(2, () -> player.removeEffect(ModEffects.MADNESS));
+		helper.runAfterDelay(2, () -> player.removeEffect(HomelanderEffects.MADNESS));
 		helper.runAfterDelay(6, () -> {
-			helper.assertTrue(player.hasEffect(ModEffects.MADNESS_AFTERMATH),
+			helper.assertTrue(player.hasEffect(HomelanderEffects.MADNESS_AFTERMATH),
 					"madness expiry arms the aftermath");
-			MobEffectInstance aftermath = player.getEffect(ModEffects.MADNESS_AFTERMATH);
+			MobEffectInstance aftermath = player.getEffect(HomelanderEffects.MADNESS_AFTERMATH);
 			helper.assertTrue(aftermath.getDuration() <= 200 && aftermath.getDuration() > 190,
 					"aftermath lasts 200 ticks, got " + aftermath.getDuration());
 			MobEffectInstance resist = player.getEffect(MobEffects.DAMAGE_RESISTANCE);
@@ -211,7 +212,7 @@ public final class HomelanderGameTests implements FabricGameTest {
 			helper.getLevel().getChunkSource().chunkMap.move(player);
 			player.setDeltaMovement(Vec3.ZERO);
 
-			player.addEffect(new MobEffectInstance(ModEffects.MADNESS_AFTERMATH, 1));
+			player.addEffect(new MobEffectInstance(HomelanderEffects.MADNESS_AFTERMATH, 1));
 			player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 60, 4));
 
 		helper.runAfterDelay(6, () -> {
@@ -260,7 +261,7 @@ public final class HomelanderGameTests implements FabricGameTest {
 		Wire holder = joinAudible(helper, "dagger-holder");
 		Wire bystander = joinAudible(helper, "bystander");
 		TestHeroes.transform(homelander.player(), HomelanderHero.ID);
-		holder.player().getInventory().add(new ItemStack(ModItems.URANIUM_DAGGER));
+		holder.player().getInventory().add(new ItemStack(HomelanderItems.URANIUM_DAGGER));
 		drainAll(homelander, holder, bystander);
 
 		List<Object> homelanderPackets = new ArrayList<>();
@@ -307,7 +308,7 @@ public final class HomelanderGameTests implements FabricGameTest {
 		ServerPlayer homelander = TestPlayers.join(helper);
 		ServerPlayer holder = TestPlayers.join(helper, "dagger-holder");
 		TestHeroes.transform(homelander, HomelanderHero.ID);
-		holder.getInventory().add(new ItemStack(ModItems.URANIUM_DAGGER));
+		holder.getInventory().add(new ItemStack(HomelanderItems.URANIUM_DAGGER));
 
 		helper.runAfterDelay(30, () -> {
 			helper.assertTrue(UraniumDefenseController.isUnderUraniumThreat(homelander),
@@ -449,8 +450,8 @@ public final class HomelanderGameTests implements FabricGameTest {
 		TestPlayers.clearSpawnInvulnerability(victim);
 		float hp = victim.getHealth();
 
-		ItemStack dagger = new ItemStack(ModItems.URANIUM_DAGGER);
-		ModItems.URANIUM_DAGGER.hurtEnemy(dagger, victim, attacker);
+		ItemStack dagger = new ItemStack(HomelanderItems.URANIUM_DAGGER);
+		HomelanderItems.URANIUM_DAGGER.hurtEnemy(dagger, victim, attacker);
 
 		MobEffectInstance weakness = victim.getEffect(MobEffects.WEAKNESS);
 		helper.assertTrue(weakness != null && weakness.getAmplifier() == 4 && weakness.getDuration() == 200,
@@ -473,7 +474,7 @@ public final class HomelanderGameTests implements FabricGameTest {
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void uraniumOffhandGrantsKbResistWhileHeld(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
-		player.getInventory().offhand.set(0, new ItemStack(ModItems.URANIUM_ISOTOPE));
+		player.getInventory().offhand.set(0, new ItemStack(HomelanderItems.URANIUM_ISOTOPE));
 		helper.runAfterDelay(3, () -> {
 			AttributeInstance attr = player.getAttribute(Attributes.KNOCKBACK_RESISTANCE);
 			helper.assertTrue(attr != null && attr.getModifier(ModId.of("uranium_offhand_kb")) != null,
@@ -492,7 +493,7 @@ public final class HomelanderGameTests implements FabricGameTest {
 	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 340)
 	public void uraniumOffhandRadiationStacksToHunger(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
-		player.getInventory().offhand.set(0, new ItemStack(ModItems.URANIUM_ISOTOPE));
+		player.getInventory().offhand.set(0, new ItemStack(HomelanderItems.URANIUM_ISOTOPE));
 		helper.runAfterDelay(305, () -> {
 			helper.assertTrue(player.hasEffect(MobEffects.HUNGER),
 					"300 ticks of offhand radiation stack to hunger");
@@ -521,7 +522,7 @@ public final class HomelanderGameTests implements FabricGameTest {
 	public void madnessFlightChewsTerrainAhead(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, HomelanderHero.ID);
-		player.addEffect(new MobEffectInstance(ModEffects.MADNESS, 400));
+		player.addEffect(new MobEffectInstance(HomelanderEffects.MADNESS, 400));
 		AbilityRouter.activate(player, SharedAbilityIds.FLIGHT);
 		helper.assertTrue(data(player).isActive(SharedAbilityIds.FLIGHT), "madness flight is active");
 		player.setYRot(0f);

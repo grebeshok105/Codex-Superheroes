@@ -1,5 +1,7 @@
 package io.github.grebeshok105.codex.gametest;
 
+import io.github.grebeshok105.codex.ability.AbilityIds;
+import io.github.grebeshok105.codex.hero.homelander.effect.HomelanderEffects;
 import io.github.grebeshok105.codex.hero.pandora.PandoraAbilities;
 import io.github.grebeshok105.codex.hero.pandora.runtime.VanityStrippedMobEffect;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
@@ -47,7 +49,7 @@ public final class AbilityGateGameTests implements FabricGameTest {
 	public void madnessMakesActivationFree(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, HomelanderHero.ID);
-		player.addEffect(new MobEffectInstance(ModEffects.MADNESS, 200));
+		player.addEffect(new MobEffectInstance(HomelanderEffects.MADNESS, 200));
 		HeroDataStore.update(player, d -> d.withResources(0f, d.mana()));
 		AbilityRouter.activate(player, HomelanderAbilityIds.STUNNING_ROAR);
 		helper.assertTrue(AbilityCooldowns.isOnCooldown(player, HomelanderAbilityIds.STUNNING_ROAR), "madness pays for the roar");
@@ -72,7 +74,7 @@ public final class AbilityGateGameTests implements FabricGameTest {
 	public void aftermathBlocksSilently(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, ScaramoucheHero.ID);
-		player.addEffect(new MobEffectInstance(ModEffects.MADNESS_AFTERMATH, 200));
+		player.addEffect(new MobEffectInstance(HomelanderEffects.MADNESS_AFTERMATH, 200));
 		float before = HeroDataStore.get(player).energy();
 		AbilityRouter.activate(player, ScaramoucheAbilities.SCARAMOUCHE_WIND_PRISON);
 		helper.assertFalse(HeroDataStore.get(player).isActive(ScaramoucheAbilities.SCARAMOUCHE_WIND_PRISON),

@@ -1,7 +1,5 @@
 package io.github.grebeshok105.codex.network;
 
-import io.github.grebeshok105.codex.hero.homelander.net.UraniumPressureS2CPayload;
-import io.github.grebeshok105.codex.hero.homelander.net.UraniumThreatS2CPayload;
 import io.github.grebeshok105.codex.core.net.CoreNetworking;
 import io.github.grebeshok105.codex.core.net.FxBroadcast;
 import io.github.grebeshok105.codex.effect.HeroMeleeImpactController;
@@ -22,13 +20,11 @@ public final class ModNetworking {
 		PayloadTypeRegistry.playC2S().register(SuperJumpC2SPayload.TYPE, SuperJumpC2SPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playC2S().register(HeroMeleeChargeC2SPayload.TYPE, HeroMeleeChargeC2SPayload.STREAM_CODEC);
 
-		PayloadTypeRegistry.playS2C().register(FlightStateS2CPayload.TYPE, FlightStateS2CPayload.STREAM_CODEC);
+		PayloadTypeRegistry.playS2C().register(io.github.grebeshok105.codex.mechanic.flight.FlightStateS2CPayload.TYPE, io.github.grebeshok105.codex.mechanic.flight.FlightStateS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(LaserFiredS2CPayload.TYPE, LaserFiredS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(RepulsorBlastS2CPayload.TYPE, RepulsorBlastS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(ThanosCosmicBeamS2CPayload.TYPE, ThanosCosmicBeamS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(ReactorStateS2CPayload.TYPE, ReactorStateS2CPayload.STREAM_CODEC);
-		PayloadTypeRegistry.playS2C().register(UraniumPressureS2CPayload.TYPE, UraniumPressureS2CPayload.STREAM_CODEC);
-		PayloadTypeRegistry.playS2C().register(UraniumThreatS2CPayload.TYPE, UraniumThreatS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(JarvisDetectionS2CPayload.TYPE, JarvisDetectionS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(SuitVariantS2CPayload.TYPE, SuitVariantS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(NanoFormS2CPayload.TYPE, NanoFormS2CPayload.STREAM_CODEC);
@@ -43,12 +39,6 @@ public final class ModNetworking {
 		});
 	}
 
-	public static void syncFlightState(ServerPlayer player, io.github.grebeshok105.codex.mechanic.flight.FlightMode mode,
-			io.github.grebeshok105.codex.mechanic.flight.FlightPhase phase, float horizontalSpeed, boolean active) {
-		FlightStateS2CPayload payload = new FlightStateS2CPayload(
-				player.getId(), active, mode.ordinal(), phase.ordinal(), horizontalSpeed);
-		FxBroadcast.trackingAndSelf(player, payload);
-	}
 
 
 	public static void broadcastLaser(ServerPlayer shooter, Vec3 start, Vec3 end) {

@@ -8,7 +8,6 @@ import io.github.grebeshok105.codex.mechanic.flight.FlightAbilityState;
 import io.github.grebeshok105.codex.mechanic.flight.FlightMode;
 import io.github.grebeshok105.codex.mechanic.flight.FlightPhase;
 import io.github.grebeshok105.codex.mechanic.flight.FlightPhaseResolver;
-import io.github.grebeshok105.codex.network.ModNetworking;
 import io.github.grebeshok105.codex.particle.ModParticles;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.minecraft.core.particles.ParticleTypes;
@@ -79,9 +78,9 @@ public final class FlightController {
 		URANIUM_ACTIVE_SINCE.remove(id);
 		disableVanillaFlight(player);
 		if (state != null) {
-			ModNetworking.syncFlightState(player, state.mode, FlightPhase.IDLE, 0f, false);
+			FlightSync.sync(player, state.mode, FlightPhase.IDLE, 0f, false);
 		} else {
-			ModNetworking.syncFlightState(player, FlightMode.NORMAL, FlightPhase.IDLE, 0f, false);
+			FlightSync.sync(player, FlightMode.NORMAL, FlightPhase.IDLE, 0f, false);
 		}
 	}
 
@@ -262,7 +261,7 @@ public final class FlightController {
 		URANIUM_ACTIVE_SINCE.remove(player.getUUID());
 		if (state != null) {
 			disableVanillaFlight(player);
-			ModNetworking.syncFlightState(player, state.mode, FlightPhase.IDLE, 0f, false);
+			FlightSync.sync(player, state.mode, FlightPhase.IDLE, 0f, false);
 		}
 	}
 
@@ -271,7 +270,7 @@ public final class FlightController {
 		boolean phaseChanged = state.phase != state.lastSyncedPhase || state.mode != state.lastSyncedMode;
 		boolean speedChanged = Math.abs(horizontalSpeed - state.lastSyncSpeed) > 0.08f;
 		if (force || phaseChanged || speedChanged || now - state.lastSyncAt >= SYNC_INTERVAL_TICKS) {
-			ModNetworking.syncFlightState(player, state.mode, state.phase, horizontalSpeed, active);
+			FlightSync.sync(player, state.mode, state.phase, horizontalSpeed, active);
 			state.lastSyncAt = now;
 			state.lastSyncSpeed = horizontalSpeed;
 			state.lastSyncedMode = state.mode;

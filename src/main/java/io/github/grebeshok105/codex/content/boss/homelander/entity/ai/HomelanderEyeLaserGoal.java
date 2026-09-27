@@ -1,7 +1,9 @@
 package io.github.grebeshok105.codex.content.boss.homelander.entity.ai;
 
 import io.github.grebeshok105.codex.content.boss.homelander.api.HomelanderBossApi;
-import io.github.grebeshok105.codex.item.ModItems;
+import io.github.grebeshok105.codex.ModId;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.item.Item;
 import io.github.grebeshok105.codex.network.ModNetworking;
 import io.github.grebeshok105.codex.particle.ModParticles;
 import net.minecraft.server.level.ServerLevel;
@@ -21,14 +23,16 @@ import net.minecraft.world.phys.Vec3;
 import java.util.EnumSet;
 
 public class HomelanderEyeLaserGoal extends Goal {
+	private static final Item URANIUM_DAGGER = BuiltInRegistries.ITEM.get(ModId.of("uranium_dagger"));
+
 	// Uranium-dagger halves the boss laser's damage — reads the shared item registry
 	// so this goal never imports the hero module.
 	private static boolean holdsUraniumDagger(net.minecraft.world.entity.player.Player player) {
 		for (net.minecraft.world.item.ItemStack stack : player.getInventory().items) {
-			if (stack.is(ModItems.URANIUM_DAGGER)) return true;
+			if (stack.is(URANIUM_DAGGER)) return true;
 		}
 		for (net.minecraft.world.item.ItemStack stack : player.getInventory().offhand) {
-			if (stack.is(ModItems.URANIUM_DAGGER)) return true;
+			if (stack.is(URANIUM_DAGGER)) return true;
 		}
 		return false;
 	}

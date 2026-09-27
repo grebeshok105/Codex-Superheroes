@@ -6,7 +6,7 @@ import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import io.github.grebeshok105.codex.core.net.ScreenShakeS2CPayload;
 import io.github.grebeshok105.codex.sound.ModSounds;
-import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
+import io.github.grebeshok105.codex.core.net.FxBroadcast;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
@@ -90,7 +90,7 @@ public final class HandClapAbility implements Ability {
 		level.playSound(null, player.getX(), player.getY(), player.getZ(),
 				SoundEvents.GENERIC_EXPLODE.value(), SoundSource.PLAYERS, 1.4f, 0.7f);
 
-		for (ServerPlayer nearby : PlayerLookup.around(level, player.position(), 24.0)) {
+		for (ServerPlayer nearby : FxBroadcast.aroundAudience(level, player.position(), 24.0)) {
 			double dist = nearby.position().distanceTo(player.position());
 			float intensity = (float) Math.max(0.0, 1.0 - dist / 24.0) * 1.8f;
 			if (intensity > 0.05f) {

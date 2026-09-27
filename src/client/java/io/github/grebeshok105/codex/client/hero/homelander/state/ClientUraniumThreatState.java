@@ -1,5 +1,7 @@
 package io.github.grebeshok105.codex.client.hero.homelander.state;
 
+import io.github.grebeshok105.codex.client.ClientSessionState;
+
 public final class ClientUraniumThreatState {
 	private static volatile boolean self = false;
 	private static volatile int sourceCount = 0;

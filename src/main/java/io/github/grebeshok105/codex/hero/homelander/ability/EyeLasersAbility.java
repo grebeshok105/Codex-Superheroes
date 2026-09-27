@@ -1,11 +1,11 @@
 package io.github.grebeshok105.codex.hero.homelander.ability;
 
+import io.github.grebeshok105.codex.hero.homelander.effect.HomelanderEffects;
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.hero.homelander.registry.HomelanderDamageTypes;
-import io.github.grebeshok105.codex.effect.ModEffects;
 import io.github.grebeshok105.codex.hero.homelander.runtime.UraniumDefenseController;
 import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.hero.Heroes;
@@ -94,7 +94,7 @@ public final class EyeLasersAbility implements Ability {
 
 	@Override
 	public void onTickActive(ServerPlayer player) {
-		boolean madness = ModEffects.isMadness(player);
+		boolean madness = HomelanderEffects.isMadness(player);
 		boolean uraniumThreat = UraniumDefenseController.isUnderUraniumThreat(player);
 		boolean fire;
 		boolean phaseStart = false;
@@ -137,7 +137,7 @@ public final class EyeLasersAbility implements Ability {
 		Vec3 dir = player.getViewVector(1f);
 		Vec3 end = eye.add(dir.scale(RANGE));
 		ServerLevel level = player.serverLevel();
-		boolean madness = ModEffects.isMadness(player);
+		boolean madness = HomelanderEffects.isMadness(player);
 		BlockHitResult blockHit = level.clip(new ClipContext(
 				eye, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player));
 		Vec3 entitySearchEnd = blockHit.getType() == HitResult.Type.BLOCK ? blockHit.getLocation() : end;

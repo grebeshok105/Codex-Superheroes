@@ -6,7 +6,6 @@ import io.github.grebeshok105.codex.core.ability.AbilityRouter;
 import io.github.grebeshok105.codex.hero.homelander.ability.IronFistsAbility;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
-import io.github.grebeshok105.codex.content.boss.homelander.entity.HomelanderBossEntity;
 import io.github.grebeshok105.codex.core.net.ScreenShakeS2CPayload;
 import io.github.grebeshok105.codex.physics.ShockwaveUtil;
 import io.github.grebeshok105.codex.sound.ModSounds;
@@ -129,7 +128,6 @@ public final class IronFistsController {
 		if (target instanceof AbstractVillager) return false;
 		if (target instanceof Animal) return false;
 		if (target instanceof Player) return true;
-		if (target instanceof HomelanderBossEntity) return true;
 		if (target instanceof Monster) return true;
 		if (target instanceof IronGolem) return true;
 		if (target instanceof SnowGolem) return true;
