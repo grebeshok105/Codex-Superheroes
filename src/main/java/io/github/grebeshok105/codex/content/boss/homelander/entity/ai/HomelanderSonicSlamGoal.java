@@ -1,6 +1,6 @@
-package io.github.grebeshok105.codex.entity.ai;
+package io.github.grebeshok105.codex.content.boss.homelander.entity.ai;
 
-import io.github.grebeshok105.codex.entity.HomelanderBossEntity;
+import io.github.grebeshok105.codex.content.boss.homelander.entity.HomelanderBossEntity;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -103,7 +103,7 @@ public class HomelanderSonicSlamGoal extends Goal {
 					6, 0.4, 0.3, 0.4, 0.05);
 
 			if (boss.distanceToSqr(t) < 6.0) {
-				DamageSource ds = io.github.grebeshok105.codex.damage.ModDamageTypes.homelanderSonicSlam((net.minecraft.server.level.ServerLevel) boss.level(), boss);
+				DamageSource ds = io.github.grebeshok105.codex.content.boss.homelander.registry.HomelanderBossDamageTypes.sonicSlam((net.minecraft.server.level.ServerLevel) boss.level(), boss);
 				t.hurt(ds, IMPACT_DAMAGE);
 				if (chargeDir != null) {
 					Vec3 push = chargeDir.scale(KNOCKBACK).add(0.0, 0.6, 0.0);

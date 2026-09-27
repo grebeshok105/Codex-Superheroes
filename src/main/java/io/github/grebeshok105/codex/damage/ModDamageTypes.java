@@ -34,14 +34,6 @@ public final class ModDamageTypes {
 	public static final ResourceKey<DamageType> THANOS_REALITY_TEAR = key("thanos_reality_tear");
 	public static final ResourceKey<DamageType> CAP_SHIELD_THROW = key("cap_shield_throw");
 	public static final ResourceKey<DamageType> CAP_SHIELD_SLAM = key("cap_shield_slam");
-	public static final ResourceKey<DamageType> HOMELANDER_EYE_LASER = key("homelander_eye_laser");
-	public static final ResourceKey<DamageType> HOMELANDER_HEAT_VISION = key("homelander_heat_vision");
-	public static final ResourceKey<DamageType> HOMELANDER_HAND_CLAP = key("homelander_hand_clap");
-	public static final ResourceKey<DamageType> HOMELANDER_SONIC_SLAM = key("homelander_sonic_slam");
-	public static final ResourceKey<DamageType> HOMELANDER_SHOCKWAVE_DIVE = key("homelander_shockwave_dive");
-	public static final ResourceKey<DamageType> HOMELANDER_LIGHTNING_CALL = key("homelander_lightning_call");
-	public static final ResourceKey<DamageType> HOMELANDER_ROAR_BOSS = key("homelander_roar_boss");
-	public static final ResourceKey<DamageType> HOMELANDER_MELEE = key("homelander_melee");
 	public static final ResourceKey<DamageType> SPACE_CRUSH = key("space_crush");
 
 	/** Beam-type damage — read by hero code instead of a hardcoded key list (populated by datagen). */
@@ -75,14 +67,6 @@ public final class ModDamageTypes {
 		context.register(THANOS_REALITY_TEAR, new DamageType("thanos_reality_tear", DamageScaling.NEVER, 0.0F));
 		context.register(CAP_SHIELD_THROW, new DamageType("cap_shield_throw", DamageScaling.NEVER, 0.0F));
 		context.register(CAP_SHIELD_SLAM, new DamageType("cap_shield_slam", DamageScaling.NEVER, 0.0F));
-		context.register(HOMELANDER_EYE_LASER, new DamageType("homelander_eye_laser", DamageScaling.NEVER, 0.0F, DamageEffects.BURNING));
-		context.register(HOMELANDER_HEAT_VISION, new DamageType("homelander_heat_vision", DamageScaling.NEVER, 0.0F, DamageEffects.BURNING));
-		context.register(HOMELANDER_HAND_CLAP, new DamageType("homelander_hand_clap", DamageScaling.NEVER, 0.0F));
-		context.register(HOMELANDER_SONIC_SLAM, new DamageType("homelander_sonic_slam", DamageScaling.NEVER, 0.0F));
-		context.register(HOMELANDER_SHOCKWAVE_DIVE, new DamageType("homelander_shockwave_dive", DamageScaling.NEVER, 0.0F));
-		context.register(HOMELANDER_LIGHTNING_CALL, new DamageType("homelander_lightning_call", DamageScaling.NEVER, 0.0F));
-		context.register(HOMELANDER_ROAR_BOSS, new DamageType("homelander_roar_boss", DamageScaling.NEVER, 0.0F));
-		context.register(HOMELANDER_MELEE, new DamageType("homelander_melee", DamageScaling.NEVER, 0.0F));
 		context.register(SPACE_CRUSH, new DamageType("space_crush", DamageScaling.NEVER, 0.0F));
 	}
 
@@ -164,38 +148,6 @@ public final class ModDamageTypes {
 
 	public static DamageSource capShieldSlam(ServerLevel level, Entity attacker) {
 		return source(level, CAP_SHIELD_SLAM, attacker);
-	}
-
-	public static DamageSource homelanderEyeLaser(ServerLevel level, Entity attacker) {
-		return source(level, HOMELANDER_EYE_LASER, attacker);
-	}
-
-	public static DamageSource homelanderHeatVision(ServerLevel level, Entity attacker) {
-		return source(level, HOMELANDER_HEAT_VISION, attacker);
-	}
-
-	public static DamageSource homelanderHandClap(ServerLevel level, Entity attacker) {
-		return source(level, HOMELANDER_HAND_CLAP, attacker);
-	}
-
-	public static DamageSource homelanderSonicSlam(ServerLevel level, Entity attacker) {
-		return source(level, HOMELANDER_SONIC_SLAM, attacker);
-	}
-
-	public static DamageSource homelanderShockwaveDive(ServerLevel level, Entity attacker) {
-		return source(level, HOMELANDER_SHOCKWAVE_DIVE, attacker);
-	}
-
-	public static DamageSource homelanderLightningCall(ServerLevel level, Entity attacker) {
-		return source(level, HOMELANDER_LIGHTNING_CALL, attacker);
-	}
-
-	public static DamageSource homelanderRoarBoss(ServerLevel level, Entity attacker) {
-		return source(level, HOMELANDER_ROAR_BOSS, attacker);
-	}
-
-	public static DamageSource homelanderMelee(ServerLevel level, Entity attacker) {
-		return source(level, HOMELANDER_MELEE, attacker);
 	}
 
 	public static DamageSource spaceCrush(ServerLevel level, Entity attacker) {

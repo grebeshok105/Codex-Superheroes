@@ -1,7 +1,7 @@
-package io.github.grebeshok105.codex.entity.ai;
+package io.github.grebeshok105.codex.content.boss.homelander.entity.ai;
 
-import io.github.grebeshok105.codex.damage.ModDamageTypes;
-import io.github.grebeshok105.codex.entity.HomelanderBossEntity;
+import io.github.grebeshok105.codex.content.boss.homelander.registry.HomelanderBossDamageTypes;
+import io.github.grebeshok105.codex.content.boss.homelander.entity.HomelanderBossEntity;
 import io.github.grebeshok105.codex.core.net.ScreenShakeS2CPayload;
 import io.github.grebeshok105.codex.sound.ModSounds;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
@@ -88,7 +88,7 @@ public class HomelanderHandClapGoal extends Goal {
 			Vec3 forward = boss.getViewVector(1f).normalize();
 			AABB area = new AABB(origin, origin).inflate(RANGE);
 			List<Entity> hits = sl.getEntities(boss, area);
-			DamageSource ds = ModDamageTypes.homelanderHandClap(sl, boss);
+			DamageSource ds = HomelanderBossDamageTypes.handClap(sl, boss);
 			for (Entity e : hits) {
 				if (!(e instanceof LivingEntity le) || !le.isAlive() || e == boss) continue;
 				Vec3 to = e.position().add(0, e.getBbHeight() * 0.5, 0).subtract(origin);

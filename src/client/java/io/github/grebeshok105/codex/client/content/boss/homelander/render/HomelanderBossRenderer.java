@@ -1,7 +1,7 @@
-package io.github.grebeshok105.codex.client.render;
+package io.github.grebeshok105.codex.client.content.boss.homelander.render;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.entity.HomelanderBossEntity;
+import io.github.grebeshok105.codex.content.boss.homelander.entity.HomelanderBossEntity;
 import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.model.geom.ModelLayers;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;

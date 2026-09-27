@@ -1,5 +1,6 @@
 package io.github.grebeshok105.codex.datagen;
 
+import io.github.grebeshok105.codex.bootstrap.ContentModules;
 import io.github.grebeshok105.codex.bootstrap.HeroModules;
 import io.github.grebeshok105.codex.damage.DamageTypeSpec;
 import io.github.grebeshok105.codex.damage.ModDamageTypes;
@@ -42,13 +43,6 @@ public final class ModDamageTypeTagProvider extends FabricTagProvider<DamageType
 				ModDamageTypes.THANOS_REALITY_TEAR,
 				ModDamageTypes.CAP_SHIELD_THROW,
 				ModDamageTypes.CAP_SHIELD_SLAM,
-				ModDamageTypes.HOMELANDER_EYE_LASER,
-				ModDamageTypes.HOMELANDER_HEAT_VISION,
-				ModDamageTypes.HOMELANDER_HAND_CLAP,
-				ModDamageTypes.HOMELANDER_SONIC_SLAM,
-				ModDamageTypes.HOMELANDER_SHOCKWAVE_DIVE,
-				ModDamageTypes.HOMELANDER_LIGHTNING_CALL,
-				ModDamageTypes.HOMELANDER_ROAR_BOSS,
 				ModDamageTypes.SPACE_CRUSH
 		);
 
@@ -57,13 +51,17 @@ public final class ModDamageTypeTagProvider extends FabricTagProvider<DamageType
 		getOrCreateTagBuilder(ModDamageTypes.BEAM).add(
 				ModDamageTypes.EYE_LASER,
 				ModDamageTypes.REPULSOR,
-				ModDamageTypes.UNIBEAM,
-				ModDamageTypes.HOMELANDER_EYE_LASER,
-				ModDamageTypes.HOMELANDER_HEAT_VISION
+				ModDamageTypes.UNIBEAM
 		);
 
-		// Hero-owned types join their declared tags via the module specs — no hero names here.
+		// Hero- and content-owned types join their declared tags via the module specs —
+		// no module class names here.
 		for (DamageTypeSpec spec : HeroModules.damageTypeSpecs()) {
+			for (var tag : spec.tags()) {
+				getOrCreateTagBuilder(tag).add(spec.key());
+			}
+		}
+		for (DamageTypeSpec spec : ContentModules.damageTypeSpecs()) {
 			for (var tag : spec.tags()) {
 				getOrCreateTagBuilder(tag).add(spec.key());
 			}

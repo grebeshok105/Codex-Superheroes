@@ -2,21 +2,22 @@ package io.github.grebeshok105.codex.gametest;
 
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.content.CreativeTabContents;
+import io.github.grebeshok105.codex.content.boss.homelander.registry.HomelanderBossDamageTypes;
 import io.github.grebeshok105.codex.damage.ModDamageTypes;
-import io.github.grebeshok105.codex.entity.HomelanderBossEntity;
-import io.github.grebeshok105.codex.entity.ModEntities;
-import io.github.grebeshok105.codex.entity.ai.HomelanderBlockThrowGoal;
-import io.github.grebeshok105.codex.entity.ai.HomelanderEyeLaserGoal;
-import io.github.grebeshok105.codex.entity.ai.HomelanderFlightGoal;
-import io.github.grebeshok105.codex.entity.ai.HomelanderGroundMagnetGoal;
-import io.github.grebeshok105.codex.entity.ai.HomelanderHandClapGoal;
-import io.github.grebeshok105.codex.entity.ai.HomelanderHeatVisionSweepGoal;
-import io.github.grebeshok105.codex.entity.ai.HomelanderLightningCallGoal;
-import io.github.grebeshok105.codex.entity.ai.HomelanderRoarGoal;
-import io.github.grebeshok105.codex.entity.ai.HomelanderShockwaveDiveGoal;
-import io.github.grebeshok105.codex.entity.ai.HomelanderSonicSlamGoal;
+import io.github.grebeshok105.codex.content.boss.homelander.entity.HomelanderBossEntity;
+import io.github.grebeshok105.codex.content.boss.homelander.entity.HomelanderBossEntities;
+import io.github.grebeshok105.codex.content.boss.homelander.entity.ai.HomelanderBlockThrowGoal;
+import io.github.grebeshok105.codex.content.boss.homelander.entity.ai.HomelanderEyeLaserGoal;
+import io.github.grebeshok105.codex.content.boss.homelander.entity.ai.HomelanderFlightGoal;
+import io.github.grebeshok105.codex.content.boss.homelander.entity.ai.HomelanderGroundMagnetGoal;
+import io.github.grebeshok105.codex.content.boss.homelander.entity.ai.HomelanderHandClapGoal;
+import io.github.grebeshok105.codex.content.boss.homelander.entity.ai.HomelanderHeatVisionSweepGoal;
+import io.github.grebeshok105.codex.content.boss.homelander.entity.ai.HomelanderLightningCallGoal;
+import io.github.grebeshok105.codex.content.boss.homelander.entity.ai.HomelanderRoarGoal;
+import io.github.grebeshok105.codex.content.boss.homelander.entity.ai.HomelanderShockwaveDiveGoal;
+import io.github.grebeshok105.codex.content.boss.homelander.entity.ai.HomelanderSonicSlamGoal;
 import io.github.grebeshok105.codex.item.ModItemGroups;
-import io.github.grebeshok105.codex.item.ModItems;
+import io.github.grebeshok105.codex.content.boss.homelander.HomelanderBossItems;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
@@ -72,21 +73,21 @@ public final class HomelanderBossGameTests implements FabricGameTest {
 	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 100)
 	public void bossRegistrationsResolve(GameTestHelper helper) {
 		helper.assertTrue(
-				ModId.of("homelander_boss").equals(BuiltInRegistries.ENTITY_TYPE.getKey(ModEntities.HOMELANDER_BOSS)),
+				ModId.of("homelander_boss").equals(BuiltInRegistries.ENTITY_TYPE.getKey(HomelanderBossEntities.HOMELANDER_BOSS)),
 				"homelander_boss EntityType must keep its registry id, got "
-						+ BuiltInRegistries.ENTITY_TYPE.getKey(ModEntities.HOMELANDER_BOSS));
+						+ BuiltInRegistries.ENTITY_TYPE.getKey(HomelanderBossEntities.HOMELANDER_BOSS));
 		helper.assertTrue(
-				ModId.of("vought_signal").equals(BuiltInRegistries.ITEM.getKey(ModItems.VOUGHT_SIGNAL)),
+				ModId.of("vought_signal").equals(BuiltInRegistries.ITEM.getKey(HomelanderBossItems.VOUGHT_SIGNAL)),
 				"vought_signal must keep its registry id, got "
-						+ BuiltInRegistries.ITEM.getKey(ModItems.VOUGHT_SIGNAL));
+						+ BuiltInRegistries.ITEM.getKey(HomelanderBossItems.VOUGHT_SIGNAL));
 		helper.assertTrue(
-				ModId.of("homelander_boss_spawn_egg").equals(BuiltInRegistries.ITEM.getKey(ModItems.HOMELANDER_BOSS_SPAWN_EGG)),
+				ModId.of("homelander_boss_spawn_egg").equals(BuiltInRegistries.ITEM.getKey(HomelanderBossItems.HOMELANDER_BOSS_SPAWN_EGG)),
 				"homelander_boss_spawn_egg must keep its registry id, got "
-						+ BuiltInRegistries.ITEM.getKey(ModItems.HOMELANDER_BOSS_SPAWN_EGG));
+						+ BuiltInRegistries.ITEM.getKey(HomelanderBossItems.HOMELANDER_BOSS_SPAWN_EGG));
 		// Admin-only gating: in ADMIN_ONLY_ITEMS, never on the creative tab list.
-		helper.assertTrue(ModItemGroups.ADMIN_ONLY_ITEMS.contains(ModItems.HOMELANDER_BOSS_SPAWN_EGG),
+		helper.assertTrue(ModItemGroups.ADMIN_ONLY_ITEMS.contains(HomelanderBossItems.HOMELANDER_BOSS_SPAWN_EGG),
 				"homelander_boss_spawn_egg must stay in ModItemGroups.ADMIN_ONLY_ITEMS");
-		helper.assertTrue(!CreativeTabContents.all().contains(ModItems.HOMELANDER_BOSS_SPAWN_EGG),
+		helper.assertTrue(!CreativeTabContents.all().contains(HomelanderBossItems.HOMELANDER_BOSS_SPAWN_EGG),
 				"homelander_boss_spawn_egg must not leak onto the creative tab");
 		helper.succeed();
 	}
@@ -94,7 +95,7 @@ public final class HomelanderBossGameTests implements FabricGameTest {
 	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 100)
 	public void bossAttributesAndCooldownsPinned(GameTestHelper helper) {
 		ServerLevel level = helper.getLevel();
-		HomelanderBossEntity boss = ModEntities.HOMELANDER_BOSS.create(level);
+		HomelanderBossEntity boss = HomelanderBossEntities.HOMELANDER_BOSS.create(level);
 		helper.assertTrue(boss != null, "HOMELANDER_BOSS.create() must instantiate");
 		// getAttributeValue CLAMPS to each attribute's declared max (armor caps at 30) —
 		// pin the constructor-set base values instead.
@@ -125,7 +126,7 @@ public final class HomelanderBossGameTests implements FabricGameTest {
 
 	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 100)
 	public void bossGoalSelectorsPinned(GameTestHelper helper) {
-		HomelanderBossEntity boss = ModEntities.HOMELANDER_BOSS.create(helper.getLevel());
+		HomelanderBossEntity boss = HomelanderBossEntities.HOMELANDER_BOSS.create(helper.getLevel());
 		helper.assertTrue(boss != null, "HOMELANDER_BOSS.create() must instantiate");
 		Set<Class<?>> goals = selectorOf(boss, "goalSelector").getAvailableGoals().stream()
 				.map(w -> w.getGoal().getClass())
@@ -162,8 +163,8 @@ public final class HomelanderBossGameTests implements FabricGameTest {
 		ServerLevel level = helper.getLevel();
 		ServerPlayer player = TestPlayers.join(helper);
 		BlockPos pos = helper.absolutePos(new BlockPos(2, 1, 2));
-		ItemStack stack = new ItemStack(ModItems.VOUGHT_SIGNAL, 4);
-		InteractionResult result = ModItems.VOUGHT_SIGNAL.useOn(new UseOnContext(level, player,
+		ItemStack stack = new ItemStack(HomelanderBossItems.VOUGHT_SIGNAL, 4);
+		InteractionResult result = HomelanderBossItems.VOUGHT_SIGNAL.useOn(new UseOnContext(level, player,
 				InteractionHand.MAIN_HAND, stack,
 				new BlockHitResult(Vec3.atBottomCenterOf(pos), net.minecraft.core.Direction.UP, pos, false)) {});
 		helper.assertTrue(result == InteractionResult.CONSUME,
@@ -184,8 +185,8 @@ public final class HomelanderBossGameTests implements FabricGameTest {
 		ServerLevel level = helper.getLevel();
 		ServerPlayer player = TestPlayers.join(helper);
 		BlockPos pos = helper.absolutePos(new BlockPos(2, 1, 2));
-		ItemStack stack = new ItemStack(ModItems.HOMELANDER_BOSS_SPAWN_EGG);
-		InteractionResult result = ModItems.HOMELANDER_BOSS_SPAWN_EGG.useOn(new UseOnContext(level, player,
+		ItemStack stack = new ItemStack(HomelanderBossItems.HOMELANDER_BOSS_SPAWN_EGG);
+		InteractionResult result = HomelanderBossItems.HOMELANDER_BOSS_SPAWN_EGG.useOn(new UseOnContext(level, player,
 				InteractionHand.MAIN_HAND, stack,
 				new BlockHitResult(Vec3.atBottomCenterOf(pos), net.minecraft.core.Direction.UP, pos, false)) {});
 		helper.assertTrue(result == InteractionResult.CONSUME,
@@ -195,7 +196,7 @@ public final class HomelanderBossGameTests implements FabricGameTest {
 		awaitBoss(helper, box(pos), found -> {
 			helper.assertTrue(found != null,
 					"homelander_boss_spawn_egg must spawn a homelander_boss");
-			helper.assertTrue(found.getType() == ModEntities.HOMELANDER_BOSS,
+			helper.assertTrue(found.getType() == HomelanderBossEntities.HOMELANDER_BOSS,
 					"the egg must spawn the HOMELANDER_BOSS entity type");
 			found.discard();
 			TestPlayers.leave(player);
@@ -209,14 +210,14 @@ public final class HomelanderBossGameTests implements FabricGameTest {
 	public void bossDamageTypesResolve(GameTestHelper helper) {
 		ServerLevel level = helper.getLevel();
 		List<ResourceKey<DamageType>> keys = List.of(
-				ModDamageTypes.HOMELANDER_EYE_LASER,
-				ModDamageTypes.HOMELANDER_HEAT_VISION,
-				ModDamageTypes.HOMELANDER_HAND_CLAP,
-				ModDamageTypes.HOMELANDER_SONIC_SLAM,
-				ModDamageTypes.HOMELANDER_SHOCKWAVE_DIVE,
-				ModDamageTypes.HOMELANDER_LIGHTNING_CALL,
-				ModDamageTypes.HOMELANDER_ROAR_BOSS,
-				ModDamageTypes.HOMELANDER_MELEE);
+				HomelanderBossDamageTypes.HOMELANDER_EYE_LASER,
+				HomelanderBossDamageTypes.HOMELANDER_HEAT_VISION,
+				HomelanderBossDamageTypes.HOMELANDER_HAND_CLAP,
+				HomelanderBossDamageTypes.HOMELANDER_SONIC_SLAM,
+				HomelanderBossDamageTypes.HOMELANDER_SHOCKWAVE_DIVE,
+				HomelanderBossDamageTypes.HOMELANDER_LIGHTNING_CALL,
+				HomelanderBossDamageTypes.HOMELANDER_ROAR_BOSS,
+				HomelanderBossDamageTypes.HOMELANDER_MELEE);
 		for (ResourceKey<DamageType> key : keys) {
 			Holder.Reference<DamageType> holder = level.registryAccess()
 					.lookupOrThrow(Registries.DAMAGE_TYPE)
@@ -224,31 +225,31 @@ public final class HomelanderBossGameTests implements FabricGameTest {
 					.orElseThrow(() -> new IllegalStateException(key + " not registered"));
 			boolean inCooldownBypass = holder.is(DamageTypeTags.BYPASSES_COOLDOWN);
 			boolean inBeam = holder.is(ModDamageTypes.BEAM);
-			boolean expectedBypass = key != ModDamageTypes.HOMELANDER_MELEE;
-			boolean expectedBeam = key == ModDamageTypes.HOMELANDER_EYE_LASER
-					|| key == ModDamageTypes.HOMELANDER_HEAT_VISION;
+			boolean expectedBypass = key != HomelanderBossDamageTypes.HOMELANDER_MELEE;
+			boolean expectedBeam = key == HomelanderBossDamageTypes.HOMELANDER_EYE_LASER
+					|| key == HomelanderBossDamageTypes.HOMELANDER_HEAT_VISION;
 			helper.assertTrue(inCooldownBypass == expectedBypass,
 					key.location() + " bypasses_cooldown membership must be " + expectedBypass);
 			helper.assertTrue(inBeam == expectedBeam,
 					key.location() + " #superheroes:beam membership must be " + expectedBeam);
 		}
 		// The DamageSource helpers the boss and its goals call must keep producing their types.
-		HomelanderBossEntity boss = ModEntities.HOMELANDER_BOSS.create(level);
-		helper.assertTrue(ModDamageTypes.homelanderEyeLaser(level, boss).is(ModDamageTypes.HOMELANDER_EYE_LASER),
+		HomelanderBossEntity boss = HomelanderBossEntities.HOMELANDER_BOSS.create(level);
+		helper.assertTrue(HomelanderBossDamageTypes.eyeLaser(level, boss).is(HomelanderBossDamageTypes.HOMELANDER_EYE_LASER),
 				"homelanderEyeLaser must produce homelander_eye_laser");
-		helper.assertTrue(ModDamageTypes.homelanderHeatVision(level, boss).is(ModDamageTypes.HOMELANDER_HEAT_VISION),
+		helper.assertTrue(HomelanderBossDamageTypes.heatVision(level, boss).is(HomelanderBossDamageTypes.HOMELANDER_HEAT_VISION),
 				"homelanderHeatVision must produce homelander_heat_vision");
-		helper.assertTrue(ModDamageTypes.homelanderHandClap(level, boss).is(ModDamageTypes.HOMELANDER_HAND_CLAP),
+		helper.assertTrue(HomelanderBossDamageTypes.handClap(level, boss).is(HomelanderBossDamageTypes.HOMELANDER_HAND_CLAP),
 				"homelanderHandClap must produce homelander_hand_clap");
-		helper.assertTrue(ModDamageTypes.homelanderSonicSlam(level, boss).is(ModDamageTypes.HOMELANDER_SONIC_SLAM),
+		helper.assertTrue(HomelanderBossDamageTypes.sonicSlam(level, boss).is(HomelanderBossDamageTypes.HOMELANDER_SONIC_SLAM),
 				"homelanderSonicSlam must produce homelander_sonic_slam");
-		helper.assertTrue(ModDamageTypes.homelanderShockwaveDive(level, boss).is(ModDamageTypes.HOMELANDER_SHOCKWAVE_DIVE),
+		helper.assertTrue(HomelanderBossDamageTypes.shockwaveDive(level, boss).is(HomelanderBossDamageTypes.HOMELANDER_SHOCKWAVE_DIVE),
 				"homelanderShockwaveDive must produce homelander_shockwave_dive");
-		helper.assertTrue(ModDamageTypes.homelanderLightningCall(level, boss).is(ModDamageTypes.HOMELANDER_LIGHTNING_CALL),
+		helper.assertTrue(HomelanderBossDamageTypes.lightningCall(level, boss).is(HomelanderBossDamageTypes.HOMELANDER_LIGHTNING_CALL),
 				"homelanderLightningCall must produce homelander_lightning_call");
-		helper.assertTrue(ModDamageTypes.homelanderRoarBoss(level, boss).is(ModDamageTypes.HOMELANDER_ROAR_BOSS),
+		helper.assertTrue(HomelanderBossDamageTypes.roarBoss(level, boss).is(HomelanderBossDamageTypes.HOMELANDER_ROAR_BOSS),
 				"homelanderRoarBoss must produce homelander_roar_boss");
-		helper.assertTrue(ModDamageTypes.homelanderMelee(level, boss).is(ModDamageTypes.HOMELANDER_MELEE),
+		helper.assertTrue(HomelanderBossDamageTypes.melee(level, boss).is(HomelanderBossDamageTypes.HOMELANDER_MELEE),
 				"homelanderMelee must produce homelander_melee");
 		boss.discard();
 		helper.succeed();
@@ -259,14 +260,14 @@ public final class HomelanderBossGameTests implements FabricGameTest {
 		ServerLevel level = helper.getLevel();
 		ServerPlayer player = TestPlayers.join(helper);
 		TestPlayers.clearSpawnInvulnerability(player);
-		HomelanderBossEntity boss = ModEntities.HOMELANDER_BOSS.create(level);
+		HomelanderBossEntity boss = HomelanderBossEntities.HOMELANDER_BOSS.create(level);
 		float before = player.getHealth();
 		boolean hurt = boss.doHurtTarget(player);
 		helper.assertTrue(hurt, "doHurtTarget must land on a vulnerable player");
 		helper.assertTrue(player.getHealth() < before,
 				"the hit must cost the player health (" + before + " -> " + player.getHealth() + ")");
 		DamageSource last = player.getLastDamageSource();
-		helper.assertTrue(last != null && last.is(ModDamageTypes.HOMELANDER_MELEE),
+		helper.assertTrue(last != null && last.is(HomelanderBossDamageTypes.HOMELANDER_MELEE),
 				"the boss melee must deal homelander_melee damage, got " + last);
 		boss.discard();
 		TestPlayers.leave(player);
@@ -283,7 +284,7 @@ public final class HomelanderBossGameTests implements FabricGameTest {
 		// The player must be inside the structure BEFORE the boss spawns, or the
 		// nearest-hostile scan can pick up a player from a concurrent test.
 		player.teleportTo(center.x, center.y, center.z);
-		HomelanderBossEntity boss = ModEntities.HOMELANDER_BOSS.create(level);
+		HomelanderBossEntity boss = HomelanderBossEntities.HOMELANDER_BOSS.create(level);
 		helper.assertTrue(boss != null, "HOMELANDER_BOSS.create() must instantiate");
 		boss.moveTo(center.x + 4.0, center.y + 1.0, center.z, 0.0f, 0.0f);
 		level.addFreshEntity(boss);

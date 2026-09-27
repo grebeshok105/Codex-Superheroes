@@ -8,7 +8,8 @@ import java.util.List;
 /** Composition root: the only client class that names content modules; mirrors bootstrap.ContentModules. */
 public final class ContentClientModules {
 	public static final List<ContentClientModule> ALL = List.of(
-			new io.github.grebeshok105.codex.client.content.horde.HordeClientModule()
+			new io.github.grebeshok105.codex.client.content.horde.HordeClientModule(),
+			new io.github.grebeshok105.codex.client.content.boss.homelander.HomelanderBossClientModule()
 	);
 
 	private ContentClientModules() {

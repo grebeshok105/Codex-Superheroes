@@ -1,6 +1,6 @@
-package io.github.grebeshok105.codex.entity.ai;
+package io.github.grebeshok105.codex.content.boss.homelander.entity.ai;
 
-import io.github.grebeshok105.codex.entity.HomelanderBossEntity;
+import io.github.grebeshok105.codex.content.boss.homelander.entity.HomelanderBossEntity;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -76,7 +76,7 @@ public class HomelanderLightningCallGoal extends Goal {
 				bolt.setCause(null);
 				sl.addFreshEntity(bolt);
 			}
-			DamageSource ds = io.github.grebeshok105.codex.damage.ModDamageTypes.homelanderLightningCall((net.minecraft.server.level.ServerLevel) boss.level(), boss);
+			DamageSource ds = io.github.grebeshok105.codex.content.boss.homelander.registry.HomelanderBossDamageTypes.lightningCall((net.minecraft.server.level.ServerLevel) boss.level(), boss);
 			lockedTarget.hurt(ds, BONUS_DAMAGE);
 		}
 	}

@@ -2,11 +2,13 @@ package io.github.grebeshok105.codex.effect;
 
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.hero.DoomsdayHero;
 import io.github.grebeshok105.codex.hero.AbilityScopedModifiers;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.minecraft.ChatFormatting;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
@@ -67,16 +69,17 @@ public final class DoomsdayAdaptationController {
 			Set.of(DamageTypes.CACTUS, DamageTypes.SWEET_BERRY_BUSH),
 			Set.of(DamageTypes.WITHER, DamageTypes.WITHER_SKULL),
 			Set.of(DamageTypes.LIGHTNING_BOLT),
+			// Boss-side keys stay as plain string ids — content modules are never imported here.
 			Set.of(
-					io.github.grebeshok105.codex.damage.ModDamageTypes.HOMELANDER_EYE_LASER,
-					io.github.grebeshok105.codex.damage.ModDamageTypes.HOMELANDER_HEAT_VISION,
-					io.github.grebeshok105.codex.damage.ModDamageTypes.HOMELANDER_LIGHTNING_CALL
+					key("homelander_eye_laser"),
+					key("homelander_heat_vision"),
+					key("homelander_lightning_call")
 			),
 			Set.of(
-					io.github.grebeshok105.codex.damage.ModDamageTypes.HOMELANDER_HAND_CLAP,
-					io.github.grebeshok105.codex.damage.ModDamageTypes.HOMELANDER_SONIC_SLAM,
-					io.github.grebeshok105.codex.damage.ModDamageTypes.HOMELANDER_SHOCKWAVE_DIVE,
-					io.github.grebeshok105.codex.damage.ModDamageTypes.HOMELANDER_ROAR_BOSS
+					key("homelander_hand_clap"),
+					key("homelander_sonic_slam"),
+					key("homelander_shockwave_dive"),
+					key("homelander_roar_boss")
 			)
 	);
 
@@ -87,6 +90,10 @@ public final class DoomsdayAdaptationController {
 	private static final Map<UUID, Integer> ADAPT_COUNT = new ConcurrentHashMap<>();
 
 	private DoomsdayAdaptationController() {
+	}
+
+	private static ResourceKey<DamageType> key(String path) {
+		return ResourceKey.create(Registries.DAMAGE_TYPE, ModId.of(path));
 	}
 
 	public static void register(HeroModuleContext ctx) {

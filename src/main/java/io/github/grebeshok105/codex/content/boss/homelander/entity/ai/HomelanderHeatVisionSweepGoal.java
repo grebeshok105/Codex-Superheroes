@@ -1,6 +1,6 @@
-package io.github.grebeshok105.codex.entity.ai;
+package io.github.grebeshok105.codex.content.boss.homelander.entity.ai;
 
-import io.github.grebeshok105.codex.entity.HomelanderBossEntity;
+import io.github.grebeshok105.codex.content.boss.homelander.entity.HomelanderBossEntity;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -107,7 +107,7 @@ public class HomelanderHeatVisionSweepGoal extends Goal {
 
 			AABB box = boss.getBoundingBox().inflate(RANGE);
 			List<Entity> nearby = world.getEntities(boss, box);
-			DamageSource ds = io.github.grebeshok105.codex.damage.ModDamageTypes.homelanderHeatVision((net.minecraft.server.level.ServerLevel) boss.level(), boss);
+			DamageSource ds = io.github.grebeshok105.codex.content.boss.homelander.registry.HomelanderBossDamageTypes.heatVision((net.minecraft.server.level.ServerLevel) boss.level(), boss);
 			for (Entity e : nearby) {
 				if (!(e instanceof LivingEntity le) || !le.isAlive()) continue;
 				if (hitOnce.contains(e.getUUID())) continue;

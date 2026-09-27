@@ -1,7 +1,7 @@
-package io.github.grebeshok105.codex.entity.ai;
+package io.github.grebeshok105.codex.content.boss.homelander.entity.ai;
 
 import io.github.grebeshok105.codex.effect.UraniumDefenseController;
-import io.github.grebeshok105.codex.entity.HomelanderBossEntity;
+import io.github.grebeshok105.codex.content.boss.homelander.entity.HomelanderBossEntity;
 import io.github.grebeshok105.codex.network.ModNetworking;
 import io.github.grebeshok105.codex.particle.ModParticles;
 import net.minecraft.server.level.ServerLevel;
@@ -127,7 +127,7 @@ public class HomelanderEyeLaserGoal extends Goal {
 		}
 		if (hit != null) {
 			LivingEntity hitTarget = (LivingEntity) hit.getEntity();
-			DamageSource ds = io.github.grebeshok105.codex.damage.ModDamageTypes.homelanderEyeLaser((net.minecraft.server.level.ServerLevel) boss.level(), boss);
+			DamageSource ds = io.github.grebeshok105.codex.content.boss.homelander.registry.HomelanderBossDamageTypes.eyeLaser((net.minecraft.server.level.ServerLevel) boss.level(), boss);
 			hitTarget.hurt(ds, damage);
 			actualEnd = new Vec3(hitTarget.getX(),
 					hitTarget.getY() + hitTarget.getBbHeight() * CHEST_FRACTION,
