@@ -1,10 +1,10 @@
 package io.github.grebeshok105.codex.effect;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.hero.CaptainAmericaHero;
 import io.github.grebeshok105.codex.hero.KratosHero;
-import io.github.grebeshok105.codex.hero.LokiHero;
 import io.github.grebeshok105.codex.hero.NarutoHero;
 import io.github.grebeshok105.codex.hero.RegulusHero;
 import io.github.grebeshok105.codex.hero.SungJinwooHero;
@@ -35,7 +35,8 @@ public final class ThanosStoneRewardController {
 		HERO_TO_STONE.put(KratosHero.ID, InfinityStoneType.POWER);
 		HERO_TO_STONE.put(NarutoHero.ID, InfinityStoneType.SPACE);
 		HERO_TO_STONE.put(SungJinwooHero.ID, InfinityStoneType.REALITY);
-		HERO_TO_STONE.put(LokiHero.ID, InfinityStoneType.MIND);
+		// Migrated hero ids are referenced by string — shared code must not import module classes.
+		HERO_TO_STONE.put(ModId.of("loki"), InfinityStoneType.MIND);
 		HERO_TO_STONE.put(CaptainAmericaHero.ID, InfinityStoneType.SOUL);
 		HERO_TO_STONE.put(RegulusHero.ID, InfinityStoneType.TIME);
 	}

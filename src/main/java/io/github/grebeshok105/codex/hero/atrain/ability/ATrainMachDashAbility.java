@@ -1,5 +1,6 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.atrain.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
@@ -21,9 +22,11 @@ public final class ATrainMachDashAbility implements Ability {
 	private static final double DISTANCE = 28.0;
 	private static final float DAMAGE = 18.0f;
 
+	public static final ResourceLocation ID = ModId.of("a_train_mach_dash");
+
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.A_TRAIN_MACH_DASH;
+		return ID;
 	}
 
 	@Override

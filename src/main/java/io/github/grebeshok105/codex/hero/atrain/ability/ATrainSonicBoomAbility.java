@@ -1,5 +1,6 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.atrain.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
@@ -22,9 +23,11 @@ public final class ATrainSonicBoomAbility implements Ability {
 	private static final double CONE_DOT = 0.58;
 	private static final float DAMAGE = 12.0f;
 
+	public static final ResourceLocation ID = ModId.of("a_train_sonic_boom");
+
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.A_TRAIN_SONIC_BOOM;
+		return ID;
 	}
 
 	@Override

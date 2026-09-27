@@ -1,5 +1,6 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.atrain.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import net.minecraft.core.particles.ParticleTypes;
@@ -14,9 +15,11 @@ import net.minecraft.world.effect.MobEffects;
 public final class ATrainAdrenalineRushAbility implements Ability {
 	private static final int COOLDOWN_TICKS = 12 * 20;
 
+	public static final ResourceLocation ID = ModId.of("a_train_adrenaline_rush");
+
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.A_TRAIN_ADRENALINE_RUSH;
+		return ID;
 	}
 
 	@Override

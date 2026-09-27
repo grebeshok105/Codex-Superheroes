@@ -1,5 +1,6 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.loki.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
@@ -28,9 +29,11 @@ public final class LokiTesseractBlinkAbility implements Ability {
 	private static final double TARGET_SCAN = 24.0;
 	private static final float BACKSTAB_DAMAGE = 40.0f;
 
+	public static final ResourceLocation ID = ModId.of("loki_tesseract_blink");
+
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.LOKI_TESSERACT_BLINK;
+		return ID;
 	}
 
 	@Override

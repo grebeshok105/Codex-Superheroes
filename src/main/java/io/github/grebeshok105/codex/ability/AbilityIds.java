@@ -71,12 +71,6 @@ public final class AbilityIds {
 	public static final ResourceLocation KRATOS_LEVIATHAN_THROW = ModId.of("kratos_leviathan_throw");
 	public static final ResourceLocation KRATOS_GOD_SLAYER = ModId.of("kratos_god_slayer");
 
-	public static final ResourceLocation LOKI_ASTRAL_CLONES = ModId.of("loki_astral_clones");
-	public static final ResourceLocation LOKI_TESSERACT_BLINK = ModId.of("loki_tesseract_blink");
-	public static final ResourceLocation LOKI_MIND_CHARM = ModId.of("loki_mind_charm");
-	public static final ResourceLocation LOKI_GLAMOUR = ModId.of("loki_glamour");
-	public static final ResourceLocation LOKI_CHAOS_BOLT = ModId.of("loki_chaos_bolt");
-
 	public static final ResourceLocation THANOS_COSMIC_SLAM = ModId.of("thanos_cosmic_slam");
 	public static final ResourceLocation THANOS_REALITY_TEAR = ModId.of("thanos_reality_tear");
 	public static final ResourceLocation THANOS_MIND_PULSE = ModId.of("thanos_mind_pulse");
@@ -104,11 +98,6 @@ public final class AbilityIds {
 	public static final ResourceLocation REM_HUMA_ICE_SPIKES = ModId.of("rem_huma_ice_spikes");
 	public static final ResourceLocation REM_MACE_CRATER = ModId.of("rem_mace_crater");
 	public static final ResourceLocation REM_ONI_KICK = ModId.of("rem_oni_kick");
-
-	public static final ResourceLocation A_TRAIN_MACH_DASH = ModId.of("a_train_mach_dash");
-	public static final ResourceLocation A_TRAIN_SONIC_BOOM = ModId.of("a_train_sonic_boom");
-	public static final ResourceLocation A_TRAIN_HYPERSPEED = ModId.of("a_train_hyperspeed");
-	public static final ResourceLocation A_TRAIN_ADRENALINE_RUSH = ModId.of("a_train_adrenaline_rush");
 
 	// Pandora — Mirror Dimension warp
 	public static final ResourceLocation MIRROR_DIMENSION = ModId.of("mirror_dimension");

@@ -127,11 +127,6 @@ public final class ModItems {
 			new BladeOfChaosItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
 	);
 
-	public static final LokiScepterItem LOKI_SCEPTER = register(
-			"loki_scepter",
-			new LokiScepterItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
-	);
-
 	public static final InfinityGauntletItem INFINITY_GAUNTLET = register(
 			"infinity_gauntlet",
 			new InfinityGauntletItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
@@ -226,16 +221,6 @@ public final class ModItems {
 	public static final RemMorningStarItem REM_MORNING_STAR = register(
 			"rem_morning_star",
 			new RemMorningStarItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
-	);
-
-	public static final TransformationItem A_TRAIN_SUIT = register(
-			"a_train_suit",
-			new TransformationItem(ModId.of("a_train"), new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC),
-					new TransformationLore(ChatFormatting.BLUE,
-							List.of(new TransformationLore.Line("item.superheroes.a_train_suit.lore.line1", ChatFormatting.RED),
-									new TransformationLore.Line("item.superheroes.a_train_suit.lore.line2", ChatFormatting.DARK_GRAY)),
-							List.of(new TransformationLore.Line("item.superheroes.a_train_suit.lore.usage", ChatFormatting.AQUA),
-									new TransformationLore.Line("item.superheroes.a_train_suit.lore.untransform", ChatFormatting.RED))))
 	);
 
 	// persisted id kept from the Doctor Strange era — do not rename the string.

@@ -50,8 +50,6 @@ public final class ModItemGroups {
 
 				output.accept(ModItems.BLADE_OF_CHAOS);
 
-				output.accept(ModItems.LOKI_SCEPTER);
-
 				output.accept(ModItems.INFINITY_GAUNTLET);
 				output.accept(ModItems.POWER_STONE);
 				output.accept(ModItems.SPACE_STONE);
@@ -68,7 +66,6 @@ public final class ModItemGroups {
 
 				output.accept(ModItems.BATTLE_BEAST_MEDALLION);
 				output.accept(ModItems.REM_ONI_HORN);
-				output.accept(ModItems.A_TRAIN_SUIT);
 				output.accept(ModItems.PANDORA_SUIT);
 
 				// Hero modules append their items here, in module registration order.

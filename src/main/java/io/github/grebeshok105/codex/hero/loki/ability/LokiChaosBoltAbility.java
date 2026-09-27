@@ -1,5 +1,6 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.loki.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
@@ -32,9 +33,11 @@ public final class LokiChaosBoltAbility implements Ability {
 			MobEffects.WITHER
 	};
 
+	public static final ResourceLocation ID = ModId.of("loki_chaos_bolt");
+
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.LOKI_CHAOS_BOLT;
+		return ID;
 	}
 
 	@Override

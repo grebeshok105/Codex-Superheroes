@@ -1,10 +1,11 @@
-package io.github.grebeshok105.codex.item;
+package io.github.grebeshok105.codex.hero.loki.item;
 
-import io.github.grebeshok105.codex.hero.LokiHero;
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.transform.TooltipFrame;
 import io.github.grebeshok105.codex.core.transform.TransformationItem;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
@@ -12,8 +13,10 @@ import net.minecraft.world.item.TooltipFlag;
 import java.util.List;
 
 public class LokiScepterItem extends TransformationItem {
+	private static final ResourceLocation LOKI_ID = ModId.of("loki");
+
 	public LokiScepterItem(Properties properties) {
-		super(LokiHero.ID, properties);
+		super(LOKI_ID, properties);
 	}
 
 	@Override

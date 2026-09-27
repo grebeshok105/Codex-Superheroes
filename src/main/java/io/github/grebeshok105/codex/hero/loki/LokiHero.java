@@ -1,7 +1,6 @@
-package io.github.grebeshok105.codex.hero;
+package io.github.grebeshok105.codex.hero.loki;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.ability.AbilityIds;
 import io.github.grebeshok105.codex.core.hero.AttributeModifierSet;
 import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.hero.HeroHudConfig;
@@ -100,11 +99,11 @@ public final class LokiHero implements Hero {
 	@Override
 	public List<ResourceLocation> getAbilities() {
 		return List.of(
-				AbilityIds.LOKI_ASTRAL_CLONES,
-				AbilityIds.LOKI_TESSERACT_BLINK,
-				AbilityIds.LOKI_MIND_CHARM,
-				AbilityIds.LOKI_GLAMOUR,
-				AbilityIds.LOKI_CHAOS_BOLT
+				LokiAbilities.LOKI_ASTRAL_CLONES,
+				LokiAbilities.LOKI_TESSERACT_BLINK,
+				LokiAbilities.LOKI_MIND_CHARM,
+				LokiAbilities.LOKI_GLAMOUR,
+				LokiAbilities.LOKI_CHAOS_BOLT
 		);
 	}
 
