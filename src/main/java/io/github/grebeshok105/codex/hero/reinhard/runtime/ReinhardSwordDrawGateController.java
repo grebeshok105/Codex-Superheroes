@@ -1,15 +1,18 @@
 package io.github.grebeshok105.codex.hero.reinhard.runtime;
 
+import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
 import io.github.grebeshok105.codex.hero.reinhard.net.ReinhardSwordGateS2CPayload;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.minecraft.server.MinecraftServer;
 
@@ -25,8 +28,10 @@ public final class ReinhardSwordDrawGateController {
 
 	private record Accum(float total, long lastHitTick) {}
 
-	private static final Map<UUID, Map<UUID, Accum>> PER_PLAYER = new ConcurrentHashMap<>();
-	private static final Map<UUID, Boolean> READY = new ConcurrentHashMap<>();
+	private static final OwnedSessionMap<UUID, Map<UUID, Accum>> PER_PLAYER =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.of(ClearOn.LEAVE));
+	private static final OwnedSessionMap<UUID, Boolean> READY =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.of(ClearOn.LEAVE));
 
 	private ReinhardSwordDrawGateController() {
 	}
@@ -36,7 +41,11 @@ public final class ReinhardSwordDrawGateController {
 		if (attacker == null || amount <= 0f) return;
 		if (Boolean.TRUE.equals(READY.get(player.getUUID()))) return;
 		long now = player.serverLevel().getGameTime();
-		Map<UUID, Accum> per = PER_PLAYER.computeIfAbsent(player.getUUID(), id -> new HashMap<>());
+		Map<UUID, Accum> per = PER_PLAYER.get(player.getUUID());
+		if (per == null) {
+			per = new HashMap<>();
+			PER_PLAYER.put(player.getUUID(), player.getUUID(), per);
+		}
 		UUID attackerId = attacker.getUUID();
 		Accum existing = per.get(attackerId);
 		float total;
@@ -47,7 +56,7 @@ public final class ReinhardSwordDrawGateController {
 		}
 		per.put(attackerId, new Accum(total, now));
 		if (total >= DAMAGE_THRESHOLD) {
-			READY.put(player.getUUID(), true);
+			READY.put(player.getUUID(), player.getUUID(), Boolean.TRUE);
 			ServerPlayNetworking.send(player, new ReinhardSwordGateS2CPayload(true, 1f));
 			player.displayClientMessage(
 					net.minecraft.network.chat.Component.translatable(
@@ -114,8 +123,17 @@ public final class ReinhardSwordDrawGateController {
 	}
 
 	public static void pruneGonePlayers(MinecraftServer server) {
-		PER_PLAYER.keySet().removeIf(uuid -> server.getPlayerList().getPlayer(uuid) == null);
-		READY.keySet().removeIf(uuid -> server.getPlayerList().getPlayer(uuid) == null);
+		pruneOffline(PER_PLAYER, server);
+		pruneOffline(READY, server);
+	}
+
+	private static <V> void pruneOffline(OwnedSessionMap<UUID, V> map, MinecraftServer server) {
+		Iterator<Map.Entry<UUID, V>> it = map.iterator();
+		while (it.hasNext()) {
+			if (server.getPlayerList().getPlayer(it.next().getKey()) == null) {
+				it.remove();
+			}
+		}
 	}
 
 }

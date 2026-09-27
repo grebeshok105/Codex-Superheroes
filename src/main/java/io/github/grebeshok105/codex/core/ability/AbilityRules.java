@@ -12,6 +12,7 @@ import java.util.function.Predicate;
 public final class AbilityRules {
 	private static final List<AbilityBlocker> BLOCKERS = new ArrayList<>();
 	private static final List<Predicate<ServerPlayer>> FREE_COST = new ArrayList<>();
+	private static final List<Predicate<ServerPlayer>> HIDE_ALL = new ArrayList<>();
 
 	private AbilityRules() {
 	}
@@ -23,6 +24,11 @@ public final class AbilityRules {
 
 	public static void freeCost(Predicate<ServerPlayer> rule) {
 		FREE_COST.add(rule);
+	}
+
+	/** States that hide the victim's whole ability list in {@code AbilityAvailabilitySync} (Vanity strip, …). */
+	public static void hideAll(Predicate<ServerPlayer> rule) {
+		HIDE_ALL.add(rule);
 	}
 
 	@Nullable
@@ -38,6 +44,15 @@ public final class AbilityRules {
 
 	public static boolean isFree(ServerPlayer player) {
 		for (Predicate<ServerPlayer> rule : FREE_COST) {
+			if (rule.test(player)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public static boolean hidesAll(ServerPlayer player) {
+		for (Predicate<ServerPlayer> rule : HIDE_ALL) {
 			if (rule.test(player)) {
 				return true;
 			}

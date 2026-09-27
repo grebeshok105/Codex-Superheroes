@@ -2,21 +2,12 @@ package io.github.grebeshok105.codex.attachment;
 
 import io.github.grebeshok105.codex.ModId;
 
-import io.github.grebeshok105.codex.effect.RegulusMadnessState;
 import io.github.grebeshok105.codex.mechanic.boundweapon.BoundWeaponIssues;
 import com.mojang.serialization.Codec;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentRegistry;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
 
 public final class ModAttachments {
-	public static final AttachmentType<RegulusMadnessState> REGULUS_MADNESS = AttachmentRegistry.create(ModId.of("regulus_madness"), b -> b
-			.initializer(() -> RegulusMadnessState.EMPTY));
-
-	public static final AttachmentType<Boolean> REGULUS_BONUS_LIFE = AttachmentRegistry.create(ModId.of("regulus_bonus_life"), b -> b
-			.initializer(() -> Boolean.FALSE)
-			.persistent(Codec.BOOL)
-			.copyOnDeath());
-
 	public static final AttachmentType<Integer> SUIT_VARIANT = AttachmentRegistry.create(ModId.of("suit_variant"), b -> b
 			.initializer(() -> 0)
 			.persistent(Codec.INT)
@@ -33,11 +24,6 @@ public final class ModAttachments {
 			AttachmentRegistry.create(ModId.of("bound_weapon_issues"));
 
 
-	/** Pandora has played her revival cinematic and is permanently un-hittable until she drops the hero. */
-	public static final AttachmentType<Boolean> PANDORA_REVIVED = AttachmentRegistry.create(ModId.of("pandora_revived"), b -> b
-			.initializer(() -> Boolean.FALSE)
-			.persistent(Codec.BOOL)
-			.copyOnDeath());
 
 	private ModAttachments() {
 	}

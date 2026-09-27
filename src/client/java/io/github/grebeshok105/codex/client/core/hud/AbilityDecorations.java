@@ -33,4 +33,18 @@ public final class AbilityDecorations {
 			decoration.render(graphics, abilityId, iconCenterX, iconCenterY, iconSize);
 		}
 	}
+
+	/** Whether any decoration on {@code abilityId} currently masks its identity in the ability panel. */
+	public static boolean masksIdentity(ResourceLocation abilityId) {
+		List<AbilityDecoration> decorations = DECORATIONS.get(abilityId);
+		if (decorations == null) {
+			return false;
+		}
+		for (AbilityDecoration decoration : decorations) {
+			if (decoration.masksIdentity()) {
+				return true;
+			}
+		}
+		return false;
+	}
 }

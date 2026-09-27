@@ -51,11 +51,7 @@ public class SuperheroesClient implements ClientModInitializer {
 		ClientNetworking.init();
 		HeroClientModules.bootstrap();
 		io.github.grebeshok105.codex.client.bootstrap.ContentClientModules.bootstrap();
-		io.github.grebeshok105.codex.client.iris.IrisShaderBridge.restoreAfterCrashIfNeeded();
-		ClientTickEvents.END_CLIENT_TICK.register(client -> io.github.grebeshok105.codex.client.iris.IrisShaderBridge.tickCrashRestore());
-		ClientTickEvents.END_CLIENT_TICK.register(io.github.grebeshok105.codex.client.ClientMirrorDimensionState::tick);
 		ClientHeroDimsWatcher.init();
-		ClientTickEvents.END_CLIENT_TICK.register(client -> io.github.grebeshok105.codex.client.ClientPandoraDeathState.tick());
 		io.github.grebeshok105.codex.client.render.WildShaders.register();
 		LaserBeamRenderer.register();
 		CosmicBeamRenderer.register();
@@ -143,9 +139,6 @@ public class SuperheroesClient implements ClientModInitializer {
 			io.github.grebeshok105.codex.client.hud.AbilitiesTooltipHud.tick();
 			RadialMenuHud.animTick();
 			RadialMenuHud.clientTick(client);
-			if (ClientMadnessState.isReading() && client.screen instanceof net.minecraft.client.gui.screens.inventory.InventoryScreen) {
-				client.setScreen(null);
-			}
 			while (ModKeys.BINDINGS.consumeClick()) {
 				if (client.player != null && ClientHeroState.data().hasHero()) {
 					client.setScreen(new BindingsScreen());

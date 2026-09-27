@@ -12,4 +12,14 @@ import net.minecraft.resources.ResourceLocation;
 @FunctionalInterface
 public interface AbilityDecoration {
 	void render(GuiGraphics graphics, ResourceLocation abilityId, int iconCenterX, int iconCenterY, int iconSize);
+
+	/**
+	 * When {@code true} the ability panel hides this ability's identity — masked name,
+	 * description, icon, cooldown and status — while drawing a "?" placeholder instead.
+	 * Consulted per row by {@code AbilitiesTooltipHud}; evaluated live so the mask can
+	 * lift once its hero-side condition clears.
+	 */
+	default boolean masksIdentity() {
+		return false;
+	}
 }

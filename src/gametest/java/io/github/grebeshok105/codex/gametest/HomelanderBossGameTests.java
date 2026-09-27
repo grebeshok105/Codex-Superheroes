@@ -284,9 +284,17 @@ public final class HomelanderBossGameTests implements FabricGameTest {
 		// The player must be inside the structure BEFORE the boss spawns, or the
 		// nearest-hostile scan can pick up a player from a concurrent test.
 		player.teleportTo(center.x, center.y, center.z);
+		// Mock players joined via placeNewPlayer are never ChunkMap-tracked: teleport sets
+		// position but the entity section stays stale, so the boss's nearest-hostile scan
+		// cannot see the player until the section is moved explicitly.
+		level.getChunkSource().chunkMap.move(player);
 		HomelanderBossEntity boss = HomelanderBossEntities.HOMELANDER_BOSS.create(level);
 		helper.assertTrue(boss != null, "HOMELANDER_BOSS.create() must instantiate");
 		boss.moveTo(center.x + 4.0, center.y + 1.0, center.z, 0.0f, 0.0f);
+		// A spawn just past the template's forced-load edge lands in a loaded but
+		// non-entity-ticking chunk — the boss's target goals then never run and
+		// getTarget() stays null. Pin the chunk entity-ticking with a FORCED ticket.
+		level.setChunkForced(boss.chunkPosition().x, boss.chunkPosition().z, true);
 		level.addFreshEntity(boss);
 		TestPlayers.awaitVisible(helper, boss, () -> helper.runAfterDelay(30, () -> {
 			helper.assertTrue(boss.getTarget() == player,

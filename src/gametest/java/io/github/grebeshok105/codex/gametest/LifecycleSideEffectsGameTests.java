@@ -1,15 +1,17 @@
 package io.github.grebeshok105.codex.gametest;
 
-import io.github.grebeshok105.codex.ability.MirrorDimensionAbility;
+import io.github.grebeshok105.codex.hero.pandora.PandoraAttachments;
+import io.github.grebeshok105.codex.hero.pandora.ability.MirrorDimensionAbility;
+import io.github.grebeshok105.codex.hero.regulus.RegulusAttachments;
 import io.github.grebeshok105.codex.hero.omniman.ability.OmnimanThinkMarkAbility;
 import io.github.grebeshok105.codex.attachment.ModAttachments;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
 import io.github.grebeshok105.codex.hero.battlebeast.runtime.BattleBeastCurseController;
 import io.github.grebeshok105.codex.hero.doomsday.runtime.DoomGripController;
-import io.github.grebeshok105.codex.effect.MirrorDimensionController;
-import io.github.grebeshok105.codex.effect.RegulusGreedController;
-import io.github.grebeshok105.codex.effect.RegulusMadnessState;
-import io.github.grebeshok105.codex.effect.SpatialBindController;
+import io.github.grebeshok105.codex.hero.pandora.runtime.MirrorDimensionController;
+import io.github.grebeshok105.codex.hero.pandora.runtime.SpatialBindController;
+import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusGreedController;
+import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusMadnessState;
 import io.github.grebeshok105.codex.hero.battlebeast.BattleBeastHero;
 import io.github.grebeshok105.codex.hero.rem.RemItems;
 import io.github.grebeshok105.codex.hero.rem.runtime.RemDemonismController;
@@ -90,7 +92,7 @@ public final class LifecycleSideEffectsGameTests implements FabricGameTest {
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void heroClearEndsMadnessWithoutTouchingForeignEffects(GameTestHelper helper) {
 		ServerPlayer regulus = TestPlayers.join(helper, "madness-owner");
-		regulus.setAttached(ModAttachments.REGULUS_MADNESS,
+		regulus.setAttached(RegulusAttachments.REGULUS_MADNESS,
 				RegulusMadnessState.EMPTY.withMadness(true).withBonusLife(true));
 		// Madness-applied instance: fixed amplifier 2, short 60t ambient duration (B12 contract).
 		regulus.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 60, 2, true, false, true));
@@ -101,7 +103,7 @@ public final class LifecycleSideEffectsGameTests implements FabricGameTest {
 
 		HeroLifecycle.fireClear(regulus);
 
-		RegulusMadnessState state = regulus.getAttachedOrCreate(ModAttachments.REGULUS_MADNESS);
+		RegulusMadnessState state = regulus.getAttachedOrCreate(RegulusAttachments.REGULUS_MADNESS);
 		helper.assertFalse(state.madness(), "madness state reset to EMPTY");
 		helper.assertTrue(regulus.getEffect(MobEffects.MOVEMENT_SPEED) == null,
 				"the madness-owned speed instance was removed");
@@ -174,14 +176,14 @@ public final class LifecycleSideEffectsGameTests implements FabricGameTest {
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void heroClearStripsPandoraRevival(GameTestHelper helper) {
 		ServerPlayer pandora = TestPlayers.join(helper, "pandora-owner");
-		pandora.setAttached(ModAttachments.PANDORA_REVIVED, Boolean.TRUE);
+		pandora.setAttached(PandoraAttachments.PANDORA_REVIVED, Boolean.TRUE);
 		EntityControlLock.acquire(pandora, ControlLockKind.INVULNERABLE, pandora);
 		helper.assertTrue(EntityControlLock.isLocked(pandora, ControlLockKind.INVULNERABLE),
 				"revival invulnerability held");
 
 		HeroLifecycle.fireClear(pandora);
 
-		helper.assertTrue(pandora.getAttached(ModAttachments.PANDORA_REVIVED) == null,
+		helper.assertTrue(pandora.getAttached(PandoraAttachments.PANDORA_REVIVED) == null,
 				"revived attachment cleared on hero clear");
 		helper.assertFalse(EntityControlLock.isLocked(pandora, ControlLockKind.INVULNERABLE),
 				"permanent invulnerability released");

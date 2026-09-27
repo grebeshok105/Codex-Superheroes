@@ -35,11 +35,6 @@ public final class ModEffects {
 			new DisabledAbilitiesMobEffect(MobEffectCategory.HARMFUL, 0xFF4A148C)
 	);
 
-	public static final Holder<MobEffect> VANITY_STRIPPED = Registry.registerForHolder(
-			BuiltInRegistries.MOB_EFFECT, ModId.of("vanity_stripped"),
-			new VanityStrippedMobEffect(MobEffectCategory.HARMFUL, 0xFF2A0A3A)
-	);
-
 	public static final Holder<MobEffect> HEAL_BLOCK = Registry.registerForHolder(
 			BuiltInRegistries.MOB_EFFECT, ModId.of("heal_block"),
 			new HealBlockMobEffect(MobEffectCategory.HARMFUL, 0xFF7C0045)
@@ -62,9 +57,5 @@ public final class ModEffects {
 
 	public static boolean isAftermath(net.minecraft.world.entity.LivingEntity entity) {
 		return entity != null && entity.hasEffect(MADNESS_AFTERMATH);
-	}
-
-	public static boolean isVanityStripped(net.minecraft.world.entity.LivingEntity entity) {
-		return entity != null && entity.hasEffect(VANITY_STRIPPED);
 	}
 }

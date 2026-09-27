@@ -1,10 +1,10 @@
 package io.github.grebeshok105.codex.gametest;
 
-import io.github.grebeshok105.codex.ability.AbilityIds;
+import io.github.grebeshok105.codex.hero.pandora.PandoraAbilities;
 import io.github.grebeshok105.codex.core.ability.AbilityRouter;
-import io.github.grebeshok105.codex.effect.MirrorDimensionController;
-import io.github.grebeshok105.codex.hero.PandoraHero;
-import io.github.grebeshok105.codex.network.MirrorDimensionStatusC2SPayload;
+import io.github.grebeshok105.codex.hero.pandora.runtime.MirrorDimensionController;
+import io.github.grebeshok105.codex.hero.pandora.PandoraHero;
+import io.github.grebeshok105.codex.hero.pandora.net.MirrorDimensionStatusC2SPayload;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -61,7 +61,7 @@ public final class HouseOfVanityGameTests implements FabricGameTest {
 		ServerPlayer pandora = pandora(helper);
 		ServerPlayer victim = victimInside(helper);
 		Vec3 center = pandora.position();
-		AbilityRouter.activate(pandora, AbilityIds.MIRROR_DIMENSION);
+		AbilityRouter.activate(pandora, PandoraAbilities.MIRROR_DIMENSION);
 
 		helper.runAfterDelay(2, () -> {
 			// Mock players cannot receive the S2C (no negotiated channel) and never
@@ -86,7 +86,7 @@ public final class HouseOfVanityGameTests implements FabricGameTest {
 		ServerPlayer pandora = pandora(helper);
 		ServerPlayer victim = victimInside(helper);
 		Vec3 center = pandora.position();
-		AbilityRouter.activate(pandora, AbilityIds.MIRROR_DIMENSION);
+		AbilityRouter.activate(pandora, PandoraAbilities.MIRROR_DIMENSION);
 
 		helper.runAfterDelay(2, () -> {
 			helper.assertTrue(MirrorDimensionController.isTrapped(victim), "absorbed");
@@ -110,7 +110,7 @@ public final class HouseOfVanityGameTests implements FabricGameTest {
 	public void houseDebuffsVictimWithoutConfirmation(GameTestHelper helper) {
 		ServerPlayer pandora = pandora(helper);
 		ServerPlayer victim = victimInside(helper);
-		AbilityRouter.activate(pandora, AbilityIds.MIRROR_DIMENSION);
+		AbilityRouter.activate(pandora, PandoraAbilities.MIRROR_DIMENSION);
 
 		helper.runAfterDelay(25, () -> {
 			helper.assertTrue(MirrorDimensionController.isTrapped(victim), "absorbed");
@@ -130,7 +130,7 @@ public final class HouseOfVanityGameTests implements FabricGameTest {
 	public void casterLeaveClosesHouseAndFreesVictims(GameTestHelper helper) {
 		ServerPlayer pandora = pandora(helper);
 		ServerPlayer victim = victimInside(helper);
-		AbilityRouter.activate(pandora, AbilityIds.MIRROR_DIMENSION);
+		AbilityRouter.activate(pandora, PandoraAbilities.MIRROR_DIMENSION);
 
 		helper.runAfterDelay(3, () -> {
 			helper.assertTrue(MirrorDimensionController.isTrapped(victim), "absorbed");
