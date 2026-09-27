@@ -77,6 +77,14 @@ public final class OmnimanGameTests implements FabricGameTest {
 		Wire omniman = joinAudible(helper, "i3-grab-omni");
 		Wire bystander = joinAudible(helper, "i3-grab-watch");
 		TestHeroes.transform(omniman.player(), ModId.of("omniman"));
+
+		// The grab picks the best-scored hostile in a ~57° cone inside 6 blocks, and
+		// mock players are survival targets (pvp is on): isolate the actors from
+		// foreign test entities so the grab can only land on our zombie.
+		double isoX = omniman.player().getX() + 2000.0;
+		double isoZ = omniman.player().getZ() + 2000.0;
+		omniman.player().teleportTo(isoX, omniman.player().getY(), isoZ);
+		bystander.player().teleportTo(isoX, omniman.player().getY(), isoZ - 12.0);
 		Zombie zombie = spawnAhead(helper, omniman.player());
 
 		TestPlayers.awaitVisible(helper, zombie, () -> {
@@ -109,6 +117,9 @@ public final class OmnimanGameTests implements FabricGameTest {
 	public void thinkMarkReleasesTargetWhenOmnimanLeaves(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, ModId.of("omniman"));
+
+		// Same cone-scan hazard as the grab test: keep foreign entities out of reach.
+		player.teleportTo(player.getX() + 2000.0, player.getY(), player.getZ() + 2000.0);
 		Zombie zombie = spawnAhead(helper, player);
 
 		TestPlayers.awaitVisible(helper, zombie, () -> {
