@@ -18,6 +18,7 @@ import io.github.grebeshok105.codex.hero.RegulusHero;
 import io.github.grebeshok105.codex.item.ModItems;
 import io.github.grebeshok105.codex.mechanic.ability.SharedAbilityIds;
 import java.util.List;
+import java.util.function.BooleanSupplier;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
@@ -186,7 +187,12 @@ public class RegulusGameTests implements FabricGameTest {
 			helper.assertFalse(ModItems.EVANGELION.use(helper.getLevel(), player, InteractionHand.MAIN_HAND)
 							.getResult().consumesAction(),
 					"evangelion refuses while mad");
-			helper.runAfterDelay(40, () -> {
+			// The amp-4 reading tail beats the amp-0 madness instance in vanilla's merge —
+			// it resurfaces only at the next tickCount % 40 ambient refresh, so poll.
+			awaitTrue(helper, () -> {
+				MobEffectInstance r = player.getEffect(MobEffects.DAMAGE_RESISTANCE);
+				return r != null && r.getAmplifier() == 0 && r.isAmbient() && !r.isVisible();
+			}, 90, () -> {
 				assertMadnessEffect(helper, player, MobEffects.DAMAGE_RESISTANCE, 0);
 				TestPlayers.leave(player);
 				helper.succeed();
@@ -351,14 +357,17 @@ public class RegulusGameTests implements FabricGameTest {
 			// findTarget's angular hitbox is bbSize*0.6 around the eye ray — aim the ray
 			// at the victim's center or the vertical offset alone rejects it.
 			player.lookAt(EntityAnchorArgument.Anchor.EYES, zombie.getBoundingBox().getCenter());
-			double dist0 = zombie.distanceTo(player);
 			AbilityRouter.activate(player, MANIA_OF_GREED);
 			helper.assertTrue(HeroDataStore.get(player).isActive(MANIA_OF_GREED),
 					"the magnet engages on the aimed target");
 
 			helper.runAfterDelay(6, () -> {
-				helper.assertTrue(zombie.distanceTo(player) < dist0,
-						"the magnet pulls the victim in");
+				// A spawned mob's section may not be entity-ticking; the pull is observable
+				// as a per-tick toward-caster impulse regardless of whether it moves.
+				Vec3 pull = zombie.getDeltaMovement();
+				Vec3 toCaster = player.position().subtract(zombie.position()).normalize();
+				helper.assertTrue(pull.horizontalDistance() > 0.4 && pull.dot(toCaster) > 0,
+						"the magnet applies a toward-caster impulse every tick");
 				MobEffectInstance slow = player.getEffect(MobEffects.MOVEMENT_SLOWDOWN);
 				helper.assertTrue(slow != null && slow.getAmplifier() == 250
 								&& slow.getDuration() <= 200 && slow.isAmbient(),
@@ -548,6 +557,17 @@ public class RegulusGameTests implements FabricGameTest {
 		helper.assertTrue(instance != null && !instance.isInfiniteDuration()
 						&& instance.getDuration() <= maxDuration && instance.getAmplifier() == amplifier,
 				name + " is a finite amp-" + amplifier + " effect within " + maxDuration + " ticks");
+	}
+
+	private static void awaitTrue(GameTestHelper helper, BooleanSupplier cond, int triesLeft,
+			Runnable body) {
+		helper.runAfterDelay(1, () -> {
+			if (cond.getAsBoolean() || triesLeft <= 1) {
+				body.run();
+				return;
+			}
+			awaitTrue(helper, cond, triesLeft - 1, body);
+		});
 	}
 
 	private static Zombie spawnAhead(GameTestHelper helper, ServerPlayer player, double distance) {
