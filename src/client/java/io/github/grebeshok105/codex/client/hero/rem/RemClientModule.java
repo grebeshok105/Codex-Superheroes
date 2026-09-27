@@ -4,7 +4,7 @@ import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.client.ClientRemDemonismState;
 import io.github.grebeshok105.codex.client.core.module.HeroClientContext;
 import io.github.grebeshok105.codex.client.core.module.HeroClientModule;
-import io.github.grebeshok105.codex.client.hud.RemDemonismHud;
+import io.github.grebeshok105.codex.client.hero.rem.hud.RemDemonismHud;
 import io.github.grebeshok105.codex.client.render.RamRenderer;
 import io.github.grebeshok105.codex.client.render.RemOniHornFeatureRenderer;
 import io.github.grebeshok105.codex.entity.ModEntities;

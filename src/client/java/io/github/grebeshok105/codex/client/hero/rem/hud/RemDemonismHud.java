@@ -1,7 +1,8 @@
-package io.github.grebeshok105.codex.client.hud;
+package io.github.grebeshok105.codex.client.hero.rem.hud;
 
 import io.github.grebeshok105.codex.client.ClientHeroState;
 import io.github.grebeshok105.codex.client.ClientRemDemonismState;
+import io.github.grebeshok105.codex.client.hud.HudUtil;
 import io.github.grebeshok105.codex.hero.RemHero;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;

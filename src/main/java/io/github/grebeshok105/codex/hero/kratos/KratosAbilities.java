@@ -21,6 +21,9 @@ public final class KratosAbilities {
 	public static final ResourceLocation KRATOS_LEVIATHAN_THROW = KratosLeviathanThrowAbility.ID;
 	public static final ResourceLocation KRATOS_GOD_SLAYER = KratosGodSlayerAbility.ID;
 
+	/** Unprefixed alias for internal module use (runtime leafs reference the module root). */
+	public static final ResourceLocation SPARTAN_RAGE = KratosSpartanRageAbility.ID;
+
 	public static final List<ResourceLocation> ALL = List.of(
 			KRATOS_SPARTAN_RAGE,
 			KRATOS_BLADE_STORM,

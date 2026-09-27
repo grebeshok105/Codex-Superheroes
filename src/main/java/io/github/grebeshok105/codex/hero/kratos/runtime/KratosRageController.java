@@ -4,7 +4,7 @@ import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.ability.AbilityRouter;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
-import io.github.grebeshok105.codex.hero.kratos.ability.KratosSpartanRageAbility;
+import io.github.grebeshok105.codex.hero.kratos.KratosAbilities;
 import io.github.grebeshok105.codex.hero.kratos.net.KratosRageS2CPayload;
 import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
@@ -138,7 +138,7 @@ public final class KratosRageController {
 				if (next <= 0f) {
 					RAGE.put(id, id, 0f);
 					it.remove();
-					AbilityRouter.deactivate(p, KratosSpartanRageAbility.ID);
+					AbilityRouter.deactivate(p, KratosAbilities.SPARTAN_RAGE);
 					sync(p);
 				} else {
 					RAGE.put(id, id, next);
