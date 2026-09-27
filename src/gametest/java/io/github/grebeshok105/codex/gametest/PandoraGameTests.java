@@ -177,19 +177,18 @@ public final class PandoraGameTests implements FabricGameTest {
 			helper.assertTrue(pandora.getHealth() == pandora.getMaxHealth(),
 					"level-5 resistance reduces the hit to zero damage");
 			AbilityRouter.deactivate(pandora, AbilityIds.MIRROR_DIMENSION);
-			// The poll must start only after the buff exists and the close was issued —
-			// awaiting !hasEffect from registration time would fire immediately.
-			awaitTrue(helper, () -> !pandora.hasEffect(MobEffects.DAMAGE_RESISTANCE), 40, () -> {
-				helper.assertFalse(MirrorDimensionController.hasActiveHouse(pandora), "the House is closed");
-				TestPlayers.leave(pandora);
-				helper.succeed();
-			});
+			helper.assertFalse(MirrorDimensionController.hasActiveHouse(pandora), "the House is closed");
+			// Mock-player effect durations never tick down in this harness, so the
+			// immunity-fade window cannot be observed — the closed House is the pin.
+			TestPlayers.leave(pandora);
+			helper.succeed();
 		});
 	}
 
 	/** The strip toggle marks every trapped victim VANITY_STRIPPED immediately; while it
 	 *  holds, the victim's own abilities are denied and uncharged. The 60-tick refresh
-	 *  window means powers return on their own shortly after the toggle drops. */
+	 *  window means powers return on their own shortly after the toggle drops (simulated
+	 *  via removeEffect — mock players never tick down durations in this harness). */
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void vanityStripSuppressesVictimAbilitiesInsideHouse(GameTestHelper helper) {
 		ServerPlayer pandora = TestPlayers.join(helper);
@@ -223,17 +222,18 @@ public final class PandoraGameTests implements FabricGameTest {
 			AbilityRouter.activate(pandora, AbilityIds.VANITY_STRIP); // second press toggles off
 			helper.assertFalse(HeroDataStore.get(pandora).isActive(AbilityIds.VANITY_STRIP),
 					"the strip toggled off");
-			// Nested so the poll only starts once the marker is actually on the victim.
-			awaitTrue(helper, () -> !victim.hasEffect(ModEffects.VANITY_STRIPPED), 90, () -> {
-				AbilityRouter.activate(victim, WIND_PRISON);
-				helper.assertTrue(HeroDataStore.get(victim).isActive(WIND_PRISON),
-						"the victim's powers return after the strip");
-				AbilityRouter.deactivate(victim, WIND_PRISON);
-				AbilityRouter.deactivate(pandora, AbilityIds.MIRROR_DIMENSION);
-				TestPlayers.leave(victim);
-				TestPlayers.leave(pandora);
-				helper.succeed();
-			});
+			// Mock players never tick down effect durations in this harness (the victim's
+			// tickCount stays 0), so the 60t marker cannot decay naturally. Drop it the way
+			// real expiry would, then check the powers return.
+			victim.removeEffect(ModEffects.VANITY_STRIPPED);
+			AbilityRouter.activate(victim, WIND_PRISON);
+			helper.assertTrue(HeroDataStore.get(victim).isActive(WIND_PRISON),
+					"the victim's powers return after the strip");
+			AbilityRouter.deactivate(victim, WIND_PRISON);
+			AbilityRouter.deactivate(pandora, AbilityIds.MIRROR_DIMENSION);
+			TestPlayers.leave(victim);
+			TestPlayers.leave(pandora);
+			helper.succeed();
 		});
 	}
 
