@@ -1,9 +1,9 @@
 package io.github.grebeshok105.codex.client.hero.rem.hud;
 
 import io.github.grebeshok105.codex.client.ClientHeroState;
-import io.github.grebeshok105.codex.client.ClientRemDemonismState;
+import io.github.grebeshok105.codex.client.hero.rem.state.ClientRemDemonismState;
 import io.github.grebeshok105.codex.client.hud.HudUtil;
-import io.github.grebeshok105.codex.hero.RemHero;
+import io.github.grebeshok105.codex.hero.rem.RemHero;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -11,8 +11,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
 /**
- * Rem's demonism bar — the Rem half of the legacy shared rage-bar HUD, kept here under the
- * Rem name until the I4 wave moves it into the rem module.
+ * Rem's demonism bar — the Rem half of the legacy shared rage-bar HUD.
  */
 public final class RemDemonismHud {
 	private static final int BAR_WIDTH = 182;

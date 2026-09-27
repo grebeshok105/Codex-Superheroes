@@ -1,5 +1,6 @@
 package io.github.grebeshok105.codex.datagen;
 
+import io.github.grebeshok105.codex.bootstrap.ContentModules;
 import io.github.grebeshok105.codex.bootstrap.HeroModules;
 import io.github.grebeshok105.codex.damage.ModDamageTypes;
 import net.fabricmc.fabric.api.datagen.v1.DataGeneratorEntrypoint;
@@ -23,6 +24,7 @@ public final class SuperheroesDataGenerator implements DataGeneratorEntrypoint {
 		registryBuilder.add(Registries.DAMAGE_TYPE, context -> {
 			ModDamageTypes.bootstrap(context);
 			HeroModules.bootstrapDamageTypes(context);
+			ContentModules.bootstrapDamageTypes(context);
 		});
 	}
 }

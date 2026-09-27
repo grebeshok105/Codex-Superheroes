@@ -42,10 +42,14 @@
 			"io.github.grebeshok105.codex.gametest.KratosGameTests",
 			"io.github.grebeshok105.codex.gametest.OmnimanGameTests",
 			"io.github.grebeshok105.codex.gametest.GokuNarutoChargeGameTests",
+			"io.github.grebeshok105.codex.gametest.BattleBeastGameTests",
 			"io.github.grebeshok105.codex.gametest.CaptainAmericaGameTests",
 			"io.github.grebeshok105.codex.gametest.ContentRegistrationGameTests",
 			"io.github.grebeshok105.codex.gametest.HordeGameTests",
 			"io.github.grebeshok105.codex.gametest.SungJinwooGameTests"
+			"io.github.grebeshok105.codex.gametest.RemGameTests",
+			"io.github.grebeshok105.codex.gametest.HomelanderBossGameTests",
+			"io.github.grebeshok105.codex.gametest.RaidenGameTests"
 		]
 	},
 	"depends": {

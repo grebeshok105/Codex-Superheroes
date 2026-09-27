@@ -25,6 +25,7 @@ import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.level.GameType;
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
@@ -77,6 +78,19 @@ public final class OmnimanGameTests implements FabricGameTest {
 		Wire omniman = joinAudible(helper, "i3-grab-omni");
 		Wire bystander = joinAudible(helper, "i3-grab-watch");
 		TestHeroes.transform(omniman.player(), ModId.of("omniman"));
+
+		// The grab picks the best-scored hostile in a ~57° cone inside 6 blocks, and
+		// mock players are survival targets (pvp is on): isolate the actors from
+		// foreign test entities so the grab can only land on our zombie. The chunk
+		// must be force-loaded first — mock connections raise no chunk tickets, so
+		// entities in a remote chunk would never enter tracking.
+		double isoX = omniman.player().getX() - 4000.0;
+		double isoZ = omniman.player().getZ() - 4000.0;
+		helper.getLevel().getChunk(BlockPos.containing(isoX, omniman.player().getY(), isoZ));
+		omniman.player().teleportTo(isoX, omniman.player().getY(), isoZ);
+		// The bystander keeps its spawn spot — teleporting a Wire player's connection
+		// drops its outbound packet capture, and the pose broadcast goes to every
+		// player regardless of distance. >12 blocks away, it can't be a grab target.
 		Zombie zombie = spawnAhead(helper, omniman.player());
 
 		TestPlayers.awaitVisible(helper, zombie, () -> {
@@ -91,17 +105,14 @@ public final class OmnimanGameTests implements FabricGameTest {
 			helper.assertTrue(TestPlayers.lockOwners(zombie, ControlLockKind.NO_PHYSICS)
 							.contains(omniman.player().getUUID()),
 					"grab holds the NO_PHYSICS lock on the victim");
-			helper.assertTrue(hasThinkMark(drain(bystander.channel()), true),
-					"pose-on broadcast reached a bystander");
-
-			OmnimanThinkMarkAbility.clear(omniman.player());
-			helper.assertFalse(OmnimanThinkMarkAbility.isActive(omniman.player()), "clear ends the session");
-			helper.assertTrue(TestPlayers.lockOwners(zombie, ControlLockKind.NO_AI).isEmpty()
-							&& TestPlayers.lockOwners(zombie, ControlLockKind.NO_PHYSICS).isEmpty(),
-					"clear releases all grab locks");
-			helper.assertTrue(hasThinkMark(drain(bystander.channel()), false),
-					"pose-off broadcast reached a bystander");
-			helper.succeed();
+			awaitThinkMark(helper, bystander.channel(), true, () -> {
+				OmnimanThinkMarkAbility.clear(omniman.player());
+				helper.assertFalse(OmnimanThinkMarkAbility.isActive(omniman.player()), "clear ends the session");
+				helper.assertTrue(TestPlayers.lockOwners(zombie, ControlLockKind.NO_AI).isEmpty()
+								&& TestPlayers.lockOwners(zombie, ControlLockKind.NO_PHYSICS).isEmpty(),
+						"clear releases all grab locks");
+				awaitThinkMark(helper, bystander.channel(), false, helper::succeed);
+			});
 		});
 	}
 
@@ -109,6 +120,12 @@ public final class OmnimanGameTests implements FabricGameTest {
 	public void thinkMarkReleasesTargetWhenOmnimanLeaves(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, ModId.of("omniman"));
+
+		// Same cone-scan hazard as the grab test: keep foreign entities out of reach.
+		double isoX = player.getX() - 4000.0;
+		double isoZ = player.getZ() + 4000.0;
+		helper.getLevel().getChunk(BlockPos.containing(isoX, player.getY(), isoZ));
+		player.teleportTo(isoX, player.getY(), isoZ);
 		Zombie zombie = spawnAhead(helper, player);
 
 		TestPlayers.awaitVisible(helper, zombie, () -> {
@@ -182,6 +199,10 @@ public final class OmnimanGameTests implements FabricGameTest {
 	}
 
 	private static List<Object> drain(EmbeddedChannel channel) {
+		// Connection.send dispatches writes via eventLoop().execute() when called off
+		// the embedded loop; without running pending tasks the packets sit queued and
+		// readOutbound sees nothing — delivery timing is otherwise racy.
+		channel.runPendingTasks();
 		List<Object> out = new ArrayList<>();
 		for (Object o = channel.readOutbound(); o != null; o = channel.readOutbound()) {
 			out.add(o);
@@ -218,9 +239,35 @@ public final class OmnimanGameTests implements FabricGameTest {
 
 	private static Zombie spawnAhead(GameTestHelper helper, ServerPlayer player) {
 		Vec3 ahead = player.position().add(player.getViewVector(1f).normalize().scale(2.0));
+		// Force-load the destination chunk first: in an unloaded chunk the entity is
+		// never registered for area scans, so findGrabTarget sees an empty world.
+		helper.getLevel().getChunk(BlockPos.containing(ahead.x, player.getY(), ahead.z));
 		Zombie zombie = EntityType.ZOMBIE.create(helper.getLevel());
 		zombie.moveTo(ahead.x, player.getY(), ahead.z, 0f, 0f);
 		helper.getLevel().addFreshEntity(zombie);
 		return zombie;
+	}
+
+	/**
+	 * Polls the wire each tick until the think-mark payload shows up (or the retry
+	 * budget runs out). Sends queue on the embedded channel's event loop, so a
+	 * single drain can legitimately read empty even though the packet is in flight.
+	 */
+	private static void awaitThinkMark(GameTestHelper helper, EmbeddedChannel channel,
+			boolean active, Runnable done) {
+		awaitThinkMark(helper, channel, active, 15, done);
+	}
+
+	private static void awaitThinkMark(GameTestHelper helper, EmbeddedChannel channel,
+			boolean active, int tries, Runnable done) {
+		if (tries <= 0) {
+			helper.fail("think-mark broadcast (active=" + active + ") never reached a bystander");
+			return;
+		}
+		if (hasThinkMark(drain(channel), active)) {
+			done.run();
+			return;
+		}
+		helper.runAfterDelay(1, () -> awaitThinkMark(helper, channel, active, tries - 1, done));
 	}
 }

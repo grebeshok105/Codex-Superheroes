@@ -41,25 +41,7 @@ public final class AbilityIds {
 	public static final ResourceLocation THANOS_SOUL_PULSE = ModId.of("thanos_soul_pulse");
 	public static final ResourceLocation THANOS_SNAP = ModId.of("thanos_snap");
 
-	public static final ResourceLocation RAIDEN_SWORD_DRAW = ModId.of("raiden_sword_draw");
-	public static final ResourceLocation RAIDEN_EYE_OF_JUDGMENT = ModId.of("raiden_eye_of_judgment");
-	public static final ResourceLocation RAIDEN_MUSOU_SHINSETSU = ModId.of("raiden_musou_shinsetsu");
-	public static final ResourceLocation RAIDEN_PLUNGING_STRIKE = ModId.of("raiden_plunging_strike");
-	public static final ResourceLocation RAIDEN_TRANSCENDENCE = ModId.of("raiden_transcendence");
-	public static final ResourceLocation RAIDEN_MUSOU_ISSHIN = ModId.of("raiden_musou_isshin");
 
-	public static final ResourceLocation BATTLE_BEAST_PREDATOR_LEAP = ModId.of("battle_beast_predator_leap");
-	public static final ResourceLocation BATTLE_BEAST_AXE_CLEAVE = ModId.of("battle_beast_axe_cleave");
-	public static final ResourceLocation BATTLE_BEAST_WAR_ROAR = ModId.of("battle_beast_war_roar");
-	public static final ResourceLocation BATTLE_BEAST_BLOODLUST = ModId.of("battle_beast_bloodlust");
-
-	public static final ResourceLocation REM_MORNING_STAR = ModId.of("rem_morning_star");
-	public static final ResourceLocation REM_ONI_RAGE = ModId.of("rem_oni_rage");
-	public static final ResourceLocation REM_HEALING_MAGIC = ModId.of("rem_healing_magic");
-	public static final ResourceLocation REM_ICE_BURST = ModId.of("rem_ice_burst");
-	public static final ResourceLocation REM_HUMA_ICE_SPIKES = ModId.of("rem_huma_ice_spikes");
-	public static final ResourceLocation REM_MACE_CRATER = ModId.of("rem_mace_crater");
-	public static final ResourceLocation REM_ONI_KICK = ModId.of("rem_oni_kick");
 
 	// Pandora — Mirror Dimension warp
 	public static final ResourceLocation MIRROR_DIMENSION = ModId.of("mirror_dimension");

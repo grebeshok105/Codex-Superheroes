@@ -26,7 +26,6 @@ public final class ModItemGroups {
 				output.accept(ModItems.HOMELANDER_SUIT);
 				output.accept(ModItems.COMPOUND_V);
 				output.accept(ModItems.MILK_BOTTLE);
-				output.accept(ModItems.VOUGHT_SIGNAL);
 
 				output.accept(ModItems.IRON_MAN_SUIT);
 				output.accept(ModItems.IRON_MAN_REACTOR);
@@ -48,12 +47,6 @@ public final class ModItemGroups {
 				output.accept(ModItems.TIME_STONE);
 				output.accept(ModItems.MIND_STONE);
 
-
-				output.accept(ModItems.RAIDEN_SUIT);
-
-
-				output.accept(ModItems.BATTLE_BEAST_MEDALLION);
-				output.accept(ModItems.REM_ONI_HORN);
 				output.accept(ModItems.PANDORA_SUIT);
 
 				// Hero modules append their items here, in module registration order.
@@ -76,7 +69,7 @@ public final class ModItemGroups {
 	 * Не появляются в обычном креативе.
 	 */
 	public static final List<Item> ADMIN_ONLY_ITEMS = List.of(
-			ModItems.HOMELANDER_BOSS_SPAWN_EGG,
+			io.github.grebeshok105.codex.content.boss.homelander.HomelanderBossItems.HOMELANDER_BOSS_SPAWN_EGG,
 			io.github.grebeshok105.codex.content.horde.HordeItems.HORDE_CRYSTAL
 	);
 
