@@ -9,7 +9,8 @@ import java.util.List;
 public final class ContentClientModules {
 	public static final List<ContentClientModule> ALL = List.of(
 			new io.github.grebeshok105.codex.client.content.horde.HordeClientModule(),
-			new io.github.grebeshok105.codex.client.content.boss.homelander.HomelanderBossClientModule()
+			new io.github.grebeshok105.codex.client.content.boss.homelander.HomelanderBossClientModule(),
+			new io.github.grebeshok105.codex.client.content.admin.AdminClientModule()
 	);
 
 	private ContentClientModules() {
