@@ -1,10 +1,10 @@
 package io.github.grebeshok105.codex.gametest;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.attachment.ModAttachments;
+import io.github.grebeshok105.codex.content.admin.AdminAbilityDebug;
+import io.github.grebeshok105.codex.content.admin.AdminAttachments;
 import io.github.grebeshok105.codex.core.hero.Heroes;
 import io.github.grebeshok105.codex.core.transform.HeroDataStore;
-import io.github.grebeshok105.codex.debug.AdminAbilityDebug;
 import io.github.grebeshok105.codex.item.ModItemGroups;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.commands.CommandSource;
@@ -28,7 +28,9 @@ import java.util.List;
  * feedback message keys) so the {@code command/} + {@code debug/} →
  * {@code content/command/} + {@code content/admin/} move is verified
  * byte-equivalent. Commands run through the real dispatcher with a
- * player-backed source at the given permission level.
+ * player-backed source at the given permission level. The flag assertions go
+ * through {@link AdminAbilityDebug}, the content.admin facade — the state itself
+ * lives in {@code core.ability.MobTargetDebug} (hero modules may read it).
  */
 public final class SuperheroesCommandsGameTests implements FabricGameTest {
 	private static final String SCORPION = "superheroes:scorpion";
@@ -179,11 +181,11 @@ public final class SuperheroesCommandsGameTests implements FabricGameTest {
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void adminCommandsToggleBuildAndGive(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper, "cmdadmin");
-		helper.assertTrue(!player.getAttachedOrCreate(ModAttachments.ADMIN_BUILD),
+		helper.assertTrue(!player.getAttachedOrCreate(AdminAttachments.ADMIN_BUILD),
 				"fresh player must not have admin build");
 
 		List<Component> toggle = runAs(player, 2, "superheroes admin");
-		helper.assertTrue(player.getAttachedOrCreate(ModAttachments.ADMIN_BUILD),
+		helper.assertTrue(player.getAttachedOrCreate(AdminAttachments.ADMIN_BUILD),
 				"bare admin must toggle the flag on");
 		helper.assertTrue(hasKey(toggle, "commands.superheroes.admin_build.on"),
 				"must report admin_build.on, got " + toggle);
@@ -197,7 +199,7 @@ public final class SuperheroesCommandsGameTests implements FabricGameTest {
 		}
 
 		List<Component> off = runAs(player, 2, "superheroes admin off");
-		helper.assertTrue(!player.getAttachedOrCreate(ModAttachments.ADMIN_BUILD),
+		helper.assertTrue(!player.getAttachedOrCreate(AdminAttachments.ADMIN_BUILD),
 				"admin off must clear the flag");
 		helper.assertTrue(hasKey(off, "commands.superheroes.admin_build.off"),
 				"must report admin_build.off, got " + off);
@@ -242,7 +244,7 @@ public final class SuperheroesCommandsGameTests implements FabricGameTest {
 				"a permission-0 player must not transform via the command");
 		helper.assertTrue(!AdminAbilityDebug.playerOnlyAbilitiesTargetMobs(),
 				"a permission-0 player must not flip the debug flag");
-		helper.assertTrue(!player.getAttachedOrCreate(ModAttachments.ADMIN_BUILD),
+		helper.assertTrue(!player.getAttachedOrCreate(AdminAttachments.ADMIN_BUILD),
 				"a permission-0 player must not toggle admin build");
 		TestPlayers.leave(player);
 		helper.succeed();

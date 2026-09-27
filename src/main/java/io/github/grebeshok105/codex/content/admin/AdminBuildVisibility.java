@@ -1,4 +1,4 @@
-package io.github.grebeshok105.codex.item;
+package io.github.grebeshok105.codex.content.admin;
 
 /**
  * Клиентский флаг видимости админ-предметов в креатив-вкладке.

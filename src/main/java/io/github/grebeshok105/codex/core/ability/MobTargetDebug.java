@@ -1,15 +1,19 @@
-package io.github.grebeshok105.codex.debug;
+package io.github.grebeshok105.codex.core.ability;
 
-import io.github.grebeshok105.codex.core.ability.Ability;
-import io.github.grebeshok105.codex.core.ability.AbilityRegistry;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Mob;
 
-public final class AdminAbilityDebug {
+/**
+ * The admin mob-targeting debug flag and the predicates built on it. The state lives in
+ * core because hero modules read it and may not depend on {@code content} (R18);
+ * {@code content.admin.AdminAbilityDebug} re-exports this API for the command surface
+ * and gametests, which flip the flag through {@code /superheroes debug mob-targets}.
+ */
+public final class MobTargetDebug {
 	private static volatile boolean playerOnlyAbilitiesTargetMobs;
 
-	private AdminAbilityDebug() {
+	private MobTargetDebug() {
 	}
 
 	public static boolean playerOnlyAbilitiesTargetMobs() {

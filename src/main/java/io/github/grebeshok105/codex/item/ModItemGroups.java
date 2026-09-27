@@ -1,6 +1,7 @@
 package io.github.grebeshok105.codex.item;
 
 import io.github.grebeshok105.codex.ModId;
+import io.github.grebeshok105.codex.content.admin.AdminBuildVisibility;
 import io.github.grebeshok105.codex.core.content.CreativeTabContents;
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
 import net.minecraft.core.Registry;

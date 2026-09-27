@@ -1,7 +1,6 @@
 package io.github.grebeshok105.codex.bootstrap;
 
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
-import io.github.grebeshok105.codex.command.AdminBuildSyncController;
 import io.github.grebeshok105.codex.core.lifecycle.HeroTickDispatcher;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.effect.AutoSaturationController;
@@ -60,8 +59,6 @@ public final class SharedMechanics {
 		ctx.ticks().global(BallisticBodyTracker::tick);
 		ctx.ticks().global(FlightController::cleanup);
 		ctx.ticks().global(HeavensStrikeController::serverTick);
-		// content rows kept here until their own stage
-		AdminBuildSyncController.register(ctx);
 	}
 
 	/**
