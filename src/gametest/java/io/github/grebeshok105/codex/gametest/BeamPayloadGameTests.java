@@ -86,19 +86,41 @@ public final class BeamPayloadGameTests implements FabricGameTest {
 		helper.runAfterDelay(2, () -> {
 			ModNetworking.broadcastRepulsor(shooter.player(), START, END);
 			ModNetworking.broadcastThanosCosmicBeam(shooter.player(), START, END);
-			List<Object> packets = drain(shooter.channel());
-			helper.assertTrue(hasRepulsor(packets, shooter.player().getUUID()),
-					"trackingAndSelf: the repulsor shooter sees their own beam");
-			helper.assertTrue(hasThanosBeam(packets, shooter.player().getUUID()),
-					"trackingAndSelf: the thanos shooter sees their own beam");
-
-			ModNetworking.broadcastLaser(shooter.player(), START, END);
-			helper.assertTrue(!hasLaser(drain(shooter.channel()), shooter.player().getUUID()),
-					"tracking (not self): the laser shooter does NOT get their own payload — "
-							+ "the local overlay draws it");
-			TestPlayers.leave(shooter.player());
-			helper.succeed();
+			awaitSelfBeams(helper, shooter, new ArrayList<>(), 15, () -> {
+				// Both trackingAndSelf payloads landed. Now the tracking-only send:
+				// give the write the same kind of settle window the positives needed,
+				// then a single drain — a negative can't poll for absence.
+				ModNetworking.broadcastLaser(shooter.player(), START, END);
+				helper.runAfterDelay(3, () -> {
+					helper.assertTrue(!hasLaser(drain(shooter.channel()), shooter.player().getUUID()),
+							"tracking (not self): the laser shooter does NOT get their own payload — "
+									+ "the local overlay draws it");
+					TestPlayers.leave(shooter.player());
+					helper.succeed();
+				});
+			});
 		});
+	}
+
+	/**
+	 * Polls the wire each tick until the shooter has seen BOTH their own repulsor
+	 * and thanos payloads (or the retry budget runs out). Sends queue on the
+	 * embedded channel's event loop, so a single drain can legitimately read empty
+	 * even though the packet is in flight; drains consume, so packets accumulate.
+	 */
+	private static void awaitSelfBeams(GameTestHelper helper, Wire shooter, List<Object> seen,
+			int tries, Runnable done) {
+		if (tries <= 0) {
+			helper.fail("trackingAndSelf beams (repulsor+thanos) never reached their shooter");
+			return;
+		}
+		seen.addAll(drain(shooter.channel()));
+		UUID id = shooter.player().getUUID();
+		if (hasRepulsor(seen, id) && hasThanosBeam(seen, id)) {
+			done.run();
+			return;
+		}
+		helper.runAfterDelay(1, () -> awaitSelfBeams(helper, shooter, seen, tries - 1, done));
 	}
 
 	// ─────────────────────────── helpers ───────────────────────────
