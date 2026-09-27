@@ -11,7 +11,6 @@ import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
 import io.github.grebeshok105.codex.mechanic.motion.Motion;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -114,10 +113,8 @@ public final class ScaramoucheWindPrisonAbility implements Ability {
 			if (distance > RADIUS + 1.5 || distance < 0.001) continue;
 
 			Vec3 pull = toCenter.scale(0.075).add(0.0, 0.025, 0.0);
-			Motion.add(target, pull, Motion.Sync.MARK);
-			if (target instanceof ServerPlayer targetPlayer && player.tickCount % 4 == 0) {
-				targetPlayer.connection.send(new ClientboundSetEntityMotionPacket(targetPlayer));
-			}
+			Motion.add(target, pull, player.tickCount % 4 == 0
+					? Motion.Sync.MARK_AND_SEND_TO_PLAYER : Motion.Sync.MARK);
 			target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 30, 2, true, true, true));
 			if (player.tickCount % 10 == 0) {
 				target.invulnerableTime = 0;
