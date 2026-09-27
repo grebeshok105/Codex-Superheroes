@@ -8,7 +8,6 @@ import io.github.grebeshok105.codex.client.hud.BloodRainHud;
 import io.github.grebeshok105.codex.client.hud.CracksOverlayHud;
 import io.github.grebeshok105.codex.client.hud.EvangelionZoomHud;
 import io.github.grebeshok105.codex.client.hud.MadnessHudOverlay;
-import io.github.grebeshok105.codex.client.hud.SunWindupHud;
 import io.github.grebeshok105.codex.hero.RegulusHero;
 import io.github.grebeshok105.codex.network.MadnessSyncS2CPayload;
 import io.github.grebeshok105.codex.network.MadnessVisualS2CPayload;
@@ -22,7 +21,6 @@ public record RegulusClientModule() implements HeroClientModule {
 
 	@Override
 	public void register(HeroClientContext ctx) {
-		ctx.hud(900, ModId.of("sun_windup"), SunWindupHud::render);
 		ctx.hud(1100, ModId.of("madness_overlay"), MadnessHudOverlay::render);
 		ctx.hud(1200, ModId.of("blood_rain"), BloodRainHud::render);
 		ctx.hud(1300, ModId.of("evangelion_zoom"), EvangelionZoomHud::render);

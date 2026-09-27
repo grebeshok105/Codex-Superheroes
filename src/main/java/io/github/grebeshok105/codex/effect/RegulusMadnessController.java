@@ -1,5 +1,6 @@
 package io.github.grebeshok105.codex.effect;
 
+import io.github.grebeshok105.codex.mechanic.flight.FlightController;
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.attachment.ModAttachments;
 import io.github.grebeshok105.codex.core.ability.AbilityRouter;

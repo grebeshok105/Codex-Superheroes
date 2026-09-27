@@ -1,7 +1,7 @@
 package io.github.grebeshok105.codex.client.hero.homelander;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.client.ClientUraniumPressureState;
+import io.github.grebeshok105.codex.client.hero.homelander.state.ClientUraniumPressureState;
 import io.github.grebeshok105.codex.client.core.render.SkinProvider;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.resources.ResourceLocation;

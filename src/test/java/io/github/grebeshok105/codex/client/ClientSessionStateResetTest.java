@@ -69,8 +69,8 @@ class ClientSessionStateResetTest {
 			// registration).
 			ClientNanoFormState.update(PLAYER, 1);
 			ClientMeleeChargeState.update(true, 12);
-			ClientFlightState.update(42, true, io.github.grebeshok105.codex.flight.FlightMode.IRON_MAN,
-					io.github.grebeshok105.codex.flight.FlightPhase.HOVER, 0f);
+			ClientFlightState.update(42, true, io.github.grebeshok105.codex.mechanic.flight.FlightMode.IRON_MAN,
+					io.github.grebeshok105.codex.mechanic.flight.FlightPhase.HOVER, 0f);
 			MirrorWarpFlashHud.flashAndRun(() -> {
 			});
 			ClientAbilityCooldowns.update(ABILITY, 60);

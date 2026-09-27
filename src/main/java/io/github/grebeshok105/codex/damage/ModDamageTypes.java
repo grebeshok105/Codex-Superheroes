@@ -14,7 +14,6 @@ import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.entity.Entity;
 
 public final class ModDamageTypes {
-	public static final ResourceKey<DamageType> EYE_LASER = key("eye_laser");
 	public static final ResourceKey<DamageType> REPULSOR = key("repulsor");
 	public static final ResourceKey<DamageType> UNIBEAM = key("unibeam");
 	public static final ResourceKey<DamageType> COUNTER_STRIKE = key("counter_strike");
@@ -36,7 +35,6 @@ public final class ModDamageTypes {
 	}
 
 	public static void bootstrap(BootstrapContext<DamageType> context) {
-		context.register(EYE_LASER, new DamageType("eye_laser", DamageScaling.NEVER, 0.0F, DamageEffects.BURNING));
 		context.register(REPULSOR, new DamageType("repulsor", DamageScaling.NEVER, 0.0F));
 		context.register(UNIBEAM, new DamageType("unibeam", DamageScaling.NEVER, 0.0F, DamageEffects.BURNING));
 		context.register(COUNTER_STRIKE, new DamageType("counter_strike", DamageScaling.NEVER, 0.0F));
@@ -46,10 +44,6 @@ public final class ModDamageTypes {
 		context.register(CAP_SHIELD_THROW, new DamageType("cap_shield_throw", DamageScaling.NEVER, 0.0F));
 		context.register(CAP_SHIELD_SLAM, new DamageType("cap_shield_slam", DamageScaling.NEVER, 0.0F));
 		context.register(SPACE_CRUSH, new DamageType("space_crush", DamageScaling.NEVER, 0.0F));
-	}
-
-	public static DamageSource eyeLaser(ServerLevel level, Entity attacker) {
-		return source(level, EYE_LASER, attacker);
 	}
 
 	public static DamageSource repulsor(ServerLevel level, Entity attacker) {

@@ -2,15 +2,15 @@ package io.github.grebeshok105.codex.client.mixin;
 
 import io.github.grebeshok105.codex.client.ClientFlightState;
 import io.github.grebeshok105.codex.client.ClientHeroState;
-import io.github.grebeshok105.codex.effect.ModEffects;
-import io.github.grebeshok105.codex.flight.FlightAbilityState;
-import io.github.grebeshok105.codex.flight.FlightControls;
-import io.github.grebeshok105.codex.flight.FlightMode;
-import io.github.grebeshok105.codex.flight.FlightMotionMath;
-import io.github.grebeshok105.codex.flight.FlightPhase;
-import io.github.grebeshok105.codex.flight.FlightProfiles;
-import io.github.grebeshok105.codex.flight.FlightTuning;
-import io.github.grebeshok105.codex.flight.FlightVector;
+import io.github.grebeshok105.codex.mechanic.flight.FlightAbilityState;
+import io.github.grebeshok105.codex.mechanic.flight.FlightControls;
+import io.github.grebeshok105.codex.mechanic.flight.FlightMode;
+import io.github.grebeshok105.codex.mechanic.flight.FlightModifier;
+import io.github.grebeshok105.codex.mechanic.flight.FlightMotionMath;
+import io.github.grebeshok105.codex.mechanic.flight.FlightPhase;
+import io.github.grebeshok105.codex.mechanic.flight.FlightProfiles;
+import io.github.grebeshok105.codex.mechanic.flight.FlightTuning;
+import io.github.grebeshok105.codex.mechanic.flight.FlightVector;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.entity.MoverType;
@@ -41,7 +41,8 @@ public abstract class LocalPlayerFlightMixin {
 			return;
 		}
 
-		FlightTuning tuning = FlightProfiles.tuning(mode, heroData.energy(), ClientHeroState.energyMax(), ModEffects.isMadness(player));
+		FlightModifier modifier = FlightProfiles.modifierFor(heroData);
+		FlightTuning tuning = FlightProfiles.tuning(mode, heroData.energy(), ClientHeroState.energyMax(), modifier != null && modifier.boosted(player));
 		Vec3 motion = self.getDeltaMovement();
 		FlightControls controls = new FlightControls(
 				player.getYRot(),

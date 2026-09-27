@@ -12,7 +12,7 @@ import net.minecraft.sounds.SoundSource;
  * The Omni-Man half of the Homelander ↔ Omni-Man reaction bark: when someone
  * transforms into Omni-Man while a live Homelander exists, the Homelander
  * reaction line is broadcast to every player. The reverse direction stays in
- * {@code effect.HeroReactionController} until the Homelander wave moves it.
+ * {@code hero.homelander.runtime.HomelanderReactionRule} until the Homelander wave moves it.
  * The foreign hero id is a string literal; the bark sound comes from the
  * shared registry constant — no foreign hero import.
  */

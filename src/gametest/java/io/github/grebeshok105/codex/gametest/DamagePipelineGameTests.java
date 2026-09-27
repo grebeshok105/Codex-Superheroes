@@ -1,6 +1,6 @@
 package io.github.grebeshok105.codex.gametest;
 
-import io.github.grebeshok105.codex.damage.ModDamageTypes;
+import io.github.grebeshok105.codex.hero.homelander.registry.HomelanderDamageTypes;
 import io.github.grebeshok105.codex.hero.naruto.runtime.KawarimiController;
 import io.github.grebeshok105.codex.hero.reinhard.runtime.ReinhardTimeSlowController;
 import io.github.grebeshok105.codex.core.lifecycle.ControlLockKind;
@@ -28,8 +28,8 @@ public final class DamagePipelineGameTests implements FabricGameTest {
 		Zombie control = helper.spawn(EntityType.ZOMBIE, 3, 1, 1);
 
 		float hp = laserTarget.getHealth();
-		laserTarget.hurt(ModDamageTypes.eyeLaser(level, attacker), 5f);
-		laserTarget.hurt(ModDamageTypes.eyeLaser(level, attacker), 5f);
+		laserTarget.hurt(HomelanderDamageTypes.eyeLaser(level, attacker), 5f);
+		laserTarget.hurt(HomelanderDamageTypes.eyeLaser(level, attacker), 5f);
 		helper.assertTrue(hp - laserTarget.getHealth() >= 9.9f,
 				"eye_laser is in bypasses_cooldown: both same-tick hits apply fully");
 

@@ -2,7 +2,7 @@ package io.github.grebeshok105.codex.client.mixin;
 
 import io.github.grebeshok105.codex.client.ClientFlightState;
 import io.github.grebeshok105.codex.client.ClientThinkMarkState;
-import io.github.grebeshok105.codex.flight.FlightPhase;
+import io.github.grebeshok105.codex.mechanic.flight.FlightPhase;
 import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.world.entity.LivingEntity;

@@ -2,7 +2,7 @@ package io.github.grebeshok105.codex.gametest;
 
 import com.mojang.authlib.GameProfile;
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.ability.AbilityIds;
+import io.github.grebeshok105.codex.hero.homelander.HomelanderAbilityIds;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import io.github.grebeshok105.codex.core.ability.AbilityRegistry;
 import io.github.grebeshok105.codex.core.ability.AbilityRouter;
@@ -10,14 +10,14 @@ import io.github.grebeshok105.codex.core.transform.HeroData;
 import io.github.grebeshok105.codex.core.transform.HeroDataStore;
 import io.github.grebeshok105.codex.core.transform.HeroTransformService;
 import io.github.grebeshok105.codex.core.hero.Heroes;
-import io.github.grebeshok105.codex.effect.FlightController;
+import io.github.grebeshok105.codex.mechanic.flight.FlightController;
 import io.github.grebeshok105.codex.effect.ModEffects;
-import io.github.grebeshok105.codex.effect.UraniumDefenseController;
-import io.github.grebeshok105.codex.hero.HomelanderHero;
+import io.github.grebeshok105.codex.hero.homelander.runtime.UraniumDefenseController;
+import io.github.grebeshok105.codex.hero.homelander.HomelanderHero;
 import io.github.grebeshok105.codex.item.ModItems;
 import io.github.grebeshok105.codex.mechanic.ability.SharedAbilityIds;
-import io.github.grebeshok105.codex.network.UraniumPressureS2CPayload;
-import io.github.grebeshok105.codex.network.UraniumThreatS2CPayload;
+import io.github.grebeshok105.codex.hero.homelander.net.UraniumPressureS2CPayload;
+import io.github.grebeshok105.codex.hero.homelander.net.UraniumThreatS2CPayload;
 import io.netty.channel.embedded.EmbeddedChannel;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.core.BlockPos;
@@ -70,11 +70,11 @@ public final class HomelanderGameTests implements FabricGameTest {
 		List<ResourceLocation> abilities = Heroes.get(HomelanderHero.ID).getAbilities();
 		helper.assertTrue(abilities.size() == 6, "homelander owns exactly 6 abilities, got " + abilities.size());
 		helper.assertTrue(abilities.get(0).equals(SharedAbilityIds.FLIGHT), "slot 0 is the shared flight toggle");
-		helper.assertTrue(abilities.get(1).equals(AbilityIds.EYE_LASERS), "slot 1 is eye_lasers");
-		helper.assertTrue(abilities.get(2).equals(AbilityIds.X_RAY), "slot 2 is x_ray");
-		helper.assertTrue(abilities.get(3).equals(AbilityIds.IRON_FISTS), "slot 3 is iron_fists");
-		helper.assertTrue(abilities.get(4).equals(AbilityIds.HAND_CLAP), "slot 4 is hand_clap");
-		helper.assertTrue(abilities.get(5).equals(AbilityIds.STUNNING_ROAR), "slot 5 is stunning_roar");
+		helper.assertTrue(abilities.get(1).equals(HomelanderAbilityIds.EYE_LASERS), "slot 1 is eye_lasers");
+		helper.assertTrue(abilities.get(2).equals(HomelanderAbilityIds.X_RAY), "slot 2 is x_ray");
+		helper.assertTrue(abilities.get(3).equals(HomelanderAbilityIds.IRON_FISTS), "slot 3 is iron_fists");
+		helper.assertTrue(abilities.get(4).equals(HomelanderAbilityIds.HAND_CLAP), "slot 4 is hand_clap");
+		helper.assertTrue(abilities.get(5).equals(HomelanderAbilityIds.STUNNING_ROAR), "slot 5 is stunning_roar");
 		TestPlayers.leave(player);
 		helper.succeed();
 	}
@@ -161,8 +161,8 @@ public final class HomelanderGameTests implements FabricGameTest {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, HomelanderHero.ID);
 		player.addEffect(new MobEffectInstance(ModEffects.MADNESS, 600));
-		AbilityRouter.activate(player, AbilityIds.X_RAY);
-		helper.assertTrue(data(player).isActive(AbilityIds.X_RAY), "x_ray toggles on in madness");
+		AbilityRouter.activate(player, HomelanderAbilityIds.X_RAY);
+		helper.assertTrue(data(player).isActive(HomelanderAbilityIds.X_RAY), "x_ray toggles on in madness");
 		// The aftermath is an edge detector: at least one tick must see MADNESS present
 		// before its removal counts.
 		helper.runAfterDelay(2, () -> player.removeEffect(ModEffects.MADNESS));
@@ -175,7 +175,7 @@ public final class HomelanderGameTests implements FabricGameTest {
 			MobEffectInstance resist = player.getEffect(MobEffects.DAMAGE_RESISTANCE);
 			helper.assertTrue(resist != null && resist.getAmplifier() == 4,
 					"aftermath comes with resistance 5");
-			helper.assertFalse(data(player).isActive(AbilityIds.X_RAY),
+			helper.assertFalse(data(player).isActive(HomelanderAbilityIds.X_RAY),
 					"the aftermath deactivates running abilities");
 			helper.assertTrue(player.getDeltaMovement().lengthSqr() < 0.01,
 					"the aftermath pins player motion, got " + player.getDeltaMovement());
@@ -346,8 +346,8 @@ public final class HomelanderGameTests implements FabricGameTest {
 	public void ironFistsLungeHitsDashTarget(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, HomelanderHero.ID);
-		AbilityRouter.activate(player, AbilityIds.IRON_FISTS);
-		helper.assertTrue(data(player).isActive(AbilityIds.IRON_FISTS), "iron fists toggles on");
+		AbilityRouter.activate(player, HomelanderAbilityIds.IRON_FISTS);
+		helper.assertTrue(data(player).isActive(HomelanderAbilityIds.IRON_FISTS), "iron fists toggles on");
 		helper.assertTrue(data(player).energy() == 0f,
 				"iron fists empties the energy bar, got " + data(player).energy());
 		Zombie zombie = spawnAhead(helper, player);
@@ -369,11 +369,11 @@ public final class HomelanderGameTests implements FabricGameTest {
 		TestHeroes.transform(player, HomelanderHero.ID);
 		Zombie zombie = spawnAhead(helper, player);
 		TestPlayers.awaitVisible(helper, zombie, () -> {
-			AbilityRouter.activate(player, AbilityIds.HAND_CLAP);
+			AbilityRouter.activate(player, HomelanderAbilityIds.HAND_CLAP);
 			helper.assertTrue(zombie.getHealth() < zombie.getMaxHealth(),
 					"hand clap hits mobs in front");
 			helper.assertTrue(zombie.hurtMarked, "clap victim is knocked back");
-			helper.assertTrue(AbilityCooldowns.isOnCooldown(player, AbilityIds.HAND_CLAP),
+			helper.assertTrue(AbilityCooldowns.isOnCooldown(player, HomelanderAbilityIds.HAND_CLAP),
 					"hand clap goes on a 240-tick cooldown");
 			helper.assertTrue(data(player).energy() == 50f,
 					"hand clap costs 50 energy, got " + data(player).energy());
@@ -388,13 +388,13 @@ public final class HomelanderGameTests implements FabricGameTest {
 		TestHeroes.transform(player, HomelanderHero.ID);
 		Zombie zombie = spawnAhead(helper, player);
 		TestPlayers.awaitVisible(helper, zombie, () -> {
-			AbilityRouter.activate(player, AbilityIds.STUNNING_ROAR);
+			AbilityRouter.activate(player, HomelanderAbilityIds.STUNNING_ROAR);
 			helper.assertTrue(zombie.getHealth() < zombie.getMaxHealth(),
 					"the roar damages mobs in radius 12");
 			MobEffectInstance darkness = zombie.getEffect(MobEffects.DARKNESS);
 			helper.assertTrue(darkness != null && darkness.getDuration() == 80,
 					"the roar applies 80 ticks of darkness");
-			helper.assertTrue(AbilityCooldowns.isOnCooldown(player, AbilityIds.STUNNING_ROAR),
+			helper.assertTrue(AbilityCooldowns.isOnCooldown(player, HomelanderAbilityIds.STUNNING_ROAR),
 					"the roar goes on a 160-tick cooldown");
 			helper.assertTrue(data(player).energy() == 70f,
 					"the roar costs 30 energy, got " + data(player).energy());
@@ -409,12 +409,12 @@ public final class HomelanderGameTests implements FabricGameTest {
 		TestHeroes.transform(player, HomelanderHero.ID);
 		Zombie zombie = spawnAhead(helper, player);
 		TestPlayers.awaitVisible(helper, zombie, () -> {
-			AbilityRouter.activate(player, AbilityIds.X_RAY);
-			helper.assertTrue(data(player).isActive(AbilityIds.X_RAY), "x_ray toggles on");
+			AbilityRouter.activate(player, HomelanderAbilityIds.X_RAY);
+			helper.assertTrue(data(player).isActive(HomelanderAbilityIds.X_RAY), "x_ray toggles on");
 			helper.runAfterDelay(4, () -> {
 				helper.assertTrue(zombie.hasEffect(MobEffects.GLOWING),
 						"hostiles within 32 blocks glow");
-				AbilityRouter.deactivate(player, AbilityIds.X_RAY);
+				AbilityRouter.deactivate(player, HomelanderAbilityIds.X_RAY);
 				TestPlayers.leave(player);
 				helper.succeed();
 			});
@@ -425,15 +425,15 @@ public final class HomelanderGameTests implements FabricGameTest {
 	public void eyeLasersDrainEnergyWhileActive(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, HomelanderHero.ID);
-		AbilityRouter.activate(player, AbilityIds.EYE_LASERS);
-		helper.assertTrue(data(player).isActive(AbilityIds.EYE_LASERS), "eye lasers toggle on");
+		AbilityRouter.activate(player, HomelanderAbilityIds.EYE_LASERS);
+		helper.assertTrue(data(player).isActive(HomelanderAbilityIds.EYE_LASERS), "eye lasers toggle on");
 		float afterActivate = data(player).energy();
 		helper.assertTrue(afterActivate == 96f,
 				"activation costs 4 energy, got " + afterActivate);
 		helper.runAfterDelay(5, () -> {
 			helper.assertTrue(data(player).energy() < afterActivate,
 					"the beam drains 1.5/t while firing, got " + data(player).energy());
-			AbilityRouter.deactivate(player, AbilityIds.EYE_LASERS);
+			AbilityRouter.deactivate(player, HomelanderAbilityIds.EYE_LASERS);
 			TestPlayers.leave(player);
 			helper.succeed();
 		});

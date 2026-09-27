@@ -13,7 +13,7 @@ import io.github.grebeshok105.codex.core.hero.JarvisThreatClass;
 import io.github.grebeshok105.codex.core.lifecycle.ControlLockKind;
 import io.github.grebeshok105.codex.core.transform.HeroDataStore;
 import io.github.grebeshok105.codex.core.transform.HeroTransformService;
-import io.github.grebeshok105.codex.damage.ModDamageTypes;
+import io.github.grebeshok105.codex.hero.homelander.registry.HomelanderDamageTypes;
 import io.github.grebeshok105.codex.hero.doomsday.runtime.DoomGripController;
 import io.github.grebeshok105.codex.hero.doomsday.runtime.DoomsdayAdaptationController;
 import io.github.grebeshok105.codex.hero.doomsday.runtime.DoomsdayEffectAdaptationController;
@@ -250,7 +250,7 @@ public final class DoomsdayGameTests implements FabricGameTest {
 		doomsday.invulnerableTime = 0;
 		// Null attacker: a player attacker would trip the shared-level pvp=false gate before
 		// adaptation is even consulted (eye_laser is a player-usable beam).
-		helper.assertTrue(doomsday.hurt(ModDamageTypes.eyeLaser(level, null), 1.0f),
+		helper.assertTrue(doomsday.hurt(HomelanderDamageTypes.eyeLaser(level, null), 1.0f),
 				"superheroes:eye_laser is in #beam but not in this group — it still lands");
 		TestPlayers.leave(doomsday);
 		helper.succeed();

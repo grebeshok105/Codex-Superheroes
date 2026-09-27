@@ -1,5 +1,8 @@
 package io.github.grebeshok105.codex.item;
 
+import io.github.grebeshok105.codex.hero.homelander.item.MilkBottleItem;
+import io.github.grebeshok105.codex.hero.homelander.item.UraniumDaggerItem;
+import io.github.grebeshok105.codex.hero.homelander.item.UraniumIsotopeItem;
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.transform.TransformationItem;
 import io.github.grebeshok105.codex.core.transform.TransformationLore;

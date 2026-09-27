@@ -5,7 +5,7 @@ import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
-import io.github.grebeshok105.codex.effect.FlightController;
+import io.github.grebeshok105.codex.mechanic.flight.FlightController;
 import io.github.grebeshok105.codex.hero.omniman.runtime.OmnimanMomentumController;
 import io.github.grebeshok105.codex.mechanic.motion.Motion;
 import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;

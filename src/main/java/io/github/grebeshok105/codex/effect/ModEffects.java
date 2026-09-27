@@ -1,5 +1,7 @@
 package io.github.grebeshok105.codex.effect;
 
+import io.github.grebeshok105.codex.hero.homelander.runtime.HomelanderMadnessAftermathMobEffect;
+import io.github.grebeshok105.codex.hero.homelander.runtime.HomelanderMadnessMobEffect;
 import io.github.grebeshok105.codex.ModId;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
@@ -10,12 +12,12 @@ import net.minecraft.world.effect.MobEffectCategory;
 public final class ModEffects {
 	public static final Holder<MobEffect> MADNESS = Registry.registerForHolder(
 			BuiltInRegistries.MOB_EFFECT, ModId.of("madness"),
-			new MadnessMobEffect(MobEffectCategory.HARMFUL, 0xFF1F2D)
+			new HomelanderMadnessMobEffect(MobEffectCategory.HARMFUL, 0xFF1F2D)
 	);
 
 	public static final Holder<MobEffect> MADNESS_AFTERMATH = Registry.registerForHolder(
 			BuiltInRegistries.MOB_EFFECT, ModId.of("madness_aftermath"),
-			new MadnessAftermathMobEffect(MobEffectCategory.NEUTRAL, 0xFFE680)
+			new HomelanderMadnessAftermathMobEffect(MobEffectCategory.NEUTRAL, 0xFFE680)
 	);
 
 	public static final Holder<MobEffect> SUPERHERO_WEAKNESS = Registry.registerForHolder(

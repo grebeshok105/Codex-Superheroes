@@ -1,5 +1,7 @@
 package io.github.grebeshok105.codex.network;
 
+import io.github.grebeshok105.codex.hero.homelander.net.UraniumPressureS2CPayload;
+import io.github.grebeshok105.codex.hero.homelander.net.UraniumThreatS2CPayload;
 import io.github.grebeshok105.codex.core.net.CoreNetworking;
 import io.github.grebeshok105.codex.core.net.FxBroadcast;
 import io.github.grebeshok105.codex.effect.HeroMeleeImpactController;
@@ -51,8 +53,8 @@ public final class ModNetworking {
 		});
 	}
 
-	public static void syncFlightState(ServerPlayer player, io.github.grebeshok105.codex.flight.FlightMode mode,
-			io.github.grebeshok105.codex.flight.FlightPhase phase, float horizontalSpeed, boolean active) {
+	public static void syncFlightState(ServerPlayer player, io.github.grebeshok105.codex.mechanic.flight.FlightMode mode,
+			io.github.grebeshok105.codex.mechanic.flight.FlightPhase phase, float horizontalSpeed, boolean active) {
 		FlightStateS2CPayload payload = new FlightStateS2CPayload(
 				player.getId(), active, mode.ordinal(), phase.ordinal(), horizontalSpeed);
 		FxBroadcast.trackingAndSelf(player, payload);

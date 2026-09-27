@@ -1,7 +1,7 @@
 package io.github.grebeshok105.codex.client;
 
-import io.github.grebeshok105.codex.flight.FlightMode;
-import io.github.grebeshok105.codex.flight.FlightPhase;
+import io.github.grebeshok105.codex.mechanic.flight.FlightMode;
+import io.github.grebeshok105.codex.mechanic.flight.FlightPhase;
 
 import java.util.HashMap;
 import java.util.Map;
