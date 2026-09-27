@@ -178,10 +178,10 @@ public final class LokiGameTests implements FabricGameTest {
 		helper.getLevel().getChunk(BlockPos.containing(isoX, player.getY(), isoZ));
 		// Both actors need a floor at the iso spot — in the void they fall during
 		// awaitVisible and the 3D distance crosses the assert threshold.
-		helper.getLevel().setBlock(BlockPos.containing(isoX, player.getY() - 1, isoZ), Blocks.STONE.defaultBlockState());
+		helper.getLevel().setBlock(BlockPos.containing(isoX, player.getY() - 1, isoZ), Blocks.STONE.defaultBlockState(), 3);
 		player.teleportTo(isoX, player.getY(), isoZ);
 		Zombie zombie = spawnZombieAhead(player, 4.0);
-		helper.getLevel().setBlock(zombie.blockPosition().below(), Blocks.STONE.defaultBlockState());
+		helper.getLevel().setBlock(zombie.blockPosition().below(), Blocks.STONE.defaultBlockState(), 3);
 		// Pin the landing geometry: a chasing/wandering zombie drifts past the
 		// 2.5-block assert before the blink resolves.
 		zombie.setNoAi(true);
