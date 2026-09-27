@@ -1,5 +1,6 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.loki.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -7,9 +8,11 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 
 public final class LokiGlamourAbility implements Ability {
+	public static final ResourceLocation ID = ModId.of("loki_glamour");
+
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.LOKI_GLAMOUR;
+		return ID;
 	}
 
 	@Override

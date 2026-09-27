@@ -1,10 +1,11 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.atrain.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
+import io.github.grebeshok105.codex.mechanic.motion.Motion;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -21,9 +22,11 @@ public final class ATrainMachDashAbility implements Ability {
 	private static final double DISTANCE = 28.0;
 	private static final float DAMAGE = 18.0f;
 
+	public static final ResourceLocation ID = ModId.of("a_train_mach_dash");
+
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.A_TRAIN_MACH_DASH;
+		return ID;
 	}
 
 	@Override
@@ -54,10 +57,8 @@ public final class ATrainMachDashAbility implements Ability {
 			forward = new Vec3(0.0, 0.0, 1.0);
 		}
 		Vec3 motion = new Vec3(forward.x * 3.2, Math.max(0.02, forward.y * 0.2), forward.z * 3.2);
-		player.setDeltaMovement(motion);
-		player.hurtMarked = true;
+		Motion.set(player, motion, Motion.Sync.MARK_AND_SEND_TO_PLAYER);
 		player.fallDistance = 0f;
-		player.connection.send(new ClientboundSetEntityMotionPacket(player.getId(), motion));
 
 		Vec3 from = player.position();
 		Vec3 to = from.add(forward.scale(DISTANCE));
@@ -69,11 +70,7 @@ public final class ATrainMachDashAbility implements Ability {
 			target.addEffect(new MobEffectInstance(MobEffects.CONFUSION, 80, 0, true, true, true));
 			target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 50, 1, true, true, true));
 			Vec3 push = forward.scale(2.6).add(0.0, 0.35, 0.0);
-			target.push(push.x, push.y, push.z);
-			target.hurtMarked = true;
-			if (target instanceof ServerPlayer targetPlayer) {
-				targetPlayer.connection.send(new ClientboundSetEntityMotionPacket(targetPlayer));
-			}
+			Motion.add(target, push, Motion.Sync.MARK_AND_SEND_TO_PLAYER);
 			level.sendParticles(ParticleTypes.CRIT,
 					target.getX(), target.getY() + target.getBbHeight() * 0.5, target.getZ(), 14, 0.25, 0.35, 0.25, 0.14);
 		}

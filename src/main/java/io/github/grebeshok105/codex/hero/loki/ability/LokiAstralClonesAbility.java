@@ -1,5 +1,6 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.loki.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
@@ -21,9 +22,11 @@ public final class LokiAstralClonesAbility implements Ability {
 	private static final int COOLDOWN_TICKS = 200;
 	private static final int CONFUSE_DURATION = 240;
 
+	public static final ResourceLocation ID = ModId.of("loki_astral_clones");
+
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.LOKI_ASTRAL_CLONES;
+		return ID;
 	}
 
 	@Override

@@ -1,5 +1,6 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.atrain.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import net.minecraft.core.particles.ParticleTypes;
@@ -15,9 +16,11 @@ public final class ATrainHyperspeedAbility implements Ability {
 	private static final int EFFECT_TICKS = 40;
 	private static final int EXIT_COOLDOWN_TICKS = 6 * 20;
 
+	public static final ResourceLocation ID = ModId.of("a_train_hyperspeed");
+
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.A_TRAIN_HYPERSPEED;
+		return ID;
 	}
 
 	@Override
