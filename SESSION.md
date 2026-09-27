@@ -520,7 +520,46 @@
   приватные holder'ы с ClientSessionState.register(::reset). §8.11: 0 в src/main и src/client.
 - PassiveReconciler: DECLARED/PENDING → ClearOn.HERO_CLEAR, ручные init/clear удалены.
 
-## O в работе
-- o-client: SuperheroesClient ≤40 строк + распускание client/network/ClientNetworking.
-- o-cycles: 15 оставшихся package-циклов (10 — core.*-web) → baseline пустой.
-- Финал O: §8-сверка (18 критериев), таблицы статусов, handoff на «новый контент».
+## O-client — composition root клиента (PR #123)
+- SuperheroesClient: 242 → 17 строк тела; client/network/ClientNetworking распущен:
+  7 core-ресиверов → client/core/net/CoreClientReceivers, AdminBuild → client/content/admin;
+  HUD → client/hud/CoreHuds, клавиши/сендеры → client/core/input/, FX → client/fx/CoreFx,
+  рендереры → client/render/CoreRenderers, скрины → client/screen/ModScreens.
+- Gate green; reviewer APPROVE.
+
+## O-cycles — ноль package-циклов (PR #124)
+- Новый leaf `core/model/` (HeroData, ResourceKind, AbilityAvailability, ControlLock*, HeldLocks) —
+  разорваны все 10 пар core.*-web; ModDataComponents удалён (BOUND_WEAPON → BoundWeapons,
+  init в composition root) — убита пара item↔mechanic.boundweapon; horde-внутренние пары
+  растворены leaf-перестановками. package-cycles-baseline.txt пуст; verifyArchitectureBaseline
+  и PackageCycleRatchetTest зелёные.
+- Фикс при интеграции: ProjectSanityTest путь resolve со слэшами; 3 мёртвых import'а (нит ревьюера).
+- Gate green (362/362); reviewer APPROVE.
+
+## O-final — финальная приёмка §8
+
+Все 18 критериев `00-overview.md` §8 выполнены на main (замеры пост-мерж):
+
+| §8 | Цель | Факт |
+| :-- | :-- | :-- |
+| 1 shared-таблицы героев | 0 | 0 (строгое ArchUnit-правило, store пуст) |
+| 2 импорты героев из core/mechanic/content/compat/client.core | 0 | 0 (строгие правила) |
+| 3 ссылки на hero.<id> | только свой пакет + bootstrap-списки | ArchUnit green |
+| 4 герой→герой | 0 | 0 |
+| 5/6 файлы при добавлении героя/способности | per-skill add-hero | skill `.agents/skills/add-hero/` на месте |
+| 7 SuperheroesMod | ≤40 тела | 28 |
+| 8 SuperheroesClient | ≤40 тела | 17 |
+| 9 тики вне диспетчера | 0 | 0 |
+| 10 lifecycle вне регистраторов | 0 | строгое правило green |
+| 11 static Map/Set<UUID> | 0/0 | 0/0 (main+client) |
+| 12 package-циклы | 0 | 0 (baseline пуст) |
+| 13 ветки героев в shared-сервисах | 0 | 0 (только комменты; FlightMode-ветки — по профилю, не по герою) |
+| 14 hero-mixins в shared mixin-пакетах | 0 | 0 (4 hero-mixin'а в mixin/hero/<id>/ с обоснованием) |
+| 15 Client*State без reset | 0 | test enforced |
+| 16 ClientAbilityFilter-дубли | 0 | файла нет (C4) |
+| 17 hero S2C без ресивера | 0 | test enforced |
+| 18 qualityGate | весь набор правил | зелёный на main |
+
+**Проект переходит в режим «новый контент»:** новый герой = `hero/<id>/` + `client/hero/<id>/` +
+2 строки в bootstrap-списках + lang×2 + ассеты + golden-строки — см. `.agents/skills/add-hero/`.
+Программа миграции из PR #41 завершена.
