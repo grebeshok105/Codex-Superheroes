@@ -5,8 +5,8 @@ import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import io.github.grebeshok105.codex.hero.battlebeast.runtime.BattleBeastCurseController;
+import io.github.grebeshok105.codex.mechanic.motion.Motion;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -62,11 +62,7 @@ public final class BattleBeastWarRoarAbility implements Ability {
 			target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 120, 1, true, true, true));
 			target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 120, 1, true, true, true));
 			Vec3 push = away.scale(1.0 / distance).scale(2.0).add(0.0, 0.35, 0.0);
-			target.push(push.x, push.y, push.z);
-			target.hurtMarked = true;
-			if (target instanceof ServerPlayer targetPlayer) {
-				targetPlayer.connection.send(new ClientboundSetEntityMotionPacket(targetPlayer));
-			}
+			Motion.add(target, push, Motion.Sync.MARK_AND_SEND_TO_PLAYER);
 		}
 		level.sendParticles(ParticleTypes.SONIC_BOOM, center.x, center.y, center.z, 1, 0.0, 0.0, 0.0, 0.0);
 		level.sendParticles(ParticleTypes.CLOUD, center.x, center.y, center.z,

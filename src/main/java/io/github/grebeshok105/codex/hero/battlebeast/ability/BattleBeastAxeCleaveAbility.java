@@ -5,8 +5,8 @@ import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import io.github.grebeshok105.codex.hero.battlebeast.runtime.BattleBeastCurseController;
+import io.github.grebeshok105.codex.mechanic.motion.Motion;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -74,11 +74,7 @@ public final class BattleBeastAxeCleaveAbility implements Ability {
 			target.hurt(level.damageSources().playerAttack(player), BattleBeastCurseController.scaleDamage(player, damage));
 			target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 80, 0, true, true, true));
 			Vec3 push = forward.scale(1.5).add(0.0, 0.35, 0.0);
-			target.push(push.x, push.y, push.z);
-			target.hurtMarked = true;
-			if (target instanceof ServerPlayer targetPlayer) {
-				targetPlayer.connection.send(new ClientboundSetEntityMotionPacket(targetPlayer));
-			}
+			Motion.add(target, push, Motion.Sync.MARK_AND_SEND_TO_PLAYER);
 			level.sendParticles(ParticleTypes.SWEEP_ATTACK,
 					targetCenter.x, targetCenter.y, targetCenter.z, 2, 0.3, 0.2, 0.3, 0.0);
 		}
