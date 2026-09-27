@@ -4,7 +4,6 @@ import io.github.grebeshok105.codex.hero.pandora.PandoraAttachments;
 import io.github.grebeshok105.codex.hero.pandora.ability.MirrorDimensionAbility;
 import io.github.grebeshok105.codex.hero.regulus.RegulusAttachments;
 import io.github.grebeshok105.codex.hero.omniman.ability.OmnimanThinkMarkAbility;
-import io.github.grebeshok105.codex.attachment.ModAttachments;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
 import io.github.grebeshok105.codex.hero.battlebeast.runtime.BattleBeastCurseController;
 import io.github.grebeshok105.codex.hero.doomsday.runtime.DoomGripController;

@@ -1,4 +1,4 @@
-package io.github.grebeshok105.codex.physics;
+package io.github.grebeshok105.codex.mechanic.shockwave;
 
 import io.github.grebeshok105.codex.core.net.ScreenShakeS2CPayload;
 import io.github.grebeshok105.codex.mechanic.world.WorldDestructionPolicy;

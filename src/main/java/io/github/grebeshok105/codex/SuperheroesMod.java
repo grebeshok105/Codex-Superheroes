@@ -1,17 +1,16 @@
 package io.github.grebeshok105.codex;
 
-import io.github.grebeshok105.codex.attachment.ModAttachments;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.lifecycle.HeroTickDispatcher;
 import io.github.grebeshok105.codex.core.lifecycle.PassiveReconciler;
-import io.github.grebeshok105.codex.effect.ModEffects;
+import io.github.grebeshok105.codex.mechanic.effect.ModEffects;
 import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.hero.Heroes;
 import io.github.grebeshok105.codex.item.ModItemGroups;
 import io.github.grebeshok105.codex.item.ModItems;
 import io.github.grebeshok105.codex.core.lifecycle.EntityControlLock;
 import io.github.grebeshok105.codex.core.lifecycle.PlayerLifecycle;
-import io.github.grebeshok105.codex.network.ModNetworking;
+import io.github.grebeshok105.codex.core.net.CoreNetworking;
 import io.github.grebeshok105.codex.particle.ModParticles;
 import io.github.grebeshok105.codex.sound.ModSounds;
 import io.github.grebeshok105.codex.core.transform.HeroDataStore;
@@ -29,7 +28,6 @@ public class SuperheroesMod implements ModInitializer {
 	@Override
 	public void onInitialize() {
 		CoreAttachments.init();
-		ModAttachments.init();
 		EntityControlLock.init();
 		PlayerLifecycle.init();
 		io.github.grebeshok105.codex.core.lifecycle.PassiveReconciler.init();
@@ -41,7 +39,7 @@ public class SuperheroesMod implements ModInitializer {
 		ModItemGroups.init();
 		ModParticles.init();
 		ModSounds.init();
-		ModNetworking.init();
+		CoreNetworking.init();
 		HeroDataStore.init();
 
 		io.github.grebeshok105.codex.core.lifecycle.HeroTickDispatcher.init();

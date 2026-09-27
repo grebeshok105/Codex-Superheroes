@@ -13,7 +13,7 @@ import io.github.grebeshok105.codex.core.hero.PassiveGlyph;
 import io.github.grebeshok105.codex.hero.ironman.runtime.IronManNanoForm;
 import io.github.grebeshok105.codex.hero.ironman.runtime.IronManNanoFormController;
 import io.github.grebeshok105.codex.hero.ironman.runtime.UnibeamController;
-import io.github.grebeshok105.codex.physics.ShockwaveUtil;
+import io.github.grebeshok105.codex.mechanic.shockwave.ShockwaveUtil;
 import io.github.grebeshok105.codex.core.resource.ResourceKind;
 import io.github.grebeshok105.codex.hero.ironman.runtime.IronManSuitStats;
 import net.minecraft.core.particles.ParticleTypes;

@@ -6,7 +6,7 @@ import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.core.transform.HeroData;
-import io.github.grebeshok105.codex.effect.EffectRefresh;
+import io.github.grebeshok105.codex.mechanic.effect.EffectRefresh;
 import io.github.grebeshok105.codex.hero.scorpion.targeting.ScorpionTargeting;
 import io.github.grebeshok105.codex.hero.scorpion.net.ScorpionFx;
 import io.github.grebeshok105.codex.mechanic.motion.Motion;

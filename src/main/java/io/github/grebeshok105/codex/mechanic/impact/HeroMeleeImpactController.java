@@ -1,4 +1,4 @@
-package io.github.grebeshok105.codex.effect;
+package io.github.grebeshok105.codex.mechanic.impact;
 
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
@@ -6,13 +6,12 @@ import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.hero.Heroes;
 import io.github.grebeshok105.codex.core.hero.ImpactContext;
-import io.github.grebeshok105.codex.network.HeroMeleeChargeC2SPayload;
+import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
+import io.github.grebeshok105.codex.core.net.HeroMeleeChargeC2SPayload;
 import io.github.grebeshok105.codex.core.net.ScreenShakeS2CPayload;
-import io.github.grebeshok105.codex.mechanic.impact.BallisticBodyTracker;
-import io.github.grebeshok105.codex.mechanic.impact.CombatImpactEngine;
-import io.github.grebeshok105.codex.mechanic.impact.ImpactChargeRules;
-import io.github.grebeshok105.codex.mechanic.impact.ImpactProfile;
-import io.github.grebeshok105.codex.mechanic.impact.ImpactTier;
+import io.github.grebeshok105.codex.mechanic.effect.HeroBleedingController;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -37,8 +36,7 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -52,7 +50,8 @@ import java.util.UUID;
  */
 public final class HeroMeleeImpactController {
 	private static final double RELEASE_HIT_INFLATE = 0.3;
-	private static final Map<UUID, ChargeState> CHARGES = new HashMap<>();
+	private static final OwnedSessionMap<UUID, ChargeState> CHARGES = OwnedSessionMap.create(
+			LifecycleRegistrar.global(), EnumSet.of(ClearOn.LEAVE, ClearOn.DEATH, ClearOn.HERO_CLEAR));
 	private static final List<PendingPush> PENDING_PUSHES = new ArrayList<>();
 
 	private HeroMeleeImpactController() {
@@ -93,7 +92,9 @@ public final class HeroMeleeImpactController {
 			if (!player.getMainHandItem().isEmpty()) {
 				return;
 			}
-			CHARGES.putIfAbsent(player.getUUID(), new ChargeState(player.level().getGameTime()));
+			if (CHARGES.get(player.getUUID()) == null) {
+				CHARGES.put(player.getUUID(), player.getUUID(), new ChargeState(player.level().getGameTime()));
+			}
 		} else if (action == HeroMeleeChargeC2SPayload.ACTION_RELEASE
 				|| action == HeroMeleeChargeC2SPayload.ACTION_CANCEL) {
 			if (action == HeroMeleeChargeC2SPayload.ACTION_RELEASE) {
@@ -198,17 +199,25 @@ public final class HeroMeleeImpactController {
 	}
 
 	private static void cleanup(MinecraftServer server) {
-		Iterator<Map.Entry<UUID, ChargeState>> it = CHARGES.entrySet().iterator();
-		while (it.hasNext()) {
-			Map.Entry<UUID, ChargeState> entry = it.next();
-			ServerPlayer player = server.getPlayerList().getPlayer(entry.getKey());
+		// Snapshot: CHARGES's iterator is fail-fast, so stale-key checks re-read the
+		// live map and removals happen explicitly after the scan.
+		List<Map.Entry<UUID, ChargeState>> snapshot = new ArrayList<>();
+		for (Map.Entry<UUID, ChargeState> entry : CHARGES) {
+			snapshot.add(entry);
+		}
+		for (Map.Entry<UUID, ChargeState> entry : snapshot) {
+			UUID ownerId = entry.getKey();
+			if (CHARGES.get(ownerId) != entry.getValue()) {
+				continue;
+			}
+			ServerPlayer player = server.getPlayerList().getPlayer(ownerId);
 			if (player == null || !player.isAlive()) {
-				it.remove();
+				CHARGES.remove(ownerId);
 				continue;
 			}
 			HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
 			if (!data.hasHero()) {
-				it.remove();
+				CHARGES.remove(ownerId);
 				continue;
 			}
 			tickChargeFeedback(player, data, heldTicks(player));

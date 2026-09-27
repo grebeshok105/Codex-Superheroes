@@ -1,4 +1,4 @@
-package io.github.grebeshok105.codex.effect;
+package io.github.grebeshok105.codex.mechanic.effect;
 
 import net.minecraft.core.Holder;
 import net.minecraft.world.effect.MobEffect;

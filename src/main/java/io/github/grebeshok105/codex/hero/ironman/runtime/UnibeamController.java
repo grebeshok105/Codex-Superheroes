@@ -5,7 +5,7 @@ import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
 import io.github.grebeshok105.codex.core.transform.HeroDataStore;
-import io.github.grebeshok105.codex.effect.EffectRefresh;
+import io.github.grebeshok105.codex.mechanic.effect.EffectRefresh;
 import io.github.grebeshok105.codex.hero.ironman.registry.IronManDamageTypes;
 import io.github.grebeshok105.codex.hero.ironman.registry.IronManParticles;
 import io.github.grebeshok105.codex.hero.ironman.sound.IronManSounds;

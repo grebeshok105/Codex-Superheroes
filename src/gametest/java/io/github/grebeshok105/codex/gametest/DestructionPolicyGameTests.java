@@ -1,7 +1,7 @@
 package io.github.grebeshok105.codex.gametest;
 
 import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusMadnessController;
-import io.github.grebeshok105.codex.physics.RushTerrainBreaker;
+import io.github.grebeshok105.codex.mechanic.world.RushTerrainBreaker;
 import io.github.grebeshok105.codex.mechanic.world.WorldDestructionPolicy;
 import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;

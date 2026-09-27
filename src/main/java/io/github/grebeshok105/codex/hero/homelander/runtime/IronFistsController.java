@@ -7,7 +7,7 @@ import io.github.grebeshok105.codex.hero.homelander.ability.IronFistsAbility;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.core.net.ScreenShakeS2CPayload;
-import io.github.grebeshok105.codex.physics.ShockwaveUtil;
+import io.github.grebeshok105.codex.mechanic.shockwave.ShockwaveUtil;
 import io.github.grebeshok105.codex.sound.ModSounds;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.fabricmc.fabric.api.event.player.AttackEntityCallback;

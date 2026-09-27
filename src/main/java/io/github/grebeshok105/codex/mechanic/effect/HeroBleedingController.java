@@ -1,4 +1,4 @@
-package io.github.grebeshok105.codex.effect;
+package io.github.grebeshok105.codex.mechanic.effect;
 
 import io.github.grebeshok105.codex.core.hero.BleedProfile;
 import io.github.grebeshok105.codex.core.hero.Hero;

@@ -20,7 +20,7 @@ import io.github.grebeshok105.codex.hero.doomsday.runtime.DoomsdayEffectAdaptati
 import io.github.grebeshok105.codex.hero.doomsday.runtime.DoomsdayModifiers;
 import io.github.grebeshok105.codex.hero.doomsday.runtime.DoomsdayProgress;
 import io.github.grebeshok105.codex.hero.doomsday.runtime.DoomsdayTierController;
-import io.github.grebeshok105.codex.physics.ShockwaveUtil;
+import io.github.grebeshok105.codex.mechanic.shockwave.ShockwaveUtil;
 import io.github.grebeshok105.codex.core.resource.ResourceKind;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;

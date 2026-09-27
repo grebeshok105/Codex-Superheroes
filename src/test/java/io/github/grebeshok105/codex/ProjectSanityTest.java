@@ -40,7 +40,7 @@ public final class ProjectSanityTest {
 
 	private static final Pattern HERO_DATA_DIRECT_WRITE = Pattern.compile(
 			"setAttached\\(\\s*(?:[\\w.]+\\.)?HERO_DATA\\b|removeAttached\\(\\s*(?:[\\w.]+\\.)?HERO_DATA\\b"
-					+ "|(?:ModNetworking|CoreNetworking)\\.sync(?:HeroData|Resources)\\(");
+					+ "|CoreNetworking\\.sync(?:HeroData|Resources)\\(");
 	private static final Pattern FABRIC_IMPL_IMPORT = Pattern.compile("net\\.fabricmc\\.fabric\\.impl\\.");
 	private static final Pattern CLIENT_ONLY_IMPORT = Pattern.compile("import\\s+net\\.minecraft\\.client\\.|import\\s+net\\.fabricmc\\.fabric\\.api\\.client\\.");
 	private static final Pattern SOUND_NAME = Pattern.compile("\"" + MOD_ID + ":([^\"]+)\"");
