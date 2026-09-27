@@ -61,9 +61,9 @@
 | I4b Rem | ✅ | #100 |
 | I4c Raiden | ✅ | #101 |
 | I4d Doomsday | ✅ | #104 |
-| I5a Thanos | ⏳ | |
-| I5b Regulus | ⏳ | |
-| I5c Pandora | ⏳ | |
+| I5a Thanos | ✅ | #108 |
+| I5b Regulus | ⏳ | #110 |
+| I5c Pandora | ✅ | #109 |
 | I6a Homelander | ⏳ | |
 | I6b Iron Man + L2 | ⏳ | |
 | IC1 орда | ✅ | PR #96; content-модуль, GeckoLib оставлена (см. «Решения») |
