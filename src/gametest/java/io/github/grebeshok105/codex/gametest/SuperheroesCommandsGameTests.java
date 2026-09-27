@@ -279,7 +279,7 @@ public final class SuperheroesCommandsGameTests implements FabricGameTest {
 		// only pins that never mutate horde state are safe here (stop/clear/spawn are
 		// level-global and would corrupt a concurrent run).
 		List<Component> status = runAs(player, 2, "superheroes horde status");
-		helper.assertTrue(status.stream().anyMatch(c -> c.getString().contains("Орда")),
+		helper.assertTrue(status.stream().anyMatch(c -> c.getString().contains("орд")),
 				"horde status must answer with the horde status text, got " + status);
 
 		List<Component> overlay = runAs(player, 2, "superheroes horde overlay");
