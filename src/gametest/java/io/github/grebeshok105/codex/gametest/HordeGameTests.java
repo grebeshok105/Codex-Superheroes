@@ -134,11 +134,13 @@ public final class HordeGameTests implements FabricGameTest {
 	public void hordeFirstWaveSpawnsAroundAudience(GameTestHelper helper) {
 		ServerLevel level = helper.getLevel();
 		ServerPlayer player = TestPlayers.join(helper);
+		player.setInvulnerable(true); // foreign mobs must not kill the audience
 		Vec3 center = helper.absoluteVec(new Vec3(1.5, 2.0, 1.5));
 		acquireHorde(helper, level, 20, 2800, () -> {
 			player.teleportTo(center.x, center.y + 2, center.z);
+			warmChunks(level, center, 40);
 			UUID id = HordeManager.startHorde(level, center, player);
-			helper.runAfterDelay(150, () -> {
+			runGuarded(helper, level, 150, () -> {
 				helper.assertTrue(HordeManager.liveMobCount(level) > 0,
 						"wave 1 must spawn mobs once an audience is near");
 				helper.assertTrue(!hordeMobs(level, id).isEmpty(),
@@ -154,18 +156,20 @@ public final class HordeGameTests implements FabricGameTest {
 	public void hordeFreezesWithoutAudienceMidWave(GameTestHelper helper) {
 		ServerLevel level = helper.getLevel();
 		ServerPlayer player = TestPlayers.join(helper);
+		player.setInvulnerable(true); // foreign mobs must not kill the audience
 		// 200 blocks up so no player of a concurrently running test counts as audience.
 		Vec3 center = helper.absoluteVec(new Vec3(1.5, 2.0, 1.5)).add(0, 200, 0);
 		acquireHorde(helper, level, 28, 2800, () -> {
 			BlockPos perch = BlockPos.containing(center.x, center.y - 1, center.z);
 			level.setBlockAndUpdate(perch, Blocks.STONE.defaultBlockState());
 			player.teleportTo(center.x, center.y, center.z);
+			warmChunks(level, center, 40);
 			UUID id = HordeManager.startHorde(level, center, player);
-			helper.runAfterDelay(150, () -> {
+			runGuarded(helper, level, 150, () -> {
 				int before = HordeManager.liveMobCount(level);
 				helper.assertTrue(before > 0, "wave 1 must be running while the player watches");
 				player.teleportTo(center.x + 300, center.y, center.z);
-				helper.runAfterDelay(100, () -> {
+				runGuarded(helper, level, 100, () -> {
 					helper.assertTrue(HordeManager.liveMobCount(level) == before,
 							"no audience must freeze the horde (" + before + " -> "
 									+ HordeManager.liveMobCount(level) + ")");
@@ -177,7 +181,7 @@ public final class HordeGameTests implements FabricGameTest {
 					helper.assertTrue(HordeManager.liveMobCount(level) == before,
 							"discards during the freeze must stay invisible until reconcile");
 					player.teleportTo(center.x, center.y, center.z);
-					helper.runAfterDelay(80, () -> {
+					runGuarded(helper, level, 80, () -> {
 						helper.assertTrue(HordeManager.liveMobCount(level) == 0,
 								"reconcile must prune discarded mobs once ticking resumes");
 						helper.assertTrue(HordeManager.getDebugStatus(level).contains("след. волна"),
@@ -195,11 +199,13 @@ public final class HordeGameTests implements FabricGameTest {
 	public void hordeMobDeathDropsFromLiveCount(GameTestHelper helper) {
 		ServerLevel level = helper.getLevel();
 		ServerPlayer player = TestPlayers.join(helper);
+		player.setInvulnerable(true); // foreign mobs must not kill the audience
 		Vec3 center = helper.absoluteVec(new Vec3(1.5, 2.0, 1.5));
 		acquireHorde(helper, level, 36, 2800, () -> {
 			player.teleportTo(center.x, center.y + 2, center.z);
+			warmChunks(level, center, 40);
 			UUID id = HordeManager.startHorde(level, center, player);
-			helper.runAfterDelay(150, () -> {
+			runGuarded(helper, level, 150, () -> {
 				int before = HordeManager.liveMobCount(level);
 				helper.assertTrue(before > 0, "wave 1 must be running");
 				BaseHordeEntity victim = hordeMobs(level, id).get(0);
@@ -218,11 +224,13 @@ public final class HordeGameTests implements FabricGameTest {
 	public void hordeAdminOpsActOnTheLevel(GameTestHelper helper) {
 		ServerLevel level = helper.getLevel();
 		ServerPlayer player = TestPlayers.join(helper);
+		player.setInvulnerable(true); // foreign mobs must not kill the audience
 		Vec3 center = helper.absoluteVec(new Vec3(1.5, 2.0, 1.5));
 		acquireHorde(helper, level, 44, 2800, () -> {
 			player.teleportTo(center.x, center.y + 2, center.z);
+			warmChunks(level, center, 40);
 			UUID id = HordeManager.startHorde(level, center, player);
-			helper.runAfterDelay(150, () -> {
+			runGuarded(helper, level, 150, () -> {
 				helper.assertTrue(HordeManager.liveMobCount(level) > 0, "wave 1 must be running");
 				helper.assertTrue(HordeManager.getDebugStatus(level).contains("волна §e1"),
 						"expected wave 1 in status: " + HordeManager.getDebugStatus(level));
@@ -235,7 +243,7 @@ public final class HordeGameTests implements FabricGameTest {
 				int cleared = HordeManager.clearMobs(level);
 				helper.assertTrue(cleared > 0 && HordeManager.liveMobCount(level) == 0,
 						"clearMobs must empty the live set synchronously (cleared " + cleared + ")");
-				helper.runAfterDelay(5, () -> {
+				runGuarded(helper, level, 5, () -> {
 					helper.assertTrue(HordeManager.getDebugStatus(level).contains("след. волна"),
 							"empty wave must enter the inter-wave countdown, got: "
 									+ HordeManager.getDebugStatus(level));
@@ -253,7 +261,9 @@ public final class HordeGameTests implements FabricGameTest {
 	public void hordeCrystalItemStartsAndConsumes(GameTestHelper helper) {
 		ServerLevel level = helper.getLevel();
 		ServerPlayer player = TestPlayers.join(helper);
+		player.setInvulnerable(true); // foreign mobs must not kill the audience
 		acquireHorde(helper, level, 52, 2800, () -> {
+			warmChunks(level, player.position(), 40);
 			ItemStack stack = new ItemStack(HordeItems.HORDE_CRYSTAL);
 			player.setItemInHand(InteractionHand.MAIN_HAND, stack);
 			InteractionResultHolder<ItemStack> first =
@@ -280,11 +290,13 @@ public final class HordeGameTests implements FabricGameTest {
 	public void hordeResetAllWipesState(GameTestHelper helper) {
 		ServerLevel level = helper.getLevel();
 		ServerPlayer player = TestPlayers.join(helper);
+		player.setInvulnerable(true); // foreign mobs must not kill the audience
 		Vec3 center = helper.absoluteVec(new Vec3(1.5, 2.0, 1.5));
 		acquireHorde(helper, level, 60, 2800, () -> {
 			player.teleportTo(center.x, center.y + 2, center.z);
+			warmChunks(level, center, 40);
 			UUID id = HordeManager.startHorde(level, center, player);
-			helper.runAfterDelay(80, () -> {
+			runGuarded(helper, level, 80, () -> {
 				helper.assertTrue(HordeManager.hasActiveHorde(level), "horde must be running");
 				helper.assertTrue(HordeManager.toggleOverlay(player), "overlay must toggle on");
 				HordeManager.resetAll();
@@ -314,6 +326,24 @@ public final class HordeGameTests implements FabricGameTest {
 	 * horde exists in {@code level}. {@code settleTicks} is a per-test offset so
 	 * two tests never observe a free level on the same tick and start together.
 	 */
+	/**
+	 * Like {@link GameTestHelper#runAfterDelay} but on failure releases the horde
+	 * slot and stops any running horde, so one failed wave test cannot starve
+	 * every later test on {@code hordeSlotTaken} / {@code hasActiveHorde}.
+	 */
+	private static void runGuarded(GameTestHelper helper, ServerLevel level,
+			int ticks, Runnable body) {
+		helper.runAfterDelay(ticks, () -> {
+			try {
+				body.run();
+			} catch (RuntimeException e) {
+				hordeSlotTaken = false;
+				HordeManager.stopHorde(level);
+				throw e;
+			}
+		});
+	}
+
 	private static void acquireHorde(GameTestHelper helper, ServerLevel level,
 			int settleTicks, int triesLeft, Runnable body) {
 		if (triesLeft <= 0) {
@@ -330,8 +360,24 @@ public final class HordeGameTests implements FabricGameTest {
 					() -> acquireHorde(helper, level, 0, triesLeft - settleTicks, body));
 			return;
 		}
+		// Mock players create no chunk tickets, so ring chunks around the spawn
+		// may be unloaded: mobs spawned there never register, then reconcile()
+		// prunes them out of the live set and "wave 1" appears empty. Force-load
+		// a chunk grid covering the 35-block spawn ring before starting.
 		hordeSlotTaken = true;
 		body.run();
+	}
+
+	/** Force-loads every chunk within {@code radius} blocks of {@code center}. */
+	private static void warmChunks(ServerLevel level, Vec3 center, int radius) {
+		int cx = net.minecraft.core.SectionPos.blockToSectionCoord(center.x);
+		int cz = net.minecraft.core.SectionPos.blockToSectionCoord(center.z);
+		int r = (radius + 15) / 16;
+		for (int dx = -r; dx <= r; dx++) {
+			for (int dz = -r; dz <= r; dz++) {
+				level.getChunk(cx + dx, cz + dz);
+			}
+		}
 	}
 
 	private static List<BaseHordeEntity> hordeMobs(ServerLevel level, UUID hordeId) {
