@@ -79,7 +79,7 @@ public final class ProjectSanityTest {
 
 	// HeroData has one writer (audit B2): read-modify-write through HeroDataStore, never a stale copy.
 	private static void assertHeroDataHasSingleWriter() throws IOException {
-		Path store = MAIN_JAVA.resolve("io.github.grebeshok105.codex.core.transform.HeroDataStore.java");
+		Path store = MAIN_JAVA.resolve("io/github/grebeshok105/codex/core/transform/HeroDataStore.java");
 		Path networking = MAIN_JAVA.resolve("io/github/grebeshok105/codex/core/net/CoreNetworking.java");
 		forEachJavaFile(MAIN_JAVA, file -> {
 			if (file.equals(store) || file.equals(networking)) {
