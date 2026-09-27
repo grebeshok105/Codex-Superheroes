@@ -43,7 +43,7 @@ Nothing else names the hero. If a design seems to need another shared file, the 
 
 - A leaf never imports its module root — it owns `ModId.of(...)` literals; the root aliases them.
 - Zero class references hero→hero: other heroes are string ids (`ModId.of("homelander")`) or entity/tag checks.
-- `hero.<id>` classes are referenced only by `hero.<id>`, `client.hero.<id>` and `bootstrap.HeroModules`; `client.hero.<id>` only by itself and `client.bootstrap.HeroClientModules`.
+- `hero.<id>` classes are referenced only by `hero.<id>`/`client.hero.<id>` and `bootstrap.HeroModules`; `client.hero.<id>` only by its own hero packages and `client.bootstrap.HeroClientModules`. (Gametests sit outside the architecture rules and may import hero classes.)
 - Composition roots (`SuperheroesMod`, `SuperheroesClient`, `bootstrap.*`, `client.bootstrap.*`, `datagen`) are never imported — use `LoggerFactory.getLogger(ModId.MOD_ID)`, not `SuperheroesMod.LOGGER`.
 - Server ticks only via `ctx.ticks()`; lifecycle only via `ctx.lifecycle()`; never `ServerTickEvents`/`DISCONNECT` directly (DISCONNECT can fire off the server thread — `onLeave` is the safe hook).
 
@@ -80,10 +80,10 @@ Stays inside `hero/<id>/` + resources — **zero shared Java files**:
 ## 8. Verification
 
 - `./gradlew qualityGate --no-daemon` — the only finishing gate (build + JUnit + sanity + gametests + ArchUnit + baseline audit). `./gradlew build -x test` is a mid-work check, not the gate.
-- Seam greps for hero `<id>`:
-  - `grep -rliE '<id>' src/main/java | grep -v '/hero/<id>/'` → only `bootstrap/HeroModules.java`
-  - `grep -rliE '<id>' src/client/java | grep -v '/hero/<id>/'` → only `client/bootstrap/HeroClientModules.java`
-  - `grep -rn 'veil' src/main/java` → empty
+- Seam greps for hero `<id>` (FQCN — a bare `grep '<id>'` false-positives on substrings like `render` and javadoc mentions):
+  - `grep -rln 'io\.github\.grebeshok105\.codex\.hero\.<id>' src/main/java src/client/java | grep -vE '/(hero|client/hero)/<id>/'` → only `bootstrap/HeroModules.java`
+  - `grep -rln 'io\.github\.grebeshok105\.codex\.client\.hero\.<id>' src/client/java | grep -v '/client/hero/<id>/'` → only `client/bootstrap/HeroClientModules.java`
+  - `grep -rn 'foundry\.veil' src/main/java` → empty (a bare `veil` grep false-positives on `moonveil`)
   Any other hit is an architecture violation — fix before PR.
 - Hero with HUD/input/VFX: in-game runClient checklist — see the `testing-runclient-hud` skill.
 
