@@ -37,7 +37,6 @@ public final class ModNetworking {
 		PayloadTypeRegistry.playS2C().register(NanoFormS2CPayload.TYPE, NanoFormS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(AdminBuildS2CPayload.TYPE, AdminBuildS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(RemDemonismS2CPayload.TYPE, RemDemonismS2CPayload.STREAM_CODEC);
-		PayloadTypeRegistry.playS2C().register(HordeDebugS2CPayload.TYPE, HordeDebugS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(MirrorDimensionS2CPayload.TYPE, MirrorDimensionS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(PandoraCinematicS2CPayload.TYPE, PandoraCinematicS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(PandoraHouseStateS2CPayload.TYPE, PandoraHouseStateS2CPayload.STREAM_CODEC);

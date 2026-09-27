@@ -199,11 +199,6 @@ public final class ModItems {
 			new MusouNoHitotachiItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
 	);
 
-	public static final io.github.grebeshok105.codex.horde.HordeCrystalItem HORDE_CRYSTAL = register(
-			"horde_crystal",
-			new io.github.grebeshok105.codex.horde.HordeCrystalItem()
-	);
-
 	private ModItems() {
 	}
 

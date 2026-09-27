@@ -13,7 +13,6 @@ import io.github.grebeshok105.codex.effect.HeroMeleeImpactController;
 import io.github.grebeshok105.codex.effect.HeroPassiveRegenController;
 import io.github.grebeshok105.codex.effect.HeroReactionController;
 import io.github.grebeshok105.codex.effect.SuperJumpController;
-import io.github.grebeshok105.codex.horde.HordeManager;
 import io.github.grebeshok105.codex.core.lifecycle.EntityControlLock;
 import io.github.grebeshok105.codex.core.lifecycle.PassiveReconciler;
 import io.github.grebeshok105.codex.physics.BallisticBodyTracker;
@@ -26,7 +25,7 @@ import io.github.grebeshok105.codex.core.transform.HeroTransformService;
  * Wiring for hero-agnostic mechanics (composition-root side, after E2 moves these to
  * {@code mechanic/}): the registrations that used to live in SuperheroesMod —
  * each controller's own event listeners plus its HeroTickDispatcher rows, in the
- * old relative order. Content-track rows (horde, admin build sync) park here until
+ * old relative order. Content-track rows (admin build sync) park here until
  * stage IC gives them a home.
  */
 public final class SharedMechanics {
@@ -48,7 +47,6 @@ public final class SharedMechanics {
 		ctx.lifecycle().onRespawn(HeroTransformService::onPlayerRespawn);
 		// Cross-hero reaction broadcast (Homelander <-> Omniman) — global by design.
 		ctx.lifecycle().onHeroTransformed(HeroReactionController::onTransformed);
-		ctx.lifecycle().onServerStopped(server -> HordeManager.resetAll());
 		ctx.lifecycle().onServerStopped(server -> EnergyLocks.resetAll());
 
 		HeroLandingTracker.register(ctx);
@@ -63,7 +61,6 @@ public final class SharedMechanics {
 		ctx.ticks().global(FlightController::cleanup);
 		ctx.ticks().global(HeavensStrikeController::serverTick);
 		// content rows kept here until their own stage
-		ctx.ticks().level((server, level) -> HordeManager.tick(level));
 		AdminBuildSyncController.register(ctx);
 	}
 
