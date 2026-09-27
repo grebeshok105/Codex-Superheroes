@@ -1,9 +1,10 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.sungjinwoo.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
-import io.github.grebeshok105.codex.effect.SungJinwooController;
-import io.github.grebeshok105.codex.entity.ShadowSoldierEntity;
+import io.github.grebeshok105.codex.hero.sungjinwoo.runtime.SungJinwooController;
+import io.github.grebeshok105.codex.hero.sungjinwoo.entity.ShadowSoldierEntity;
 import io.github.grebeshok105.codex.util.SafeTeleport;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
@@ -24,11 +25,12 @@ import java.util.List;
  *  - CD: 200t (10с)
  */
 public final class ShadowExchangeAbility implements Ability {
+	public static final ResourceLocation ID = ModId.of("shadow_exchange");
 	private static final int COOLDOWN_TICKS = 200;
 
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.SHADOW_EXCHANGE;
+		return ID;
 	}
 
 	@Override
@@ -81,7 +83,7 @@ public final class ShadowExchangeAbility implements Ability {
 		level.playSound(null, shadowPos.x, shadowPos.y, shadowPos.z,
 				SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS, 1.0f, 0.9f);
 
-		AbilityCooldowns.setCooldownTicks(player, AbilityIds.SHADOW_EXCHANGE, COOLDOWN_TICKS);
+		AbilityCooldowns.setCooldownTicks(player, ID, COOLDOWN_TICKS);
 		return true;
 	}
 }

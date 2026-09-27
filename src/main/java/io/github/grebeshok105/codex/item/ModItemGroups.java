@@ -1,6 +1,7 @@
 package io.github.grebeshok105.codex.item;
 
 import io.github.grebeshok105.codex.ModId;
+import io.github.grebeshok105.codex.content.admin.AdminBuildVisibility;
 import io.github.grebeshok105.codex.core.content.CreativeTabContents;
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
 import net.minecraft.core.Registry;
@@ -35,7 +36,6 @@ public final class ModItemGroups {
 				output.accept(ModItems.REGULUS_SUIT);
 				output.accept(ModItems.EVANGELION);
 
-				output.accept(ModItems.SHADOW_MONARCHS_CLOAK);
 
 				output.accept(ModItems.INFINITY_GAUNTLET);
 				output.accept(ModItems.POWER_STONE);

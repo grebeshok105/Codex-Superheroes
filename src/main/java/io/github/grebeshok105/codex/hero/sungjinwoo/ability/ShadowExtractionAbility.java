@@ -1,5 +1,6 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.sungjinwoo.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import io.github.grebeshok105.codex.core.hero.Heroes;
@@ -19,11 +20,12 @@ import net.minecraft.sounds.SoundSource;
  *  - CD: 100t (5с)
  */
 public final class ShadowExtractionAbility implements Ability {
+	public static final ResourceLocation ID = ModId.of("shadow_extraction");
 	private static final int COOLDOWN_TICKS = 100;
 
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.SHADOW_EXTRACTION;
+		return ID;
 	}
 
 	@Override
@@ -57,7 +59,7 @@ public final class ShadowExtractionAbility implements Ability {
 		level.playSound(null, player.getX(), player.getY(), player.getZ(),
 				SoundEvents.SOUL_ESCAPE.value(), SoundSource.PLAYERS, 0.7f, 1.4f);
 
-		AbilityCooldowns.setCooldownTicks(player, AbilityIds.SHADOW_EXTRACTION, COOLDOWN_TICKS);
+		AbilityCooldowns.setCooldownTicks(player, ID, COOLDOWN_TICKS);
 		return true;
 	}
 }

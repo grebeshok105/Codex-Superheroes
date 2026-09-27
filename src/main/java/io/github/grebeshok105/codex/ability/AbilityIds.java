@@ -25,12 +25,6 @@ public final class AbilityIds {
 	public static final ResourceLocation LION_ROAR = ModId.of("lion_roar");
 	public static final ResourceLocation COUNTER_STRIKE = ModId.of("counter_strike");
 
-	public static final ResourceLocation ARISE = ModId.of("arise");
-	public static final ResourceLocation SHADOW_EXCHANGE = ModId.of("shadow_exchange");
-	public static final ResourceLocation SACRIFICE = ModId.of("sacrifice");
-	public static final ResourceLocation RULERS_AUTHORITY = ModId.of("rulers_authority");
-	public static final ResourceLocation SHADOW_EXTRACTION = ModId.of("shadow_extraction");
-	public static final ResourceLocation MONARCHS_DOMAIN = ModId.of("monarchs_domain");
 
 	public static final ResourceLocation THANOS_COSMIC_SLAM = ModId.of("thanos_cosmic_slam");
 	public static final ResourceLocation THANOS_REALITY_TEAR = ModId.of("thanos_reality_tear");
