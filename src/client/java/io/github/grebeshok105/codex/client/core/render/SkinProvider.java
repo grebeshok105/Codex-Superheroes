@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
  *       <ul>
  *         <li>Homelander: {@code ClientUraniumPressureState.isPressured(uuid)} → wounded texture
  *             ({@code textures/entity/hero/infected_homelander_wounded.png});</li>
- *         <li>Sung: {@code ClientShadowArmyState.hasShadows(uuid)} → {@code SungJinwooHero.SKIN_PHASE_2};</li>
+ *         <li>Sung: {@code ClientShadowArmyState.hasShadows(uuid)} → the hero's phase-2 skin;</li>
  *         <li>Thanos: {@code ThanosSkinTextures.textureFor(ClientThanosState.maskFor(uuid))};</li>
  *         <li>Iron Man: {@code IronManSuitVariant.get(ClientSuitVariantState.variantFor(uuid)).texture()};</li>
  *         <li>any other state → return {@code null} so the hero's {@code getSkinTexture()} applies.</li>

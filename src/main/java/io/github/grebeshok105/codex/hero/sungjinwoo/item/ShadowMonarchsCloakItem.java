@@ -1,6 +1,6 @@
-package io.github.grebeshok105.codex.item;
+package io.github.grebeshok105.codex.hero.sungjinwoo.item;
 
-import io.github.grebeshok105.codex.hero.SungJinwooHero;
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.transform.TooltipFrame;
 import io.github.grebeshok105.codex.core.transform.TransformationItem;
 import net.minecraft.ChatFormatting;
@@ -12,8 +12,11 @@ import net.minecraft.world.item.TooltipFlag;
 import java.util.List;
 
 public class ShadowMonarchsCloakItem extends TransformationItem {
+	// Leaf classes carry their own hero id (leaves never import the module root).
+	private static final net.minecraft.resources.ResourceLocation HERO_ID = ModId.of("sung_jinwoo");
+
 	public ShadowMonarchsCloakItem(Properties properties) {
-		super(SungJinwooHero.ID, properties);
+		super(HERO_ID, properties);
 	}
 
 	@Override

@@ -1,8 +1,8 @@
 package io.github.grebeshok105.codex.client.hero.sungjinwoo;
 
-import io.github.grebeshok105.codex.client.ClientShadowArmyState;
 import io.github.grebeshok105.codex.client.core.render.SkinProvider;
-import io.github.grebeshok105.codex.hero.SungJinwooHero;
+import io.github.grebeshok105.codex.client.hero.sungjinwoo.state.ClientShadowArmyState;
+import io.github.grebeshok105.codex.hero.sungjinwoo.SungJinwooHero;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;

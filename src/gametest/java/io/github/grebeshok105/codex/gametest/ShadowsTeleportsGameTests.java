@@ -1,11 +1,11 @@
 package io.github.grebeshok105.codex.gametest;
 
-import io.github.grebeshok105.codex.attachment.ModAttachments;
-import io.github.grebeshok105.codex.attachment.SungShadowArmy;
-import io.github.grebeshok105.codex.effect.SungJinwooController;
-import io.github.grebeshok105.codex.entity.ModEntities;
-import io.github.grebeshok105.codex.entity.ShadowSoldierEntity;
-import io.github.grebeshok105.codex.hero.SungJinwooHero;
+import io.github.grebeshok105.codex.hero.sungjinwoo.SungJinwooAttachments;
+import io.github.grebeshok105.codex.hero.sungjinwoo.runtime.SungShadowArmy;
+import io.github.grebeshok105.codex.hero.sungjinwoo.runtime.SungJinwooController;
+import io.github.grebeshok105.codex.hero.sungjinwoo.entity.SungJinwooEntities;
+import io.github.grebeshok105.codex.hero.sungjinwoo.entity.ShadowSoldierEntity;
+import io.github.grebeshok105.codex.hero.sungjinwoo.SungJinwooHero;
 import io.github.grebeshok105.codex.core.transform.HeroTransformService;
 import io.github.grebeshok105.codex.util.SafeTeleport;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
@@ -33,14 +33,14 @@ public final class ShadowsTeleportsGameTests implements FabricGameTest {
 		helper.runAfterDelay(10, () -> {
 			helper.assertTrue(SungJinwooController.aliveCount(player) == SungJinwooController.MAX_SHADOWS,
 					"the initial shadow army is summoned");
-			helper.assertTrue(player.getAttached(ModAttachments.SUNG_SHADOW_ARMY).summoned(),
+			helper.assertTrue(player.getAttached(SungJinwooAttachments.ARMY).summoned(),
 					"the summon is recorded in the persistent attachment");
 
 			HeroTransformService.forceUntransform(player);
 			helper.runAfterDelay(3, () -> {
 				helper.assertTrue(SungJinwooController.aliveCount(player) == 0,
 						"untransform releases every shadow");
-				SungShadowArmy army = player.getAttached(ModAttachments.SUNG_SHADOW_ARMY);
+				SungShadowArmy army = player.getAttached(SungJinwooAttachments.ARMY);
 				helper.assertTrue(army == null || army.shadowIds().isEmpty(),
 						"the persistent army record is cleared");
 				// Concurrent tests can field their own shadow armies within the bounds —
@@ -59,7 +59,7 @@ public final class ShadowsTeleportsGameTests implements FabricGameTest {
 	public void orphanShadowDiscardsItself(GameTestHelper helper) {
 		ServerPlayer owner = TestPlayers.join(helper);
 		// Not Sung — a shadow saved under this owner must not keep existing.
-		ShadowSoldierEntity shadow = helper.spawn(ModEntities.SHADOW_SOLDIER, 1, 1, 1);
+		ShadowSoldierEntity shadow = helper.spawn(SungJinwooEntities.SHADOW_SOLDIER, 1, 1, 1);
 		shadow.setOwnerId(owner.getUUID());
 
 		TestPlayers.awaitVisible(helper, shadow, () -> helper.runAfterDelay(3, () -> {
