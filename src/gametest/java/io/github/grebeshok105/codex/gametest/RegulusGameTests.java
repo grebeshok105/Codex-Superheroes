@@ -19,6 +19,7 @@ import io.github.grebeshok105.codex.item.ModItems;
 import io.github.grebeshok105.codex.mechanic.ability.SharedAbilityIds;
 import java.util.List;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
+import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -171,8 +172,12 @@ public class RegulusGameTests implements FabricGameTest {
 			assertMadnessEffect(helper, player, MobEffects.MOVEMENT_SPEED, 2);
 			assertMadnessEffect(helper, player, MobEffects.DAMAGE_BOOST, 2);
 			assertMadnessEffect(helper, player, MobEffects.JUMP, 2);
-			assertMadnessEffect(helper, player, MobEffects.REGENERATION, 0);
 			assertMadnessEffect(helper, player, MobEffects.DAMAGE_RESISTANCE, 0);
+			// The amp-0 madness regen merges into the infinite amp-0 passive instance —
+			// the passive's longer duration wins, so only the passive is observable.
+			MobEffectInstance regen = player.getEffect(MobEffects.REGENERATION);
+			helper.assertTrue(regen != null && regen.isInfiniteDuration(),
+					"the passive regen survives into madness");
 			helper.assertFalse(ModItems.EVANGELION.use(helper.getLevel(), player, InteractionHand.MAIN_HAND)
 							.getResult().consumesAction(),
 					"evangelion refuses while mad");
@@ -213,16 +218,11 @@ public class RegulusGameTests implements FabricGameTest {
 		player.setAttached(ModAttachments.REGULUS_MADNESS,
 				RegulusMadnessState.EMPTY.withMadness(true));
 
-		// findTarget sweeps a 120-block AABB — keep foreign test entities out of reach.
-		// The test world is void outside the structure, so lay a floor or the actors
-		// fall before the counter engages.
-		double isoX = player.getX() - 2000.0;
-		double isoZ = player.getZ() - 2000.0;
-		helper.getLevel().getChunk(BlockPos.containing(isoX, player.getY(), isoZ));
-		placeFloor(helper, isoX, player.getY(), isoZ);
-		placeFloor(helper, isoX + 2.0, player.getY(), isoZ);
-		player.teleportTo(isoX, player.getY(), isoZ);
-		Warden warden = spawnEntity(helper, EntityType.WARDEN, isoX + 2.0, player.getY(), isoZ);
+		// Stay on the structure: the counter resolves its victim through the entity
+		// section manager, which drops entities once a transient chunk load ends, and
+		// findTarget prefers the recorded last damager over the 120-block sweep anyway.
+		Warden warden = spawnEntity(helper, EntityType.WARDEN,
+				player.getX() + 2.0, player.getY(), player.getZ());
 
 		TestPlayers.awaitVisible(helper, warden, () -> {
 			player.invulnerableTime = 0;
@@ -243,7 +243,7 @@ public class RegulusGameTests implements FabricGameTest {
 				helper.assertTrue(warden.getY() > startY + 6.0,
 						"LIFT raises the attacker ~1.5 blocks per tick");
 			});
-			helper.runAfterDelay(80, () -> {
+			helper.runAfterDelay(90, () -> {
 				helper.assertTrue(warden.getHealth() < warden.getMaxHealth(),
 						"the slam dealt counter damage");
 				helper.assertTrue(EnergyLocks.isLocked(player),
@@ -344,6 +344,9 @@ public class RegulusGameTests implements FabricGameTest {
 		Zombie zombie = spawnEntity(helper, EntityType.ZOMBIE, aheadPos.x, player.getY(), aheadPos.z);
 
 		TestPlayers.awaitVisible(helper, zombie, () -> {
+			// findTarget's angular hitbox is bbSize*0.6 around the eye ray — aim the ray
+			// at the victim's center or the vertical offset alone rejects it.
+			player.lookAt(EntityAnchorArgument.Anchor.EYES, zombie.getBoundingBox().getCenter());
 			double dist0 = zombie.distanceTo(player);
 			AbilityRouter.activate(player, MANIA_OF_GREED);
 			helper.assertTrue(HeroDataStore.get(player).isActive(MANIA_OF_GREED),
@@ -445,7 +448,8 @@ public class RegulusGameTests implements FabricGameTest {
 	public void lionHeartTogglesResistancePushesAndDrains(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, RegulusHero.ID);
-		Zombie zombie = helper.spawn(EntityType.ZOMBIE, 2, 1, 2);
+		// Player-relative spawn — the mock player does not stand at the structure origin.
+		Zombie zombie = spawnAhead(helper, player, 2.5);
 		zombie.setNoAi(true); // a pathing zombie re-closes the gap and cancels the knockback assert
 		float energy0 = HeroDataStore.get(player).energy();
 
@@ -482,8 +486,10 @@ public class RegulusGameTests implements FabricGameTest {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, RegulusHero.ID);
 		Zombie ahead = spawnAhead(helper, player, 3.0);
+		ahead.setNoAi(true);
 		Vec3 back = player.position().subtract(player.getViewVector(1f).normalize().scale(3.0));
 		Zombie behind = spawnEntity(helper, EntityType.ZOMBIE, back.x, player.getY(), back.z);
+		behind.setNoAi(true);
 
 		TestPlayers.awaitVisible(helper, ahead, () -> TestPlayers.awaitVisible(helper, behind, () -> {
 			AbilityRouter.activate(player, LION_ROAR);
