@@ -1,25 +1,26 @@
 package io.github.grebeshok105.codex.gametest;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.ability.RaidenSwordDrawAbility;
+import io.github.grebeshok105.codex.hero.raiden.ability.RaidenSwordDrawAbility;
 import io.github.grebeshok105.codex.hero.reinhard.runtime.ReinhardSword;
-import io.github.grebeshok105.codex.attachment.ModAttachments;
 import io.github.grebeshok105.codex.core.lifecycle.EntityControlLock;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
 import io.github.grebeshok105.codex.hero.kratos.runtime.KratosRageController;
-import io.github.grebeshok105.codex.effect.RaidenState;
+import io.github.grebeshok105.codex.hero.raiden.runtime.RaidenState;
 import io.github.grebeshok105.codex.hero.reinhard.runtime.ReinhardState;
 import io.github.grebeshok105.codex.hero.reinhard.runtime.ReinhardSwordDrawCeremonyController;
 import io.github.grebeshok105.codex.hero.reinhard.runtime.ReinhardTimeSlowController;
 import io.github.grebeshok105.codex.core.lifecycle.ControlLockKind;
-import io.github.grebeshok105.codex.hero.AbilityScopedModifiers;
+import io.github.grebeshok105.codex.hero.raiden.runtime.RaidenModifiers;
 import io.github.grebeshok105.codex.hero.kratos.KratosHero;
-import io.github.grebeshok105.codex.hero.RaidenHero;
+import io.github.grebeshok105.codex.hero.raiden.RaidenAttachments;
+import io.github.grebeshok105.codex.hero.raiden.RaidenHero;
+import io.github.grebeshok105.codex.hero.raiden.RaidenItems;
 import io.github.grebeshok105.codex.hero.reinhard.ReinhardHero;
 import io.github.grebeshok105.codex.hero.reinhard.ReinhardAttachments;
 import io.github.grebeshok105.codex.hero.reinhard.ReinhardItems;
 import io.github.grebeshok105.codex.hero.reinhard.runtime.ReinhardModifiers;
-import io.github.grebeshok105.codex.item.ModItems;
+
 import io.github.grebeshok105.codex.core.transform.HeroTransformService;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.gametest.framework.GameTest;
@@ -50,25 +51,25 @@ public final class HeroModuleLifecycleGameTests implements FabricGameTest {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, RaidenHero.ID);
 		helper.assertTrue(RaidenSwordDrawAbility.giveSword(player), "Yamato given");
-		AbilityScopedModifiers.RAIDEN_BURST.apply(player);
-		helper.assertTrue(TestPlayers.count(player, ModItems.MUSOU_NO_HITOTACHI) > 0,
+		RaidenModifiers.RAIDEN_BURST.apply(player);
+		helper.assertTrue(TestPlayers.count(player, RaidenItems.MUSOU_NO_HITOTACHI) > 0,
 				"Yamato sits in the inventory");
 		helper.assertTrue(player.getAttribute(Attributes.ATTACK_DAMAGE)
-						.getModifier(AbilityScopedModifiers.RAIDEN_BURST_DAMAGE) != null,
+						.getModifier(RaidenModifiers.RAIDEN_BURST_DAMAGE) != null,
 				"burst damage modifier applied");
 
 		HeroTransformService.forceUntransform(player);
 
-		helper.assertTrue(TestPlayers.count(player, ModItems.MUSOU_NO_HITOTACHI) == 0,
+		helper.assertTrue(TestPlayers.count(player, RaidenItems.MUSOU_NO_HITOTACHI) == 0,
 				"untransform takes Yamato back");
 		helper.assertTrue(player.getAttribute(Attributes.ATTACK_DAMAGE)
-						.getModifier(AbilityScopedModifiers.RAIDEN_BURST_DAMAGE) == null,
+						.getModifier(RaidenModifiers.RAIDEN_BURST_DAMAGE) == null,
 				"burst modifiers stripped");
 		helper.assertTrue(player.getAttribute(Attributes.MOVEMENT_SPEED)
-						.getModifier(AbilityScopedModifiers.RAIDEN_BURST_SPEED) == null,
+						.getModifier(RaidenModifiers.RAIDEN_BURST_SPEED) == null,
 				"burst speed modifier stripped");
 		helper.assertTrue(RaidenState.EMPTY.equals(
-						player.getAttachedOrCreate(ModAttachments.RAIDEN_STATE)),
+						player.getAttachedOrCreate(RaidenAttachments.STATE)),
 				"RaidenState reset to EMPTY");
 		TestPlayers.leave(player);
 		helper.succeed();

@@ -1,8 +1,9 @@
 package io.github.grebeshok105.codex.gametest;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.ability.RaidenSwordDrawAbility;
-import io.github.grebeshok105.codex.attachment.ModAttachments;
+import io.github.grebeshok105.codex.hero.raiden.RaidenAttachments;
+import io.github.grebeshok105.codex.hero.raiden.RaidenItems;
+import io.github.grebeshok105.codex.hero.raiden.ability.RaidenSwordDrawAbility;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import io.github.grebeshok105.codex.core.ability.AbilityRegistry;
 import io.github.grebeshok105.codex.core.ability.AbilityRouter;
@@ -10,12 +11,11 @@ import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.hero.Heroes;
 import io.github.grebeshok105.codex.core.transform.HeroDataStore;
 import io.github.grebeshok105.codex.core.transform.HeroTransformService;
-import io.github.grebeshok105.codex.effect.HeavensStrikeController;
-import io.github.grebeshok105.codex.effect.RaidenMusouIsshinController;
-import io.github.grebeshok105.codex.effect.RaidenState;
-import io.github.grebeshok105.codex.hero.AbilityScopedModifiers;
-import io.github.grebeshok105.codex.item.ModItems;
-import io.github.grebeshok105.codex.item.MusouNoHitotachiItem;
+import io.github.grebeshok105.codex.hero.raiden.item.MusouNoHitotachiItem;
+import io.github.grebeshok105.codex.hero.raiden.runtime.HeavensStrikeController;
+import io.github.grebeshok105.codex.hero.raiden.runtime.RaidenModifiers;
+import io.github.grebeshok105.codex.hero.raiden.runtime.RaidenMusouIsshinController;
+import io.github.grebeshok105.codex.hero.raiden.runtime.RaidenState;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
@@ -67,7 +67,7 @@ public final class RaidenGameTests implements FabricGameTest {
 	}
 
 	private static RaidenState raidenState(ServerPlayer player) {
-		return player.getAttachedOrCreate(ModAttachments.RAIDEN_STATE);
+		return player.getAttachedOrCreate(RaidenAttachments.STATE);
 	}
 
 	private static boolean isActive(ServerPlayer player, ResourceLocation abilityId) {
@@ -135,13 +135,13 @@ public final class RaidenGameTests implements FabricGameTest {
 		helper.assertTrue(isActive(player, SWORD_DRAW), "sword draw toggled on");
 		helper.assertTrue(player.getMainHandItem().getItem() instanceof MusouNoHitotachiItem,
 				"Yamato lands in the main hand");
-		helper.assertTrue(TestPlayers.count(player, ModItems.MUSOU_NO_HITOTACHI) == 1,
+		helper.assertTrue(TestPlayers.count(player, RaidenItems.MUSOU_NO_HITOTACHI) == 1,
 				"exactly one Yamato issued");
 		helper.assertTrue(raidenState(player).swordDrawn(), "state flags the drawn sword");
 
 		AbilityRouter.activate(player, SWORD_DRAW);
 		helper.assertTrue(!isActive(player, SWORD_DRAW), "second activation toggles it off");
-		helper.assertTrue(TestPlayers.count(player, ModItems.MUSOU_NO_HITOTACHI) == 0,
+		helper.assertTrue(TestPlayers.count(player, RaidenItems.MUSOU_NO_HITOTACHI) == 0,
 				"deactivation revokes Yamato");
 		helper.assertTrue(!raidenState(player).swordDrawn(), "state cleared");
 
@@ -160,7 +160,7 @@ public final class RaidenGameTests implements FabricGameTest {
 
 		AbilityRouter.activate(player, SWORD_DRAW);
 		helper.assertTrue(!isActive(player, SWORD_DRAW), "no room -> no activation");
-		helper.assertTrue(TestPlayers.count(player, ModItems.MUSOU_NO_HITOTACHI) == 0, "no Yamato");
+		helper.assertTrue(TestPlayers.count(player, RaidenItems.MUSOU_NO_HITOTACHI) == 0, "no Yamato");
 		helper.assertTrue(!raidenState(player).swordDrawn(), "state untouched");
 
 		TestPlayers.leave(player);
@@ -187,7 +187,7 @@ public final class RaidenGameTests implements FabricGameTest {
 				"eye timer armed at +500 ticks");
 
 		// Fast-forward the expiry field: the active tick must drop the toggle itself.
-		player.setAttached(ModAttachments.RAIDEN_STATE,
+		player.setAttached(RaidenAttachments.STATE,
 				raidenState(player).withEyeExpireTick(now + 1));
 		helper.runAfterDelay(4, () -> {
 			helper.assertTrue(!isActive(player, EYE_OF_JUDGMENT), "expired eye deactivates itself");
@@ -222,10 +222,10 @@ public final class RaidenGameTests implements FabricGameTest {
 							&& armed.burstFinalSlashTick() - now == 140L,
 					"burst window and final slash both armed at +140");
 			helper.assertTrue(player.getAttribute(Attributes.ATTACK_DAMAGE)
-							.getModifier(AbilityScopedModifiers.RAIDEN_BURST_DAMAGE) != null,
+							.getModifier(RaidenModifiers.RAIDEN_BURST_DAMAGE) != null,
 					"burst attack-damage modifier applied");
 			helper.assertTrue(player.getAttribute(Attributes.MOVEMENT_SPEED)
-							.getModifier(AbilityScopedModifiers.RAIDEN_BURST_SPEED) != null,
+							.getModifier(RaidenModifiers.RAIDEN_BURST_SPEED) != null,
 					"burst speed modifier applied");
 
 			helper.runAfterDelay(142, () -> {
@@ -234,7 +234,7 @@ public final class RaidenGameTests implements FabricGameTest {
 				helper.assertTrue(done.burstExpireTick() == 0L && done.burstFinalSlashTick() == 0L,
 						"burst counters cleared after the slash");
 				helper.assertTrue(player.getAttribute(Attributes.ATTACK_DAMAGE)
-								.getModifier(AbilityScopedModifiers.RAIDEN_BURST_DAMAGE) == null,
+								.getModifier(RaidenModifiers.RAIDEN_BURST_DAMAGE) == null,
 						"burst modifiers stripped on expiry");
 				TestPlayers.leave(player);
 				helper.succeed();
@@ -540,14 +540,14 @@ public final class RaidenGameTests implements FabricGameTest {
 		ServerPlayer player = TestPlayers.join(helper);
 		teleportIntoStructure(helper, player);
 		TestHeroes.transform(player, RAIDEN);
-		player.setAttached(ModAttachments.RAIDEN_STATE, RaidenState.EMPTY
+		player.setAttached(RaidenAttachments.STATE, RaidenState.EMPTY
 				.withEyeExpireTick(123L).withSwordDrawn(true).withBurstExpireTick(77L));
 
 		TestPlayers.leave(player);
 		helper.runAfterDelay(3, () -> {
 			ServerPlayer back = TestPlayers.rejoin(helper, player);
 			helper.assertTrue(RaidenState.EMPTY.equals(
-							back.getAttachedOrCreate(ModAttachments.RAIDEN_STATE)),
+							back.getAttachedOrCreate(RaidenAttachments.STATE)),
 					"raiden_state starts empty after relog");
 			TestPlayers.leave(back);
 			helper.succeed();
