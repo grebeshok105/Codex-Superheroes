@@ -5,6 +5,8 @@ ability.ironman <-> hero
 attachment <-> effect
 attachment <-> mechanic.boundweapon
 client <-> client.hud
+content.horde <-> content.horde.entity
+content.horde.entity <-> content.horde.entity.projectile
 core.ability <-> core.attachment
 core.ability <-> core.hero
 core.ability <-> core.net
@@ -24,6 +26,4 @@ effect <-> network
 entity <-> entity.ai
 entity <-> item
 hero <-> physics
-horde <-> horde.entity
-horde.entity <-> horde.entity.projectile
 item <-> mechanic.boundweapon
