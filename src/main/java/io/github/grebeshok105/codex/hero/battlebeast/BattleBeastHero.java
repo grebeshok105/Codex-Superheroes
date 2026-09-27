@@ -1,7 +1,7 @@
-package io.github.grebeshok105.codex.hero;
+package io.github.grebeshok105.codex.hero.battlebeast;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.ability.AbilityIds;
+
 import io.github.grebeshok105.codex.core.hero.AttributeModifierSet;
 import io.github.grebeshok105.codex.core.hero.BleedProfile;
 import io.github.grebeshok105.codex.core.hero.Hero;
@@ -98,10 +98,10 @@ public final class BattleBeastHero implements Hero {
 	@Override
 	public List<ResourceLocation> getAbilities() {
 		return List.of(
-				AbilityIds.BATTLE_BEAST_PREDATOR_LEAP,
-				AbilityIds.BATTLE_BEAST_AXE_CLEAVE,
-				AbilityIds.BATTLE_BEAST_WAR_ROAR,
-				AbilityIds.BATTLE_BEAST_BLOODLUST
+				BattleBeastAbilities.BATTLE_BEAST_PREDATOR_LEAP,
+				BattleBeastAbilities.BATTLE_BEAST_AXE_CLEAVE,
+				BattleBeastAbilities.BATTLE_BEAST_WAR_ROAR,
+				BattleBeastAbilities.BATTLE_BEAST_BLOODLUST
 		);
 	}
 
@@ -126,7 +126,7 @@ public final class BattleBeastHero implements Hero {
 		PASSIVES.remove(player);
 		player.removeEffect(MobEffects.DAMAGE_RESISTANCE);
 		if (player instanceof ServerPlayer serverPlayer) {
-			io.github.grebeshok105.codex.effect.BattleBeastCurseController.clear(serverPlayer);
+			io.github.grebeshok105.codex.hero.battlebeast.runtime.BattleBeastCurseController.clear(serverPlayer);
 		}
 	}
 
@@ -152,7 +152,7 @@ public final class BattleBeastHero implements Hero {
 		}
 		ServerLevel level = player.serverLevel();
 		double radius = 3.5 + impact.intensity() * 5.5;
-		float damage = io.github.grebeshok105.codex.effect.BattleBeastCurseController.scaleDamage(player,
+		float damage = io.github.grebeshok105.codex.hero.battlebeast.runtime.BattleBeastCurseController.scaleDamage(player,
 				4.0f + impact.intensity() * 8.0f);
 		io.github.grebeshok105.codex.physics.ShockwaveUtil.detonate(player, player.position(), radius, damage, false);
 		level.sendParticles(ParticleTypes.CRIT,

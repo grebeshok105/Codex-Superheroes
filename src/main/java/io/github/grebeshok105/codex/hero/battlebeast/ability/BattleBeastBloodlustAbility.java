@@ -1,5 +1,6 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.battlebeast.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import net.minecraft.core.particles.ParticleTypes;
@@ -12,11 +13,12 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 
 public final class BattleBeastBloodlustAbility implements Ability {
+	public static final ResourceLocation ID = ModId.of("battle_beast_bloodlust");
 	private static final int COOLDOWN_TICKS = 16 * 20;
 
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.BATTLE_BEAST_BLOODLUST;
+		return ID;
 	}
 
 	@Override

@@ -15,7 +15,7 @@ import java.util.UUID;
  * {@code PUBLIC_HERO} arrives via attachment sync with no client-side change callback, and a
  * remote player's {@code dimensions} only recalculates on a pose change. Watches the synced hero
  * id of every tracked player and calls {@code refreshDimensions()} the moment it changes, so a
- * Battle Beast hitbox (or its removal) takes effect without waiting for a crouch (audit B14).
+ * hero-sized hitbox (or its removal) takes effect without waiting for a crouch (audit B14).
  */
 public final class ClientHeroDimsWatcher {
 	private static final Map<UUID, ResourceLocation> LAST_SEEN = new HashMap<>();
