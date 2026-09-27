@@ -3,7 +3,7 @@ package io.github.grebeshok105.codex.gametest;
 import io.github.grebeshok105.codex.effect.RamCompanionController;
 import io.github.grebeshok105.codex.entity.ModEntities;
 import io.github.grebeshok105.codex.entity.RamEntity;
-import io.github.grebeshok105.codex.horde.HordeManager;
+import io.github.grebeshok105.codex.content.horde.HordeManager;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;

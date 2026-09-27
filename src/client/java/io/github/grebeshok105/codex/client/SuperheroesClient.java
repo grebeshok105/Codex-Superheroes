@@ -9,7 +9,6 @@ import io.github.grebeshok105.codex.client.hud.AbilityBarHud;
 import io.github.grebeshok105.codex.client.hud.ChatHudMovable;
 import io.github.grebeshok105.codex.client.hud.EffectsHudMovable;
 import io.github.grebeshok105.codex.client.hud.HeroInfoPanelHud;
-import io.github.grebeshok105.codex.client.hud.HordeDebugOverlay;
 import io.github.grebeshok105.codex.client.hud.HotbarOverrideHud;
 import io.github.grebeshok105.codex.client.hud.MeleeChargeHud;
 import io.github.grebeshok105.codex.client.hud.RadialMenuHud;
@@ -54,6 +53,7 @@ public class SuperheroesClient implements ClientModInitializer {
 		ModKeys.init();
 		ClientNetworking.init();
 		HeroClientModules.bootstrap();
+		io.github.grebeshok105.codex.client.bootstrap.ContentClientModules.bootstrap();
 		io.github.grebeshok105.codex.client.iris.IrisShaderBridge.restoreAfterCrashIfNeeded();
 		ClientTickEvents.END_CLIENT_TICK.register(client -> io.github.grebeshok105.codex.client.iris.IrisShaderBridge.tickCrashRestore());
 		ClientTickEvents.END_CLIENT_TICK.register(io.github.grebeshok105.codex.client.ClientMirrorDimensionState::tick);
@@ -65,33 +65,6 @@ public class SuperheroesClient implements ClientModInitializer {
 		LocalLaserOverlay.register();
 		EntityRendererRegistry.register(EntityType.LIGHTNING_BOLT, SuperheroLightningRenderer::new);
 		EntityRendererRegistry.register(ModEntities.HOMELANDER_BOSS, HomelanderBossRenderer::new);
-		// Horde entity renderers — vanilla models matched to each mob's texture UV
-		// (custom geo/textures are mismatched imports → garbled UVs, deferred to a proper import PR).
-		EntityRendererRegistry.register(io.github.grebeshok105.codex.horde.entity.HordeEntities.CRAWLER, io.github.grebeshok105.codex.client.render.horde.GenericHordeRenderer.spider("crawler", 0.4f, 0.55f));
-		EntityRendererRegistry.register(io.github.grebeshok105.codex.horde.entity.HordeEntities.LURKER, io.github.grebeshok105.codex.client.render.horde.GenericHordeRenderer.humanoid("lurker", 0.4f, 0.72f));
-		EntityRendererRegistry.register(io.github.grebeshok105.codex.horde.entity.HordeEntities.SPITTER, io.github.grebeshok105.codex.client.render.horde.GenericHordeRenderer.humanoid("spitter", 0.35f, 0.62f));
-		EntityRendererRegistry.register(io.github.grebeshok105.codex.horde.entity.HordeEntities.SWOOPER, io.github.grebeshok105.codex.client.render.horde.GenericHordeRenderer.ghast("swooper", 0.4f, 0.8f));
-		EntityRendererRegistry.register(io.github.grebeshok105.codex.horde.entity.HordeEntities.STALKER, io.github.grebeshok105.codex.client.render.horde.GenericHordeRenderer.humanoid("stalker", 0.4f, 0.82f));
-		EntityRendererRegistry.register(io.github.grebeshok105.codex.horde.entity.HordeEntities.INFECTOR, io.github.grebeshok105.codex.client.render.horde.GenericHordeRenderer.humanoid("infector", 0.3f, 0.51f));
-		EntityRendererRegistry.register(io.github.grebeshok105.codex.horde.entity.HordeEntities.PARASITIC_HOUND, io.github.grebeshok105.codex.client.render.horde.GenericHordeRenderer.cow("parasitic_hound", 0.35f, 0.5f));
-		EntityRendererRegistry.register(io.github.grebeshok105.codex.horde.entity.HordeEntities.INFECTED_ZOMBIE, io.github.grebeshok105.codex.client.render.horde.GenericHordeRenderer.humanoid("infected_zombie", 0.5f, 1.0f));
-		EntityRendererRegistry.register(io.github.grebeshok105.codex.horde.entity.HordeEntities.INFECTED_SKELETON, io.github.grebeshok105.codex.client.render.horde.GenericHordeRenderer.humanoid("infected_skeleton", 0.5f, 1.0f));
-		EntityRendererRegistry.register(io.github.grebeshok105.codex.horde.entity.HordeEntities.INFECTED_SPIDER, io.github.grebeshok105.codex.client.render.horde.GenericHordeRenderer.spider("infected_spider", 0.7f, 1.0f));
-		EntityRendererRegistry.register(io.github.grebeshok105.codex.horde.entity.HordeEntities.INFECTED_CREEPER, io.github.grebeshok105.codex.client.render.horde.GenericHordeRenderer.creeper("infected_creeper", 0.5f, 1.0f));
-		EntityRendererRegistry.register(io.github.grebeshok105.codex.horde.entity.HordeEntities.VOID_PARASITE, io.github.grebeshok105.codex.client.render.horde.GenericHordeRenderer.humanoid("void_parasite", 0.35f, 0.67f));
-		EntityRendererRegistry.register(io.github.grebeshok105.codex.horde.entity.HordeEntities.HOLLOW_VILLAGER, io.github.grebeshok105.codex.client.render.horde.GenericHordeRenderer.villager("hollow_villager", 0.5f, 1.0f));
-		EntityRendererRegistry.register(io.github.grebeshok105.codex.horde.entity.HordeEntities.INFECTED_CATTLE, io.github.grebeshok105.codex.client.render.horde.GenericHordeRenderer.cow("infected_cattle", 0.5f, 1.0f));
-		EntityRendererRegistry.register(io.github.grebeshok105.codex.horde.entity.HordeEntities.BROODMOTHER, io.github.grebeshok105.codex.client.render.horde.GenericHordeRenderer.spider("broodmother", 0.9f, 1.25f));
-		EntityRendererRegistry.register(io.github.grebeshok105.codex.horde.entity.HordeEntities.CORRUPTED_GOLEM, io.github.grebeshok105.codex.client.render.horde.GenericHordeRenderer.humanoid("corrupted_golem", 0.8f, 1.38f));
-		EntityRendererRegistry.register(io.github.grebeshok105.codex.horde.entity.HordeEntities.HIVEMIND, io.github.grebeshok105.codex.client.render.horde.GenericHordeRenderer.humanoid("hivemind", 0.6f, 1.03f));
-		EntityRendererRegistry.register(io.github.grebeshok105.codex.horde.entity.HordeEntities.LEVIATHAN, io.github.grebeshok105.codex.client.render.horde.GenericHordeRenderer.humanoid("leviathan", 1.0f, 1.54f));
-		io.github.grebeshok105.codex.horde.entity.HordeEntities hordeRef = null; // static init trigger
-		EntityRendererRegistry.register(io.github.grebeshok105.codex.horde.entity.HordeEntities.INFECTED_HOMELANDER, io.github.grebeshok105.codex.client.render.horde.InfectedHomelanderRenderer::new);
-		// Horde bomb projectiles render as thrown items.
-		EntityRendererRegistry.register(io.github.grebeshok105.codex.horde.entity.HordeEntities.ACID_BOMB,
-				ctx -> new net.minecraft.client.renderer.entity.ThrownItemRenderer<>(ctx, 1.0f, false));
-		EntityRendererRegistry.register(io.github.grebeshok105.codex.horde.entity.HordeEntities.FIRE_BOMB,
-				ctx -> new net.minecraft.client.renderer.entity.ThrownItemRenderer<>(ctx, 1.0f, false));
 		LivingEntityFeatureRendererRegistrationCallback.EVENT.register((entityType, entityRenderer, registrationHelper, context) -> {
 			if (entityRenderer instanceof PlayerRenderer playerRenderer) {
 				PlayerLayers.registerAll(playerRenderer, registrationHelper);
@@ -159,7 +132,6 @@ public class SuperheroesClient implements ClientModInitializer {
 		HudLayers.register(700, ModId.of("radial_menu"), RadialMenuHud::render);
 		HudLayers.register(800, ModId.of("screen_flash"), ScreenFlashHud::render);
 		HudLayers.registerMovable(1800, ModId.of("tooltips"), AbilitiesTooltipHud::render, AbilitiesTooltipHud.INSTANCE);
-		HudLayers.register(2000, ModId.of("horde_debug"), HordeDebugOverlay::render);
 		HudLayers.registerMovable(2100, ModId.of("melee_charge"), MeleeChargeHud::render, MeleeChargeHud.INSTANCE);
 
 		ClientTickEvents.START_CLIENT_TICK.register(SuperheroesClient::tickHeroMeleeCharge);

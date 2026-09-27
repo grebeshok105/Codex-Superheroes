@@ -418,3 +418,8 @@
 - R21-R23 recorded (HeroClientContext bound ≤10; ClientSoundFilters single-consumer OK; entities/particles direct reg).
 - migrate-hero SKILL.md authored from F/G lessons (characterize→move→clean; DAG; seams; traps).
 - Wave order confirmed: I1a-c → I2a-c → I3 → I4a-d → I5a-c → I6a-b + IC1-3 → O.
+
+## IC1 — horde → content/horde (PR #96)
+- Horde subsystem moved to content/horde/ + client/content/horde/ on NEW ContentModule/ContentModuleContext contract (HeroModuleContext minus hero()); composition roots bootstrap/ContentModules + client/bootstrap/ContentClientModules.
+- HordeManager.ACTIVE/OVERLAY_PLAYERS → OwnedSessionMap(global(), empty ClearOn) — clears only on SERVER_STOPPED (matches old resetAll; SharedMechanics.onServerStopped dropped).
+- GeckoLib kept (removal precondition not proven). Reviewer APPROVE, CI green.
