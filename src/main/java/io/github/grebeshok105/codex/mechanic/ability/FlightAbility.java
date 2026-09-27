@@ -1,20 +1,26 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.mechanic.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.effect.FlightController;
 import io.github.grebeshok105.codex.effect.ModEffects;
 import io.github.grebeshok105.codex.effect.UraniumDefenseController;
 import io.github.grebeshok105.codex.flight.FlightMode;
-import io.github.grebeshok105.codex.hero.HomelanderHero;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 
 public final class FlightAbility implements Ability {
+	public static final ResourceLocation ID = ModId.of("flight");
+
+	// The uranium-threat deny is Homelander-specific; referenced by id so this
+	// shared class never imports a foreign hero.
+	private static final ResourceLocation HOMELANDER_ID = ModId.of("homelander");
+
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.FLIGHT;
+		return ID;
 	}
 
 	@Override
@@ -35,7 +41,7 @@ public final class FlightAbility implements Ability {
 	@Override
 	public boolean canActivate(ServerPlayer player) {
 		HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
-		boolean isHomelander = data.hasHero() && HomelanderHero.ID.equals(data.heroId());
+		boolean isHomelander = data.hasHero() && HOMELANDER_ID.equals(data.heroId());
 		if (isHomelander && !ModEffects.isMadness(player)
 				&& UraniumDefenseController.isUnderUraniumThreat(player)
 				&& FlightController.isOnCooldown(player)) {

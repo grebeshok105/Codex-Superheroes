@@ -1,5 +1,6 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.mechanic.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
@@ -8,10 +9,10 @@ import io.github.grebeshok105.codex.effect.FlightController;
 import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
+import io.github.grebeshok105.codex.mechanic.motion.Motion;
 import io.github.grebeshok105.codex.physics.RushTerrainBreaker;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -34,12 +35,13 @@ public final class ViltrumiteChargeAbility implements Ability {
 	private static final double DISTANCE = 22.0;
 	private static final double FLIGHT_DISTANCE_MULTIPLIER = 2.5;
 	private static final double KNOCKBACK = 4.8;
+	public static final ResourceLocation ID = ModId.of("viltrumite_charge");
 	private static final OwnedSessionMap<UUID, ActiveCharge> ACTIVE =
 			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.of(ClearOn.LEAVE, ClearOn.DEATH));
 
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.VILTRUMITE_CHARGE;
+		return ID;
 	}
 
 	@Override
@@ -71,10 +73,8 @@ public final class ViltrumiteChargeAbility implements Ability {
 		double distance = effectiveDistance(player);
 		double speed = distance / DURATION_TICKS;
 		Vec3 motion = look.scale(speed);
-		player.setDeltaMovement(motion);
-		player.hurtMarked = true;
+		Motion.set(player, motion, Motion.Sync.MARK_AND_SEND_TO_PLAYER);
 		player.fallDistance = 0f;
-		player.connection.send(new ClientboundSetEntityMotionPacket(player.getId(), motion));
 
 		ACTIVE.put(player.getUUID(), player.getUUID(), new ActiveCharge(DURATION_TICKS, look, distance, new HashSet<>()));
 
@@ -92,10 +92,8 @@ public final class ViltrumiteChargeAbility implements Ability {
 		if (charge == null) return;
 
 		Vec3 motion = charge.direction.scale(charge.distance / DURATION_TICKS);
-		player.setDeltaMovement(motion);
-		player.hurtMarked = true;
+		Motion.set(player, motion, Motion.Sync.MARK_AND_SEND_TO_PLAYER);
 		player.fallDistance = 0f;
-		player.connection.send(new ClientboundSetEntityMotionPacket(player.getId(), motion));
 
 		ServerLevel level = player.serverLevel();
 		AABB box = player.getBoundingBox().inflate(1.4);
@@ -105,8 +103,7 @@ public final class ViltrumiteChargeAbility implements Ability {
 			if (!charge.hits.add(hit.getUUID())) continue;
 			hit.hurt(player.damageSources().playerAttack(player), DAMAGE);
 			Vec3 push = charge.direction.scale(KNOCKBACK).add(0, 0.45, 0);
-			hit.push(push.x, push.y, push.z);
-			hit.hurtMarked = true;
+			Motion.add(hit, push, Motion.Sync.MARK);
 			level.sendParticles(ParticleTypes.CRIT,
 					hit.getX(), hit.getY() + hit.getBbHeight() * 0.5, hit.getZ(),
 					18, 0.35, 0.35, 0.35, 0.18);

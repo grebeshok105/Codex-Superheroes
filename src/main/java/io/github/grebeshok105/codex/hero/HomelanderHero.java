@@ -2,6 +2,7 @@ package io.github.grebeshok105.codex.hero;
 
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.ability.AbilityIds;
+import io.github.grebeshok105.codex.mechanic.ability.SharedAbilityIds;
 import io.github.grebeshok105.codex.core.hero.AttributeModifierSet;
 import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.hero.HeroHudConfig;
@@ -103,7 +104,7 @@ public final class HomelanderHero implements Hero {
 	@Override
 	public List<ResourceLocation> getAbilities() {
 		return List.of(
-				AbilityIds.FLIGHT,
+				SharedAbilityIds.FLIGHT,
 				AbilityIds.EYE_LASERS,
 				AbilityIds.X_RAY,
 				AbilityIds.IRON_FISTS,

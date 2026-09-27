@@ -1,17 +1,20 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.omniman.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import io.github.grebeshok105.codex.core.lifecycle.ControlLockKind;
 import io.github.grebeshok105.codex.core.lifecycle.EntityControlLock;
-import io.github.grebeshok105.codex.network.ThinkMarkS2CPayload;
+import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
+import io.github.grebeshok105.codex.hero.omniman.net.ThinkMarkS2CPayload;
+import io.github.grebeshok105.codex.mechanic.motion.Motion;
 import io.github.grebeshok105.codex.physics.RushTerrainBreaker;
 import io.github.grebeshok105.codex.physics.ShockwaveUtil;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -22,9 +25,9 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.EnumSet;
 import java.util.List;
 import java.util.UUID;
-import java.util.WeakHashMap;
 
 /**
  * «Think, Mark!» — фирменный захват Омнимена (жёсткий грэб-лок).
@@ -48,11 +51,16 @@ public final class OmnimanThinkMarkAbility implements Ability {
 	private static final double DASH_SPEED = 4.2;
 	private static final float DASH_TICK_DAMAGE = 1.5f;
 	private static final float SLAM_DAMAGE = 6.0f;
-	private static final WeakHashMap<UUID, State> ACTIVE = new WeakHashMap<>();
+	// Empty ClearOn: releasing a grab has side effects (lock release, pose-off
+	// broadcast), so clearing stays explicit through clear() on lifecycle hooks.
+	private static final OwnedSessionMap<UUID, State> ACTIVE =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.noneOf(OwnedSessionMap.ClearOn.class));
+
+	public static final ResourceLocation ID = ModId.of("omniman_think_mark");
 
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.OMNIMAN_THINK_MARK;
+		return ID;
 	}
 
 	@Override
@@ -86,7 +94,7 @@ public final class OmnimanThinkMarkAbility implements Ability {
 
 		State state = new State(target);
 		lockTarget(player, state);
-		ACTIVE.put(player.getUUID(), state);
+		ACTIVE.put(player.getUUID(), player.getUUID(), state);
 		setPose(player, true);
 
 		ServerLevel level = player.serverLevel();
@@ -219,11 +227,6 @@ public final class OmnimanThinkMarkAbility implements Ability {
 		}
 	}
 
-	/** World shutdown — grab sessions die with the world; the locks restore the flags. */
-	public static void resetAll() {
-		ACTIVE.clear();
-	}
-
 	public static boolean isActive(ServerPlayer player) {
 		return ACTIVE.containsKey(player.getUUID());
 	}
@@ -263,15 +266,12 @@ public final class OmnimanThinkMarkAbility implements Ability {
 		target.hurtMarked = true;
 		// Игрока-жертву дополнительно «осаживаем» нулевым импульсом на клиенте.
 		if (target instanceof ServerPlayer victim) {
-			victim.connection.send(new ClientboundSetEntityMotionPacket(victim.getId(), Vec3.ZERO));
-			victim.hurtMarked = true;
+			Motion.set(victim, Vec3.ZERO, Motion.Sync.MARK_AND_SEND_TO_PLAYER);
 		}
 	}
 
 	private static void applyMotion(ServerPlayer player, Vec3 motion) {
-		player.setDeltaMovement(motion);
-		player.hurtMarked = true;
-		player.connection.send(new ClientboundSetEntityMotionPacket(player.getId(), motion));
+		Motion.set(player, motion, Motion.Sync.MARK_AND_SEND_TO_PLAYER);
 	}
 
 	private static void setPose(ServerPlayer player, boolean active) {

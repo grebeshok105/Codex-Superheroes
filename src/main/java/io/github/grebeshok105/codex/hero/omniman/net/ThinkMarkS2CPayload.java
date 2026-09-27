@@ -1,4 +1,4 @@
-package io.github.grebeshok105.codex.network;
+package io.github.grebeshok105.codex.hero.omniman.net;
 
 import io.github.grebeshok105.codex.ModId;
 import io.netty.buffer.ByteBuf;

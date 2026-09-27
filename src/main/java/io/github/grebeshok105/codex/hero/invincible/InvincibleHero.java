@@ -1,8 +1,8 @@
-package io.github.grebeshok105.codex.hero;
+package io.github.grebeshok105.codex.hero.invincible;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.ability.AbilityIds;
-import io.github.grebeshok105.codex.ability.ViltrumiteChargeAbility;
+import io.github.grebeshok105.codex.mechanic.ability.SharedAbilityIds;
+import io.github.grebeshok105.codex.mechanic.ability.ViltrumiteChargeAbility;
 import io.github.grebeshok105.codex.core.hero.AttributeModifierSet;
 import io.github.grebeshok105.codex.core.hero.BleedProfile;
 import io.github.grebeshok105.codex.core.hero.Hero;
@@ -111,10 +111,10 @@ public final class InvincibleHero implements Hero {
 	@Override
 	public List<ResourceLocation> getAbilities() {
 		return List.of(
-				AbilityIds.FLIGHT,
-				AbilityIds.VILTRUMITE_CHARGE,
-				AbilityIds.VILTRUMITE_RECOVERY,
-				AbilityIds.GUARDIANS_BREAKER);
+				SharedAbilityIds.FLIGHT,
+				SharedAbilityIds.VILTRUMITE_CHARGE,
+				SharedAbilityIds.VILTRUMITE_RECOVERY,
+				InvincibleAbilities.GUARDIANS_BREAKER);
 	}
 
 	@Override

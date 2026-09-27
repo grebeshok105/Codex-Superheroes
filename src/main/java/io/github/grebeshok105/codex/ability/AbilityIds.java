@@ -4,18 +4,11 @@ import io.github.grebeshok105.codex.ModId;
 import net.minecraft.resources.ResourceLocation;
 
 public final class AbilityIds {
-	public static final ResourceLocation FLIGHT = ModId.of("flight");
 	public static final ResourceLocation EYE_LASERS = ModId.of("eye_lasers");
 	public static final ResourceLocation X_RAY = ModId.of("x_ray");
 	public static final ResourceLocation IRON_FISTS = ModId.of("iron_fists");
 	public static final ResourceLocation HAND_CLAP = ModId.of("hand_clap");
 	public static final ResourceLocation STUNNING_ROAR = ModId.of("stunning_roar");
-	public static final ResourceLocation VILTRUMITE_CHARGE = ModId.of("viltrumite_charge");
-	public static final ResourceLocation VILTRUMITE_RECOVERY = ModId.of("viltrumite_recovery");
-	public static final ResourceLocation GUARDIANS_BREAKER = ModId.of("guardians_breaker");
-	public static final ResourceLocation OMNIMAN_VILTRUMITE_RUSH = ModId.of("omniman_viltrumite_rush");
-	public static final ResourceLocation OMNIMAN_WORLD_BREAKER = ModId.of("omniman_world_breaker");
-	public static final ResourceLocation OMNIMAN_THINK_MARK = ModId.of("omniman_think_mark");
 
 	public static final ResourceLocation IRON_MAN_FLIGHT = ModId.of("iron_man_flight");
 	public static final ResourceLocation SUPERSONIC = ModId.of("supersonic");

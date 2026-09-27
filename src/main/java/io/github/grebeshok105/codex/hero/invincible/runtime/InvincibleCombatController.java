@@ -1,12 +1,12 @@
-package io.github.grebeshok105.codex.effect;
+package io.github.grebeshok105.codex.hero.invincible.runtime;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.ability.AbilityIds;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
+import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
-import io.github.grebeshok105.codex.hero.InvincibleHero;
-import io.github.grebeshok105.codex.sound.ModSounds;
 import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.sound.ModSounds;
 import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
@@ -21,11 +21,9 @@ import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import net.minecraft.server.MinecraftServer;
 
@@ -35,8 +33,15 @@ public final class InvincibleCombatController {
 	private static final double BONUS_KNOCKBACK = 1.15;
 	private static final ResourceLocation DAMAGE_PROC = ModId.of("modifiers/invincible/iron_fists_proc_damage");
 	private static final ResourceLocation KNOCKBACK_PROC = ModId.of("modifiers/invincible/iron_fists_proc_knockback");
-	private static final Map<UUID, Long> LAST_PROC = new HashMap<>();
-	private static final Set<UUID> ACTIVE_MODIFIERS = new HashSet<>();
+	// Iron Fists belongs to Homelander (not yet migrated); referenced by id so
+	// this module never imports a foreign hero.
+	private static final ResourceLocation IRON_FISTS_ID = ModId.of("iron_fists");
+	private static final ResourceLocation INVINCIBLE_ID = ModId.of("invincible");
+
+	private static final OwnedSessionMap<UUID, Long> LAST_PROC =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.of(OwnedSessionMap.ClearOn.LEAVE));
+	private static final OwnedSessionMap<UUID, Boolean> ACTIVE_MODIFIERS =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.of(OwnedSessionMap.ClearOn.LEAVE));
 
 	private InvincibleCombatController() {
 	}
@@ -53,7 +58,7 @@ public final class InvincibleCombatController {
 				return InteractionResult.PASS;
 			}
 			HeroData data = sp.getAttachedOrCreate(CoreAttachments.HERO_DATA);
-			if (!InvincibleHero.ID.equals(data.heroId()) || data.isActive(AbilityIds.IRON_FISTS)) {
+			if (!INVINCIBLE_ID.equals(data.heroId()) || data.isActive(IRON_FISTS_ID)) {
 				return InteractionResult.PASS;
 			}
 			long now = sp.level().getGameTime();
@@ -61,7 +66,7 @@ public final class InvincibleCombatController {
 			if (last != null && now - last < PROC_COOLDOWN_TICKS) {
 				return InteractionResult.PASS;
 			}
-			LAST_PROC.put(sp.getUUID(), now);
+			LAST_PROC.put(sp.getUUID(), sp.getUUID(), now);
 			applyAttackModifiers(sp);
 			spawnImpact(sp.serverLevel(), target);
 			return InteractionResult.PASS;
@@ -82,7 +87,7 @@ public final class InvincibleCombatController {
 			knockback.addTransientModifier(new AttributeModifier(
 					KNOCKBACK_PROC, BONUS_KNOCKBACK, AttributeModifier.Operation.ADD_VALUE));
 		}
-		ACTIVE_MODIFIERS.add(player.getUUID());
+		ACTIVE_MODIFIERS.put(player.getUUID(), player.getUUID(), Boolean.TRUE);
 	}
 
 	private static void removeAttackModifiers(ServerPlayer player) {
@@ -107,16 +112,15 @@ public final class InvincibleCombatController {
 	}
 
 	public static void serverTick(MinecraftServer server) {
-		Iterator<UUID> it = ACTIVE_MODIFIERS.iterator();
+		Iterator<Map.Entry<UUID, Boolean>> it = ACTIVE_MODIFIERS.iterator();
 		while (it.hasNext()) {
-			UUID id = it.next();
+			UUID id = it.next().getKey();
 			ServerPlayer player = server.getPlayerList().getPlayer(id);
 			if (player != null) {
 				removeAttackModifiers(player);
 			}
 			it.remove();
 		}
-		LAST_PROC.keySet().removeIf(id -> server.getPlayerList().getPlayer(id) == null);
 	}
 
 }

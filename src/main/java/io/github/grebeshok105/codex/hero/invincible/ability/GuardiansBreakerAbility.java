@@ -1,15 +1,15 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.invincible.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import io.github.grebeshok105.codex.core.net.ScreenShakeS2CPayload;
+import io.github.grebeshok105.codex.mechanic.motion.Motion;
 import io.github.grebeshok105.codex.mechanic.world.WorldDestructionPolicy;
-import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -41,9 +41,11 @@ public final class GuardiansBreakerAbility implements Ability {
 	private static final double SWEEP_KNOCKBACK = 5.8;
 	private static final double SWEEP_UPWARD_KNOCKBACK = 0.9;
 
+	public static final ResourceLocation ID = ModId.of("guardians_breaker");
+
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.GUARDIANS_BREAKER;
+		return ID;
 	}
 
 	@Override
@@ -85,21 +87,16 @@ public final class GuardiansBreakerAbility implements Ability {
 				MAX_BLOCKS_DESTROYED - destroyed);
 
 		Vec3 motion = direction.scale(dashSpeed(distance));
-		player.setDeltaMovement(motion);
-		player.hurtMarked = true;
+		Motion.set(player, motion, Motion.Sync.MARK_AND_SEND_TO_PLAYER);
 		player.fallDistance = 0f;
-		player.connection.send(new ClientboundSetEntityMotionPacket(player.getId(), motion));
 
 		target.hurt(player.damageSources().playerAttack(player), DAMAGE);
 		target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, BREAK_DURATION_TICKS, 1, true, true, true));
 		target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, BREAK_DURATION_TICKS, 1, true, true, true));
 		target.addEffect(new MobEffectInstance(MobEffects.DIG_SLOWDOWN, BREAK_DURATION_TICKS, 0, true, true, true));
 		target.addEffect(new MobEffectInstance(MobEffects.GLOWING, 30, 0, true, false, false));
-		target.setDeltaMovement(direction.x * TARGET_KNOCKBACK, TARGET_UPWARD_KNOCKBACK, direction.z * TARGET_KNOCKBACK);
-		target.hurtMarked = true;
-		if (target instanceof ServerPlayer targetPlayer) {
-			targetPlayer.connection.send(new ClientboundSetEntityMotionPacket(targetPlayer));
-		}
+		Motion.set(target, new Vec3(direction.x * TARGET_KNOCKBACK, TARGET_UPWARD_KNOCKBACK, direction.z * TARGET_KNOCKBACK),
+				Motion.Sync.MARK_AND_SEND_TO_PLAYER);
 		int swept = sweepImpactTargets(player, target, targetCenter, direction);
 
 		int steps = (int) Math.max(8.0, distance * 4.0);
@@ -250,20 +247,20 @@ public final class GuardiansBreakerAbility implements Ability {
 			double knockback = SWEEP_KNOCKBACK * (0.35 + falloff * 0.65);
 			target.hurt(player.damageSources().playerAttack(player), damage);
 			target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 50, 0, true, true, true));
-			target.setDeltaMovement(away.x * knockback + direction.x * 1.1,
+			Motion.set(target, new Vec3(away.x * knockback + direction.x * 1.1,
 					SWEEP_UPWARD_KNOCKBACK + falloff * 0.45,
-					away.z * knockback + direction.z * 1.1);
-			target.hurtMarked = true;
-			if (target instanceof ServerPlayer targetPlayer) {
-				targetPlayer.connection.send(new ClientboundSetEntityMotionPacket(targetPlayer));
-			}
+					away.z * knockback + direction.z * 1.1),
+					Motion.Sync.MARK_AND_SEND_TO_PLAYER);
 			swept++;
 		}
 		return swept;
 	}
 
 	private static void shake(ServerLevel level, Vec3 center) {
-		for (ServerPlayer nearby : PlayerLookup.around(level, center, 48.0)) {
+		for (ServerPlayer nearby : level.players()) {
+			if (nearby.distanceToSqr(center) > 48.0 * 48.0) {
+				continue;
+			}
 			double distance = nearby.position().distanceTo(center);
 			float intensity = (float) Math.max(0.08, 1.0 - distance / 48.0) * 2.2f;
 			ServerPlayNetworking.send(nearby, new ScreenShakeS2CPayload(intensity, 28));

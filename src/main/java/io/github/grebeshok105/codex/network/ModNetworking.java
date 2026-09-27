@@ -19,7 +19,6 @@ public final class ModNetworking {
 
 		PayloadTypeRegistry.playC2S().register(SuperJumpC2SPayload.TYPE, SuperJumpC2SPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playC2S().register(HeroMeleeChargeC2SPayload.TYPE, HeroMeleeChargeC2SPayload.STREAM_CODEC);
-		PayloadTypeRegistry.playC2S().register(ThinkMarkDashC2SPayload.TYPE, ThinkMarkDashC2SPayload.STREAM_CODEC);
 
 		PayloadTypeRegistry.playS2C().register(FlightStateS2CPayload.TYPE, FlightStateS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(LaserFiredS2CPayload.TYPE, LaserFiredS2CPayload.STREAM_CODEC);
@@ -36,7 +35,6 @@ public final class ModNetworking {
 		PayloadTypeRegistry.playS2C().register(JarvisDetectionS2CPayload.TYPE, JarvisDetectionS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(SuitVariantS2CPayload.TYPE, SuitVariantS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(NanoFormS2CPayload.TYPE, NanoFormS2CPayload.STREAM_CODEC);
-		PayloadTypeRegistry.playS2C().register(ThinkMarkS2CPayload.TYPE, ThinkMarkS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(AdminBuildS2CPayload.TYPE, AdminBuildS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(KratosRageS2CPayload.TYPE, KratosRageS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(RemDemonismS2CPayload.TYPE, RemDemonismS2CPayload.STREAM_CODEC);
@@ -53,10 +51,6 @@ public final class ModNetworking {
 		ServerPlayNetworking.registerGlobalReceiver(HeroMeleeChargeC2SPayload.TYPE, (payload, context) -> {
 			ServerPlayer player = context.player();
 			HeroMeleeImpactController.handleChargeInput(player, payload);
-		});
-		ServerPlayNetworking.registerGlobalReceiver(ThinkMarkDashC2SPayload.TYPE, (payload, context) -> {
-			ServerPlayer player = context.player();
-			io.github.grebeshok105.codex.ability.OmnimanThinkMarkAbility.triggerDash(player);
 		});
 		ServerPlayNetworking.registerGlobalReceiver(MirrorDimensionStatusC2SPayload.TYPE, (payload, context) -> {
 			ServerPlayer player = context.player();

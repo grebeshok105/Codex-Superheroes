@@ -63,8 +63,6 @@ public final class ModItemGroups {
 
 				output.accept(ModItems.RAIDEN_SUIT);
 
-				output.accept(ModItems.INVINCIBLE_SUIT);
-				output.accept(ModItems.OMNIMAN_SUIT);
 
 				output.accept(ModItems.BATTLE_BEAST_MEDALLION);
 				output.accept(ModItems.REM_ONI_HORN);

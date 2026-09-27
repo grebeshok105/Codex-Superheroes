@@ -1,8 +1,10 @@
-package io.github.grebeshok105.codex.hero;
+package io.github.grebeshok105.codex.hero.omniman;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.ability.AbilityIds;
-import io.github.grebeshok105.codex.ability.OmnimanViltrumiteRushAbility;
+import io.github.grebeshok105.codex.hero.omniman.ability.OmnimanThinkMarkAbility;
+import io.github.grebeshok105.codex.hero.omniman.ability.OmnimanViltrumiteRushAbility;
+import io.github.grebeshok105.codex.hero.omniman.runtime.OmnimanMomentumController;
+import io.github.grebeshok105.codex.mechanic.ability.SharedAbilityIds;
 import io.github.grebeshok105.codex.core.hero.AttributeModifierSet;
 import io.github.grebeshok105.codex.core.hero.BleedProfile;
 import io.github.grebeshok105.codex.core.hero.Hero;
@@ -12,7 +14,6 @@ import io.github.grebeshok105.codex.core.hero.ImpactStyle;
 import io.github.grebeshok105.codex.core.hero.JarvisThreatClass;
 import io.github.grebeshok105.codex.core.hero.LandingImpact;
 import io.github.grebeshok105.codex.core.hero.PassiveGlyph;
-import io.github.grebeshok105.codex.effect.OmnimanMomentumController;
 import io.github.grebeshok105.codex.physics.ShockwaveUtil;
 import io.github.grebeshok105.codex.core.resource.ResourceKind;
 import net.minecraft.core.particles.ParticleTypes;
@@ -114,11 +115,11 @@ public final class OmnimanHero implements Hero {
 	@Override
 	public List<ResourceLocation> getAbilities() {
 		return List.of(
-				AbilityIds.FLIGHT,
-				AbilityIds.OMNIMAN_VILTRUMITE_RUSH,
-				AbilityIds.OMNIMAN_THINK_MARK,
-				AbilityIds.OMNIMAN_WORLD_BREAKER,
-				AbilityIds.VILTRUMITE_RECOVERY);
+				SharedAbilityIds.FLIGHT,
+				OmnimanAbilities.VILTRUMITE_RUSH,
+				OmnimanAbilities.THINK_MARK,
+				OmnimanAbilities.WORLD_BREAKER,
+				SharedAbilityIds.VILTRUMITE_RECOVERY);
 	}
 
 	@Override
@@ -148,7 +149,7 @@ public final class OmnimanHero implements Hero {
 		if (player instanceof ServerPlayer sp) {
 			OmnimanMomentumController.clear(sp);
 			OmnimanViltrumiteRushAbility.clear(sp);
-			io.github.grebeshok105.codex.ability.OmnimanThinkMarkAbility.clear(sp);
+			OmnimanThinkMarkAbility.clear(sp);
 		}
 	}
 

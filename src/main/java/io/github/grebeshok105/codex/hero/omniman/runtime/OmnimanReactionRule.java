@@ -1,34 +1,34 @@
-package io.github.grebeshok105.codex.effect;
+package io.github.grebeshok105.codex.hero.omniman.runtime;
 
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
-import io.github.grebeshok105.codex.hero.HomelanderHero;
-import io.github.grebeshok105.codex.sound.ModSounds;
 import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.sound.ModSounds;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
 
 /**
- * Голосовые реакции героев на появление других героев.
- * Кто-то превращается в Омни-Мэна при живом Хоумлендере (или наоборот,
- * в Хоумлендера при живом Омни-Мэне) — реплику Хоумлендера слышат
- * ВСЕ игроки на сервере.
+ * The Omni-Man half of the Homelander ↔ Omni-Man reaction bark: when someone
+ * transforms into Omni-Man while a live Homelander exists, the Homelander
+ * reaction line is broadcast to every player. The reverse direction stays in
+ * {@code effect.HeroReactionController} until the Homelander wave moves it.
+ * The foreign hero id is a string literal; the bark sound comes from the
+ * shared registry constant — no foreign hero import.
  */
-public final class HeroReactionController {
+public final class OmnimanReactionRule {
+	private static final ResourceLocation OMNIMAN_ID = ModId.of("omniman");
+	private static final ResourceLocation HOMELANDER_ID = ModId.of("homelander");
 
-	private HeroReactionController() {
+	private OmnimanReactionRule() {
 	}
 
 	public static void onTransformed(ServerPlayer player, ResourceLocation heroId) {
-		// The Omni-Man direction lives in hero/omniman (OmnimanReactionRule);
-		// only the Homelander direction remains here until the Homelander wave
-		// moves it and renames this hook off the shared controller. The paired
-		// hero id is a string literal — no foreign import.
-		if (HomelanderHero.ID.equals(heroId)) {
-			if (anyOtherWithHero(player, ModId.of("omniman"))) {
-				broadcastReaction(player);
-			}
+		if (!OMNIMAN_ID.equals(heroId)) {
+			return;
+		}
+		if (anyOtherWithHero(player, HOMELANDER_ID)) {
+			broadcastReaction(player);
 		}
 	}
 
