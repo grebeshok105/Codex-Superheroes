@@ -258,7 +258,7 @@ public final class GuardiansBreakerAbility implements Ability {
 
 	private static void shake(ServerLevel level, Vec3 center) {
 		for (ServerPlayer nearby : level.players()) {
-			if (nearby.distanceToSqr(center) >= 48.0 * 48.0) {
+			if (nearby.distanceToSqr(center) > 48.0 * 48.0) {
 				continue;
 			}
 			double distance = nearby.position().distanceTo(center);
