@@ -2,7 +2,7 @@ package io.github.grebeshok105.codex.client.hero.ironman;
 
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.client.ClientHeroState;
-import io.github.grebeshok105.codex.client.ModKeys;
+import io.github.grebeshok105.codex.client.core.input.ModKeys;
 import io.github.grebeshok105.codex.client.core.module.HeroClientContext;
 import io.github.grebeshok105.codex.client.core.module.HeroClientModule;
 import io.github.grebeshok105.codex.client.core.render.BeamDraws;

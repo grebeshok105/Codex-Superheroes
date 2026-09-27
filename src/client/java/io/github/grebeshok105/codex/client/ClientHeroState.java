@@ -3,21 +3,28 @@ package io.github.grebeshok105.codex.client;
 import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.hero.HeroTheme;
 import io.github.grebeshok105.codex.core.hero.Heroes;
-import io.github.grebeshok105.codex.client.hud.ScreenFlashHud;
 import io.github.grebeshok105.codex.core.model.HeroData;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
 
 public final class ClientHeroState {
 	private static volatile HeroData data = HeroData.EMPTY;
 	private static volatile List<ResourceLocation> abilities = List.of();
+	private static final List<Consumer<Boolean>> PRESENCE_LISTENERS = new CopyOnWriteArrayList<>();
 
 	static {
 		ClientSessionState.register(ClientHeroState::reset);
 	}
 
 	private ClientHeroState() {
+	}
+
+	/** Registers a listener fired inside {@link #update} whenever {@code hasHero()} flips. */
+	public static void onPresenceChange(Consumer<Boolean> listener) {
+		PRESENCE_LISTENERS.add(listener);
 	}
 
 	public static HeroData data() {
@@ -42,7 +49,10 @@ public final class ClientHeroState {
 			abilities = List.of();
 		}
 		if (hadHero != newData.hasHero()) {
-			ScreenFlashHud.trigger(newData.hasHero());
+			boolean present = newData.hasHero();
+			for (Consumer<Boolean> listener : PRESENCE_LISTENERS) {
+				listener.accept(present);
+			}
 		}
 	}
 

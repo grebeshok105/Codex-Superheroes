@@ -1,27 +1,31 @@
-package io.github.grebeshok105.codex.client.network;
+package io.github.grebeshok105.codex.client.core.net;
 
 import io.github.grebeshok105.codex.client.ClientAbilityCooldowns;
 import io.github.grebeshok105.codex.client.ClientFlightState;
 import io.github.grebeshok105.codex.client.ClientHeroState;
-import io.github.grebeshok105.codex.client.fx.ScreenShakeManager;
 import io.github.grebeshok105.codex.client.core.render.BeamRenderer;
+import io.github.grebeshok105.codex.client.fx.ScreenShakeManager;
 import io.github.grebeshok105.codex.client.fx.WallImpactDebrisManager;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.net.AbilityCooldownS2CPayload;
 import io.github.grebeshok105.codex.core.net.BeamFxS2CPayload;
-import io.github.grebeshok105.codex.core.net.WallImpactDebrisS2CPayload;
-import io.github.grebeshok105.codex.mechanic.flight.FlightAbilityState;
 import io.github.grebeshok105.codex.core.net.HeroDataSyncS2CPayload;
-import io.github.grebeshok105.codex.mechanic.flight.FlightStateS2CPayload;
 import io.github.grebeshok105.codex.core.net.ResourceUpdateS2CPayload;
 import io.github.grebeshok105.codex.core.net.ScreenShakeS2CPayload;
+import io.github.grebeshok105.codex.core.net.WallImpactDebrisS2CPayload;
 import io.github.grebeshok105.codex.core.model.HeroData;
+import io.github.grebeshok105.codex.mechanic.flight.FlightAbilityState;
+import io.github.grebeshok105.codex.mechanic.flight.FlightStateS2CPayload;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 
-public final class ClientNetworking {
-	private ClientNetworking() {
+/**
+ * Receivers for the core S2C payloads — the client mirror of {@code core/net/CoreNetworking}.
+ * Hero payloads register through {@code HeroClientContext.receive} in their client modules.
+ */
+public final class CoreClientReceivers {
+	private CoreClientReceivers() {
 	}
 
 	public static void init() {
@@ -65,35 +69,16 @@ public final class ClientNetworking {
 		ClientPlayNetworking.registerGlobalReceiver(ScreenShakeS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> ScreenShakeManager.shake(payload.intensity(), payload.durationTicks())));
 
-		ClientPlayNetworking.registerGlobalReceiver(io.github.grebeshok105.codex.core.net.WallImpactDebrisS2CPayload.TYPE, (payload, context) ->
+		ClientPlayNetworking.registerGlobalReceiver(WallImpactDebrisS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> WallImpactDebrisManager.spawn(
 						context.client().level, payload.position(), payload.direction(),
 						payload.intensity(), payload.blockStateIds())));
 
-		ClientPlayNetworking.registerGlobalReceiver(io.github.grebeshok105.codex.core.net.AbilityCooldownS2CPayload.TYPE, (payload, context) ->
+		ClientPlayNetworking.registerGlobalReceiver(AbilityCooldownS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> ClientAbilityCooldowns.update(payload.abilityId(), payload.remainingTicks())));
 
 		ClientPlayNetworking.registerGlobalReceiver(BeamFxS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> BeamRenderer.add(
 						payload.style(), payload.start(), payload.end())));
-
-		ClientPlayNetworking.registerGlobalReceiver(io.github.grebeshok105.codex.content.admin.AdminBuildS2CPayload.TYPE, (payload, context) ->
-				context.client().execute(() -> {
-					io.github.grebeshok105.codex.content.admin.AdminBuildVisibility.setClientVisible(payload.enabled());
-					superheroes$rebuildSuperheroesTab(context.client());
-				}));
-	}
-
-	/**
-	 * Пересобирает содержимое креатив-вкладки Superheroes после смены
-	 * состояния админ-билда (vanilla кэширует вкладки и сам не обновит).
-	 */
-	private static void superheroes$rebuildSuperheroesTab(Minecraft mc) {
-		if (mc.player == null || mc.level == null) return;
-		var parameters = new net.minecraft.world.item.CreativeModeTab.ItemDisplayParameters(
-				mc.player.connection.enabledFeatures(),
-				mc.player.canUseGameMasterBlocks() && mc.options.operatorItemsTab().get(),
-				mc.level.registryAccess());
-		io.github.grebeshok105.codex.item.ModItemGroups.SUPERHEROES_TAB.buildContents(parameters);
 	}
 }
