@@ -172,7 +172,12 @@ public class RegulusGameTests implements FabricGameTest {
 			assertMadnessEffect(helper, player, MobEffects.MOVEMENT_SPEED, 2);
 			assertMadnessEffect(helper, player, MobEffects.DAMAGE_BOOST, 2);
 			assertMadnessEffect(helper, player, MobEffects.JUMP, 2);
-			assertMadnessEffect(helper, player, MobEffects.DAMAGE_RESISTANCE, 0);
+			// The reading window refreshed amp-4 resistance every tick; its ~2-tick
+			// tail outlives the window and beats the madness amp-0 in vanilla's merge
+			// — amp-0 only resurfaces on the next tickMadnessAmbient 40-tick boundary.
+			MobEffectInstance handoff = player.getEffect(MobEffects.DAMAGE_RESISTANCE);
+			helper.assertTrue(handoff != null && handoff.getAmplifier() == 4,
+					"the reading-window amp-4 resistance tail outlives the window");
 			// The amp-0 madness regen merges into the infinite amp-0 passive instance —
 			// the passive's longer duration wins, so only the passive is observable.
 			MobEffectInstance regen = player.getEffect(MobEffects.REGENERATION);
@@ -181,8 +186,11 @@ public class RegulusGameTests implements FabricGameTest {
 			helper.assertFalse(ModItems.EVANGELION.use(helper.getLevel(), player, InteractionHand.MAIN_HAND)
 							.getResult().consumesAction(),
 					"evangelion refuses while mad");
-			TestPlayers.leave(player);
-			helper.succeed();
+			helper.runAfterDelay(40, () -> {
+				assertMadnessEffect(helper, player, MobEffects.DAMAGE_RESISTANCE, 0);
+				TestPlayers.leave(player);
+				helper.succeed();
+			});
 		});
 	}
 
@@ -334,14 +342,10 @@ public class RegulusGameTests implements FabricGameTest {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, RegulusHero.ID);
 
-		double isoX = player.getX() + 3000.0;
-		double isoZ = player.getZ() + 3000.0;
-		helper.getLevel().getChunk(BlockPos.containing(isoX, player.getY(), isoZ));
-		placeFloor(helper, isoX, player.getY(), isoZ);
-		player.teleportTo(isoX, player.getY(), isoZ);
-		Vec3 aheadPos = player.position().add(player.getViewVector(1f).normalize().scale(4.0));
-		placeFloor(helper, aheadPos.x, player.getY(), aheadPos.z);
-		Zombie zombie = spawnEntity(helper, EntityType.ZOMBIE, aheadPos.x, player.getY(), aheadPos.z);
+		// The victim must keep ticking — entities parked in a transient far chunk are
+		// registered but never ticked, so the magnet's pull never displaces them.
+		Zombie zombie = spawnAhead(helper, player, 4.0);
+		zombie.setNoAi(true);
 
 		TestPlayers.awaitVisible(helper, zombie, () -> {
 			// findTarget's angular hitbox is bbSize*0.6 around the eye ray — aim the ray
@@ -459,11 +463,15 @@ public class RegulusGameTests implements FabricGameTest {
 		MobEffectInstance resist = player.getEffect(MobEffects.DAMAGE_RESISTANCE);
 		helper.assertTrue(resist != null && resist.getAmplifier() == 4 && resist.isInfiniteDuration(),
 				"activation grants infinite amp-4 resistance");
+		// tryActivate applies the shockwave impulse synchronously — pin the impulse,
+		// not a later position (walls and the vertical component make distance racy).
+		helper.assertTrue(zombie.getDeltaMovement().horizontalDistance() > 1.0,
+				"the activation shockwave pushes nearby mobs away");
 
 		double dist0 = zombie.distanceTo(player);
 		helper.runAfterDelay(8, () -> {
-			helper.assertTrue(zombie.distanceTo(player) > dist0 + 0.2,
-					"the activation shockwave pushes nearby mobs away");
+			helper.assertTrue(zombie.distanceTo(player) >= dist0 - 0.1,
+					"the pushed zombie never drifts back inside its start radius");
 			helper.assertTrue(HeroDataStore.get(player).energy() < energy0,
 					"the toggle drains 10 energy per tick while active");
 
