@@ -177,6 +177,9 @@ public final class LokiGameTests implements FabricGameTest {
 		helper.getLevel().getChunk(BlockPos.containing(isoX, player.getY(), isoZ));
 		player.teleportTo(isoX, player.getY(), isoZ);
 		Zombie zombie = spawnZombieAhead(player, 4.0);
+		// Pin the landing geometry: a chasing/wandering zombie drifts past the
+		// 2.5-block assert before the blink resolves.
+		zombie.setNoAi(true);
 
 		TestPlayers.awaitVisible(helper, zombie, () -> {
 			AbilityRouter.activate(player, TESSERACT_BLINK);
