@@ -5,7 +5,6 @@ import io.github.grebeshok105.codex.core.model.ControlLockKind;
 import io.github.grebeshok105.codex.core.model.ControlLockShadow;
 import io.github.grebeshok105.codex.core.model.ControlLockState;
 import io.github.grebeshok105.codex.core.model.HeldLocks;
-import io.github.grebeshok105.codex.core.transform.HeroTransformService;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
