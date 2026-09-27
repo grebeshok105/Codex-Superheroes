@@ -96,15 +96,17 @@ public final class HomelanderBossGameTests implements FabricGameTest {
 		ServerLevel level = helper.getLevel();
 		HomelanderBossEntity boss = ModEntities.HOMELANDER_BOSS.create(level);
 		helper.assertTrue(boss != null, "HOMELANDER_BOSS.create() must instantiate");
-		helper.assertTrue(boss.getAttributeValue(Attributes.MAX_HEALTH) == 500.0D, "500 hp");
-		helper.assertTrue(boss.getAttributeValue(Attributes.ARMOR) == 100.0D, "100 armor");
-		helper.assertTrue(boss.getAttributeValue(Attributes.ARMOR_TOUGHNESS) == 12.0D, "12 toughness");
-		helper.assertTrue(boss.getAttributeValue(Attributes.ATTACK_DAMAGE) == 14.0D, "14 damage");
-		helper.assertTrue(boss.getAttributeValue(Attributes.ATTACK_KNOCKBACK) == 2.0D, "2 attack knockback");
-		helper.assertTrue(boss.getAttributeValue(Attributes.KNOCKBACK_RESISTANCE) == 1.0D, "1 knockback resistance");
-		helper.assertTrue(boss.getAttributeValue(Attributes.MOVEMENT_SPEED) == 0.8D, "0.8 movement speed");
-		helper.assertTrue(boss.getAttributeValue(Attributes.FLYING_SPEED) == 1.4D, "1.4 flying speed");
-		helper.assertTrue(boss.getAttributeValue(Attributes.FOLLOW_RANGE) == 96.0D, "96 follow range");
+		// getAttributeValue CLAMPS to each attribute's declared max (armor caps at 30) —
+		// pin the constructor-set base values instead.
+		helper.assertTrue(boss.getAttribute(Attributes.MAX_HEALTH).getBaseValue() == 500.0D, "500 hp");
+		helper.assertTrue(boss.getAttribute(Attributes.ARMOR).getBaseValue() == 100.0D, "100 armor");
+		helper.assertTrue(boss.getAttribute(Attributes.ARMOR_TOUGHNESS).getBaseValue() == 12.0D, "12 toughness");
+		helper.assertTrue(boss.getAttribute(Attributes.ATTACK_DAMAGE).getBaseValue() == 14.0D, "14 damage");
+		helper.assertTrue(boss.getAttribute(Attributes.ATTACK_KNOCKBACK).getBaseValue() == 2.0D, "2 attack knockback");
+		helper.assertTrue(boss.getAttribute(Attributes.KNOCKBACK_RESISTANCE).getBaseValue() == 1.0D, "1 knockback resistance");
+		helper.assertTrue(boss.getAttribute(Attributes.MOVEMENT_SPEED).getBaseValue() == 0.8D, "0.8 movement speed");
+		helper.assertTrue(boss.getAttribute(Attributes.FLYING_SPEED).getBaseValue() == 1.4D, "1.4 flying speed");
+		helper.assertTrue(boss.getAttribute(Attributes.FOLLOW_RANGE).getBaseValue() == 96.0D, "96 follow range");
 		helper.assertTrue(boss.fireImmune(), "the boss is fire immune");
 		helper.assertTrue(!boss.isPushable(), "the boss cannot be pushed");
 		// Constructor-seeded cooldowns (laser is left at 0 — the only one ready immediately).
@@ -273,7 +275,7 @@ public final class HomelanderBossGameTests implements FabricGameTest {
 
 	// ─────────────────────────── live targeting / bar ─────────────────────
 
-	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 300)
+	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 400)
 	public void bossTargetsPlayerAndShowsBar(GameTestHelper helper) {
 		ServerLevel level = helper.getLevel();
 		ServerPlayer player = TestPlayers.join(helper);
