@@ -84,21 +84,6 @@ public final class ModItems {
 									new TransformationLore.Line("item.superheroes.doomsday_genome.lore.untransform", ChatFormatting.GOLD))))
 	);
 
-	public static final CaptainAmericaSuitItem CAPTAIN_AMERICA_SUIT = register(
-			"captain_america_suit",
-			new CaptainAmericaSuitItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
-	);
-
-	public static final VibraniumShieldItem VIBRANIUM_SHIELD = register(
-			"vibranium_shield",
-			new VibraniumShieldItem(new Item.Properties().stacksTo(1).durability(2000).rarity(Rarity.EPIC))
-	);
-
-	public static final BladeOfChaosItem BLADE_OF_CHAOS = register(
-			"blade_of_chaos",
-			new BladeOfChaosItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
-	);
-
 	public static final InfinityGauntletItem INFINITY_GAUNTLET = register(
 			"infinity_gauntlet",
 			new InfinityGauntletItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
@@ -148,16 +133,6 @@ public final class ModItems {
 									new TransformationLore.Line("item.superheroes.raiden_suit.lore.line2", ChatFormatting.DARK_GRAY)),
 							List.of(new TransformationLore.Line("item.superheroes.raiden_suit.lore.usage", ChatFormatting.YELLOW),
 									new TransformationLore.Line("item.superheroes.raiden_suit.lore.untransform", ChatFormatting.RED))))
-	);
-
-	public static final TransformationItem BATTLE_BEAST_MEDALLION = register(
-			"battle_beast_medallion",
-			new TransformationItem(ModId.of("battle_beast"), new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC),
-					new TransformationLore(ChatFormatting.DARK_RED,
-							List.of(new TransformationLore.Line("item.superheroes.battle_beast_medallion.lore.line1", ChatFormatting.RED),
-									new TransformationLore.Line("item.superheroes.battle_beast_medallion.lore.line2", ChatFormatting.DARK_GRAY)),
-							List.of(new TransformationLore.Line("item.superheroes.battle_beast_medallion.lore.usage", ChatFormatting.GOLD),
-									new TransformationLore.Line("item.superheroes.battle_beast_medallion.lore.untransform", ChatFormatting.RED))))
 	);
 
 	public static final TransformationItem REM_ONI_HORN = register(

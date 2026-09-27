@@ -39,17 +39,6 @@ public final class AbilityIds {
 	public static final ResourceLocation DOOMSDAY_CHARGE_TACKLE = ModId.of("doomsday_charge_tackle");
 	public static final ResourceLocation DOOMSDAY_DOOM_GRIP = ModId.of("doomsday_doom_grip");
 
-	public static final ResourceLocation CAP_SHIELD_THROW = ModId.of("cap_shield_throw");
-	public static final ResourceLocation CAP_SHIELD_SLAM = ModId.of("cap_shield_slam");
-	public static final ResourceLocation CAP_SHIELD_DASH = ModId.of("cap_shield_dash");
-	public static final ResourceLocation CAP_COUNTER_STANCE = ModId.of("cap_counter_stance");
-
-	public static final ResourceLocation KRATOS_SPARTAN_RAGE = ModId.of("kratos_spartan_rage");
-	public static final ResourceLocation KRATOS_BLADE_STORM = ModId.of("kratos_blade_storm");
-	public static final ResourceLocation KRATOS_CHAIN_WHIRL = ModId.of("kratos_chain_whirl");
-	public static final ResourceLocation KRATOS_LEVIATHAN_THROW = ModId.of("kratos_leviathan_throw");
-	public static final ResourceLocation KRATOS_GOD_SLAYER = ModId.of("kratos_god_slayer");
-
 	public static final ResourceLocation THANOS_COSMIC_SLAM = ModId.of("thanos_cosmic_slam");
 	public static final ResourceLocation THANOS_REALITY_TEAR = ModId.of("thanos_reality_tear");
 	public static final ResourceLocation THANOS_MIND_PULSE = ModId.of("thanos_mind_pulse");
@@ -64,11 +53,6 @@ public final class AbilityIds {
 	public static final ResourceLocation RAIDEN_PLUNGING_STRIKE = ModId.of("raiden_plunging_strike");
 	public static final ResourceLocation RAIDEN_TRANSCENDENCE = ModId.of("raiden_transcendence");
 	public static final ResourceLocation RAIDEN_MUSOU_ISSHIN = ModId.of("raiden_musou_isshin");
-
-	public static final ResourceLocation BATTLE_BEAST_PREDATOR_LEAP = ModId.of("battle_beast_predator_leap");
-	public static final ResourceLocation BATTLE_BEAST_AXE_CLEAVE = ModId.of("battle_beast_axe_cleave");
-	public static final ResourceLocation BATTLE_BEAST_WAR_ROAR = ModId.of("battle_beast_war_roar");
-	public static final ResourceLocation BATTLE_BEAST_BLOODLUST = ModId.of("battle_beast_bloodlust");
 
 	public static final ResourceLocation REM_MORNING_STAR = ModId.of("rem_morning_star");
 	public static final ResourceLocation REM_ONI_RAGE = ModId.of("rem_oni_rage");

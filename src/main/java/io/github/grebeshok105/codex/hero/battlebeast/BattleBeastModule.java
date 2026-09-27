@@ -1,14 +1,14 @@
 package io.github.grebeshok105.codex.hero.battlebeast;
 
-import io.github.grebeshok105.codex.ability.BattleBeastAxeCleaveAbility;
-import io.github.grebeshok105.codex.ability.BattleBeastBloodlustAbility;
-import io.github.grebeshok105.codex.ability.BattleBeastPredatorLeapAbility;
-import io.github.grebeshok105.codex.ability.BattleBeastWarRoarAbility;
 import io.github.grebeshok105.codex.core.module.HeroModule;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
-import io.github.grebeshok105.codex.effect.BattleBeastCurseController;
-import io.github.grebeshok105.codex.hero.BattleBeastHero;
+import io.github.grebeshok105.codex.hero.battlebeast.ability.BattleBeastAxeCleaveAbility;
+import io.github.grebeshok105.codex.hero.battlebeast.ability.BattleBeastBloodlustAbility;
+import io.github.grebeshok105.codex.hero.battlebeast.ability.BattleBeastPredatorLeapAbility;
+import io.github.grebeshok105.codex.hero.battlebeast.ability.BattleBeastWarRoarAbility;
+import io.github.grebeshok105.codex.hero.battlebeast.runtime.BattleBeastCurseController;
 import io.github.grebeshok105.codex.core.hero.Hero;
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 
 public final class BattleBeastModule implements HeroModule {
 	private final BattleBeastHero hero = new BattleBeastHero();
@@ -25,7 +25,9 @@ public final class BattleBeastModule implements HeroModule {
 		ctx.abilities().register(new BattleBeastWarRoarAbility());
 		ctx.abilities().register(new BattleBeastBloodlustAbility());
 		ctx.lifecycle().onJoin(BattleBeastCurseController::reapplyOnJoin);
-		ctx.lifecycle().onServerStopped(server -> BattleBeastCurseController.resetAll());
 		ctx.ticks().player(BattleBeastCurseController::tickPlayer);
+		BattleBeastItems.register(ctx.content());
+		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, env) ->
+				BattleBeastCommands.register(dispatcher));
 	}
 }

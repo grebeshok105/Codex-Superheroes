@@ -39,8 +39,11 @@
 			"io.github.grebeshok105.codex.gametest.LokiGameTests",
 			"io.github.grebeshok105.codex.gametest.ATrainGameTests",
 			"io.github.grebeshok105.codex.gametest.InvincibleGameTests",
+			"io.github.grebeshok105.codex.gametest.KratosGameTests",
 			"io.github.grebeshok105.codex.gametest.OmnimanGameTests",
 			"io.github.grebeshok105.codex.gametest.GokuNarutoChargeGameTests",
+			"io.github.grebeshok105.codex.gametest.BattleBeastGameTests",
+			"io.github.grebeshok105.codex.gametest.CaptainAmericaGameTests",
 			"io.github.grebeshok105.codex.gametest.ContentRegistrationGameTests",
 			"io.github.grebeshok105.codex.gametest.HordeGameTests",
 			"io.github.grebeshok105.codex.gametest.HomelanderBossGameTests"

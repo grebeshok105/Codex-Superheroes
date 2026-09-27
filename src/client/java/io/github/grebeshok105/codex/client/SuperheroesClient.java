@@ -71,8 +71,6 @@ public class SuperheroesClient implements ClientModInitializer {
 		ParticleFactoryRegistry.getInstance().register(ModParticles.LASER_SPARK, EndRodParticle.Provider::new);
 		ParticleFactoryRegistry.getInstance().register(ModParticles.REPULSOR_SPARK, EndRodParticle.Provider::new);
 		ParticleFactoryRegistry.getInstance().register(ModParticles.UNIBEAM_SPARK, EndRodParticle.Provider::new);
-		ParticleFactoryRegistry.getInstance().register(ModParticles.CAP_SHIELD_TRAIL, EndRodParticle.Provider::new);
-		ParticleFactoryRegistry.getInstance().register(ModParticles.CAP_SHIELD_SLAM_BURST, EndRodParticle.Provider::new);
 		ParticleFactoryRegistry.getInstance().register(ModParticles.WHITE_BOOM,
 				sprites -> new io.github.grebeshok105.codex.client.fx.CustomParticleGate(sprites, EndRodParticle.Provider::new));
 		ParticleFactoryRegistry.getInstance().register(ModParticles.SWORD_EXPLOSION,
@@ -94,12 +92,6 @@ public class SuperheroesClient implements ClientModInitializer {
 		ParticleFactoryRegistry.getInstance().register(ModParticles.NIGHTFALL,
 				sprites -> new io.github.grebeshok105.codex.client.fx.CustomParticleGate(sprites, EndRodParticle.Provider::new));
 		ParticleFactoryRegistry.getInstance().register(ModParticles.CHAOS_ORB,
-				sprites -> new io.github.grebeshok105.codex.client.fx.CustomParticleGate(sprites, EndRodParticle.Provider::new));
-		ParticleFactoryRegistry.getInstance().register(ModParticles.KRATOS_HAND_BURST_1,
-				sprites -> new io.github.grebeshok105.codex.client.fx.CustomParticleGate(sprites, EndRodParticle.Provider::new));
-		ParticleFactoryRegistry.getInstance().register(ModParticles.KRATOS_HAND_BURST_2,
-				sprites -> new io.github.grebeshok105.codex.client.fx.CustomParticleGate(sprites, EndRodParticle.Provider::new));
-		ParticleFactoryRegistry.getInstance().register(ModParticles.KRATOS_HAND_BURST_3,
 				sprites -> new io.github.grebeshok105.codex.client.fx.CustomParticleGate(sprites, EndRodParticle.Provider::new));
 		ParticleFactoryRegistry.getInstance().register(ModParticles.ANOMALY_SLICE,
 				sprites -> new io.github.grebeshok105.codex.client.fx.CustomParticleGate(sprites, EndRodParticle.Provider::new));
