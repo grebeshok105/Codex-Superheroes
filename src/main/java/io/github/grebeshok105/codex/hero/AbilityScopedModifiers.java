@@ -1,0 +1,120 @@
+package io.github.grebeshok105.codex.hero;
+
+import io.github.grebeshok105.codex.ModId;
+import io.github.grebeshok105.codex.core.hero.AttributeModifierSet;
+import io.github.grebeshok105.codex.core.hero.Hero;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+
+/**
+ * Transient, ability-scoped attribute sets (BF3): buffs that exist only while an
+ * ability, rage or hero phase is active and are removed by id afterwards.
+ * Permanent passive sets live on the hero classes behind {@code Hero#passiveAttributes()}.
+ */
+public final class AbilityScopedModifiers {
+	/** Нано-клинок: чистый бонус к урону ближнего боя, пока активна форма клинка. */
+	public static final ResourceLocation NANO_BLADE_DAMAGE = ModId.of("modifiers/iron_man/nano_blade_damage");
+
+	public static final AttributeModifierSet NANO_BLADE = AttributeModifierSet.builder()
+			.add(Attributes.ATTACK_DAMAGE, NANO_BLADE_DAMAGE, 7.0, AttributeModifier.Operation.ADD_VALUE)
+			.build();
+
+	/** Нано-щит: жёсткая стойкость, пока активна форма щита. */
+	public static final ResourceLocation NANO_SHIELD_ARMOR = ModId.of("modifiers/iron_man/nano_shield_armor");
+	public static final ResourceLocation NANO_SHIELD_TOUGHNESS = ModId.of("modifiers/iron_man/nano_shield_toughness");
+	public static final ResourceLocation NANO_SHIELD_KNOCKBACK = ModId.of("modifiers/iron_man/nano_shield_knockback");
+
+	public static final AttributeModifierSet NANO_SHIELD = AttributeModifierSet.builder()
+			.add(Attributes.ARMOR, NANO_SHIELD_ARMOR, 12.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ARMOR_TOUGHNESS, NANO_SHIELD_TOUGHNESS, 6.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.KNOCKBACK_RESISTANCE, NANO_SHIELD_KNOCKBACK, 0.4, AttributeModifier.Operation.ADD_VALUE)
+			.build();
+
+	public static final ResourceLocation REGULUS_MADNESS_ARMOR = ModId.of("modifiers/regulus/madness_armor");
+	public static final ResourceLocation REGULUS_MADNESS_HP = ModId.of("modifiers/regulus/madness_max_health");
+	public static final ResourceLocation REGULUS_MADNESS_DAMAGE = ModId.of("modifiers/regulus/madness_damage");
+
+	public static final AttributeModifierSet REGULUS_MADNESS = AttributeModifierSet.builder()
+			.add(Attributes.ARMOR, REGULUS_MADNESS_ARMOR, 10.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.MAX_HEALTH, REGULUS_MADNESS_HP, 0.20, AttributeModifier.Operation.ADD_MULTIPLIED_BASE)
+			.add(Attributes.ATTACK_DAMAGE, REGULUS_MADNESS_DAMAGE, 0.40, AttributeModifier.Operation.ADD_VALUE)
+			.abilityScoped()
+			.build();
+
+	public static final ResourceLocation RAIDEN_BURST_DAMAGE = ModId.of("modifiers/raiden/burst_damage");
+	public static final ResourceLocation RAIDEN_BURST_SPEED = ModId.of("modifiers/raiden/burst_speed");
+	public static final ResourceLocation RAIDEN_BURST_ATTACK_SPEED = ModId.of("modifiers/raiden/burst_attack_speed");
+
+	// Бафф во время Burst (Q): +50% movement speed, +1.5 attack speed, +6 attack damage.
+	public static final AttributeModifierSet RAIDEN_BURST = AttributeModifierSet.builder()
+			.add(Attributes.ATTACK_DAMAGE, RAIDEN_BURST_DAMAGE, 6.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.MOVEMENT_SPEED, RAIDEN_BURST_SPEED, 0.50, AttributeModifier.Operation.ADD_MULTIPLIED_BASE)
+			.add(Attributes.ATTACK_SPEED, RAIDEN_BURST_ATTACK_SPEED, 1.5, AttributeModifier.Operation.ADD_VALUE)
+			.abilityScoped()
+			.build();
+
+	public static final ResourceLocation DOOMSDAY_ARMOR = ModId.of("modifiers/doomsday/armor");
+	public static final ResourceLocation DOOMSDAY_TOUGHNESS = ModId.of("modifiers/doomsday/toughness");
+	public static final ResourceLocation DOOMSDAY_DAMAGE = ModId.of("modifiers/doomsday/damage");
+	public static final ResourceLocation DOOMSDAY_SPEED = ModId.of("modifiers/doomsday/speed");
+	public static final ResourceLocation DOOMSDAY_HP = ModId.of("modifiers/doomsday/max_health");
+	public static final ResourceLocation DOOMSDAY_KNOCKBACK = ModId.of("modifiers/doomsday/knockback_resistance");
+	public static final ResourceLocation DOOMSDAY_SCALE = ModId.of("modifiers/doomsday/scale");
+	public static final ResourceLocation DOOMSDAY_REACH = ModId.of("modifiers/doomsday/entity_reach");
+	public static final ResourceLocation DOOMSDAY_BLOCK_REACH = ModId.of("modifiers/doomsday/block_reach");
+	public static final ResourceLocation DOOMSDAY_STEP = ModId.of("modifiers/doomsday/step_height");
+	public static final ResourceLocation DOOMSDAY_JUMP = ModId.of("modifiers/doomsday/jump_strength");
+	public static final ResourceLocation DOOMSDAY_BERSERK_DAMAGE = ModId.of("modifiers/doomsday/berserk_damage");
+	public static final ResourceLocation DOOMSDAY_BERSERK_ARMOR = ModId.of("modifiers/doomsday/berserk_armor");
+	public static final ResourceLocation DOOMSDAY_BERSERK_SPEED = ModId.of("modifiers/doomsday/berserk_speed");
+	public static final ResourceLocation DOOMSDAY_ADAPT_DAMAGE = ModId.of("modifiers/doomsday/adapt_damage");
+
+	public static final AttributeModifierSet DOOMSDAY = AttributeModifierSet.builder()
+			.add(Attributes.ARMOR, DOOMSDAY_ARMOR, 30.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ARMOR_TOUGHNESS, DOOMSDAY_TOUGHNESS, 20.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ATTACK_DAMAGE, DOOMSDAY_DAMAGE, 20.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.MOVEMENT_SPEED, DOOMSDAY_SPEED, 0.25, AttributeModifier.Operation.ADD_MULTIPLIED_BASE)
+			.add(Attributes.MAX_HEALTH, DOOMSDAY_HP, 80.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.KNOCKBACK_RESISTANCE, DOOMSDAY_KNOCKBACK, 1.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.SCALE, DOOMSDAY_SCALE, 1.2, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ENTITY_INTERACTION_RANGE, DOOMSDAY_REACH, 1.5, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.BLOCK_INTERACTION_RANGE, DOOMSDAY_BLOCK_REACH, 1.5, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.STEP_HEIGHT, DOOMSDAY_STEP, 1.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.JUMP_STRENGTH, DOOMSDAY_JUMP, 0.6, AttributeModifier.Operation.ADD_VALUE)
+			.build();
+
+	public static AttributeModifierSet buildDoomsdayTierSet(int tier) {
+		int t = Math.max(1, Math.min(7, tier));
+		double f = (t - 1) / 6.0;
+		return AttributeModifierSet.builder()
+				.add(Attributes.ARMOR, DOOMSDAY_ARMOR, lerp(0.0, 30.0, f), AttributeModifier.Operation.ADD_VALUE)
+				.add(Attributes.ARMOR_TOUGHNESS, DOOMSDAY_TOUGHNESS, lerp(0.0, 20.0, f), AttributeModifier.Operation.ADD_VALUE)
+				.add(Attributes.ATTACK_DAMAGE, DOOMSDAY_DAMAGE, lerp(0.0, 20.0, f), AttributeModifier.Operation.ADD_VALUE)
+				.add(Attributes.MOVEMENT_SPEED, DOOMSDAY_SPEED, lerp(0.0, 0.25, f), AttributeModifier.Operation.ADD_MULTIPLIED_BASE)
+				.add(Attributes.MAX_HEALTH, DOOMSDAY_HP, lerp(0.0, 80.0, f), AttributeModifier.Operation.ADD_VALUE)
+				.add(Attributes.KNOCKBACK_RESISTANCE, DOOMSDAY_KNOCKBACK, lerp(0.0, 1.0, f), AttributeModifier.Operation.ADD_VALUE)
+				.add(Attributes.SCALE, DOOMSDAY_SCALE, lerp(0.0, 1.2, f), AttributeModifier.Operation.ADD_VALUE)
+				.add(Attributes.ENTITY_INTERACTION_RANGE, DOOMSDAY_REACH, lerp(0.0, 1.5, f), AttributeModifier.Operation.ADD_VALUE)
+				.add(Attributes.BLOCK_INTERACTION_RANGE, DOOMSDAY_BLOCK_REACH, lerp(0.0, 1.5, f), AttributeModifier.Operation.ADD_VALUE)
+				.add(Attributes.STEP_HEIGHT, DOOMSDAY_STEP, lerp(0.0, 1.0, f), AttributeModifier.Operation.ADD_VALUE)
+				.add(Attributes.JUMP_STRENGTH, DOOMSDAY_JUMP, lerp(0.0, 0.6, f), AttributeModifier.Operation.ADD_VALUE)
+				.build();
+	}
+
+	public static void thanosClearStoneModifiers(net.minecraft.world.entity.LivingEntity entity) {
+		for (io.github.grebeshok105.codex.item.infinity.InfinityStoneType t : io.github.grebeshok105.codex.item.infinity.InfinityStoneType.values()) {
+			net.minecraft.world.entity.ai.attributes.AttributeInstance instance = entity.getAttribute(t.getAttribute());
+			if (instance != null) {
+				instance.removeModifier(t.getModifierId());
+			}
+		}
+	}
+
+	private AbilityScopedModifiers() {
+	}
+
+	private static double lerp(double a, double b, double f) {
+		return a + (b - a) * f;
+	}
+}

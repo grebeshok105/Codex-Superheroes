@@ -147,6 +147,13 @@
 - All 4 "потенциальные" findings verified real against current code and fixed:- Architecture audit 2 is preserved as two complementary files: `docs/audits/2026-09-25-hero-modularity-audit.md` (hero locality, `HeroModule`/`HeroProfile`, Scorpion pilot, Reinhard stress-test) and `docs/audits/2026-09-25-hoplite-structural-audit.md` (package cycles, registries, router contract, services, payloads).
 - The migration that synthesizes both audits is split into six executable plans in `docs/design/architecture-migration/` (`00-overview.md` is the map; `01`–`06` are the plans). They were revised after an external review and rebased on the bugfix stages 4–12 (#40, #42–#49): plans extend the BF11 seams (`HeroTickDispatcher`, `HeroLifecycle`, `Hero` hooks), BF7 `ClientSessionState` and BF10 `PUBLIC_HERO` instead of adding parallel ones. The monolithic `docs/design/2026-09-25-architecture-migration-plan.md` is an unchanged archive of the pre-review version and is not executed or updated.
 
+## Architecture migration — stages E1 + E2 (plan 05)
+
+- **E1 (#81):** root package `com.example.superheroes` → `io.github.grebeshok105.codex` (R14, owner-approved). Pure rename: 681/683 files byte-identical modulo substitution; only build.gradle/gradle.properties differ. Acceptance: zero `com.example` refs; barrier held (no open src/ PRs at merge).
+- **E2 (#83):** `core/` + `mechanic/` skeleton — 52 moves + 3 new (`CoreAttachments` 9 shared ids byte-identical, `CoreNetworking` — `ModNetworking.init()` calls it first, `PayloadRegistrar` per F.1). `item/bound`→`mechanic/boundweapon`, `world/`→`mechanic/world`; emptied legacy packages deleted.
+- Deviations logged: `BOUND_WEAPON_ISSUES` stayed in `ModAttachments` (type in mechanic; core→mechanic forbidden — plan internally inconsistent); `PlayerLifecycle` logger → `LoggerFactory.getLogger(MOD_ID)` (R16); cycle baseline 28→31 (old top-level ring dismantled, contracts re-expressed as thin intra-core pairs — waves break them by ownership per R6); residual core→legacy edges (`HeroTransformService→particle`, `TooltipFrame→item.infinity`) noted for wave work.
+- Gate: compile all source-sets, junit 48/48, gametest 97/97; strict rules verified non-empty (`allowEmptyShould` flipped+restored); store+baseline refrozen post-integration.
+
 ## Architecture migration — stage CL2 (plan 04)
 
 - New `client/core/hud/` registry: `HudLayer` (functional iface), `HudBounds`, `MovableHud` (`layoutId()` + `bounds(w,h)`), `HudLayers` — the mod's single `HudRenderCallback` (spectator gate lives inside it), `register`/`registerMovable`, `movables()`. All 24 HUD renders in `SuperheroesClient` are now `HudLayers.register(order, id, X::render)` with `order` = former position × 100.
@@ -364,3 +371,55 @@
 - PassiveReconciler сверка: it did NOT replace the respawn path (it re-asserts captured infinite effects on tick; the explicit reapplyLifecyclePassives call remained) → `reapplyPassivesAfterRespawn` introduced per plan.
 - GameTest `doomsdayKeepsHeroOnDeath` (LifecycleGameTests): kill() drives the real AFTER_DEATH chain — Doomsday keeps his hero and tiers to 2, Raiden untransforms. Respawn half driven via `HeroTransformService.onPlayerRespawn` directly — mock players have no real respawn round-trip, and it is the exact hook PlayerLifecycle RESPAWN fires; asserts tier still 2 + REGENERATION re-applied.
 - archunit_store `8c45b479` shrunk: HeroTransformService→DoomsdayHero.ID frozen line removed. qualityGate NOT run (orchestrator runs the gate).
+
+## Architecture migration — stage M1 (plan 05)
+
+- core/net/FxBroadcast (tracking/trackingAndSelf/around over PlayerLookup — transport only); 5 ModNetworking loops migrated: syncFlightState/broadcastRepulsor/broadcastThanosCosmicBeam → trackingAndSelf (was send+tracking), broadcastLaser/broadcastLaserFromEntity → tracking (old `observer != shooter` was dead code — bytecode-verified `ChunkMap$TrackedEntity.updatePlayer` returns immediately on player==entity so self is never in seenBy). Audiences identical.
+- mechanic/motion/Motion (set/add + Sync{MARK, MARK_AND_SEND_TO_PLAYER}; mark=hurtMarked, send=packet to self when player).
+- mechanic/targeting/{TargetFilter,Targeting} — record, all flags off by default; respectPvp/excludeAllies = gameplay change (audit B19), never enabled.
+- Frozen rules MechanicServiceRulesTest: motion-packet ctor coverage BOTH (Entity) and (int,Vec3) — reviewer caught the id-ctor gap; store refrozen 45+16 sites (all in ability/effect/physics/entity — wave debt). GameTests: Motion +4, MechanicTargeting +6 (each flag cuts exactly its case, and()-composition, pvp, allies). 107/107.
+- Reviewer note: reviewed stale HEAD once (pre-refreeze push) — pointed at fc35585 → APPROVE.
+
+## Architecture migration — stage F (plan 05)
+
+- Scorpion is now a fully self-contained hero module: `hero/scorpion/` (ScorpionModule/ScorpionHero/ScorpionItems + ability/, runtime/ScorpionController, net/, sound/, targeting/) + `client/hero/scorpion/` (ScorpionClientModule, fx/, fx/veil/). Only composition-root lines remain in HeroModules/HeroClientModules.
+- HeroModuleContext gained `content()` (ContentRegistrar→CreativeTabContents) and `payloads()` (PayloadRegistrar.FABRIC); CoreModuleContext wires both.
+- Intra-module DAG rule established (leaf packages own constants; runtime classes use local SCORPION_ID, not root-class refs) — mandatory for G1/waves.
+- ArchUnit F.4: every hero S2C payload registers a receiver in its client module.
+- Sanctioned behavior commit: OwnedSessionMap SPEAR_PULLS/BREATHS with ClearOn.LEAVE+DEATH (was static HashMaps); creative tab order = kunai after legacy items (module registration order).
+- build.gradle: `datagen` sourceSet (Veil-free classpath — fixes pre-existing runDatagen break on server env) + `clientnoveil` sourceSet + `runClientNoVeil` run config for Veil-free client checks.
+- Gate: qualityGate green @a7aaab2 (111/111 gametests). Golden transformation_lore reordered (kunai first — registration order, content identical). ArchUnit store refrozen with 0 scorpion entries.
+- Runtime: runClient Veil + runClientNoVeil both PASSED 7/7 (transform, 4 abilities + spear pull, untransform, OwnedSessionMap ClearOn LEAVE+DEATH proven via instrumentation).
+- Reviewer: APPROVE at HEAD 1118390. Merged #85.
+
+## G1 — Reinhard server module (PR #86)
+- hero/reinhard/ full server move: module+hero+abilities(8, own ids)+items+attachments, ability/, runtime/ (10 classes), item/RoyalIcicleItem, net/ (7 payloads), sound/ReinhardSounds.
+- New core seams: C2SGuards (requireHero/requireActiveAbility), AttachmentRegistrar (persistent/transient/initializer overload).
+- Shared cleaned: AbilityIds, ModItems, ModItemGroups, ModAttachments, ModNetworking, ModSounds, AdminAbilityDebug (debugTargetsMobs via Ability contract).
+- isReinhardSwordOnly dead-code moved disconnected to ReinhardAbilities.
+- Baseline lost ability<->debug pair; golden regen (reinhard_suit first); store refrozen.
+- Gate green; reviewer APPROVE; runtime 7/7 (bounded on icicle empowered branches — pre-existing, player-scoped).
+- HeavensStrikeController.Variant.REINHARD intentionally remains (G3).
+
+## G2 — Reinhard client module (PR #87)
+- client/hero/reinhard/: state/ (5), hud/ (3), screen/WishScreen, render/ScabbardLayer; module registers muteWorldDuringTimeSlow + swordDrawReadyHalo.
+- Client core seams: ClientSoundFilters + generic SoundEngineMixin (new client.core.mixins.json), AbilityDecoration(s), ctx.soundFilter()/abilityDecoration().
+- Old SoundEngineMixin + RadialMenuHud Reinhard branch deleted; acceptance grep → HeroClientModules only.
+- Gate green; reviewer APPROVE; runtime 8/8 (darkness/sword-death bounded — render path proven, melee trigger env-blocked solo).
+
+## G3 — Reinhard leftovers (PR #88)
+- Variant.REINHARD deleted (dead); chargeFriendly now uses BoundWeaponItem.blocksChargedAttackTiers trait (only RoyalIcicle true) — zero hero ids in SuperheroesClient.
+- Acceptance G reached: Reinhard touches shared code only via HeroModules + HeroClientModules + beam.json + lang/assets.
+- Gate green; reviewer APPROVE; no runtime needed (dead-code + semantics-identical).
+
+## H — architecture review gate (GO)
+- Independent reviewer (not F/G author): GO on all 10 checklist items. No seam-fix PRs before waves.
+- Metrics §8 on main post-G3: 76/10 UUID maps, 30 cycle pairs, 17 .init(), 0 own-tick files, 70/318-line roots.
+- R21-R23 recorded (HeroClientContext bound ≤10; ClientSoundFilters single-consumer OK; entities/particles direct reg).
+- migrate-hero SKILL.md authored from F/G lessons (characterize→move→clean; DAG; seams; traps).
+- Wave order confirmed: I1a-c → I2a-c → I3 → I4a-d → I5a-c → I6a-b + IC1-3 → O.
+
+## IC1 — horde → content/horde (PR #96)
+- Horde subsystem moved to content/horde/ + client/content/horde/ on NEW ContentModule/ContentModuleContext contract (HeroModuleContext minus hero()); composition roots bootstrap/ContentModules + client/bootstrap/ContentClientModules.
+- HordeManager.ACTIVE/OVERLAY_PLAYERS → OwnedSessionMap(global(), empty ClearOn) — clears only on SERVER_STOPPED (matches old resetAll; SharedMechanics.onServerStopped dropped).
+- GeckoLib kept (removal precondition not proven). Reviewer APPROVE, CI green.

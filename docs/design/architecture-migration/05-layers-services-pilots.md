@@ -50,15 +50,15 @@
 
 | Стадия | Статус | PR |
 | :-- | :-- | :-- |
-| E1 переименование корня (барьер) | ⏳ | |
-| E2 скелет `core/` и `mechanic/` | ⏳ | |
-| M1 `Motion`, `FxBroadcast`, `Targeting` | ⏳ | |
-| F1 Scorpion — сервер | ⏳ | |
-| F2 Scorpion — клиент | ⏳ | |
-| G1 Reinhard — сервер | ⏳ | |
-| G2 Reinhard — клиент | ⏳ | |
-| G3 Reinhard — межгеройские остатки | ⏳ | |
-| H architecture review gate | ⏳ | |
+| E1 переименование корня (барьер) | ✅ | merged #81 |
+| E2 скелет `core/` и `mechanic/` | ✅ | merged #83 |
+| M1 `Motion`, `FxBroadcast`, `Targeting` | ✅ | merged #84 |
+| F1 Scorpion — сервер | ✅ | merged #85 |
+| F2 Scorpion — клиент | ✅ | merged #85 |
+| G1 Reinhard — сервер | ✅ | #86 |
+| G2 Reinhard — клиент | ✅ | #87 |
+| G3 Reinhard — межгеройские остатки | ✅ | #88 |
+| H architecture review gate | ✅ | docs/h-gate |
 
 ## Контекст
 

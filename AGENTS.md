@@ -1,6 +1,6 @@
 # AGENTS.md — Codex Superheroes
 
-Fabric mod (Minecraft 1.21.1, Java 21, mod id `superheroes`, package `com.example.superheroes`): superhero ability fantasy — transformations, flight physics, signature moves, HUD, VFX — natively embedded in Minecraft. Exact dependency and game versions live in `gradle.properties` and `build.gradle`; current code and passing tests win if any document differs.
+Fabric mod (Minecraft 1.21.1, Java 21, mod id `superheroes`, package `io.github.grebeshok105.codex`): superhero ability fantasy — transformations, flight physics, signature moves, HUD, VFX — natively embedded in Minecraft. Exact dependency and game versions live in `gradle.properties` and `build.gradle`; current code and passing tests win if any document differs.
 
 ## 1. What we are building
 
@@ -12,7 +12,7 @@ Every substantial change should improve the whole project: reuse a healthy share
 
 **Existing code describes current behavior. It does not automatically define the desired architecture.**
 
-Playable heroes today: `src/main/java/com/example/superheroes/hero/Heroes.java` is the roster.
+Playable heroes today: `src/main/java/io/github/grebeshok105/codex/hero/Heroes.java` is the roster.
 
 ## 2. Heroes, abilities, resources
 

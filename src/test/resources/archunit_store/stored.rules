@@ -1,9 +1,11 @@
 #
-#Fri Sep 25 22:48:57 UTC 2026
+#Sat Sep 26 17:21:47 UTC 2026
 AbilityRouter\ owns\ the\ cooldown\ check;\ an\ ability\ may\ only\ check\ another\ ability's\ cooldown=ba9a6ce4-2be6-47e1-ab0d-274a63800245
+FX\ audiences\ go\ through\ core.net.FxBroadcast=f1ce40b8-d987-4397-8a2c-30040232b3b7
 entrypoints\ and\ module\ lists\ sit\ on\ top;\ use\ LoggerFactory.getLogger(ModId.MOD_ID)\ instead\ of\ SuperheroesMod.LOGGER=2cc0c740-a38f-418f-8f0a-8186cf3e98e0
 lifecycle\ hooks\ are\ registered\ through\ a\ module's\ LifecycleRegistrar=6ab35c1a-33f1-4f02-8c7e-3b264b0d0209
 server\ ticks\ go\ through\ HeroTickDispatcher=4c613794-5fd7-4dfe-9e5d-f5291f8611d3
 shared\ client\ code\ reads\ the\ hero\ registry\ and\ hooks,\ never\ a\ concrete\ hero=1e35fb36-4e0c-43b1-b8a0-6db260f14ef7
 shared\ code\ asks\ the\ hero\ registry\ and\ hooks,\ never\ a\ concrete\ hero=8c45b479-5a2c-419c-bcf5-7771d1ce59df
 src/main\ loads\ on\ a\ dedicated\ server=0dd6698a-7050-4c8a-87dd-5ce2acf0aad5
+velocity\ changes\ go\ through\ mechanic.motion.Motion=558945ba-f7ac-479a-aa8e-4af7ad6de175
