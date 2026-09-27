@@ -50,6 +50,7 @@
 			"io.github.grebeshok105.codex.gametest.HomelanderBossGameTests",
 			"io.github.grebeshok105.codex.gametest.RemGameTests",
 			"io.github.grebeshok105.codex.gametest.RaidenGameTests",
+			"io.github.grebeshok105.codex.gametest.RegulusGameTests",
 			"io.github.grebeshok105.codex.gametest.DoomsdayGameTests",
 			"io.github.grebeshok105.codex.gametest.SuperheroesCommandsGameTests",
 			"io.github.grebeshok105.codex.gametest.ThanosGameTests",

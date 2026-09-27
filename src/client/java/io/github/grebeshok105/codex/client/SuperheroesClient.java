@@ -141,9 +141,6 @@ public class SuperheroesClient implements ClientModInitializer {
 			io.github.grebeshok105.codex.client.hud.AbilitiesTooltipHud.tick();
 			RadialMenuHud.animTick();
 			RadialMenuHud.clientTick(client);
-			if (ClientMadnessState.isReading() && client.screen instanceof net.minecraft.client.gui.screens.inventory.InventoryScreen) {
-				client.setScreen(null);
-			}
 			while (ModKeys.BINDINGS.consumeClick()) {
 				if (client.player != null && ClientHeroState.data().hasHero()) {
 					client.setScreen(new BindingsScreen());

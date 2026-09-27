@@ -42,3 +42,5 @@ replay_*.log
 
 # art-source extracted (large, redundant with .zip)
 art-source/rezero_fx_extracted/
+
+logs/

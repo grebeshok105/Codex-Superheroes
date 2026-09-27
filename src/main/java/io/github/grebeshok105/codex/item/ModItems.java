@@ -57,21 +57,6 @@ public final class ModItems {
 			new UraniumDaggerItem(new Item.Properties().stacksTo(1).durability(250).rarity(Rarity.EPIC))
 	);
 
-	public static final TransformationItem REGULUS_SUIT = register(
-			"regulus_suit",
-			new TransformationItem(ModId.of("regulus"), new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC),
-					new TransformationLore(ChatFormatting.GOLD,
-							List.of(new TransformationLore.Line("item.superheroes.regulus_suit.lore.line1", ChatFormatting.GOLD),
-									new TransformationLore.Line("item.superheroes.regulus_suit.lore.line2", ChatFormatting.DARK_GRAY)),
-							List.of(new TransformationLore.Line("item.superheroes.regulus_suit.lore.usage", ChatFormatting.YELLOW),
-									new TransformationLore.Line("item.superheroes.regulus_suit.lore.untransform", ChatFormatting.GOLD))))
-	);
-
-	public static final EvangelionItem EVANGELION = register(
-			"evangelion",
-			new EvangelionItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
-	);
-
 	private ModItems() {
 	}
 

@@ -19,12 +19,6 @@ public final class AbilityIds {
 	public static final ResourceLocation IRON_MAN_SUIT_SWITCH = ModId.of("iron_man_suit_switch");
 	public static final ResourceLocation IRON_MAN_LEGION = ModId.of("iron_man_legion");
 
-	public static final ResourceLocation LION_HEART = ModId.of("lion_heart");
-	public static final ResourceLocation MANIA_OF_GREED = ModId.of("mania_of_greed");
-	public static final ResourceLocation GREEDS_EMBRACE = ModId.of("greeds_embrace");
-	public static final ResourceLocation LION_ROAR = ModId.of("lion_roar");
-	public static final ResourceLocation COUNTER_STRIKE = ModId.of("counter_strike");
-
 
 
 

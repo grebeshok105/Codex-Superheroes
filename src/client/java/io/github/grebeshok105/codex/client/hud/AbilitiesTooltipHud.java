@@ -1,10 +1,10 @@
 package io.github.grebeshok105.codex.client.hud;
 
-import io.github.grebeshok105.codex.ability.AbilityIds;
 import io.github.grebeshok105.codex.client.ClientAbilityCooldowns;
 import io.github.grebeshok105.codex.client.ClientAbilityVisibility;
 import io.github.grebeshok105.codex.client.ClientHeroState;
-import io.github.grebeshok105.codex.client.ClientMadnessState;
+import io.github.grebeshok105.codex.client.core.HudJitter;
+import io.github.grebeshok105.codex.client.core.hud.AbilityDecorations;
 import io.github.grebeshok105.codex.client.core.hud.HudBounds;
 import io.github.grebeshok105.codex.client.core.hud.MovableHud;
 import io.github.grebeshok105.codex.core.hero.Hero;
@@ -91,15 +91,15 @@ public final class AbilitiesTooltipHud implements MovableHud {
 		if ((!userVisible || !ClientHeroState.data().hasHero()) && progress <= 0f) {
 			return;
 		}
-		float ramp = ClientHudGlitch.ramp();
+		float ramp = HudJitter.ramp();
 		if (ramp > 0.001f) {
 			graphics.pose().pushPose();
-			graphics.pose().translate(ClientHudGlitch.jitterX(), ClientHudGlitch.jitterY(), 0f);
+			graphics.pose().translate(HudJitter.jitterX(), HudJitter.jitterY(), 0f);
 			renderInner(graphics, tracker);
 			graphics.pose().popPose();
-			if (ClientHudGlitch.ghostDouble()) {
+			if (HudJitter.ghostDouble()) {
 				graphics.pose().pushPose();
-				graphics.pose().translate(ClientHudGlitch.ghostOffsetX(), 0f, 0f);
+				graphics.pose().translate(HudJitter.ghostOffsetX(), 0f, 0f);
 				renderInner(graphics, tracker);
 				graphics.pose().popPose();
 			}
@@ -181,15 +181,15 @@ public final class AbilitiesTooltipHud implements MovableHud {
 		int shadowAlpha = Math.min(0x88, alpha / 2);
 		HudUtil.dropShadow(g, x, y, w, h, 3, (shadowAlpha << 24) | 0x000000);
 
-		int top = applyAlpha(ClientHudGlitch.tintColor(theme.panelTop()), alpha, 0.55f);
-		int bottom = applyAlpha(ClientHudGlitch.tintColor(theme.panelBottom()), alpha, 0.55f);
+		int top = applyAlpha(HudJitter.tintColor(theme.panelTop()), alpha, 0.55f);
+		int bottom = applyAlpha(HudJitter.tintColor(theme.panelBottom()), alpha, 0.55f);
 		HudUtil.roundedRectGradient(g, x, y, w, h, top, bottom);
 
-		int border = applyAlpha(ClientHudGlitch.tintColor(theme.panelBorder()), alpha, 0.9f);
+		int border = applyAlpha(HudJitter.tintColor(theme.panelBorder()), alpha, 0.9f);
 		HudUtil.roundedRectBorder(g, x, y, w, h, border);
-		int glow = applyAlpha(ClientHudGlitch.tintColor(theme.panelBorder()), alpha / 3, 1.0f);
+		int glow = applyAlpha(HudJitter.tintColor(theme.panelBorder()), alpha / 3, 1.0f);
 		HudUtil.roundedRectBorder(g, x - 1, y - 1, w + 2, h + 2, glow);
-		int glow2 = applyAlpha(ClientHudGlitch.tintColor(theme.panelBorder()), alpha / 6, 1.0f);
+		int glow2 = applyAlpha(HudJitter.tintColor(theme.panelBorder()), alpha / 6, 1.0f);
 		HudUtil.roundedRectBorder(g, x - 2, y - 2, w + 4, h + 4, glow2);
 	}
 
@@ -197,37 +197,37 @@ public final class AbilitiesTooltipHud implements MovableHud {
 	private static void drawHeroHeader(GuiGraphics g, Minecraft mc, int panelX, int y, ResourceLocation heroId,
 			HeroTheme theme, int alpha) {
 		int x = panelX + PADDING_X;
-		Component name = ClientHudGlitch.maybeObfuscate(
+		Component name = HudJitter.maybeObfuscate(
 				HudUtil.text(Component.translatable("hero.superheroes." + heroId.getPath())).withStyle(ChatFormatting.BOLD));
-		int color = applyAlpha(ClientHudGlitch.tintColor(theme.heroNameColor()), alpha, 1.0f);
+		int color = applyAlpha(HudJitter.tintColor(theme.heroNameColor()), alpha, 1.0f);
 		g.drawString(mc.font, name, x, y + 1, color, true);
 		// accent underline: bright near the name, fading to the right
 		int lineY = y + 12;
-		int bright = applyAlpha(ClientHudGlitch.tintColor(theme.heroNameColor()), alpha, 0.85f);
-		int faint = applyAlpha(ClientHudGlitch.tintColor(theme.panelBorder()), alpha, 0.25f);
+		int bright = applyAlpha(HudJitter.tintColor(theme.heroNameColor()), alpha, 0.85f);
+		int faint = applyAlpha(HudJitter.tintColor(theme.panelBorder()), alpha, 0.25f);
 		int nameW = Math.min(mc.font.width(name) + 8, PANEL_WIDTH - PADDING_X * 2);
 		g.fill(x, lineY, x + nameW, lineY + 1, bright);
 		g.fill(x + nameW, lineY, panelX + PANEL_WIDTH - PADDING_X, lineY + 1, faint);
 	}
 
 	private static void drawSectionHeader(GuiGraphics g, Minecraft mc, int x, int y, int width, Component label, HeroTheme theme, int alpha) {
-		int color = applyAlpha(ClientHudGlitch.tintColor(theme.heroNameColor()), alpha, 1.0f);
+		int color = applyAlpha(HudJitter.tintColor(theme.heroNameColor()), alpha, 1.0f);
 		// vertical accent stripe to the left of the section title (v4 refresh)
-		int stripe = applyAlpha(ClientHudGlitch.tintColor(theme.energyIcon()), alpha, 0.9f);
+		int stripe = applyAlpha(HudJitter.tintColor(theme.energyIcon()), alpha, 0.9f);
 		g.fill(x, y, x + 2, y + 9, stripe);
-		Component shown = ClientHudGlitch.maybeObfuscate(
+		Component shown = HudJitter.maybeObfuscate(
 				HudUtil.text(Component.empty().append(label)).withStyle(ChatFormatting.BOLD));
 		g.drawString(mc.font, shown, x + 6, y, color, true);
-		int line = applyAlpha(ClientHudGlitch.tintColor(theme.panelBorder()), alpha, 0.35f);
+		int line = applyAlpha(HudJitter.tintColor(theme.panelBorder()), alpha, 0.35f);
 		g.fill(x, y + 10, x + width, y + 11, line);
 	}
 
 	private static void drawPassiveRow(GuiGraphics g, Minecraft mc, int x, int y, Component name, int maxTextWidth, HeroTheme theme, int alpha) {
-		int nameColor = applyAlpha(ClientHudGlitch.tintColor(0xFFE8E9F2), alpha, 1.0f);
-		int bulletColor = applyAlpha(ClientHudGlitch.tintColor(theme.energyIcon()), alpha, 1.0f);
+		int nameColor = applyAlpha(HudJitter.tintColor(0xFFE8E9F2), alpha, 1.0f);
+		int bulletColor = applyAlpha(HudJitter.tintColor(theme.energyIcon()), alpha, 1.0f);
 		g.drawString(mc.font, HudUtil.text("▸ ").withStyle(ChatFormatting.BOLD), x, y + NAME_Y_OFFSET, bulletColor, true);
 
-		Component shown = ClientHudGlitch.maybeObfuscate(HudUtil.text(name));
+		Component shown = HudJitter.maybeObfuscate(HudUtil.text(name));
 		List<FormattedCharSequence> lines = mc.font.split(shown, maxTextWidth);
 		int count = Math.min(MAX_PASSIVE_LINES, lines.size());
 		for (int i = 0; i < count; i++) {
@@ -239,18 +239,18 @@ public final class AbilitiesTooltipHud implements MovableHud {
 
 	private static void drawAbilityRow(GuiGraphics g, Minecraft mc, int x, int y, int width, ResourceLocation abilityId, HeroTheme theme, int alpha) {
 		AbilityDescriptions.Kind kind = AbilityDescriptions.kindOf(abilityId);
-		boolean glitchSecret = AbilityIds.COUNTER_STRIKE.equals(abilityId) && !ClientMadnessState.isMadness();
+		boolean glitchSecret = AbilityDecorations.masksIdentity(abilityId);
 		boolean isActive = !glitchSecret && ClientHeroState.data().activeAbilities().contains(abilityId);
 		int cooldownTicks = glitchSecret ? 0 : ClientAbilityCooldowns.remainingTicks(abilityId);
 
 		int iconBg = applyAlpha(0xFF0A0B14, alpha, 1.0f);
 		int themeColor = kind == AbilityDescriptions.Kind.TOGGLE ? theme.heroNameColor() : theme.energyIcon();
-		int activeBorder = applyAlpha(ClientHudGlitch.tintColor(0xFF6BFF8C), alpha, 1.0f);
-		int cdBorder = applyAlpha(ClientHudGlitch.tintColor(0xFFFF8866), alpha, 1.0f);
-		int normalBorder = applyAlpha(ClientHudGlitch.tintColor(themeColor), alpha, 1.0f);
+		int activeBorder = applyAlpha(HudJitter.tintColor(0xFF6BFF8C), alpha, 1.0f);
+		int cdBorder = applyAlpha(HudJitter.tintColor(0xFFFF8866), alpha, 1.0f);
+		int normalBorder = applyAlpha(HudJitter.tintColor(themeColor), alpha, 1.0f);
 		int iconBorder = isActive ? activeBorder : (cooldownTicks > 0 ? cdBorder : normalBorder);
-		int badgeX = x + ClientHudGlitch.badgeJitterX();
-		int badgeY = y + ClientHudGlitch.badgeJitterY();
+		int badgeX = x + HudJitter.badgeJitterX();
+		int badgeY = y + HudJitter.badgeJitterY();
 		HudUtil.roundedRectFill(g, badgeX, badgeY, ICON_SIZE, ICON_SIZE, iconBg);
 		HudUtil.roundedRectBorder(g, badgeX, badgeY, ICON_SIZE, ICON_SIZE, iconBorder);
 		if (glitchSecret) {
@@ -274,17 +274,17 @@ public final class AbilitiesTooltipHud implements MovableHud {
 			if (cooldownTicks > 0) {
 				int seconds = (cooldownTicks + 19) / 20;
 				statusText = Component.translatable("hud.superheroes.abilities.seconds", seconds).withStyle(ChatFormatting.BOLD);
-				statusColor = applyAlpha(ClientHudGlitch.tintColor(0xFFFF9D6E), alpha, 1.0f);
+				statusColor = applyAlpha(HudJitter.tintColor(0xFFFF9D6E), alpha, 1.0f);
 			} else if (isActive && kind == AbilityDescriptions.Kind.TOGGLE) {
 				statusText = HudUtil.text(Component.translatable("ability.superheroes.status.on")).withStyle(ChatFormatting.BOLD);
-				statusColor = applyAlpha(ClientHudGlitch.tintColor(0xFF6BFF8C), alpha, 1.0f);
+				statusColor = applyAlpha(HudJitter.tintColor(0xFF6BFF8C), alpha, 1.0f);
 			} else if (kind == AbilityDescriptions.Kind.TOGGLE) {
 				statusText = HudUtil.text(Component.translatable("ability.superheroes.status.off")).withStyle(ChatFormatting.BOLD);
-				statusColor = applyAlpha(ClientHudGlitch.tintColor(0xFF8E94A8), alpha, 1.0f);
+				statusColor = applyAlpha(HudJitter.tintColor(0xFF8E94A8), alpha, 1.0f);
 			} else if (kind == AbilityDescriptions.Kind.ACTIVE) {
 				// "ГОТОВ" badge tinted to the hero's own theme colour (per request).
 				statusText = HudUtil.text(Component.translatable("ability.superheroes.status.ready")).withStyle(ChatFormatting.BOLD);
-				statusColor = applyAlpha(ClientHudGlitch.tintColor(theme.heroNameColor()), alpha, 1.0f);
+				statusColor = applyAlpha(HudJitter.tintColor(theme.heroNameColor()), alpha, 1.0f);
 			}
 		}
 		int statusWidth = statusText == null ? 0 : (mc.font.width(statusText) + 4);
@@ -296,17 +296,17 @@ public final class AbilitiesTooltipHud implements MovableHud {
 		int textX = x + ICON_SIZE + 6;
 		int maxTextWidth = width - ICON_SIZE - 6 - statusWidth;
 		int baseNameColor = isActive ? 0xFF6BFF8C : (cooldownTicks > 0 ? 0xFFFFD0AE : 0xFFF4F5FC);
-		int nameColor = applyAlpha(ClientHudGlitch.tintColor(baseNameColor), alpha, 1.0f);
+		int nameColor = applyAlpha(HudJitter.tintColor(baseNameColor), alpha, 1.0f);
 		Component name = glitchSecret
 				? Component.literal("????????").withStyle(ChatFormatting.OBFUSCATED, ChatFormatting.BOLD)
 				: HudUtil.text(Component.translatable(AbilityDescriptions.nameKey(abilityId))).withStyle(ChatFormatting.BOLD);
-		Component nameShown = glitchSecret ? name : ClientHudGlitch.maybeObfuscate(ellipsize(mc, name, maxTextWidth));
+		Component nameShown = glitchSecret ? name : HudJitter.maybeObfuscate(ellipsize(mc, name, maxTextWidth));
 		g.drawString(mc.font, glitchSecret ? ellipsize(mc, name, maxTextWidth) : nameShown, textX, y + NAME_Y_OFFSET, nameColor, true);
 
-		int descColor = applyAlpha(ClientHudGlitch.tintColor(0xFFA2A6B8), alpha, 1.0f);
+		int descColor = applyAlpha(HudJitter.tintColor(0xFFA2A6B8), alpha, 1.0f);
 		Component desc = glitchSecret
 				? Component.literal("????????????????????").withStyle(ChatFormatting.OBFUSCATED)
-				: ClientHudGlitch.maybeObfuscate(HudUtil.text(Component.translatable(AbilityDescriptions.descKey(abilityId))));
+				: HudJitter.maybeObfuscate(HudUtil.text(Component.translatable(AbilityDescriptions.descKey(abilityId))));
 
 		List<FormattedCharSequence> descLines = mc.font.split(desc, maxTextWidth);
 		int lineCount = Math.min(MAX_DESC_LINES, descLines.size());
@@ -325,7 +325,7 @@ public final class AbilitiesTooltipHud implements MovableHud {
 			int total = rawTotal > 0 ? rawTotal : Math.max(20, cooldownTicks);
 			float frac = Math.max(0f, Math.min(1f, 1f - (cooldownTicks / (float) total)));
 			int trackBg = applyAlpha(0xFF1A1B25, alpha, 1.0f);
-			int barFg = applyAlpha(ClientHudGlitch.tintColor(0xFFFF9D6E), alpha, 1.0f);
+			int barFg = applyAlpha(HudJitter.tintColor(0xFFFF9D6E), alpha, 1.0f);
 			g.fill(barX, barY, barX + barW, barY + barH, trackBg);
 			g.fill(barX, barY, barX + (int) (barW * frac), barY + barH, barFg);
 		}

@@ -31,7 +31,7 @@ public final class PandoraHero implements Hero {
 	public static final ResourceLocation ID = ModId.of("pandora");
 	public static final ResourceLocation SKIN = ModId.of("textures/entity/hero/pandora.png");
 
-	// Same palette as Regulus on purpose (House of Vanity shares his madness colors).
+	// Same palette as the madness hero on purpose (House of Vanity shares his colors).
 	private static final HeroTheme THEME = new HeroTheme(
 			0xFFFFFFFF,
 			0xFF606060,
@@ -148,7 +148,7 @@ public final class PandoraHero implements Hero {
 
 	@Override
 	public HeroTheme getTheme() {
-		// Pandora's HUD/radial colours are pure white — same monochrome theme as Regulus.
+		// Pandora's HUD/radial colours are pure white — same monochrome theme as the madness hero.
 		return THEME;
 	}
 	@Override

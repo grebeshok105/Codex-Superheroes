@@ -5,7 +5,7 @@
 	"mixins": [
 		"PlayerDimensionsMixin",
 		"PlayerFlightPoseMixin",
-		"LivingEntityFallDamageMixin",
+		"hero.regulus.LivingEntityFallDamageMixin",
 		"LivingEntityFallFlyingMixin",
 		"hero.doomsday.LivingEntityEffectMixin",
 		"LivingEntityPassiveEffectsMixin",
