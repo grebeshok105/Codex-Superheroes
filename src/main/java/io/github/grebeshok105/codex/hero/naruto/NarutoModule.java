@@ -4,7 +4,6 @@ import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.module.HeroModule;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.damage.DamageTypeSpec;
-import io.github.grebeshok105.codex.effect.ThanosStoneRewardController;
 import io.github.grebeshok105.codex.hero.naruto.ability.NarutoBijuudamaAbility;
 import io.github.grebeshok105.codex.hero.naruto.ability.NarutoOodamaRasenganAbility;
 import io.github.grebeshok105.codex.hero.naruto.ability.NarutoRasenganAbility;
@@ -16,7 +15,6 @@ import io.github.grebeshok105.codex.hero.naruto.registry.NarutoDamageTypes;
 import io.github.grebeshok105.codex.hero.naruto.registry.NarutoParticles;
 import io.github.grebeshok105.codex.hero.naruto.runtime.KawarimiController;
 import io.github.grebeshok105.codex.hero.naruto.runtime.NarutoWallRunController;
-import io.github.grebeshok105.codex.item.infinity.InfinityStoneType;
 
 import java.util.List;
 
@@ -44,8 +42,6 @@ public final class NarutoModule implements HeroModule {
 		NarutoItems.register(ctx.content());
 		NarutoParticles.register();
 		NarutoEntities.register();
-		// Naruto→SPACE stone reward, registered by the hero that owns the drop row.
-		ThanosStoneRewardController.registerHeroStone(NarutoHero.ID, InfinityStoneType.SPACE);
 		KawarimiController.register(ctx);
 		ctx.ticks().player((server, p, data) -> NarutoRasenganAbility.serverTick(p));
 		ctx.ticks().player((server, p, data) -> NarutoOodamaRasenganAbility.serverTick(p));

@@ -40,14 +40,6 @@ public final class ModItemGroups {
 				output.accept(ModItems.DOOMSDAY_GENOME);
 				output.accept(ModItems.KRYPTONITE_SHARD);
 
-				output.accept(ModItems.INFINITY_GAUNTLET);
-				output.accept(ModItems.POWER_STONE);
-				output.accept(ModItems.SPACE_STONE);
-				output.accept(ModItems.REALITY_STONE);
-				output.accept(ModItems.SOUL_STONE);
-				output.accept(ModItems.TIME_STONE);
-				output.accept(ModItems.MIND_STONE);
-
 				output.accept(ModItems.PANDORA_SUIT);
 
 				// Hero modules append their items here, in module registration order.

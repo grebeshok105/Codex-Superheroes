@@ -35,10 +35,6 @@ public final class ModDamageTypeTagProvider extends FabricTagProvider<DamageType
 				ModDamageTypes.DOOMSDAY_CHARGE_TACKLE,
 				ModDamageTypes.DOOMSDAY_DOOM_GRIP,
 				ModDamageTypes.LOKI_CHAOS,
-				ModDamageTypes.THANOS_SNAP,
-				ModDamageTypes.THANOS_COSMIC_SLAM,
-				ModDamageTypes.THANOS_MIND_PULSE,
-				ModDamageTypes.THANOS_REALITY_TEAR,
 				ModDamageTypes.CAP_SHIELD_THROW,
 				ModDamageTypes.CAP_SHIELD_SLAM,
 				ModDamageTypes.SPACE_CRUSH

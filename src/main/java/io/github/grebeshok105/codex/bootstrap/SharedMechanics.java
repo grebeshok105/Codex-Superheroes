@@ -1,5 +1,6 @@
 package io.github.grebeshok105.codex.bootstrap;
 
+import io.github.grebeshok105.codex.compat.falbiks.FalbiksSnapCompat;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import io.github.grebeshok105.codex.command.AdminBuildSyncController;
 import io.github.grebeshok105.codex.core.lifecycle.HeroTickDispatcher;
@@ -60,6 +61,10 @@ public final class SharedMechanics {
 		ctx.ticks().global(FlightController::cleanup);
 		// content rows kept here until their own stage
 		AdminBuildSyncController.register(ctx);
+
+		// compat bridges subscribe their CrossModHooks listeners here — compat sees
+		// only the seam, hero code fires it.
+		FalbiksSnapCompat.init();
 	}
 
 	/**

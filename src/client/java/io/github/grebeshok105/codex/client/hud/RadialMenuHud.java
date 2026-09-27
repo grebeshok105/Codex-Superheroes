@@ -4,24 +4,18 @@ import io.github.grebeshok105.codex.client.ClientAbilityCooldowns;
 import io.github.grebeshok105.codex.client.ClientAbilityVisibility;
 import io.github.grebeshok105.codex.client.ClientHeroState;
 import io.github.grebeshok105.codex.client.ClientSessionState;
-import io.github.grebeshok105.codex.client.ClientThanosState;
 import io.github.grebeshok105.codex.client.ModKeys;
 import io.github.grebeshok105.codex.client.core.hud.AbilityDecorations;
 import io.github.grebeshok105.codex.client.render.WildRenderer;
 import io.github.grebeshok105.codex.client.render.WildShaders;
-import io.github.grebeshok105.codex.hero.ThanosHero;
-import io.github.grebeshok105.codex.item.ModItems;
-import io.github.grebeshok105.codex.item.infinity.InfinityStoneType;
 import io.github.grebeshok105.codex.core.hero.HeroTheme;
 import io.github.grebeshok105.codex.core.net.ActivateAbilityC2SPayload;
-import com.mojang.blaze3d.systems.RenderSystem;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.ItemStack;
 
 import java.util.List;
 
@@ -214,7 +208,6 @@ public final class RadialMenuHud {
 			updateSelection(mc, n);
 		}
 		HeroTheme theme = ClientHeroState.theme();
-		boolean isThanos = ThanosHero.ID.equals(ClientHeroState.heroId());
 
 		float eased = HudAnimator.smoothstep(anim);
 
@@ -289,10 +282,6 @@ public final class RadialMenuHud {
 			} else {
 				graphics.drawCenteredString(mc.font, keyForSlot(i), ix, iy + half - 1,
 						isSel ? theme.radialKeyActive() : 0x99B9BECF);
-			}
-
-			if (isThanos) {
-				drawThanosStoneBadge(graphics, mc, aid, ix, iy - half - 6);
 			}
 
 			// Hero-registered decorations (ready halos, badges) around the slot's icon
@@ -499,60 +488,6 @@ public final class RadialMenuHud {
 		int originalA = (argb >>> 24) & 0xFF;
 		int finalA = Math.min(255, Math.max(0, (int) (originalA * (alpha / 255f) * mult)));
 		return (finalA << 24) | (argb & 0x00FFFFFF);
-	}
-
-	private static void drawThanosStoneBadge(GuiGraphics graphics, Minecraft mc, ResourceLocation aid,
-			int slotCenterX, int topY) {
-		ItemStack stack;
-		int color;
-		boolean owned;
-		if (ThanosHero.isSnapAbility(aid)) {
-			stack = new ItemStack(ModItems.INFINITY_GAUNTLET);
-			color = 0xFFFFD24A;
-			owned = ClientThanosState.hasAllStones();
-		} else {
-			InfinityStoneType type = ThanosHero.getRequiredStoneFor(aid);
-			if (type == null) {
-				return;
-			}
-			stack = stoneStackFor(type);
-			color = type.getColor();
-			owned = ClientThanosState.hasStone(type);
-		}
-		if (stack == null || stack.isEmpty()) {
-			return;
-		}
-		int badgeSize = 20;
-		int iconX = slotCenterX - 8;
-		int iconY = topY - badgeSize - 2;
-		int bx = slotCenterX - badgeSize / 2;
-		int by = iconY - 2;
-		HudUtil.roundedRectFill(graphics, bx, by, badgeSize, badgeSize, 0xCC080A14);
-		HudUtil.roundedRectBorder(graphics, bx, by, badgeSize, badgeSize, color);
-		long now = System.currentTimeMillis();
-		float pulse = 0.55f + 0.45f * (float) Math.sin(now / 280.0);
-		int glowAlpha = (int) (160 * pulse);
-		int glow = ((Math.max(40, glowAlpha) & 0xFF) << 24) | (color & 0x00FFFFFF);
-		HudUtil.roundedRectBorder(graphics, bx - 1, by - 1, badgeSize + 2, badgeSize + 2, glow);
-		RenderSystem.enableBlend();
-		graphics.renderItem(stack, iconX, iconY);
-		RenderSystem.disableBlend();
-		if (!owned) {
-			graphics.fill(bx + 1, by + 1, bx + badgeSize - 1, by + badgeSize - 1, 0xB0000814);
-			graphics.drawCenteredString(mc.font, Component.literal("\u2715"),
-					slotCenterX, by + 6, 0xFFE03030);
-		}
-	}
-
-	private static ItemStack stoneStackFor(InfinityStoneType type) {
-		return switch (type) {
-			case POWER -> new ItemStack(ModItems.POWER_STONE);
-			case SPACE -> new ItemStack(ModItems.SPACE_STONE);
-			case REALITY -> new ItemStack(ModItems.REALITY_STONE);
-			case SOUL -> new ItemStack(ModItems.SOUL_STONE);
-			case TIME -> new ItemStack(ModItems.TIME_STONE);
-			case MIND -> new ItemStack(ModItems.MIND_STONE);
-		};
 	}
 
 	private static Component cooldownText(int ticks) {

@@ -123,7 +123,7 @@ public interface Hero {
 
 	/**
 	 * Gate for {@code AbilityRouter.activate} — hero-specific locks (Doomsday tiers,
-	 * Thanos stones, Pandora's dimension-only powers) live here, not in the router.
+	 * collected-stone gates, Pandora's dimension-only powers) live here, not in the router.
 	 * On {@code false}, {@link #onAbilityDenied} runs for player feedback.
 	 */
 	default boolean canUseAbility(ServerPlayer player, io.github.grebeshok105.codex.core.transform.HeroData data,
@@ -139,7 +139,7 @@ public interface Hero {
 	 * Server-side visibility of {@code abilityId} on this player's HUD, synced to the owner
 	 * through the {@code ability_availability} attachment (stage C4 — the hook that replaced
 	 * the deleted client-side filter). Default {@code AVAILABLE}; heroes hiding abilities
-	 * behind progression (Doomsday tiers, Thanos stones, Pandora's house, Rem's demonism,
+	 * behind progression (Doomsday tiers, collected stones, Pandora's house, Rem's demonism,
 	 * Regulus's madness) return {@code HIDDEN}/{@code LOCKED} instead.
 	 */
 	default AbilityAvailability.Visibility visibility(ServerPlayer player, ResourceLocation abilityId) {

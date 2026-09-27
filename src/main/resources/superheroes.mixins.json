@@ -10,7 +10,7 @@
 		"LivingEntityEffectMixin",
 		"LivingEntityPassiveEffectsMixin",
 		"LivingEntityHealBlockMixin",
-		"ThanosBlockBreakingMixin",
+		"hero.thanos.ThanosBlockBreakingMixin",
 		"KryptoniteShardPickupMixin",
 		"PlayerBoundWeaponDropMixin",
 		"falbiks.HeroComponentStripMixin"

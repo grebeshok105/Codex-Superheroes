@@ -19,13 +19,13 @@ import org.jetbrains.annotations.Nullable;
  *         <li>Homelander: {@code ClientUraniumPressureState.isPressured(uuid)} → wounded texture
  *             ({@code textures/entity/hero/infected_homelander_wounded.png});</li>
  *         <li>Sung: {@code ClientShadowArmyState.hasShadows(uuid)} → {@code SungJinwooHero.SKIN_PHASE_2};</li>
- *         <li>Thanos: {@code ThanosSkinTextures.textureFor(ClientThanosState.maskFor(uuid))};</li>
+ *         <li>a module can paint state-driven texture variants instead;</li>
  *         <li>Iron Man: {@code IronManSuitVariant.get(ClientSuitVariantState.variantFor(uuid)).texture()};</li>
  *         <li>any other state → return {@code null} so the hero's {@code getSkinTexture()} applies.</li>
  *       </ul></li>
  *   <li>{@link #handSkin} replaces the branches of {@code PlayerRendererMixin#renderHand}
  *       (first-person arm): Sung {@code ClientShadowArmyState.isPhase2(uuid)} → {@code SKIN_PHASE_2},
- *       Iron Man suit variant, Thanos mask — the same checks as {@link #skin} for Iron Man/Thanos,
+ *       Iron Man suit variant, gauntlet mask — the same checks as {@link #skin},
  *       but Sung deliberately uses {@code isPhase2} here versus {@code hasShadows} for the body;
  *       that divergence existed before CL4 and is kept as-is (realigning it is a separate
  *       hero-owner decision). No Homelander branch existed for the hand — do not add one.</li>

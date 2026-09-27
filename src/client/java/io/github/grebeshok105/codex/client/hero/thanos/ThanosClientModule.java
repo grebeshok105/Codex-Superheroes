@@ -2,11 +2,26 @@ package io.github.grebeshok105.codex.client.hero.thanos;
 
 import io.github.grebeshok105.codex.client.core.module.HeroClientContext;
 import io.github.grebeshok105.codex.client.core.module.HeroClientModule;
+import io.github.grebeshok105.codex.client.hero.thanos.hud.ThanosStoneBadge;
+import io.github.grebeshok105.codex.client.hero.thanos.state.ClientThanosState;
 import io.github.grebeshok105.codex.client.render.CosmicBeamRenderer;
-import io.github.grebeshok105.codex.hero.ThanosHero;
+import io.github.grebeshok105.codex.core.transform.TransformationItem;
+import io.github.grebeshok105.codex.hero.thanos.ThanosAbilities;
+import io.github.grebeshok105.codex.hero.thanos.ThanosHero;
+import io.github.grebeshok105.codex.hero.thanos.item.InfinityStoneType;
+import io.github.grebeshok105.codex.hero.thanos.item.InfinityStones;
 import io.github.grebeshok105.codex.network.ThanosCosmicBeamS2CPayload;
-import io.github.grebeshok105.codex.network.ThanosStonesS2CPayload;
+import io.github.grebeshok105.codex.hero.thanos.net.ThanosStonesS2CPayload;
+import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.contents.PlainTextContents;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+
+import java.util.List;
 
 public record ThanosClientModule() implements HeroClientModule {
 	@Override
@@ -20,6 +35,39 @@ public record ThanosClientModule() implements HeroClientModule {
 		ctx.receive(ThanosCosmicBeamS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> CosmicBeamRenderer.add(payload.start(), payload.end())));
 		ctx.receive(ThanosStonesS2CPayload.TYPE, (payload, context) ->
-				context.client().execute(() -> io.github.grebeshok105.codex.client.ClientThanosState.update(payload.playerId(), payload.bitmask())));
+				context.client().execute(() -> ClientThanosState.update(payload.playerId(), payload.bitmask())));
+
+		ThanosStoneBadge badge = new ThanosStoneBadge();
+		for (ResourceLocation id : ThanosAbilities.ALL) {
+			ctx.abilityDecoration(id, badge);
+		}
+
+		// The "contains an Infinity Stone" tail used to be emitted inside each item's
+		// appendHoverText via TooltipFrame.containsStone — that would make core tooltip
+		// code depend on hero content, so the lines are appended here instead.
+		ItemTooltipCallback.EVENT.register(ThanosClientModule::appendStoneLine);
+	}
+
+	private static void appendStoneLine(ItemStack stack, Item.TooltipContext context,
+			TooltipFlag flag, List<Component> lines) {
+		if (!(stack.getItem() instanceof TransformationItem item)) {
+			return;
+		}
+		InfinityStoneType stone = InfinityStones.rewardFor(item.getHeroId());
+		if (stone == null || lines.isEmpty()) {
+			return;
+		}
+		Component last = lines.getLast();
+		if (!(last.getContents() instanceof PlainTextContents text)
+				|| !text.text().chars().allMatch(c -> c == '━')) {
+			return;
+		}
+		Component stoneName = Component.translatable(stone.getStoneNameKey())
+				.withStyle(ChatFormatting.LIGHT_PURPLE, ChatFormatting.BOLD);
+		lines.add(lines.size() - 1, Component.empty());
+		lines.add(lines.size() - 1, Component.literal("◆ ").withStyle(ChatFormatting.LIGHT_PURPLE)
+				.append(Component.translatable("tooltip.superheroes.contains_stone").withStyle(ChatFormatting.GRAY))
+				.append(Component.literal(" "))
+				.append(stoneName));
 	}
 }
