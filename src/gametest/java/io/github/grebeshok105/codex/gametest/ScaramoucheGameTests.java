@@ -1,6 +1,7 @@
 package io.github.grebeshok105.codex.gametest;
 
 import io.github.grebeshok105.codex.ModId;
+import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import io.github.grebeshok105.codex.core.ability.AbilityRegistry;
 import io.github.grebeshok105.codex.core.ability.AbilityRouter;
 import io.github.grebeshok105.codex.core.hero.Hero;
@@ -59,6 +60,9 @@ public final class ScaramoucheGameTests implements FabricGameTest {
 			TestHeroes.transform(player, ModId.of("scaramouche"));
 			helper.assertFalse(HeroDataStore.get(player).isActive(WIND_PRISON),
 					"no ghost activation after re-transform");
+			// cooldowns survive hero swaps (audit B5) — clear so the pin tests the
+			// zone map, not the cooldown gate
+			AbilityCooldowns.clearAndSync(player);
 			AbilityRouter.activate(player, WIND_PRISON);
 			helper.assertTrue(HeroDataStore.get(player).isActive(WIND_PRISON),
 					"a fresh prison activates cleanly");
