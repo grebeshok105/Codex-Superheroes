@@ -1,7 +1,10 @@
 package io.github.grebeshok105.codex.mechanic.boundweapon;
 
-import io.github.grebeshok105.codex.item.ModDataComponents;
+import io.github.grebeshok105.codex.ModId;
 import net.minecraft.core.NonNullList;
+import net.minecraft.core.Registry;
+import net.minecraft.core.component.DataComponentType;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
@@ -21,7 +24,19 @@ import java.util.concurrent.ThreadLocalRandom;
  * vanishes when it next ticks in a player inventory. Bound weapons never become item entities.
  */
 public final class BoundWeapons {
+	public static final DataComponentType<BoundWeaponToken> BOUND_WEAPON = Registry.register(
+			BuiltInRegistries.DATA_COMPONENT_TYPE,
+			ModId.of("bound_weapon"),
+			DataComponentType.<BoundWeaponToken>builder()
+					.persistent(BoundWeaponToken.CODEC)
+					.networkSynchronized(BoundWeaponToken.STREAM_CODEC)
+					.build());
+
 	private BoundWeapons() {
+	}
+
+	/** Forces class-load so {@link #BOUND_WEAPON} is registered before any stack carries it. */
+	public static void init() {
 	}
 
 	/**
@@ -35,7 +50,7 @@ public final class BoundWeapons {
 		}
 		long issue = ThreadLocalRandom.current().nextLong();
 		ItemStack stack = new ItemStack(item);
-		stack.set(ModDataComponents.BOUND_WEAPON, new BoundWeaponToken(owner.getUUID(), issue));
+		stack.set(BOUND_WEAPON, new BoundWeaponToken(owner.getUUID(), issue));
 		if (!place(owner, stack)) {
 			return false;
 		}
@@ -65,7 +80,7 @@ public final class BoundWeapons {
 		if (!(stack.getItem() instanceof BoundWeaponItem) || !(holder instanceof Player player)) {
 			return false;
 		}
-		BoundWeaponToken token = stack.get(ModDataComponents.BOUND_WEAPON);
+		BoundWeaponToken token = stack.get(BOUND_WEAPON);
 		if (token == null || !token.owner().equals(player.getUUID())) {
 			return false;
 		}
