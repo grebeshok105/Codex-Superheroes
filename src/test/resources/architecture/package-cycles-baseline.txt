@@ -1,7 +1,6 @@
 ability <-> effect
 ability <-> flight
 ability <-> hero
-ability <-> network
 ability.ironman <-> hero
 attachment <-> effect
 attachment <-> mechanic.boundweapon

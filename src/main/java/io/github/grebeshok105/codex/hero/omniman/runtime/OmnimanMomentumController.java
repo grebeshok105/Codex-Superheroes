@@ -5,7 +5,6 @@ import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
-import io.github.grebeshok105.codex.hero.omniman.OmnimanHero;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
 import net.minecraft.resources.ResourceLocation;
@@ -37,6 +36,7 @@ public final class OmnimanMomentumController {
 	private static final double MAX_BONUS_KNOCKBACK = 1.35;
 	private static final ResourceLocation DAMAGE_PROC = ModId.of("modifiers/omniman/momentum_proc_damage");
 	private static final ResourceLocation KNOCKBACK_PROC = ModId.of("modifiers/omniman/momentum_proc_knockback");
+	private static final ResourceLocation OMNIMAN_ID = ModId.of("omniman");
 	private static final OwnedSessionMap<UUID, Float> MOMENTUM =
 			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.of(OwnedSessionMap.ClearOn.LEAVE));
 	private static final OwnedSessionMap<UUID, Boolean> ACTIVE_MODIFIERS =
@@ -130,7 +130,7 @@ public final class OmnimanMomentumController {
 
 	private static boolean isOmniman(ServerPlayer player) {
 		HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
-		return data.hasHero() && OmnimanHero.ID.equals(data.heroId());
+		return data.hasHero() && OMNIMAN_ID.equals(data.heroId());
 	}
 
 	private static void applyAttackModifiers(ServerPlayer player, float momentumFraction) {

@@ -1,5 +1,6 @@
 package io.github.grebeshok105.codex.effect;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.attachment.ModAttachments;
 import io.github.grebeshok105.codex.core.ability.AbilityRouter;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
@@ -15,6 +16,7 @@ import io.github.grebeshok105.codex.core.transform.HeroData;
 import io.github.grebeshok105.codex.mechanic.world.WorldDestructionPolicy;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
@@ -38,6 +40,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.server.MinecraftServer;
 
 public final class RegulusMadnessController {
+	private static final net.minecraft.resources.ResourceLocation FLIGHT_ID = ModId.of("flight");
 	private static final long READING_DURATION_TICKS = 200L;
 	private static final int COUNTER_LIFT_TICKS = 20;
 	private static final double COUNTER_LIFT_HEIGHT = 30.0;
@@ -142,7 +145,7 @@ public final class RegulusMadnessController {
 	private static void stripFlight(LivingEntity target) {
 		if (!(target instanceof ServerPlayer sp)) return;
 		try {
-			io.github.grebeshok105.codex.core.ability.AbilityRouter.deactivate(sp, io.github.grebeshok105.codex.mechanic.ability.SharedAbilityIds.FLIGHT);
+			io.github.grebeshok105.codex.core.ability.AbilityRouter.deactivate(sp, FLIGHT_ID);
 		} catch (Throwable ignored) {
 		}
 		try {

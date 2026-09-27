@@ -1,10 +1,11 @@
 package io.github.grebeshok105.codex.effect;
 
-import io.github.grebeshok105.codex.mechanic.ability.SharedAbilityIds;
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import io.github.grebeshok105.codex.mechanic.world.WorldDestructionPolicy;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
@@ -16,6 +17,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
 public final class MadnessFlightController {
+	private static final net.minecraft.resources.ResourceLocation FLIGHT_ID = ModId.of("flight");
 	private static final float HARDNESS_LIMIT = 20.0f;
 	private static final int CHECKS_PER_SLICE = 22;
 	private static final int JITTER_RADIUS = 4;
@@ -41,7 +43,7 @@ public final class MadnessFlightController {
 			return;
 		}
 		HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
-		if (!data.hasHero() || !data.isActive(SharedAbilityIds.FLIGHT)) {
+		if (!data.hasHero() || !data.isActive(FLIGHT_ID)) {
 			return;
 		}
 		Vec3 motion = player.getDeltaMovement();

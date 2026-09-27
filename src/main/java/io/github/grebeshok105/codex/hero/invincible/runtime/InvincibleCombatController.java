@@ -5,7 +5,6 @@ import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
-import io.github.grebeshok105.codex.hero.invincible.InvincibleHero;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import io.github.grebeshok105.codex.sound.ModSounds;
 import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
@@ -37,6 +36,7 @@ public final class InvincibleCombatController {
 	// Iron Fists belongs to Homelander (not yet migrated); referenced by id so
 	// this module never imports a foreign hero.
 	private static final ResourceLocation IRON_FISTS_ID = ModId.of("iron_fists");
+	private static final ResourceLocation INVINCIBLE_ID = ModId.of("invincible");
 
 	private static final OwnedSessionMap<UUID, Long> LAST_PROC =
 			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.of(OwnedSessionMap.ClearOn.LEAVE));
@@ -58,7 +58,7 @@ public final class InvincibleCombatController {
 				return InteractionResult.PASS;
 			}
 			HeroData data = sp.getAttachedOrCreate(CoreAttachments.HERO_DATA);
-			if (!InvincibleHero.ID.equals(data.heroId()) || data.isActive(IRON_FISTS_ID)) {
+			if (!INVINCIBLE_ID.equals(data.heroId()) || data.isActive(IRON_FISTS_ID)) {
 				return InteractionResult.PASS;
 			}
 			long now = sp.level().getGameTime();

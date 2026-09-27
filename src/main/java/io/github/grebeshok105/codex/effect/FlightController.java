@@ -1,8 +1,8 @@
 package io.github.grebeshok105.codex.effect;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.transform.HeroDataStore;
-import io.github.grebeshok105.codex.mechanic.ability.SharedAbilityIds;
 import io.github.grebeshok105.codex.core.ability.AbilityRouter;
 import io.github.grebeshok105.codex.flight.FlightAbilityState;
 import io.github.grebeshok105.codex.flight.FlightMode;
@@ -30,6 +30,7 @@ import java.util.UUID;
 import net.minecraft.server.MinecraftServer;
 
 public final class FlightController {
+	private static final ResourceLocation FLIGHT_ID = ModId.of("flight");
 	private static final int URANIUM_AUTO_OFF_TICKS = 100;
 	private static final int URANIUM_COOLDOWN_TICKS = 20;
 	private static final int SYNC_INTERVAL_TICKS = 5;
@@ -203,7 +204,7 @@ public final class FlightController {
 		UUID id = player.getUUID();
 		URANIUM_ACTIVE_SINCE.remove(id);
 		URANIUM_COOLDOWN_UNTIL.put(id, player.level().getGameTime() + URANIUM_COOLDOWN_TICKS);
-		AbilityRouter.deactivate(player, SharedAbilityIds.FLIGHT);
+		AbilityRouter.deactivate(player, FLIGHT_ID);
 	}
 
 	private static void tickIronManEffects(ServerPlayer player, HeroData data) {
