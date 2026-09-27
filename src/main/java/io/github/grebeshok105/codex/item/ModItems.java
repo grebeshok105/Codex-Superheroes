@@ -69,11 +69,6 @@ public final class ModItems {
 			new EvangelionItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
 	);
 
-	public static final ShadowMonarchsCloakItem SHADOW_MONARCHS_CLOAK = register(
-			"shadow_monarchs_cloak",
-			new ShadowMonarchsCloakItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
-	);
-
 	public static final InfinityGauntletItem INFINITY_GAUNTLET = register(
 			"infinity_gauntlet",
 			new InfinityGauntletItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
