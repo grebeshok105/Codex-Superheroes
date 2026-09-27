@@ -51,8 +51,4 @@ public final class RaidenPlungingStrikeAbility implements Ability {
 		AbilityCooldowns.setCooldownTicks(player, getId(), COOLDOWN_TICKS);
 		return true;
 	}
-
-	public static void onLanding(ServerPlayer player) {
-		// no-op: replaced by HeavensStrikeController windup-based impact
-	}
 }

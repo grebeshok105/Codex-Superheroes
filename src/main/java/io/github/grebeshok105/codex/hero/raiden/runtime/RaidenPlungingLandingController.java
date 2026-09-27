@@ -6,7 +6,6 @@ import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
 import io.github.grebeshok105.codex.core.transform.HeroData;
-import io.github.grebeshok105.codex.hero.raiden.ability.RaidenPlungingStrikeAbility;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 
@@ -16,7 +15,7 @@ import net.minecraft.server.MinecraftServer;
 
 /**
  * Ловит переход air→ground у Райден с активным «armed»-окном Plunging Strike.
- * При приземлении вызывает {@link RaidenPlungingStrikeAbility#onLanding(ServerPlayer)}.
+ * При приземлении вызывает {@link #onLanding(ServerPlayer)}.
  *
  * <p>NOTE: dead-but-pinned — nothing ever writes {@code plungingArmedUntilTick}, so the
  * landing branch never fires today. Kept wired exactly as before; the only change is the
@@ -43,9 +42,16 @@ public final class RaidenPlungingLandingController {
 			RaidenState state = player.getAttachedOrCreate(RaidenState.ATTACHMENT);
 			long now = player.serverLevel().getGameTime();
 			if (state.plungingArmedUntilTick() > now) {
-				RaidenPlungingStrikeAbility.onLanding(player);
+				onLanding(player);
 			}
 		}
+	}
+
+	/** Landing action for an armed plunging strike — lives here so runtime does not
+	 *  import back into the ability leaf. Still a no-op: HeavensStrikeController's
+	 *  windup-based impact replaced it (kept dead-but-pinned as before the move). */
+	private static void onLanding(ServerPlayer player) {
+		// no-op
 	}
 
 	public static void tickPlayer(MinecraftServer server, ServerPlayer player, HeroData data) {

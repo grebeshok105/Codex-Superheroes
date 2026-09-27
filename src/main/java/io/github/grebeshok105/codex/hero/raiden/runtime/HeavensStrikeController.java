@@ -6,7 +6,7 @@ import io.github.grebeshok105.codex.mechanic.strike.QueuedStrikes;
 import io.github.grebeshok105.codex.mechanic.strike.StrikeSession;
 import io.github.grebeshok105.codex.sound.ModSounds;
 import io.github.grebeshok105.codex.mechanic.world.WorldDestructionPolicy;
-import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
+import io.github.grebeshok105.codex.core.net.FxBroadcast;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
@@ -229,7 +229,7 @@ public final class HeavensStrikeController {
 		level.sendParticles(ParticleTypes.LARGE_SMOKE, t.x, t.y + 1, t.z,
 				60, v.radius, 2.0, v.radius, 0.05);
 
-		for (ServerPlayer near : PlayerLookup.around(level, t, 100.0)) {
+		for (ServerPlayer near : FxBroadcast.aroundAudience(level, t, 100.0)) {
 			double dist = near.position().distanceTo(t);
 			float intensity = (float) Math.max(0.05, 1.0 - dist / 100.0) * v.shakeIntensity;
 			ServerPlayNetworking.send(near, new ScreenShakeS2CPayload(intensity, 36));

@@ -29,4 +29,9 @@ public final class FxBroadcast {
 			ServerPlayNetworking.send(near, payload);
 		}
 	}
+
+	/** The radial audience itself — for call sites that scale the payload per player (e.g. distance). */
+	public static java.util.Collection<ServerPlayer> aroundAudience(ServerLevel level, Vec3 center, double radius) {
+		return PlayerLookup.around(level, center, radius);
+	}
 }

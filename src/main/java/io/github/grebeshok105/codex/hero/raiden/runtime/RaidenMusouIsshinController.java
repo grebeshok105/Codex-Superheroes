@@ -3,7 +3,7 @@ package io.github.grebeshok105.codex.hero.raiden.runtime;
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
-import io.github.grebeshok105.codex.hero.raiden.item.MusouNoHitotachiItem;
+import net.minecraft.core.registries.BuiltInRegistries;
 import io.github.grebeshok105.codex.core.net.ScreenShakeS2CPayload;
 import io.github.grebeshok105.codex.mechanic.strike.QueuedStrikes;
 import io.github.grebeshok105.codex.mechanic.strike.StrikeSession;
@@ -11,7 +11,7 @@ import io.github.grebeshok105.codex.particle.ModParticles;
 import io.github.grebeshok105.codex.sound.ModSounds;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import io.github.grebeshok105.codex.mechanic.world.WorldDestructionPolicy;
-import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
+import io.github.grebeshok105.codex.core.net.FxBroadcast;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
@@ -53,6 +53,7 @@ public final class RaidenMusouIsshinController {
 	private static final float IMPACT_DAMAGE = 16f;
 
 	private static final ResourceLocation RAIDEN_ID = ModId.of("raiden_shogun");
+	private static final ResourceLocation YAMATO_ID = ModId.of("musou_no_hitotachi");
 
 	// Precious blocks the slash intentionally cannot dent — everything else
 	// unbreakable is covered by WorldDestructionPolicy (tag + destroySpeed).
@@ -324,7 +325,7 @@ public final class RaidenMusouIsshinController {
 	}
 
 	private static void shake(ServerLevel level, Vec3 center) {
-		for (ServerPlayer near : PlayerLookup.around(level, center, 100.0)) {
+		for (ServerPlayer near : FxBroadcast.aroundAudience(level, center, 100.0)) {
 			double dist = near.position().distanceTo(center);
 			float intensity = (float) Math.max(0.08, 1.0 - dist / 100.0) * 4.5f;
 			ServerPlayNetworking.send(near, new ScreenShakeS2CPayload(intensity, 42));
@@ -362,9 +363,12 @@ public final class RaidenMusouIsshinController {
 	}
 
 	private static boolean hasYamato(ServerPlayer player) {
+		// Registry-singleton identity — leaf-literal lookup; identical to instanceof for the
+		// one registered musou_no_hitotachi item instance (same idiom SwordDraw uses).
+		var yamato = BuiltInRegistries.ITEM.get(YAMATO_ID);
 		ItemStack main = player.getMainHandItem();
 		ItemStack off = player.getOffhandItem();
-		return main.getItem() instanceof MusouNoHitotachiItem || off.getItem() instanceof MusouNoHitotachiItem;
+		return main.getItem() == yamato || off.getItem() == yamato;
 	}
 
 	public static void serverTick(MinecraftServer server) {
