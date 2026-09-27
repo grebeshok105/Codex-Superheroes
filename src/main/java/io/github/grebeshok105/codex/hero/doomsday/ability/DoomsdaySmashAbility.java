@@ -4,7 +4,7 @@ import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import io.github.grebeshok105.codex.hero.doomsday.registry.DoomsdayDamageTypes;
-import io.github.grebeshok105.codex.physics.ShockwaveUtil;
+import io.github.grebeshok105.codex.mechanic.shockwave.ShockwaveUtil;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;

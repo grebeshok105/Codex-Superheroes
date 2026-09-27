@@ -11,7 +11,8 @@ import io.github.grebeshok105.codex.content.boss.homelander.entity.ai.Homelander
 import io.github.grebeshok105.codex.content.boss.homelander.entity.ai.HomelanderRoarGoal;
 import io.github.grebeshok105.codex.content.boss.homelander.entity.ai.HomelanderShockwaveDiveGoal;
 import io.github.grebeshok105.codex.content.boss.homelander.entity.ai.HomelanderSonicSlamGoal;
-import io.github.grebeshok105.codex.item.ModItems;
+import io.github.grebeshok105.codex.ModId;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
@@ -162,7 +163,8 @@ public class HomelanderBossEntity extends Monster implements HomelanderBossApi {
 	@Override
 	protected void dropCustomDeathLoot(ServerLevel level, DamageSource damageSource, boolean wasRecentlyHit) {
 		super.dropCustomDeathLoot(level, damageSource, wasRecentlyHit);
-		this.spawnAtLocation(new ItemStack(ModItems.HOMELANDER_SUIT));
+		// Resolved by id: content code may not import hero.homelander (ArchUnit module isolation).
+		this.spawnAtLocation(new ItemStack(BuiltInRegistries.ITEM.get(ModId.of("homelander_suit"))));
 	}
 
 	@Override

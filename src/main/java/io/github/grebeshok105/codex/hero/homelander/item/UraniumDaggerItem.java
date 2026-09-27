@@ -2,7 +2,7 @@ package io.github.grebeshok105.codex.hero.homelander.item;
 
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
-import io.github.grebeshok105.codex.effect.ModEffects;
+import io.github.grebeshok105.codex.mechanic.effect.ModEffects;
 import io.github.grebeshok105.codex.core.resource.ResourceController;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import io.github.grebeshok105.codex.core.transform.TooltipFrame;

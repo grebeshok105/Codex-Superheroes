@@ -11,7 +11,7 @@ import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.core.resource.EnergyLocks;
-import io.github.grebeshok105.codex.effect.EffectRefresh;
+import io.github.grebeshok105.codex.mechanic.effect.EffectRefresh;
 import io.github.grebeshok105.codex.mechanic.flight.FlightController;
 import io.github.grebeshok105.codex.mechanic.flight.FlightAbilityState;
 import io.github.grebeshok105.codex.hero.regulus.net.MadnessSyncS2CPayload;

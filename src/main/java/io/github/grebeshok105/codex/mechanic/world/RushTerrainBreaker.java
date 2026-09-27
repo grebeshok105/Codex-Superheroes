@@ -1,4 +1,4 @@
-package io.github.grebeshok105.codex.physics;
+package io.github.grebeshok105.codex.mechanic.world;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.BlockParticleOption;
@@ -7,7 +7,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import io.github.grebeshok105.codex.mechanic.world.WorldDestructionPolicy;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 

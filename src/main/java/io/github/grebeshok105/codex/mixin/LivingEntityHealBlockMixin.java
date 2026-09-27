@@ -1,6 +1,6 @@
 package io.github.grebeshok105.codex.mixin;
 
-import io.github.grebeshok105.codex.effect.ModEffects;
+import io.github.grebeshok105.codex.mechanic.effect.ModEffects;
 import net.minecraft.world.entity.LivingEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;

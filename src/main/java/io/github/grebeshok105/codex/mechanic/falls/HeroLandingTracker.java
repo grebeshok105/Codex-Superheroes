@@ -1,16 +1,18 @@
-package io.github.grebeshok105.codex.effect;
+package io.github.grebeshok105.codex.mechanic.falls;
 
 import io.github.grebeshok105.codex.mechanic.flight.FlightController;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
-import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.hero.Heroes;
 import io.github.grebeshok105.codex.core.hero.LandingImpact;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
+import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
 import io.github.grebeshok105.codex.core.transform.HeroData;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.server.level.ServerPlayer;
 
-import java.util.HashMap;
+import java.util.EnumSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
 import net.minecraft.server.MinecraftServer;
@@ -20,7 +22,8 @@ public final class HeroLandingTracker {
 	private static final double TELEPORT_DETECT_DROP = 8.0;
 	private static final long LANDING_COOLDOWN_TICKS = 5L;
 
-	private static final Map<UUID, State> states = new HashMap<>();
+	private static final OwnedSessionMap<UUID, State> states = OwnedSessionMap.create(
+			LifecycleRegistrar.global(), EnumSet.of(ClearOn.LEAVE, ClearOn.HERO_CLEAR));
 
 	private HeroLandingTracker() {
 	}
@@ -35,13 +38,6 @@ public final class HeroLandingTracker {
 		boolean wasOnGround;
 		boolean tracking;
 		long lastLandingTick;
-	}
-
-	public static void register(HeroModuleContext ctx) {
-
-		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
-			states.remove(handler.getPlayer().getUUID());
-		});
 	}
 
 	public static void reset(ServerPlayer player) {
@@ -60,19 +56,20 @@ public final class HeroLandingTracker {
 			return;
 		}
 
-		State s = states.computeIfAbsent(player.getUUID(), k -> {
-			State ns = new State();
-			ns.peakY = player.getY();
-			ns.prevY = player.getY();
-			ns.prevX = player.getX();
-			ns.prevZ = player.getZ();
-			ns.lastDeltaY = 0.0;
-			ns.lastHorizontalSpeed = 0.0;
-			ns.wasOnGround = player.onGround();
-			ns.tracking = !player.onGround();
-			ns.lastLandingTick = 0L;
-			return ns;
-		});
+		State s = states.get(player.getUUID());
+		if (s == null) {
+			s = new State();
+			s.peakY = player.getY();
+			s.prevY = player.getY();
+			s.prevX = player.getX();
+			s.prevZ = player.getZ();
+			s.lastDeltaY = 0.0;
+			s.lastHorizontalSpeed = 0.0;
+			s.wasOnGround = player.onGround();
+			s.tracking = !player.onGround();
+			s.lastLandingTick = 0L;
+			states.put(player.getUUID(), player.getUUID(), s);
+		}
 
 		double currentX = player.getX();
 		double currentY = player.getY();
@@ -144,7 +141,12 @@ public final class HeroLandingTracker {
 	}
 
 	public static void pruneGonePlayers(MinecraftServer server) {
-		states.entrySet().removeIf(e -> server.getPlayerList().getPlayer(e.getKey()) == null);
+		Iterator<Map.Entry<UUID, State>> it = states.iterator();
+		while (it.hasNext()) {
+			if (server.getPlayerList().getPlayer(it.next().getKey()) == null) {
+				it.remove();
+			}
+		}
 	}
 
 }

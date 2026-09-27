@@ -14,7 +14,7 @@ import net.minecraft.server.MinecraftServer;
 /**
  * Хоумлендер: усиленная регенерация (II) включается, когда HP < {@link #LOW_HP_THRESHOLD},
  * и держится до полного восстановления. После full HP — снимается до уровня базовой пассивной
- * регенерации (которая поддерживается {@link io.github.grebeshok105.codex.effect.HeroPassiveRegenController}).
+ * регенерации (которая поддерживается {@link io.github.grebeshok105.codex.mechanic.passive.HeroPassiveRegenController}).
  */
 public final class HomelanderRegenController {
 	private static final net.minecraft.resources.ResourceLocation HOMELANDER_ID = ModId.of("homelander");

@@ -1,7 +1,7 @@
 package io.github.grebeshok105.codex.mixin.hero.regulus;
 
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
-import io.github.grebeshok105.codex.effect.SuperJumpController;
+import io.github.grebeshok105.codex.mechanic.falls.SuperJumpController;
 import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.hero.Heroes;
 import io.github.grebeshok105.codex.core.transform.HeroData;

@@ -1,9 +1,7 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.core.ability;
 
-import io.github.grebeshok105.codex.core.ability.AbilityAvailability;
 import io.github.grebeshok105.codex.core.ability.AbilityAvailability.Visibility;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
-import io.github.grebeshok105.codex.core.ability.AbilityRules;
 import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.hero.Heroes;
 import io.github.grebeshok105.codex.core.transform.HeroData;

@@ -4,7 +4,7 @@ import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
-import io.github.grebeshok105.codex.effect.ModEffects;
+import io.github.grebeshok105.codex.mechanic.effect.ModEffects;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;

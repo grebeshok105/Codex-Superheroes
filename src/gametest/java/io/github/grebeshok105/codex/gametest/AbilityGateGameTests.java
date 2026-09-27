@@ -1,6 +1,5 @@
 package io.github.grebeshok105.codex.gametest;
 
-import io.github.grebeshok105.codex.ability.AbilityIds;
 import io.github.grebeshok105.codex.hero.homelander.effect.HomelanderEffects;
 import io.github.grebeshok105.codex.hero.pandora.PandoraAbilities;
 import io.github.grebeshok105.codex.hero.pandora.runtime.VanityStrippedMobEffect;
@@ -8,7 +7,7 @@ import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import io.github.grebeshok105.codex.hero.homelander.HomelanderAbilityIds;
 import io.github.grebeshok105.codex.core.ability.AbilityRouter;
 import io.github.grebeshok105.codex.hero.pandora.runtime.MirrorDimensionController;
-import io.github.grebeshok105.codex.effect.ModEffects;
+import io.github.grebeshok105.codex.mechanic.effect.ModEffects;
 import io.github.grebeshok105.codex.hero.doomsday.DoomsdayAbilities;
 import io.github.grebeshok105.codex.hero.doomsday.DoomsdayHero;
 import io.github.grebeshok105.codex.hero.homelander.HomelanderHero;

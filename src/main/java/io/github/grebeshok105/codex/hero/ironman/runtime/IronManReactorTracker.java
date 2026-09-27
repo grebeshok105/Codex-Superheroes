@@ -2,7 +2,7 @@ package io.github.grebeshok105.codex.hero.ironman.runtime;
 
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.transform.HeroDataStore;
-import io.github.grebeshok105.codex.effect.EffectRefresh;
+import io.github.grebeshok105.codex.mechanic.effect.EffectRefresh;
 import io.github.grebeshok105.codex.ModId;
 import net.minecraft.resources.ResourceLocation;
 import io.github.grebeshok105.codex.hero.ironman.item.IronManReactorItem;

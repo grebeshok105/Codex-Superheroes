@@ -8,8 +8,9 @@ import net.minecraft.server.level.ServerPlayer;
 /**
  * Registrations and senders for the core payloads (hero activation/binding, hero
  * data and resources, cooldowns, screen shake, wall-impact debris). Hero and
- * mechanic payloads stay in {@link io.github.grebeshok105.codex.network.ModNetworking},
- * which invokes {@link #init()} so wiring order is unchanged.
+ * mechanic payloads register through {@code HeroModuleContext.payloads()} from
+ * their modules and {@code bootstrap.SharedMechanics}; the shared receivers live
+ * on mechanic classes this package may not depend on.
  */
 public final class CoreNetworking {
 	private CoreNetworking() {

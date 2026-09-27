@@ -12,7 +12,7 @@ import io.github.grebeshok105.codex.core.ability.AbilityRules;
 import io.github.grebeshok105.codex.core.module.HeroModule;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.damage.DamageTypeSpec;
-import io.github.grebeshok105.codex.effect.ModEffects;
+import io.github.grebeshok105.codex.mechanic.effect.ModEffects;
 import io.github.grebeshok105.codex.hero.thanos.net.ThanosStonesS2CPayload;
 import io.github.grebeshok105.codex.hero.thanos.registry.ThanosDamageTypes;
 import io.github.grebeshok105.codex.hero.thanos.runtime.ThanosGauntletStateController;
