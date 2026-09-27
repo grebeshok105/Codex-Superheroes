@@ -1,4 +1,4 @@
-package io.github.grebeshok105.codex.effect;
+package io.github.grebeshok105.codex.mechanic.passive;
 
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.minecraft.server.level.ServerPlayer;

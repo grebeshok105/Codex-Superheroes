@@ -15,8 +15,8 @@ import java.util.Map;
 
 /**
  * Attachments shared by core services and more than one hero module
- * ({@link io.github.grebeshok105.codex.attachment.ModAttachments} keeps the
- * per-hero and bound-weapon attachments).
+ * ({@link io.github.grebeshok105.codex.mechanic.boundweapon.BoundWeaponIssues} owns the
+ * bound-weapon attachment; per-hero attachments live with their modules).
  */
 public final class CoreAttachments {
 	public static final AttachmentType<HeroData> HERO_DATA = AttachmentRegistry.create(ModId.of("hero_data"), b -> b
@@ -38,7 +38,7 @@ public final class CoreAttachments {
 	 * Server-computed ability visibility for the owning player's HUD (stage C4 — replaces
 	 * the deleted client-side filter). Synced to the owner only; absent means "all
 	 * {@link io.github.grebeshok105.codex.core.ability.AbilityAvailability.Visibility#AVAILABLE}".
-	 * Written only by {@link io.github.grebeshok105.codex.ability.AbilityAvailabilitySync}.
+	 * Written only by {@link io.github.grebeshok105.codex.core.ability.AbilityAvailabilitySync}.
 	 */
 	public static final AttachmentType<AbilityAvailability> ABILITY_AVAILABILITY = AttachmentRegistry.create(ModId.of("ability_availability"), b -> b
 			.syncWith(AbilityAvailability.STREAM_CODEC, net.fabricmc.fabric.api.attachment.v1.AttachmentSyncPredicate.targetOnly()));

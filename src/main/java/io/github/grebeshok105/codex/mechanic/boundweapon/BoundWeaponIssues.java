@@ -1,5 +1,8 @@
 package io.github.grebeshok105.codex.mechanic.boundweapon;
 
+import io.github.grebeshok105.codex.ModId;
+import net.fabricmc.fabric.api.attachment.v1.AttachmentRegistry;
+import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
 import net.minecraft.world.item.Item;
 
 import java.util.HashMap;
@@ -8,6 +11,11 @@ import java.util.OptionalLong;
 
 /** Per-player record of the currently valid issue of each bound weapon. Deliberately not persistent. */
 public record BoundWeaponIssues(Map<Item, Long> current) {
+	/** Current issue of each bound weapon; not persistent, so a relog or restart invalidates every old copy. */
+	public static final AttachmentType<BoundWeaponIssues> ATTACHMENT =
+			AttachmentRegistry.create(ModId.of("bound_weapon_issues"));
+
+
 	public static final BoundWeaponIssues EMPTY = new BoundWeaponIssues(Map.of());
 
 	public BoundWeaponIssues {

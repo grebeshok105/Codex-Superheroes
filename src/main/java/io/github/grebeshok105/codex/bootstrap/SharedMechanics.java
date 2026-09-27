@@ -1,16 +1,20 @@
 package io.github.grebeshok105.codex.bootstrap;
 
 import io.github.grebeshok105.codex.compat.falbiks.FalbiksSnapCompat;
+import io.github.grebeshok105.codex.core.ability.AbilityAvailabilitySync;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import io.github.grebeshok105.codex.core.lifecycle.HeroTickDispatcher;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
-import io.github.grebeshok105.codex.effect.AutoSaturationController;
+import io.github.grebeshok105.codex.core.net.HeroMeleeChargeC2SPayload;
+import io.github.grebeshok105.codex.core.net.SuperJumpC2SPayload;
+import io.github.grebeshok105.codex.mechanic.flight.FlightStateS2CPayload;
+import io.github.grebeshok105.codex.mechanic.passive.AutoSaturationController;
 import io.github.grebeshok105.codex.mechanic.flight.FlightController;
-import io.github.grebeshok105.codex.effect.HeroEquipmentLock;
-import io.github.grebeshok105.codex.effect.HeroLandingTracker;
-import io.github.grebeshok105.codex.effect.HeroMeleeImpactController;
-import io.github.grebeshok105.codex.effect.HeroPassiveRegenController;
-import io.github.grebeshok105.codex.effect.SuperJumpController;
+import io.github.grebeshok105.codex.mechanic.passive.HeroEquipmentLock;
+import io.github.grebeshok105.codex.mechanic.falls.HeroLandingTracker;
+import io.github.grebeshok105.codex.mechanic.impact.HeroMeleeImpactController;
+import io.github.grebeshok105.codex.mechanic.passive.HeroPassiveRegenController;
+import io.github.grebeshok105.codex.mechanic.falls.SuperJumpController;
 import io.github.grebeshok105.codex.core.lifecycle.EntityControlLock;
 import io.github.grebeshok105.codex.core.lifecycle.PassiveReconciler;
 import io.github.grebeshok105.codex.mechanic.impact.BallisticBodyTracker;
@@ -45,7 +49,14 @@ public final class SharedMechanics {
 		ctx.lifecycle().onRespawn(HeroTransformService::onPlayerRespawn);
 		ctx.lifecycle().onServerStopped(server -> EnergyLocks.resetAll());
 
-		HeroLandingTracker.register(ctx);
+		// Shared payload wiring: the receivers live on mechanic classes, which
+		// core.net may not depend on, so they register through the module context.
+		ctx.payloads().c2s(SuperJumpC2SPayload.TYPE, SuperJumpC2SPayload.STREAM_CODEC,
+				(payload, context) -> SuperJumpController.activate(context.player()));
+		ctx.payloads().c2s(HeroMeleeChargeC2SPayload.TYPE, HeroMeleeChargeC2SPayload.STREAM_CODEC,
+				(payload, context) -> HeroMeleeImpactController.handleChargeInput(context.player(), payload));
+		ctx.payloads().s2c(FlightStateS2CPayload.TYPE, FlightStateS2CPayload.STREAM_CODEC);
+
 		ctx.ticks().global(HeroLandingTracker::pruneGonePlayers);
 		HeroEquipmentLock.register(ctx);
 		ctx.ticks().player(HeroEquipmentLock::tickPlayer);
@@ -76,7 +87,7 @@ public final class SharedMechanics {
 
 		// C4: recompute the synced ability_availability attachment after all hero ticks
 		// (writes only on change) — was the last row of the old PLAYERS table.
-		ctx.ticks().player(io.github.grebeshok105.codex.ability.AbilityAvailabilitySync::tickPlayer);
+		ctx.ticks().player(AbilityAvailabilitySync::tickPlayer);
 
 		// Core lifecycle rows that closed their lists in the old table — they keep
 		// running after every hero-owned hook (registerPost is called post-modules).

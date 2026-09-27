@@ -10,7 +10,7 @@ import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
 import io.github.grebeshok105.codex.mechanic.motion.Motion;
-import io.github.grebeshok105.codex.physics.RushTerrainBreaker;
+import io.github.grebeshok105.codex.mechanic.world.RushTerrainBreaker;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;

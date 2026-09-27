@@ -1,6 +1,5 @@
 package io.github.grebeshok105.codex.mechanic.boundweapon;
 
-import io.github.grebeshok105.codex.attachment.ModAttachments;
 import io.github.grebeshok105.codex.item.ModDataComponents;
 import net.minecraft.core.NonNullList;
 import net.minecraft.server.level.ServerPlayer;
@@ -40,13 +39,13 @@ public final class BoundWeapons {
 		if (!place(owner, stack)) {
 			return false;
 		}
-		owner.setAttached(ModAttachments.BOUND_WEAPON_ISSUES, issues(owner).with(item, issue));
+		owner.setAttached(BoundWeaponIssues.ATTACHMENT, issues(owner).with(item, issue));
 		return true;
 	}
 
 	/** Invalidates the current issue and removes every copy the owner carries. */
 	public static void revoke(ServerPlayer owner, BoundWeaponItem item) {
-		owner.setAttached(ModAttachments.BOUND_WEAPON_ISSUES, issues(owner).without(item));
+		owner.setAttached(BoundWeaponIssues.ATTACHMENT, issues(owner).without(item));
 		Inventory inventory = owner.getInventory();
 		for (NonNullList<ItemStack> compartment : compartments(inventory)) {
 			for (int i = 0; i < compartment.size(); i++) {
@@ -148,7 +147,7 @@ public final class BoundWeapons {
 	}
 
 	private static BoundWeaponIssues issues(Player player) {
-		return player.getAttachedOrElse(ModAttachments.BOUND_WEAPON_ISSUES, BoundWeaponIssues.EMPTY);
+		return player.getAttachedOrElse(BoundWeaponIssues.ATTACHMENT, BoundWeaponIssues.EMPTY);
 	}
 
 	private static List<NonNullList<ItemStack>> compartments(Inventory inventory) {

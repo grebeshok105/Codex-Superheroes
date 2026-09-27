@@ -21,10 +21,9 @@ public final class ModItemGroups {
 			Registries.CREATIVE_MODE_TAB, ModId.of("superheroes"));
 
 	public static final CreativeModeTab SUPERHEROES_TAB = FabricItemGroup.builder()
-			.icon(() -> new ItemStack(ModItems.HOMELANDER_SUIT))
+			.icon(() -> new ItemStack(BuiltInRegistries.ITEM.get(ModId.of("homelander_suit"))))
 			.title(Component.translatable("itemGroup.superheroes"))
 			.displayItems((params, output) -> {
-				output.accept(ModItems.HOMELANDER_SUIT);
 				output.accept(ModItems.COMPOUND_V);
 
 

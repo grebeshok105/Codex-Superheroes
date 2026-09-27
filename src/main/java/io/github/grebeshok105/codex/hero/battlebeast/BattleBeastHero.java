@@ -154,7 +154,7 @@ public final class BattleBeastHero implements Hero {
 		double radius = 3.5 + impact.intensity() * 5.5;
 		float damage = io.github.grebeshok105.codex.hero.battlebeast.runtime.BattleBeastCurseController.scaleDamage(player,
 				4.0f + impact.intensity() * 8.0f);
-		io.github.grebeshok105.codex.physics.ShockwaveUtil.detonate(player, player.position(), radius, damage, false);
+		io.github.grebeshok105.codex.mechanic.shockwave.ShockwaveUtil.detonate(player, player.position(), radius, damage, false);
 		level.sendParticles(ParticleTypes.CRIT,
 				player.getX(), player.getY() + 0.4, player.getZ(), 32, radius * 0.35, 0.2, radius * 0.35, 0.12);
 		level.playSound(null, player.getX(), player.getY(), player.getZ(),
