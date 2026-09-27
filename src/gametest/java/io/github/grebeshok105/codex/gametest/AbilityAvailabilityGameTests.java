@@ -13,7 +13,8 @@ import io.github.grebeshok105.codex.hero.DoomsdayHero;
 import io.github.grebeshok105.codex.core.hero.Heroes;
 import io.github.grebeshok105.codex.hero.naruto.NarutoHero;
 import io.github.grebeshok105.codex.hero.RegulusHero;
-import io.github.grebeshok105.codex.hero.RemHero;
+import io.github.grebeshok105.codex.hero.rem.RemAbilities;
+import io.github.grebeshok105.codex.hero.rem.RemHero;
 import io.github.grebeshok105.codex.core.transform.HeroTransformService;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.gametest.framework.GameTest;
@@ -100,9 +101,9 @@ public class AbilityAvailabilityGameTests implements FabricGameTest {
 		tickSync(player);
 		AbilityAvailability availability = player.getAttached(CoreAttachments.ABILITY_AVAILABILITY);
 		helper.assertTrue(availability != null, "the sync task wrote the attachment");
-		helper.assertValueEqual(availability.visibilityOf(AbilityIds.REM_MORNING_STAR),
+		helper.assertValueEqual(availability.visibilityOf(RemAbilities.REM_MORNING_STAR),
 				Visibility.HIDDEN, "demon-only ability without demonism");
-		helper.assertValueEqual(availability.visibilityOf(AbilityIds.REM_ONI_RAGE),
+		helper.assertValueEqual(availability.visibilityOf(RemAbilities.REM_ONI_RAGE),
 				Visibility.AVAILABLE, "oni rage shows outside demon form");
 
 		helper.assertTrue(HeroTransformService.forceUntransform(player), "untransform");

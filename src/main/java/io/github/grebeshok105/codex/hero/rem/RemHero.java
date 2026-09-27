@@ -1,7 +1,6 @@
-package io.github.grebeshok105.codex.hero;
+package io.github.grebeshok105.codex.hero.rem;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.ability.AbilityIds;
 import io.github.grebeshok105.codex.core.ability.AbilityAvailability;
 import io.github.grebeshok105.codex.core.hero.AttributeModifierSet;
 import io.github.grebeshok105.codex.core.hero.Hero;
@@ -10,6 +9,7 @@ import io.github.grebeshok105.codex.core.hero.HeroTheme;
 import io.github.grebeshok105.codex.core.hero.ImpactStyle;
 import io.github.grebeshok105.codex.core.hero.PassiveGlyph;
 import io.github.grebeshok105.codex.core.resource.ResourceKind;
+import io.github.grebeshok105.codex.hero.rem.runtime.RemDemonismController;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.Pose;
@@ -86,13 +86,13 @@ public final class RemHero implements Hero {
 	@Override
 	public List<ResourceLocation> getAbilities() {
 		return List.of(
-				AbilityIds.REM_HEALING_MAGIC,
-				AbilityIds.REM_ICE_BURST,
-				AbilityIds.REM_ONI_RAGE,
-				AbilityIds.REM_MORNING_STAR,
-				AbilityIds.REM_MACE_CRATER,
-				AbilityIds.REM_ONI_KICK,
-				AbilityIds.REM_HUMA_ICE_SPIKES
+				RemAbilities.REM_HEALING_MAGIC,
+				RemAbilities.REM_ICE_BURST,
+				RemAbilities.REM_ONI_RAGE,
+				RemAbilities.REM_MORNING_STAR,
+				RemAbilities.REM_MACE_CRATER,
+				RemAbilities.REM_ONI_KICK,
+				RemAbilities.REM_HUMA_ICE_SPIKES
 		);
 	}
 
@@ -113,7 +113,7 @@ public final class RemHero implements Hero {
 		player.removeEffect(net.minecraft.world.effect.MobEffects.DAMAGE_RESISTANCE);
 		player.removeEffect(net.minecraft.world.effect.MobEffects.MOVEMENT_SPEED);
 		if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
-			io.github.grebeshok105.codex.effect.RemDemonismController.clear(serverPlayer);
+			RemDemonismController.clear(serverPlayer);
 		}
 	}
 
@@ -147,10 +147,10 @@ public final class RemHero implements Hero {
 
 	/** Abilities that only exist inside Oni demon form. */
 	public static boolean isDemonOnly(ResourceLocation abilityId) {
-		return AbilityIds.REM_MORNING_STAR.equals(abilityId)
-				|| AbilityIds.REM_MACE_CRATER.equals(abilityId)
-				|| AbilityIds.REM_ONI_KICK.equals(abilityId)
-				|| AbilityIds.REM_HUMA_ICE_SPIKES.equals(abilityId);
+		return RemAbilities.REM_MORNING_STAR.equals(abilityId)
+				|| RemAbilities.REM_MACE_CRATER.equals(abilityId)
+				|| RemAbilities.REM_ONI_KICK.equals(abilityId)
+				|| RemAbilities.REM_HUMA_ICE_SPIKES.equals(abilityId);
 	}
 
 	/**
@@ -158,7 +158,7 @@ public final class RemHero implements Hero {
 	 * show while demonism is active, {@code REM_ONI_RAGE} hides itself inside it.
 	 */
 	public static boolean isVisibleIn(ResourceLocation abilityId, boolean demonismActive) {
-		if (AbilityIds.REM_ONI_RAGE.equals(abilityId) && demonismActive) {
+		if (RemAbilities.REM_ONI_RAGE.equals(abilityId) && demonismActive) {
 			return false;
 		}
 		return !isDemonOnly(abilityId) || demonismActive;
@@ -167,7 +167,7 @@ public final class RemHero implements Hero {
 	@Override
 	public AbilityAvailability.Visibility visibility(net.minecraft.server.level.ServerPlayer player,
 			ResourceLocation abilityId) {
-		return isVisibleIn(abilityId, io.github.grebeshok105.codex.effect.RemDemonismController.isActive(player))
+		return isVisibleIn(abilityId, RemDemonismController.isActive(player))
 				? AbilityAvailability.Visibility.AVAILABLE
 				: AbilityAvailability.Visibility.HIDDEN;
 	}

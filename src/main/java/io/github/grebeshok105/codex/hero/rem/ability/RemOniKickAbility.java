@@ -1,9 +1,10 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.rem.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
-import io.github.grebeshok105.codex.effect.RemDemonismController;
+import io.github.grebeshok105.codex.hero.rem.runtime.RemDemonismController;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.resources.ResourceLocation;
@@ -18,13 +19,15 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 public final class RemOniKickAbility implements Ability {
+	public static final ResourceLocation ID = ModId.of("rem_oni_kick");
+
 	private static final int COOLDOWN_TICKS = 5 * 20;
 	private static final double DISTANCE = 12.0;
 	private static final float DAMAGE = 16.0f;
 
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.REM_ONI_KICK;
+		return ID;
 	}
 
 	@Override

@@ -59,14 +59,6 @@ public final class AbilityIds {
 	public static final ResourceLocation BATTLE_BEAST_WAR_ROAR = ModId.of("battle_beast_war_roar");
 	public static final ResourceLocation BATTLE_BEAST_BLOODLUST = ModId.of("battle_beast_bloodlust");
 
-	public static final ResourceLocation REM_MORNING_STAR = ModId.of("rem_morning_star");
-	public static final ResourceLocation REM_ONI_RAGE = ModId.of("rem_oni_rage");
-	public static final ResourceLocation REM_HEALING_MAGIC = ModId.of("rem_healing_magic");
-	public static final ResourceLocation REM_ICE_BURST = ModId.of("rem_ice_burst");
-	public static final ResourceLocation REM_HUMA_ICE_SPIKES = ModId.of("rem_huma_ice_spikes");
-	public static final ResourceLocation REM_MACE_CRATER = ModId.of("rem_mace_crater");
-	public static final ResourceLocation REM_ONI_KICK = ModId.of("rem_oni_kick");
-
 	// Pandora — Mirror Dimension warp
 	public static final ResourceLocation MIRROR_DIMENSION = ModId.of("mirror_dimension");
 	public static final ResourceLocation MIRROR_MODE_CYCLE = ModId.of("mirror_mode_cycle");

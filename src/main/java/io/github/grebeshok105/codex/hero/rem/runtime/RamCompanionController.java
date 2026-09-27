@@ -1,7 +1,8 @@
-package io.github.grebeshok105.codex.effect;
+package io.github.grebeshok105.codex.hero.rem.runtime;
 
-import io.github.grebeshok105.codex.entity.ModEntities;
-import io.github.grebeshok105.codex.entity.RamEntity;
+import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -14,11 +15,9 @@ import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.EnumSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.minecraft.server.MinecraftServer;
 
@@ -36,9 +35,13 @@ import net.minecraft.server.MinecraftServer;
 public final class RamCompanionController {
 	private static final int WEAKNESS_TICKS = 30 * 20;
 	private static final double SEARCH_RADIUS = 64.0;
+	// Session state: tracking entries die with the owner's session (leave/hero-clear); the
+	// ram entity itself self-dismisses in aiStep once demonism is off, same as before.
 	/** ownerId -> ram entity UUID (not a live reference). */
-	private static final Map<UUID, UUID> ACTIVE_RAM = new ConcurrentHashMap<>();
-	private static final Set<UUID> FALLEN_THIS_SESSION = ConcurrentHashMap.newKeySet();
+	private static final OwnedSessionMap<UUID, UUID> ACTIVE_RAM =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.of(ClearOn.LEAVE, ClearOn.HERO_CLEAR));
+	private static final OwnedSessionMap<UUID, Boolean> FALLEN_THIS_SESSION =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.of(ClearOn.LEAVE, ClearOn.HERO_CLEAR));
 
 	private RamCompanionController() {
 	}
@@ -55,7 +58,7 @@ public final class RamCompanionController {
 			}
 			return;
 		}
-		if (FALLEN_THIS_SESSION.contains(id)) {
+		if (FALLEN_THIS_SESSION.containsKey(id)) {
 			return;
 		}
 		if (findRam(player) == null) {
@@ -76,8 +79,8 @@ public final class RamCompanionController {
 			Entity e = level.getEntity(tracked);
 			if (e instanceof RamEntity ram && ram.isAlive()) {
 				keep = ram;
-			} else {
-				ACTIVE_RAM.remove(player.getUUID(), tracked);
+			} else if (tracked.equals(ACTIVE_RAM.get(player.getUUID()))) {
+				ACTIVE_RAM.remove(player.getUUID());
 			}
 		}
 		List<RamEntity> owned = level.getEntitiesOfClass(RamEntity.class,
@@ -92,7 +95,7 @@ public final class RamCompanionController {
 			}
 		}
 		if (keep != null) {
-			ACTIVE_RAM.put(player.getUUID(), keep.getUUID());
+			ACTIVE_RAM.put(player.getUUID(), player.getUUID(), keep.getUUID());
 		}
 		return keep;
 	}
@@ -108,7 +111,7 @@ public final class RamCompanionController {
 
 	private static void spawnRam(ServerPlayer player) {
 		ServerLevel level = player.serverLevel();
-		RamEntity ram = ModEntities.RAM.create(level);
+		RamEntity ram = RemEntities.RAM.create(level);
 		if (ram == null) {
 			return;
 		}
@@ -117,7 +120,7 @@ public final class RamCompanionController {
 		ram.setOwnerId(player.getUUID());
 		ram.finalizeSpawn(level, level.getCurrentDifficultyAt(ram.blockPosition()), MobSpawnType.MOB_SUMMONED, null);
 		level.addFreshEntity(ram);
-		ACTIVE_RAM.put(player.getUUID(), ram.getUUID());
+		ACTIVE_RAM.put(player.getUUID(), player.getUUID(), ram.getUUID());
 		level.sendParticles(ParticleTypes.CHERRY_LEAVES,
 				ram.getX(), ram.getY() + 1.0, ram.getZ(), 24, 0.4, 0.7, 0.4, 0.05);
 		level.sendParticles(ParticleTypes.END_ROD,
@@ -132,7 +135,7 @@ public final class RamCompanionController {
 		if (ownerId == null) {
 			return;
 		}
-		FALLEN_THIS_SESSION.add(ownerId);
+		FALLEN_THIS_SESSION.put(ownerId, ownerId, Boolean.TRUE);
 		ACTIVE_RAM.remove(ownerId);
 		Player owner = ram.level().getPlayerByUUID(ownerId);
 		if (owner instanceof ServerPlayer rem && RemDemonismController.isActive(rem)) {

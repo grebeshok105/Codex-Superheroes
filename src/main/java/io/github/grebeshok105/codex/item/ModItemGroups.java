@@ -54,7 +54,6 @@ public final class ModItemGroups {
 
 
 				output.accept(ModItems.BATTLE_BEAST_MEDALLION);
-				output.accept(ModItems.REM_ONI_HORN);
 				output.accept(ModItems.PANDORA_SUIT);
 
 				// Hero modules append their items here, in module registration order.

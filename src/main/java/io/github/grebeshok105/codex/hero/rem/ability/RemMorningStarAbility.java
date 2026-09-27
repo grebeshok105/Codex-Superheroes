@@ -1,10 +1,11 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.rem.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import io.github.grebeshok105.codex.effect.ModEffects;
-import io.github.grebeshok105.codex.effect.RemDemonismController;
+import io.github.grebeshok105.codex.hero.rem.runtime.RemDemonismController;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -18,6 +19,8 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 public final class RemMorningStarAbility implements Ability {
+	public static final ResourceLocation ID = ModId.of("rem_morning_star");
+
 	private static final int COOLDOWN_TICKS = 8 * 20;
 	private static final double RANGE = 18.0;
 	private static final double CONE_DOT = 0.82;
@@ -25,7 +28,7 @@ public final class RemMorningStarAbility implements Ability {
 
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.REM_MORNING_STAR;
+		return ID;
 	}
 
 	@Override

@@ -5,6 +5,7 @@ import io.github.grebeshok105.codex.core.ability.AbilityRouter;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.hero.RaidenHero;
 import io.github.grebeshok105.codex.hero.reinhard.ReinhardItems;
+import io.github.grebeshok105.codex.hero.rem.RemItems;
 import io.github.grebeshok105.codex.item.ModItems;
 import io.github.grebeshok105.codex.mechanic.boundweapon.BoundWeapons;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
@@ -54,11 +55,11 @@ public final class BoundWeaponGameTests implements FabricGameTest {
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void droppedWeaponReturnsToOwner(GameTestHelper helper) {
 		ServerPlayer owner = TestPlayers.join(helper);
-		helper.assertTrue(BoundWeapons.ensureHeld(owner, ModItems.REM_MORNING_STAR), "issued into the main hand");
+		helper.assertTrue(BoundWeapons.ensureHeld(owner, RemItems.REM_MORNING_STAR), "issued into the main hand");
 
 		owner.drop(true);
 
-		helper.assertTrue(TestPlayers.count(owner, ModItems.REM_MORNING_STAR) == 1, "the mace went back to the owner");
+		helper.assertTrue(TestPlayers.count(owner, RemItems.REM_MORNING_STAR) == 1, "the mace went back to the owner");
 		assertNoItemEntities(helper, owner);
 		TestPlayers.leave(owner);
 		helper.succeed();
@@ -68,16 +69,16 @@ public final class BoundWeaponGameTests implements FabricGameTest {
 	public void stashedCopyGoesStaleWhenReissued(GameTestHelper helper) {
 		ServerPlayer owner = TestPlayers.join(helper);
 		Inventory inventory = owner.getInventory();
-		BoundWeapons.ensureHeld(owner, ModItems.REM_MORNING_STAR);
+		BoundWeapons.ensureHeld(owner, RemItems.REM_MORNING_STAR);
 		// Simulates moving the mace into a chest: the owner no longer carries it.
 		ItemStack stashed = inventory.removeItemNoUpdate(inventory.selected);
 
-		BoundWeapons.ensureHeld(owner, ModItems.REM_MORNING_STAR);
+		BoundWeapons.ensureHeld(owner, RemItems.REM_MORNING_STAR);
 		inventory.add(stashed);
-		helper.assertTrue(TestPlayers.count(owner, ModItems.REM_MORNING_STAR) == 2, "stash pulled back out");
+		helper.assertTrue(TestPlayers.count(owner, RemItems.REM_MORNING_STAR) == 2, "stash pulled back out");
 		inventory.tick();
 
-		helper.assertTrue(TestPlayers.count(owner, ModItems.REM_MORNING_STAR) == 1,
+		helper.assertTrue(TestPlayers.count(owner, RemItems.REM_MORNING_STAR) == 1,
 				"only the current issue survives an inventory tick");
 		helper.assertTrue(BoundWeapons.isValidFor(inventory.getItem(inventory.selected), owner),
 				"the surviving copy is the reissued one");

@@ -1,17 +1,20 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.rem.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
-import io.github.grebeshok105.codex.effect.RemDemonismController;
+import io.github.grebeshok105.codex.hero.rem.runtime.RemDemonismController;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 
 public final class RemOniRageAbility implements Ability {
+	public static final ResourceLocation ID = ModId.of("rem_oni_rage");
+
 	private static final int EXIT_COOLDOWN_TICKS = 8 * 20;
 
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.REM_ONI_RAGE;
+		return ID;
 	}
 
 	@Override

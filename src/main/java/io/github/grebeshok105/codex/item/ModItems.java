@@ -158,20 +158,6 @@ public final class ModItems {
 									new TransformationLore.Line("item.superheroes.battle_beast_medallion.lore.untransform", ChatFormatting.RED))))
 	);
 
-	public static final TransformationItem REM_ONI_HORN = register(
-			"rem_oni_horn",
-			new TransformationItem(ModId.of("rem"), new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC),
-					new TransformationLore(ChatFormatting.BLUE,
-							List.of(new TransformationLore.Line("item.superheroes.rem_oni_horn.lore.line1", ChatFormatting.AQUA),
-									new TransformationLore.Line("item.superheroes.rem_oni_horn.lore.line2", ChatFormatting.DARK_GRAY)),
-							List.of(new TransformationLore.Line("item.superheroes.rem_oni_horn.lore.usage", ChatFormatting.AQUA),
-									new TransformationLore.Line("item.superheroes.rem_oni_horn.lore.untransform", ChatFormatting.RED))))
-	);
-
-	public static final RemMorningStarItem REM_MORNING_STAR = register(
-			"rem_morning_star",
-			new RemMorningStarItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
-	);
 
 	// persisted id kept from the Doctor Strange era — do not rename the string.
 	public static final TransformationItem PANDORA_SUIT = register(

@@ -1,5 +1,6 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.rem.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
@@ -18,6 +19,8 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 public final class RemIceBurstAbility implements Ability {
+	public static final ResourceLocation ID = ModId.of("rem_ice_burst");
+
 	private static final int COOLDOWN_TICKS = 7 * 20;
 	private static final double RANGE = 11.0;
 	private static final double CONE_DOT = 0.70;
@@ -25,7 +28,7 @@ public final class RemIceBurstAbility implements Ability {
 
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.REM_ICE_BURST;
+		return ID;
 	}
 
 	@Override

@@ -1,10 +1,10 @@
-package io.github.grebeshok105.codex.item;
+package io.github.grebeshok105.codex.hero.rem.item;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.mechanic.boundweapon.BoundWeaponItem;
 import io.github.grebeshok105.codex.effect.ModEffects;
-import io.github.grebeshok105.codex.effect.RemDemonismController;
-import io.github.grebeshok105.codex.hero.RemHero;
+import io.github.grebeshok105.codex.hero.rem.runtime.RemDemonismController;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import io.github.grebeshok105.codex.core.transform.TooltipFrame;
 import net.minecraft.ChatFormatting;
@@ -25,6 +25,8 @@ import net.minecraft.world.item.TooltipFlag;
 import java.util.List;
 
 public class RemMorningStarItem extends BoundWeaponItem {
+	private static final net.minecraft.resources.ResourceLocation REM_ID = ModId.of("rem");
+
 	public RemMorningStarItem(Properties properties) {
 		super(Tiers.NETHERITE, properties.attributes(SwordItem.createAttributes(Tiers.NETHERITE, 0, -2.8f)));
 	}
@@ -33,7 +35,7 @@ public class RemMorningStarItem extends BoundWeaponItem {
 	public boolean hurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
 		if (attacker instanceof ServerPlayer player) {
 			HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
-			if (RemHero.ID.equals(data.heroId()) && RemDemonismController.isActive(player)) {
+			if (REM_ID.equals(data.heroId()) && RemDemonismController.isActive(player)) {
 				ServerLevel level = player.serverLevel();
 				target.invulnerableTime = 0;
 				target.hurt(level.damageSources().playerAttack(player), 2.5f);
