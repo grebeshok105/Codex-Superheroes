@@ -460,7 +460,10 @@ public class RegulusGameTests implements FabricGameTest {
 			return;
 		}
 		helper.assertTrue(tries > 0, "the magnet pulls the victim toward the caster (pulled="
-				+ pulled + " delta=" + pull + ")");
+				+ pulled + " delta=" + pull + " active="
+				+ HeroDataStore.get(player).isActive(MANIA_OF_GREED)
+				+ " frozen=" + RegulusGreedController.isFrozen(victim)
+				+ " alive=" + victim.isAlive() + " vtc=" + victim.tickCount + ")");
 		helper.runAfterDelay(1, () -> awaitGreedPull(helper, player, victim, anchor, tries - 1, body));
 	}
 
