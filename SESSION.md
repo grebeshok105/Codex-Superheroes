@@ -492,3 +492,35 @@
 - #76 horde audience isolation, #78 house-of-vanity release scope, #82 victim visibility + pvp flag restore,
   #94 charge victim visibility, #105 horde wave stabilization, #107 runServer Veil-free classpath,
   #112 doom-grip spatial-scan wait.
+
+## I6a — Homelander + mechanic/flight (PR #117)
+- hero/homelander + client/hero/homelander; полёт → mechanic/flight (FlightController + профили).
+- Gate green; reviewer APPROVE.
+
+## I6b — Iron Man + L2 единый лучевой payload (PR #116)
+- hero/ironman; три лучевых S2C payload'а → единый core/net/BeamFxS2CPayload + BeamRenderer.
+- Gate green; reviewer APPROVE.
+
+## O-pre — статики hero-runtime → OwnedSessionMap (PR #115)
+- Reinhard×4, Goku, Naruto и др.: статические Map/Set<UUID> → OwnedSessionMap.
+
+## O-pre — разморозка ArchUnit (PR #118)
+- Все 9 freeze-правил → strict (store-файлы пустые удалены); CapShieldSlam → Motion.set.
+
+## O-docs (PR #119)
+- AGENTS §2/§7 + README под модульную архитектуру; .agents/skills/add-hero/; migrate-hero удалён.
+
+## O-strays — распускание legacy-пакетов (PR #120)
+- effect/network/ability/physics/attachment/item распущены; ресиверы → SharedMechanics через
+  ctx.payloads(); BoundWeaponIssues attachment воссоздан; ModItemGroups/HomelanderBossEntity →
+  BuiltInRegistries seam (datagen не импортирует hero-пакеты).
+
+## O-statics2 — ноль static UUID-коллекций (PR #121)
+- 12 main + 8 client файлов: статические Map/Set<UUID> → OwnedSessionMap(ClearOn.*) /
+  приватные holder'ы с ClientSessionState.register(::reset). §8.11: 0 в src/main и src/client.
+- PassiveReconciler: DECLARED/PENDING → ClearOn.HERO_CLEAR, ручные init/clear удалены.
+
+## O в работе
+- o-client: SuperheroesClient ≤40 строк + распускание client/network/ClientNetworking.
+- o-cycles: 15 оставшихся package-циклов (10 — core.*-web) → baseline пустой.
+- Финал O: §8-сверка (18 критериев), таблицы статусов, handoff на «новый контент».
