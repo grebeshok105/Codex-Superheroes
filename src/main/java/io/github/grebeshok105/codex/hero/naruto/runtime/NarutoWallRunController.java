@@ -1,18 +1,20 @@
 package io.github.grebeshok105.codex.hero.naruto.runtime;
 
-import io.github.grebeshok105.codex.hero.naruto.NarutoHero;
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.transform.HeroData;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.server.MinecraftServer;
 
 public final class NarutoWallRunController {
+	private static final ResourceLocation HERO_ID = ModId.of("naruto");
 	private NarutoWallRunController() {
 	}
 
 
 	public static void tickPlayer(MinecraftServer server, ServerPlayer player, HeroData data) {
-		if (!data.hasHero() || !NarutoHero.ID.equals(data.heroId())) {
+		if (!data.hasHero() || !HERO_ID.equals(data.heroId())) {
 			return;
 		}
 		if (!player.horizontalCollision || !player.isSprinting() || player.isCrouching()) {

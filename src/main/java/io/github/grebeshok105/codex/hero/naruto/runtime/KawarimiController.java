@@ -1,12 +1,13 @@
 package io.github.grebeshok105.codex.hero.naruto.runtime;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
-import io.github.grebeshok105.codex.hero.naruto.NarutoHero;
 import io.github.grebeshok105.codex.hero.naruto.registry.NarutoParticles;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import io.github.grebeshok105.codex.util.SafeTeleport;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -29,6 +30,7 @@ import java.util.UUID;
  * and is restored to 30% HP. 60s cooldown.
  */
 public final class KawarimiController {
+	private static final ResourceLocation HERO_ID = ModId.of("naruto");
 	private static final long COOLDOWN_TICKS = 1200L;
 
 	private static final Map<UUID, Long> LAST_TRIGGER = new HashMap<>();
@@ -42,7 +44,7 @@ public final class KawarimiController {
 		ServerLivingEntityEvents.ALLOW_DEATH.register((entity, source, amount) -> {
 			if (!(entity instanceof ServerPlayer player)) return true;
 			HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
-			if (!data.hasHero() || !NarutoHero.ID.equals(data.heroId())) return true;
+			if (!data.hasHero() || !HERO_ID.equals(data.heroId())) return true;
 			long now = player.serverLevel().getGameTime();
 			Long last = LAST_TRIGGER.get(player.getUUID());
 			if (last != null && now - last < COOLDOWN_TICKS) return true;

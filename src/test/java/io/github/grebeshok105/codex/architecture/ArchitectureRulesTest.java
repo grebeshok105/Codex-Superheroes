@@ -50,7 +50,8 @@ class ArchitectureRulesTest {
 	/** Entrypoints and module lists: allowed to depend on everything; nothing may depend on them. */
 	static final DescribedPredicate<JavaClass> COMPOSITION_ROOT = DescribedPredicate.describe("are composition roots",
 			c -> c.getName().equals(ROOT + ".SuperheroesMod") || c.getName().equals(ROOT + ".client.SuperheroesClient")
-					|| c.getPackageName().startsWith(ROOT + ".bootstrap") || c.getPackageName().startsWith(ROOT + ".client.bootstrap"));
+					|| c.getPackageName().startsWith(ROOT + ".bootstrap") || c.getPackageName().startsWith(ROOT + ".client.bootstrap")
+					|| c.getPackageName().startsWith(ROOT + ".datagen"));
 
 	static String heroId(String packageName, String prefix) {
 		String rest = packageName.substring(prefix.length());
