@@ -127,8 +127,8 @@ public final class ReinhardSwordDrawGateController {
 		pruneOffline(READY, server);
 	}
 
-	private static void pruneOffline(OwnedSessionMap<UUID, ?> map, MinecraftServer server) {
-		Iterator<Map.Entry<UUID, ?>> it = map.iterator();
+	private static <V> void pruneOffline(OwnedSessionMap<UUID, V> map, MinecraftServer server) {
+		Iterator<Map.Entry<UUID, V>> it = map.iterator();
 		while (it.hasNext()) {
 			if (server.getPlayerList().getPlayer(it.next().getKey()) == null) {
 				it.remove();
