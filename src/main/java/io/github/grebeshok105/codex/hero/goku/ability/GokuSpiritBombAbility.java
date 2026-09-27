@@ -7,6 +7,7 @@ import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import io.github.grebeshok105.codex.hero.goku.registry.GokuDamageTypes;
 import io.github.grebeshok105.codex.hero.goku.registry.GokuParticles;
 import io.github.grebeshok105.codex.mechanic.charge.ChargeSession;
+import io.github.grebeshok105.codex.mechanic.motion.Motion;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -72,8 +73,7 @@ public final class GokuSpiritBombAbility implements Ability {
 			return false;
 		}
 		ServerLevel level = player.serverLevel();
-		player.setDeltaMovement(0, Math.max(player.getDeltaMovement().y, 0.02), 0);
-		player.hurtMarked = true;
+		Motion.set(player, new Vec3(0, Math.max(player.getDeltaMovement().y, 0.02), 0), Motion.Sync.MARK);
 		Vec3 orb = player.position().add(0, 4.0, 0);
 		double spread = 0.6 + (progress.phase() / (double) CHANNEL_TICKS) * 2.2;
 		level.sendParticles(GokuParticles.GOKU_KI_AURA,

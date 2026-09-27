@@ -6,6 +6,7 @@ import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import io.github.grebeshok105.codex.hero.naruto.registry.NarutoDamageTypes;
 import io.github.grebeshok105.codex.hero.naruto.registry.NarutoParticles;
+import io.github.grebeshok105.codex.mechanic.motion.Motion;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -89,8 +90,7 @@ public final class NarutoBijuudamaAbility implements Ability {
 			le.igniteForSeconds(3f);
 			Vec3 away = le.position().subtract(impact);
 			double horiz = Math.max(0.01, Math.sqrt(away.x * away.x + away.z * away.z));
-			le.setDeltaMovement(away.x / horiz * 1.4, 0.7, away.z / horiz * 1.4);
-			le.hurtMarked = true;
+			Motion.set(le, new Vec3(away.x / horiz * 1.4, 0.7, away.z / horiz * 1.4), Motion.Sync.MARK);
 		}
 
 		level.sendParticles(ParticleTypes.EXPLOSION_EMITTER,

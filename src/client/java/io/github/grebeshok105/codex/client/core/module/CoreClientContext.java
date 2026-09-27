@@ -11,6 +11,7 @@ import io.github.grebeshok105.codex.client.core.render.PlayerLayers;
 import io.github.grebeshok105.codex.client.core.render.SkinProvider;
 import io.github.grebeshok105.codex.client.core.render.SkinResolver;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -20,6 +21,8 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraft.client.resources.sounds.SoundInstance;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.particles.ParticleType;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
@@ -60,6 +63,11 @@ public final class CoreClientContext implements HeroClientContext {
 	@Override
 	public <T extends Entity> void entityRenderer(EntityType<T> type, EntityRendererProvider<T> provider) {
 		EntityRendererRegistry.register(type, provider);
+	}
+
+	@Override
+	public <T extends ParticleOptions> void particle(ParticleType<T> type, ParticleFactoryRegistry.PendingParticleFactory<T> factory) {
+		ParticleFactoryRegistry.getInstance().register(type, factory);
 	}
 
 	@Override

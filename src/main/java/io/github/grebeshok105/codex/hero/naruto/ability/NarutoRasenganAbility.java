@@ -7,6 +7,7 @@ import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import io.github.grebeshok105.codex.hero.naruto.registry.NarutoDamageTypes;
 import io.github.grebeshok105.codex.hero.naruto.registry.NarutoParticles;
 import io.github.grebeshok105.codex.mechanic.charge.ChargeSession;
+import io.github.grebeshok105.codex.mechanic.motion.Motion;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -126,8 +127,7 @@ public final class NarutoRasenganAbility implements Ability {
 
 		primary.hurt(NarutoDamageTypes.rasengan(level, player), DAMAGE);
 		Vec3 push = player.getLookAngle();
-		primary.setDeltaMovement(push.x * 1.6, 0.5, push.z * 1.6);
-		primary.hurtMarked = true;
+		Motion.set(primary, new Vec3(push.x * 1.6, 0.5, push.z * 1.6), Motion.Sync.MARK);
 
 		AABB aoe = new AABB(hit.x - AOE_RADIUS, hit.y - AOE_RADIUS, hit.z - AOE_RADIUS,
 				hit.x + AOE_RADIUS, hit.y + AOE_RADIUS, hit.z + AOE_RADIUS);

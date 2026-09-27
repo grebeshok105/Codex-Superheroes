@@ -63,14 +63,9 @@ public final class ModDamageTypeTagProvider extends FabricTagProvider<DamageType
 		);
 
 		// Hero-owned types join their declared tags via the module specs — no hero names here.
-		var bypassesCooldown = getOrCreateTagBuilder(DamageTypeTags.BYPASSES_COOLDOWN);
-		var beam = getOrCreateTagBuilder(ModDamageTypes.BEAM);
 		for (DamageTypeSpec spec : HeroModules.damageTypeSpecs()) {
-			if (spec.tags().contains(DamageTypeTags.BYPASSES_COOLDOWN)) {
-				bypassesCooldown.add(spec.key());
-			}
-			if (spec.tags().contains(ModDamageTypes.BEAM)) {
-				beam.add(spec.key());
+			for (var tag : spec.tags()) {
+				getOrCreateTagBuilder(tag).add(spec.key());
 			}
 		}
 	}
