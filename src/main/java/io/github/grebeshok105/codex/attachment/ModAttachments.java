@@ -22,11 +22,6 @@ public final class ModAttachments {
 			.persistent(DoomsdayProgress.CODEC)
 			.copyOnDeath());
 
-	public static final AttachmentType<Boolean> ADMIN_BUILD = AttachmentRegistry.create(ModId.of("admin_build"), b -> b
-			.initializer(() -> Boolean.FALSE)
-			.persistent(Codec.BOOL)
-			.copyOnDeath());
-
 	public static final AttachmentType<Integer> SUIT_VARIANT = AttachmentRegistry.create(ModId.of("suit_variant"), b -> b
 			.initializer(() -> 0)
 			.persistent(Codec.INT)

@@ -1,22 +1,23 @@
-package io.github.grebeshok105.codex.command;
+package io.github.grebeshok105.codex.content.command;
 
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.transform.HeroDataStore;
-import io.github.grebeshok105.codex.attachment.ModAttachments;
-import io.github.grebeshok105.codex.debug.AdminAbilityDebug;
+import io.github.grebeshok105.codex.content.admin.AdminAbilityDebug;
+import io.github.grebeshok105.codex.content.admin.AdminAttachments;
+import io.github.grebeshok105.codex.content.admin.AdminBuildSyncController;
 import io.github.grebeshok105.codex.effect.DoomsdayTierController;
-import io.github.grebeshok105.codex.hero.DoomsdayHero;
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.hero.Heroes;
 import io.github.grebeshok105.codex.item.ModItemGroups;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import io.github.grebeshok105.codex.core.transform.HeroTransformService;
+import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
-import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
@@ -28,7 +29,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
-public final class SuperheroesCommands {
+final class SuperheroesCommands {
 	private static final SuggestionProvider<CommandSourceStack> HERO_SUGGESTIONS =
 			(ctx, builder) -> SharedSuggestionProvider.suggestResource(Heroes.all().keySet(), builder);
 
@@ -39,9 +40,14 @@ public final class SuperheroesCommands {
 	private SuperheroesCommands() {
 	}
 
-	public static void init() {
-		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, env) ->
-				dispatcher.register(Commands.literal("superheroes")
+	/**
+	 * Adds the shared {@code superheroes} root literal to the dispatcher. Hero-owned
+	 * subcommands register their own {@code superheroes} literal (e.g.
+	 * {@code BattleBeastCommands}); Brigadier merges same-named root children, so the
+	 * trees coexist whichever order the registration callbacks fire in.
+	 */
+	static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+		dispatcher.register(Commands.literal("superheroes")
 						.requires(src -> src.hasPermission(2))
 						.then(Commands.literal("hero")
 								.then(Commands.argument("id", ResourceLocationArgument.id())
@@ -106,7 +112,7 @@ public final class SuperheroesCommands {
 						.then(Commands.literal("abilities")
 								.executes(SuperheroesCommands::listAbilities))
 						.then(Commands.literal("info")
-								.executes(SuperheroesCommands::info))));
+								.executes(SuperheroesCommands::info)));
 	}
 
 	// ─────────────────────────────────────────── horde commands ───────────
@@ -271,7 +277,8 @@ public final class SuperheroesCommands {
 			return 0;
 		}
 		HeroData data = target.getAttachedOrCreate(CoreAttachments.HERO_DATA);
-		if (!data.hasHero() || !DoomsdayHero.ID.equals(data.heroId())) {
+		// doomsday branch stays in the shared root until I4d extracts it; the id is a literal so content/ never references hero/
+		if (!data.hasHero() || !ModId.of("doomsday").equals(data.heroId())) {
 			ctx.getSource().sendFailure(Component.translatable("commands.superheroes.doomsday.not_doomsday",
 					target.getScoreboardName()));
 			return 0;
@@ -347,14 +354,14 @@ public final class SuperheroesCommands {
 	private static int toggleAdminBuild(CommandContext<CommandSourceStack> ctx) {
 		ServerPlayer player = playerOrNull(ctx);
 		if (player == null) return 0;
-		boolean current = player.getAttachedOrCreate(ModAttachments.ADMIN_BUILD);
+		boolean current = player.getAttachedOrCreate(AdminAttachments.ADMIN_BUILD);
 		return setAdminBuild(ctx, !current);
 	}
 
 	private static int setAdminBuild(CommandContext<CommandSourceStack> ctx, boolean enabled) {
 		ServerPlayer player = playerOrNull(ctx);
 		if (player == null) return 0;
-		player.setAttached(ModAttachments.ADMIN_BUILD, enabled);
+		player.setAttached(AdminAttachments.ADMIN_BUILD, enabled);
 		AdminBuildSyncController.send(player);
 		if (enabled) {
 			ctx.getSource().sendSuccess(() -> Component.translatable("commands.superheroes.admin_build.on"), false);
@@ -367,7 +374,7 @@ public final class SuperheroesCommands {
 	private static int giveAllAdminItems(CommandContext<CommandSourceStack> ctx) {
 		ServerPlayer player = playerOrNull(ctx);
 		if (player == null) return 0;
-		boolean adminEnabled = player.getAttachedOrCreate(ModAttachments.ADMIN_BUILD);
+		boolean adminEnabled = player.getAttachedOrCreate(AdminAttachments.ADMIN_BUILD);
 		if (!adminEnabled) {
 			ctx.getSource().sendFailure(Component.translatable("commands.superheroes.admin_build.required"));
 			return 0;
