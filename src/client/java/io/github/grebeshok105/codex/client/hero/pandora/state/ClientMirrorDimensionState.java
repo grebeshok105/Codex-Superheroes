@@ -1,7 +1,7 @@
 package io.github.grebeshok105.codex.client.hero.pandora.state;
 
 import io.github.grebeshok105.codex.client.ClientSessionState;
-import io.github.grebeshok105.codex.client.compat.iris.IrisShaderBridge;
+import io.github.grebeshok105.codex.client.hero.pandora.iris.IrisShaderBridge;
 import io.github.grebeshok105.codex.hero.pandora.net.MirrorDimensionStatusC2SPayload;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.Minecraft;

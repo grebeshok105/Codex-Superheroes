@@ -1,7 +1,7 @@
 package io.github.grebeshok105.codex.client.hero.pandora;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.client.compat.iris.IrisShaderBridge;
+import io.github.grebeshok105.codex.client.hero.pandora.iris.IrisShaderBridge;
 import io.github.grebeshok105.codex.client.core.input.InputLock;
 import io.github.grebeshok105.codex.client.core.module.HeroClientContext;
 import io.github.grebeshok105.codex.client.core.module.HeroClientModule;

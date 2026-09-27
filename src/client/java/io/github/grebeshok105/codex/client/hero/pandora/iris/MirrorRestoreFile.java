@@ -1,4 +1,4 @@
-package io.github.grebeshok105.codex.client.compat.iris;
+package io.github.grebeshok105.codex.client.hero.pandora.iris;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
