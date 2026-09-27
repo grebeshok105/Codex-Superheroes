@@ -248,7 +248,9 @@ public final class DoomsdayGameTests implements FabricGameTest {
 		helper.assertTrue(doomsday.hurt(bossDamage(level, "homelander_hand_clap"), 1.0f),
 				"the clap/slam boss group is a different group — it still lands");
 		doomsday.invulnerableTime = 0;
-		helper.assertTrue(doomsday.hurt(ModDamageTypes.eyeLaser(level, doomsday), 1.0f),
+		// Null attacker: a player attacker would trip the shared-level pvp=false gate before
+		// adaptation is even consulted (eye_laser is a player-usable beam).
+		helper.assertTrue(doomsday.hurt(ModDamageTypes.eyeLaser(level, null), 1.0f),
 				"superheroes:eye_laser is in #beam but not in this group — it still lands");
 		TestPlayers.leave(doomsday);
 		helper.succeed();
