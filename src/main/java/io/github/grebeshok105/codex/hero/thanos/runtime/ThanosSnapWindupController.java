@@ -1,6 +1,5 @@
 package io.github.grebeshok105.codex.hero.thanos.runtime;
 
-import io.github.grebeshok105.codex.hero.thanos.ability.ThanosSnapAbility;
 import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
@@ -10,6 +9,7 @@ import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Consumer;
 import net.minecraft.server.MinecraftServer;
 
 public final class ThanosSnapWindupController {
@@ -22,9 +22,9 @@ public final class ThanosSnapWindupController {
 	}
 
 
-	public static void schedule(ServerPlayer player, int snapInTicks, int totalTicks) {
+	public static void schedule(ServerPlayer player, int snapInTicks, int totalTicks, Consumer<ServerPlayer> onSnap) {
 		long now = player.serverLevel().getGameTime();
-		PENDING.put(player.getUUID(), player.getUUID(), new Pending(now + snapInTicks, now + totalTicks));
+		PENDING.put(player.getUUID(), player.getUUID(), new Pending(now + snapInTicks, now + totalTicks, onSnap));
 	}
 
 	public static boolean isWindingUp(ServerPlayer player) {
@@ -35,11 +35,13 @@ public final class ThanosSnapWindupController {
 	private static final class Pending {
 		final long snapAtTick;
 		final long endTick;
+		final Consumer<ServerPlayer> onSnap;
 		boolean snapped;
 
-		Pending(long snapAtTick, long endTick) {
+		Pending(long snapAtTick, long endTick, Consumer<ServerPlayer> onSnap) {
 			this.snapAtTick = snapAtTick;
 			this.endTick = endTick;
+			this.onSnap = onSnap;
 		}
 	}
 
@@ -58,7 +60,7 @@ public final class ThanosSnapWindupController {
 				Pending p = e.getValue();
 				long now = player.serverLevel().getGameTime();
 				if (!p.snapped && now >= p.snapAtTick) {
-					ThanosSnapAbility.executeSnap(player);
+					p.onSnap.accept(player);
 					p.snapped = true;
 				}
 				if (now >= p.endTick) {

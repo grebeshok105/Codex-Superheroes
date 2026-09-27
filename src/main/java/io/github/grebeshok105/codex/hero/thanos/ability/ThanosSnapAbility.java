@@ -82,7 +82,7 @@ public final class ThanosSnapAbility implements Ability {
 		ServerLevel level = player.serverLevel();
 		level.playSound(null, player.getX(), player.getY(), player.getZ(),
 				ThanosSounds.THANOS_SNAP_VOICE, SoundSource.PLAYERS, 1.6f, 1.0f);
-		ThanosSnapWindupController.schedule(player, WINDUP_SNAP_AT_TICK, WINDUP_TOTAL_TICKS);
+		ThanosSnapWindupController.schedule(player, WINDUP_SNAP_AT_TICK, WINDUP_TOTAL_TICKS, ThanosSnapAbility::executeSnap);
 		AbilityCooldowns.setCooldownTicks(player, getId(), COOLDOWN_TICKS);
 		return true;
 	}

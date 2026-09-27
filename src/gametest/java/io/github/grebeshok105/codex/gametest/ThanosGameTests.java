@@ -12,6 +12,7 @@ import io.github.grebeshok105.codex.core.transform.HeroTransformService;
 import io.github.grebeshok105.codex.core.transform.TransformationItem;
 import io.github.grebeshok105.codex.effect.ModEffects;
 import io.github.grebeshok105.codex.hero.thanos.runtime.ThanosGauntletStateController;
+import io.github.grebeshok105.codex.hero.thanos.ability.ThanosSnapAbility;
 import io.github.grebeshok105.codex.hero.thanos.runtime.ThanosSnapWindupController;
 import io.github.grebeshok105.codex.hero.thanos.item.InfinityGauntletData;
 import io.github.grebeshok105.codex.hero.thanos.item.InfinityStoneItem;
@@ -522,7 +523,7 @@ public final class ThanosGameTests implements FabricGameTest {
 	public void snapPendingDropsWhenCasterLeaves(GameTestHelper helper) {
 		ServerPlayer caster = TestPlayers.join(helper, "t5-leave");
 		ServerPlayer victim = TestPlayers.join(helper, "t5-leave-v");
-		ThanosSnapWindupController.schedule(caster, 30, 60);
+		ThanosSnapWindupController.schedule(caster, 30, 60, ThanosSnapAbility::executeSnap);
 		helper.assertTrue(ThanosSnapWindupController.isWindingUp(caster), "pending snap registered");
 		TestPlayers.leave(caster);
 		ServerPlayer rejoined = TestPlayers.rejoin(helper, caster);
