@@ -26,6 +26,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.phys.Vec3;
 
@@ -64,6 +65,23 @@ public final class GokuNarutoChargeGameTests implements FabricGameTest {
 		return zombie;
 	}
 
+	/**
+	 * Whether the victim's last damage came from {@code player}. Shared-level leftovers
+	 * can damage our zombies too — health-based asserts must attribute the hit.
+	 */
+	private static boolean hurtBy(ServerPlayer player, LivingEntity victim) {
+		return victim.getLastDamageSource() != null
+				&& victim.getLastDamageSource().getEntity() == player;
+	}
+
+	/** Whether any hostile near the player was last damaged by the player. */
+	private static boolean anyHurtBy(ServerPlayer player) {
+		return !player.serverLevel().getEntitiesOfClass(LivingEntity.class,
+				player.getBoundingBox().inflate(16.0),
+				e -> e.getLastDamageSource() != null && e.getLastDamageSource().getEntity() == player)
+				.isEmpty();
+	}
+
 	// ---------- charge timings ----------
 
 	@GameTest(template = EMPTY_STRUCTURE)
@@ -83,10 +101,10 @@ public final class GokuNarutoChargeGameTests implements FabricGameTest {
 			for (int i = 0; i < 40; i++) {
 				GokuKamehamehaAbility.serverTick(player);
 			}
-			helper.assertTrue(target.getHealth() == target.getMaxHealth(),
+			helper.assertTrue(!hurtBy(player, target),
 					"40 charge ticks only charge — no beam damage yet");
 			GokuKamehamehaAbility.serverTick(player);
-			helper.assertTrue(target.getHealth() < target.getMaxHealth(),
+			helper.assertTrue(anyHurtBy(player),
 					"tick 41 is the first beam tick");
 			for (int i = 0; i < 29; i++) {
 				GokuKamehamehaAbility.serverTick(player);
@@ -116,9 +134,9 @@ public final class GokuNarutoChargeGameTests implements FabricGameTest {
 			for (int i = 0; i < 79; i++) {
 				GokuSpiritBombAbility.serverTick(player);
 			}
-			helper.assertTrue(target.isAlive(), "channeling for 79 ticks does not detonate");
+			helper.assertTrue(!hurtBy(player, target), "channeling for 79 ticks does not detonate");
 			GokuSpiritBombAbility.serverTick(player);
-			helper.assertTrue(target.getHealth() < target.getMaxHealth() || !target.isAlive(),
+			helper.assertTrue(anyHurtBy(player),
 					"tick 80 detonates the spirit bomb");
 			helper.assertTrue(spiritBomb.canActivate(player),
 					"the session closes on detonation");
@@ -143,10 +161,10 @@ public final class GokuNarutoChargeGameTests implements FabricGameTest {
 			for (int i = 0; i < 30; i++) {
 				NarutoRasenganAbility.serverTick(player);
 			}
-			helper.assertTrue(target.getHealth() == target.getMaxHealth(),
+			helper.assertTrue(!hurtBy(player, target),
 					"30 charge ticks — no strike yet");
 			NarutoRasenganAbility.serverTick(player);
-			helper.assertTrue(target.getHealth() < target.getMaxHealth() || !target.isAlive(),
+			helper.assertTrue(anyHurtBy(player),
 					"the first window tick strikes a hostile in reach");
 			helper.assertTrue(!rasengan.canActivate(player),
 					"a detonated rasengan still holds the session until the window ends");
@@ -175,10 +193,10 @@ public final class GokuNarutoChargeGameTests implements FabricGameTest {
 			for (int i = 0; i < 50; i++) {
 				NarutoOodamaRasenganAbility.serverTick(player);
 			}
-			helper.assertTrue(target.getHealth() == target.getMaxHealth(),
+			helper.assertTrue(!hurtBy(player, target),
 					"50 charge ticks — no strike yet");
 			NarutoOodamaRasenganAbility.serverTick(player);
-			helper.assertTrue(target.getHealth() < target.getMaxHealth() || !target.isAlive(),
+			helper.assertTrue(anyHurtBy(player),
 					"the first window tick strikes a hostile in reach");
 
 			TestPlayers.leave(player);
