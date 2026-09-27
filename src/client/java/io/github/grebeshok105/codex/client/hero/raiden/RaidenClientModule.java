@@ -1,7 +1,7 @@
 package io.github.grebeshok105.codex.client.hero.raiden;
 
 import io.github.grebeshok105.codex.client.ClientHeroState;
-import io.github.grebeshok105.codex.client.ModKeys;
+import io.github.grebeshok105.codex.client.core.input.ModKeys;
 import io.github.grebeshok105.codex.client.core.module.HeroClientContext;
 import io.github.grebeshok105.codex.client.core.module.HeroClientModule;
 import io.github.grebeshok105.codex.hero.raiden.RaidenHero;

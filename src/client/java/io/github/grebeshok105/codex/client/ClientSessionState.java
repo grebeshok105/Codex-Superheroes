@@ -1,5 +1,7 @@
 package io.github.grebeshok105.codex.client;
 
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
+
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -20,6 +22,11 @@ public final class ClientSessionState {
 	private static final List<Runnable> RESETS = new CopyOnWriteArrayList<>();
 
 	private ClientSessionState() {
+	}
+
+	/** Registers the disconnect hook that drops every registered piece of session state. */
+	public static void init() {
+		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> resetAll());
 	}
 
 	/** Called from a holder's static initializer; runs once per holder per JVM. */

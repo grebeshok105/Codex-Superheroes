@@ -1,4 +1,3 @@
-client <-> client.hud
 content.horde <-> content.horde.entity
 content.horde.entity <-> content.horde.entity.projectile
 core.ability <-> core.attachment
