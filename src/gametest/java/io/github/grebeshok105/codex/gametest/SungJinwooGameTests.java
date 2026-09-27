@@ -25,6 +25,7 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.monster.Zombie;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.Comparator;
@@ -143,6 +144,14 @@ public final class SungJinwooGameTests implements FabricGameTest {
 		double isoX = inside.x + 8000.0;
 		double isoZ = inside.z + 8000.0;
 		helper.getLevel().getChunk(BlockPos.containing(isoX, inside.y, isoZ));
+		// The isolated spot is past the test platform: lay a small floor so the
+		// victim and the raised shadow do not fall into the void.
+		for (int dx = -1; dx <= 3; dx++) {
+			for (int dz = -1; dz <= 3; dz++) {
+				helper.getLevel().setBlockAndUpdate(
+						BlockPos.containing(isoX + dx, inside.y - 1, isoZ + dz), Blocks.STONE.defaultBlockState());
+			}
+		}
 		player.teleportTo(isoX, inside.y, isoZ);
 
 		helper.runAfterDelay(10, () -> {
