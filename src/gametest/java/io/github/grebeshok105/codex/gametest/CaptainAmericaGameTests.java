@@ -93,9 +93,22 @@ public final class CaptainAmericaGameTests implements FabricGameTest {
 		return BuiltInRegistries.ITEM.get(VIBRANIUM_SHIELD);
 	}
 
+	/**
+	 * Puts the player inside this test's own structure so nearest-hostile scans
+	 * cannot pick up leftovers another test left near the shared world spawn.
+	 */
+	private static void teleportIntoStructure(GameTestHelper helper, ServerPlayer player) {
+		var pos = helper.absolutePos(net.minecraft.core.BlockPos.containing(1, 1, 1));
+		player.teleportTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5);
+	}
+
 	private static List<ShieldProjectileEntity> shieldProjectilesNear(ServerPlayer player, double radius) {
+		// Filter by owner: concurrent cap tests spawn their own projectiles
+		// ~10-40 blocks away inside the same shared level.
 		return player.serverLevel().getEntitiesOfClass(ShieldProjectileEntity.class,
-				player.getBoundingBox().inflate(radius));
+				player.getBoundingBox().inflate(radius)).stream()
+				.filter(p -> p.getOwner() == player)
+				.toList();
 	}
 
 	/** Polls once per game tick until {@code cond} holds or {@code tries} run out, then runs {@code body}. */
@@ -105,6 +118,29 @@ public final class CaptainAmericaGameTests implements FabricGameTest {
 			return;
 		}
 		helper.runAfterDelay(1, () -> awaitTrue(helper, cond, tries - 1, body));
+	}
+
+	/**
+	 * Like {@link #awaitTrue} but the condition must hold for two consecutive ticks —
+	 * {@code getEntitiesOfClass} can flicker a single tick while a moving entity
+	 * crosses a section boundary or its removal propagates.
+	 */
+	private static void awaitStable(GameTestHelper helper, BooleanSupplier cond, int tries, Runnable body) {
+		if (tries <= 0) {
+			body.run();
+			return;
+		}
+		if (!cond.getAsBoolean()) {
+			helper.runAfterDelay(1, () -> awaitStable(helper, cond, tries - 1, body));
+			return;
+		}
+		helper.runAfterDelay(1, () -> {
+			if (cond.getAsBoolean()) {
+				body.run();
+			} else {
+				awaitStable(helper, cond, tries - 2, body);
+			}
+		});
 	}
 
 	// ---------- ability registration ----------
@@ -165,8 +201,9 @@ public final class CaptainAmericaGameTests implements FabricGameTest {
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void shieldThrowBouncesOffAHostileAndReturnsToHand(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper, "cap-return");
-		faceForward(player);
 		TestHeroes.transform(player, CAPTAIN_AMERICA);
+		teleportIntoStructure(helper, player);
+		faceForward(player);
 		Zombie target = spawnZombieAhead(player, 3.0);
 		TestPlayers.awaitVisible(helper, target, () -> {
 			grantEnergy(player);
@@ -191,7 +228,7 @@ public final class CaptainAmericaGameTests implements FabricGameTest {
 		});
 	}
 
-	@GameTest(template = EMPTY_STRUCTURE)
+	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 200)
 	public void shieldThrowRestoresTheShieldWhenItsLifetimeExpires(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper, "cap-expire");
 		faceForward(player);
@@ -205,7 +242,8 @@ public final class CaptainAmericaGameTests implements FabricGameTest {
 		});
 		// MAX_LIFETIME_TICKS=100 wins over the forced return at 80 (the owner is ~110
 		// blocks below by then) — the shield lands via remove()'s owner-restore.
-		awaitTrue(helper, () -> TestPlayers.count(player, vibraniumShield()) == 1, 140, () -> {
+		awaitStable(helper, () -> TestPlayers.count(player, vibraniumShield()) == 1
+				&& shieldProjectilesNear(player, 260.0).isEmpty(), 140, () -> {
 			helper.assertTrue(TestPlayers.count(player, vibraniumShield()) == 1,
 					"an expired projectile restores the shield to its owner");
 			helper.assertTrue(shieldProjectilesNear(player, 260.0).isEmpty(),
@@ -346,6 +384,7 @@ public final class CaptainAmericaGameTests implements FabricGameTest {
 	public void shieldDashStrikesAndSlowsTheNearestHostile(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper, "cap-dash");
 		TestHeroes.transform(player, CAPTAIN_AMERICA);
+		teleportIntoStructure(helper, player);
 		faceForward(player);
 		Zombie target = spawnZombieAhead(player, 3.0);
 		TestPlayers.awaitVisible(helper, target, () -> {
@@ -448,8 +487,14 @@ public final class CaptainAmericaGameTests implements FabricGameTest {
 		TestHeroes.transform(victim, CAPTAIN_AMERICA);
 		helper.runAfterDelay(2, () -> {
 			TestPlayers.clearSpawnInvulnerability(victim);
-			// mobAttack keeps getEntity()==killer without going through the pvp gate
-			victim.hurt(killer.damageSources().mobAttack(killer), 10000f);
+			// The gametest server runs pvp off — ServerPlayer.canHarmPlayer then
+			// blocks both hurt() and die() when the attacker is a player. Enable
+			// it only around the kill; the flag is global to every concurrent
+			// test, so the window stays a few ticks of one callback.
+			boolean oldPvp = helper.getLevel().getServer().isPvpAllowed();
+			helper.getLevel().getServer().setPvpAllowed(true);
+			victim.hurt(killer.damageSources().mobAttack(killer), victim.getMaxHealth() * 10f);
+			helper.getLevel().getServer().setPvpAllowed(oldPvp);
 			helper.assertTrue(!victim.isAlive(), "the victim died to the hit");
 			helper.assertTrue(TestPlayers.count(killer, ModItems.SOUL_STONE) == 1,
 					"the thanos killer receives cap's SOUL stone drop row");
