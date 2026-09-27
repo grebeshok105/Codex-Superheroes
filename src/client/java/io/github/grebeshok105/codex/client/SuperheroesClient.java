@@ -101,12 +101,6 @@ public class SuperheroesClient implements ClientModInitializer {
 		ParticleFactoryRegistry.getInstance().register(ModParticles.LASER_SPARK, EndRodParticle.Provider::new);
 		ParticleFactoryRegistry.getInstance().register(ModParticles.REPULSOR_SPARK, EndRodParticle.Provider::new);
 		ParticleFactoryRegistry.getInstance().register(ModParticles.UNIBEAM_SPARK, EndRodParticle.Provider::new);
-		ParticleFactoryRegistry.getInstance().register(ModParticles.GOKU_KI_AURA, EndRodParticle.Provider::new);
-		ParticleFactoryRegistry.getInstance().register(ModParticles.GOKU_KAMEHAMEHA_CORE, EndRodParticle.Provider::new);
-		ParticleFactoryRegistry.getInstance().register(ModParticles.GOKU_KAMEHAMEHA_TRAIL, EndRodParticle.Provider::new);
-		ParticleFactoryRegistry.getInstance().register(ModParticles.NARUTO_RASENGAN_SWIRL, EndRodParticle.Provider::new);
-		ParticleFactoryRegistry.getInstance().register(ModParticles.NARUTO_CLONE_POOF, EndRodParticle.Provider::new);
-		ParticleFactoryRegistry.getInstance().register(ModParticles.NARUTO_KAWARIMI_SMOKE, EndRodParticle.Provider::new);
 		ParticleFactoryRegistry.getInstance().register(ModParticles.CAP_SHIELD_TRAIL, EndRodParticle.Provider::new);
 		ParticleFactoryRegistry.getInstance().register(ModParticles.CAP_SHIELD_SLAM_BURST, EndRodParticle.Provider::new);
 		ParticleFactoryRegistry.getInstance().register(ModParticles.WHITE_BOOM,
@@ -169,7 +163,6 @@ public class SuperheroesClient implements ClientModInitializer {
 		HudLayers.registerMovable(2100, ModId.of("melee_charge"), MeleeChargeHud::render, MeleeChargeHud.INSTANCE);
 
 		ClientTickEvents.START_CLIENT_TICK.register(SuperheroesClient::tickHeroMeleeCharge);
-		ClientTickEvents.START_CLIENT_TICK.register(SuperheroesClient::tickThinkMarkDash);
 
 		// "HUD" button in the pause menu -> drag editor for all HUD elements
 		net.fabricmc.fabric.api.client.screen.v1.ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
@@ -236,25 +229,8 @@ public class SuperheroesClient implements ClientModInitializer {
 			ClientSessionState.resetAll();
 			meleeChargeSent = false;
 			meleeChargeTicks = 0;
-			thinkMarkUseWasDown = false;
 		});
 
-	}
-
-	private static boolean thinkMarkUseWasDown = false;
-
-	/** While the Omni-Man grab is active, RMB (use) launches the dash/slam. */
-	private static void tickThinkMarkDash(Minecraft client) {
-		if (client.player == null || client.level == null) {
-			thinkMarkUseWasDown = false;
-			return;
-		}
-		boolean grabbing = io.github.grebeshok105.codex.client.ClientThinkMarkState.isActive(client.player.getUUID());
-		boolean useDown = client.screen == null && client.options.keyUse.isDown();
-		if (grabbing && useDown && !thinkMarkUseWasDown) {
-			ClientPlayNetworking.send(new io.github.grebeshok105.codex.network.ThinkMarkDashC2SPayload());
-		}
-		thinkMarkUseWasDown = useDown;
 	}
 
 	private static void tickHeroMeleeCharge(Minecraft client) {

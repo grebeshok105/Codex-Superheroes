@@ -30,6 +30,21 @@ public final class LokiGameTests implements FabricGameTest {
 	private static final ResourceLocation GLAMOUR = ModId.of("loki_glamour");
 	private static final ResourceLocation CHAOS_BOLT = ModId.of("loki_chaos_bolt");
 
+	/**
+	 * Spawn a zombie {@code dist} blocks ahead of the player. {@code helper.spawn}
+	 * places entities at structure coordinates while {@code TestPlayers.join} puts
+	 * the player at world spawn millions of blocks away — proximity scans and
+	 * SafeTeleport's loaded-chunk check only work near the player.
+	 */
+	private static Zombie spawnZombieAhead(ServerPlayer player, double dist) {
+		var level = player.serverLevel();
+		Zombie zombie = new Zombie(EntityType.ZOMBIE, level);
+		var pos = player.position().add(player.getLookAngle().multiply(1, 0, 1).normalize().scale(dist));
+		zombie.moveTo(pos.x, pos.y, pos.z, 0f, 0f);
+		level.addFreshEntity(zombie);
+		return zombie;
+	}
+
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void lokiOwnsExactlyItsFiveAbilitiesInSlotOrder(GameTestHelper helper) {
 		Hero loki = Heroes.get(ModId.of("loki"));
@@ -70,7 +85,7 @@ public final class LokiGameTests implements FabricGameTest {
 	public void astralClonesDisorientsMobsAndHidesCaster(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, ModId.of("loki"));
-		Zombie zombie = helper.spawn(EntityType.ZOMBIE, 2, 1, 2);
+		Zombie zombie = spawnZombieAhead(player, 4.0);
 
 		// The clone wave scans entity sections — wait for the spawn to be visible.
 		TestPlayers.awaitVisible(helper, zombie, () -> {
@@ -147,12 +162,11 @@ public final class LokiGameTests implements FabricGameTest {
 	public void tesseractBlinkTeleportsBehindTarget(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, ModId.of("loki"));
-		Zombie zombie = helper.spawn(EntityType.ZOMBIE, 2, 1, 2);
-		player.teleportTo(zombie.getX() - 4.0, zombie.getY(), zombie.getZ());
 		player.setYRot(-90.0F);
 		player.setXRot(0.0F);
 		player.setYHeadRot(-90.0F);
 		player.setYBodyRot(-90.0F);
+		Zombie zombie = spawnZombieAhead(player, 4.0);
 
 		TestPlayers.awaitVisible(helper, zombie, () -> {
 			AbilityRouter.activate(player, TESSERACT_BLINK);

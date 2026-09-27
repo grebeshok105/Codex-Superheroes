@@ -1,5 +1,7 @@
 package io.github.grebeshok105.codex.datagen;
 
+import io.github.grebeshok105.codex.bootstrap.HeroModules;
+import io.github.grebeshok105.codex.damage.DamageTypeSpec;
 import io.github.grebeshok105.codex.damage.ModDamageTypes;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricDynamicRegistryProvider;
@@ -27,12 +29,6 @@ public final class ModDamageTypeProvider extends FabricDynamicRegistryProvider {
 		entries.add(lookup, ModDamageTypes.DOOMSDAY_CHARGE_TACKLE);
 		entries.add(lookup, ModDamageTypes.DOOMSDAY_DOOM_GRIP);
 		entries.add(lookup, ModDamageTypes.SHADOW_ATTACK);
-		entries.add(lookup, ModDamageTypes.GOKU_KAMEHAMEHA);
-		entries.add(lookup, ModDamageTypes.GOKU_INSTANT_STRIKE);
-		entries.add(lookup, ModDamageTypes.GOKU_SPIRIT_BOMB);
-		entries.add(lookup, ModDamageTypes.NARUTO_RASENGAN);
-		entries.add(lookup, ModDamageTypes.NARUTO_RASENSHURIKEN);
-		entries.add(lookup, ModDamageTypes.NARUTO_BIJUUDAMA);
 		entries.add(lookup, ModDamageTypes.KRATOS_BLADE);
 		entries.add(lookup, ModDamageTypes.KRATOS_LEVIATHAN);
 		entries.add(lookup, ModDamageTypes.LOKI_CHAOS);
@@ -51,6 +47,9 @@ public final class ModDamageTypeProvider extends FabricDynamicRegistryProvider {
 		entries.add(lookup, ModDamageTypes.HOMELANDER_ROAR_BOSS);
 		entries.add(lookup, ModDamageTypes.HOMELANDER_MELEE);
 		entries.add(lookup, ModDamageTypes.SPACE_CRUSH);
+		for (DamageTypeSpec spec : HeroModules.damageTypeSpecs()) {
+			entries.add(lookup, spec.key());
+		}
 	}
 
 	@Override

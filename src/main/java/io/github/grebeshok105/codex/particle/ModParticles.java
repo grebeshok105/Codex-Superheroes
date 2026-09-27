@@ -12,14 +12,6 @@ public final class ModParticles {
 	public static final SimpleParticleType REPULSOR_SPARK = register("repulsor_spark", FabricParticleTypes.simple());
 	public static final SimpleParticleType UNIBEAM_SPARK = register("unibeam_spark", FabricParticleTypes.simple());
 
-	public static final SimpleParticleType GOKU_KI_AURA = register("goku_ki_aura", FabricParticleTypes.simple());
-	public static final SimpleParticleType GOKU_KAMEHAMEHA_CORE = register("goku_kamehameha_core", FabricParticleTypes.simple());
-	public static final SimpleParticleType GOKU_KAMEHAMEHA_TRAIL = register("goku_kamehameha_trail", FabricParticleTypes.simple());
-
-	public static final SimpleParticleType NARUTO_RASENGAN_SWIRL = register("naruto_rasengan_swirl", FabricParticleTypes.simple());
-	public static final SimpleParticleType NARUTO_CLONE_POOF = register("naruto_clone_poof", FabricParticleTypes.simple());
-	public static final SimpleParticleType NARUTO_KAWARIMI_SMOKE = register("naruto_kawarimi_smoke", FabricParticleTypes.simple());
-
 	public static final SimpleParticleType CAP_SHIELD_TRAIL = register("cap_shield_trail", FabricParticleTypes.simple());
 	public static final SimpleParticleType CAP_SHIELD_SLAM_BURST = register("cap_shield_slam_burst", FabricParticleTypes.simple());
 

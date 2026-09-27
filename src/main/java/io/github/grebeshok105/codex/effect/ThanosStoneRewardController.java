@@ -1,11 +1,9 @@
 package io.github.grebeshok105.codex.effect;
 
-import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.hero.CaptainAmericaHero;
 import io.github.grebeshok105.codex.hero.KratosHero;
-import io.github.grebeshok105.codex.hero.NarutoHero;
 import io.github.grebeshok105.codex.hero.RegulusHero;
 import io.github.grebeshok105.codex.hero.SungJinwooHero;
 import io.github.grebeshok105.codex.hero.ThanosHero;
@@ -33,15 +31,17 @@ public final class ThanosStoneRewardController {
 
 	static {
 		HERO_TO_STONE.put(KratosHero.ID, InfinityStoneType.POWER);
-		HERO_TO_STONE.put(NarutoHero.ID, InfinityStoneType.SPACE);
 		HERO_TO_STONE.put(SungJinwooHero.ID, InfinityStoneType.REALITY);
-		// Migrated hero ids are referenced by string — shared code must not import module classes.
-		HERO_TO_STONE.put(ModId.of("loki"), InfinityStoneType.MIND);
 		HERO_TO_STONE.put(CaptainAmericaHero.ID, InfinityStoneType.SOUL);
 		HERO_TO_STONE.put(RegulusHero.ID, InfinityStoneType.TIME);
 	}
 
 	private ThanosStoneRewardController() {
+	}
+
+	/** Hero modules register their own hero→stone drop row here (the hero owns its reward). */
+	public static void registerHeroStone(ResourceLocation heroId, InfinityStoneType stone) {
+		HERO_TO_STONE.put(heroId, stone);
 	}
 
 	public static void register(HeroModuleContext ctx) {

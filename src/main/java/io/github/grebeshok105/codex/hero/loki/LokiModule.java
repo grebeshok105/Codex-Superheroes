@@ -3,6 +3,8 @@ package io.github.grebeshok105.codex.hero.loki;
 import io.github.grebeshok105.codex.core.module.HeroModule;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.core.hero.Hero;
+import io.github.grebeshok105.codex.effect.ThanosStoneRewardController;
+import io.github.grebeshok105.codex.item.infinity.InfinityStoneType;
 import io.github.grebeshok105.codex.hero.loki.ability.LokiAstralClonesAbility;
 import io.github.grebeshok105.codex.hero.loki.ability.LokiChaosBoltAbility;
 import io.github.grebeshok105.codex.hero.loki.ability.LokiGlamourAbility;
@@ -24,6 +26,8 @@ public final class LokiModule implements HeroModule {
 		ctx.abilities().register(new LokiMindCharmAbility());
 		ctx.abilities().register(new LokiGlamourAbility());
 		ctx.abilities().register(new LokiChaosBoltAbility());
+		// Loki→MIND stone reward, registered by the hero that owns the drop row.
+		ThanosStoneRewardController.registerHeroStone(LokiHero.ID, InfinityStoneType.MIND);
 		LokiItems.register(ctx.content());
 	}
 }

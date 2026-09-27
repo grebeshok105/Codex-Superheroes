@@ -1,8 +1,8 @@
 package io.github.grebeshok105.codex.hero.scaramouche;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.ability.AbilityIds;
 import io.github.grebeshok105.codex.hero.scaramouche.ability.ScaramoucheWindPrisonAbility;
+import io.github.grebeshok105.codex.mechanic.ability.SharedAbilityIds;
 import io.github.grebeshok105.codex.core.hero.AttributeModifierSet;
 import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.hero.HeroHudConfig;
@@ -93,7 +93,7 @@ public final class ScaramoucheHero implements Hero {
 	@Override
 	public List<ResourceLocation> getAbilities() {
 		return List.of(
-				AbilityIds.FLIGHT,
+				SharedAbilityIds.FLIGHT,
 				ScaramoucheAbilities.SCARAMOUCHE_WINDSTEP,
 				ScaramoucheAbilities.SCARAMOUCHE_ELECTRO_SWIRL,
 				ScaramoucheAbilities.SCARAMOUCHE_WIND_PRISON,

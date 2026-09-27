@@ -11,7 +11,7 @@ import io.github.grebeshok105.codex.effect.ModEffects;
 import io.github.grebeshok105.codex.effect.RegulusMadnessState;
 import io.github.grebeshok105.codex.hero.DoomsdayHero;
 import io.github.grebeshok105.codex.core.hero.Heroes;
-import io.github.grebeshok105.codex.hero.NarutoHero;
+import io.github.grebeshok105.codex.hero.naruto.NarutoHero;
 import io.github.grebeshok105.codex.hero.RegulusHero;
 import io.github.grebeshok105.codex.hero.RemHero;
 import io.github.grebeshok105.codex.core.transform.HeroTransformService;

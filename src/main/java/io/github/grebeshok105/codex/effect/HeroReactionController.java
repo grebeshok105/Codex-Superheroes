@@ -1,8 +1,8 @@
 package io.github.grebeshok105.codex.effect;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.hero.HomelanderHero;
-import io.github.grebeshok105.codex.hero.OmnimanHero;
 import io.github.grebeshok105.codex.sound.ModSounds;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.minecraft.resources.ResourceLocation;
@@ -21,12 +21,12 @@ public final class HeroReactionController {
 	}
 
 	public static void onTransformed(ServerPlayer player, ResourceLocation heroId) {
-		if (OmnimanHero.ID.equals(heroId)) {
-			if (anyOtherWithHero(player, HomelanderHero.ID)) {
-				broadcastReaction(player);
-			}
-		} else if (HomelanderHero.ID.equals(heroId)) {
-			if (anyOtherWithHero(player, OmnimanHero.ID)) {
+		// The Omni-Man direction lives in hero/omniman (OmnimanReactionRule);
+		// only the Homelander direction remains here until the Homelander wave
+		// moves it and renames this hook off the shared controller. The paired
+		// hero id is a string literal — no foreign import.
+		if (HomelanderHero.ID.equals(heroId)) {
+			if (anyOtherWithHero(player, ModId.of("omniman"))) {
 				broadcastReaction(player);
 			}
 		}

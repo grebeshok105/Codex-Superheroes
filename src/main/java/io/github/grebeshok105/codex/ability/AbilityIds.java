@@ -4,18 +4,11 @@ import io.github.grebeshok105.codex.ModId;
 import net.minecraft.resources.ResourceLocation;
 
 public final class AbilityIds {
-	public static final ResourceLocation FLIGHT = ModId.of("flight");
 	public static final ResourceLocation EYE_LASERS = ModId.of("eye_lasers");
 	public static final ResourceLocation X_RAY = ModId.of("x_ray");
 	public static final ResourceLocation IRON_FISTS = ModId.of("iron_fists");
 	public static final ResourceLocation HAND_CLAP = ModId.of("hand_clap");
 	public static final ResourceLocation STUNNING_ROAR = ModId.of("stunning_roar");
-	public static final ResourceLocation VILTRUMITE_CHARGE = ModId.of("viltrumite_charge");
-	public static final ResourceLocation VILTRUMITE_RECOVERY = ModId.of("viltrumite_recovery");
-	public static final ResourceLocation GUARDIANS_BREAKER = ModId.of("guardians_breaker");
-	public static final ResourceLocation OMNIMAN_VILTRUMITE_RUSH = ModId.of("omniman_viltrumite_rush");
-	public static final ResourceLocation OMNIMAN_WORLD_BREAKER = ModId.of("omniman_world_breaker");
-	public static final ResourceLocation OMNIMAN_THINK_MARK = ModId.of("omniman_think_mark");
 
 	public static final ResourceLocation IRON_MAN_FLIGHT = ModId.of("iron_man_flight");
 	public static final ResourceLocation SUPERSONIC = ModId.of("supersonic");
@@ -45,20 +38,6 @@ public final class AbilityIds {
 	public static final ResourceLocation DOOMSDAY_BONE_SPIKE = ModId.of("doomsday_bone_spike");
 	public static final ResourceLocation DOOMSDAY_CHARGE_TACKLE = ModId.of("doomsday_charge_tackle");
 	public static final ResourceLocation DOOMSDAY_DOOM_GRIP = ModId.of("doomsday_doom_grip");
-
-	public static final ResourceLocation GOKU_KAMEHAMEHA = ModId.of("goku_kamehameha");
-	public static final ResourceLocation GOKU_INSTANT_TRANSMISSION = ModId.of("goku_instant_transmission");
-	public static final ResourceLocation GOKU_KI_CHARGE = ModId.of("goku_ki_charge");
-	public static final ResourceLocation GOKU_SOLAR_FLARE = ModId.of("goku_solar_flare");
-	public static final ResourceLocation GOKU_SPIRIT_BOMB = ModId.of("goku_spirit_bomb");
-	public static final ResourceLocation GOKU_SUPER_SAIYAN_AURA = ModId.of("goku_super_saiyan_aura");
-
-	public static final ResourceLocation NARUTO_RASENGAN = ModId.of("naruto_rasengan");
-	public static final ResourceLocation NARUTO_SHADOW_CLONES = ModId.of("naruto_shadow_clones");
-	public static final ResourceLocation NARUTO_RASENSHURIKEN = ModId.of("naruto_rasenshuriken");
-	public static final ResourceLocation NARUTO_SAGE_MODE = ModId.of("naruto_sage_mode");
-	public static final ResourceLocation NARUTO_OODAMA_RASENGAN = ModId.of("naruto_oodama_rasengan");
-	public static final ResourceLocation NARUTO_BIJUUDAMA = ModId.of("naruto_bijuudama");
 
 	public static final ResourceLocation CAP_SHIELD_THROW = ModId.of("cap_shield_throw");
 	public static final ResourceLocation CAP_SHIELD_SLAM = ModId.of("cap_shield_slam");

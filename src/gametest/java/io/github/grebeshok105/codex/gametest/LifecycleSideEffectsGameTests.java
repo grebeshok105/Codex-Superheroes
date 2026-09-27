@@ -1,7 +1,7 @@
 package io.github.grebeshok105.codex.gametest;
 
 import io.github.grebeshok105.codex.ability.MirrorDimensionAbility;
-import io.github.grebeshok105.codex.ability.OmnimanThinkMarkAbility;
+import io.github.grebeshok105.codex.hero.omniman.ability.OmnimanThinkMarkAbility;
 import io.github.grebeshok105.codex.attachment.ModAttachments;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
 import io.github.grebeshok105.codex.effect.BattleBeastCurseController;

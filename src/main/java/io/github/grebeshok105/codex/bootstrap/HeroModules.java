@@ -3,7 +3,11 @@ package io.github.grebeshok105.codex.bootstrap;
 import io.github.grebeshok105.codex.core.module.HeroModule;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.core.hero.Heroes;
+import io.github.grebeshok105.codex.damage.DamageTypeSpec;
+import net.minecraft.data.worldgen.BootstrapContext;
+import net.minecraft.world.damagesource.DamageType;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /** Composition root: the only place that names hero modules. One line per hero; order = registry order. */
@@ -46,5 +50,21 @@ public final class HeroModules {
 			module.register(ctx);
 		}
 		SharedMechanics.registerPost(ctx);
+	}
+
+	/** Bootstraps every module-owned damage type (datagen side; modules never run here). */
+	public static void bootstrapDamageTypes(BootstrapContext<DamageType> context) {
+		for (DamageTypeSpec spec : damageTypeSpecs()) {
+			context.register(spec.key(), spec.type());
+		}
+	}
+
+	/** Every module-owned damage type spec, in module order — datagen + tag providers enumerate this. */
+	public static List<DamageTypeSpec> damageTypeSpecs() {
+		List<DamageTypeSpec> specs = new ArrayList<>();
+		for (HeroModule module : ALL) {
+			specs.addAll(module.damageTypes());
+		}
+		return specs;
 	}
 }
