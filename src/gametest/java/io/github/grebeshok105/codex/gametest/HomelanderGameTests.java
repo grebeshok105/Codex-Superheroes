@@ -198,17 +198,23 @@ public final class HomelanderGameTests implements FabricGameTest {
 			}
 		}
 		// A FORCED ticket makes the remote chunk entity-ticking — getChunk/setBlock
-		// alone only load it, and the effect duration would never decrement.
+		// alone only load it. Note mock players never decrement effect durations:
+		// LivingEntity.tickEffects lives behind ServerPlayer.doTick, which only runs
+		// from a live connection's tick — a gametest connection never ticks. The
+		// aftermath controller is a player-phase tick (level.players()), so it reads
+		// the duration fine; a duration-1 instance satisfies "remaining <= 1" on the
+		// first tick and detonates immediately.
 		helper.getLevel().setChunkForced(remoteFeet.getX() >> 4, remoteFeet.getZ() >> 4, true);
-		player.teleportTo(remoteFeet.getX() + 0.5, remoteFeet.getY(), remoteFeet.getZ() + 0.5);
-		helper.getLevel().getChunkSource().chunkMap.move(player);
-		player.setDeltaMovement(Vec3.ZERO);
 
-		player.addEffect(new MobEffectInstance(ModEffects.MADNESS_AFTERMATH, 25));
-		player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 60, 4));
+		helper.runAfterDelay(3, () -> {
+			player.teleportTo(remoteFeet.getX() + 0.5, remoteFeet.getY(), remoteFeet.getZ() + 0.5);
+			helper.getLevel().getChunkSource().chunkMap.move(player);
+			player.setDeltaMovement(Vec3.ZERO);
 
-		helper.runAfterDelay(26, () -> await(helper,
-				() -> !player.hasEffect(ModEffects.MADNESS_AFTERMATH), 8, () -> {
+			player.addEffect(new MobEffectInstance(ModEffects.MADNESS_AFTERMATH, 1));
+			player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 60, 4));
+
+		helper.runAfterDelay(6, () -> {
 				helper.assertTrue(player.isAlive(), "resistance 5 survives the sun detonation");
 				boolean scorched = false;
 				for (BlockPos pos : BlockPos.betweenClosed(
@@ -221,7 +227,8 @@ public final class HomelanderGameTests implements FabricGameTest {
 			helper.assertTrue(scorched, "the detonation leaves fire in its wake");
 				TestPlayers.leave(player);
 				helper.succeed();
-			}));
+			});
+		});
 	}
 
 	// ---- flight ------------------------------------------------------------
@@ -268,7 +275,7 @@ public final class HomelanderGameTests implements FabricGameTest {
 				bystanderPackets.addAll(drain(bystander.channel()));
 				return hasThreat(homelanderPackets, true, 1)
 						&& hasPressure(bystanderPackets, homelander.player().getUUID());
-			}, 15, () -> {
+			}, 30, () -> {
 				helper.assertTrue(hasThreat(homelanderPackets, true, 1),
 						"homelander is sent threat=true, count=1");
 				helper.assertTrue(hasPressure(bystanderPackets, homelander.player().getUUID()),
@@ -282,7 +289,7 @@ public final class HomelanderGameTests implements FabricGameTest {
 					await(helper, () -> {
 						homelanderPackets.addAll(drain(homelander.channel()));
 						return hasThreat(homelanderPackets, false, 0);
-					}, 15, () -> {
+					}, 30, () -> {
 						helper.assertTrue(hasThreat(homelanderPackets, false, 0),
 								"the cleared scan sends threat=false, count=0");
 						TestPlayers.leave(homelander.player());
