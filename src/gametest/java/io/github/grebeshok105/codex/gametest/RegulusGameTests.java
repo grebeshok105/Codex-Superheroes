@@ -364,11 +364,13 @@ public class RegulusGameTests implements FabricGameTest {
 					"the magnet engages on the aimed target");
 
 			helper.runAfterDelay(6, () -> {
-				// A spawned mob's section may not be entity-ticking; the pull is observable
-				// as a per-tick toward-caster impulse regardless of whether it moves.
+				// The per-tick impulse lands in the player phase; a sequence-boundary read
+				// catches deltaMovement either fresh (~0.6) or after one friction decay
+				// (~x0.55 → ~0.33), so the threshold must sit below the decayed value. If the
+				// victim's section does not entity-tick the delta stays exactly as set.
 				Vec3 pull = zombie.getDeltaMovement();
 				Vec3 toCaster = player.position().subtract(zombie.position()).normalize();
-				helper.assertTrue(pull.horizontalDistance() > 0.4 && pull.dot(toCaster) > 0,
+				helper.assertTrue(pull.horizontalDistance() > 0.25 && pull.dot(toCaster) > 0,
 						"the magnet applies a toward-caster impulse every tick");
 				MobEffectInstance slow = player.getEffect(MobEffects.MOVEMENT_SLOWDOWN);
 				helper.assertTrue(slow != null && slow.getAmplifier() == 250
