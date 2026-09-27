@@ -52,7 +52,8 @@
 			"io.github.grebeshok105.codex.gametest.RaidenGameTests",
 			"io.github.grebeshok105.codex.gametest.DoomsdayGameTests",
 			"io.github.grebeshok105.codex.gametest.SuperheroesCommandsGameTests",
-			"io.github.grebeshok105.codex.gametest.ThanosGameTests"
+			"io.github.grebeshok105.codex.gametest.ThanosGameTests",
+			"io.github.grebeshok105.codex.gametest.HomelanderGameTests"
 		]
 	},
 	"depends": {
