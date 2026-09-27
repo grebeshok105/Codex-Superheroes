@@ -243,7 +243,7 @@ public final class ProjectSanityTest {
 		JsonObject en = parseJsonObject(MAIN_RESOURCES.resolve("assets/" + MOD_ID + "/lang/en_us.json"));
 		Pattern entityId = Pattern.compile("(?:ModId\\.of|register)\\(\\s*\"([a-z_]+)\"");
 		for (String file : List.of("io/github/grebeshok105/codex/entity/ModEntities.java",
-				"io/github/grebeshok105/codex/horde/entity/HordeEntities.java")) {
+				"io/github/grebeshok105/codex/content/horde/entity/HordeEntities.java")) {
 			Matcher ids = entityId.matcher(Files.readString(MAIN_JAVA.resolve(file)));
 			while (ids.find()) {
 				assert en.has("entity." + MOD_ID + "." + ids.group(1))

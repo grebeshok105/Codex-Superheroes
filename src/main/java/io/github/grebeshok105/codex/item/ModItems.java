@@ -102,11 +102,6 @@ public final class ModItems {
 			new BladeOfChaosItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
 	);
 
-	public static final LokiScepterItem LOKI_SCEPTER = register(
-			"loki_scepter",
-			new LokiScepterItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
-	);
-
 	public static final InfinityGauntletItem INFINITY_GAUNTLET = register(
 			"infinity_gauntlet",
 			new InfinityGauntletItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
@@ -183,16 +178,6 @@ public final class ModItems {
 			new RemMorningStarItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
 	);
 
-	public static final TransformationItem A_TRAIN_SUIT = register(
-			"a_train_suit",
-			new TransformationItem(ModId.of("a_train"), new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC),
-					new TransformationLore(ChatFormatting.BLUE,
-							List.of(new TransformationLore.Line("item.superheroes.a_train_suit.lore.line1", ChatFormatting.RED),
-									new TransformationLore.Line("item.superheroes.a_train_suit.lore.line2", ChatFormatting.DARK_GRAY)),
-							List.of(new TransformationLore.Line("item.superheroes.a_train_suit.lore.usage", ChatFormatting.AQUA),
-									new TransformationLore.Line("item.superheroes.a_train_suit.lore.untransform", ChatFormatting.RED))))
-	);
-
 	// persisted id kept from the Doctor Strange era — do not rename the string.
 	public static final TransformationItem PANDORA_SUIT = register(
 			"doctor_strange_suit",
@@ -207,11 +192,6 @@ public final class ModItems {
 	public static final MusouNoHitotachiItem MUSOU_NO_HITOTACHI = register(
 			"musou_no_hitotachi",
 			new MusouNoHitotachiItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
-	);
-
-	public static final io.github.grebeshok105.codex.horde.HordeCrystalItem HORDE_CRYSTAL = register(
-			"horde_crystal",
-			new io.github.grebeshok105.codex.horde.HordeCrystalItem()
 	);
 
 	private ModItems() {

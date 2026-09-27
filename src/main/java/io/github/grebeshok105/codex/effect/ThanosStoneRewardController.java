@@ -3,7 +3,6 @@ package io.github.grebeshok105.codex.effect;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.hero.KratosHero;
-import io.github.grebeshok105.codex.hero.LokiHero;
 import io.github.grebeshok105.codex.hero.RegulusHero;
 import io.github.grebeshok105.codex.hero.SungJinwooHero;
 import io.github.grebeshok105.codex.hero.ThanosHero;
