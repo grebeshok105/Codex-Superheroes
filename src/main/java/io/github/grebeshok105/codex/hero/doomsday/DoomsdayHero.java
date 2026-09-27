@@ -1,7 +1,6 @@
-package io.github.grebeshok105.codex.hero;
+package io.github.grebeshok105.codex.hero.doomsday;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.ability.AbilityIds;
 import io.github.grebeshok105.codex.core.ability.AbilityAvailability;
 import io.github.grebeshok105.codex.core.hero.AttributeModifierSet;
 import io.github.grebeshok105.codex.core.hero.BleedProfile;
@@ -13,6 +12,14 @@ import io.github.grebeshok105.codex.core.hero.JarvisThreatClass;
 import io.github.grebeshok105.codex.core.hero.LandingImpact;
 import io.github.grebeshok105.codex.core.hero.PassiveGlyph;
 import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.hero.doomsday.ability.ChargeTackleAbility;
+import io.github.grebeshok105.codex.hero.doomsday.ability.DoomsdayBerserkAbility;
+import io.github.grebeshok105.codex.hero.doomsday.runtime.DoomGripController;
+import io.github.grebeshok105.codex.hero.doomsday.runtime.DoomsdayAdaptationController;
+import io.github.grebeshok105.codex.hero.doomsday.runtime.DoomsdayEffectAdaptationController;
+import io.github.grebeshok105.codex.hero.doomsday.runtime.DoomsdayModifiers;
+import io.github.grebeshok105.codex.hero.doomsday.runtime.DoomsdayProgress;
+import io.github.grebeshok105.codex.hero.doomsday.runtime.DoomsdayTierController;
 import io.github.grebeshok105.codex.physics.ShockwaveUtil;
 import io.github.grebeshok105.codex.core.resource.ResourceKind;
 import net.minecraft.core.particles.ParticleTypes;
@@ -21,7 +28,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.Pose;
@@ -57,7 +63,7 @@ public final class DoomsdayHero implements Hero {
 
         private static final HeroHudConfig HUD = new HeroHudConfig("hud.superheroes.energy.rage", HeroHudConfig.EnergyIconType.SKULL, true, "DOOM GRIP");
 
-        private static final AttributeModifierSet PASSIVES = AbilityScopedModifiers.DOOMSDAY;
+        private static final AttributeModifierSet PASSIVES = DoomsdayModifiers.DOOMSDAY;
 
         @Override
         public ResourceLocation getId() {
@@ -91,12 +97,12 @@ public final class DoomsdayHero implements Hero {
         @Override
         public List<ResourceLocation> getAbilities() {
                 return List.of(
-                                AbilityIds.DOOMSDAY_SMASH,
-                                AbilityIds.DOOMSDAY_ROAR,
-                                AbilityIds.DOOMSDAY_BONE_SPIKE,
-                                AbilityIds.DOOMSDAY_CHARGE_TACKLE,
-                                AbilityIds.DOOMSDAY_BERSERK,
-                                AbilityIds.DOOMSDAY_DOOM_GRIP);
+                                DoomsdayAbilities.DOOMSDAY_SMASH,
+                                DoomsdayAbilities.DOOMSDAY_ROAR,
+                                DoomsdayAbilities.DOOMSDAY_BONE_SPIKE,
+                                DoomsdayAbilities.DOOMSDAY_CHARGE_TACKLE,
+                                DoomsdayAbilities.DOOMSDAY_BERSERK,
+                                DoomsdayAbilities.DOOMSDAY_DOOM_GRIP);
         }
 
         @Override
@@ -113,37 +119,16 @@ public final class DoomsdayHero implements Hero {
         public void applyPassives(Player player) {
                 int tier = getTier(player);
                 PASSIVES.remove(player);
-                AbilityScopedModifiers.buildDoomsdayTierSet(tier).apply(player);
-                applyTierEffects(player, tier);
+                DoomsdayModifiers.buildDoomsdayTierSet(tier).apply(player);
+                DoomsdayTierController.applyTierEffects(player, tier);
                 if (player instanceof ServerPlayer sp) {
-                        io.github.grebeshok105.codex.effect.DoomsdayAdaptationController.reapplyDamageBonus(sp);
-                        io.github.grebeshok105.codex.effect.DoomsdayTierController.sync(sp);
-                }
-        }
-
-        public static void applyTierEffects(Player player, int tier) {
-                if (tier >= 7) {
-                        player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, -1, 1, true, false, true));
-                        player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, -1, 1, true, false, true));
-                        player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, -1, 1, true, false, true));
-                        player.addEffect(new MobEffectInstance(MobEffects.JUMP, -1, 1, true, false, true));
-                        player.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, -1, 0, true, false, true));
-                } else {
-                        player.removeEffect(MobEffects.DAMAGE_BOOST);
-                        player.removeEffect(MobEffects.JUMP);
-                        player.removeEffect(MobEffects.FIRE_RESISTANCE);
-                        player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, -1, 0, true, false, true));
-                        if (tier >= 5) {
-                                player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, -1, 0, true, false, true));
-                        } else {
-                                player.removeEffect(MobEffects.DAMAGE_RESISTANCE);
-                        }
+                        DoomsdayAdaptationController.reapplyDamageBonus(sp);
+                        DoomsdayTierController.sync(sp);
                 }
         }
 
         public static int getTier(Player player) {
-                io.github.grebeshok105.codex.effect.DoomsdayProgress p = player.getAttachedOrCreate(
-                                io.github.grebeshok105.codex.attachment.ModAttachments.DOOMSDAY_PROGRESS);
+                DoomsdayProgress p = player.getAttachedOrCreate(DoomsdayAttachments.PROGRESS);
                 return Math.max(1, Math.min(7, p.tier()));
         }
 
@@ -164,12 +149,12 @@ public final class DoomsdayHero implements Hero {
          * ({@link #visibility}, synced through the {@code ability_availability} attachment).
          */
         public static boolean isUnlockedAtTier(int tier, ResourceLocation abilityId) {
-                if (AbilityIds.DOOMSDAY_SMASH.equals(abilityId)) return tier >= 2;
-                if (AbilityIds.DOOMSDAY_ROAR.equals(abilityId)) return tier >= 3;
-                if (AbilityIds.DOOMSDAY_BONE_SPIKE.equals(abilityId)) return tier >= 4;
-                if (AbilityIds.DOOMSDAY_CHARGE_TACKLE.equals(abilityId)) return tier >= 5;
-                if (AbilityIds.DOOMSDAY_BERSERK.equals(abilityId)) return tier >= 6;
-                if (AbilityIds.DOOMSDAY_DOOM_GRIP.equals(abilityId)) return tier >= 7;
+                if (DoomsdayAbilities.DOOMSDAY_SMASH.equals(abilityId)) return tier >= 2;
+                if (DoomsdayAbilities.DOOMSDAY_ROAR.equals(abilityId)) return tier >= 3;
+                if (DoomsdayAbilities.DOOMSDAY_BONE_SPIKE.equals(abilityId)) return tier >= 4;
+                if (DoomsdayAbilities.DOOMSDAY_CHARGE_TACKLE.equals(abilityId)) return tier >= 5;
+                if (DoomsdayAbilities.DOOMSDAY_BERSERK.equals(abilityId)) return tier >= 6;
+                if (DoomsdayAbilities.DOOMSDAY_DOOM_GRIP.equals(abilityId)) return tier >= 7;
                 return false;
         }
 
@@ -197,12 +182,12 @@ public final class DoomsdayHero implements Hero {
                 player.removeEffect(MobEffects.JUMP);
                 player.removeEffect(MobEffects.FIRE_RESISTANCE);
                 if (player instanceof ServerPlayer sp) {
-                        io.github.grebeshok105.codex.effect.DoomsdayAdaptationController.clear(sp);
-                        io.github.grebeshok105.codex.effect.DoomsdayEffectAdaptationController.clear(sp);
-                        io.github.grebeshok105.codex.ability.DoomsdayBerserkAbility.clearBuff(sp);
-                        io.github.grebeshok105.codex.effect.DoomsdayTierController.resetProgress(sp);
-                        io.github.grebeshok105.codex.ability.ChargeTackleAbility.clear(sp);
-                        io.github.grebeshok105.codex.effect.DoomGripController.clear(sp);
+                        DoomsdayAdaptationController.clear(sp);
+                        DoomsdayEffectAdaptationController.clear(sp);
+                        DoomsdayBerserkAbility.clearBuff(sp);
+                        DoomsdayTierController.resetProgress(sp);
+                        ChargeTackleAbility.clear(sp);
+                        DoomGripController.clear(sp);
                 }
         }
 

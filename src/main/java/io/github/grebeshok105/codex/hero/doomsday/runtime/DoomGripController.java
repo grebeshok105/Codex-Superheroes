@@ -1,11 +1,13 @@
-package io.github.grebeshok105.codex.effect;
+package io.github.grebeshok105.codex.hero.doomsday.runtime;
 
-import io.github.grebeshok105.codex.damage.ModDamageTypes;
 import io.github.grebeshok105.codex.core.lifecycle.ControlLockKind;
 import io.github.grebeshok105.codex.core.lifecycle.EntityControlLock;
+import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
+import io.github.grebeshok105.codex.hero.doomsday.registry.DoomsdayDamageTypes;
 import io.github.grebeshok105.codex.util.SafeTeleport;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
+import io.github.grebeshok105.codex.mechanic.motion.Motion;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -18,8 +20,8 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
-import java.util.WeakHashMap;
 
 public final class DoomGripController {
 	private static final int TOTAL_TICKS = 70;
@@ -28,14 +30,18 @@ public final class DoomGripController {
 	private static final float HIT_DAMAGE = 18f;
 	private static final int HIT_INTERVAL = 10;
 
-	private static final Map<UUID, GripState> ACTIVE = new WeakHashMap<>();
+	// Empty clearOn: the module's onLeave/onDeath/onHeroClear hooks route through clear(),
+	// which removes the map entry AND releases the target's NO_AI lock together — auto-clear
+	// on leave would drop the entry first and strand the lock.
+	private static final OwnedSessionMap<UUID, GripState> ACTIVE =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), Set.of());
 
 	private DoomGripController() {
 	}
 
 	public static void start(ServerPlayer doomsday, LivingEntity target) {
 		EntityControlLock.acquire(target, ControlLockKind.NO_AI, doomsday);
-		ACTIVE.put(doomsday.getUUID(), new GripState(target, 0));
+		ACTIVE.put(doomsday.getUUID(), doomsday.getUUID(), new GripState(target, 0));
 		ServerLevel level = doomsday.serverLevel();
 
 		Vec3 look = doomsday.getLookAngle().normalize();
@@ -52,7 +58,7 @@ public final class DoomGripController {
 	}
 
 	public static void serverTick() {
-		Iterator<Map.Entry<UUID, GripState>> it = ACTIVE.entrySet().iterator();
+		Iterator<Map.Entry<UUID, GripState>> it = ACTIVE.iterator();
 		while (it.hasNext()) {
 			Map.Entry<UUID, GripState> entry = it.next();
 			GripState state = entry.getValue();
@@ -75,20 +81,18 @@ public final class DoomGripController {
 					sp.connection.teleport(holdPos.x, holdPos.y, holdPos.z, sp.getYRot(), sp.getXRot());
 					sp.stopFallFlying();
 					sp.setNoActionTime(0);
-					sp.connection.send(new ClientboundSetEntityMotionPacket(sp.getId(), Vec3.ZERO));
 				} else if (target instanceof net.minecraft.world.entity.Mob mob) {
 					mob.moveTo(holdPos.x, holdPos.y, holdPos.z, mob.getYRot(), mob.getXRot());
 				} else {
 					target.setPos(holdPos.x, holdPos.y, holdPos.z);
 				}
-				target.setDeltaMovement(Vec3.ZERO);
+				Motion.set(target, Vec3.ZERO, Motion.Sync.MARK_AND_SEND_TO_PLAYER);
 				target.fallDistance = 0;
-				target.hurtMarked = true;
 				target.stopUsingItem();
 				target.removeEffect(MobEffects.LEVITATION);
 
 				if ((state.tick - LUNGE_END) % HIT_INTERVAL == 0) {
-					target.hurt(ModDamageTypes.doomsdayDoomGrip(level, doomsday), HIT_DAMAGE);
+					target.hurt(DoomsdayDamageTypes.doomsdayDoomGrip(level, doomsday), HIT_DAMAGE);
 					level.playSound(null, target.getX(), target.getY(), target.getZ(),
 							SoundEvents.PLAYER_ATTACK_CRIT, SoundSource.PLAYERS, 1.4f, 0.7f);
 					level.sendParticles(ParticleTypes.DAMAGE_INDICATOR,
@@ -98,11 +102,7 @@ public final class DoomGripController {
 			} else {
 				Vec3 look = doomsday.getLookAngle().normalize();
 				Vec3 throwVec = new Vec3(look.x * 2.5, 0.7, look.z * 2.5);
-				target.setDeltaMovement(throwVec);
-				target.hurtMarked = true;
-				if (target instanceof ServerPlayer sp) {
-					sp.connection.send(new ClientboundSetEntityMotionPacket(sp.getId(), throwVec));
-				}
+				Motion.set(target, throwVec, Motion.Sync.MARK_AND_SEND_TO_PLAYER);
 				target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 120, 2));
 
 				level.playSound(null, doomsday.getX(), doomsday.getY(), doomsday.getZ(),

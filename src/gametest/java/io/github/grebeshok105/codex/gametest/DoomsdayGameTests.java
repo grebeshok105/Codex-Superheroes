@@ -2,7 +2,7 @@ package io.github.grebeshok105.codex.gametest;
 
 import com.mojang.authlib.GameProfile;
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.attachment.ModAttachments;
+import io.github.grebeshok105.codex.hero.doomsday.DoomsdayAttachments;
 import io.github.grebeshok105.codex.core.ability.AbilityRegistry;
 import io.github.grebeshok105.codex.core.ability.AbilityRouter;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
@@ -14,15 +14,15 @@ import io.github.grebeshok105.codex.core.lifecycle.ControlLockKind;
 import io.github.grebeshok105.codex.core.transform.HeroDataStore;
 import io.github.grebeshok105.codex.core.transform.HeroTransformService;
 import io.github.grebeshok105.codex.damage.ModDamageTypes;
-import io.github.grebeshok105.codex.effect.DoomGripController;
-import io.github.grebeshok105.codex.effect.DoomsdayAdaptationController;
-import io.github.grebeshok105.codex.effect.DoomsdayEffectAdaptationController;
-import io.github.grebeshok105.codex.effect.DoomsdayProgress;
-import io.github.grebeshok105.codex.effect.DoomsdayTierController;
-import io.github.grebeshok105.codex.hero.AbilityScopedModifiers;
-import io.github.grebeshok105.codex.item.KryptoniteShardItem;
-import io.github.grebeshok105.codex.item.ModItems;
-import io.github.grebeshok105.codex.network.DoomsdayProgressS2CPayload;
+import io.github.grebeshok105.codex.hero.doomsday.runtime.DoomGripController;
+import io.github.grebeshok105.codex.hero.doomsday.runtime.DoomsdayAdaptationController;
+import io.github.grebeshok105.codex.hero.doomsday.runtime.DoomsdayEffectAdaptationController;
+import io.github.grebeshok105.codex.hero.doomsday.runtime.DoomsdayProgress;
+import io.github.grebeshok105.codex.hero.doomsday.runtime.DoomsdayTierController;
+import io.github.grebeshok105.codex.hero.doomsday.runtime.DoomsdayModifiers;
+import io.github.grebeshok105.codex.hero.doomsday.item.KryptoniteShardItem;
+import io.github.grebeshok105.codex.hero.doomsday.DoomsdayItems;
+import io.github.grebeshok105.codex.hero.doomsday.net.DoomsdayProgressS2CPayload;
 import io.netty.channel.embedded.EmbeddedChannel;
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
@@ -93,7 +93,7 @@ public final class DoomsdayGameTests implements FabricGameTest {
 	}
 
 	private static DoomsdayProgress progress(ServerPlayer player) {
-		return player.getAttachedOrCreate(ModAttachments.DOOMSDAY_PROGRESS);
+		return player.getAttachedOrCreate(DoomsdayAttachments.PROGRESS);
 	}
 
 	private static void hit(ServerPlayer player, DamageSource source, float amount) {
@@ -124,17 +124,17 @@ public final class DoomsdayGameTests implements FabricGameTest {
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void genomeItemTransformsAndShiftUseUntransforms(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
-		player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ModItems.DOOMSDAY_GENOME));
+		player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(DoomsdayItems.DOOMSDAY_GENOME));
 
 		player.setShiftKeyDown(true);
 		InteractionResultHolder<ItemStack> noHeroUse =
-				ModItems.DOOMSDAY_GENOME.use(helper.getLevel(), player, InteractionHand.MAIN_HAND);
+				DoomsdayItems.DOOMSDAY_GENOME.use(helper.getLevel(), player, InteractionHand.MAIN_HAND);
 		helper.assertTrue(noHeroUse.getResult() == InteractionResult.FAIL,
 				"shift-use with no hero does nothing");
 
 		player.setShiftKeyDown(false);
 		InteractionResultHolder<ItemStack> transformed =
-				ModItems.DOOMSDAY_GENOME.use(helper.getLevel(), player, InteractionHand.MAIN_HAND);
+				DoomsdayItems.DOOMSDAY_GENOME.use(helper.getLevel(), player, InteractionHand.MAIN_HAND);
 		helper.assertTrue(transformed.getResult() == InteractionResult.CONSUME,
 				"use transforms into doomsday");
 		helper.assertValueEqual(HeroDataStore.get(player).heroId(), DOOMSDAY, "hero is doomsday");
@@ -142,13 +142,13 @@ public final class DoomsdayGameTests implements FabricGameTest {
 
 		player.setShiftKeyDown(true);
 		InteractionResultHolder<ItemStack> insideCooldown =
-				ModItems.DOOMSDAY_GENOME.use(helper.getLevel(), player, InteractionHand.MAIN_HAND);
+				DoomsdayItems.DOOMSDAY_GENOME.use(helper.getLevel(), player, InteractionHand.MAIN_HAND);
 		helper.assertTrue(insideCooldown.getResult() == InteractionResult.FAIL,
 				"shift-use inside the 20-tick transform cooldown is rejected");
 
 		helper.runAfterDelay(21, () -> {
 			InteractionResultHolder<ItemStack> untransformed =
-					ModItems.DOOMSDAY_GENOME.use(helper.getLevel(), player, InteractionHand.MAIN_HAND);
+					DoomsdayItems.DOOMSDAY_GENOME.use(helper.getLevel(), player, InteractionHand.MAIN_HAND);
 			helper.assertTrue(untransformed.getResult() == InteractionResult.CONSUME,
 					"shift-use after the cooldown untransforms");
 			helper.assertFalse(HeroDataStore.get(player).hasHero(), "hero cleared");
@@ -178,8 +178,8 @@ public final class DoomsdayGameTests implements FabricGameTest {
 				"one adaptation recorded");
 		AttributeInstance attack = doomsday.getAttribute(Attributes.ATTACK_DAMAGE);
 		helper.assertTrue(attack != null
-						&& attack.getModifier(AbilityScopedModifiers.DOOMSDAY_ADAPT_DAMAGE) != null
-						&& attack.getModifier(AbilityScopedModifiers.DOOMSDAY_ADAPT_DAMAGE).amount() == 1.0,
+						&& attack.getModifier(DoomsdayModifiers.DOOMSDAY_ADAPT_DAMAGE) != null
+						&& attack.getModifier(DoomsdayModifiers.DOOMSDAY_ADAPT_DAMAGE).amount() == 1.0,
 				"each adaptation grants +1 attack damage");
 
 		doomsday.invulnerableTime = 0;
@@ -341,7 +341,7 @@ public final class DoomsdayGameTests implements FabricGameTest {
 				"adapt counter cleared");
 		AttributeInstance attack = player.getAttribute(Attributes.ATTACK_DAMAGE);
 		helper.assertTrue(attack == null
-						|| attack.getModifier(AbilityScopedModifiers.DOOMSDAY_ADAPT_DAMAGE) == null,
+						|| attack.getModifier(DoomsdayModifiers.DOOMSDAY_ADAPT_DAMAGE) == null,
 				"the adapt damage bonus is removed");
 		TestPlayers.leave(player);
 		helper.succeed();
@@ -382,7 +382,7 @@ public final class DoomsdayGameTests implements FabricGameTest {
 		for (ItemEntity entity : helper.getLevel().getEntitiesOfClass(ItemEntity.class,
 				doomsday.getBoundingBox().inflate(8.0))) {
 			ItemStack stack = entity.getItem();
-			if (stack.is(ModItems.KRYPTONITE_SHARD)
+			if (stack.is(DoomsdayItems.KRYPTONITE_SHARD)
 					&& owner.equals(KryptoniteShardItem.getOwner(stack))
 					&& doomsday.getUUID().equals(KryptoniteShardItem.getTargetDoomsday(stack))) {
 				done.run();
@@ -405,21 +405,21 @@ public final class DoomsdayGameTests implements FabricGameTest {
 		TestHeroes.transform(doomsday, DOOMSDAY);
 		ServerLevel level = helper.getLevel();
 
-		ItemEntity unowned = dropShardAt(level, new ItemStack(ModItems.KRYPTONITE_SHARD), doomsday);
+		ItemEntity unowned = dropShardAt(level, new ItemStack(DoomsdayItems.KRYPTONITE_SHARD), doomsday);
 		unowned.playerTouch(doomsday);
-		helper.assertTrue(TestPlayers.count(doomsday, ModItems.KRYPTONITE_SHARD) == 0
+		helper.assertTrue(TestPlayers.count(doomsday, DoomsdayItems.KRYPTONITE_SHARD) == 0
 						&& unowned.isAlive(), "a doomsday cannot pick up even an unowned shard");
 
 		ItemEntity bound = dropShardAt(level,
 				KryptoniteShardItem.create(owner.getUUID(), doomsday.getUUID()), doomsday);
 		bound.playerTouch(doomsday);
-		helper.assertTrue(TestPlayers.count(doomsday, ModItems.KRYPTONITE_SHARD) == 0
+		helper.assertTrue(TestPlayers.count(doomsday, DoomsdayItems.KRYPTONITE_SHARD) == 0
 						&& bound.isAlive(), "a doomsday cannot pick up a bound shard");
 		bound.playerTouch(stranger);
-		helper.assertTrue(TestPlayers.count(stranger, ModItems.KRYPTONITE_SHARD) == 0
+		helper.assertTrue(TestPlayers.count(stranger, DoomsdayItems.KRYPTONITE_SHARD) == 0
 						&& bound.isAlive(), "a non-owner stranger cannot pick it up");
 		bound.playerTouch(owner);
-		helper.assertTrue(TestPlayers.count(owner, ModItems.KRYPTONITE_SHARD) == 1,
+		helper.assertTrue(TestPlayers.count(owner, DoomsdayItems.KRYPTONITE_SHARD) == 1,
 				"the owner picks it up");
 		TestPlayers.leave(doomsday);
 		TestPlayers.leave(owner);
@@ -458,11 +458,11 @@ public final class DoomsdayGameTests implements FabricGameTest {
 		helper.runAfterDelay(25, () -> {
 			helper.assertFalse(DoomsdayAdaptationController.hasAdapted(doomsday, freeze),
 					"three owned shards strip one adaptation");
-			helper.assertTrue(TestPlayers.count(attacker, ModItems.KRYPTONITE_SHARD) == 0,
+			helper.assertTrue(TestPlayers.count(attacker, DoomsdayItems.KRYPTONITE_SHARD) == 0,
 					"the three shards are consumed");
 			AttributeInstance attack = doomsday.getAttribute(Attributes.ATTACK_DAMAGE);
 			helper.assertTrue(attack == null
-							|| attack.getModifier(AbilityScopedModifiers.DOOMSDAY_ADAPT_DAMAGE) == null,
+							|| attack.getModifier(DoomsdayModifiers.DOOMSDAY_ADAPT_DAMAGE) == null,
 					"losing the last adaptation removes the damage bonus");
 
 			hit(doomsday, freeze, 5.0f);

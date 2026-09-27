@@ -1,6 +1,6 @@
-package io.github.grebeshok105.codex.mixin;
+package io.github.grebeshok105.codex.mixin.hero.doomsday;
 
-import io.github.grebeshok105.codex.effect.DoomsdayEffectAdaptationController;
+import io.github.grebeshok105.codex.core.lifecycle.MobEffectGates;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
@@ -18,8 +18,7 @@ public abstract class LivingEntityEffectMixin {
 			CallbackInfoReturnable<Boolean> cir) {
 		LivingEntity self = (LivingEntity) (Object) this;
 		if (!(self instanceof ServerPlayer player)) return;
-		if (!DoomsdayEffectAdaptationController.isTracked(instance.getEffect())) return;
-		if (!DoomsdayEffectAdaptationController.onApply(player, instance)) {
+		if (!MobEffectGates.allow(player, instance)) {
 			cir.setReturnValue(false);
 		}
 	}

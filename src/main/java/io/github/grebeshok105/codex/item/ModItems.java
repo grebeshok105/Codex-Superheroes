@@ -74,16 +74,6 @@ public final class ModItems {
 			new ShadowMonarchsCloakItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
 	);
 
-	public static final TransformationItem DOOMSDAY_GENOME = register(
-			"doomsday_genome",
-			new TransformationItem(ModId.of("doomsday"), new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC),
-					new TransformationLore(ChatFormatting.DARK_PURPLE,
-							List.of(new TransformationLore.Line("item.superheroes.doomsday_genome.lore.line1", ChatFormatting.LIGHT_PURPLE),
-									new TransformationLore.Line("item.superheroes.doomsday_genome.lore.line2", ChatFormatting.DARK_GRAY)),
-							List.of(new TransformationLore.Line("item.superheroes.doomsday_genome.lore.usage", ChatFormatting.RED),
-									new TransformationLore.Line("item.superheroes.doomsday_genome.lore.untransform", ChatFormatting.GOLD))))
-	);
-
 	public static final InfinityGauntletItem INFINITY_GAUNTLET = register(
 			"infinity_gauntlet",
 			new InfinityGauntletItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
@@ -118,12 +108,6 @@ public final class ModItems {
 			InfinityStoneType.MIND.getItemRegistryName(),
 			new InfinityStoneItem(InfinityStoneType.MIND, new Item.Properties().stacksTo(1).rarity(Rarity.EPIC))
 	);
-
-	public static final KryptoniteShardItem KRYPTONITE_SHARD = register(
-			"kryptonite_shard",
-			new KryptoniteShardItem(new Item.Properties().stacksTo(16).rarity(Rarity.RARE))
-	);
-
 
 	public static final TransformationItem RAIDEN_SUIT = register(
 			"raiden_suit",

@@ -6,10 +6,12 @@ import io.github.grebeshok105.codex.attachment.ModAttachments;
 import io.github.grebeshok105.codex.core.ability.AbilityAvailability;
 import io.github.grebeshok105.codex.core.ability.AbilityAvailability.Visibility;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
-import io.github.grebeshok105.codex.effect.DoomsdayProgress;
+import io.github.grebeshok105.codex.hero.doomsday.runtime.DoomsdayProgress;
 import io.github.grebeshok105.codex.effect.ModEffects;
 import io.github.grebeshok105.codex.effect.RegulusMadnessState;
-import io.github.grebeshok105.codex.hero.DoomsdayHero;
+import io.github.grebeshok105.codex.hero.doomsday.DoomsdayAbilities;
+import io.github.grebeshok105.codex.hero.doomsday.DoomsdayAttachments;
+import io.github.grebeshok105.codex.hero.doomsday.DoomsdayHero;
 import io.github.grebeshok105.codex.core.hero.Heroes;
 import io.github.grebeshok105.codex.hero.naruto.NarutoHero;
 import io.github.grebeshok105.codex.hero.RegulusHero;
@@ -41,9 +43,9 @@ public class AbilityAvailabilityGameTests implements FabricGameTest {
 		tickSync(player);
 		AbilityAvailability availability = player.getAttached(CoreAttachments.ABILITY_AVAILABILITY);
 		helper.assertTrue(availability != null, "the sync task wrote the attachment");
-		helper.assertValueEqual(availability.visibilityOf(AbilityIds.DOOMSDAY_DOOM_GRIP),
+		helper.assertValueEqual(availability.visibilityOf(DoomsdayAbilities.DOOMSDAY_DOOM_GRIP),
 				Visibility.HIDDEN, "doom grip at tier 1");
-		helper.assertValueEqual(availability.visibilityOf(AbilityIds.DOOMSDAY_SMASH),
+		helper.assertValueEqual(availability.visibilityOf(DoomsdayAbilities.DOOMSDAY_SMASH),
 				Visibility.HIDDEN, "smash needs tier 2");
 		helper.assertTrue(availability.entries().size() == 6,
 				"tier 1 hides all six tier-gated abilities, got " + availability.entries());
@@ -57,7 +59,7 @@ public class AbilityAvailabilityGameTests implements FabricGameTest {
 	public void doomGripBecomesAvailableAtTier7(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, DoomsdayHero.ID);
-		player.setAttached(ModAttachments.DOOMSDAY_PROGRESS, DoomsdayProgress.EMPTY.withTier(7));
+		player.setAttached(DoomsdayAttachments.PROGRESS, DoomsdayProgress.EMPTY.withTier(7));
 
 		tickSync(player);
 		AbilityAvailability availability = player.getAttached(CoreAttachments.ABILITY_AVAILABILITY);
@@ -82,7 +84,7 @@ public class AbilityAvailabilityGameTests implements FabricGameTest {
 		helper.assertTrue(player.getAttached(CoreAttachments.ABILITY_AVAILABILITY) == first,
 				"an unchanged answer is not rewritten (same instance)");
 
-		player.setAttached(ModAttachments.DOOMSDAY_PROGRESS, DoomsdayProgress.EMPTY.withTier(7));
+		player.setAttached(DoomsdayAttachments.PROGRESS, DoomsdayProgress.EMPTY.withTier(7));
 		tickSync(player);
 		helper.assertTrue(player.getAttached(CoreAttachments.ABILITY_AVAILABILITY) != first,
 				"a tier change writes a new value");

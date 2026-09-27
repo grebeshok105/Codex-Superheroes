@@ -1,16 +1,18 @@
-package io.github.grebeshok105.codex.effect;
+package io.github.grebeshok105.codex.hero.doomsday.runtime;
 
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
+import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.hero.DoomsdayHero;
-import io.github.grebeshok105.codex.hero.AbilityScopedModifiers;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -27,7 +29,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 
 public final class DoomsdayAdaptationController {
 	private static final float CUMULATIVE_THRESHOLD = 15f;
@@ -83,17 +85,33 @@ public final class DoomsdayAdaptationController {
 			)
 	);
 
-	private static final Map<UUID, Set<ResourceKey<DamageType>>> ADAPTED = new ConcurrentHashMap<>();
-	private static final Map<UUID, Set<ResourceKey<DamageType>>> BANNED = new ConcurrentHashMap<>();
-	private static final Map<UUID, Map<ResourceKey<DamageType>, Float>> CUMULATIVE = new ConcurrentHashMap<>();
-	private static final Map<UUID, Map<ResourceKey<DamageType>, Long>> FIRST_HIT_TICK = new ConcurrentHashMap<>();
-	private static final Map<UUID, Integer> ADAPT_COUNT = new ConcurrentHashMap<>();
+	private static final ResourceLocation DOOMSDAY_ID = ModId.of("doomsday");
+
+	private static final OwnedSessionMap<UUID, Set<ResourceKey<DamageType>>> ADAPTED =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), Set.of(ClearOn.HERO_CLEAR));
+	private static final OwnedSessionMap<UUID, Set<ResourceKey<DamageType>>> BANNED =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), Set.of(ClearOn.HERO_CLEAR));
+	private static final OwnedSessionMap<UUID, Map<ResourceKey<DamageType>, Float>> CUMULATIVE =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), Set.of(ClearOn.HERO_CLEAR));
+	private static final OwnedSessionMap<UUID, Map<ResourceKey<DamageType>, Long>> FIRST_HIT_TICK =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), Set.of(ClearOn.HERO_CLEAR));
+	private static final OwnedSessionMap<UUID, Integer> ADAPT_COUNT =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), Set.of(ClearOn.HERO_CLEAR));
 
 	private DoomsdayAdaptationController() {
 	}
 
 	private static ResourceKey<DamageType> key(String path) {
 		return ResourceKey.create(Registries.DAMAGE_TYPE, ModId.of(path));
+	}
+
+	private static <V> V getOrPut(OwnedSessionMap<UUID, V> map, UUID id, Supplier<V> make) {
+		V value = map.get(id);
+		if (value == null) {
+			value = make.get();
+			map.put(id, id, value);
+		}
+		return value;
 	}
 
 	public static void register(HeroModuleContext ctx) {
@@ -109,7 +127,7 @@ public final class DoomsdayAdaptationController {
 				return true;
 			}
 
-			Set<ResourceKey<DamageType>> adapted = ADAPTED.computeIfAbsent(player.getUUID(), k -> new HashSet<>());
+			Set<ResourceKey<DamageType>> adapted = getOrPut(ADAPTED, player.getUUID(), HashSet::new);
 			if (adapted.contains(typeKey) || isAdaptedRelated(adapted, typeKey)) {
 				return false;
 			}
@@ -128,12 +146,12 @@ public final class DoomsdayAdaptationController {
 				return;
 			}
 
-			Set<ResourceKey<DamageType>> adapted = ADAPTED.computeIfAbsent(player.getUUID(), k -> new HashSet<>());
-			Set<ResourceKey<DamageType>> banned = BANNED.computeIfAbsent(player.getUUID(), k -> new HashSet<>());
+			Set<ResourceKey<DamageType>> adapted = getOrPut(ADAPTED, player.getUUID(), HashSet::new);
+			Set<ResourceKey<DamageType>> banned = getOrPut(BANNED, player.getUUID(), HashSet::new);
 			if (!GENERIC_TYPES.contains(typeKey) && !banned.contains(typeKey) && !isInBannedGroup(banned, typeKey)) {
 				long now = player.serverLevel().getGameTime();
-				Map<ResourceKey<DamageType>, Float> perType = CUMULATIVE.computeIfAbsent(player.getUUID(), k -> new HashMap<>());
-				Map<ResourceKey<DamageType>, Long> firstHit = FIRST_HIT_TICK.computeIfAbsent(player.getUUID(), k -> new HashMap<>());
+				Map<ResourceKey<DamageType>, Float> perType = getOrPut(CUMULATIVE, player.getUUID(), HashMap::new);
+				Map<ResourceKey<DamageType>, Long> firstHit = getOrPut(FIRST_HIT_TICK, player.getUUID(), HashMap::new);
 				Long firstTs = firstHit.get(typeKey);
 				if (firstTs == null || now - firstTs > IDLE_RESET_TICKS) {
 					firstHit.put(typeKey, now);
@@ -190,7 +208,7 @@ public final class DoomsdayAdaptationController {
 		if (adapted == null || adapted.isEmpty()) return null;
 		ResourceKey<DamageType> picked = adapted.iterator().next();
 		adapted.remove(picked);
-		Set<ResourceKey<DamageType>> banned = BANNED.computeIfAbsent(doomsday.getUUID(), k -> new HashSet<>());
+		Set<ResourceKey<DamageType>> banned = getOrPut(BANNED, doomsday.getUUID(), HashSet::new);
 		banned.add(picked);
 		Integer count = ADAPT_COUNT.get(doomsday.getUUID());
 		if (count != null && count > 0) {
@@ -198,9 +216,9 @@ public final class DoomsdayAdaptationController {
 			if (next <= 0) {
 				ADAPT_COUNT.remove(doomsday.getUUID());
 				AttributeInstance inst = doomsday.getAttribute(Attributes.ATTACK_DAMAGE);
-				if (inst != null) inst.removeModifier(AbilityScopedModifiers.DOOMSDAY_ADAPT_DAMAGE);
+				if (inst != null) inst.removeModifier(DoomsdayModifiers.DOOMSDAY_ADAPT_DAMAGE);
 			} else {
-				ADAPT_COUNT.put(doomsday.getUUID(), next);
+				ADAPT_COUNT.put(doomsday.getUUID(), doomsday.getUUID(), next);
 				applyDamageBonus(doomsday, next);
 			}
 		}
@@ -211,18 +229,20 @@ public final class DoomsdayAdaptationController {
 		if (GENERIC_TYPES.contains(typeKey)) {
 			return;
 		}
-		Set<ResourceKey<DamageType>> adapted = ADAPTED.computeIfAbsent(player.getUUID(), k -> new HashSet<>());
+		Set<ResourceKey<DamageType>> adapted = getOrPut(ADAPTED, player.getUUID(), HashSet::new);
 		if (!adapted.add(typeKey)) {
 			return;
 		}
-		int count = ADAPT_COUNT.merge(player.getUUID(), 1, Integer::sum);
+		Integer prev = ADAPT_COUNT.get(player.getUUID());
+		int count = prev == null ? 1 : prev + 1;
+		ADAPT_COUNT.put(player.getUUID(), player.getUUID(), count);
 		applyDamageBonus(player, count);
 
 		ServerLevel level = player.serverLevel();
 		level.playSound(null, player.getX(), player.getY(), player.getZ(),
 				SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 1.4f, 0.5f);
 		level.playSound(null, player.getX(), player.getY(), player.getZ(),
-				io.github.grebeshok105.codex.sound.ModSounds.DOOMSDAY_ROAR, SoundSource.PLAYERS, 0.5f, 0.95f);
+				io.github.grebeshok105.codex.hero.doomsday.sound.DoomsdaySounds.DOOMSDAY_ROAR, SoundSource.PLAYERS, 0.5f, 0.95f);
 
 		String typePath = typeKey.location().getPath();
 		Component title = Component.translatable("hero.superheroes.doomsday.adapted",
@@ -240,19 +260,21 @@ public final class DoomsdayAdaptationController {
 		if (inst == null) return;
 		double amount = ADAPT_DAMAGE_BONUS * count;
 		inst.addOrReplacePermanentModifier(new AttributeModifier(
-				AbilityScopedModifiers.DOOMSDAY_ADAPT_DAMAGE, amount, AttributeModifier.Operation.ADD_VALUE));
+				DoomsdayModifiers.DOOMSDAY_ADAPT_DAMAGE, amount, AttributeModifier.Operation.ADD_VALUE));
 	}
 
 	/** Вызывать на респавне — attribute modifier сбрасывается при remove/apply набора. */
 	public static void reapplyDamageBonus(ServerPlayer player) {
-		int count = ADAPT_COUNT.getOrDefault(player.getUUID(), 0);
+		Integer stored = ADAPT_COUNT.get(player.getUUID());
+		int count = stored == null ? 0 : stored;
 		if (count > 0) {
 			applyDamageBonus(player, count);
 		}
 	}
 
 	public static int getAdaptationCount(ServerPlayer player) {
-		return ADAPT_COUNT.getOrDefault(player.getUUID(), 0);
+		Integer stored = ADAPT_COUNT.get(player.getUUID());
+		return stored == null ? 0 : stored;
 	}
 
 	public static boolean hasAdapted(ServerPlayer player, DamageSource source) {
@@ -271,12 +293,12 @@ public final class DoomsdayAdaptationController {
 		ADAPT_COUNT.remove(id);
 		AttributeInstance inst = player.getAttribute(Attributes.ATTACK_DAMAGE);
 		if (inst != null) {
-			inst.removeModifier(AbilityScopedModifiers.DOOMSDAY_ADAPT_DAMAGE);
+			inst.removeModifier(DoomsdayModifiers.DOOMSDAY_ADAPT_DAMAGE);
 		}
 	}
 
 	private static boolean isDoomsday(ServerPlayer player) {
 		HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
-		return data.hasHero() && DoomsdayHero.ID.equals(data.heroId());
+		return data.hasHero() && DOOMSDAY_ID.equals(data.heroId());
 	}
 }

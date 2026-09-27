@@ -1,9 +1,10 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.doomsday.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
-import io.github.grebeshok105.codex.damage.ModDamageTypes;
+import io.github.grebeshok105.codex.hero.doomsday.registry.DoomsdayDamageTypes;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -17,13 +18,15 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 
 public final class DoomsdayBoneSpikeAbility implements Ability {
+	public static final ResourceLocation ID = ModId.of("doomsday_bone_spike");
+
 	private static final int COOLDOWN_TICKS = 30;
 	private static final double RANGE = 30.0;
 	private static final float DAMAGE = 18.0f;
 
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.DOOMSDAY_BONE_SPIKE;
+		return ID;
 	}
 
 	@Override
@@ -76,7 +79,7 @@ public final class DoomsdayBoneSpikeAbility implements Ability {
 		}
 
 		if (hit != null && hit.getEntity() instanceof LivingEntity living) {
-			living.hurt(ModDamageTypes.doomsdayBoneSpike(level, player), DAMAGE);
+			living.hurt(DoomsdayDamageTypes.doomsdayBoneSpike(level, player), DAMAGE);
 			living.knockback(0.4, -dir.x, -dir.z);
 			living.hurtMarked = true;
 			level.sendParticles(ParticleTypes.DAMAGE_INDICATOR, impactPos.x, impactPos.y, impactPos.z, 8, 0.2, 0.2, 0.2, 0.0);

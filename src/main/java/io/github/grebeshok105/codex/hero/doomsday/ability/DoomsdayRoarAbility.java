@@ -1,9 +1,10 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.doomsday.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
-import io.github.grebeshok105.codex.damage.ModDamageTypes;
+import io.github.grebeshok105.codex.hero.doomsday.registry.DoomsdayDamageTypes;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -20,6 +21,8 @@ import net.minecraft.world.phys.Vec3;
 import java.util.List;
 
 public final class DoomsdayRoarAbility implements Ability {
+	public static final ResourceLocation ID = ModId.of("doomsday_roar");
+
 	private static final int COOLDOWN_TICKS = 120;
 	private static final double RADIUS = 9.0;
 	private static final float DAMAGE = 8.0f;
@@ -27,7 +30,7 @@ public final class DoomsdayRoarAbility implements Ability {
 
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.DOOMSDAY_ROAR;
+		return ID;
 	}
 
 	@Override
@@ -64,7 +67,7 @@ public final class DoomsdayRoarAbility implements Ability {
 			double dist = to.length();
 			if (dist > RADIUS || dist < 0.001) continue;
 			Vec3 push = to.normalize().scale(KNOCKBACK);
-			entity.hurt(ModDamageTypes.doomsdayRoar(level, player), DAMAGE);
+			entity.hurt(DoomsdayDamageTypes.doomsdayRoar(level, player), DAMAGE);
 			entity.push(push.x, 0.6, push.z);
 			entity.hurtMarked = true;
 			if (entity instanceof LivingEntity living) {
@@ -74,7 +77,7 @@ public final class DoomsdayRoarAbility implements Ability {
 		}
 
 		level.playSound(null, origin.x, origin.y, origin.z,
-				io.github.grebeshok105.codex.sound.ModSounds.DOOMSDAY_ROAR, SoundSource.PLAYERS, 2.0f, 0.9f);
+				io.github.grebeshok105.codex.hero.doomsday.sound.DoomsdaySounds.DOOMSDAY_ROAR, SoundSource.PLAYERS, 2.0f, 0.9f);
 		level.playSound(null, origin.x, origin.y, origin.z,
 				SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.PLAYERS, 1.0f, 0.6f);
 

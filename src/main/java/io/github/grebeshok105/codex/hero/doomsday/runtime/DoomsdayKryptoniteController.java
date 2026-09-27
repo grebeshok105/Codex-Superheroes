@@ -1,16 +1,17 @@
-package io.github.grebeshok105.codex.effect;
+package io.github.grebeshok105.codex.hero.doomsday.runtime;
 
-import io.github.grebeshok105.codex.attachment.ModAttachments;
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
+import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
-import io.github.grebeshok105.codex.hero.DoomsdayHero;
-import io.github.grebeshok105.codex.item.KryptoniteShardItem;
-import io.github.grebeshok105.codex.item.ModItems;
+import io.github.grebeshok105.codex.hero.doomsday.item.KryptoniteShardItem;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -24,8 +25,8 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 public final class DoomsdayKryptoniteController {
 	private static final float SHARD_THRESHOLD = 30.0f;
@@ -33,7 +34,13 @@ public final class DoomsdayKryptoniteController {
 	private static final int CLEANSE_TICK_INTERVAL = 20;
 	private static final int CONSUME_COUNT = 3;
 
-	private static final Map<UUID, Map<UUID, Float>> ACCUM = new ConcurrentHashMap<>();
+	private static final ResourceLocation DOOMSDAY_ID = ModId.of("doomsday");
+
+	// Per-attacker damage credit, keyed by the victim doomsday. Never cleared in-session —
+	// it outlives relog/death like the old ConcurrentHashMap; OwnedSessionMap now drops it on
+	// server stop, covering the old cross-world leak.
+	private static final OwnedSessionMap<UUID, Map<UUID, Float>> ACCUM =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), Set.of());
 
 	private DoomsdayKryptoniteController() {
 	}
@@ -42,7 +49,7 @@ public final class DoomsdayKryptoniteController {
 		ServerLivingEntityEvents.AFTER_DAMAGE.register((entity, source, baseDamage, damageTaken, blocked) -> {
 			if (!(entity instanceof ServerPlayer doomsday)) return;
 			if (!isDoomsday(doomsday)) return;
-			DoomsdayProgress progress = doomsday.getAttachedOrCreate(ModAttachments.DOOMSDAY_PROGRESS);
+			DoomsdayProgress progress = doomsday.getAttachedOrCreate(DoomsdayProgress.ATTACHMENT);
 			if (progress.tier() < MIN_TIER) return;
 
 			Entity attackerEntity = source.getEntity();
@@ -52,7 +59,11 @@ public final class DoomsdayKryptoniteController {
 			if (DoomsdayAdaptationController.wouldBlock(doomsday, source)) return;
 			if (damageTaken <= 0f) return;
 
-			Map<UUID, Float> perAttacker = ACCUM.computeIfAbsent(doomsday.getUUID(), k -> new HashMap<>());
+			Map<UUID, Float> perAttacker = ACCUM.get(doomsday.getUUID());
+			if (perAttacker == null) {
+				perAttacker = new HashMap<>();
+				ACCUM.put(doomsday.getUUID(), doomsday.getUUID(), perAttacker);
+			}
 			float total = perAttacker.merge(attacker.getUUID(), damageTaken, Float::sum);
 			if (total >= SHARD_THRESHOLD) {
 				int shardsToDrop = (int) (total / SHARD_THRESHOLD);
@@ -95,7 +106,7 @@ public final class DoomsdayKryptoniteController {
 		Map<UUID, Integer> firstSlot = new HashMap<>();
 		for (int slot = 0; slot < attacker.getInventory().getContainerSize(); slot++) {
 			ItemStack stack = attacker.getInventory().getItem(slot);
-			if (stack.isEmpty() || !stack.is(ModItems.KRYPTONITE_SHARD)) continue;
+			if (stack.isEmpty() || !(stack.getItem() instanceof KryptoniteShardItem)) continue;
 			UUID target = KryptoniteShardItem.getTargetDoomsday(stack);
 			if (target == null) continue;
 			UUID owner = KryptoniteShardItem.getOwner(stack);
@@ -140,7 +151,7 @@ public final class DoomsdayKryptoniteController {
 		int remaining = count;
 		for (int slot = 0; slot < attacker.getInventory().getContainerSize() && remaining > 0; slot++) {
 			ItemStack stack = attacker.getInventory().getItem(slot);
-			if (stack.isEmpty() || !stack.is(ModItems.KRYPTONITE_SHARD)) continue;
+			if (stack.isEmpty() || !(stack.getItem() instanceof KryptoniteShardItem)) continue;
 			UUID target = KryptoniteShardItem.getTargetDoomsday(stack);
 			if (target == null || !target.equals(doomsdayUuid)) continue;
 			int take = Math.min(stack.getCount(), remaining);
@@ -159,6 +170,6 @@ public final class DoomsdayKryptoniteController {
 
 	private static boolean isDoomsday(ServerPlayer player) {
 		HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
-		return data.hasHero() && DoomsdayHero.ID.equals(data.heroId());
+		return data.hasHero() && DOOMSDAY_ID.equals(data.heroId());
 	}
 }

@@ -1,7 +1,8 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.doomsday.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.ability.Ability;
-import io.github.grebeshok105.codex.hero.AbilityScopedModifiers;
+import io.github.grebeshok105.codex.hero.doomsday.runtime.DoomsdayModifiers;
 import net.minecraft.core.Holder;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
@@ -14,9 +15,11 @@ import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 
 public final class DoomsdayBerserkAbility implements Ability {
+	public static final ResourceLocation ID = ModId.of("doomsday_berserk");
+
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.DOOMSDAY_BERSERK;
+		return ID;
 	}
 
 	@Override
@@ -39,7 +42,7 @@ public final class DoomsdayBerserkAbility implements Ability {
 		applyBuff(player);
 		ServerLevel level = player.serverLevel();
 		level.playSound(null, player.getX(), player.getY(), player.getZ(),
-				io.github.grebeshok105.codex.sound.ModSounds.DOOMSDAY_ROAR, SoundSource.PLAYERS, 1.2f, 0.85f);
+				io.github.grebeshok105.codex.hero.doomsday.sound.DoomsdaySounds.DOOMSDAY_ROAR, SoundSource.PLAYERS, 1.2f, 0.85f);
 		return true;
 	}
 
@@ -62,18 +65,18 @@ public final class DoomsdayBerserkAbility implements Ability {
 	}
 
 	private static void applyBuff(ServerPlayer player) {
-		modify(player, Attributes.ATTACK_DAMAGE, AbilityScopedModifiers.DOOMSDAY_BERSERK_DAMAGE,
+		modify(player, Attributes.ATTACK_DAMAGE, DoomsdayModifiers.DOOMSDAY_BERSERK_DAMAGE,
 				12.0, AttributeModifier.Operation.ADD_VALUE);
-		modify(player, Attributes.ARMOR, AbilityScopedModifiers.DOOMSDAY_BERSERK_ARMOR,
+		modify(player, Attributes.ARMOR, DoomsdayModifiers.DOOMSDAY_BERSERK_ARMOR,
 				-15.0, AttributeModifier.Operation.ADD_VALUE);
-		modify(player, Attributes.MOVEMENT_SPEED, AbilityScopedModifiers.DOOMSDAY_BERSERK_SPEED,
+		modify(player, Attributes.MOVEMENT_SPEED, DoomsdayModifiers.DOOMSDAY_BERSERK_SPEED,
 				0.15, AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
 	}
 
 	public static void clearBuff(ServerPlayer player) {
-		remove(player, Attributes.ATTACK_DAMAGE, AbilityScopedModifiers.DOOMSDAY_BERSERK_DAMAGE);
-		remove(player, Attributes.ARMOR, AbilityScopedModifiers.DOOMSDAY_BERSERK_ARMOR);
-		remove(player, Attributes.MOVEMENT_SPEED, AbilityScopedModifiers.DOOMSDAY_BERSERK_SPEED);
+		remove(player, Attributes.ATTACK_DAMAGE, DoomsdayModifiers.DOOMSDAY_BERSERK_DAMAGE);
+		remove(player, Attributes.ARMOR, DoomsdayModifiers.DOOMSDAY_BERSERK_ARMOR);
+		remove(player, Attributes.MOVEMENT_SPEED, DoomsdayModifiers.DOOMSDAY_BERSERK_SPEED);
 	}
 
 	private static void modify(ServerPlayer player, Holder<Attribute> attribute,

@@ -1,9 +1,16 @@
-package io.github.grebeshok105.codex.item;
+package io.github.grebeshok105.codex.hero.doomsday.item;
 
+import io.github.grebeshok105.codex.ModId;
+import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
+import io.github.grebeshok105.codex.core.content.OwnerGatedItem;
+import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.minecraft.ChatFormatting;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
@@ -12,16 +19,26 @@ import net.minecraft.world.item.component.CustomData;
 import java.util.List;
 import java.util.UUID;
 
-public class KryptoniteShardItem extends Item {
+public class KryptoniteShardItem extends Item implements OwnerGatedItem {
 	public static final String KEY_OWNER = "OwnerUUID";
 	public static final String KEY_TARGET = "TargetDoomsdayUUID";
+	private static final ResourceLocation DOOMSDAY_ID = ModId.of("doomsday");
 
 	public KryptoniteShardItem(Properties properties) {
 		super(properties);
 	}
 
+	/** Doomsday can never touch his own bane; only the owner may pick a bound shard up. */
+	@Override
+	public boolean deniesPickup(Player player, ItemStack stack) {
+		HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
+		if (data.hasHero() && DOOMSDAY_ID.equals(data.heroId())) return true;
+		UUID owner = getOwner(stack);
+		return owner != null && !owner.equals(player.getUUID());
+	}
+
 	public static ItemStack create(UUID owner, UUID targetDoomsday) {
-		ItemStack stack = new ItemStack(io.github.grebeshok105.codex.item.ModItems.KRYPTONITE_SHARD);
+		ItemStack stack = new ItemStack(BuiltInRegistries.ITEM.get(ModId.of("kryptonite_shard")));
 		CompoundTag tag = new CompoundTag();
 		tag.putUUID(KEY_OWNER, owner);
 		tag.putUUID(KEY_TARGET, targetDoomsday);

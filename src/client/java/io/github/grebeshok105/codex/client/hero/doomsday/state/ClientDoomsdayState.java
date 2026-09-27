@@ -1,4 +1,6 @@
-package io.github.grebeshok105.codex.client;
+package io.github.grebeshok105.codex.client.hero.doomsday.state;
+
+import io.github.grebeshok105.codex.client.ClientSessionState;
 
 public final class ClientDoomsdayState {
 	private static int tier = 1;

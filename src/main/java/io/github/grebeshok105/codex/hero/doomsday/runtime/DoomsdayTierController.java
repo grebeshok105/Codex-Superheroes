@@ -1,12 +1,12 @@
-package io.github.grebeshok105.codex.effect;
+package io.github.grebeshok105.codex.hero.doomsday.runtime;
 
-import io.github.grebeshok105.codex.attachment.ModAttachments;
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.lifecycle.PassiveReconciler;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
-import io.github.grebeshok105.codex.hero.DoomsdayHero;
-import io.github.grebeshok105.codex.hero.AbilityScopedModifiers;
-import io.github.grebeshok105.codex.network.DoomsdayProgressS2CPayload;
+import io.github.grebeshok105.codex.effect.FlightController;
+import io.github.grebeshok105.codex.effect.SuperJumpController;
+import io.github.grebeshok105.codex.hero.doomsday.net.DoomsdayProgressS2CPayload;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
@@ -15,6 +15,10 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -27,6 +31,8 @@ import net.minecraft.world.phys.Vec3;
 public final class DoomsdayTierController {
 	private static final int RELOCATE_MIN = 50;
 	private static final int RELOCATE_MAX = 100;
+
+	private static final ResourceLocation DOOMSDAY_ID = ModId.of("doomsday");
 
 	private DoomsdayTierController() {
 	}
@@ -45,7 +51,7 @@ public final class DoomsdayTierController {
 	}
 
 	private static void handleDeath(ServerPlayer player, DamageSource source) {
-		DoomsdayProgress progress = player.getAttachedOrCreate(ModAttachments.DOOMSDAY_PROGRESS);
+		DoomsdayProgress progress = player.getAttachedOrCreate(DoomsdayProgress.ATTACHMENT);
 		String sourceKey = describeDamageSource(source);
 		Vec3 deathPos = player.position();
 
@@ -55,7 +61,7 @@ public final class DoomsdayTierController {
 		if (oldTier < 7) {
 			next = next.withTierUp(player.serverLevel().getGameTime());
 		}
-		player.setAttached(ModAttachments.DOOMSDAY_PROGRESS, next);
+		player.setAttached(DoomsdayProgress.ATTACHMENT, next);
 
 		// Permanent immunity to that damage type via existing adaptation system
 		ResourceKey<DamageType> typeKey = source.typeHolder().unwrapKey().orElse(null);
@@ -67,14 +73,14 @@ public final class DoomsdayTierController {
 	}
 
 	private static void handleRespawn(ServerPlayer player) {
-		DoomsdayProgress progress = player.getAttachedOrCreate(ModAttachments.DOOMSDAY_PROGRESS);
+		DoomsdayProgress progress = player.getAttachedOrCreate(DoomsdayProgress.ATTACHMENT);
 
 		// The respawned entity carries no cooldown attachment — death already reset them.
 		java.util.UUID id = player.getUUID();
 		SuperJumpController.clear(id);
 		FlightController.clear(id);
 		DoomGripController.clear(player);
-		io.github.grebeshok105.codex.ability.ChargeTackleAbility.clear(player);
+		io.github.grebeshok105.codex.hero.doomsday.ability.ChargeTackleAbility.clear(player);
 
 		applyProgress(player);
 
@@ -82,18 +88,18 @@ public final class DoomsdayTierController {
 			Vec3 deathPos = progress.lastDeathPos();
 			ServerLevel level = player.serverLevel();
 			tryRelocate(player, level, deathPos);
-			player.setAttached(ModAttachments.DOOMSDAY_PROGRESS, progress.withRelocateClear());
+			player.setAttached(DoomsdayProgress.ATTACHMENT, progress.withRelocateClear());
 		}
 
 		sync(player);
 	}
 
 	public static void applyProgress(ServerPlayer player) {
-		DoomsdayProgress progress = player.getAttachedOrCreate(ModAttachments.DOOMSDAY_PROGRESS);
-		AbilityScopedModifiers.DOOMSDAY.remove(player);
-		AbilityScopedModifiers.buildDoomsdayTierSet(progress.tier()).apply(player);
-		io.github.grebeshok105.codex.core.lifecycle.PassiveReconciler.capture(player, DoomsdayHero.ID,
-				() -> DoomsdayHero.applyTierEffects(player, progress.tier()));
+		DoomsdayProgress progress = player.getAttachedOrCreate(DoomsdayProgress.ATTACHMENT);
+		DoomsdayModifiers.DOOMSDAY.remove(player);
+		DoomsdayModifiers.buildDoomsdayTierSet(progress.tier()).apply(player);
+		PassiveReconciler.capture(player, DOOMSDAY_ID,
+				() -> applyTierEffects(player, progress.tier()));
 		DoomsdayAdaptationController.reapplyDamageBonus(player);
 		player.setHealth(player.getMaxHealth());
 		sync(player);
@@ -101,9 +107,33 @@ public final class DoomsdayTierController {
 
 	public static void setTier(ServerPlayer player, int tier) {
 		int clamped = Math.max(1, Math.min(7, tier));
-		DoomsdayProgress progress = player.getAttachedOrCreate(ModAttachments.DOOMSDAY_PROGRESS);
-		player.setAttached(ModAttachments.DOOMSDAY_PROGRESS, progress.withTier(clamped));
+		DoomsdayProgress progress = player.getAttachedOrCreate(DoomsdayProgress.ATTACHMENT);
+		player.setAttached(DoomsdayProgress.ATTACHMENT, progress.withTier(clamped));
 		applyProgress(player);
+	}
+
+	/**
+	 * Tier-scaled mob effects (moved off {@code DoomsdayHero} — runtime leaves must not import
+	 * the module root). {@code DoomsdayHero.applyPassives} and the reconciler both call this.
+	 */
+	public static void applyTierEffects(Player player, int tier) {
+		if (tier >= 7) {
+			player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, -1, 1, true, false, true));
+			player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, -1, 1, true, false, true));
+			player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, -1, 1, true, false, true));
+			player.addEffect(new MobEffectInstance(MobEffects.JUMP, -1, 1, true, false, true));
+			player.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, -1, 0, true, false, true));
+		} else {
+			player.removeEffect(MobEffects.DAMAGE_BOOST);
+			player.removeEffect(MobEffects.JUMP);
+			player.removeEffect(MobEffects.FIRE_RESISTANCE);
+			player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, -1, 0, true, false, true));
+			if (tier >= 5) {
+				player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, -1, 0, true, false, true));
+			} else {
+				player.removeEffect(MobEffects.DAMAGE_RESISTANCE);
+			}
+		}
 	}
 
 	private static void tryRelocate(ServerPlayer player, ServerLevel level, Vec3 from) {
@@ -162,18 +192,18 @@ public final class DoomsdayTierController {
 	}
 
 	public static void sync(ServerPlayer player) {
-		DoomsdayProgress progress = player.getAttachedOrCreate(ModAttachments.DOOMSDAY_PROGRESS);
+		DoomsdayProgress progress = player.getAttachedOrCreate(DoomsdayProgress.ATTACHMENT);
 		ServerPlayNetworking.send(player, new DoomsdayProgressS2CPayload(progress.tier(), progress.adaptations()));
 	}
 
 	public static void resetProgress(ServerPlayer player) {
-		player.setAttached(ModAttachments.DOOMSDAY_PROGRESS, DoomsdayProgress.EMPTY);
-		AbilityScopedModifiers.DOOMSDAY.remove(player);
+		player.setAttached(DoomsdayProgress.ATTACHMENT, DoomsdayProgress.EMPTY);
+		DoomsdayModifiers.DOOMSDAY.remove(player);
 		sync(player);
 	}
 
 	private static boolean isDoomsday(ServerPlayer player) {
 		HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
-		return data.hasHero() && DoomsdayHero.ID.equals(data.heroId());
+		return data.hasHero() && DOOMSDAY_ID.equals(data.heroId());
 	}
 }

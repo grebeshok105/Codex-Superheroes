@@ -1,7 +1,9 @@
-package io.github.grebeshok105.codex.effect;
+package io.github.grebeshok105.codex.hero.doomsday.runtime;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.grebeshok105.codex.core.attachment.AttachmentRegistrar;
+import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.HashSet;
@@ -34,6 +36,17 @@ public record DoomsdayProgress(
 			Codec.BOOL.optionalFieldOf("pending_relocate", false).forGetter(DoomsdayProgress::pendingRelocate),
 			Codec.LONG.optionalFieldOf("last_tier_up", 0L).forGetter(DoomsdayProgress::lastTierUpTick)
 	).apply(instance, DoomsdayProgress::new));
+
+	/**
+	 * The attachment type itself lives on this leaf class so leaf packages can reach it without
+	 * importing the module root; {@code DoomsdayAttachments.PROGRESS} re-exports it for
+	 * module-external readers. Byte-identical to the former {@code ModAttachments.DOOMSDAY_PROGRESS}
+	 * registration (id {@code superheroes:doomsday_progress}, persistent + copyOnDeath + EMPTY
+	 * initializer). Created eagerly at class-init — see {@code DoomsdayAttachments.init()}.
+	 * Must be declared after {@link #CODEC} — the registry call reads it eagerly.
+	 */
+	public static final AttachmentType<DoomsdayProgress> ATTACHMENT =
+			AttachmentRegistrar.FABRIC.persistent("doomsday_progress", CODEC, true, () -> EMPTY);
 
 	public DoomsdayProgress {
 		deathSources = Set.copyOf(deathSources);

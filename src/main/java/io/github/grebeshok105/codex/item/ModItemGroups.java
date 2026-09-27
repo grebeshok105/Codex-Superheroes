@@ -37,9 +37,6 @@ public final class ModItemGroups {
 
 				output.accept(ModItems.SHADOW_MONARCHS_CLOAK);
 
-				output.accept(ModItems.DOOMSDAY_GENOME);
-				output.accept(ModItems.KRYPTONITE_SHARD);
-
 				output.accept(ModItems.INFINITY_GAUNTLET);
 				output.accept(ModItems.POWER_STONE);
 				output.accept(ModItems.SPACE_STONE);
