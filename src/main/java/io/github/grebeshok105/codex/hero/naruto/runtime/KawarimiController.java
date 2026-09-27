@@ -2,6 +2,9 @@ package io.github.grebeshok105.codex.hero.naruto.runtime;
 
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
+import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.hero.naruto.registry.NarutoParticles;
 import io.github.grebeshok105.codex.core.transform.HeroData;
@@ -19,8 +22,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.EnumSet;
 import java.util.Set;
 import java.util.UUID;
 
@@ -33,7 +35,10 @@ public final class KawarimiController {
 	private static final ResourceLocation HERO_ID = ModId.of("naruto");
 	private static final long COOLDOWN_TICKS = 1200L;
 
-	private static final Map<UUID, Long> LAST_TRIGGER = new HashMap<>();
+	// The cooldown survives relog/death today — onPlayerDisconnect below was never wired,
+	// so ClearOn stays empty to keep semantics identical.
+	private static final OwnedSessionMap<UUID, Long> LAST_TRIGGER =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.noneOf(ClearOn.class));
 
 	private KawarimiController() {
 	}
@@ -51,7 +56,7 @@ public final class KawarimiController {
 			Entity attacker = source.getEntity();
 			if (attacker == null) return true;
 
-			LAST_TRIGGER.put(player.getUUID(), now);
+			LAST_TRIGGER.put(player.getUUID(), player.getUUID(), now);
 			triggerSubstitution(player, attacker);
 			return false;
 		});

@@ -1,7 +1,9 @@
 package io.github.grebeshok105.codex.hero.reinhard.runtime;
 
 import io.github.grebeshok105.codex.combat.TargetFilters;
+import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.core.lifecycle.ControlLockKind;
 import io.github.grebeshok105.codex.core.lifecycle.EntityControlLock;
@@ -30,6 +32,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -51,9 +54,14 @@ public final class ReinhardTimeSlowController {
 	private record ActiveSlow(long endTick, ResourceKey<Level> level, Set<UUID> frozenEntities) {
 	}
 
-	private static final Set<UUID> ARMED = ConcurrentHashMap.newKeySet();
-	private static final Map<UUID, ActiveSlow> ACTIVE = new ConcurrentHashMap<>();
-	private static final Set<UUID> FROZEN_PLAYERS = ConcurrentHashMap.newKeySet();
+	private static final OwnedSessionMap<UUID, Boolean> ARMED =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.of(ClearOn.LEAVE, ClearOn.DEATH));
+	// ClearOn is empty on purpose: the value carries the frozen-entity ids
+	// releaseSlow() must unlock, so the drops stay inside the explicit hooks.
+	private static final OwnedSessionMap<UUID, ActiveSlow> ACTIVE =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.noneOf(ClearOn.class));
+	private static final OwnedSessionMap<UUID, Boolean> FROZEN_PLAYERS =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.of(ClearOn.LEAVE, ClearOn.DEATH));
 
 	private ReinhardTimeSlowController() {
 	}
@@ -70,11 +78,11 @@ public final class ReinhardTimeSlowController {
 			if (!(entity instanceof LivingEntity living) || living == attacker) return InteractionResult.PASS;
 			if (!living.isAlive()) return InteractionResult.PASS;
 			if (!ReinhardController.isReinhard(attacker)) return InteractionResult.PASS;
-			if (!ARMED.contains(attacker.getUUID())) return InteractionResult.PASS;
+			if (!ARMED.containsKey(attacker.getUUID())) return InteractionResult.PASS;
 			if (!ReinhardSword.isRoyalIcicle(attacker.getMainHandItem())) return InteractionResult.PASS;
 			ReinhardState rstate = attacker.getAttachedOrCreate(ReinhardState.ATTACHMENT);
 			if (!rstate.swordDrawn()) return InteractionResult.PASS;
-			if (!ARMED.remove(attacker.getUUID())) return InteractionResult.PASS;
+			if (ARMED.remove(attacker.getUUID()) == null) return InteractionResult.PASS;
 			triggerSlow(attacker);
 			return InteractionResult.PASS;
 		});
@@ -88,15 +96,13 @@ public final class ReinhardTimeSlowController {
 		UseBlockCallback.EVENT.register((player, world, hand, hitResult) ->
 				(player instanceof ServerPlayer sp && isFrozen(sp)) ? InteractionResult.FAIL : InteractionResult.PASS);
 
-		// Not OwnedSessionMap: entries carry release obligations — ACTIVE holds the frozen-entity
-		// ids releaseSlow() must unlock, so the drops stay inside the explicit hooks.
 		ctx.lifecycle().onLeave(ReinhardTimeSlowController::onPlayerGone);
 		ctx.lifecycle().onDeath(ReinhardTimeSlowController::onPlayerGone);
 		ctx.lifecycle().onServerStopped(ReinhardTimeSlowController::resetAll);
 	}
 
 	public static void armForFirstStrike(ServerPlayer player) {
-		ARMED.add(player.getUUID());
+		ARMED.put(player.getUUID(), player.getUUID(), Boolean.TRUE);
 	}
 
 	public static void disarmForFirstStrike(ServerPlayer player) {
@@ -108,7 +114,7 @@ public final class ReinhardTimeSlowController {
 	}
 
 	public static boolean isFrozen(ServerPlayer player) {
-		return FROZEN_PLAYERS.contains(player.getUUID());
+		return FROZEN_PLAYERS.containsKey(player.getUUID());
 	}
 
 	public static void triggerAbilitySlow(ServerPlayer player) {
@@ -117,7 +123,7 @@ public final class ReinhardTimeSlowController {
 
 	private static void triggerSlow(ServerPlayer player) {
 		long endTick = player.level().getGameTime() + SLOW_DURATION_TICKS;
-		ACTIVE.put(player.getUUID(), new ActiveSlow(endTick, player.level().dimension(), ConcurrentHashMap.newKeySet()));
+		ACTIVE.put(player.getUUID(), player.getUUID(), new ActiveSlow(endTick, player.level().dimension(), ConcurrentHashMap.newKeySet()));
 
 		ServerLevel level = player.serverLevel();
 		level.playSound(null, player.getX(), player.getY(), player.getZ(),
@@ -146,7 +152,7 @@ public final class ReinhardTimeSlowController {
 		long now = server.overworld().getGameTime();
 		Set<UUID> shouldBeFrozen = ConcurrentHashMap.newKeySet();
 
-		Iterator<Map.Entry<UUID, ActiveSlow>> it = ACTIVE.entrySet().iterator();
+		Iterator<Map.Entry<UUID, ActiveSlow>> it = ACTIVE.iterator();
 		boolean anyEnded = false;
 		while (it.hasNext()) {
 			Map.Entry<UUID, ActiveSlow> e = it.next();
@@ -171,7 +177,7 @@ public final class ReinhardTimeSlowController {
 
 		syncFrozenPlayers(server, shouldBeFrozen);
 
-		if (anyEnded && ACTIVE.isEmpty()) {
+		if (anyEnded && ACTIVE.size() == 0) {
 			broadcastTimeSlowOff(server);
 			ReinhardSwordDeathMarkController.flushDeaths(server);
 		}
@@ -204,16 +210,17 @@ public final class ReinhardTimeSlowController {
 	}
 
 	private static void syncFrozenPlayers(MinecraftServer server, Set<UUID> shouldBeFrozen) {
-		Iterator<UUID> it = FROZEN_PLAYERS.iterator();
+		Iterator<Map.Entry<UUID, Boolean>> it = FROZEN_PLAYERS.iterator();
 		while (it.hasNext()) {
-			UUID id = it.next();
+			UUID id = it.next().getKey();
 			if (!shouldBeFrozen.contains(id)) {
 				it.remove();
 				removeFreezeModifiers(server, id);
 			}
 		}
 		for (UUID id : shouldBeFrozen) {
-			if (FROZEN_PLAYERS.add(id)) {
+			if (!FROZEN_PLAYERS.containsKey(id)) {
+				FROZEN_PLAYERS.put(id, id, Boolean.TRUE);
 				applyFreezeModifiers(server, id);
 			}
 		}
@@ -253,7 +260,7 @@ public final class ReinhardTimeSlowController {
 		var attach = ReinhardState.ATTACHMENT;
 		ReinhardState state = player.getAttachedOrCreate(attach);
 		if (state.swordDrawn()) {
-			ARMED.add(player.getUUID());
+			ARMED.put(player.getUUID(), player.getUUID(), Boolean.TRUE);
 		}
 	}
 
@@ -273,13 +280,13 @@ public final class ReinhardTimeSlowController {
 
 	/** World shutdown — все замедления умирают вместе с миром. */
 	public static void resetAll(MinecraftServer server) {
-		for (Map.Entry<UUID, ActiveSlow> e : ACTIVE.entrySet()) {
+		for (Map.Entry<UUID, ActiveSlow> e : ACTIVE) {
 			releaseSlow(server, e.getKey(), e.getValue());
 		}
 		ACTIVE.clear();
 		ARMED.clear();
-		for (UUID id : FROZEN_PLAYERS) {
-			removeFreezeModifiers(server, id);
+		for (Map.Entry<UUID, Boolean> e : FROZEN_PLAYERS) {
+			removeFreezeModifiers(server, e.getKey());
 		}
 		FROZEN_PLAYERS.clear();
 	}
