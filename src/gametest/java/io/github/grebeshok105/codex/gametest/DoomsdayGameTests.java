@@ -51,10 +51,12 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
@@ -535,21 +537,44 @@ public final class DoomsdayGameTests implements FabricGameTest {
 		Zombie zombie = spawnAhead(helper, player);
 
 		TestPlayers.awaitVisible(helper, zombie, () -> {
-			AbilityRouter.activate(player, DOOMSDAY_DOOM_GRIP);
-
-			helper.assertTrue(DoomGripController.isGripping(player), "grip session started");
-			helper.assertTrue(TestPlayers.lockOwners(zombie, ControlLockKind.NO_AI)
-							.contains(player.getUUID()), "grip holds NO_AI on the victim");
-			helper.assertTrue(TestPlayers.lockOwners(player, ControlLockKind.INVULNERABLE)
-							.contains(player.getUUID()), "grip holds INVULNERABLE on the doomsday");
-
-			TestPlayers.leave(player);
-			helper.assertFalse(DoomGripController.isGripping(player), "leave ends the session");
-			helper.assertTrue(TestPlayers.lockOwners(zombie, ControlLockKind.NO_AI).isEmpty()
-							&& TestPlayers.lockOwners(player, ControlLockKind.INVULNERABLE).isEmpty(),
-					"leave releases every grip lock");
-			helper.succeed();
+			awaitScanSees(helper, player, zombie, 40, () -> {
+				gripBody(helper, player, zombie);
+			});
 		});
+	}
+
+	private static void gripBody(GameTestHelper helper, ServerPlayer player, Zombie zombie) {
+		AbilityRouter.activate(player, DOOMSDAY_DOOM_GRIP);
+
+		helper.assertTrue(DoomGripController.isGripping(player), "grip session started");
+		helper.assertTrue(TestPlayers.lockOwners(zombie, ControlLockKind.NO_AI)
+						.contains(player.getUUID()), "grip holds NO_AI on the victim");
+		helper.assertTrue(TestPlayers.lockOwners(player, ControlLockKind.INVULNERABLE)
+						.contains(player.getUUID()), "grip holds INVULNERABLE on the doomsday");
+
+		TestPlayers.leave(player);
+		helper.assertFalse(DoomGripController.isGripping(player), "leave ends the session");
+		helper.assertTrue(TestPlayers.lockOwners(zombie, ControlLockKind.NO_AI).isEmpty()
+						&& TestPlayers.lockOwners(player, ControlLockKind.INVULNERABLE).isEmpty(),
+				"leave releases every grip lock");
+		helper.succeed();
+	}
+
+	/**
+	 * {@link TestPlayers#awaitVisible} only waits for the entity to enter the UUID index,
+	 * but the ability's {@code getEntitiesOfClass} reads the spatial section — a fresh mob
+	 * can be index-visible a tick or two before the section sees it. Poll the same query
+	 * shape the ability runs before activating so a miss is impossible.
+	 */
+	private static void awaitScanSees(GameTestHelper helper, ServerPlayer player, LivingEntity victim,
+			int tries, Runnable body) {
+		AABB box = new AABB(player.position().subtract(8, 8, 8), player.position().add(8, 8, 8));
+		if (tries <= 0
+				|| helper.getLevel().getEntitiesOfClass(LivingEntity.class, box, e -> e == victim).contains(victim)) {
+			body.run();
+			return;
+		}
+		helper.runAfterDelay(1, () -> awaitScanSees(helper, player, victim, tries - 1, body));
 	}
 
 	private static Zombie spawnAhead(GameTestHelper helper, ServerPlayer player) {
