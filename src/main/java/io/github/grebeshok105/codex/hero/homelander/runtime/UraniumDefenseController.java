@@ -3,6 +3,9 @@ package io.github.grebeshok105.codex.hero.homelander.runtime;
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.hero.homelander.effect.HomelanderEffects;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
+import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
 import io.github.grebeshok105.codex.hero.homelander.item.UraniumDaggerItem;
 import io.github.grebeshok105.codex.hero.homelander.net.UraniumPressureS2CPayload;
 import io.github.grebeshok105.codex.hero.homelander.net.UraniumThreatS2CPayload;
@@ -16,9 +19,10 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,15 +35,19 @@ public final class UraniumDefenseController {
 	private static final int SCAN_INTERVAL_TICKS = 20;
 	private static final double THREAT_RADIUS = 64.0;
 	private static int tickCounter = 0;
-	private static Set<UUID> lastPressured = Collections.emptySet();
-	private static final Map<UUID, Integer> lastSourceCount = new HashMap<>();
+	// No lifecycle clearOn: both collections were rebuilt/trimmed by the 20-tick
+	// scan only — wholesale replace and retainAll — never lifecycle-cleared.
+	private static final OwnedSessionMap<UUID, Boolean> lastPressured =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.noneOf(ClearOn.class));
+	private static final OwnedSessionMap<UUID, Integer> lastSourceCount =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.noneOf(ClearOn.class));
 
 	private UraniumDefenseController() {
 	}
 
 
 	public static boolean isUnderUraniumThreat(Player player) {
-		return lastPressured.contains(player.getUUID());
+		return lastPressured.containsKey(player.getUUID());
 	}
 
 	public static boolean isHomelander(Player player) {
@@ -66,10 +74,14 @@ public final class UraniumDefenseController {
 	}
 
 	public static void sendCurrentTo(ServerPlayer player) {
-		List<UUID> ids = new ArrayList<>(lastPressured);
+		List<UUID> ids = new ArrayList<>();
+		for (Map.Entry<UUID, Boolean> e : lastPressured) {
+			ids.add(e.getKey());
+		}
 		ServerPlayNetworking.send(player, new UraniumPressureS2CPayload(ids));
 		if (isHomelander(player)) {
-			int count = lastSourceCount.getOrDefault(player.getUUID(), 0);
+			Integer stored = lastSourceCount.get(player.getUUID());
+			int count = stored == null ? 0 : stored;
 			boolean self = count > 0 && !HomelanderEffects.isMadness(player);
 			ServerPlayNetworking.send(player, new UraniumThreatS2CPayload(self, count));
 		}
@@ -102,9 +114,13 @@ public final class UraniumDefenseController {
 				if (count > 0) pressured.add(homelander.getUUID());
 			}
 
-			boolean pressureChanged = !pressured.equals(lastPressured);
+			boolean pressureChanged = pressured.size() != lastPressured.size()
+					|| pressured.stream().anyMatch(id -> !lastPressured.containsKey(id));
 			if (pressureChanged) {
-				lastPressured = pressured;
+				lastPressured.clear();
+				for (UUID id : pressured) {
+					lastPressured.put(id, id, Boolean.TRUE);
+				}
 				List<UUID> ids = new ArrayList<>(pressured);
 				UraniumPressureS2CPayload payload = new UraniumPressureS2CPayload(ids);
 				for (ServerPlayer p : players) {
@@ -124,11 +140,15 @@ public final class UraniumDefenseController {
 						l.playSound(null, homelander.getX(), homelander.getY(), homelander.getZ(),
 								SoundEvents.BEACON_ACTIVATE, SoundSource.PLAYERS, 0.7f, 1.0f);
 					}
-					lastSourceCount.put(homelander.getUUID(), count);
+					lastSourceCount.put(homelander.getUUID(), homelander.getUUID(), count);
 				}
 			}
 
-			lastSourceCount.keySet().retainAll(sourceCounts.keySet());
+			for (Iterator<Map.Entry<UUID, Integer>> it = lastSourceCount.iterator(); it.hasNext();) {
+				if (!sourceCounts.containsKey(it.next().getKey())) {
+					it.remove();
+				}
+			}
 			}
 
 }

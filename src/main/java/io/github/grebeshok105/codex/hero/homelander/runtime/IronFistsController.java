@@ -3,6 +3,9 @@ package io.github.grebeshok105.codex.hero.homelander.runtime;
 import io.github.grebeshok105.codex.ModId;
 import net.minecraft.resources.ResourceLocation;
 import io.github.grebeshok105.codex.core.ability.AbilityRouter;
+import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
 import io.github.grebeshok105.codex.hero.homelander.ability.IronFistsAbility;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
@@ -26,8 +29,7 @@ import net.minecraft.world.entity.npc.AbstractVillager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.EnumSet;
 import java.util.UUID;
 import net.minecraft.server.MinecraftServer;
 
@@ -54,8 +56,12 @@ public final class IronFistsController {
 	private static final int LOOP_INTERVAL_TICKS = 100;
 	private static final int AURA_INTERVAL_TICKS = 4;
 
-	private static final Map<UUID, Long> ACTIVATE_TICK = new HashMap<>();
-	private static final Map<UUID, Long> LAST_DASH = new HashMap<>();
+	// No lifecycle clearOn: markDeactivated / the not-active branch of tickPlayer
+	// remove both rows, exactly like the old maps.
+	private static final OwnedSessionMap<UUID, Long> ACTIVATE_TICK =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.noneOf(ClearOn.class));
+	private static final OwnedSessionMap<UUID, Long> LAST_DASH =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.noneOf(ClearOn.class));
 
 	private IronFistsController() {
 	}
@@ -82,7 +88,7 @@ public final class IronFistsController {
 				if (last != null && (now - last) < LMB_COOLDOWN_TICKS) {
 					return InteractionResult.FAIL;
 				}
-				LAST_DASH.put(sp.getUUID(), now);
+				LAST_DASH.put(sp.getUUID(), sp.getUUID(), now);
 
 				// dash в сторону цели
 				Vec3 toTarget = target.position().add(0, target.getBbHeight() * 0.4, 0)
@@ -135,7 +141,7 @@ public final class IronFistsController {
 	}
 
 	public static void markActivated(ServerPlayer player) {
-		ACTIVATE_TICK.put(player.getUUID(), player.level().getGameTime());
+		ACTIVATE_TICK.put(player.getUUID(), player.getUUID(), player.level().getGameTime());
 		LAST_DASH.remove(player.getUUID());
 	}
 
@@ -150,7 +156,7 @@ public final class IronFistsController {
 		Long started = ACTIVATE_TICK.get(id);
 		if (started == null) {
 			started = now;
-			ACTIVATE_TICK.put(id, started);
+			ACTIVATE_TICK.put(id, id, started);
 		}
 		long elapsed = now - started;
 		if (elapsed >= IronFistsAbility.DURATION_TICKS) {

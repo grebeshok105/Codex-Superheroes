@@ -7,7 +7,11 @@ import java.util.Map;
 import java.util.UUID;
 
 public final class ClientRemDemonismState {
-	private static final Map<UUID, State> STATES = new HashMap<>();
+	private static final class Maps {
+		final Map<UUID, State> states = new HashMap<>();
+	}
+
+	private static final Maps MAPS = new Maps();
 
 	static {
 		ClientSessionState.register(ClientRemDemonismState::clearAll);
@@ -21,33 +25,33 @@ public final class ClientRemDemonismState {
 			return;
 		}
 		if (!active && charge <= 0.001f && !permanent) {
-			STATES.remove(playerId);
+			MAPS.states.remove(playerId);
 			return;
 		}
-		STATES.put(playerId, new State(Math.max(0f, Math.min(100f, charge)), active, permanent));
+		MAPS.states.put(playerId, new State(Math.max(0f, Math.min(100f, charge)), active, permanent));
 	}
 
 	public static boolean isActive(UUID playerId) {
-		State state = STATES.get(playerId);
+		State state = MAPS.states.get(playerId);
 		return state != null && state.active();
 	}
 
 	public static float charge(UUID playerId) {
-		State state = STATES.get(playerId);
+		State state = MAPS.states.get(playerId);
 		return state == null ? 0f : state.charge();
 	}
 
 	public static boolean isPermanent(UUID playerId) {
-		State state = STATES.get(playerId);
+		State state = MAPS.states.get(playerId);
 		return state != null && state.permanent();
 	}
 
 	public static void clear(UUID playerId) {
-		STATES.remove(playerId);
+		MAPS.states.remove(playerId);
 	}
 
 	public static void clearAll() {
-		STATES.clear();
+		MAPS.states.clear();
 	}
 
 	private record State(float charge, boolean active, boolean permanent) {

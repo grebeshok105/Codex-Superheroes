@@ -14,7 +14,6 @@ import io.github.grebeshok105.codex.effect.SuperJumpController;
 import io.github.grebeshok105.codex.core.lifecycle.EntityControlLock;
 import io.github.grebeshok105.codex.core.lifecycle.PassiveReconciler;
 import io.github.grebeshok105.codex.mechanic.impact.BallisticBodyTracker;
-import io.github.grebeshok105.codex.core.resource.EnergyLocks;
 import io.github.grebeshok105.codex.core.resource.ResourceController;
 import io.github.grebeshok105.codex.core.transform.HeroDataStore;
 import io.github.grebeshok105.codex.core.transform.HeroTransformService;
@@ -43,7 +42,6 @@ public final class SharedMechanics {
 		ctx.lifecycle().onLeave(EntityControlLock::releaseOwnedBy);
 		ctx.lifecycle().onDeath(EntityControlLock::releaseOwnedBy);
 		ctx.lifecycle().onRespawn(HeroTransformService::onPlayerRespawn);
-		ctx.lifecycle().onServerStopped(server -> EnergyLocks.resetAll());
 
 		HeroLandingTracker.register(ctx);
 		ctx.ticks().global(HeroLandingTracker::pruneGonePlayers);

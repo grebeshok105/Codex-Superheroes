@@ -1,5 +1,8 @@
 package io.github.grebeshok105.codex.mechanic.impact;
 
+import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
 import io.github.grebeshok105.codex.core.net.ScreenShakeS2CPayload;
 import io.github.grebeshok105.codex.core.net.WallImpactDebrisS2CPayload;
 import io.github.grebeshok105.codex.mechanic.world.WorldDestructionPolicy;
@@ -22,7 +25,7 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -54,7 +57,10 @@ public final class BallisticBodyTracker {
 	private static final double SHAKE_RADIUS = 24.0;
 	private static final double DEBRIS_RADIUS = 48.0;
 
-	private static final HashMap<UUID, TrackedState> tracked = new HashMap<>();
+	// No lifecycle clearOn: entries are pruned by tick() validity and clear(body);
+	// the built-in server-stopped drop still covers world switches.
+	private static final OwnedSessionMap<UUID, TrackedState> tracked =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.noneOf(ClearOn.class));
 
 	private BallisticBodyTracker() {
 	}
@@ -77,7 +83,7 @@ public final class BallisticBodyTracker {
 			return;
 		}
 		TrackedState state = new TrackedState(body, level, power, source, superPierce);
-		tracked.put(id, state);
+		tracked.put(id, id, state);
 		try {
 			if (!tickBody(state)) {
 				tracked.remove(id);
@@ -94,8 +100,8 @@ public final class BallisticBodyTracker {
 	}
 
 	public static void tick(MinecraftServer server) {
-		if (tracked.isEmpty()) return;
-		Iterator<Map.Entry<UUID, TrackedState>> it = tracked.entrySet().iterator();
+		if (tracked.size() == 0) return;
+		Iterator<Map.Entry<UUID, TrackedState>> it = tracked.iterator();
 		while (it.hasNext()) {
 			Map.Entry<UUID, TrackedState> entry = it.next();
 			try {

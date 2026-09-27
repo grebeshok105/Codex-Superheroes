@@ -34,9 +34,13 @@ public final class ClientNanoSuitUpState {
 	public static final long DURATION_MS = 1500L;
 	private static final long REPAIR_MS = 1200L;
 
-	private static final Map<UUID, ResourceLocation> LAST_SUIT = new HashMap<>();
-	private static final Map<UUID, Anim> ANIMS = new HashMap<>();
-	private static final Map<UUID, Long> REPAIRS = new HashMap<>();
+	private static final class Maps {
+		final Map<UUID, ResourceLocation> lastSuit = new HashMap<>();
+		final Map<UUID, Anim> anims = new HashMap<>();
+		final Map<UUID, Long> repairs = new HashMap<>();
+	}
+
+	private static final Maps MAPS = new Maps();
 
 	static {
 		ClientSessionState.register(ClientNanoSuitUpState::reset);
@@ -47,74 +51,72 @@ public final class ClientNanoSuitUpState {
 
 	public static void clientTick(Minecraft mc) {
 		if (mc.level == null) {
-			LAST_SUIT.clear();
-			ANIMS.clear();
-			REPAIRS.clear();
+			reset();
 			return;
 		}
 		long now = Util.getMillis();
 		for (AbstractClientPlayer player : mc.level.players()) {
 			UUID id = player.getUUID();
 			ResourceLocation current = currentSuitTexture(player);
-			ResourceLocation previous = LAST_SUIT.get(id);
+			ResourceLocation previous = MAPS.lastSuit.get(id);
 			if (current != null && previous == null) {
-				ANIMS.put(id, new Anim(false, current, now));
+				MAPS.anims.put(id, new Anim(false, current, now));
 			} else if (current == null && previous != null) {
-				ANIMS.put(id, new Anim(true, previous, now));
+				MAPS.anims.put(id, new Anim(true, previous, now));
 			}
 			if (current != null) {
-				LAST_SUIT.put(id, current);
+				MAPS.lastSuit.put(id, current);
 			} else {
-				LAST_SUIT.remove(id);
+				MAPS.lastSuit.remove(id);
 			}
 
-			Anim anim = ANIMS.get(id);
+			Anim anim = MAPS.anims.get(id);
 			if (anim != null) {
 				if (now - anim.startMillis > DURATION_MS) {
-					ANIMS.remove(id);
+					MAPS.anims.remove(id);
 				} else {
 					spawnAssemblyParticles(mc, player, anim, now);
 				}
 			}
 
 			// Нано-регенерация: hurtTime синхронизируется ванилью, 9 = только что ударили.
-			if (current != null && ANIMS.get(id) == null && player.hurtTime == 9) {
-				REPAIRS.put(id, now + REPAIR_MS);
+			if (current != null && MAPS.anims.get(id) == null && player.hurtTime == 9) {
+				MAPS.repairs.put(id, now + REPAIR_MS);
 			}
-			Long repairEnd = REPAIRS.get(id);
+			Long repairEnd = MAPS.repairs.get(id);
 			if (repairEnd != null) {
 				if (now > repairEnd) {
-					REPAIRS.remove(id);
+					MAPS.repairs.remove(id);
 				} else if (current != null) {
 					spawnRepairParticles(mc, player);
 				} else {
-					REPAIRS.remove(id);
+					MAPS.repairs.remove(id);
 				}
 			}
 		}
 		// Чистка вышедших игроков.
-		ANIMS.entrySet().removeIf(e -> now - e.getValue().startMillis > DURATION_MS * 2);
-		Iterator<UUID> it = LAST_SUIT.keySet().iterator();
+		MAPS.anims.entrySet().removeIf(e -> now - e.getValue().startMillis > DURATION_MS * 2);
+		Iterator<UUID> it = MAPS.lastSuit.keySet().iterator();
 		while (it.hasNext()) {
 			UUID id = it.next();
 			boolean online = mc.level.players().stream().anyMatch(p -> p.getUUID().equals(id));
 			if (!online) {
 				it.remove();
-				ANIMS.remove(id);
-				REPAIRS.remove(id);
+				MAPS.anims.remove(id);
+				MAPS.repairs.remove(id);
 			}
 		}
 	}
 
 	/** Пока идёт сборка, геройский скин не подменяется — броня проявляется слоем поверх. */
 	public static boolean suppressHeroSkin(UUID playerId) {
-		Anim anim = ANIMS.get(playerId);
+		Anim anim = MAPS.anims.get(playerId);
 		return anim != null && !anim.disassemble;
 	}
 
 	@Nullable
 	public static Anim animFor(UUID playerId) {
-		return ANIMS.get(playerId);
+		return MAPS.anims.get(playerId);
 	}
 
 	/** Прогресс сборки 0..1 (для разборки — это прогресс исчезновения). */
@@ -207,8 +209,8 @@ public final class ClientNanoSuitUpState {
 
 	/** Drop all session state (registered with {@code ClientSessionState}). */
 	public static void reset() {
-		LAST_SUIT.clear();
-		ANIMS.clear();
-		REPAIRS.clear();
+		MAPS.lastSuit.clear();
+		MAPS.anims.clear();
+		MAPS.repairs.clear();
 	}
 }

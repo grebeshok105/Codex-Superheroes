@@ -53,9 +53,7 @@ public final class HomelanderModule implements HeroModule {
 		ctx.abilities().register(new StunningRoarAbility());
 		HomelanderMadnessFlightController.register(ctx);
 		IronFistsController.register(ctx);
-		ctx.ticks().global(HomelanderMadnessAftermathController::pruneGonePlayers);
 		ctx.ticks().global(UraniumDefenseController::serverTick);
-		ctx.ticks().global(UraniumOffhandController::pruneGonePlayers);
 		ctx.ticks().player(HomelanderMadnessAftermathController::tickPlayer);
 		ctx.ticks().player(HomelanderRegenController::tickPlayer);
 		ctx.ticks().player(IronFistsController::tickPlayer);

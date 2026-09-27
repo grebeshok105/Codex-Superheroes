@@ -1,13 +1,15 @@
 package io.github.grebeshok105.codex.hero.homelander.runtime;
 
 import io.github.grebeshok105.codex.ModId;
+import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.EnumSet;
 import java.util.UUID;
 import net.minecraft.server.MinecraftServer;
 
@@ -23,7 +25,10 @@ public final class HomelanderRegenController {
 	private static final int CHECK_INTERVAL = 20;
 	private static final int EFFECT_DURATION = 60;
 
-	private static final Set<UUID> ACTIVE = new HashSet<>();
+	// No lifecycle clearOn: tickPlayer already drops the flag when the player is
+	// not Homelander or back at full HP — same sites as the old set.
+	private static final OwnedSessionMap<UUID, Boolean> ACTIVE =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.noneOf(ClearOn.class));
 
 	private HomelanderRegenController() {
 	}
@@ -37,7 +42,7 @@ public final class HomelanderRegenController {
 		}
 		float hp = player.getHealth();
 		float maxHp = player.getMaxHealth();
-		boolean active = ACTIVE.contains(id);
+		boolean active = ACTIVE.containsKey(id);
 		if (active) {
 			if (hp >= maxHp - 0.001f) {
 				ACTIVE.remove(id);
@@ -45,7 +50,7 @@ public final class HomelanderRegenController {
 				player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, EFFECT_DURATION, 1, true, false, true));
 			}
 		} else if (hp < LOW_HP_THRESHOLD) {
-			ACTIVE.add(id);
+			ACTIVE.put(id, id, Boolean.TRUE);
 			player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, EFFECT_DURATION, 1, true, false, true));
 		}
 	}

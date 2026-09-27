@@ -11,7 +11,11 @@ import io.github.grebeshok105.codex.client.ClientSessionState;
  * Используется {@code IronManNanoFormLayer} для рендера оружия на руке.
  */
 public final class ClientNanoFormState {
-	private static final Map<UUID, Integer> FORMS = new HashMap<>();
+	private static final class Maps {
+		final Map<UUID, Integer> forms = new HashMap<>();
+	}
+
+	private static final Maps MAPS = new Maps();
 
 	static {
 		ClientSessionState.register(ClientNanoFormState::clear);
@@ -22,18 +26,18 @@ public final class ClientNanoFormState {
 
 	public static synchronized void update(UUID playerId, int form) {
 		if (form == 0) {
-			FORMS.remove(playerId);
+			MAPS.forms.remove(playerId);
 		} else {
-			FORMS.put(playerId, form);
+			MAPS.forms.put(playerId, form);
 		}
 	}
 
 	public static synchronized int formFor(UUID playerId) {
-		Integer f = FORMS.get(playerId);
+		Integer f = MAPS.forms.get(playerId);
 		return f == null ? 0 : f;
 	}
 
 	public static synchronized void clear() {
-		FORMS.clear();
+		MAPS.forms.clear();
 	}
 }

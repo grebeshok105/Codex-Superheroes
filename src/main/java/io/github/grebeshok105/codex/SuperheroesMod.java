@@ -3,7 +3,6 @@ package io.github.grebeshok105.codex;
 import io.github.grebeshok105.codex.attachment.ModAttachments;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.lifecycle.HeroTickDispatcher;
-import io.github.grebeshok105.codex.core.lifecycle.PassiveReconciler;
 import io.github.grebeshok105.codex.effect.ModEffects;
 import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.hero.Heroes;
@@ -32,7 +31,6 @@ public class SuperheroesMod implements ModInitializer {
 		ModAttachments.init();
 		EntityControlLock.init();
 		PlayerLifecycle.init();
-		io.github.grebeshok105.codex.core.lifecycle.PassiveReconciler.init();
 		ModEffects.init();
 		io.github.grebeshok105.codex.bootstrap.HeroModules.bootstrap(io.github.grebeshok105.codex.core.module.CoreModuleContext.INSTANCE);
 		io.github.grebeshok105.codex.bootstrap.ContentModules.bootstrap(io.github.grebeshok105.codex.core.module.CoreModuleContext.INSTANCE);

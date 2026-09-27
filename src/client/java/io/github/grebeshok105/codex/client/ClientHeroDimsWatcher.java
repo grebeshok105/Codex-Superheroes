@@ -18,7 +18,15 @@ import java.util.UUID;
  * hero-sized hitbox (or its removal) takes effect without waiting for a crouch (audit B14).
  */
 public final class ClientHeroDimsWatcher {
-	private static final Map<UUID, ResourceLocation> LAST_SEEN = new HashMap<>();
+	private static final class Maps {
+		final Map<UUID, ResourceLocation> lastSeen = new HashMap<>();
+	}
+
+	private static final Maps MAPS = new Maps();
+
+	static {
+		ClientSessionState.register(ClientHeroDimsWatcher::reset);
+	}
 
 	private ClientHeroDimsWatcher() {
 	}
@@ -27,14 +35,19 @@ public final class ClientHeroDimsWatcher {
 		ClientTickEvents.END_CLIENT_TICK.register(ClientHeroDimsWatcher::tick);
 	}
 
+	/** Drop session state (registered with {@code ClientSessionState}). */
+	public static void reset() {
+		MAPS.lastSeen.clear();
+	}
+
 	private static void tick(Minecraft client) {
 		if (client.level == null) {
-			LAST_SEEN.clear();
+			MAPS.lastSeen.clear();
 			return;
 		}
 		for (AbstractClientPlayer player : client.level.players()) {
 			ResourceLocation heroId = player.getAttached(CoreAttachments.PUBLIC_HERO);
-			ResourceLocation previous = LAST_SEEN.put(player.getUUID(), heroId);
+			ResourceLocation previous = MAPS.lastSeen.put(player.getUUID(), heroId);
 			if (!Objects.equals(previous, heroId)) {
 				player.refreshDimensions();
 			}

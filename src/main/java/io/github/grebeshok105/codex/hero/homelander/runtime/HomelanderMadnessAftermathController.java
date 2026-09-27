@@ -2,6 +2,9 @@ package io.github.grebeshok105.codex.hero.homelander.runtime;
 
 import io.github.grebeshok105.codex.hero.homelander.effect.HomelanderEffects;
 import io.github.grebeshok105.codex.core.ability.AbilityRouter;
+import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
 import io.github.grebeshok105.codex.core.transform.HeroDataStore;
 import io.github.grebeshok105.codex.sound.ModSounds;
 import io.github.grebeshok105.codex.core.transform.HeroData;
@@ -25,14 +28,16 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.EnumSet;
 import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
 import net.minecraft.server.MinecraftServer;
 
 public final class HomelanderMadnessAftermathController {
 	public static final int AFTERMATH_TICKS = 200;
-	private static final Set<UUID> hadMadnessLastTick = new HashSet<>();
+	// ClearOn.LEAVE replaces the offline-player sweep pruneGonePlayers ran every tick.
+	private static final OwnedSessionMap<UUID, Boolean> hadMadnessLastTick =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.of(ClearOn.LEAVE));
 
 	private HomelanderMadnessAftermathController() {
 	}
@@ -151,17 +156,13 @@ public final class HomelanderMadnessAftermathController {
 	public static void tickPlayer(MinecraftServer server, ServerPlayer player, HeroData data) {
 		boolean madness = HomelanderEffects.isMadness(player);
 		if (madness) {
-			hadMadnessLastTick.add(player.getUUID());
-		} else if (hadMadnessLastTick.remove(player.getUUID())) {
+			hadMadnessLastTick.put(player.getUUID(), player.getUUID(), Boolean.TRUE);
+		} else if (hadMadnessLastTick.remove(player.getUUID()) != null) {
 			triggerAftermath(player);
 		}
 		if (HomelanderEffects.isAftermath(player)) {
 			tickAftermath(player);
 		}
-	}
-
-	public static void pruneGonePlayers(MinecraftServer server) {
-		hadMadnessLastTick.removeIf(id -> server.getPlayerList().getPlayer(id) == null);
 	}
 
 }
