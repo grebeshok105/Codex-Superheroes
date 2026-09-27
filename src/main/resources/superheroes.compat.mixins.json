@@ -1,9 +1,9 @@
 {
 	"required": true,
-	"package": "io.github.grebeshok105.codex.compat",
+	"package": "io.github.grebeshok105.codex.compat.falbiks.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
-		"falbiks.mixin.HeroComponentStripMixin"
+		"HeroComponentStripMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
