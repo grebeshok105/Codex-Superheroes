@@ -16,6 +16,7 @@ import io.github.grebeshok105.codex.flight.FlightAbilityState;
 import io.github.grebeshok105.codex.hero.regulus.net.MadnessSyncS2CPayload;
 import io.github.grebeshok105.codex.hero.regulus.net.MadnessVisualS2CPayload;
 import io.github.grebeshok105.codex.hero.regulus.registry.RegulusDamageTypes;
+import io.github.grebeshok105.codex.mechanic.falls.FallDamageHandlers;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import io.github.grebeshok105.codex.mechanic.world.WorldDestructionPolicy;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
@@ -73,7 +74,7 @@ public final class RegulusMadnessController {
 	}
 
 	public static void register(HeroModuleContext ctx) {
-		RegulusFallDamageHook.wire(RegulusMadnessController::isCounterInvolved);
+		FallDamageHandlers.registerImmunitySuppressor(RegulusMadnessController::isCounterInvolved);
 
 		ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> {
 			if (!(entity instanceof ServerPlayer player)) {

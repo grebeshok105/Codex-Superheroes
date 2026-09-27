@@ -5,7 +5,7 @@ import io.github.grebeshok105.codex.effect.SuperJumpController;
 import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.hero.Heroes;
 import io.github.grebeshok105.codex.core.transform.HeroData;
-import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusFallDamageHook;
+import io.github.grebeshok105.codex.mechanic.falls.FallDamageHandlers;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -23,7 +23,7 @@ public abstract class LivingEntityFallDamageMixin {
 		if (!(self instanceof Player player)) {
 			return;
 		}
-		boolean counterActive = RegulusFallDamageHook.isCounterParticipant(player);
+		boolean counterActive = FallDamageHandlers.isFallImmunitySuppressed(player);
 		if (SuperJumpController.hasFallImmunity(player) && !counterActive) {
 			cir.setReturnValue(false);
 			return;
