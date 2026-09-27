@@ -23,4 +23,3 @@ effect <-> hero
 effect <-> item
 effect <-> network
 hero <-> physics
-item <-> mechanic.boundweapon
