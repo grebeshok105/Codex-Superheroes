@@ -139,6 +139,13 @@ public final class ThanosGameTests implements FabricGameTest {
 					ServerPlayer victim = victims.get(i);
 					TestPlayers.clearSpawnInvulnerability(victim);
 					kill(thanos, victim);
+					if (victim.isAlive()) {
+						// Naruto's substitution jutsu eats the first lethal hit; clear i-frames
+						// and land the second. Fires only for survivors, so it pins the real
+						// dodge behavior on the naruto row and no-ops elsewhere.
+						victim.invulnerableTime = 0;
+						kill(thanos, victim);
+					}
 					helper.assertTrue(!victim.isAlive(), HERO_STONES[i][0] + " victim died to the hit");
 					helper.assertTrue(TestPlayers.count(thanos, item(HERO_STONES[i][1] + "_stone")) == 1,
 							"killing " + HERO_STONES[i][0] + " grants " + HERO_STONES[i][1] + "_stone");
@@ -726,6 +733,9 @@ public final class ThanosGameTests implements FabricGameTest {
 		// register for area scans, so the snap's getEntitiesOfClass would miss the victim.
 		helper.getLevel().getChunk(BlockPos.containing(x, player.getY(), z));
 		player.teleportTo(x, player.getY(), z);
+		// Mock players joined via placeNewPlayer are never ChunkMap-tracked — without a
+		// move() their entity section stays at spawn and getEntitiesOfClass misses them.
+		helper.getLevel().getChunkSource().chunkMap.move(player);
 	}
 
 	private static AttributeModifier modifier(ServerPlayer player, InfinityStoneType type) {
