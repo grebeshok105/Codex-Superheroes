@@ -117,7 +117,7 @@ public final class ThanosGauntletStateController {
 		}
 	}
 
-		/** Strips every stone attribute modifier the scan applied (swap path, snap burn, untransform). */
+	/** Strips every stone attribute modifier the scan applied (swap path, snap burn, untransform). */
 	public static void clearStoneModifiers(net.minecraft.world.entity.LivingEntity entity) {
 		for (InfinityStoneType t : InfinityStoneType.values()) {
 			AttributeInstance instance = entity.getAttribute(t.getAttribute());

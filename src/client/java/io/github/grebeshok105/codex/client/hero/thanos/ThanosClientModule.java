@@ -57,15 +57,25 @@ public record ThanosClientModule() implements HeroClientModule {
 		if (stone == null || lines.isEmpty()) {
 			return;
 		}
-		Component last = lines.getLast();
-		if (!(last.getContents() instanceof PlainTextContents text)
-				|| !text.text().chars().allMatch(c -> c == '━')) {
+		// Insert before the last divider, not lines.getLast(): with F3+H advanced
+		// tooltips vanilla appends the item-id line after hover lines, and other
+		// ItemTooltipCallback handlers may append too — getLast() isn't the divider.
+		int divider = -1;
+		for (int i = lines.size() - 1; i >= 0; i--) {
+			if (lines.get(i).getContents() instanceof PlainTextContents text
+					&& !text.text().isEmpty()
+					&& text.text().chars().allMatch(c -> c == '━')) {
+				divider = i;
+				break;
+			}
+		}
+		if (divider < 0) {
 			return;
 		}
 		Component stoneName = Component.translatable(stone.getStoneNameKey())
 				.withStyle(ChatFormatting.LIGHT_PURPLE, ChatFormatting.BOLD);
-		lines.add(lines.size() - 1, Component.empty());
-		lines.add(lines.size() - 1, Component.literal("◆ ").withStyle(ChatFormatting.LIGHT_PURPLE)
+		lines.add(divider, Component.empty());
+		lines.add(divider + 1, Component.literal("◆ ").withStyle(ChatFormatting.LIGHT_PURPLE)
 				.append(Component.translatable("tooltip.superheroes.contains_stone").withStyle(ChatFormatting.GRAY))
 				.append(Component.literal(" "))
 				.append(stoneName));
