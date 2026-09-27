@@ -3,6 +3,8 @@
 	"package": "io.github.grebeshok105.codex.client.core.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"client": [
+		"GameRendererFovMixin",
+		"GuiVanillaGlitchMixin",
 		"SoundEngineMixin"
 	],
 	"injectors": {

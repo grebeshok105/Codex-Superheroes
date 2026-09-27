@@ -140,7 +140,7 @@ public interface Hero {
 	 * through the {@code ability_availability} attachment (stage C4 — the hook that replaced
 	 * the deleted client-side filter). Default {@code AVAILABLE}; heroes hiding abilities
 	 * behind progression (Doomsday tiers, Thanos stones, Pandora's house, Rem's demonism,
-	 * Regulus's madness) return {@code HIDDEN}/{@code LOCKED} instead.
+	 * per-hero madness gates) return {@code HIDDEN}/{@code LOCKED} instead.
 	 */
 	default AbilityAvailability.Visibility visibility(ServerPlayer player, ResourceLocation abilityId) {
 		return AbilityAvailability.Visibility.AVAILABLE;

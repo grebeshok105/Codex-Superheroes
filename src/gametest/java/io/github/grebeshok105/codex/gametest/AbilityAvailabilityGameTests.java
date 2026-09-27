@@ -8,11 +8,13 @@ import io.github.grebeshok105.codex.core.ability.AbilityAvailability.Visibility;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.effect.DoomsdayProgress;
 import io.github.grebeshok105.codex.effect.ModEffects;
-import io.github.grebeshok105.codex.effect.RegulusMadnessState;
+import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusMadnessState;
 import io.github.grebeshok105.codex.hero.DoomsdayHero;
 import io.github.grebeshok105.codex.core.hero.Heroes;
 import io.github.grebeshok105.codex.hero.naruto.NarutoHero;
-import io.github.grebeshok105.codex.hero.RegulusHero;
+import io.github.grebeshok105.codex.hero.regulus.RegulusAbilities;
+import io.github.grebeshok105.codex.hero.regulus.RegulusAttachments;
+import io.github.grebeshok105.codex.hero.regulus.RegulusHero;
 import io.github.grebeshok105.codex.hero.rem.RemAbilities;
 import io.github.grebeshok105.codex.hero.rem.RemHero;
 import io.github.grebeshok105.codex.core.transform.HeroTransformService;
@@ -119,23 +121,23 @@ public class AbilityAvailabilityGameTests implements FabricGameTest {
 		tickSync(player);
 		AbilityAvailability sane = player.getAttached(CoreAttachments.ABILITY_AVAILABILITY);
 		helper.assertTrue(sane != null, "the sync task wrote the attachment");
-		helper.assertValueEqual(sane.visibilityOf(AbilityIds.COUNTER_STRIKE),
+		helper.assertValueEqual(sane.visibilityOf(RegulusAbilities.COUNTER_STRIKE),
 				Visibility.HIDDEN, "counter strike hidden while sane");
 
-		RegulusMadnessState madness = player.getAttachedOrCreate(ModAttachments.REGULUS_MADNESS)
+		RegulusMadnessState madness = player.getAttachedOrCreate(RegulusAttachments.REGULUS_MADNESS)
 				.withMadness(true);
-		player.setAttached(ModAttachments.REGULUS_MADNESS, madness);
+		player.setAttached(RegulusAttachments.REGULUS_MADNESS, madness);
 		tickSync(player);
 		AbilityAvailability mad = player.getAttached(CoreAttachments.ABILITY_AVAILABILITY);
 		helper.assertTrue(mad == null
-				|| mad.visibilityOf(AbilityIds.COUNTER_STRIKE) == Visibility.AVAILABLE,
+				|| mad.visibilityOf(RegulusAbilities.COUNTER_STRIKE) == Visibility.AVAILABLE,
 				"counter strike shows once the madness flag is set");
 
-		player.setAttached(ModAttachments.REGULUS_MADNESS, madness.withMadness(false));
+		player.setAttached(RegulusAttachments.REGULUS_MADNESS, madness.withMadness(false));
 		tickSync(player);
 		AbilityAvailability cleared = player.getAttached(CoreAttachments.ABILITY_AVAILABILITY);
 		helper.assertTrue(cleared != null
-				&& cleared.visibilityOf(AbilityIds.COUNTER_STRIKE) == Visibility.HIDDEN,
+				&& cleared.visibilityOf(RegulusAbilities.COUNTER_STRIKE) == Visibility.HIDDEN,
 				"counter strike hides again when madness ends");
 
 		helper.assertTrue(HeroTransformService.forceUntransform(player), "untransform");

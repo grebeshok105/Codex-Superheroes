@@ -22,8 +22,6 @@ public final class ModDamageTypeProvider extends FabricDynamicRegistryProvider {
 		entries.add(lookup, ModDamageTypes.EYE_LASER);
 		entries.add(lookup, ModDamageTypes.REPULSOR);
 		entries.add(lookup, ModDamageTypes.UNIBEAM);
-		entries.add(lookup, ModDamageTypes.COUNTER_STRIKE);
-		entries.add(lookup, ModDamageTypes.LION_ROAR);
 		entries.add(lookup, ModDamageTypes.DOOMSDAY_SMASH);
 		entries.add(lookup, ModDamageTypes.DOOMSDAY_ROAR);
 		entries.add(lookup, ModDamageTypes.DOOMSDAY_BONE_SPIKE);

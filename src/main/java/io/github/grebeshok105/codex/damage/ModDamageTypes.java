@@ -17,8 +17,6 @@ public final class ModDamageTypes {
 	public static final ResourceKey<DamageType> EYE_LASER = key("eye_laser");
 	public static final ResourceKey<DamageType> REPULSOR = key("repulsor");
 	public static final ResourceKey<DamageType> UNIBEAM = key("unibeam");
-	public static final ResourceKey<DamageType> COUNTER_STRIKE = key("counter_strike");
-	public static final ResourceKey<DamageType> LION_ROAR = key("lion_roar");
 	public static final ResourceKey<DamageType> DOOMSDAY_SMASH = key("doomsday_smash");
 	public static final ResourceKey<DamageType> DOOMSDAY_ROAR = key("doomsday_roar");
 	public static final ResourceKey<DamageType> DOOMSDAY_BONE_SPIKE = key("doomsday_bone_spike");
@@ -48,8 +46,6 @@ public final class ModDamageTypes {
 		context.register(EYE_LASER, new DamageType("eye_laser", DamageScaling.NEVER, 0.0F, DamageEffects.BURNING));
 		context.register(REPULSOR, new DamageType("repulsor", DamageScaling.NEVER, 0.0F));
 		context.register(UNIBEAM, new DamageType("unibeam", DamageScaling.NEVER, 0.0F, DamageEffects.BURNING));
-		context.register(COUNTER_STRIKE, new DamageType("counter_strike", DamageScaling.NEVER, 0.0F));
-		context.register(LION_ROAR, new DamageType("lion_roar", DamageScaling.NEVER, 0.0F));
 		context.register(DOOMSDAY_SMASH, new DamageType("doomsday_smash", DamageScaling.NEVER, 0.0F));
 		context.register(DOOMSDAY_ROAR, new DamageType("doomsday_roar", DamageScaling.NEVER, 0.0F));
 		context.register(DOOMSDAY_BONE_SPIKE, new DamageType("doomsday_bone_spike", DamageScaling.NEVER, 0.0F));
@@ -76,14 +72,6 @@ public final class ModDamageTypes {
 
 	public static DamageSource unibeam(ServerLevel level, Entity attacker) {
 		return source(level, UNIBEAM, attacker);
-	}
-
-	public static DamageSource counterStrike(ServerLevel level, Entity attacker) {
-		return source(level, COUNTER_STRIKE, attacker);
-	}
-
-	public static DamageSource lionRoar(ServerLevel level, Entity attacker) {
-		return source(level, LION_ROAR, attacker);
 	}
 
 	public static DamageSource doomsdaySmash(ServerLevel level, Entity attacker) {

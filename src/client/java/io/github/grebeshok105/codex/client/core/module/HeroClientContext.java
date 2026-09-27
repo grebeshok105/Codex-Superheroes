@@ -1,5 +1,7 @@
 package io.github.grebeshok105.codex.client.core.module;
 
+import io.github.grebeshok105.codex.client.core.FovModifier;
+import io.github.grebeshok105.codex.client.core.HudGlitchSource;
 import io.github.grebeshok105.codex.client.core.hud.AbilityDecoration;
 import io.github.grebeshok105.codex.client.core.hud.HudLayer;
 import io.github.grebeshok105.codex.client.core.hud.MovableHud;
@@ -66,6 +68,25 @@ public interface HeroClientContext {
 	/**
 	 * Registers an {@link AbilityDecoration} drawn around {@code abilityId}'s icon in the radial menu
 	 * (a ready halo, a badge, …). The decoration itself decides per frame whether to draw.
+	 * A decoration that also answers {@code true} from {@link AbilityDecoration#masksIdentity()} makes
+	 * the ability panel hide that ability's identity — masked name, description, icon, cooldown —
+	 * behind a "?" placeholder.
 	 */
 	void abilityDecoration(ResourceLocation abilityId, AbilityDecoration decoration);
+
+	/**
+	 * Registers an {@link FovModifier} for this hero (zoom channels, cinematic reads, …);
+	 * the {@code GameRenderer#getFov} mixin folds every registered modifier into the fov result.
+	 */
+	void fovModifier(FovModifier modifier);
+
+	/**
+	 * Registers a {@link HudGlitchSource} owned by this hero (pose jitter, ghost double-render,
+	 * colour bleed, text obfuscation); {@link io.github.grebeshok105.codex.client.core.HudJitter}
+	 * serves it to shared HUD and vanilla-UI code while active.
+	 */
+	void hudGlitchSource(HudGlitchSource source);
+
+	/** Registers a per-client-tick hook (END_CLIENT_TICK). */
+	void clientTick(Consumer<Minecraft> hook);
 }

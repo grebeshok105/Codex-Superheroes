@@ -1,7 +1,6 @@
 package io.github.grebeshok105.codex.gametest;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.attachment.ModAttachments;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import io.github.grebeshok105.codex.core.ability.AbilityRegistry;
 import io.github.grebeshok105.codex.core.ability.AbilityRouter;
@@ -10,12 +9,13 @@ import io.github.grebeshok105.codex.core.hero.Heroes;
 import io.github.grebeshok105.codex.core.lifecycle.ControlLockKind;
 import io.github.grebeshok105.codex.core.resource.EnergyLocks;
 import io.github.grebeshok105.codex.core.transform.HeroDataStore;
-import io.github.grebeshok105.codex.effect.RegulusGreedController;
-import io.github.grebeshok105.codex.effect.RegulusMadnessController;
-import io.github.grebeshok105.codex.effect.RegulusMadnessState;
-import io.github.grebeshok105.codex.effect.RegulusTotemController;
-import io.github.grebeshok105.codex.hero.RegulusHero;
-import io.github.grebeshok105.codex.item.ModItems;
+import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusGreedController;
+import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusMadnessController;
+import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusMadnessState;
+import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusTotemController;
+import io.github.grebeshok105.codex.hero.regulus.RegulusAttachments;
+import io.github.grebeshok105.codex.hero.regulus.RegulusItems;
+import io.github.grebeshok105.codex.hero.regulus.RegulusHero;
 import io.github.grebeshok105.codex.mechanic.ability.SharedAbilityIds;
 import java.util.List;
 import java.util.function.BooleanSupplier;
@@ -73,9 +73,9 @@ public class RegulusGameTests implements FabricGameTest {
 	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 60)
 	public void regulusSuitTransformsAndShiftUntransforms(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
-		player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ModItems.REGULUS_SUIT));
+		player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(RegulusItems.REGULUS_SUIT));
 
-		InteractionResultHolder<ItemStack> transform = ModItems.REGULUS_SUIT.use(
+		InteractionResultHolder<ItemStack> transform = RegulusItems.REGULUS_SUIT.use(
 				helper.getLevel(), player, InteractionHand.MAIN_HAND);
 		helper.assertTrue(transform.getResult().consumesAction(), "suit use transforms");
 		helper.assertValueEqual(HeroDataStore.get(player).heroId(), RegulusHero.ID,
@@ -85,7 +85,7 @@ public class RegulusGameTests implements FabricGameTest {
 		helper.runAfterDelay(25, () -> {
 			player.setShiftKeyDown(true);
 			try {
-				InteractionResultHolder<ItemStack> undo = ModItems.REGULUS_SUIT.use(
+				InteractionResultHolder<ItemStack> undo = RegulusItems.REGULUS_SUIT.use(
 						helper.getLevel(), player, InteractionHand.MAIN_HAND);
 				helper.assertTrue(undo.getResult().consumesAction(), "shift-use untransforms");
 			} finally {
@@ -132,28 +132,28 @@ public class RegulusGameTests implements FabricGameTest {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, RegulusHero.ID);
 		TestPlayers.clearSpawnInvulnerability(player);
-		player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ModItems.EVANGELION));
+		player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(RegulusItems.EVANGELION));
 
-		InteractionResultHolder<ItemStack> use = ModItems.EVANGELION.use(
+		InteractionResultHolder<ItemStack> use = RegulusItems.EVANGELION.use(
 				helper.getLevel(), player, InteractionHand.MAIN_HAND);
 		helper.assertTrue(use.getResult().consumesAction(), "evangelion use starts reading");
-		RegulusMadnessState state = player.getAttachedOrCreate(ModAttachments.REGULUS_MADNESS);
+		RegulusMadnessState state = player.getAttachedOrCreate(RegulusAttachments.REGULUS_MADNESS);
 		helper.assertTrue(state.isReading(helper.getLevel().getGameTime()),
 				"reading window is open");
 		helper.assertTrue(state.readingUntilTick() >= helper.getLevel().getGameTime() + 190,
 				"the window spans ~200 ticks");
 		helper.assertFalse(player.hurt(helper.getLevel().damageSources().generic(), 1f),
 				"the reading window denies all damage");
-		helper.assertFalse(ModItems.EVANGELION.use(helper.getLevel(), player, InteractionHand.MAIN_HAND)
+		helper.assertFalse(RegulusItems.EVANGELION.use(helper.getLevel(), player, InteractionHand.MAIN_HAND)
 						.getResult().consumesAction(),
 				"a second use fails while already reading");
 
 		helper.runAfterDelay(205, () -> {
-			RegulusMadnessState mad = player.getAttachedOrCreate(ModAttachments.REGULUS_MADNESS);
+			RegulusMadnessState mad = player.getAttachedOrCreate(RegulusAttachments.REGULUS_MADNESS);
 			helper.assertTrue(mad.madness(), "madness turns on when the window lapses");
 			helper.assertFalse(mad.isReading(helper.getLevel().getGameTime()),
 					"the window is closed");
-			helper.assertValueEqual(player.getAttachedOrCreate(ModAttachments.REGULUS_BONUS_LIFE),
+			helper.assertValueEqual(player.getAttachedOrCreate(RegulusAttachments.REGULUS_BONUS_LIFE),
 					Boolean.TRUE, "madness grants the bonus life");
 			assertModifierAmount(helper, player, Attributes.ARMOR,
 					ModId.of("modifiers/regulus/madness_armor"), 10.0,
@@ -184,7 +184,7 @@ public class RegulusGameTests implements FabricGameTest {
 			MobEffectInstance regen = player.getEffect(MobEffects.REGENERATION);
 			helper.assertTrue(regen != null && regen.isInfiniteDuration(),
 					"the passive regen survives into madness");
-			helper.assertFalse(ModItems.EVANGELION.use(helper.getLevel(), player, InteractionHand.MAIN_HAND)
+			helper.assertFalse(RegulusItems.EVANGELION.use(helper.getLevel(), player, InteractionHand.MAIN_HAND)
 							.getResult().consumesAction(),
 					"evangelion refuses while mad");
 			// Mock-player effect durations never decrement, so the amp-4 reading
@@ -231,7 +231,7 @@ public class RegulusGameTests implements FabricGameTest {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, RegulusHero.ID);
 		TestPlayers.clearSpawnInvulnerability(player);
-		player.setAttached(ModAttachments.REGULUS_MADNESS,
+		player.setAttached(RegulusAttachments.REGULUS_MADNESS,
 				RegulusMadnessState.EMPTY.withMadness(true));
 
 		// Stay on the structure: the counter resolves its victim through the entity
@@ -280,7 +280,7 @@ public class RegulusGameTests implements FabricGameTest {
 		ServerPlayer flyer = TestPlayers.join(helper, "regulus-counter-flyer");
 		TestHeroes.transform(regulus, RegulusHero.ID);
 		TestHeroes.transform(flyer, ModId.of("omniman"));
-		regulus.setAttached(ModAttachments.REGULUS_MADNESS,
+		regulus.setAttached(RegulusAttachments.REGULUS_MADNESS,
 				RegulusMadnessState.EMPTY.withMadness(true));
 
 		AbilityRouter.activate(flyer, SharedAbilityIds.FLIGHT);
@@ -321,13 +321,13 @@ public class RegulusGameTests implements FabricGameTest {
 		assertFiniteEffect(helper, player, MobEffects.ABSORPTION, 1, 100, "ward absorption");
 		assertFiniteEffect(helper, player, MobEffects.FIRE_RESISTANCE, 0, 800, "ward fire resistance");
 
-		player.setAttached(ModAttachments.REGULUS_BONUS_LIFE, Boolean.TRUE);
+		player.setAttached(RegulusAttachments.REGULUS_BONUS_LIFE, Boolean.TRUE);
 		player.invulnerableTime = 0;
 		player.kill();
 		helper.assertTrue(player.isAlive(), "the bonus life refuses the second death");
 		helper.assertTrue(Math.abs(player.getHealth() - player.getMaxHealth() * 0.5f) < 0.01f,
 				"the bonus life restores half health");
-		helper.assertValueEqual(player.getAttachedOrCreate(ModAttachments.REGULUS_BONUS_LIFE),
+		helper.assertValueEqual(player.getAttachedOrCreate(RegulusAttachments.REGULUS_BONUS_LIFE),
 				Boolean.FALSE, "the bonus life is consumed");
 		assertFiniteEffect(helper, player, MobEffects.REGENERATION, 1, 600, "bonus regen");
 		assertFiniteEffect(helper, player, MobEffects.ABSORPTION, 1, 200, "bonus absorption");

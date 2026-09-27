@@ -8,8 +8,6 @@
 		"CameraMixin",
 		"AbstractClientPlayerSkinMixin",
 		"PlayerModelPoseMixin",
-		"GameRendererFovMixin",
-		"GuiVanillaGlitchMixin",
 		"MinecraftHeroMeleeChargeMixin",
 		"GuiHotbarMixin",
 		"GuiOverlayMessageMixin",

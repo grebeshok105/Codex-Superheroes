@@ -59,16 +59,6 @@ public final class ModItems {
 			new UraniumDaggerItem(new Item.Properties().stacksTo(1).durability(250).rarity(Rarity.EPIC))
 	);
 
-	public static final RegulusSuitItem REGULUS_SUIT = register(
-			"regulus_suit",
-			new RegulusSuitItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
-	);
-
-	public static final EvangelionItem EVANGELION = register(
-			"evangelion",
-			new EvangelionItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
-	);
-
 	public static final ShadowMonarchsCloakItem SHADOW_MONARCHS_CLOAK = register(
 			"shadow_monarchs_cloak",
 			new ShadowMonarchsCloakItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))

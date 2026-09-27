@@ -27,8 +27,6 @@ public final class ModDamageTypeTagProvider extends FabricTagProvider<DamageType
 				ModDamageTypes.EYE_LASER,
 				ModDamageTypes.REPULSOR,
 				ModDamageTypes.UNIBEAM,
-				ModDamageTypes.COUNTER_STRIKE,
-				ModDamageTypes.LION_ROAR,
 				ModDamageTypes.DOOMSDAY_SMASH,
 				ModDamageTypes.DOOMSDAY_ROAR,
 				ModDamageTypes.DOOMSDAY_BONE_SPIKE,
