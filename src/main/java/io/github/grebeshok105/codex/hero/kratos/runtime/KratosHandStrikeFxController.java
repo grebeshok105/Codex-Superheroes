@@ -1,8 +1,9 @@
-package io.github.grebeshok105.codex.effect;
+package io.github.grebeshok105.codex.hero.kratos.runtime;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
-import io.github.grebeshok105.codex.hero.KratosHero;
+import io.github.grebeshok105.codex.hero.kratos.registry.KratosParticles;
 import io.github.grebeshok105.codex.particle.ModParticles;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
@@ -17,8 +18,11 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
 import java.util.concurrent.ThreadLocalRandom;
+import net.minecraft.resources.ResourceLocation;
 
 public final class KratosHandStrikeFxController {
+	private static final ResourceLocation KRATOS_ID = ModId.of("kratos");
+
 	private KratosHandStrikeFxController() {
 	}
 
@@ -36,7 +40,7 @@ public final class KratosHandStrikeFxController {
 
 	private static boolean isKratos(ServerPlayer p) {
 		HeroData data = p.getAttachedOrCreate(CoreAttachments.HERO_DATA);
-		return KratosHero.ID.equals(data.heroId());
+		return KRATOS_ID.equals(data.heroId());
 	}
 
 	private static boolean isBareHand(ServerPlayer p) {
@@ -47,9 +51,9 @@ public final class KratosHandStrikeFxController {
 	private static void spawnFx(LivingEntity target, ServerLevel level) {
 		int pick = ThreadLocalRandom.current().nextInt(3);
 		SimpleParticleType type = switch (pick) {
-			case 0 -> ModParticles.KRATOS_HAND_BURST_1;
-			case 1 -> ModParticles.KRATOS_HAND_BURST_2;
-			default -> ModParticles.KRATOS_HAND_BURST_3;
+			case 0 -> KratosParticles.KRATOS_HAND_BURST_1;
+			case 1 -> KratosParticles.KRATOS_HAND_BURST_2;
+			default -> KratosParticles.KRATOS_HAND_BURST_3;
 		};
 		double x = target.getX();
 		double y = target.getY() + target.getBbHeight() * 0.55;

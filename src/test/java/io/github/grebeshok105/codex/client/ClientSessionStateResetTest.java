@@ -1,5 +1,6 @@
 package io.github.grebeshok105.codex.client;
 
+import io.github.grebeshok105.codex.client.hero.kratos.state.ClientKratosRageState;
 import io.github.grebeshok105.codex.client.hero.reinhard.state.ClientReinhardCeremonyState;
 import io.github.grebeshok105.codex.client.hero.reinhard.state.ClientReinhardDarknessState;
 import io.github.grebeshok105.codex.client.hero.reinhard.state.ClientReinhardSwordGateState;

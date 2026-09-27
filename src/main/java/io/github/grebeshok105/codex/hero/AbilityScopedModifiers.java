@@ -13,25 +13,6 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
  * Permanent passive sets live on the hero classes behind {@code Hero#passiveAttributes()}.
  */
 public final class AbilityScopedModifiers {
-	public static final ResourceLocation KRATOS_RAGE_DAMAGE = ModId.of("modifiers/kratos/rage_damage");
-	public static final ResourceLocation KRATOS_RAGE_SPEED = ModId.of("modifiers/kratos/rage_speed");
-	public static final ResourceLocation KRATOS_RAGE_ARMOR = ModId.of("modifiers/kratos/rage_armor");
-	public static final ResourceLocation KRATOS_RAGE_TOUGHNESS = ModId.of("modifiers/kratos/rage_toughness");
-	public static final ResourceLocation KRATOS_RAGE_HP = ModId.of("modifiers/kratos/rage_hp");
-	public static final ResourceLocation KRATOS_RAGE_KB = ModId.of("modifiers/kratos/rage_kb");
-	public static final ResourceLocation KRATOS_RAGE_FLAT = ModId.of("modifiers/kratos/rage_flat");
-
-	public static final AttributeModifierSet KRATOS_RAGE = AttributeModifierSet.builder()
-			.add(Attributes.ATTACK_DAMAGE, KRATOS_RAGE_FLAT, 12.0, AttributeModifier.Operation.ADD_VALUE)
-			.add(Attributes.ATTACK_DAMAGE, KRATOS_RAGE_DAMAGE, 1.5, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL)
-			.add(Attributes.MOVEMENT_SPEED, KRATOS_RAGE_SPEED, 0.30, AttributeModifier.Operation.ADD_MULTIPLIED_BASE)
-			.add(Attributes.ARMOR, KRATOS_RAGE_ARMOR, 15.0, AttributeModifier.Operation.ADD_VALUE)
-			.add(Attributes.ARMOR_TOUGHNESS, KRATOS_RAGE_TOUGHNESS, 6.0, AttributeModifier.Operation.ADD_VALUE)
-			.add(Attributes.MAX_HEALTH, KRATOS_RAGE_HP, 15.0, AttributeModifier.Operation.ADD_VALUE)
-			.add(Attributes.KNOCKBACK_RESISTANCE, KRATOS_RAGE_KB, 1.0, AttributeModifier.Operation.ADD_VALUE)
-			.abilityScoped()
-			.build();
-
 	/** Нано-клинок: чистый бонус к урону ближнего боя, пока активна форма клинка. */
 	public static final ResourceLocation NANO_BLADE_DAMAGE = ModId.of("modifiers/iron_man/nano_blade_damage");
 

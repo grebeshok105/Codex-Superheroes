@@ -1,14 +1,14 @@
-package io.github.grebeshok105.codex.effect;
+package io.github.grebeshok105.codex.hero.kratos.runtime;
 
-import io.github.grebeshok105.codex.ability.AbilityIds;
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.ability.AbilityRouter;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
-import io.github.grebeshok105.codex.hero.KratosHero;
+import io.github.grebeshok105.codex.hero.kratos.ability.KratosSpartanRageAbility;
+import io.github.grebeshok105.codex.hero.kratos.net.KratosRageS2CPayload;
 import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
-import io.github.grebeshok105.codex.network.KratosRageS2CPayload;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -20,9 +20,12 @@ import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 
 public final class KratosRageController {
+	private static final ResourceLocation KRATOS_ID = ModId.of("kratos");
+
 	public static final float MAX_RAGE = 100f;
 	private static final float TAKEN_PER_DMG = 0.3f;
 	private static final float DEALT_PER_DMG = 0.75f;
@@ -107,7 +110,7 @@ public final class KratosRageController {
 
 	private static boolean isKratos(Player player) {
 		HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
-		return KratosHero.ID.equals(data.heroId());
+		return KRATOS_ID.equals(data.heroId());
 	}
 
 	public static void sync(ServerPlayer player) {
@@ -135,7 +138,7 @@ public final class KratosRageController {
 				if (next <= 0f) {
 					RAGE.put(id, id, 0f);
 					it.remove();
-					AbilityRouter.deactivate(p, AbilityIds.KRATOS_SPARTAN_RAGE);
+					AbilityRouter.deactivate(p, KratosSpartanRageAbility.ID);
 					sync(p);
 				} else {
 					RAGE.put(id, id, next);

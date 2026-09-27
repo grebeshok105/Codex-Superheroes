@@ -1,6 +1,7 @@
-package io.github.grebeshok105.codex.item;
+package io.github.grebeshok105.codex.hero.kratos.item;
 
-import io.github.grebeshok105.codex.hero.KratosHero;
+import io.github.grebeshok105.codex.ModId;
+import net.minecraft.resources.ResourceLocation;
 import io.github.grebeshok105.codex.core.transform.TooltipFrame;
 import io.github.grebeshok105.codex.core.transform.TransformationItem;
 import net.minecraft.ChatFormatting;
@@ -12,8 +13,10 @@ import net.minecraft.world.item.TooltipFlag;
 import java.util.List;
 
 public class BladeOfChaosItem extends TransformationItem {
+	private static final ResourceLocation KRATOS_ID = ModId.of("kratos");
+
 	public BladeOfChaosItem(Properties properties) {
-		super(KratosHero.ID, properties);
+		super(KRATOS_ID, properties);
 	}
 
 	@Override

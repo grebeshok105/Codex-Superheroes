@@ -107,11 +107,6 @@ public final class ModItems {
 			new VibraniumShieldItem(new Item.Properties().stacksTo(1).durability(2000).rarity(Rarity.EPIC))
 	);
 
-	public static final BladeOfChaosItem BLADE_OF_CHAOS = register(
-			"blade_of_chaos",
-			new BladeOfChaosItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
-	);
-
 	public static final InfinityGauntletItem INFINITY_GAUNTLET = register(
 			"infinity_gauntlet",
 			new InfinityGauntletItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))

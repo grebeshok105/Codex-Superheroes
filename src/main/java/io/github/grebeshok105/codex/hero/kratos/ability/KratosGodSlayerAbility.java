@@ -1,9 +1,10 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.kratos.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
-import io.github.grebeshok105.codex.damage.ModDamageTypes;
+import io.github.grebeshok105.codex.hero.kratos.registry.KratosDamageTypes;
 import io.github.grebeshok105.codex.util.SafeTeleport;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
@@ -16,12 +17,14 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 public final class KratosGodSlayerAbility implements Ability {
+	public static final ResourceLocation ID = ModId.of("kratos_god_slayer");
+
 	private static final int COOLDOWN_TICKS = 900;
 	private static final double SCAN_RADIUS = 16.0;
 
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.KRATOS_GOD_SLAYER;
+		return ID;
 	}
 
 	@Override
@@ -82,7 +85,7 @@ public final class KratosGodSlayerAbility implements Ability {
 				AABB aoe = target.getBoundingBox().inflate(4.0);
 				for (LivingEntity le : level.getEntitiesOfClass(LivingEntity.class, aoe,
 						TargetFilters.hostileTo(player))) {
-					le.hurt(ModDamageTypes.kratosBlade(level, player), dmg);
+					le.hurt(KratosDamageTypes.blade(level, player), dmg);
 					Vec3 push = le.position().subtract(target.position()).normalize().scale(1.2);
 					le.setDeltaMovement(push.x, 0.4, push.z);
 					le.hurtMarked = true;
@@ -90,7 +93,7 @@ public final class KratosGodSlayerAbility implements Ability {
 				level.sendParticles(ParticleTypes.EXPLOSION_EMITTER,
 						target.getX(), target.getY() + 1, target.getZ(), 3, 1.0, 0.5, 1.0, 0.0);
 			} else {
-				target.hurt(ModDamageTypes.kratosBlade(level, player), dmg);
+				target.hurt(KratosDamageTypes.blade(level, player), dmg);
 			}
 			level.sendParticles(ParticleTypes.CRIT,
 					target.getX(), target.getY() + 1, target.getZ(), 20, 0.6, 0.6, 0.6, 0.2);

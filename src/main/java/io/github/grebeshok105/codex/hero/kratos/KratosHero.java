@@ -1,7 +1,6 @@
-package io.github.grebeshok105.codex.hero;
+package io.github.grebeshok105.codex.hero.kratos;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.ability.AbilityIds;
 import io.github.grebeshok105.codex.core.hero.AttributeModifierSet;
 import io.github.grebeshok105.codex.core.hero.BleedProfile;
 import io.github.grebeshok105.codex.core.hero.Hero;
@@ -100,11 +99,11 @@ public final class KratosHero implements Hero {
 	@Override
 	public List<ResourceLocation> getAbilities() {
 		return List.of(
-				AbilityIds.KRATOS_SPARTAN_RAGE,
-				AbilityIds.KRATOS_BLADE_STORM,
-				AbilityIds.KRATOS_CHAIN_WHIRL,
-				AbilityIds.KRATOS_LEVIATHAN_THROW,
-				AbilityIds.KRATOS_GOD_SLAYER
+				KratosAbilities.KRATOS_SPARTAN_RAGE,
+				KratosAbilities.KRATOS_BLADE_STORM,
+				KratosAbilities.KRATOS_CHAIN_WHIRL,
+				KratosAbilities.KRATOS_LEVIATHAN_THROW,
+				KratosAbilities.KRATOS_GOD_SLAYER
 		);
 	}
 
