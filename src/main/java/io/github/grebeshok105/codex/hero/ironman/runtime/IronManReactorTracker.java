@@ -1,6 +1,9 @@
 package io.github.grebeshok105.codex.hero.ironman.runtime;
 
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
+import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
 import io.github.grebeshok105.codex.core.transform.HeroDataStore;
 import io.github.grebeshok105.codex.mechanic.effect.EffectRefresh;
 import io.github.grebeshok105.codex.ModId;
@@ -19,8 +22,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.EnumSet;
 import java.util.UUID;
 
 public final class IronManReactorTracker {
@@ -30,7 +32,10 @@ public final class IronManReactorTracker {
 	private static final int REPLACE_TICKS = 100;        // 5s standstill
 	private static final double STILL_TOLERANCE_SQ = 0.0025; // ~0.05 block movement
 
-	private static final Map<UUID, State> states = new HashMap<>();
+	// No lifecycle clearOn: tick() already removes the row for a non-Iron-Man /
+	// dead player and after finishReplace — same sites as the old map.
+	private static final OwnedSessionMap<UUID, State> states =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.noneOf(ClearOn.class));
 
 	private static final class State {
 		boolean active;
@@ -68,7 +73,7 @@ public final class IronManReactorTracker {
 				s.progress = 0;
 				s.anchor = player.position();
 				s.hasStock = playerHasReactor(player);
-				states.put(id, s);
+				states.put(id, id, s);
 				ServerLevel level = player.serverLevel();
 				level.playSound(null, player.getX(), player.getY(), player.getZ(),
 						SoundEvents.BEACON_DEACTIVATE, SoundSource.PLAYERS, 0.6f, 0.7f);

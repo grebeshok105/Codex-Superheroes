@@ -9,7 +9,11 @@ import java.util.UUID;
  * (поза переопределяется в {@code PlayerModelPoseMixin}).
  */
 public final class ClientThinkMarkState {
-	private static final Set<UUID> ACTIVE = new HashSet<>();
+	private static final class Maps {
+		final Set<UUID> active = new HashSet<>();
+	}
+
+	private static final Maps MAPS = new Maps();
 
 	static {
 		ClientSessionState.register(ClientThinkMarkState::clear);
@@ -20,17 +24,17 @@ public final class ClientThinkMarkState {
 
 	public static synchronized void update(UUID playerId, boolean active) {
 		if (active) {
-			ACTIVE.add(playerId);
+			MAPS.active.add(playerId);
 		} else {
-			ACTIVE.remove(playerId);
+			MAPS.active.remove(playerId);
 		}
 	}
 
 	public static synchronized boolean isActive(UUID playerId) {
-		return ACTIVE.contains(playerId);
+		return MAPS.active.contains(playerId);
 	}
 
 	public static synchronized void clear() {
-		ACTIVE.clear();
+		MAPS.active.clear();
 	}
 }

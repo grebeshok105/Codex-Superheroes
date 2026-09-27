@@ -16,7 +16,12 @@ import java.util.UUID;
  */
 public final class ClientThanosState {
 	private static final int FULL_MASK = (1 << InfinityStoneType.values().length) - 1;
-	private static final Map<UUID, Integer> MASKS = new HashMap<>();
+
+	private static final class Maps {
+		final Map<UUID, Integer> masks = new HashMap<>();
+	}
+
+	private static final Maps MAPS = new Maps();
 
 	static {
 		ClientSessionState.register(ClientThanosState::clear);
@@ -27,14 +32,14 @@ public final class ClientThanosState {
 
 	public static synchronized void update(UUID playerId, int bitmask) {
 		if (bitmask == 0) {
-			MASKS.remove(playerId);
+			MAPS.masks.remove(playerId);
 		} else {
-			MASKS.put(playerId, bitmask);
+			MAPS.masks.put(playerId, bitmask);
 		}
 	}
 
 	public static synchronized int maskFor(UUID playerId) {
-		Integer mask = MASKS.get(playerId);
+		Integer mask = MAPS.masks.get(playerId);
 		return mask == null ? 0 : mask;
 	}
 
@@ -55,7 +60,7 @@ public final class ClientThanosState {
 	}
 
 	public static synchronized void clear() {
-		MASKS.clear();
+		MAPS.masks.clear();
 	}
 
 	private static UUID localId() {

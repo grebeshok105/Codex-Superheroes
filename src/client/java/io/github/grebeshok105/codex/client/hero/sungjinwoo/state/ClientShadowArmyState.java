@@ -11,7 +11,11 @@ import java.util.UUID;
  *  - Per-player: hasShadows (для авто-свапа фазы скина) и count (для HUD-индикатора).
  */
 public final class ClientShadowArmyState {
-	private static final Map<UUID, ArmyInfo> ARMIES = new HashMap<>();
+	private static final class Maps {
+		final Map<UUID, ArmyInfo> armies = new HashMap<>();
+	}
+
+	private static final Maps MAPS = new Maps();
 
 	static {
 		ClientSessionState.register(ClientShadowArmyState::clear);
@@ -21,26 +25,26 @@ public final class ClientShadowArmyState {
 	}
 
 	public static void update(UUID playerId, boolean hasShadows, int count, boolean phase2) {
-		ARMIES.put(playerId, new ArmyInfo(hasShadows, count, phase2));
+		MAPS.armies.put(playerId, new ArmyInfo(hasShadows, count, phase2));
 	}
 
 	public static boolean hasShadows(UUID playerId) {
-		ArmyInfo info = ARMIES.get(playerId);
+		ArmyInfo info = MAPS.armies.get(playerId);
 		return info != null && info.hasShadows();
 	}
 
 	public static boolean isPhase2(UUID playerId) {
-		ArmyInfo info = ARMIES.get(playerId);
+		ArmyInfo info = MAPS.armies.get(playerId);
 		return info != null && info.phase2();
 	}
 
 	public static int count(UUID playerId) {
-		ArmyInfo info = ARMIES.get(playerId);
+		ArmyInfo info = MAPS.armies.get(playerId);
 		return info == null ? 0 : info.count();
 	}
 
 	public static void clear() {
-		ARMIES.clear();
+		MAPS.armies.clear();
 	}
 
 	public record ArmyInfo(boolean hasShadows, int count, boolean phase2) {

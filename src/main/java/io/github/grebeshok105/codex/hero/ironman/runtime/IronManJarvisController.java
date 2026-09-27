@@ -1,6 +1,9 @@
 package io.github.grebeshok105.codex.hero.ironman.runtime;
 
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
+import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.hero.JarvisThreatClass;
@@ -11,6 +14,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -29,23 +33,25 @@ public final class IronManJarvisController {
 	private static final int SCAN_INTERVAL_TICKS = 20;
 
 	/** ironman -> (target -> heroId, о котором уже объявлено). */
-	private static final Map<UUID, Map<UUID, ResourceLocation>> ANNOUNCED = new HashMap<>();
+	private static final OwnedSessionMap<UUID, Map<UUID, ResourceLocation>> ANNOUNCED =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.of(ClearOn.LEAVE));
 	/** ironman -> (target -> тиков до объявления). */
-	private static final Map<UUID, Map<UUID, Integer>> PENDING = new HashMap<>();
+	private static final OwnedSessionMap<UUID, Map<UUID, Integer>> PENDING =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.of(ClearOn.LEAVE));
 
 	private IronManJarvisController() {
 	}
 
 	public static void register(HeroModuleContext ctx) {
 		ctx.lifecycle().onLeave(player -> {
+			// Outer rows drop via ClearOn.LEAVE; inner maps are plain HashMaps and
+			// still need the leaver scrubbed out of every other ironman's view.
 			UUID id = player.getUUID();
-			ANNOUNCED.remove(id);
-			PENDING.remove(id);
-			for (Map<UUID, ResourceLocation> m : ANNOUNCED.values()) {
-				m.remove(id);
+			for (Map.Entry<UUID, Map<UUID, ResourceLocation>> e : ANNOUNCED) {
+				e.getValue().remove(id);
 			}
-			for (Map<UUID, Integer> m : PENDING.values()) {
-				m.remove(id);
+			for (Map.Entry<UUID, Map<UUID, Integer>> e : PENDING) {
+				e.getValue().remove(id);
 			}
 		});
 	}
@@ -67,20 +73,23 @@ public final class IronManJarvisController {
 				if (heroId == null) {
 					continue;
 				}
-				ResourceLocation announced = ANNOUNCED
-						.getOrDefault(imId, Map.of())
-						.get(target.getUUID());
+				Map<UUID, ResourceLocation> announcedMap = ANNOUNCED.get(imId);
+				ResourceLocation announced = announcedMap == null ? null : announcedMap.get(target.getUUID());
 				if (heroId.equals(announced)) {
 					continue;
 				}
-				Map<UUID, Integer> pending = PENDING.computeIfAbsent(imId, id -> new HashMap<>());
+				Map<UUID, Integer> pending = PENDING.get(imId);
+				if (pending == null) {
+					pending = new HashMap<>();
+					PENDING.put(imId, imId, pending);
+				}
 				pending.putIfAbsent(target.getUUID(), DETECT_DELAY_TICKS);
 			}
 		}
 	}
 
 	private static void tickPending(MinecraftServer server) {
-		for (Iterator<Map.Entry<UUID, Map<UUID, Integer>>> it = PENDING.entrySet().iterator(); it.hasNext(); ) {
+		for (Iterator<Map.Entry<UUID, Map<UUID, Integer>>> it = PENDING.iterator(); it.hasNext(); ) {
 			Map.Entry<UUID, Map<UUID, Integer>> entry = it.next();
 			ServerPlayer ironman = server.getPlayerList().getPlayer(entry.getKey());
 			if (ironman == null || !IRON_MAN_ID.equals(heroIdOf(ironman))) {
@@ -101,8 +110,12 @@ public final class IronManJarvisController {
 					continue;
 				}
 				ti.remove();
-				ANNOUNCED.computeIfAbsent(entry.getKey(), id -> new HashMap<>())
-						.put(pe.getKey(), heroId);
+				Map<UUID, ResourceLocation> announcedMap = ANNOUNCED.get(entry.getKey());
+				if (announcedMap == null) {
+					announcedMap = new HashMap<>();
+					ANNOUNCED.put(entry.getKey(), entry.getKey(), announcedMap);
+				}
+				announcedMap.put(pe.getKey(), heroId);
 				int distance = (int) Math.round(ironman.position().distanceTo(target.position()));
 				JarvisThreatClass threat = JarvisThreatClass.forHero(heroId);
 				String quote = JarvisQuotes.randomDetect(threat);

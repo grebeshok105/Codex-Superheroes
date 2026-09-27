@@ -1,6 +1,9 @@
 package io.github.grebeshok105.codex.hero.homelander.runtime;
 
 import io.github.grebeshok105.codex.ModId;
+import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
 import io.github.grebeshok105.codex.hero.homelander.item.UraniumIsotopeItem;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -11,8 +14,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.EnumSet;
 import java.util.UUID;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.minecraft.server.MinecraftServer;
@@ -23,7 +25,9 @@ public final class UraniumOffhandController {
 	private static final int RAD_TICK_PER_STACK = 100;
 	private static final int RAD_MAX_STACKS = 5;
 
-	private static final Map<UUID, Integer> radiationTicks = new HashMap<>();
+	// ClearOn.LEAVE replaces the offline-player sweep pruneGonePlayers ran every tick.
+	private static final OwnedSessionMap<UUID, Integer> radiationTicks =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.of(ClearOn.LEAVE));
 
 	private UraniumOffhandController() {
 	}
@@ -47,7 +51,10 @@ public final class UraniumOffhandController {
 		boolean holding = offhand.getItem() instanceof UraniumIsotopeItem;
 		if (holding) {
 			applyKbResistance(player);
-			int ticks = radiationTicks.merge(player.getUUID(), 1, Integer::sum);
+			UUID id = player.getUUID();
+			Integer prev = radiationTicks.get(id);
+			int ticks = prev == null ? 1 : prev + 1;
+			radiationTicks.put(id, id, ticks);
 			int stacks = Math.min(RAD_MAX_STACKS, ticks / RAD_TICK_PER_STACK);
 			if (stacks >= RAD_MAX_STACKS) {
 				player.addEffect(new MobEffectInstance(MobEffects.WITHER, 60, 1, false, true, true));
@@ -59,10 +66,6 @@ public final class UraniumOffhandController {
 			removeKbResistance(player);
 			radiationTicks.remove(player.getUUID());
 		}
-	}
-
-	public static void pruneGonePlayers(MinecraftServer server) {
-		radiationTicks.keySet().removeIf(id -> server.getPlayerList().getPlayer(id) == null);
 	}
 
 }
