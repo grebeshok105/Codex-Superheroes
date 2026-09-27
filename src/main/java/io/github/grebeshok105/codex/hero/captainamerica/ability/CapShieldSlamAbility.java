@@ -7,8 +7,8 @@ import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import io.github.grebeshok105.codex.hero.captainamerica.registry.CaptainAmericaDamageTypes;
 import io.github.grebeshok105.codex.hero.captainamerica.registry.CaptainAmericaParticles;
 import io.github.grebeshok105.codex.mechanic.charge.ChargeSession;
+import io.github.grebeshok105.codex.mechanic.motion.Motion;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -61,9 +61,7 @@ public final class CapShieldSlamAbility implements Ability {
 	public boolean tryActivate(ServerPlayer player) {
 		ServerLevel level = player.serverLevel();
 		Vec3 motion = new Vec3(0, 1.4, 0);
-		player.setDeltaMovement(motion);
-		player.hurtMarked = true;
-		player.connection.send(new ClientboundSetEntityMotionPacket(player));
+		Motion.set(player, motion, Motion.Sync.MARK_AND_SEND_TO_PLAYER);
 		SESSION.begin(player, null);
 		level.playSound(null, player.getX(), player.getY(), player.getZ(),
 				SoundEvents.IRON_GOLEM_DAMAGE, SoundSource.PLAYERS, 1.2f, 1.4f);
