@@ -46,6 +46,7 @@ import net.minecraft.world.phys.Vec3;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.BooleanSupplier;
 
 /**
  * I6a characterization pins for the Homelander player-hero, written against the
@@ -183,28 +184,40 @@ public final class HomelanderGameTests implements FabricGameTest {
 		});
 	}
 
-	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 60)
+	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 80)
 	public void aftermathEndsInDetonation(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, HomelanderHero.ID);
+
+		// The sun detonation scorches a wide radius; run it on a private platform far
+		// away so the blast can't reach the shared test floor or neighbouring tests.
+		BlockPos remoteFeet = player.blockPosition().offset(3000, 0, 3000);
+		for (int dx = -13; dx <= 13; dx++) {
+			for (int dz = -13; dz <= 13; dz++) {
+				helper.getLevel().setBlock(remoteFeet.offset(dx, -1, dz), Blocks.STONE.defaultBlockState(), 3);
+			}
+		}
+		player.moveTo(remoteFeet.getX() + 0.5, remoteFeet.getY(), remoteFeet.getZ() + 0.5, 0f, 0f);
+		player.setDeltaMovement(Vec3.ZERO);
+
 		player.addEffect(new MobEffectInstance(ModEffects.MADNESS_AFTERMATH, 25));
 		player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 60, 4));
-		BlockPos center = player.blockPosition();
-		helper.runAfterDelay(30, () -> {
-			helper.assertFalse(player.hasEffect(ModEffects.MADNESS_AFTERMATH),
-					"the aftermath effect is spent");
-			helper.assertTrue(player.isAlive(), "resistance 5 survives the sun detonation");
-			boolean scorched = false;
-			for (BlockPos pos : BlockPos.betweenClosed(center.offset(-12, -2, -12), center.offset(12, 4, 12))) {
-				if (helper.getLevel().getBlockState(pos).is(Blocks.FIRE)) {
-					scorched = true;
-					break;
+
+		helper.runAfterDelay(26, () -> await(helper,
+				() -> !player.hasEffect(ModEffects.MADNESS_AFTERMATH), 8, () -> {
+				helper.assertTrue(player.isAlive(), "resistance 5 survives the sun detonation");
+				boolean scorched = false;
+				for (BlockPos pos : BlockPos.betweenClosed(
+						remoteFeet.offset(-12, -2, -12), remoteFeet.offset(12, 4, 12))) {
+					if (helper.getLevel().getBlockState(pos).is(Blocks.FIRE)) {
+						scorched = true;
+						break;
+					}
 				}
-			}
 			helper.assertTrue(scorched, "the detonation leaves fire in its wake");
-			TestPlayers.leave(player);
-			helper.succeed();
-		});
+				TestPlayers.leave(player);
+				helper.succeed();
+			}));
 	}
 
 	// ---- flight ------------------------------------------------------------
@@ -230,7 +243,7 @@ public final class HomelanderGameTests implements FabricGameTest {
 
 	// ---- uranium threat ----------------------------------------------------
 
-	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 120)
+	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 140)
 	public void uraniumThreatScanMarksAndClears(GameTestHelper helper) {
 		Wire homelander = joinAudible(helper, "homelander-under-threat");
 		Wire holder = joinAudible(helper, "dagger-holder");
@@ -239,26 +252,41 @@ public final class HomelanderGameTests implements FabricGameTest {
 		holder.player().getInventory().add(new ItemStack(ModItems.URANIUM_DAGGER));
 		drainAll(homelander, holder, bystander);
 
+		List<Object> homelanderPackets = new ArrayList<>();
+		List<Object> bystanderPackets = new ArrayList<>();
 		helper.runAfterDelay(30, () -> {
 			helper.assertTrue(UraniumDefenseController.isUnderUraniumThreat(homelander.player()),
 					"the 20-tick scan marks a threatened homelander");
-			helper.assertTrue(hasThreat(drain(homelander.channel()), true, 1),
-					"homelander is sent threat=true, count=1");
-			helper.assertTrue(hasPressure(drain(bystander.channel()),
-							homelander.player().getUUID()),
-					"bystanders get the pressured-homelanders broadcast");
+			// Payloads queue on the connection's event loop: poll while accumulating
+			// drained packets instead of reading the queue once.
+			await(helper, () -> {
+				homelanderPackets.addAll(drain(homelander.channel()));
+				bystanderPackets.addAll(drain(bystander.channel()));
+				return hasThreat(homelanderPackets, true, 1)
+						&& hasPressure(bystanderPackets, homelander.player().getUUID());
+			}, 15, () -> {
+				helper.assertTrue(hasThreat(homelanderPackets, true, 1),
+						"homelander is sent threat=true, count=1");
+				helper.assertTrue(hasPressure(bystanderPackets, homelander.player().getUUID()),
+						"bystanders get the pressured-homelanders broadcast");
 
-			holder.player().getInventory().clearContent();
-			drainAll(homelander, holder, bystander);
-			helper.runAfterDelay(30, () -> {
-				helper.assertFalse(UraniumDefenseController.isUnderUraniumThreat(homelander.player()),
-						"the threat clears once the dagger holder leaves");
-				helper.assertTrue(hasThreat(drain(homelander.channel()), false, 0),
-						"the cleared scan sends threat=false, count=0");
-				TestPlayers.leave(homelander.player());
-				TestPlayers.leave(holder.player());
-				TestPlayers.leave(bystander.player());
-				helper.succeed();
+				holder.player().getInventory().clearContent();
+				homelanderPackets.clear();
+				helper.runAfterDelay(30, () -> {
+					helper.assertFalse(UraniumDefenseController.isUnderUraniumThreat(homelander.player()),
+							"the threat clears once the dagger holder leaves");
+					await(helper, () -> {
+						homelanderPackets.addAll(drain(homelander.channel()));
+						return hasThreat(homelanderPackets, false, 0);
+					}, 15, () -> {
+						helper.assertTrue(hasThreat(homelanderPackets, false, 0),
+								"the cleared scan sends threat=false, count=0");
+						TestPlayers.leave(homelander.player());
+						TestPlayers.leave(holder.player());
+						TestPlayers.leave(bystander.player());
+						helper.succeed();
+					});
+				});
 			});
 		});
 	}
@@ -277,22 +305,26 @@ public final class HomelanderGameTests implements FabricGameTest {
 					"precondition: no uranium cooldown yet");
 			helper.assertTrue(AbilityRegistry.get(SharedAbilityIds.FLIGHT).canActivate(homelander),
 					"quirk pin: threat alone does not gate activation");
-			helper.assertTrue(homelander.onGround(), "precondition: homelander is grounded");
 
-			AbilityRouter.activate(homelander, SharedAbilityIds.FLIGHT);
-			helper.assertTrue(data(homelander).isActive(SharedAbilityIds.FLIGHT),
-					"the activation itself still succeeds");
+			// Mock players can still be airborne when the scan lands; stand the
+			// homelander on a placed floor and wait for the physics tick to settle.
+			groundOn(helper, homelander);
+			await(helper, homelander::onGround, 15, () -> {
+				AbilityRouter.activate(homelander, SharedAbilityIds.FLIGHT);
+				helper.assertTrue(data(homelander).isActive(SharedAbilityIds.FLIGHT),
+						"the activation itself still succeeds");
 
-			helper.runAfterDelay(3, () -> {
-				helper.assertFalse(data(homelander).isActive(SharedAbilityIds.FLIGHT),
-						"a grounded threatened homelander is forced out of flight");
-				helper.assertTrue(FlightController.isOnCooldown(homelander),
-						"the forced-off arms a 20-tick cooldown");
-				helper.assertFalse(AbilityRegistry.get(SharedAbilityIds.FLIGHT).canActivate(homelander),
-						"threat + cooldown is what the activation gate denies");
-				TestPlayers.leave(homelander);
-				TestPlayers.leave(holder);
-				helper.succeed();
+				helper.runAfterDelay(3, () -> {
+					helper.assertFalse(data(homelander).isActive(SharedAbilityIds.FLIGHT),
+							"a grounded threatened homelander is forced out of flight");
+					helper.assertTrue(FlightController.isOnCooldown(homelander),
+							"the forced-off arms a 20-tick cooldown");
+					helper.assertFalse(AbilityRegistry.get(SharedAbilityIds.FLIGHT).canActivate(homelander),
+							"threat + cooldown is what the activation gate denies");
+					TestPlayers.leave(homelander);
+					TestPlayers.leave(holder);
+					helper.succeed();
+				});
 			});
 		});
 	}
@@ -416,11 +448,15 @@ public final class HomelanderGameTests implements FabricGameTest {
 		helper.assertTrue(heroWeakness != null && heroWeakness.getDuration() == 200,
 				"the dagger inflicts superhero weakness for 200 ticks");
 		helper.assertTrue(victim.getHealth() < hp, "the hit lands magic damage on the victim");
-		helper.assertTrue(data(victim).energy() < 100f,
-				"the dagger drains the victim's energy, got " + data(victim).energy());
-		TestPlayers.leave(attacker);
-		TestPlayers.leave(victim);
-		helper.succeed();
+		// tryConsume pulls 200 through the victim's bound pool (energy first, mana
+		// covering the deficit); poll a few ticks in case the resource write lands late.
+		await(helper, () -> data(victim).energy() < 100f || data(victim).mana() < 100f, 10, () -> {
+			helper.assertTrue(data(victim).energy() < 100f,
+					"the dagger drains the victim's energy, got " + data(victim).energy());
+			TestPlayers.leave(attacker);
+			TestPlayers.leave(victim);
+			helper.succeed();
+		});
 	}
 
 	@GameTest(template = EMPTY_STRUCTURE)
@@ -525,6 +561,25 @@ public final class HomelanderGameTests implements FabricGameTest {
 		helper.getLevel().getServer().getPlayerList().placeNewPlayer(connection, player, cookie);
 		player.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
 		return new Wire(player, channel);
+	}
+
+	/** Retries {@code ready} once per tick until it holds; drains may accumulate packets. */
+	private static void await(GameTestHelper helper, BooleanSupplier ready, int tries, Runnable done) {
+		if (ready.getAsBoolean()) {
+			done.run();
+			return;
+		}
+		helper.assertTrue(tries > 0, "condition never became true");
+		helper.runAfterDelay(1, () -> await(helper, ready, tries - 1, done));
+	}
+
+	/** Plants a stone floor under the player and drops them onto it. */
+	private static void groundOn(GameTestHelper helper, ServerPlayer player) {
+		BlockPos feet = player.blockPosition();
+		helper.getLevel().setBlock(feet.below(), Blocks.STONE.defaultBlockState(), 3);
+		player.moveTo(feet.getX() + 0.5, feet.getY(), feet.getZ() + 0.5, player.getYRot(), player.getXRot());
+		player.setDeltaMovement(Vec3.ZERO);
+		player.setOnGround(true);
 	}
 
 	private static List<Object> drain(EmbeddedChannel channel) {
