@@ -1,7 +1,4 @@
-package io.github.grebeshok105.codex.entity;
-
-import io.github.grebeshok105.codex.effect.RamCompanionController;
-import io.github.grebeshok105.codex.effect.RemDemonismController;
+package io.github.grebeshok105.codex.hero.rem.runtime;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;

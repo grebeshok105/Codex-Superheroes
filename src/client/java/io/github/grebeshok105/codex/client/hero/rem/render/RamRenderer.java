@@ -1,7 +1,7 @@
-package io.github.grebeshok105.codex.client.render;
+package io.github.grebeshok105.codex.client.hero.rem.render;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.entity.RamEntity;
+import io.github.grebeshok105.codex.hero.rem.runtime.RamEntity;
 import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.model.geom.ModelLayers;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;

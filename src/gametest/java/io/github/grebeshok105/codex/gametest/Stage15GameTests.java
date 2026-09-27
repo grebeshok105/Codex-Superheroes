@@ -1,8 +1,8 @@
 package io.github.grebeshok105.codex.gametest;
 
-import io.github.grebeshok105.codex.effect.RamCompanionController;
-import io.github.grebeshok105.codex.entity.ModEntities;
-import io.github.grebeshok105.codex.entity.RamEntity;
+import io.github.grebeshok105.codex.hero.rem.runtime.RamCompanionController;
+import io.github.grebeshok105.codex.hero.rem.runtime.RemEntities;
+import io.github.grebeshok105.codex.hero.rem.runtime.RamEntity;
 import io.github.grebeshok105.codex.content.horde.HordeManager;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.gametest.framework.GameTest;
@@ -54,7 +54,7 @@ public final class Stage15GameTests implements FabricGameTest {
 
 		// An unregistered live ram (e.g. the tracked reference was lost on unload)
 		// is adopted, not re-spawned.
-		RamEntity ram = ModEntities.RAM.create(level);
+		RamEntity ram = RemEntities.RAM.create(level);
 		ram.setOwnerId(owner.getUUID());
 		ram.moveTo(owner.getX() + 1, owner.getY(), owner.getZ(), 0f, 0f);
 		level.addFreshEntity(ram);
@@ -62,7 +62,7 @@ public final class Stage15GameTests implements FabricGameTest {
 				"the live ram is adopted, not duplicated");
 
 		// A second copy — a persisted RamEntity from an old save — is discarded.
-		RamEntity stale = ModEntities.RAM.create(level);
+		RamEntity stale = RemEntities.RAM.create(level);
 		stale.setOwnerId(owner.getUUID());
 		stale.moveTo(owner.getX() - 1, owner.getY(), owner.getZ(), 0f, 0f);
 		level.addFreshEntity(stale);

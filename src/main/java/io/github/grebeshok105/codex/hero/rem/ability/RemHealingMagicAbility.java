@@ -1,5 +1,6 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.rem.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import net.minecraft.core.particles.ParticleTypes;
@@ -12,11 +13,13 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 
 public final class RemHealingMagicAbility implements Ability {
+	public static final ResourceLocation ID = ModId.of("rem_healing_magic");
+
 	private static final int COOLDOWN_TICKS = 14 * 20;
 
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.REM_HEALING_MAGIC;
+		return ID;
 	}
 
 	@Override

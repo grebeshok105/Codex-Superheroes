@@ -1,4 +1,6 @@
-package io.github.grebeshok105.codex.client;
+package io.github.grebeshok105.codex.client.hero.rem.state;
+
+import io.github.grebeshok105.codex.client.ClientSessionState;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -1,6 +1,6 @@
-package io.github.grebeshok105.codex.client.render;
+package io.github.grebeshok105.codex.client.hero.rem.render;
 
-import io.github.grebeshok105.codex.client.ClientRemDemonismState;
+import io.github.grebeshok105.codex.client.hero.rem.state.ClientRemDemonismState;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.model.PlayerModel;

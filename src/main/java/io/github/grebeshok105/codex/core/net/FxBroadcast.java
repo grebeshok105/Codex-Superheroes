@@ -8,6 +8,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.Collection;
+
 /** Who receives a visual-only payload. Pick the variant the call site used before; do not widen audiences silently. */
 public final class FxBroadcast {
 	private FxBroadcast() {
@@ -28,6 +30,11 @@ public final class FxBroadcast {
 		for (ServerPlayer near : PlayerLookup.around(level, center, radius)) {
 			ServerPlayNetworking.send(near, payload);
 		}
+	}
+
+	/** Raw audience for sites that must post-filter before sending (e.g. exclude the source player). */
+	public static Collection<ServerPlayer> trackingAudience(Entity source) {
+		return PlayerLookup.tracking(source);
 	}
 
 	/** The radial audience itself — for call sites that scale the payload per player (e.g. distance). */

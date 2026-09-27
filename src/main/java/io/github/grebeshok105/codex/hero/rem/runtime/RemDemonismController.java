@@ -1,25 +1,28 @@
-package io.github.grebeshok105.codex.effect;
+package io.github.grebeshok105.codex.hero.rem.runtime;
 
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.core.transform.HeroDataStore;
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.ability.AbilityIds;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import io.github.grebeshok105.codex.core.hero.AttributeModifierSet;
+import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
+import io.github.grebeshok105.codex.effect.EffectRefresh;
+import io.github.grebeshok105.codex.effect.ModEffects;
+import io.github.grebeshok105.codex.mechanic.boundweapon.BoundWeaponItem;
 import io.github.grebeshok105.codex.mechanic.boundweapon.BoundWeapons;
-import io.github.grebeshok105.codex.hero.RemHero;
-import io.github.grebeshok105.codex.item.ModItems;
-import io.github.grebeshok105.codex.network.RemDemonismS2CPayload;
+import io.github.grebeshok105.codex.mechanic.motion.Motion;
+import io.github.grebeshok105.codex.hero.rem.net.RemDemonismS2CPayload;
+import io.github.grebeshok105.codex.core.net.FxBroadcast;
 import io.github.grebeshok105.codex.core.net.ScreenShakeS2CPayload;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
-import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -38,7 +41,10 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.HashMap;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -47,6 +53,12 @@ import java.util.UUID;
 import net.minecraft.server.MinecraftServer;
 
 public final class RemDemonismController {
+	private static final ResourceLocation REM_ID = ModId.of("rem");
+	private static final ResourceLocation REM_ONI_RAGE = ModId.of("rem_oni_rage");
+	private static final ResourceLocation REM_MACE_CRATER = ModId.of("rem_mace_crater");
+	private static final ResourceLocation REM_HUMA_ICE_SPIKES = ModId.of("rem_huma_ice_spikes");
+	private static final ResourceLocation MORNING_STAR_ITEM = ModId.of("rem_morning_star");
+
 	public static final float MAX_DEMONISM = 100f;
 	private static final float TAKEN_PER_DAMAGE = 0.55f;
 	private static final float DEALT_PER_DAMAGE = 0.85f;
@@ -86,12 +98,21 @@ public final class RemDemonismController {
 			.abilityScoped()
 			.build();
 
-	private static final Map<UUID, Float> CHARGE = new HashMap<>();
-	private static final Set<UUID> ACTIVE = new HashSet<>();
-	private static final Set<UUID> PERMANENT = new HashSet<>();
-	private static final Map<UUID, CraterWindup> CRATER_WINDUPS = new HashMap<>();
-	private static final Map<UUID, IceSpikeWave> ICE_WAVES = new HashMap<>();
-	private static final Map<UUID, MorningStarPull> MORNING_STAR_PULLS = new HashMap<>();
+	// Session state drops on leave/hero-clear — the events the old clear()/resetAll() wiring
+	// covered; OwnedSessionMap also clears everything on server stop on its own.
+	private static final OwnedSessionMap<UUID, Float> CHARGE =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.of(ClearOn.LEAVE, ClearOn.HERO_CLEAR));
+	private static final OwnedSessionMap<UUID, Boolean> ACTIVE =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.of(ClearOn.LEAVE, ClearOn.HERO_CLEAR));
+	private static final OwnedSessionMap<UUID, Boolean> PERMANENT =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.of(ClearOn.LEAVE, ClearOn.HERO_CLEAR));
+	private static final OwnedSessionMap<UUID, CraterWindup> CRATER_WINDUPS =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.of(ClearOn.LEAVE, ClearOn.HERO_CLEAR));
+	private static final OwnedSessionMap<UUID, IceSpikeWave> ICE_WAVES =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.of(ClearOn.LEAVE, ClearOn.HERO_CLEAR));
+	/** Keyed by the pulled target's id; owned by the Rem player doing the pull. */
+	private static final OwnedSessionMap<UUID, MorningStarPull> MORNING_STAR_PULLS =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.of(ClearOn.LEAVE, ClearOn.HERO_CLEAR));
 
 	private RemDemonismController() {
 	}
@@ -115,9 +136,10 @@ public final class RemDemonismController {
 			return true;
 		});
 
+		// The maps drop their own entries on leave/hero-clear; clear() stays for the side
+		// effects the map cannot do (mace revocation, demon attributes, sync).
 		ctx.lifecycle().onHeroClear(RemDemonismController::clear);
 		ctx.lifecycle().onLeave(RemDemonismController::clear);
-		ctx.lifecycle().onServerStopped(server -> RemDemonismController.resetAll());
 	}
 
 	public static boolean tryActivate(ServerPlayer player) {
@@ -125,9 +147,9 @@ public final class RemDemonismController {
 			return false;
 		}
 		UUID id = player.getUUID();
-		ACTIVE.add(id);
+		ACTIVE.put(id, id, Boolean.TRUE);
 		PERMANENT.remove(id);
-		CHARGE.put(id, MAX_DEMONISM);
+		CHARGE.put(id, id, MAX_DEMONISM);
 		giveMace(player);
 		applyDemonEffects(player);
 		applyActivationAbsorption(player);
@@ -139,13 +161,13 @@ public final class RemDemonismController {
 
 	public static void stopManual(ServerPlayer player) {
 		UUID id = player.getUUID();
-		if (PERMANENT.contains(id)) {
+		if (PERMANENT.containsKey(id)) {
 			ensureAbilityActive(player);
 			sync(player);
 			return;
 		}
 		ACTIVE.remove(id);
-		CHARGE.put(id, 0f);
+		CHARGE.put(id, id, 0f);
 		CRATER_WINDUPS.remove(id);
 		ICE_WAVES.remove(id);
 		removeMorningStarPulls(id);
@@ -171,38 +193,29 @@ public final class RemDemonismController {
 		clear(player);
 	}
 
-	/** World shutdown — demonism state dies with the world (windups hold tick-clock values). */
-	public static void resetAll() {
-		CHARGE.clear();
-		ACTIVE.clear();
-		PERMANENT.clear();
-		CRATER_WINDUPS.clear();
-		ICE_WAVES.clear();
-		MORNING_STAR_PULLS.clear();
-	}
-
 	public static boolean isActive(Player player) {
-		return player != null && ACTIVE.contains(player.getUUID());
+		return player != null && ACTIVE.containsKey(player.getUUID());
 	}
 
 	public static boolean isPermanent(Player player) {
-		return player != null && PERMANENT.contains(player.getUUID());
+		return player != null && PERMANENT.containsKey(player.getUUID());
 	}
 
 	public static float getCharge(ServerPlayer player) {
-		return CHARGE.getOrDefault(player.getUUID(), 0f);
+		Float charge = CHARGE.get(player.getUUID());
+		return charge == null ? 0f : charge;
 	}
 
 	public static boolean startCraterAttack(ServerPlayer player) {
 		if (!isActive(player) || CRATER_WINDUPS.containsKey(player.getUUID())
-				|| AbilityCooldowns.isOnCooldown(player, AbilityIds.REM_MACE_CRATER)) {
+				|| AbilityCooldowns.isOnCooldown(player, REM_MACE_CRATER)) {
 			return false;
 		}
 		Vec3 forward = player.getViewVector(1f).normalize();
 		if (forward.lengthSqr() < 1.0e-4) {
 			forward = new Vec3(0.0, 0.0, 1.0);
 		}
-		CRATER_WINDUPS.put(player.getUUID(), new CraterWindup(
+		CRATER_WINDUPS.put(player.getUUID(), player.getUUID(), new CraterWindup(
 				player.position(), forward, player.serverLevel().getGameTime()));
 		ServerLevel level = player.serverLevel();
 		level.playSound(null, player.getX(), player.getY(), player.getZ(),
@@ -220,7 +233,7 @@ public final class RemDemonismController {
 
 	public static boolean startIceSpikeWave(ServerPlayer player) {
 		if (!isActive(player) || ICE_WAVES.containsKey(player.getUUID())
-				|| AbilityCooldowns.isOnCooldown(player, AbilityIds.REM_HUMA_ICE_SPIKES)) {
+				|| AbilityCooldowns.isOnCooldown(player, REM_HUMA_ICE_SPIKES)) {
 			return false;
 		}
 		Vec3 look = player.getViewVector(1f);
@@ -231,9 +244,9 @@ public final class RemDemonismController {
 			forward = forward.normalize();
 		}
 		Vec3 right = new Vec3(-forward.z, 0.0, forward.x);
-		ICE_WAVES.put(player.getUUID(), new IceSpikeWave(
+		ICE_WAVES.put(player.getUUID(), player.getUUID(), new IceSpikeWave(
 				player.position(), forward, right, player.serverLevel().getGameTime()));
-		AbilityCooldowns.setCooldownTicks(player, AbilityIds.REM_HUMA_ICE_SPIKES, ICE_SPIKE_COOLDOWN_TICKS);
+		AbilityCooldowns.setCooldownTicks(player, REM_HUMA_ICE_SPIKES, ICE_SPIKE_COOLDOWN_TICKS);
 		ServerLevel level = player.serverLevel();
 		player.swing(InteractionHand.MAIN_HAND, true);
 		level.sendParticles(ParticleTypes.SNOWFLAKE,
@@ -247,14 +260,14 @@ public final class RemDemonismController {
 	}
 
 	public static void giveMace(ServerPlayer player) {
-		BoundWeapons.ensureHeld(player, ModItems.REM_MORNING_STAR);
+		BoundWeapons.ensureHeld(player, morningStar());
 	}
 
 	public static void startMorningStarPull(ServerPlayer player, LivingEntity target) {
 		if (player == null || target == null || !isActive(player) || !TargetFilters.hostileTo(player).test(target)) {
 			return;
 		}
-		MORNING_STAR_PULLS.put(target.getUUID(), new MorningStarPull(
+		MORNING_STAR_PULLS.put(target.getUUID(), player.getUUID(), new MorningStarPull(
 				player.getUUID(), player.serverLevel().getGameTime()));
 		if (tickMorningStarPull(player, target)) {
 			stopMorningStarPull(target);
@@ -263,12 +276,16 @@ public final class RemDemonismController {
 	}
 
 	public static void removeMace(ServerPlayer player) {
-		BoundWeapons.revoke(player, ModItems.REM_MORNING_STAR);
+		BoundWeapons.revoke(player, morningStar());
+	}
+
+	private static BoundWeaponItem morningStar() {
+		return (BoundWeaponItem) BuiltInRegistries.ITEM.get(MORNING_STAR_ITEM);
 	}
 
 	private static void tickRem(ServerPlayer player) {
 		UUID id = player.getUUID();
-		if (!ACTIVE.contains(id)) {
+		if (!ACTIVE.containsKey(id)) {
 			if (player.tickCount % 20 == 0) {
 				addCharge(player, PASSIVE_GAIN_PER_SECOND);
 			}
@@ -288,14 +305,14 @@ public final class RemDemonismController {
 					player.getX(), player.getY() + 1.0, player.getZ(),
 					5, 0.35, 0.55, 0.35, 0.03);
 		}
-		if (PERMANENT.contains(id)) {
-			CHARGE.put(id, MAX_DEMONISM);
+		if (PERMANENT.containsKey(id)) {
+			CHARGE.put(id, id, MAX_DEMONISM);
 			ensureAbilityActive(player);
 			if (player.tickCount % 20 == 0) sync(player);
 			return;
 		}
-		float next = Math.max(0f, CHARGE.getOrDefault(id, 0f) - MANUAL_DRAIN_PER_TICK);
-		CHARGE.put(id, next);
+		float next = Math.max(0f, getCharge(player) - MANUAL_DRAIN_PER_TICK);
+		CHARGE.put(id, id, next);
 		if (next <= 0f) {
 			ACTIVE.remove(id);
 			removeMace(player);
@@ -345,7 +362,7 @@ public final class RemDemonismController {
 			return false;
 		}
 		impactCrater(player, windup);
-		AbilityCooldowns.setCooldownTicks(player, AbilityIds.REM_MACE_CRATER, CRATER_COOLDOWN_TICKS);
+		AbilityCooldowns.setCooldownTicks(player, REM_MACE_CRATER, CRATER_COOLDOWN_TICKS);
 		return true;
 	}
 
@@ -366,11 +383,7 @@ public final class RemDemonismController {
 			target.hurt(source, CRATER_DAMAGE * falloff);
 			target.addEffect(new MobEffectInstance(ModEffects.BLEEDING, 10 * 20, 0, false, true, true));
 			Vec3 push = target.position().subtract(player.position()).normalize().scale(1.6).add(0.0, 0.18, 0.0);
-			target.push(push.x, push.y, push.z);
-			target.hurtMarked = true;
-			if (target instanceof ServerPlayer targetPlayer) {
-				targetPlayer.connection.send(new ClientboundSetEntityMotionPacket(targetPlayer));
-			}
+			Motion.add(target, push, Motion.Sync.MARK_AND_SEND_TO_PLAYER);
 		}
 		carveCrater(level, center, player);
 		level.sendParticles(ParticleTypes.EXPLOSION_EMITTER, impact.x, center.getY() + 0.35, impact.z, 2, 0.4, 0.2, 0.4, 0.0);
@@ -378,9 +391,7 @@ public final class RemDemonismController {
 		level.sendParticles(ParticleTypes.DAMAGE_INDICATOR, impact.x, center.getY() + 0.8, impact.z, 30, 1.0, 0.4, 1.0, 0.12);
 		level.playSound(null, impact.x, center.getY(), impact.z, SoundEvents.GENERIC_EXPLODE.value(), SoundSource.PLAYERS, 1.8f, 0.55f);
 		level.playSound(null, impact.x, center.getY(), impact.z, SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 0.9f, 0.75f);
-		for (ServerPlayer nearby : PlayerLookup.around(level, impact, 34.0)) {
-			ServerPlayNetworking.send(nearby, new ScreenShakeS2CPayload(1.8f, 24));
-		}
+		FxBroadcast.around(level, impact, 34.0, new ScreenShakeS2CPayload(1.8f, 24));
 	}
 
 	private static void carveCrater(ServerLevel level, BlockPos center, ServerPlayer player) {
@@ -439,11 +450,7 @@ public final class RemDemonismController {
 	}
 
 	private static void setMorningStarPullMotion(LivingEntity target, Vec3 motion) {
-		target.setDeltaMovement(motion);
-		target.hurtMarked = true;
-		if (target instanceof ServerPlayer targetPlayer) {
-			targetPlayer.connection.send(new ClientboundSetEntityMotionPacket(targetPlayer));
-		}
+		Motion.set(target, motion, Motion.Sync.MARK_AND_SEND_TO_PLAYER);
 	}
 
 	private static void spawnIceBand(ServerLevel level, ServerPlayer player, IceSpikeWave wave, int band) {
@@ -500,11 +507,7 @@ public final class RemDemonismController {
 			target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 100, 0, true, true, true));
 			target.addEffect(new MobEffectInstance(MobEffects.DIG_SLOWDOWN, 100, 1, true, true, true));
 			Vec3 push = wave.forward.scale(0.45).add(0.0, 0.12, 0.0);
-			target.push(push.x, push.y, push.z);
-			target.hurtMarked = true;
-			if (target instanceof ServerPlayer targetPlayer) {
-				targetPlayer.connection.send(new ClientboundSetEntityMotionPacket(targetPlayer));
-			}
+			Motion.add(target, push, Motion.Sync.MARK_AND_SEND_TO_PLAYER);
 			level.sendParticles(ParticleTypes.SNOWFLAKE,
 					targetCenter.x, targetCenter.y, targetCenter.z, 28, 0.4, 0.45, 0.4, 0.08);
 		}
@@ -526,12 +529,12 @@ public final class RemDemonismController {
 
 	private static boolean tryDeathSave(ServerPlayer player, DamageSource source) {
 		UUID id = player.getUUID();
-		if (PERMANENT.contains(id)) {
+		if (PERMANENT.containsKey(id)) {
 			return true;
 		}
-		ACTIVE.add(id);
-		PERMANENT.add(id);
-		CHARGE.put(id, MAX_DEMONISM);
+		ACTIVE.put(id, id, Boolean.TRUE);
+		PERMANENT.put(id, id, Boolean.TRUE);
+		CHARGE.put(id, id, MAX_DEMONISM);
 		player.setHealth(1f);
 		player.removeAllEffects();
 		applyDemonEffects(player);
@@ -571,10 +574,10 @@ public final class RemDemonismController {
 	private static void addCharge(ServerPlayer player, float amount) {
 		if (amount <= 0f) return;
 		UUID id = player.getUUID();
-		float current = CHARGE.getOrDefault(id, 0f);
+		float current = getCharge(player);
 		float next = Math.min(MAX_DEMONISM, current + amount);
 		if (next != current) {
-			CHARGE.put(id, next);
+			CHARGE.put(id, id, next);
 			sync(player);
 		}
 	}
@@ -593,28 +596,28 @@ public final class RemDemonismController {
 	}
 
 	private static void ensureAbilityActive(ServerPlayer player) {
-		HeroDataStore.update(player, d -> d.withActive(AbilityIds.REM_ONI_RAGE, true));
+		HeroDataStore.update(player, d -> d.withActive(REM_ONI_RAGE, true));
 	}
 
 	private static void clearActiveAbility(ServerPlayer player) {
-		HeroDataStore.update(player, d -> d.withActive(AbilityIds.REM_ONI_RAGE, false));
+		HeroDataStore.update(player, d -> d.withActive(REM_ONI_RAGE, false));
 	}
 
 	private static boolean isRem(Player player) {
 		HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
-		return RemHero.ID.equals(data.heroId());
+		return REM_ID.equals(data.heroId());
 	}
 
 
 	private static void removeMorningStarPulls(UUID ownerId) {
-		MORNING_STAR_PULLS.entrySet().removeIf(entry -> ownerId.equals(entry.getValue().ownerId));
+		MORNING_STAR_PULLS.removeOwnedBy(ownerId);
 	}
 
 	private static void sync(ServerPlayer player) {
 		RemDemonismS2CPayload payload = new RemDemonismS2CPayload(
 				player.getUUID(), getCharge(player), isActive(player), isPermanent(player));
 		ServerPlayNetworking.send(player, payload);
-		for (ServerPlayer observer : PlayerLookup.tracking(player)) {
+		for (ServerPlayer observer : FxBroadcast.trackingAudience(player)) {
 			if (observer != player) {
 				ServerPlayNetworking.send(observer, payload);
 			}
@@ -644,7 +647,7 @@ public final class RemDemonismController {
 	}
 
 	public static void serverTick(MinecraftServer server) {
-			Iterator<Map.Entry<UUID, MorningStarPull>> pullIt = MORNING_STAR_PULLS.entrySet().iterator();
+			Iterator<Map.Entry<UUID, MorningStarPull>> pullIt = MORNING_STAR_PULLS.iterator();
 			while (pullIt.hasNext()) {
 				Map.Entry<UUID, MorningStarPull> entry = pullIt.next();
 				MorningStarPull pull = entry.getValue();
@@ -664,7 +667,7 @@ public final class RemDemonismController {
 					pullIt.remove();
 				}
 			}
-			Iterator<Map.Entry<UUID, IceSpikeWave>> iceIt = ICE_WAVES.entrySet().iterator();
+			Iterator<Map.Entry<UUID, IceSpikeWave>> iceIt = ICE_WAVES.iterator();
 			while (iceIt.hasNext()) {
 				Map.Entry<UUID, IceSpikeWave> entry = iceIt.next();
 				ServerPlayer player = server.getPlayerList().getPlayer(entry.getKey());
@@ -676,7 +679,7 @@ public final class RemDemonismController {
 					iceIt.remove();
 				}
 			}
-			Iterator<Map.Entry<UUID, CraterWindup>> craterIt = CRATER_WINDUPS.entrySet().iterator();
+			Iterator<Map.Entry<UUID, CraterWindup>> craterIt = CRATER_WINDUPS.iterator();
 			while (craterIt.hasNext()) {
 				Map.Entry<UUID, CraterWindup> entry = craterIt.next();
 				ServerPlayer player = server.getPlayerList().getPlayer(entry.getKey());
@@ -693,7 +696,7 @@ public final class RemDemonismController {
 	public static void tickPlayer(MinecraftServer server, ServerPlayer player, HeroData data) {
 				if (isRem(player)) {
 					tickRem(player);
-				} else if (CHARGE.containsKey(player.getUUID()) || ACTIVE.contains(player.getUUID())) {
+				} else if (CHARGE.containsKey(player.getUUID()) || ACTIVE.containsKey(player.getUUID())) {
 					clear(player);
 				}
 				}
