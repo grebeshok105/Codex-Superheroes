@@ -197,9 +197,9 @@ public final class HomelanderGameTests implements FabricGameTest {
 				helper.getLevel().setBlock(remoteFeet.offset(dx, -1, dz), Blocks.STONE.defaultBlockState(), 3);
 			}
 		}
-		// ChunkMap tracking puts a player ticket on the remote chunk — without it the
-		// chunk never entity-ticks and the effect duration would never decrement.
-		helper.getLevel().getChunk(remoteFeet);
+		// A FORCED ticket makes the remote chunk entity-ticking — getChunk/setBlock
+		// alone only load it, and the effect duration would never decrement.
+		helper.getLevel().setChunkForced(remoteFeet.getX() >> 4, remoteFeet.getZ() >> 4, true);
 		player.teleportTo(remoteFeet.getX() + 0.5, remoteFeet.getY(), remoteFeet.getZ() + 0.5);
 		helper.getLevel().getChunkSource().chunkMap.move(player);
 		player.setDeltaMovement(Vec3.ZERO);
