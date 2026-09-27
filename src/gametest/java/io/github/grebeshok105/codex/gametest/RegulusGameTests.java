@@ -30,10 +30,13 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.entity.monster.warden.Warden;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
 
 /**
@@ -99,8 +102,11 @@ public class RegulusGameTests implements FabricGameTest {
 
 		helper.assertTrue(Math.abs(HeroDataStore.get(player).energy() - 1000f) < 0.001f,
 				"fresh transform starts at full energy (1000)");
-		helper.assertTrue(Math.abs(player.getAttributeValue(Attributes.ARMOR) - 70.0) < 0.001,
-				"regulus passive armor +70");
+		// Vanilla clamps Attributes.ARMOR to [0,30] — pin the modifier, not the clamped value.
+		assertModifierAmount(helper, player, Attributes.ARMOR,
+				ModId.of("modifiers/regulus/armor"), 70.0, "regulus passive armor");
+		helper.assertTrue(Math.abs(player.getAttributeValue(Attributes.ARMOR) - 30.0) < 0.001,
+				"the resolved armor value clamps at vanilla's 30 cap");
 		helper.assertTrue(Math.abs(player.getAttributeValue(Attributes.KNOCKBACK_RESISTANCE) - 1.0) < 0.001,
 				"regulus passive knockback resistance 1.0");
 		assertInfinite(helper, player, MobEffects.REGENERATION, 0, "regeneration");
@@ -147,14 +153,21 @@ public class RegulusGameTests implements FabricGameTest {
 					"the window is closed");
 			helper.assertValueEqual(player.getAttachedOrCreate(ModAttachments.REGULUS_BONUS_LIFE),
 					Boolean.TRUE, "madness grants the bonus life");
-			helper.assertTrue(Math.abs(player.getAttributeValue(Attributes.ARMOR) - 80.0) < 0.01,
-					"madness stacks +10 armor on the passive 70");
+			assertModifierAmount(helper, player, Attributes.ARMOR,
+					ModId.of("modifiers/regulus/madness_armor"), 10.0,
+					"madness armor +10 on top of the passive 70 (resolved value stays clamped at 30)");
+			helper.assertTrue(Math.abs(player.getAttributeValue(Attributes.ARMOR) - 30.0) < 0.001,
+					"the resolved armor value clamps at vanilla's 30 cap");
+			assertModifierAmount(helper, player, Attributes.MAX_HEALTH,
+					ModId.of("modifiers/regulus/madness_max_health"), 0.20,
+					"madness max-health x1.2 modifier");
 			helper.assertTrue(Math.abs(player.getMaxHealth() - 24.0f) < 0.01f,
 					"madness scales max health x1.2");
 			helper.assertTrue(Math.abs(player.getHealth() - player.getMaxHealth()) < 0.01f,
 					"madness heals to full");
-			helper.assertTrue(Math.abs(player.getAttributeValue(Attributes.ATTACK_DAMAGE) - 1.4) < 0.01,
-					"madness adds +0.4 attack damage");
+			assertModifierAmount(helper, player, Attributes.ATTACK_DAMAGE,
+					ModId.of("modifiers/regulus/madness_damage"), 0.40,
+					"madness attack-damage +0.4 modifier");
 			assertMadnessEffect(helper, player, MobEffects.MOVEMENT_SPEED, 2);
 			assertMadnessEffect(helper, player, MobEffects.DAMAGE_BOOST, 2);
 			assertMadnessEffect(helper, player, MobEffects.JUMP, 2);
@@ -201,9 +214,13 @@ public class RegulusGameTests implements FabricGameTest {
 				RegulusMadnessState.EMPTY.withMadness(true));
 
 		// findTarget sweeps a 120-block AABB — keep foreign test entities out of reach.
+		// The test world is void outside the structure, so lay a floor or the actors
+		// fall before the counter engages.
 		double isoX = player.getX() - 2000.0;
 		double isoZ = player.getZ() - 2000.0;
 		helper.getLevel().getChunk(BlockPos.containing(isoX, player.getY(), isoZ));
+		placeFloor(helper, isoX, player.getY(), isoZ);
+		placeFloor(helper, isoX + 2.0, player.getY(), isoZ);
 		player.teleportTo(isoX, player.getY(), isoZ);
 		Warden warden = spawnEntity(helper, EntityType.WARDEN, isoX + 2.0, player.getY(), isoZ);
 
@@ -320,8 +337,11 @@ public class RegulusGameTests implements FabricGameTest {
 		double isoX = player.getX() + 3000.0;
 		double isoZ = player.getZ() + 3000.0;
 		helper.getLevel().getChunk(BlockPos.containing(isoX, player.getY(), isoZ));
+		placeFloor(helper, isoX, player.getY(), isoZ);
 		player.teleportTo(isoX, player.getY(), isoZ);
-		Zombie zombie = spawnAhead(helper, player, 4.0);
+		Vec3 aheadPos = player.position().add(player.getViewVector(1f).normalize().scale(4.0));
+		placeFloor(helper, aheadPos.x, player.getY(), aheadPos.z);
+		Zombie zombie = spawnEntity(helper, EntityType.ZOMBIE, aheadPos.x, player.getY(), aheadPos.z);
 
 		TestPlayers.awaitVisible(helper, zombie, () -> {
 			double dist0 = zombie.distanceTo(player);
@@ -387,6 +407,8 @@ public class RegulusGameTests implements FabricGameTest {
 		double isoX = player.getX() - 6000.0;
 		double isoZ = player.getZ() + 6000.0;
 		helper.getLevel().getChunk(BlockPos.containing(isoX, player.getY(), isoZ));
+		placeFloor(helper, isoX, player.getY(), isoZ);
+		placeFloor(helper, isoX + 3.0, player.getY(), isoZ);
 		player.teleportTo(isoX, player.getY(), isoZ);
 		Warden warden = spawnEntity(helper, EntityType.WARDEN, isoX + 3.0, player.getY(), isoZ);
 
@@ -424,6 +446,7 @@ public class RegulusGameTests implements FabricGameTest {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, RegulusHero.ID);
 		Zombie zombie = helper.spawn(EntityType.ZOMBIE, 2, 1, 2);
+		zombie.setNoAi(true); // a pathing zombie re-closes the gap and cancels the knockback assert
 		float energy0 = HeroDataStore.get(player).energy();
 
 		AbilityRouter.activate(player, LION_HEART);
@@ -495,6 +518,15 @@ public class RegulusGameTests implements FabricGameTest {
 						+ " as a 60-tick ambient amp-" + amplifier + " instance");
 	}
 
+	private static void assertModifierAmount(GameTestHelper helper, ServerPlayer player,
+			net.minecraft.core.Holder<net.minecraft.world.entity.ai.attributes.Attribute> attribute,
+			ResourceLocation modifierId, double amount, String name) {
+		AttributeInstance instance = player.getAttribute(attribute);
+		AttributeModifier modifier = instance == null ? null : instance.getModifier(modifierId);
+		helper.assertTrue(modifier != null && Math.abs(modifier.amount() - amount) < 0.001,
+				name + " modifier " + modifierId + " is " + amount);
+	}
+
 	private static void assertFiniteEffect(GameTestHelper helper, ServerPlayer player,
 			net.minecraft.core.Holder<net.minecraft.world.effect.MobEffect> effect, int amplifier,
 			int maxDuration, String name) {
@@ -518,5 +550,15 @@ public class RegulusGameTests implements FabricGameTest {
 		entity.moveTo(x, y, z, 0f, 0f);
 		helper.getLevel().addFreshEntity(entity);
 		return entity;
+	}
+
+	/** A 3x3 stone pad at feet level — the gametest world is void outside structures. */
+	private static void placeFloor(GameTestHelper helper, double x, double y, double z) {
+		BlockPos center = BlockPos.containing(x, y - 1.0, z);
+		for (int dx = -1; dx <= 1; dx++) {
+			for (int dz = -1; dz <= 1; dz++) {
+				helper.getLevel().setBlock(center.offset(dx, 0, dz), Blocks.STONE.defaultBlockState(), 3);
+			}
+		}
 	}
 }
