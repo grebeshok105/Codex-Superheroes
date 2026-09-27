@@ -38,7 +38,8 @@
 			"io.github.grebeshok105.codex.gametest.ScaramoucheGameTests",
 			"io.github.grebeshok105.codex.gametest.InvincibleGameTests",
 			"io.github.grebeshok105.codex.gametest.OmnimanGameTests",
-			"io.github.grebeshok105.codex.gametest.ContentRegistrationGameTests"
+			"io.github.grebeshok105.codex.gametest.ContentRegistrationGameTests",
+			"io.github.grebeshok105.codex.gametest.HordeGameTests"
 		]
 	},
 	"depends": {
