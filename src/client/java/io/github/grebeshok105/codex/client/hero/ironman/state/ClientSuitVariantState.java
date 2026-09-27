@@ -10,7 +10,11 @@ import io.github.grebeshok105.codex.client.ClientSessionState;
  * Используется скин-миксином, чтобы каждый видел актуальный костюм.
  */
 public final class ClientSuitVariantState {
-	private static final Map<UUID, Integer> VARIANTS = new HashMap<>();
+	private static final class Maps {
+		final Map<UUID, Integer> variants = new HashMap<>();
+	}
+
+	private static final Maps MAPS = new Maps();
 
 	static {
 		ClientSessionState.register(ClientSuitVariantState::clear);
@@ -21,18 +25,18 @@ public final class ClientSuitVariantState {
 
 	public static synchronized void update(UUID playerId, int variant) {
 		if (variant == 0) {
-			VARIANTS.remove(playerId);
+			MAPS.variants.remove(playerId);
 		} else {
-			VARIANTS.put(playerId, variant);
+			MAPS.variants.put(playerId, variant);
 		}
 	}
 
 	public static synchronized int variantFor(UUID playerId) {
-		Integer v = VARIANTS.get(playerId);
+		Integer v = MAPS.variants.get(playerId);
 		return v == null ? 0 : v;
 	}
 
 	public static synchronized void clear() {
-		VARIANTS.clear();
+		MAPS.variants.clear();
 	}
 }

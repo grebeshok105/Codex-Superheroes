@@ -2,6 +2,9 @@ package io.github.grebeshok105.codex.mechanic.flight;
 
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
+import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
 import io.github.grebeshok105.codex.core.transform.HeroDataStore;
 import io.github.grebeshok105.codex.core.ability.AbilityRouter;
 import io.github.grebeshok105.codex.mechanic.flight.FlightAbilityState;
@@ -20,7 +23,7 @@ import net.minecraft.world.entity.player.Abilities;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.HashMap;
+import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
@@ -33,9 +36,15 @@ public final class FlightController {
 	private static final int SYNC_INTERVAL_TICKS = 5;
 	private static final float IRON_MAN_ENERGY_FLOOR = 100f;
 
-	private static final Map<UUID, State> STATES = new HashMap<>();
-	private static final Map<UUID, Long> URANIUM_ACTIVE_SINCE = new HashMap<>();
-	private static final Map<UUID, Long> URANIUM_COOLDOWN_UNTIL = new HashMap<>();
+	// ClearOn.LEAVE replaces cleanup()'s offline-player prune. Death/hero-clear are
+	// intentionally absent: STATES must outlive them so clearIfPresent can still run
+	// disableVanillaFlight+sync on the post-clear tick, exactly as before.
+	private static final OwnedSessionMap<UUID, State> STATES =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.of(ClearOn.LEAVE));
+	private static final OwnedSessionMap<UUID, Long> URANIUM_ACTIVE_SINCE =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.of(ClearOn.LEAVE));
+	private static final OwnedSessionMap<UUID, Long> URANIUM_COOLDOWN_UNTIL =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.of(ClearOn.LEAVE));
 
 	private FlightController() {
 	}
@@ -59,7 +68,7 @@ public final class FlightController {
 
 	public static boolean start(ServerPlayer player, FlightMode mode) {
 		long now = player.level().getGameTime();
-		State state = STATES.computeIfAbsent(player.getUUID(), id -> new State(mode, now));
+		State state = stateOrCreate(player.getUUID(), mode, now);
 		state.phase = FlightPhase.TAKEOFF;
 		state.startedAt = now;
 		if (state.mode != mode) {
@@ -92,7 +101,7 @@ public final class FlightController {
 			return;
 		}
 		long now = player.level().getGameTime();
-		State state = STATES.computeIfAbsent(player.getUUID(), id -> new State(remaining, now));
+		State state = stateOrCreate(player.getUUID(), remaining, now);
 		state.mode = remaining;
 		enableVanillaFlight(player);
 		if (!player.isFallFlying()) {
@@ -141,7 +150,7 @@ public final class FlightController {
 		}
 
 		long now = player.level().getGameTime();
-		State state = STATES.computeIfAbsent(player.getUUID(), id -> new State(mode, now));
+		State state = stateOrCreate(player.getUUID(), mode, now);
 		if (state.mode != mode) {
 			state.mode = mode;
 			state.startedAt = now;
@@ -185,7 +194,7 @@ public final class FlightController {
 		long now = player.level().getGameTime();
 		Long since = URANIUM_ACTIVE_SINCE.get(id);
 		if (since == null) {
-			URANIUM_ACTIVE_SINCE.put(id, now);
+			URANIUM_ACTIVE_SINCE.put(id, id, now);
 			return false;
 		}
 		if (now - since >= URANIUM_AUTO_OFF_TICKS) {
@@ -198,7 +207,7 @@ public final class FlightController {
 	private static void forceUraniumOff(ServerPlayer player) {
 		UUID id = player.getUUID();
 		URANIUM_ACTIVE_SINCE.remove(id);
-		URANIUM_COOLDOWN_UNTIL.put(id, player.level().getGameTime() + URANIUM_COOLDOWN_TICKS);
+		URANIUM_COOLDOWN_UNTIL.put(id, id, player.level().getGameTime() + URANIUM_COOLDOWN_TICKS);
 		AbilityRouter.deactivate(player, FLIGHT_ID);
 	}
 
@@ -279,7 +288,9 @@ public final class FlightController {
 	}
 
 	public static void cleanup(net.minecraft.server.MinecraftServer server) {
-		Iterator<Map.Entry<UUID, Long>> it = URANIUM_COOLDOWN_UNTIL.entrySet().iterator();
+		// Offline-player drops are covered by ClearOn.LEAVE; only the cooldown's
+		// time-based expiry still needs this sweep.
+		Iterator<Map.Entry<UUID, Long>> it = URANIUM_COOLDOWN_UNTIL.iterator();
 		while (it.hasNext()) {
 			Map.Entry<UUID, Long> e = it.next();
 			ServerPlayer p = server.getPlayerList().getPlayer(e.getKey());
@@ -287,8 +298,15 @@ public final class FlightController {
 				it.remove();
 			}
 		}
-		STATES.keySet().removeIf(id -> server.getPlayerList().getPlayer(id) == null);
-		URANIUM_ACTIVE_SINCE.keySet().removeIf(id -> server.getPlayerList().getPlayer(id) == null);
+	}
+
+	private static State stateOrCreate(UUID id, FlightMode mode, long now) {
+		State state = STATES.get(id);
+		if (state == null) {
+			state = new State(mode, now);
+			STATES.put(id, id, state);
+		}
+		return state;
 	}
 
 	public static void tickPlayer(MinecraftServer server, ServerPlayer player, HeroData data) {

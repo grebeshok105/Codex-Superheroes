@@ -1,6 +1,7 @@
 package io.github.grebeshok105.codex.core.lifecycle;
 
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
 import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.minecraft.core.Holder;
@@ -11,11 +12,12 @@ import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
 
+import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Audit B12: hero passives are infinite {@link MobEffectInstance}s applied once at transform —
@@ -35,14 +37,14 @@ public final class PassiveReconciler {
 	/** Effect instances currently applying for the armed {@link #capture} scope. */
 	private static final ThreadLocal<Capture> CAPTURING = new ThreadLocal<>();
 
-	private static final Map<UUID, Declared> DECLARED = new ConcurrentHashMap<>();
-	private static final Set<UUID> PENDING = ConcurrentHashMap.newKeySet();
+	// ClearOn.HERO_CLEAR replaces the explicit clear(playerId) HeroTransformService
+	// ran inside doUntransform; the built-in server-stopped drop replaces reset().
+	private static final OwnedSessionMap<UUID, Declared> DECLARED =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.of(ClearOn.HERO_CLEAR));
+	private static final OwnedSessionMap<UUID, Boolean> PENDING =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.of(ClearOn.HERO_CLEAR));
 
 	private PassiveReconciler() {
-	}
-
-	public static void init() {
-		PlayerLifecycle.onServerStopped(server -> reset());
 	}
 
 	/**
@@ -58,7 +60,7 @@ public final class PassiveReconciler {
 		} finally {
 			CAPTURING.remove();
 		}
-		DECLARED.put(player.getUUID(), new Declared(heroId, Map.copyOf(capture.effects())));
+		DECLARED.put(player.getUUID(), player.getUUID(), new Declared(heroId, Map.copyOf(capture.effects())));
 	}
 
 	public static void applyAndCapture(ServerPlayer player, Hero hero) {
@@ -84,25 +86,20 @@ public final class PassiveReconciler {
 	 */
 	public static void onEffectRemoved(LivingEntity entity) {
 		if (entity instanceof ServerPlayer player) {
-			PENDING.add(player.getUUID());
+			PENDING.put(player.getUUID(), player.getUUID(), Boolean.TRUE);
 		}
-	}
-
-	public static void clear(UUID playerId) {
-		DECLARED.remove(playerId);
-		PENDING.remove(playerId);
-	}
-
-	public static void reset() {
-		DECLARED.clear();
-		PENDING.clear();
 	}
 
 	public static void serverTick(MinecraftServer server) {
-		if (PENDING.isEmpty()) {
+		if (PENDING.size() == 0) {
 			return;
 		}
-		for (UUID id : PENDING) {
+		// snapshot: OwnedSessionMap's iterator is fail-fast and we remove as we go
+		List<UUID> pending = new ArrayList<>();
+		for (Map.Entry<UUID, Boolean> e : PENDING) {
+			pending.add(e.getKey());
+		}
+		for (UUID id : pending) {
 			PENDING.remove(id);
 			Declared declared = DECLARED.get(id);
 			if (declared == null) {

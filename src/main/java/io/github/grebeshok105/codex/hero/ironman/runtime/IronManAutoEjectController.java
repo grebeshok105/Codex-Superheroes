@@ -1,6 +1,9 @@
 package io.github.grebeshok105.codex.hero.ironman.runtime;
 
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
+import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
 import io.github.grebeshok105.codex.ModId;
 import net.minecraft.resources.ResourceLocation;
 import io.github.grebeshok105.codex.core.transform.HeroData;
@@ -13,8 +16,7 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.EnumSet;
 import java.util.UUID;
 
 public final class IronManAutoEjectController {
@@ -23,7 +25,9 @@ public final class IronManAutoEjectController {
 	private static final long COOLDOWN_TICKS = 20L * 60L; // 60 seconds
 	private static final double EJECT_VELOCITY = 1.18;    // ~8 blocks of vertical lift after gravity/drag
 
-	private static final Map<UUID, Long> nextAvailableTick = new HashMap<>();
+	// No lifecycle clearOn: nothing ever removed rows — the cooldown just expires.
+	private static final OwnedSessionMap<UUID, Long> nextAvailableTick =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.noneOf(ClearOn.class));
 
 	private IronManAutoEjectController() {
 	}
@@ -49,7 +53,7 @@ public final class IronManAutoEjectController {
 			return;
 		}
 		fire(player);
-		nextAvailableTick.put(player.getUUID(), now + COOLDOWN_TICKS);
+		nextAvailableTick.put(player.getUUID(), player.getUUID(), now + COOLDOWN_TICKS);
 	}
 
 	private static void fire(ServerPlayer player) {

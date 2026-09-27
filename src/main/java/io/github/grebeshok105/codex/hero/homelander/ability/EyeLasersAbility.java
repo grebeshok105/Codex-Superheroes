@@ -9,6 +9,9 @@ import io.github.grebeshok105.codex.hero.homelander.registry.HomelanderDamageTyp
 import io.github.grebeshok105.codex.hero.homelander.runtime.UraniumDefenseController;
 import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.hero.Heroes;
+import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
 import io.github.grebeshok105.codex.core.net.BeamFx;
 import io.github.grebeshok105.codex.particle.ModParticles;
 import io.github.grebeshok105.codex.core.transform.HeroData;
@@ -16,8 +19,7 @@ import io.github.grebeshok105.codex.mechanic.world.WorldDestructionPolicy;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.EnumSet;
 import java.util.UUID;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -55,7 +57,10 @@ public final class EyeLasersAbility implements Ability {
 	private static final int PULSE_PHASE_PAUSE1_END = 30;
 	private static final int PULSE_PHASE_SHOT2_END = 70;
 
-	private static final Map<UUID, Integer> PULSE_TICK = new HashMap<>();
+	// No lifecycle clearOn: entries are dropped by onDeactivate / the non-threat
+	// branch of onTickActive, exactly like the old map.
+	private static final OwnedSessionMap<UUID, Integer> PULSE_TICK =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.noneOf(ClearOn.class));
 
 	@Override
 	public ResourceLocation getId() {
@@ -82,7 +87,7 @@ public final class EyeLasersAbility implements Ability {
 		ServerLevel level = player.serverLevel();
 		level.playSound(null, player.getX(), player.getY(), player.getZ(),
 				SoundEvents.BLAZE_SHOOT, SoundSource.PLAYERS, 0.6f, 1.8f);
-		PULSE_TICK.put(player.getUUID(), 0);
+		PULSE_TICK.put(player.getUUID(), player.getUUID(), 0);
 		fireBeam(player);
 		return true;
 	}
@@ -102,7 +107,8 @@ public final class EyeLasersAbility implements Ability {
 			PULSE_TICK.remove(player.getUUID());
 			fire = true;
 		} else {
-			int phase = PULSE_TICK.getOrDefault(player.getUUID(), 0);
+			Integer stored = PULSE_TICK.get(player.getUUID());
+			int phase = stored == null ? 0 : stored;
 			if (phase == 0 || phase == PULSE_PHASE_PAUSE1_END) {
 				phaseStart = true;
 			}
@@ -117,7 +123,7 @@ public final class EyeLasersAbility implements Ability {
 			}
 			phase++;
 			if (phase >= PULSE_CYCLE_TICKS) phase = 0;
-			PULSE_TICK.put(player.getUUID(), phase);
+			PULSE_TICK.put(player.getUUID(), player.getUUID(), phase);
 		}
 		if (fire) {
 			fireBeam(player);

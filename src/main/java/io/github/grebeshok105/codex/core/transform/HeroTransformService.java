@@ -6,9 +6,7 @@ import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.hero.Heroes;
 import io.github.grebeshok105.codex.core.lifecycle.HeroLifecycle;
-import io.github.grebeshok105.codex.core.lifecycle.PassiveReconciler;
 import io.github.grebeshok105.codex.core.lifecycle.PlayerLifecycle;
-import io.github.grebeshok105.codex.core.resource.EnergyLocks;
 import io.github.grebeshok105.codex.particle.ModParticles;
 import io.github.grebeshok105.codex.core.resource.ResourceKind;
 import net.minecraft.core.particles.ParticleTypes;
@@ -93,7 +91,6 @@ public final class HeroTransformService {
 			deactivateAll(player, data);
 		}
 		clearHeroRuntimeState(player);
-		io.github.grebeshok105.codex.core.lifecycle.PassiveReconciler.clear(player.getUUID());
 		HeroDataStore.update(player, d -> d.withHero(null).withResources(0f, 0f).clearActive());
 		player.refreshDimensions();
 		if (playFx) {
@@ -172,9 +169,7 @@ public final class HeroTransformService {
 	 * {@code onDeactivate} (its gameplay side-effects would persist onto a leaving player).
 	 */
 	public static void onPlayerLeave(ServerPlayer player) {
-		java.util.UUID id = player.getUUID();
 		// ability cooldowns intentionally persist — they live on the player attachment (audit B5)
-		io.github.grebeshok105.codex.core.resource.EnergyLocks.clear(id);
 		if (HeroDataStore.get(player).hasHero()) {
 			HeroDataStore.update(player, HeroData::clearActive);
 		}
