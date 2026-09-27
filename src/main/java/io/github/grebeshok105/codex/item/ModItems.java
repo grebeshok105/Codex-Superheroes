@@ -72,31 +72,6 @@ public final class ModItems {
 			new EvangelionItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
 	);
 
-	public static final TransformationItem SHADOW_MONARCHS_CLOAK = register(
-			"shadow_monarchs_cloak",
-			new TransformationItem(ModId.of("sung_jinwoo"), new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC),
-					new TransformationLore(ChatFormatting.LIGHT_PURPLE,
-							List.of(new TransformationLore.Line("item.superheroes.shadow_monarchs_cloak.lore.line1", ChatFormatting.LIGHT_PURPLE),
-									new TransformationLore.Line("item.superheroes.shadow_monarchs_cloak.lore.line2", ChatFormatting.DARK_GRAY)),
-							List.of(new TransformationLore.Line("item.superheroes.shadow_monarchs_cloak.lore.usage", ChatFormatting.YELLOW),
-									new TransformationLore.Line("item.superheroes.shadow_monarchs_cloak.lore.untransform", ChatFormatting.LIGHT_PURPLE))))
-	);
-
-	public static final TransformationItem DOOMSDAY_GENOME = register(
-			"doomsday_genome",
-			new TransformationItem(ModId.of("doomsday"), new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC),
-					new TransformationLore(ChatFormatting.DARK_PURPLE,
-							List.of(new TransformationLore.Line("item.superheroes.doomsday_genome.lore.line1", ChatFormatting.LIGHT_PURPLE),
-									new TransformationLore.Line("item.superheroes.doomsday_genome.lore.line2", ChatFormatting.DARK_GRAY)),
-							List.of(new TransformationLore.Line("item.superheroes.doomsday_genome.lore.usage", ChatFormatting.RED),
-									new TransformationLore.Line("item.superheroes.doomsday_genome.lore.untransform", ChatFormatting.GOLD))))
-	);
-
-	public static final KryptoniteShardItem KRYPTONITE_SHARD = register(
-			"kryptonite_shard",
-			new KryptoniteShardItem(new Item.Properties().stacksTo(16).rarity(Rarity.RARE))
-	);
-
 	// persisted id kept from the Doctor Strange era — do not rename the string.
 	public static final TransformationItem PANDORA_SUIT = register(
 			"doctor_strange_suit",

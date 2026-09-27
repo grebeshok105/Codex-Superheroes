@@ -11,7 +11,7 @@ import io.github.grebeshok105.codex.core.transform.HeroDataStore;
 import io.github.grebeshok105.codex.core.transform.HeroTransformService;
 import io.github.grebeshok105.codex.core.transform.TransformationItem;
 import io.github.grebeshok105.codex.effect.ModEffects;
-import io.github.grebeshok105.codex.effect.SungJinwooController;
+import io.github.grebeshok105.codex.hero.sungjinwoo.runtime.SungJinwooController;
 import io.github.grebeshok105.codex.hero.thanos.runtime.ThanosGauntletStateController;
 import io.github.grebeshok105.codex.hero.thanos.ability.ThanosSnapAbility;
 import io.github.grebeshok105.codex.hero.thanos.runtime.ThanosSnapWindupController;

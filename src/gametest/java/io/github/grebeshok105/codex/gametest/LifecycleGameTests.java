@@ -7,7 +7,8 @@ import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.hero.AttributeModifierSet;
 import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.lifecycle.PlayerLifecycle;
-import io.github.grebeshok105.codex.hero.DoomsdayHero;
+import io.github.grebeshok105.codex.hero.doomsday.DoomsdayAttachments;
+import io.github.grebeshok105.codex.hero.doomsday.DoomsdayHero;
 import io.github.grebeshok105.codex.hero.raiden.RaidenAbilities;
 import io.github.grebeshok105.codex.hero.raiden.RaidenHero;
 import io.github.grebeshok105.codex.hero.scaramouche.ScaramoucheHero;
@@ -191,7 +192,7 @@ public final class LifecycleGameTests implements FabricGameTest {
 								doomsday.getAttachedOrCreate(CoreAttachments.HERO_DATA).heroId()),
 				"Doomsday keeps his transformation through death");
 		helper.assertTrue(
-				doomsday.getAttachedOrCreate(ModAttachments.DOOMSDAY_PROGRESS).tier() == 2,
+				doomsday.getAttachedOrCreate(DoomsdayAttachments.PROGRESS).tier() == 2,
 				"the death advanced his adaptation tier");
 		helper.assertFalse(raiden.getAttachedOrCreate(CoreAttachments.HERO_DATA).hasHero(),
 				"a hero without keepsHeroOnDeath untransforms on death");
@@ -199,7 +200,7 @@ public final class LifecycleGameTests implements FabricGameTest {
 		HeroTransformService.onPlayerRespawn(doomsday);
 
 		helper.assertTrue(
-				doomsday.getAttachedOrCreate(ModAttachments.DOOMSDAY_PROGRESS).tier() == 2,
+				doomsday.getAttachedOrCreate(DoomsdayAttachments.PROGRESS).tier() == 2,
 				"respawn re-apply keeps the tier his death granted");
 		helper.assertTrue(doomsday.hasEffect(MobEffects.REGENERATION),
 				"respawn re-applies Doomsday's tier effects");

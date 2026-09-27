@@ -19,11 +19,6 @@ public final class ModDamageTypes {
 	public static final ResourceKey<DamageType> UNIBEAM = key("unibeam");
 	public static final ResourceKey<DamageType> COUNTER_STRIKE = key("counter_strike");
 	public static final ResourceKey<DamageType> LION_ROAR = key("lion_roar");
-	public static final ResourceKey<DamageType> DOOMSDAY_SMASH = key("doomsday_smash");
-	public static final ResourceKey<DamageType> DOOMSDAY_ROAR = key("doomsday_roar");
-	public static final ResourceKey<DamageType> DOOMSDAY_BONE_SPIKE = key("doomsday_bone_spike");
-	public static final ResourceKey<DamageType> DOOMSDAY_CHARGE_TACKLE = key("doomsday_charge_tackle");
-	public static final ResourceKey<DamageType> DOOMSDAY_DOOM_GRIP = key("doomsday_doom_grip");
 	public static final ResourceKey<DamageType> SHADOW_ATTACK = key("shadow_attack");
 	public static final ResourceKey<DamageType> LOKI_CHAOS = key("loki_chaos");
 	public static final ResourceKey<DamageType> CAP_SHIELD_THROW = key("cap_shield_throw");
@@ -46,11 +41,6 @@ public final class ModDamageTypes {
 		context.register(UNIBEAM, new DamageType("unibeam", DamageScaling.NEVER, 0.0F, DamageEffects.BURNING));
 		context.register(COUNTER_STRIKE, new DamageType("counter_strike", DamageScaling.NEVER, 0.0F));
 		context.register(LION_ROAR, new DamageType("lion_roar", DamageScaling.NEVER, 0.0F));
-		context.register(DOOMSDAY_SMASH, new DamageType("doomsday_smash", DamageScaling.NEVER, 0.0F));
-		context.register(DOOMSDAY_ROAR, new DamageType("doomsday_roar", DamageScaling.NEVER, 0.0F));
-		context.register(DOOMSDAY_BONE_SPIKE, new DamageType("doomsday_bone_spike", DamageScaling.NEVER, 0.0F));
-		context.register(DOOMSDAY_CHARGE_TACKLE, new DamageType("doomsday_charge_tackle", DamageScaling.NEVER, 0.0F));
-		context.register(DOOMSDAY_DOOM_GRIP, new DamageType("doomsday_doom_grip", DamageScaling.NEVER, 0.0F));
 		context.register(SHADOW_ATTACK, new DamageType("shadow_attack", DamageScaling.WHEN_CAUSED_BY_LIVING_NON_PLAYER, 0.0F));
 		context.register(LOKI_CHAOS, new DamageType("loki_chaos", DamageScaling.NEVER, 0.0F));
 		context.register(CAP_SHIELD_THROW, new DamageType("cap_shield_throw", DamageScaling.NEVER, 0.0F));
@@ -76,26 +66,6 @@ public final class ModDamageTypes {
 
 	public static DamageSource lionRoar(ServerLevel level, Entity attacker) {
 		return source(level, LION_ROAR, attacker);
-	}
-
-	public static DamageSource doomsdaySmash(ServerLevel level, Entity attacker) {
-		return source(level, DOOMSDAY_SMASH, attacker);
-	}
-
-	public static DamageSource doomsdayRoar(ServerLevel level, Entity attacker) {
-		return source(level, DOOMSDAY_ROAR, attacker);
-	}
-
-	public static DamageSource doomsdayBoneSpike(ServerLevel level, Entity attacker) {
-		return source(level, DOOMSDAY_BONE_SPIKE, attacker);
-	}
-
-	public static DamageSource doomsdayChargeTackle(ServerLevel level, Entity attacker) {
-		return source(level, DOOMSDAY_CHARGE_TACKLE, attacker);
-	}
-
-	public static DamageSource doomsdayDoomGrip(ServerLevel level, Entity attacker) {
-		return source(level, DOOMSDAY_DOOM_GRIP, attacker);
 	}
 
 	public static DamageSource shadowAttack(ServerLevel level, Entity attacker) {

@@ -10,6 +10,7 @@ import io.github.grebeshok105.codex.core.transform.HeroDataStore;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -175,8 +176,15 @@ public final class LokiGameTests implements FabricGameTest {
 		double isoX = player.getX() + 2000.0;
 		double isoZ = player.getZ() + 2000.0;
 		helper.getLevel().getChunk(BlockPos.containing(isoX, player.getY(), isoZ));
+		// Both actors need a floor at the iso spot — in the void they fall during
+		// awaitVisible and the 3D distance crosses the assert threshold.
+		helper.getLevel().setBlock(BlockPos.containing(isoX, player.getY() - 1, isoZ), Blocks.STONE.defaultBlockState(), 3);
 		player.teleportTo(isoX, player.getY(), isoZ);
 		Zombie zombie = spawnZombieAhead(player, 4.0);
+		helper.getLevel().setBlock(zombie.blockPosition().below(), Blocks.STONE.defaultBlockState(), 3);
+		// Pin the landing geometry: a chasing/wandering zombie drifts past the
+		// 2.5-block assert before the blink resolves.
+		zombie.setNoAi(true);
 
 		TestPlayers.awaitVisible(helper, zombie, () -> {
 			AbilityRouter.activate(player, TESSERACT_BLINK);

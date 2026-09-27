@@ -1,5 +1,4 @@
 Method <io.github.grebeshok105.codex.client.ClientNanoSuitUpState.currentSuitTexture(net.minecraft.client.player.AbstractClientPlayer)> gets field <io.github.grebeshok105.codex.hero.IronManHero.ID> in (ClientNanoSuitUpState.java:133)
-Method <io.github.grebeshok105.codex.client.hud.DoomsdayGlitchHud.isDoomsday()> gets field <io.github.grebeshok105.codex.hero.DoomsdayHero.ID> in (DoomsdayGlitchHud.java:89)
 Method <io.github.grebeshok105.codex.client.hud.HeroInfoPanelHud.render(net.minecraft.client.gui.GuiGraphics, net.minecraft.client.DeltaTracker)> gets field <io.github.grebeshok105.codex.hero.IronManHero.ID> in (HeroInfoPanelHud.java:118)
 Method <io.github.grebeshok105.codex.client.hud.HeroInfoPanelHud.render(net.minecraft.client.gui.GuiGraphics, net.minecraft.client.DeltaTracker)> gets field <io.github.grebeshok105.codex.hero.IronManHero.ID> in (HeroInfoPanelHud.java:178)
 Method <io.github.grebeshok105.codex.client.hud.JarvisDetectionHud.tick(net.minecraft.client.Minecraft)> gets field <io.github.grebeshok105.codex.hero.IronManHero.ID> in (JarvisDetectionHud.java:53)

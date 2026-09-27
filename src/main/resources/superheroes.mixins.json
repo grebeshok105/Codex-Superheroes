@@ -7,11 +7,11 @@
 		"PlayerFlightPoseMixin",
 		"LivingEntityFallDamageMixin",
 		"LivingEntityFallFlyingMixin",
-		"LivingEntityEffectMixin",
+		"hero.doomsday.LivingEntityEffectMixin",
 		"LivingEntityPassiveEffectsMixin",
 		"LivingEntityHealBlockMixin",
 		"hero.thanos.ThanosBlockBreakingMixin",
-		"KryptoniteShardPickupMixin",
+		"hero.doomsday.KryptoniteShardPickupMixin",
 		"PlayerBoundWeaponDropMixin",
 		"falbiks.HeroComponentStripMixin"
 	],
