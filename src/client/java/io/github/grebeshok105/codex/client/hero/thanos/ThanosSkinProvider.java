@@ -1,8 +1,8 @@
 package io.github.grebeshok105.codex.client.hero.thanos;
 
-import io.github.grebeshok105.codex.client.ClientThanosState;
-import io.github.grebeshok105.codex.client.ThanosSkinTextures;
 import io.github.grebeshok105.codex.client.core.render.SkinProvider;
+import io.github.grebeshok105.codex.client.hero.thanos.render.ThanosSkinTextures;
+import io.github.grebeshok105.codex.client.hero.thanos.state.ClientThanosState;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;

@@ -1,9 +1,9 @@
 package io.github.grebeshok105.codex.gametest;
 
-import io.github.grebeshok105.codex.attachment.ModAttachments;
-import io.github.grebeshok105.codex.effect.DoomsdayProgress;
+import io.github.grebeshok105.codex.hero.doomsday.runtime.DoomsdayProgress;
 import io.github.grebeshok105.codex.core.hero.BleedProfile;
-import io.github.grebeshok105.codex.hero.DoomsdayHero;
+import io.github.grebeshok105.codex.hero.doomsday.DoomsdayAttachments;
+import io.github.grebeshok105.codex.hero.doomsday.DoomsdayHero;
 import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.hero.Heroes;
 import io.github.grebeshok105.codex.core.hero.PassiveGlyph;
@@ -71,9 +71,9 @@ public final class HeroPresentationGameTests implements FabricGameTest {
 			if (DoomsdayHero.ID.equals(hero.getId())) {
 				// Doomsday bleeds only from tier 3: capture the hook at min and max tier,
 				// written the same way DoomsdayTierController writes it.
-				player.setAttached(ModAttachments.DOOMSDAY_PROGRESS, DoomsdayProgress.EMPTY.withTier(1));
+				player.setAttached(DoomsdayAttachments.PROGRESS, DoomsdayProgress.EMPTY.withTier(1));
 				bleedTier1 = hero.getMeleeBleed(player);
-				player.setAttached(ModAttachments.DOOMSDAY_PROGRESS, DoomsdayProgress.EMPTY.withTier(7));
+				player.setAttached(DoomsdayAttachments.PROGRESS, DoomsdayProgress.EMPTY.withTier(7));
 				bleedTier7 = hero.getMeleeBleed(player);
 			} else {
 				bleedTier1 = hero.getMeleeBleed(player);

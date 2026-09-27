@@ -7,14 +7,16 @@ import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.hero.AttributeModifierSet;
 import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.lifecycle.PlayerLifecycle;
-import io.github.grebeshok105.codex.hero.DoomsdayHero;
+import io.github.grebeshok105.codex.hero.doomsday.DoomsdayAttachments;
+import io.github.grebeshok105.codex.hero.doomsday.DoomsdayHero;
 import io.github.grebeshok105.codex.hero.raiden.RaidenAbilities;
 import io.github.grebeshok105.codex.hero.raiden.RaidenHero;
 import io.github.grebeshok105.codex.hero.scaramouche.ScaramoucheHero;
 import io.github.grebeshok105.codex.core.lifecycle.ControlLockKind;
 import io.github.grebeshok105.codex.core.lifecycle.EntityControlLock;
 import io.github.grebeshok105.codex.effect.ModEffects;
-import io.github.grebeshok105.codex.effect.ThanosSnapWindupController;
+import io.github.grebeshok105.codex.hero.thanos.ability.ThanosSnapAbility;
+import io.github.grebeshok105.codex.hero.thanos.runtime.ThanosSnapWindupController;
 import io.github.grebeshok105.codex.core.transform.HeroTransformService;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.gametest.framework.GameTest;
@@ -190,7 +192,7 @@ public final class LifecycleGameTests implements FabricGameTest {
 								doomsday.getAttachedOrCreate(CoreAttachments.HERO_DATA).heroId()),
 				"Doomsday keeps his transformation through death");
 		helper.assertTrue(
-				doomsday.getAttachedOrCreate(ModAttachments.DOOMSDAY_PROGRESS).tier() == 2,
+				doomsday.getAttachedOrCreate(DoomsdayAttachments.PROGRESS).tier() == 2,
 				"the death advanced his adaptation tier");
 		helper.assertFalse(raiden.getAttachedOrCreate(CoreAttachments.HERO_DATA).hasHero(),
 				"a hero without keepsHeroOnDeath untransforms on death");
@@ -198,7 +200,7 @@ public final class LifecycleGameTests implements FabricGameTest {
 		HeroTransformService.onPlayerRespawn(doomsday);
 
 		helper.assertTrue(
-				doomsday.getAttachedOrCreate(ModAttachments.DOOMSDAY_PROGRESS).tier() == 2,
+				doomsday.getAttachedOrCreate(DoomsdayAttachments.PROGRESS).tier() == 2,
 				"respawn re-apply keeps the tier his death granted");
 		helper.assertTrue(doomsday.hasEffect(MobEffects.REGENERATION),
 				"respawn re-applies Doomsday's tier effects");
@@ -213,7 +215,7 @@ public final class LifecycleGameTests implements FabricGameTest {
 		ServerPlayer caster = TestPlayers.join(helper);
 		ServerPlayer victim = TestPlayers.join(helper);
 		victim.teleportTo(caster.getX(), caster.getY(), caster.getZ());
-		ThanosSnapWindupController.schedule(caster, 2, 200);
+		ThanosSnapWindupController.schedule(caster, 2, 200, ThanosSnapAbility::executeSnap);
 		caster.setHealth(0.0F);
 
 		helper.runAfterDelay(10, () -> {

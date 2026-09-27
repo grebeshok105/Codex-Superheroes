@@ -1,6 +1,7 @@
 package io.github.grebeshok105.codex.item;
 
 import io.github.grebeshok105.codex.ModId;
+import io.github.grebeshok105.codex.content.admin.AdminBuildVisibility;
 import io.github.grebeshok105.codex.core.content.CreativeTabContents;
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
 import net.minecraft.core.Registry;
@@ -35,17 +36,6 @@ public final class ModItemGroups {
 				output.accept(ModItems.REGULUS_SUIT);
 				output.accept(ModItems.EVANGELION);
 
-
-				output.accept(ModItems.DOOMSDAY_GENOME);
-				output.accept(ModItems.KRYPTONITE_SHARD);
-
-				output.accept(ModItems.INFINITY_GAUNTLET);
-				output.accept(ModItems.POWER_STONE);
-				output.accept(ModItems.SPACE_STONE);
-				output.accept(ModItems.REALITY_STONE);
-				output.accept(ModItems.SOUL_STONE);
-				output.accept(ModItems.TIME_STONE);
-				output.accept(ModItems.MIND_STONE);
 
 				// Hero modules append their items here, in module registration order.
 				for (ItemLike item : CreativeTabContents.all()) {

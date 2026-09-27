@@ -7,12 +7,12 @@
 		"PlayerFlightPoseMixin",
 		"LivingEntityFallDamageMixin",
 		"LivingEntityFallFlyingMixin",
-		"LivingEntityEffectMixin",
+		"hero.doomsday.LivingEntityEffectMixin",
 		"LivingEntityPassiveEffectsMixin",
 		"LivingEntityHealBlockMixin",
-		"ThanosBlockBreakingMixin",
-		"KryptoniteShardPickupMixin",
-		"PlayerBoundWeaponDropMixin"
+		"hero.thanos.ThanosBlockBreakingMixin",
+		"hero.doomsday.KryptoniteShardPickupMixin",
+		"PlayerBoundWeaponDropMixin",
 	],
 	"injectors": {
 		"defaultRequire": 1

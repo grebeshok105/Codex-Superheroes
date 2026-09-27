@@ -1,6 +1,6 @@
 package io.github.grebeshok105.codex.gametest;
 
-import io.github.grebeshok105.codex.ability.DoomsdayRoarAbility;
+import io.github.grebeshok105.codex.hero.doomsday.ability.DoomsdayRoarAbility;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.gametest.framework.GameTest;

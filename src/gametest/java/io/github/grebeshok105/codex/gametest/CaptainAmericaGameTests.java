@@ -11,7 +11,6 @@ import io.github.grebeshok105.codex.core.hero.Heroes;
 import io.github.grebeshok105.codex.core.lifecycle.HeroTickDispatcher;
 import io.github.grebeshok105.codex.core.transform.HeroDataStore;
 import io.github.grebeshok105.codex.hero.captainamerica.entity.ShieldProjectileEntity;
-import io.github.grebeshok105.codex.item.ModItems;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -29,6 +28,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 
@@ -91,6 +91,14 @@ public final class CaptainAmericaGameTests implements FabricGameTest {
 
 	private static Item vibraniumShield() {
 		return BuiltInRegistries.ITEM.get(VIBRANIUM_SHIELD);
+	}
+
+	private static Item item(String path) {
+		Item item = BuiltInRegistries.ITEM.get(ModId.of(path));
+		if (item == Items.AIR) {
+			throw new IllegalStateException("unregistered item " + path);
+		}
+		return item;
 	}
 
 	/**
@@ -496,7 +504,7 @@ public final class CaptainAmericaGameTests implements FabricGameTest {
 			victim.hurt(killer.damageSources().mobAttack(killer), victim.getMaxHealth() * 10f);
 			helper.getLevel().getServer().setPvpAllowed(oldPvp);
 			helper.assertTrue(!victim.isAlive(), "the victim died to the hit");
-			helper.assertTrue(TestPlayers.count(killer, ModItems.SOUL_STONE) == 1,
+			helper.assertTrue(TestPlayers.count(killer, item("soul_stone")) == 1,
 					"the thanos killer receives cap's SOUL stone drop row");
 			TestPlayers.leave(killer);
 			TestPlayers.leave(victim);

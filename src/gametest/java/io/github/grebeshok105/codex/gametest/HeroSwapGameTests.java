@@ -1,20 +1,23 @@
 package io.github.grebeshok105.codex.gametest;
 
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
-import io.github.grebeshok105.codex.ability.ThanosSnapAbility;
+import io.github.grebeshok105.codex.hero.thanos.ability.ThanosSnapAbility;
 import io.github.grebeshok105.codex.hero.raiden.RaidenAbilities;
 import io.github.grebeshok105.codex.hero.raiden.RaidenHero;
 import io.github.grebeshok105.codex.hero.scaramouche.ScaramoucheHero;
-import io.github.grebeshok105.codex.item.ModItems;
-import io.github.grebeshok105.codex.item.infinity.InfinityGauntletData;
-import io.github.grebeshok105.codex.item.infinity.InfinityStoneType;
+import io.github.grebeshok105.codex.hero.thanos.item.InfinityGauntletData;
+import io.github.grebeshok105.codex.hero.thanos.item.InfinityStoneType;
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.transform.HeroDataStore;
 import io.github.grebeshok105.codex.core.transform.HeroTransformService;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 
 /**
  * Audit B5 (hero swap must not reset cooldowns, heal, or refill energy) and
@@ -61,20 +64,28 @@ public final class HeroSwapGameTests implements FabricGameTest {
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void snapConsumesGauntletAndLooseStones(GameTestHelper helper) {
 		ServerPlayer thanos = TestPlayers.join(helper);
-		ItemStack gauntlet = new ItemStack(ModItems.INFINITY_GAUNTLET);
+		ItemStack gauntlet = new ItemStack(item("infinity_gauntlet"));
 		for (InfinityStoneType type : InfinityStoneType.values()) {
 			InfinityGauntletData.tryInsert(gauntlet, type);
 		}
 		thanos.getInventory().add(gauntlet);
-		thanos.getInventory().add(new ItemStack(ModItems.POWER_STONE));
+		thanos.getInventory().add(new ItemStack(item("power_stone")));
 
 		ThanosSnapAbility.executeSnap(thanos);
 
 		helper.assertTrue(InfinityGauntletData.getStones(gauntlet).isEmpty(),
 				"the snap burns the stones out of the gauntlet");
-		helper.assertTrue(TestPlayers.count(thanos, ModItems.POWER_STONE) == 0,
+		helper.assertTrue(TestPlayers.count(thanos, item("power_stone")) == 0,
 				"loose stones are consumed too");
 		TestPlayers.leave(thanos);
 		helper.succeed();
+	}
+
+	private static Item item(String path) {
+		Item item = BuiltInRegistries.ITEM.get(ModId.of(path));
+		if (item == Items.AIR) {
+			throw new IllegalStateException("unregistered item " + path);
+		}
+		return item;
 	}
 }

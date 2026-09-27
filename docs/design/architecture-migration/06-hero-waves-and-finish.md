@@ -52,23 +52,23 @@
 | :-- | :-- | :-- |
 | I1a Kazuha + Scaramouche | ✅ | #90 |
 | I1b Loki + A-Train | ✅ | #93 |
-| I1c Battle Beast | ⏳ | |
+| I1c Battle Beast | ✅ | #98 |
 | I2a Goku + Naruto | ✅ | #91 |
 | I2b Kratos | ✅ | #97 |
 | I2c Captain America | ✅ | #95 |
 | I3 Invincible + Omni-Man | ✅ | #92 |
-| I4a Sung Jinwoo | ⏳ | |
-| I4b Rem | ⏳ | |
-| I4c Raiden | ⏳ | |
-| I4d Doomsday | ⏳ | |
+| I4a Sung Jinwoo | ✅ | #102 |
+| I4b Rem | ✅ | #100 |
+| I4c Raiden | ✅ | #101 |
+| I4d Doomsday | ✅ | #104 |
 | I5a Thanos | ⏳ | |
 | I5b Regulus | ⏳ | |
 | I5c Pandora | ⏳ | |
 | I6a Homelander | ⏳ | |
 | I6b Iron Man + L2 | ⏳ | |
 | IC1 орда | ✅ | PR #96; content-модуль, GeckoLib оставлена (см. «Решения») |
-| IC2 босс Хоумлендер | ⏳ | |
-| IC3 admin и команды | ⏳ | |
+| IC2 босс Хоумлендер | ✅ | #99 |
+| IC3 admin и команды | ✅ | #103 |
 | O документация и финальная приёмка | ⏳ | |
 
 ## Контекст

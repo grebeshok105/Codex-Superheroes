@@ -1,7 +1,6 @@
 package io.github.grebeshok105.codex;
 
 import io.github.grebeshok105.codex.attachment.ModAttachments;
-import io.github.grebeshok105.codex.command.SuperheroesCommands;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.lifecycle.HeroTickDispatcher;
 import io.github.grebeshok105.codex.core.lifecycle.PassiveReconciler;
@@ -45,7 +44,6 @@ public class SuperheroesMod implements ModInitializer {
 		ModSounds.init();
 		ModNetworking.init();
 		HeroDataStore.init();
-		SuperheroesCommands.init();
 
 		io.github.grebeshok105.codex.core.lifecycle.HeroTickDispatcher.init();
 

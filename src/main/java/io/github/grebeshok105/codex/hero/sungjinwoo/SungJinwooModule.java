@@ -4,7 +4,6 @@ import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.module.HeroModule;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.damage.DamageTypeSpec;
-import io.github.grebeshok105.codex.effect.ThanosStoneRewardController;
 import io.github.grebeshok105.codex.hero.sungjinwoo.ability.AriseAbility;
 import io.github.grebeshok105.codex.hero.sungjinwoo.ability.MonarchsDomainAbility;
 import io.github.grebeshok105.codex.hero.sungjinwoo.ability.RulersAuthorityAbility;
@@ -17,7 +16,7 @@ import io.github.grebeshok105.codex.hero.sungjinwoo.net.SungShadowArmyS2CPayload
 import io.github.grebeshok105.codex.hero.sungjinwoo.registry.SungJinwooDamageTypes;
 import io.github.grebeshok105.codex.hero.sungjinwoo.runtime.MonarchsDomainController;
 import io.github.grebeshok105.codex.hero.sungjinwoo.runtime.SungJinwooController;
-import io.github.grebeshok105.codex.item.infinity.InfinityStoneType;
+
 
 import java.util.List;
 
@@ -51,9 +50,8 @@ public final class SungJinwooModule implements HeroModule {
 
 		ctx.payloads().s2c(SungShadowArmyS2CPayload.TYPE, SungShadowArmyS2CPayload.STREAM_CODEC);
 
-		// Sung Jin-Woo→REALITY stone reward, registered by the hero that owns the drop row.
-		ThanosStoneRewardController.registerHeroStone(SungJinwooHero.ID, InfinityStoneType.REALITY);
-
+		// Sung Jin-Woo→REALITY stone reward row lives in InfinityStones' static table
+		// (hero.thanos owns the stone registry — heroes never import sibling heroes).
 		SungJinwooController.register(ctx);
 		// Entity leaf asks the runtime for legitimacy through a wired contract (no entity→runtime edge).
 		ShadowSoldierEntity.setArmyMembership(SungJinwooController::isArmyMember);

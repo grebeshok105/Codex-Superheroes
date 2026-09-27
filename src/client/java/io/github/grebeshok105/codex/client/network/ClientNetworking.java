@@ -74,9 +74,9 @@ public final class ClientNetworking {
 		ClientPlayNetworking.registerGlobalReceiver(io.github.grebeshok105.codex.network.SuitVariantS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> io.github.grebeshok105.codex.client.ClientSuitVariantState.update(payload.playerId(), payload.variant())));
 
-		ClientPlayNetworking.registerGlobalReceiver(io.github.grebeshok105.codex.network.AdminBuildS2CPayload.TYPE, (payload, context) ->
+		ClientPlayNetworking.registerGlobalReceiver(io.github.grebeshok105.codex.content.admin.AdminBuildS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> {
-					io.github.grebeshok105.codex.item.AdminBuildVisibility.setClientVisible(payload.enabled());
+					io.github.grebeshok105.codex.content.admin.AdminBuildVisibility.setClientVisible(payload.enabled());
 					superheroes$rebuildSuperheroesTab(context.client());
 				}));
 	}
