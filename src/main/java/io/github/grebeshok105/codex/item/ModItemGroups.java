@@ -48,10 +48,6 @@ public final class ModItemGroups {
 				output.accept(ModItems.TIME_STONE);
 				output.accept(ModItems.MIND_STONE);
 
-
-				output.accept(ModItems.RAIDEN_SUIT);
-
-
 				output.accept(ModItems.PANDORA_SUIT);
 
 				// Hero modules append their items here, in module registration order.

@@ -1,10 +1,12 @@
-package io.github.grebeshok105.codex.effect;
+package io.github.grebeshok105.codex.hero.raiden.runtime;
 
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.net.ScreenShakeS2CPayload;
+import io.github.grebeshok105.codex.mechanic.strike.QueuedStrikes;
+import io.github.grebeshok105.codex.mechanic.strike.StrikeSession;
 import io.github.grebeshok105.codex.sound.ModSounds;
 import io.github.grebeshok105.codex.mechanic.world.WorldDestructionPolicy;
-import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
+import io.github.grebeshok105.codex.core.net.FxBroadcast;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
@@ -24,13 +26,16 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.Iterator;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.server.MinecraftServer;
 
+/**
+ * Raiden's queued heavens strike behind Plunging Strike — the generic queue drain lives in
+ * {@link QueuedStrikes} ({@code mechanic/strike}); this class keeps only the Raiden-side
+ * concerns: the RAIDEN variant config, the caster lock + freeze bundle, windup FX and the
+ * crater/damage detonation.
+ */
 public final class HeavensStrikeController {
 	public static final int WINDUP_TICKS = 80;
 	private static final int FREEZE_REFRESH_TICKS = 18;
@@ -40,9 +45,25 @@ public final class HeavensStrikeController {
 		public static final Variant RAIDEN = new Variant(8, 5, 3.5f, 60f, 0.78f, 0.9, 65.0);
 	}
 
-	public record Pending(Vec3 target, long startTick, long impactTick, Variant variant, Vec3 lockPos, float lockYaw, float lockPitch) {}
+	public record Pending(Vec3 target, long startTick, long impactTick, Variant variant, Vec3 lockPos, float lockYaw, float lockPitch) implements StrikeSession {}
 
-	private static final Map<UUID, Pending> PENDING = new ConcurrentHashMap<>();
+	private static final QueuedStrikes<Pending> QUEUE = new QueuedStrikes<>(new QueuedStrikes.Handlers<>() {
+		@Override
+		public void tick(ServerPlayer owner, Pending p, long now) {
+			enforceLock(owner, p, now);
+		}
+
+		@Override
+		public void windup(ServerPlayer owner, Pending p, long now) {
+			windupTick(owner, p, now);
+		}
+
+		@Override
+		public void impact(ServerPlayer owner, Pending p) {
+			clearFreeze(owner);
+			detonate(owner, p);
+		}
+	});
 
 	// Precious blocks the strike intentionally cannot dent — everything else
 	// unbreakable is covered by WorldDestructionPolicy (tag + destroySpeed).
@@ -59,17 +80,16 @@ public final class HeavensStrikeController {
 	private HeavensStrikeController() {}
 
 	public static boolean isCharging(ServerPlayer player) {
-		return PENDING.containsKey(player.getUUID());
+		return QUEUE.isCharging(player);
 	}
 
 	public static boolean start(ServerPlayer player, Variant variant) {
-		if (PENDING.containsKey(player.getUUID())) return false;
 		ServerLevel level = player.serverLevel();
 		long now = level.getGameTime();
 		Vec3 target = findGroundTarget(player);
 		Vec3 lockPos = player.position();
-		PENDING.put(player.getUUID(), new Pending(target, now, now + WINDUP_TICKS, variant,
-				lockPos, player.getYRot(), player.getXRot()));
+		if (!QUEUE.queue(player, new Pending(target, now, now + WINDUP_TICKS, variant,
+				lockPos, player.getYRot(), player.getXRot()))) return false;
 		applyFreeze(player);
 		level.playSound(null, target.x, target.y, target.z,
 				SoundEvents.BEACON_ACTIVATE, SoundSource.PLAYERS, 2.0f, 0.6f);
@@ -81,7 +101,7 @@ public final class HeavensStrikeController {
 	}
 
 	public static void cancel(UUID id) {
-		PENDING.remove(id);
+		QUEUE.cancel(id);
 	}
 
 	private static void applyFreeze(ServerPlayer player) {
@@ -185,7 +205,7 @@ public final class HeavensStrikeController {
 		}
 	}
 
-	private static void impact(ServerPlayer player, Pending p) {
+	private static void detonate(ServerPlayer player, Pending p) {
 		ServerLevel level = player.serverLevel();
 		Vec3 t = p.target;
 		Variant v = p.variant;
@@ -209,7 +229,7 @@ public final class HeavensStrikeController {
 		level.sendParticles(ParticleTypes.LARGE_SMOKE, t.x, t.y + 1, t.z,
 				60, v.radius, 2.0, v.radius, 0.05);
 
-		for (ServerPlayer near : PlayerLookup.around(level, t, 100.0)) {
+		for (ServerPlayer near : FxBroadcast.aroundAudience(level, t, 100.0)) {
 			double dist = near.position().distanceTo(t);
 			float intensity = (float) Math.max(0.05, 1.0 - dist / 100.0) * v.shakeIntensity;
 			ServerPlayNetworking.send(near, new ScreenShakeS2CPayload(intensity, 36));
@@ -275,26 +295,7 @@ public final class HeavensStrikeController {
 	}
 
 	public static void serverTick(MinecraftServer server) {
-			if (PENDING.isEmpty()) return;
-			Iterator<Map.Entry<UUID, Pending>> it = PENDING.entrySet().iterator();
-			while (it.hasNext()) {
-				Map.Entry<UUID, Pending> e = it.next();
-				ServerPlayer player = server.getPlayerList().getPlayer(e.getKey());
-				if (player == null) {
-					it.remove();
-					continue;
-				}
-				Pending p = e.getValue();
-				long now = player.serverLevel().getGameTime();
-				enforceLock(player, p, now);
-				if (now >= p.impactTick) {
-					clearFreeze(player);
-					impact(player, p);
-					it.remove();
-				} else {
-					windupTick(player, p, now);
-				}
-			}
-			}
+		QUEUE.serverTick(server);
+	}
 
 }

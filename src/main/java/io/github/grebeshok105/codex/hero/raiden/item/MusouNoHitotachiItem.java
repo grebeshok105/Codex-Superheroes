@@ -1,15 +1,15 @@
-package io.github.grebeshok105.codex.item;
+package io.github.grebeshok105.codex.hero.raiden.item;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.mechanic.boundweapon.BoundWeaponItem;
-import io.github.grebeshok105.codex.attachment.ModAttachments;
-import io.github.grebeshok105.codex.effect.RaidenState;
-import io.github.grebeshok105.codex.hero.RaidenHero;
+import io.github.grebeshok105.codex.hero.raiden.runtime.RaidenState;
 import io.github.grebeshok105.codex.particle.ModParticles;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -33,6 +33,8 @@ import java.util.List;
  *   • Musou Shinsetsu (Q активен) — обычный удар бьёт +50% сильнее, всё в радиусе 4 блока тоже получает урон.
  */
 public class MusouNoHitotachiItem extends BoundWeaponItem {
+	private static final ResourceLocation RAIDEN_ID = ModId.of("raiden_shogun");
+
 	public MusouNoHitotachiItem(Properties properties) {
 		super(Tiers.NETHERITE, properties.attributes(SwordItem.createAttributes(Tiers.NETHERITE, 6, -2.4f)));
 	}
@@ -52,8 +54,8 @@ public class MusouNoHitotachiItem extends BoundWeaponItem {
 	public boolean hurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
 		if (attacker instanceof ServerPlayer player) {
 			HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
-			if (RaidenHero.ID.equals(data.heroId())) {
-				RaidenState state = player.getAttachedOrCreate(ModAttachments.RAIDEN_STATE);
+			if (RAIDEN_ID.equals(data.heroId())) {
+				RaidenState state = player.getAttachedOrCreate(RaidenState.ATTACHMENT);
 				long now = player.serverLevel().getGameTime();
 				ServerLevel level = player.serverLevel();
 				boolean targetIsPlayer = target instanceof net.minecraft.world.entity.player.Player;

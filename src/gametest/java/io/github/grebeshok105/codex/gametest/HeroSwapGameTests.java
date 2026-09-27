@@ -1,9 +1,9 @@
 package io.github.grebeshok105.codex.gametest;
 
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
-import io.github.grebeshok105.codex.ability.AbilityIds;
 import io.github.grebeshok105.codex.ability.ThanosSnapAbility;
-import io.github.grebeshok105.codex.hero.RaidenHero;
+import io.github.grebeshok105.codex.hero.raiden.RaidenAbilities;
+import io.github.grebeshok105.codex.hero.raiden.RaidenHero;
 import io.github.grebeshok105.codex.hero.scaramouche.ScaramoucheHero;
 import io.github.grebeshok105.codex.item.ModItems;
 import io.github.grebeshok105.codex.item.infinity.InfinityGauntletData;
@@ -26,12 +26,12 @@ public final class HeroSwapGameTests implements FabricGameTest {
 	public void heroSwapKeepsAbilityCooldowns(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		HeroTransformService.transform(player, RaidenHero.ID);
-		AbilityCooldowns.setCooldownTicks(player, AbilityIds.RAIDEN_SWORD_DRAW, 200);
+		AbilityCooldowns.setCooldownTicks(player, RaidenAbilities.RAIDEN_SWORD_DRAW, 200);
 
 		// the transform cooldown is 20 ticks — swap as soon as it legally allows
 		helper.runAfterDelay(25, () -> {
 			TestHeroes.transform(player, ScaramoucheHero.ID);
-			helper.assertTrue(AbilityCooldowns.isOnCooldown(player, AbilityIds.RAIDEN_SWORD_DRAW),
+			helper.assertTrue(AbilityCooldowns.isOnCooldown(player, RaidenAbilities.RAIDEN_SWORD_DRAW),
 					"a hero swap must not reset ability cooldowns");
 			TestPlayers.leave(player);
 			helper.succeed();

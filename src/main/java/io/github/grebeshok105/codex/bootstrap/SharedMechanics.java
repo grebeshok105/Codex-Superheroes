@@ -6,7 +6,6 @@ import io.github.grebeshok105.codex.core.lifecycle.HeroTickDispatcher;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.effect.AutoSaturationController;
 import io.github.grebeshok105.codex.effect.FlightController;
-import io.github.grebeshok105.codex.effect.HeavensStrikeController;
 import io.github.grebeshok105.codex.effect.HeroEquipmentLock;
 import io.github.grebeshok105.codex.effect.HeroLandingTracker;
 import io.github.grebeshok105.codex.effect.HeroMeleeImpactController;
@@ -59,7 +58,6 @@ public final class SharedMechanics {
 		ctx.ticks().global(HeroMeleeImpactController::serverTick);
 		ctx.ticks().global(BallisticBodyTracker::tick);
 		ctx.ticks().global(FlightController::cleanup);
-		ctx.ticks().global(HeavensStrikeController::serverTick);
 		// content rows kept here until their own stage
 		AdminBuildSyncController.register(ctx);
 	}

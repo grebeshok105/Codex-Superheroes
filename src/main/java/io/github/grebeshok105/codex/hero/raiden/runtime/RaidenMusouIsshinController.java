@@ -1,15 +1,17 @@
-package io.github.grebeshok105.codex.effect;
+package io.github.grebeshok105.codex.hero.raiden.runtime;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
-import io.github.grebeshok105.codex.hero.RaidenHero;
-import io.github.grebeshok105.codex.item.MusouNoHitotachiItem;
+import net.minecraft.core.registries.BuiltInRegistries;
 import io.github.grebeshok105.codex.core.net.ScreenShakeS2CPayload;
+import io.github.grebeshok105.codex.mechanic.strike.QueuedStrikes;
+import io.github.grebeshok105.codex.mechanic.strike.StrikeSession;
 import io.github.grebeshok105.codex.particle.ModParticles;
 import io.github.grebeshok105.codex.sound.ModSounds;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import io.github.grebeshok105.codex.mechanic.world.WorldDestructionPolicy;
-import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
+import io.github.grebeshok105.codex.core.net.FxBroadcast;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
@@ -32,13 +34,10 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.resources.ResourceLocation;
 
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.server.MinecraftServer;
 
 public final class RaidenMusouIsshinController {
@@ -53,6 +52,9 @@ public final class RaidenMusouIsshinController {
 	private static final double IMPACT_RADIUS = 10.0;
 	private static final float IMPACT_DAMAGE = 16f;
 
+	private static final ResourceLocation RAIDEN_ID = ModId.of("raiden_shogun");
+	private static final ResourceLocation YAMATO_ID = ModId.of("musou_no_hitotachi");
+
 	// Precious blocks the slash intentionally cannot dent — everything else
 	// unbreakable is covered by WorldDestructionPolicy (tag + destroySpeed).
 	private static final Set<Block> UNBREAKABLE = Set.of(
@@ -61,17 +63,38 @@ public final class RaidenMusouIsshinController {
 	);
 
 	private record Pending(Vec3 origin, Vec3 dir, Vec3 perp, Vec3 lockPos, float lockYaw, float lockPitch,
-	                       long startTick, long impactTick) {
+	                       long startTick, long impactTick) implements StrikeSession {
 	}
 
-	private static final Map<UUID, Pending> PENDING = new ConcurrentHashMap<>();
+	private static final QueuedStrikes<Pending> QUEUE = new QueuedStrikes<>(new QueuedStrikes.Handlers<>() {
+		@Override
+		public boolean stillValid(ServerPlayer owner, Pending session) {
+			return isRaiden(owner) && hasYamato(owner);
+		}
+
+		@Override
+		public void tick(ServerPlayer owner, Pending p, long now) {
+			enforceCasterLock(owner, p, now);
+			freezeNearby(owner, p.origin, now, false);
+		}
+
+		@Override
+		public void windup(ServerPlayer owner, Pending p, long now) {
+			windupTick(owner, p, now);
+		}
+
+		@Override
+		public void impact(ServerPlayer owner, Pending p) {
+			resolveImpact(owner, p);
+		}
+	});
 
 	private RaidenMusouIsshinController() {
 	}
 
 
 	public static boolean isCharging(ServerPlayer player) {
-		return PENDING.containsKey(player.getUUID());
+		return QUEUE.isCharging(player);
 	}
 
 	public static boolean start(ServerPlayer player) {
@@ -85,8 +108,8 @@ public final class RaidenMusouIsshinController {
 		}
 		Vec3 origin = player.position();
 		long now = player.serverLevel().getGameTime();
-		PENDING.put(player.getUUID(), new Pending(origin, flat, new Vec3(-flat.z, 0, flat.x),
-				origin, player.getYRot(), player.getXRot(), now, now + WINDUP_TICKS));
+		if (!QUEUE.queue(player, new Pending(origin, flat, new Vec3(-flat.z, 0, flat.x),
+				origin, player.getYRot(), player.getXRot(), now, now + WINDUP_TICKS))) return false;
 		ServerLevel level = player.serverLevel();
 		applyCasterFreeze(player);
 		freezeNearby(player, origin, now, true);
@@ -147,7 +170,7 @@ public final class RaidenMusouIsshinController {
 		}
 	}
 
-	private static void impact(ServerPlayer player, Pending p) {
+	private static void resolveImpact(ServerPlayer player, Pending p) {
 		ServerLevel level = player.serverLevel();
 		player.swing(InteractionHand.MAIN_HAND, true);
 		carveSlash(level, player, p);
@@ -302,7 +325,7 @@ public final class RaidenMusouIsshinController {
 	}
 
 	private static void shake(ServerLevel level, Vec3 center) {
-		for (ServerPlayer near : PlayerLookup.around(level, center, 100.0)) {
+		for (ServerPlayer near : FxBroadcast.aroundAudience(level, center, 100.0)) {
 			double dist = near.position().distanceTo(center);
 			float intensity = (float) Math.max(0.08, 1.0 - dist / 100.0) * 4.5f;
 			ServerPlayNetworking.send(near, new ScreenShakeS2CPayload(intensity, 42));
@@ -336,36 +359,20 @@ public final class RaidenMusouIsshinController {
 
 	private static boolean isRaiden(ServerPlayer player) {
 		HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
-		return data.hasHero() && RaidenHero.ID.equals(data.heroId());
+		return data.hasHero() && RAIDEN_ID.equals(data.heroId());
 	}
 
 	private static boolean hasYamato(ServerPlayer player) {
+		// Registry-singleton identity — leaf-literal lookup; identical to instanceof for the
+		// one registered musou_no_hitotachi item instance (same idiom SwordDraw uses).
+		var yamato = BuiltInRegistries.ITEM.get(YAMATO_ID);
 		ItemStack main = player.getMainHandItem();
 		ItemStack off = player.getOffhandItem();
-		return main.getItem() instanceof MusouNoHitotachiItem || off.getItem() instanceof MusouNoHitotachiItem;
+		return main.getItem() == yamato || off.getItem() == yamato;
 	}
 
 	public static void serverTick(MinecraftServer server) {
-			if (PENDING.isEmpty()) return;
-			Iterator<Map.Entry<UUID, Pending>> it = PENDING.entrySet().iterator();
-			while (it.hasNext()) {
-				Map.Entry<UUID, Pending> e = it.next();
-				ServerPlayer player = server.getPlayerList().getPlayer(e.getKey());
-				if (player == null || !isRaiden(player) || !hasYamato(player)) {
-					it.remove();
-					continue;
-				}
-				Pending p = e.getValue();
-				long now = player.serverLevel().getGameTime();
-				enforceCasterLock(player, p, now);
-				freezeNearby(player, p.origin, now, false);
-				if (now >= p.impactTick) {
-					impact(player, p);
-					it.remove();
-				} else {
-					windupTick(player, p, now);
-				}
-			}
-			}
+		QUEUE.serverTick(server);
+	}
 
 }

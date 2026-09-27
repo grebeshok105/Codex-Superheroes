@@ -31,7 +31,6 @@ public final class FxBroadcast {
 			ServerPlayNetworking.send(near, payload);
 		}
 	}
-
 	/** Raw audience for sites that must post-filter before sending (e.g. exclude the source player). */
 	public static Collection<ServerPlayer> trackingAudience(Entity source) {
 		return PlayerLookup.tracking(source);

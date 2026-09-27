@@ -1,9 +1,10 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.raiden.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
-import io.github.grebeshok105.codex.effect.RaidenMusouIsshinController;
-import io.github.grebeshok105.codex.item.MusouNoHitotachiItem;
+import io.github.grebeshok105.codex.hero.raiden.item.MusouNoHitotachiItem;
+import io.github.grebeshok105.codex.hero.raiden.runtime.RaidenMusouIsshinController;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -17,12 +18,13 @@ import net.minecraft.world.item.ItemStack;
  * КД 45 секунд, стоимость 800 энергии.
  */
 public final class RaidenMusouIsshinAbility implements Ability {
+	public static final ResourceLocation ID = ModId.of("raiden_musou_isshin");
 	private static final float COST = 800f;
 	private static final int COOLDOWN_TICKS = 45 * 20;
 
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.RAIDEN_MUSOU_ISSHIN;
+		return ID;
 	}
 
 	@Override

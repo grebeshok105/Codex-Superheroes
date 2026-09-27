@@ -124,17 +124,6 @@ public final class ModItems {
 			new KryptoniteShardItem(new Item.Properties().stacksTo(16).rarity(Rarity.RARE))
 	);
 
-
-	public static final TransformationItem RAIDEN_SUIT = register(
-			"raiden_suit",
-			new TransformationItem(ModId.of("raiden_shogun"), new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC),
-					new TransformationLore(ChatFormatting.LIGHT_PURPLE,
-							List.of(new TransformationLore.Line("item.superheroes.raiden_suit.lore.line1", ChatFormatting.LIGHT_PURPLE),
-									new TransformationLore.Line("item.superheroes.raiden_suit.lore.line2", ChatFormatting.DARK_GRAY)),
-							List.of(new TransformationLore.Line("item.superheroes.raiden_suit.lore.usage", ChatFormatting.YELLOW),
-									new TransformationLore.Line("item.superheroes.raiden_suit.lore.untransform", ChatFormatting.RED))))
-	);
-
 	// persisted id kept from the Doctor Strange era — do not rename the string.
 	public static final TransformationItem PANDORA_SUIT = register(
 			"doctor_strange_suit",
@@ -144,11 +133,6 @@ public final class ModItems {
 									new TransformationLore.Line("item.superheroes.doctor_strange_suit.lore.line2", ChatFormatting.DARK_GRAY)),
 							List.of(new TransformationLore.Line("item.superheroes.doctor_strange_suit.lore.usage", ChatFormatting.YELLOW),
 									new TransformationLore.Line("item.superheroes.doctor_strange_suit.lore.untransform", ChatFormatting.GOLD))))
-	);
-
-	public static final MusouNoHitotachiItem MUSOU_NO_HITOTACHI = register(
-			"musou_no_hitotachi",
-			new MusouNoHitotachiItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
 	);
 
 	private ModItems() {

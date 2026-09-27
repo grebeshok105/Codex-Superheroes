@@ -1,10 +1,10 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.raiden.ability;
 
-import io.github.grebeshok105.codex.attachment.ModAttachments;
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityRouter;
-import io.github.grebeshok105.codex.effect.RaidenState;
-import io.github.grebeshok105.codex.item.MusouNoHitotachiItem;
+import io.github.grebeshok105.codex.hero.raiden.item.MusouNoHitotachiItem;
+import io.github.grebeshok105.codex.hero.raiden.runtime.RaidenState;
 import io.github.grebeshok105.codex.particle.ModParticles;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -20,12 +20,13 @@ import net.minecraft.world.item.ItemStack;
  * Стоимость 50 энергии при активации, 0 во время действия (таймер заканчивает сам).
  */
 public final class RaidenEyeOfJudgmentAbility implements Ability {
+	public static final ResourceLocation ID = ModId.of("raiden_eye_of_judgment");
 	public static final int DURATION_TICKS = 25 * 20;
 	private static final float COST_ON_ACTIVATE = 50f;
 
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.RAIDEN_EYE_OF_JUDGMENT;
+		return ID;
 	}
 
 	@Override
@@ -59,9 +60,9 @@ public final class RaidenEyeOfJudgmentAbility implements Ability {
 	@Override
 	public boolean tryActivate(ServerPlayer player) {
 		long now = player.serverLevel().getGameTime();
-		RaidenState state = player.getAttachedOrCreate(ModAttachments.RAIDEN_STATE);
+		RaidenState state = player.getAttachedOrCreate(RaidenState.ATTACHMENT);
 		long expireAt = now + DURATION_TICKS;
-		player.setAttached(ModAttachments.RAIDEN_STATE, state.withEyeExpireTick(expireAt));
+		player.setAttached(RaidenState.ATTACHMENT, state.withEyeExpireTick(expireAt));
 
 		ServerLevel level = player.serverLevel();
 		level.sendParticles(ModParticles.JIWALD_EFFECT,
@@ -81,9 +82,9 @@ public final class RaidenEyeOfJudgmentAbility implements Ability {
 	@Override
 	public void onTickActive(ServerPlayer player) {
 		long now = player.serverLevel().getGameTime();
-		RaidenState state = player.getAttachedOrCreate(ModAttachments.RAIDEN_STATE);
+		RaidenState state = player.getAttachedOrCreate(RaidenState.ATTACHMENT);
 		if (state.eyeExpireTick() <= now) {
-			io.github.grebeshok105.codex.core.ability.AbilityRouter.deactivate(player, getId());
+			AbilityRouter.deactivate(player, getId());
 			return;
 		}
 		if (now % 6 == 0) {
@@ -96,8 +97,8 @@ public final class RaidenEyeOfJudgmentAbility implements Ability {
 
 	@Override
 	public void onDeactivate(ServerPlayer player) {
-		RaidenState state = player.getAttachedOrCreate(ModAttachments.RAIDEN_STATE);
-		player.setAttached(ModAttachments.RAIDEN_STATE, state.withEyeExpireTick(0L));
+		RaidenState state = player.getAttachedOrCreate(RaidenState.ATTACHMENT);
+		player.setAttached(RaidenState.ATTACHMENT, state.withEyeExpireTick(0L));
 		ServerLevel level = player.serverLevel();
 		level.sendParticles(ModParticles.BLUE_FLAME,
 				player.getX(), player.getY() + 1.0, player.getZ(),
