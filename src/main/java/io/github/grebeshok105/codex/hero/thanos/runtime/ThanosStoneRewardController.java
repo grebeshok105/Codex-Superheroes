@@ -20,9 +20,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public final class ThanosStoneRewardController {
 	// Leaves never import the module root — the hero id stays a local literal.
 	private static final ResourceLocation THANOS_ID = ModId.of("thanos");
