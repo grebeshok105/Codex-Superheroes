@@ -18,22 +18,22 @@ Codex Superheroes — Fabric-мод для Minecraft 1.21.1 про суперг�
 
 ## Что уже есть
 
-Актуальный список игровых героев определяется кодом в:
+Актуальный список игровых героев — один модуль на героя в:
 
-`src/main/java/io/github/grebeshok105/codex/hero/Heroes.java`
+`src/main/java/io/github/grebeshok105/codex/bootstrap/HeroModules.java`
+
+Каждый герой — пара модулей: `hero/<id>/<Id>Module` (server) и `client/hero/<id>/<Id>ClientModule` (клиент). Контракт героя — `core/hero/Hero`, способность — `core/ability/Ability`.
 
 Основные системы проекта:
 
-- `Hero`, `HeroData`, `HeroTransformService` — трансформация и состояние героя
-- `Ability`, `AbilityRegistry`, `AbilityRouter` — способности и их выполнение
-- `ResourceController` — Energy / Mana
-- `effect/*Controller` — server-side runtime логика героев и механик
-- `client/hud`, `client/render`, `client/fx` — интерфейс, рендер и визуальные эффекты
-- `network` — typed Fabric networking
-- `physics` — общая физика и движение
+- `core/` — контракты и shared-слои: `hero/` (`Hero`, `Heroes`), `ability/` (`Ability`, `AbilityRegistry`, `AbilityRouter`), `resource/` (Energy/Mana, `ResourceController`), `transform/` (`HeroData`, `HeroTransformService`), `lifecycle/` (`HeroTickDispatcher`, `PlayerLifecycle`, `HeroLifecycle`, `OwnedSessionMap`), `net/` (typed Fabric networking — `PayloadRegistrar`, `C2SGuards`, `FxBroadcast`), `attachment/`, `content/`, `module/` (контракты модулей)
+- `mechanic/` — герой-агностические механики: flight, impact, motion, targeting, boundweapon, charge, strike, summon, falls, world, общие способности в `mechanic/ability`
+- `hero/<id>/` — server-модуль героя: `<Id>Hero`, `ability/`, `runtime/`, `item/`, `entity/`, `net/`, `sound/`, `registry/`
+- `content/` — контент без героя (`ContentModule`: horde, boss, admin, command)
+- `compat/` — мосты к другим модам
+- `bootstrap/` — composition roots (`HeroModules`, `ContentModules`, `SharedAbilities`, `SharedMechanics`)
+- `client/core/` — общая клиентская инфраструктура (HUD-фреймворк, input, render, audio, text, mixin) и `client/hero/<id>/` — клиентский модуль героя
 - `art-source/` — исходники пользовательских ассетов
-
-Существующие пути описывают текущую реализацию и могут меняться по мере архитектурной модернизации.
 
 ## Сборка
 
@@ -59,11 +59,13 @@ Datagen:
 
 ## Разработка
 
-Главные правила разработки и контракт для AI-агентов находятся в `AGENTS.md`.
+Главные правила разработки и контракт для AI-агентов находятся в `AGENTS.md`. Как добавить нового героя — `.agents/skills/add-hero/`.
 
-Ключевой принцип текущего этапа проекта: legacy-код сохраняет ценное поведение, но не считается автоматически правильной архитектурой. Старые решения можно и нужно заменять, когда они создают лишнюю связанность, дублирование, плохую тестируемость или мешают развитию проекта.
+Архитектура модульная: `core` ← `mechanic` ← `hero`/`content`/`compat` ← `bootstrap`. Направление зависимостей проверяет ArchUnit (`src/test/java/io/github/grebeshok105/codex/architecture/`) — правила в `docs/design/architecture-migration/00-overview.md` §5.2.
 
-Новые изменения должны сопровождаться тестами там, где поведение можно проверить автоматически. Финальный gate перед PR — `./gradlew build --no-daemon`. Runtime-изменения дополнительно проверяются в игре.
+**Граница Veil:** Veil — client-only зависимость. `veil.*` референсится только из `src/client` (`client/hero/<id>/fx/`, `client/core/**`), всегда за `FabricLoader.isModLoaded("veil")`. Shared/server код никогда не импортит Veil: выделенный сервер его не несёт (Veil требует client-only модули Fabric), поэтому в `fabric.mod.json` он остаётся `recommends` даже после полного порта VFX на Veil, а source set `servernoveil` + run `runServer` и classpath'ы gametest/datagen фильтруют jar из classpath. Серверный код достаёт Veil-эффекты только через payload'ы `core/net`/`FxBroadcast`.
+
+Новые изменения должны сопровождаться тестами там, где поведение можно проверить автоматически. Финальный gate перед PR — `./gradlew qualityGate --no-daemon`. Runtime-изменения дополнительно проверяются в игре.
 
 ## Структура репозитория
 
@@ -71,7 +73,8 @@ Datagen:
 - `src/client/java/` — client-only код
 - `src/main/resources/` — runtime-ресурсы
 - `src/main/generated/` — datagen output, вручную не редактируется
-- `src/test/java/` — JUnit-тесты
+- `src/test/java/` — JUnit-тесты (включая ArchUnit-правила архитектуры)
+- `src/gametest/` — headless server GameTests (`runGametest`) и golden-файлы
 - `art-source/` — исходные модели, текстуры, звуки и другие рабочие ассеты
 - `.agents/skills/` — актуальные специализированные процедуры для агентов, когда они существуют
 
