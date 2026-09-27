@@ -2,7 +2,6 @@ package io.github.grebeshok105.codex.client.hero.pandora.state;
 
 import io.github.grebeshok105.codex.client.ClientSessionState;
 import io.github.grebeshok105.codex.client.compat.iris.IrisShaderBridge;
-import io.github.grebeshok105.codex.client.hero.pandora.hud.MirrorWarpFlashHud;
 import io.github.grebeshok105.codex.hero.pandora.net.MirrorDimensionStatusC2SPayload;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.Minecraft;
@@ -14,12 +13,37 @@ import net.minecraft.client.Minecraft;
  * period instead of staying acid-warped forever.
  *
  * Every Iris reload (apply / mode switch / restore) is hidden behind the black
- * {@link MirrorWarpFlashHud} so the unavoidable pipeline-reload freeze is not
- * visible.
+ * {@code MirrorWarpFlashHud} so the unavoidable pipeline-reload freeze is not
+ * visible. The state package must not know {@code hud}, so the overlay is wired
+ * in through {@link FlashOverlay} by the client module.
  */
 public final class ClientMirrorDimensionState {
 	/** 5 seconds without a keepalive -> self-restore. */
 	private static final int DEADMAN_TICKS = 100;
+
+	/** Seam to the flash overlay hud — the client module wires MirrorWarpFlashHud here. */
+	public interface FlashOverlay {
+		void flashAndRun(Runnable action);
+		boolean isCovering();
+		void fallbackTick();
+	}
+
+	/** Pre-registration default: run the action without any flash cover. */
+	private static FlashOverlay flash = new FlashOverlay() {
+		@Override
+		public void flashAndRun(Runnable action) {
+			action.run();
+		}
+
+		@Override
+		public boolean isCovering() {
+			return false;
+		}
+
+		@Override
+		public void fallbackTick() {
+		}
+	};
 
 	private static boolean active;
 	private static int ticksSinceKeepalive;
@@ -57,7 +81,7 @@ public final class ClientMirrorDimensionState {
 			sendStatus(IrisShaderBridge.applyAcid(mode, scale));
 			return;
 		}
-		MirrorWarpFlashHud.flashAndRun(() -> {
+		flash.flashAndRun(() -> {
 			int status = IrisShaderBridge.applyAcid(mode, scale);
 			sendStatus(status);
 			active = status == MirrorDimensionStatusC2SPayload.OK_APPLIED;
@@ -72,7 +96,7 @@ public final class ClientMirrorDimensionState {
 		if (!active || !IrisShaderBridge.canWarp()) {
 			return;
 		}
-		MirrorWarpFlashHud.flashAndRun(() -> IrisShaderBridge.reassertAcid(mode, scale));
+		flash.flashAndRun(() -> IrisShaderBridge.reassertAcid(mode, scale));
 	}
 
 	/** @return true while the local player is trapped in the House (cipher should run). */
@@ -103,7 +127,7 @@ public final class ClientMirrorDimensionState {
 		ticksSinceKeepalive = 0;
 		if (reportToServer && IrisShaderBridge.canWarp()) {
 			// Server told us to release -> hide the restore reload behind black too.
-			MirrorWarpFlashHud.flashAndRun(() -> {
+			flash.flashAndRun(() -> {
 				if (IrisShaderBridge.restore()) {
 					sendStatus(MirrorDimensionStatusC2SPayload.OK_RESTORED);
 				}
@@ -122,14 +146,14 @@ public final class ClientMirrorDimensionState {
 		// Способность ещё активна, но warp слетел (чужой reload Iris / ручное
 		// переключение шейдеров) — молча вернуть его. reassert делает reload только
 		// когда warp реально пропал, поэтому обычные keepalive'ы ничего не стоят.
-		if (active && !MirrorWarpFlashHud.isCovering() && !IrisShaderBridge.isAcidWarpActive()) {
-			MirrorWarpFlashHud.flashAndRun(() -> IrisShaderBridge.reassertAcid(activeMode, activeScale));
+		if (active && !flash.isCovering() && !IrisShaderBridge.isAcidWarpActive()) {
+			flash.flashAndRun(() -> IrisShaderBridge.reassertAcid(activeMode, activeScale));
 		}
 	}
 
 	public static void tick(Minecraft client) {
 		// Safety net: if a GUI screen stalls rendering, still run the pending reload.
-		MirrorWarpFlashHud.fallbackTick();
+		flash.fallbackTick();
 		// The deadman tracks the whole trap state, not just the applied shader:
 		// a victim whose client never managed the warp (no Iris, apply failed)
 		// still gets ciphered text — and must release it too once keepalives
@@ -153,6 +177,11 @@ public final class ClientMirrorDimensionState {
 
 	public static void onDisconnect() {
 		deactivate(false);
+	}
+
+	/** Wires the real overlay in — called by the client module at register time. */
+	public static void setFlashOverlay(FlashOverlay overlay) {
+		flash = overlay;
 	}
 
 	private static void sendStatus(int status) {

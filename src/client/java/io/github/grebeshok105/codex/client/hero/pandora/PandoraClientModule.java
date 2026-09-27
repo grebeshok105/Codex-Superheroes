@@ -47,6 +47,24 @@ public record PandoraClientModule() implements HeroClientModule {
 				return VanityCipher.cipher(text);
 			}
 		});
+		// Wire the flash overlay into the mirror-dimension state — state must not know hud,
+		// so the module root bridges the two leaves.
+		ClientMirrorDimensionState.setFlashOverlay(new ClientMirrorDimensionState.FlashOverlay() {
+			@Override
+			public void flashAndRun(Runnable action) {
+				MirrorWarpFlashHud.flashAndRun(action);
+			}
+
+			@Override
+			public boolean isCovering() {
+				return MirrorWarpFlashHud.isCovering();
+			}
+
+			@Override
+			public void fallbackTick() {
+				MirrorWarpFlashHud.fallbackTick();
+			}
+		});
 		// Iris crash-restore and the warp/death-state ticks used to live in SuperheroesClient.
 		IrisShaderBridge.restoreAfterCrashIfNeeded();
 		ClientTickEvents.END_CLIENT_TICK.register(client -> IrisShaderBridge.tickCrashRestore());
