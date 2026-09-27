@@ -48,7 +48,8 @@
 			"io.github.grebeshok105.codex.gametest.HordeGameTests",
 			"io.github.grebeshok105.codex.gametest.RemGameTests",
 			"io.github.grebeshok105.codex.gametest.HomelanderBossGameTests",
-			"io.github.grebeshok105.codex.gametest.RaidenGameTests"
+			"io.github.grebeshok105.codex.gametest.RaidenGameTests",
+			"io.github.grebeshok105.codex.gametest.RegulusGameTests"
 		]
 	},
 	"depends": {
