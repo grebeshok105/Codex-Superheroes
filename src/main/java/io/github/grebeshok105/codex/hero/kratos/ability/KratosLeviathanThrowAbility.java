@@ -1,9 +1,10 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.kratos.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
-import io.github.grebeshok105.codex.damage.ModDamageTypes;
+import io.github.grebeshok105.codex.hero.kratos.registry.KratosDamageTypes;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -20,12 +21,14 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 public final class KratosLeviathanThrowAbility implements Ability {
+	public static final ResourceLocation ID = ModId.of("kratos_leviathan_throw");
+
 	private static final int COOLDOWN_TICKS = 240;
 	private static final double RANGE = 32.0;
 
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.KRATOS_LEVIATHAN_THROW;
+		return ID;
 	}
 
 	@Override
@@ -82,13 +85,13 @@ public final class KratosLeviathanThrowAbility implements Ability {
 
 		if (target != null) {
 			final LivingEntity primary = target;
-			primary.hurt(ModDamageTypes.kratosLeviathan(level, player), 36.0f);
+			primary.hurt(KratosDamageTypes.leviathan(level, player), 36.0f);
 			primary.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 120, 4, true, true, true));
 			primary.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 120, 1, true, true, true));
 			AABB splash = primary.getBoundingBox().inflate(3.5);
 			for (LivingEntity neighbor : level.getEntitiesOfClass(LivingEntity.class, splash,
 					TargetFilters.hostileTo(player).and(e -> e != primary))) {
-				neighbor.hurt(ModDamageTypes.kratosLeviathan(level, player), 16.0f);
+				neighbor.hurt(KratosDamageTypes.leviathan(level, player), 16.0f);
 				neighbor.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 80, 2, true, true, true));
 			}
 			level.sendParticles(ParticleTypes.SNOWFLAKE, impact.x, impact.y, impact.z, 160, 1.4, 1.0, 1.4, 0.2);

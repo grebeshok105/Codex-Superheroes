@@ -1,17 +1,22 @@
-package io.github.grebeshok105.codex.client.hud;
+package io.github.grebeshok105.codex.client.hero.kratos.hud;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.client.ClientHeroState;
-import io.github.grebeshok105.codex.client.ClientKratosRageState;
-import io.github.grebeshok105.codex.client.ClientRemDemonismState;
-import io.github.grebeshok105.codex.hero.KratosHero;
-import io.github.grebeshok105.codex.hero.RemHero;
+import io.github.grebeshok105.codex.client.hero.kratos.state.ClientKratosRageState;
+import io.github.grebeshok105.codex.client.hud.HudUtil;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
-public final class SpartanRageHud {
+/**
+ * Kratos half of the old {@code SpartanRageHud} (the Rem branch lives on as
+ * {@code RemDemonismHud} until the I4 wave). Rendering code is byte-identical.
+ */
+public final class KratosRageHud {
+	private static final ResourceLocation KRATOS_ID = ModId.of("kratos");
+
 	private static final int BAR_WIDTH = 182;
 	private static final int BAR_HEIGHT = 7;
 	private static final int Y_OFFSET_FROM_HOTBAR = 28;
@@ -25,34 +30,19 @@ public final class SpartanRageHud {
 	private static final int LABEL_DIM = 0xFFAA4030;
 	private static final int LABEL_BRIGHT = 0xFFFFE060;
 
-	private SpartanRageHud() {
+	private KratosRageHud() {
 	}
 
 	public static void render(GuiGraphics graphics, DeltaTracker tracker) {
 		if (!ClientHeroState.data().hasHero()) return;
 		ResourceLocation heroId = ClientHeroState.heroId();
-		boolean kratos = KratosHero.ID.equals(heroId);
-		boolean rem = RemHero.ID.equals(heroId);
-		if (!kratos && !rem) return;
+		if (!KRATOS_ID.equals(heroId)) return;
 
 		Minecraft mc = Minecraft.getInstance();
-		float rage;
-		boolean active;
-		String activeKey;
-		String readyKey;
-		if (kratos) {
-			rage = ClientKratosRageState.rage();
-			active = ClientKratosRageState.active();
-			activeKey = "hud.superheroes.spartan_rage.active";
-			readyKey = "hud.superheroes.spartan_rage.ready";
-		} else if (mc.player != null) {
-			rage = ClientRemDemonismState.charge(mc.player.getUUID());
-			active = ClientRemDemonismState.isActive(mc.player.getUUID());
-			activeKey = "hud.superheroes.rem_demonism.active";
-			readyKey = "hud.superheroes.rem_demonism.ready";
-		} else {
-			return;
-		}
+		float rage = ClientKratosRageState.rage();
+		boolean active = ClientKratosRageState.active();
+		String activeKey = "hud.superheroes.spartan_rage.active";
+		String readyKey = "hud.superheroes.spartan_rage.ready";
 		if (rage <= 0.001f && !active) return;
 
 		int sw = mc.getWindow().getGuiScaledWidth();

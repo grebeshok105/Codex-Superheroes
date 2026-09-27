@@ -1,8 +1,9 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.kratos.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
-import io.github.grebeshok105.codex.damage.ModDamageTypes;
+import io.github.grebeshok105.codex.hero.kratos.registry.KratosDamageTypes;
 import io.github.grebeshok105.codex.particle.ModParticles;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
@@ -17,11 +18,13 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 public final class KratosChainWhirlAbility implements Ability {
+	public static final ResourceLocation ID = ModId.of("kratos_chain_whirl");
+
 	private static final double RADIUS = 4.0;
 
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.KRATOS_CHAIN_WHIRL;
+		return ID;
 	}
 
 	@Override
@@ -82,7 +85,7 @@ public final class KratosChainWhirlAbility implements Ability {
 			for (LivingEntity le : level.getEntitiesOfClass(LivingEntity.class, aoe,
 					TargetFilters.hostileTo(player))) {
 				if (le.position().distanceTo(center) > RADIUS) continue;
-				le.hurt(ModDamageTypes.kratosBlade(level, player), 9.0f);
+				le.hurt(KratosDamageTypes.blade(level, player), 9.0f);
 				le.igniteForSeconds(2f);
 				le.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 60, 0, false, true, true));
 				Vec3 push = le.position().subtract(center).normalize().scale(0.6);

@@ -98,12 +98,6 @@ public class SuperheroesClient implements ClientModInitializer {
 				sprites -> new io.github.grebeshok105.codex.client.fx.CustomParticleGate(sprites, EndRodParticle.Provider::new));
 		ParticleFactoryRegistry.getInstance().register(ModParticles.CHAOS_ORB,
 				sprites -> new io.github.grebeshok105.codex.client.fx.CustomParticleGate(sprites, EndRodParticle.Provider::new));
-		ParticleFactoryRegistry.getInstance().register(ModParticles.KRATOS_HAND_BURST_1,
-				sprites -> new io.github.grebeshok105.codex.client.fx.CustomParticleGate(sprites, EndRodParticle.Provider::new));
-		ParticleFactoryRegistry.getInstance().register(ModParticles.KRATOS_HAND_BURST_2,
-				sprites -> new io.github.grebeshok105.codex.client.fx.CustomParticleGate(sprites, EndRodParticle.Provider::new));
-		ParticleFactoryRegistry.getInstance().register(ModParticles.KRATOS_HAND_BURST_3,
-				sprites -> new io.github.grebeshok105.codex.client.fx.CustomParticleGate(sprites, EndRodParticle.Provider::new));
 		ParticleFactoryRegistry.getInstance().register(ModParticles.ANOMALY_SLICE,
 				sprites -> new io.github.grebeshok105.codex.client.fx.CustomParticleGate(sprites, EndRodParticle.Provider::new));
 		ParticleFactoryRegistry.getInstance().register(ModParticles.JIWALD_EFFECT,

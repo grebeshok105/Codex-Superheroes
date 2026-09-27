@@ -1,8 +1,9 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.kratos.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.ability.Ability;
-import io.github.grebeshok105.codex.effect.KratosRageController;
-import io.github.grebeshok105.codex.hero.AbilityScopedModifiers;
+import io.github.grebeshok105.codex.hero.kratos.runtime.KratosModifiers;
+import io.github.grebeshok105.codex.hero.kratos.runtime.KratosRageController;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -13,11 +14,13 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 
 public final class KratosSpartanRageAbility implements Ability {
+	public static final ResourceLocation ID = ModId.of("kratos_spartan_rage");
+
 	private static final int DURATION_TICKS = 240;
 
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.KRATOS_SPARTAN_RAGE;
+		return ID;
 	}
 
 	@Override
@@ -43,7 +46,7 @@ public final class KratosSpartanRageAbility implements Ability {
 	@Override
 	public boolean tryActivate(ServerPlayer player) {
 		if (!KratosRageController.tryActivate(player)) return false;
-		AbilityScopedModifiers.KRATOS_RAGE.apply(player);
+		KratosModifiers.KRATOS_RAGE.apply(player);
 		player.setHealth(player.getMaxHealth());
 
 		player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, DURATION_TICKS, 2, true, false, true));
@@ -96,7 +99,7 @@ public final class KratosSpartanRageAbility implements Ability {
 
 	@Override
 	public void onDeactivate(ServerPlayer player) {
-		AbilityScopedModifiers.KRATOS_RAGE.remove(player);
+		KratosModifiers.KRATOS_RAGE.remove(player);
 		player.removeEffect(MobEffects.DAMAGE_BOOST);
 		player.removeEffect(MobEffects.DAMAGE_RESISTANCE);
 		player.removeEffect(MobEffects.ABSORPTION);

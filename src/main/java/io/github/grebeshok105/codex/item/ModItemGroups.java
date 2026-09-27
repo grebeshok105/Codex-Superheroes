@@ -44,8 +44,6 @@ public final class ModItemGroups {
 				output.accept(ModItems.CAPTAIN_AMERICA_SUIT);
 				output.accept(ModItems.VIBRANIUM_SHIELD);
 
-				output.accept(ModItems.BLADE_OF_CHAOS);
-
 				output.accept(ModItems.INFINITY_GAUNTLET);
 				output.accept(ModItems.POWER_STONE);
 				output.accept(ModItems.SPACE_STONE);

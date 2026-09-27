@@ -1,9 +1,10 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.kratos.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
-import io.github.grebeshok105.codex.damage.ModDamageTypes;
+import io.github.grebeshok105.codex.hero.kratos.registry.KratosDamageTypes;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -15,6 +16,8 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 public final class KratosBladeStormAbility implements Ability {
+	public static final ResourceLocation ID = ModId.of("kratos_blade_storm");
+
 	private static final int COOLDOWN_TICKS = 120;
 	private static final double RADIUS = 6.0;
 	private static final float CENTER_DAMAGE = 25.0f;
@@ -22,7 +25,7 @@ public final class KratosBladeStormAbility implements Ability {
 
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.KRATOS_BLADE_STORM;
+		return ID;
 	}
 
 	@Override
@@ -59,7 +62,7 @@ public final class KratosBladeStormAbility implements Ability {
 			if (dist > RADIUS) continue;
 			float falloff = (float) Math.max(0.0, 1.0 - dist / RADIUS);
 			float damage = EDGE_DAMAGE + (CENTER_DAMAGE - EDGE_DAMAGE) * falloff;
-			le.hurt(ModDamageTypes.kratosBlade(level, player), damage);
+			le.hurt(KratosDamageTypes.blade(level, player), damage);
 			le.igniteForSeconds(4f);
 			Vec3 push = le.position().subtract(center).normalize().scale(2.0);
 			le.setDeltaMovement(push.x, 0.6, push.z);

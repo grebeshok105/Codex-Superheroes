@@ -1,4 +1,6 @@
-package io.github.grebeshok105.codex.client;
+package io.github.grebeshok105.codex.client.hero.kratos.state;
+
+import io.github.grebeshok105.codex.client.ClientSessionState;
 
 public final class ClientKratosRageState {
 	private static volatile float rage;
