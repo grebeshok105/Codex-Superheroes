@@ -18,7 +18,6 @@ core.hero <-> core.transform
 core.lifecycle <-> core.transform
 core.net <-> core.transform
 core.resource <-> core.transform
-effect <-> hero
 effect <-> item
 effect <-> network
 hero <-> physics
