@@ -1,7 +1,6 @@
 package io.github.grebeshok105.codex.core.net;
 
-import io.github.grebeshok105.codex.core.ability.AbilityRouter;
-import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.core.model.HeroData;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.server.level.ServerPlayer;
 
@@ -21,14 +20,6 @@ public final class CoreNetworking {
 	}
 
 	static void init(PayloadRegistrar registrar) {
-		registrar.c2s(ActivateAbilityC2SPayload.TYPE, ActivateAbilityC2SPayload.STREAM_CODEC, (payload, context) -> {
-			ServerPlayer player = context.player();
-			AbilityRouter.activate(player, payload.abilityId());
-		});
-		registrar.c2s(BindAbilityResourceC2SPayload.TYPE, BindAbilityResourceC2SPayload.STREAM_CODEC, (payload, context) -> {
-			ServerPlayer player = context.player();
-			AbilityRouter.bind(player, payload.abilityId(), payload.kind());
-		});
 		registrar.s2c(ResourceUpdateS2CPayload.TYPE, ResourceUpdateS2CPayload.STREAM_CODEC);
 		registrar.s2c(HeroDataSyncS2CPayload.TYPE, HeroDataSyncS2CPayload.STREAM_CODEC);
 		registrar.s2c(ScreenShakeS2CPayload.TYPE, ScreenShakeS2CPayload.STREAM_CODEC);

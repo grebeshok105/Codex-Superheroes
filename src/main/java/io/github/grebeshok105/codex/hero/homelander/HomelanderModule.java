@@ -11,6 +11,7 @@ import io.github.grebeshok105.codex.hero.homelander.ability.XRayAbility;
 import io.github.grebeshok105.codex.core.ability.AbilityDenial;
 import io.github.grebeshok105.codex.core.ability.AbilityRules;
 import io.github.grebeshok105.codex.core.module.HeroModule;
+import io.github.grebeshok105.codex.core.resource.ResourceController;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.damage.DamageTypeSpec;
 import io.github.grebeshok105.codex.hero.homelander.registry.HomelanderDamageTypes;
@@ -63,6 +64,6 @@ public final class HomelanderModule implements HeroModule {
 		// Homelander's own ability rules: his MADNESS_AFTERMATH blocks casting silently;
 		// while MADNESS (milk) is up his abilities are free. Order preserved.
 		AbilityRules.blocker((player, id) -> HomelanderEffects.isAftermath(player) ? AbilityDenial.SILENT : null);
-		AbilityRules.freeCost(HomelanderEffects::isMadness);
+		ResourceController.freeCost(HomelanderEffects::isMadness);
 	}
 }

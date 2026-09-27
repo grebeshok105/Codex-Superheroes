@@ -1,14 +1,13 @@
 package io.github.grebeshok105.codex.core.transform;
 
-import io.github.grebeshok105.codex.core.ability.Ability;
-import io.github.grebeshok105.codex.core.ability.AbilityRegistry;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.hero.Heroes;
 import io.github.grebeshok105.codex.core.lifecycle.HeroLifecycle;
 import io.github.grebeshok105.codex.core.lifecycle.PlayerLifecycle;
 import io.github.grebeshok105.codex.particle.ModParticles;
-import io.github.grebeshok105.codex.core.resource.ResourceKind;
+import io.github.grebeshok105.codex.core.model.HeroData;
+import io.github.grebeshok105.codex.core.model.ResourceKind;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -19,11 +18,20 @@ import net.minecraft.sounds.SoundSource;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.BiConsumer;
 
 public final class HeroTransformService {
 	private static final int COOLDOWN_TICKS = 20;
 
+	private static BiConsumer<ServerPlayer, HeroData> abilityDeactivator = (player, data) -> {
+	};
+
 	private HeroTransformService() {
+	}
+
+	/** The ability layer registers its {@code onDeactivate} sweep here; transform may not reach into it. */
+	public static void abilityDeactivator(BiConsumer<ServerPlayer, HeroData> deactivator) {
+		abilityDeactivator = deactivator;
 	}
 
 	public static boolean transform(ServerPlayer player, ResourceLocation heroId) {
@@ -186,11 +194,6 @@ public final class HeroTransformService {
 	}
 
 	private static void deactivateAll(ServerPlayer player, HeroData data) {
-		for (ResourceLocation activeId : data.activeAbilities()) {
-			Ability ability = AbilityRegistry.get(activeId);
-			if (ability != null) {
-				ability.onDeactivate(player);
-			}
-		}
+		abilityDeactivator.accept(player, data);
 	}
 }
