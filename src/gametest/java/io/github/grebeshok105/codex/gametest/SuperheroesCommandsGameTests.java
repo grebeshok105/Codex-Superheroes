@@ -330,7 +330,21 @@ public final class SuperheroesCommandsGameTests implements FabricGameTest {
 
 	private static boolean hasKey(List<Component> messages, String key) {
 		for (Component message : messages) {
-			if (message.getContents() instanceof TranslatableContents t && key.equals(t.getKey())) {
+			if (containsKey(message, key)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	// Error feedback arrives as Component.empty().withStyle(RED).append(translatable) —
+	// the key lives in the siblings, not the root contents.
+	private static boolean containsKey(Component component, String key) {
+		if (component.getContents() instanceof TranslatableContents t && key.equals(t.getKey())) {
+			return true;
+		}
+		for (Component sibling : component.getSiblings()) {
+			if (containsKey(sibling, key)) {
 				return true;
 			}
 		}
