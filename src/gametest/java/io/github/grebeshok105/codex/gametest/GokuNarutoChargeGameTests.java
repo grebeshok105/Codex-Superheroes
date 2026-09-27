@@ -1,23 +1,24 @@
 package io.github.grebeshok105.codex.gametest;
 
-import io.github.grebeshok105.codex.ability.AbilityIds;
 import io.github.grebeshok105.codex.core.ability.AbilityRegistry;
-import io.github.grebeshok105.codex.ability.GokuKamehamehaAbility;
-import io.github.grebeshok105.codex.ability.GokuSpiritBombAbility;
-import io.github.grebeshok105.codex.ability.NarutoOodamaRasenganAbility;
-import io.github.grebeshok105.codex.ability.NarutoRasenganAbility;
-import io.github.grebeshok105.codex.ability.NarutoRasenshurikenAbility;
+import io.github.grebeshok105.codex.hero.goku.ability.GokuKamehamehaAbility;
+import io.github.grebeshok105.codex.hero.goku.ability.GokuSpiritBombAbility;
+import io.github.grebeshok105.codex.hero.naruto.ability.NarutoOodamaRasenganAbility;
+import io.github.grebeshok105.codex.hero.naruto.ability.NarutoRasenganAbility;
+import io.github.grebeshok105.codex.hero.naruto.ability.NarutoRasenshurikenAbility;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import io.github.grebeshok105.codex.core.ability.AbilityRouter;
 import io.github.grebeshok105.codex.core.lifecycle.HeroTickDispatcher;
 import io.github.grebeshok105.codex.core.transform.HeroDataStore;
 import io.github.grebeshok105.codex.core.transform.HeroTransformService;
-import io.github.grebeshok105.codex.effect.GokuKiStackController;
-import io.github.grebeshok105.codex.effect.KawarimiController;
-import io.github.grebeshok105.codex.entity.KageBunshinEntity;
-import io.github.grebeshok105.codex.hero.GokuHero;
-import io.github.grebeshok105.codex.hero.NarutoHero;
+import io.github.grebeshok105.codex.hero.goku.runtime.GokuKiStackController;
+import io.github.grebeshok105.codex.hero.naruto.runtime.KawarimiController;
+import io.github.grebeshok105.codex.hero.naruto.entity.KageBunshinEntity;
+import io.github.grebeshok105.codex.hero.goku.GokuAbilities;
+import io.github.grebeshok105.codex.hero.goku.GokuHero;
+import io.github.grebeshok105.codex.hero.naruto.NarutoAbilities;
+import io.github.grebeshok105.codex.hero.naruto.NarutoHero;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -74,8 +75,8 @@ public final class GokuNarutoChargeGameTests implements FabricGameTest {
 
 		helper.runAfterDelay(2, () -> {
 			grantEnergy(player);
-			AbilityRouter.activate(player, AbilityIds.GOKU_KAMEHAMEHA);
-			Ability kamehameha = AbilityRegistry.get(AbilityIds.GOKU_KAMEHAMEHA);
+			AbilityRouter.activate(player, GokuAbilities.GOKU_KAMEHAMEHA);
+			Ability kamehameha = AbilityRegistry.get(GokuAbilities.GOKU_KAMEHAMEHA);
 			helper.assertTrue(!kamehameha.canActivate(player),
 					"a charge session opens on activation");
 
@@ -108,8 +109,8 @@ public final class GokuNarutoChargeGameTests implements FabricGameTest {
 
 		helper.runAfterDelay(2, () -> {
 			grantEnergy(player);
-			AbilityRouter.activate(player, AbilityIds.GOKU_SPIRIT_BOMB);
-			Ability spiritBomb = AbilityRegistry.get(AbilityIds.GOKU_SPIRIT_BOMB);
+			AbilityRouter.activate(player, GokuAbilities.GOKU_SPIRIT_BOMB);
+			Ability spiritBomb = AbilityRegistry.get(GokuAbilities.GOKU_SPIRIT_BOMB);
 			helper.assertTrue(!spiritBomb.canActivate(player), "channel session opened");
 
 			for (int i = 0; i < 79; i++) {
@@ -136,8 +137,8 @@ public final class GokuNarutoChargeGameTests implements FabricGameTest {
 
 		helper.runAfterDelay(2, () -> {
 			grantEnergy(player);
-			AbilityRouter.activate(player, AbilityIds.NARUTO_RASENGAN);
-			Ability rasengan = AbilityRegistry.get(AbilityIds.NARUTO_RASENGAN);
+			AbilityRouter.activate(player, NarutoAbilities.NARUTO_RASENGAN);
+			Ability rasengan = AbilityRegistry.get(NarutoAbilities.NARUTO_RASENGAN);
 
 			for (int i = 0; i < 30; i++) {
 				NarutoRasenganAbility.serverTick(player);
@@ -169,7 +170,7 @@ public final class GokuNarutoChargeGameTests implements FabricGameTest {
 
 		helper.runAfterDelay(2, () -> {
 			grantEnergy(player);
-			AbilityRouter.activate(player, AbilityIds.NARUTO_OODAMA_RASENGAN);
+			AbilityRouter.activate(player, NarutoAbilities.NARUTO_OODAMA_RASENGAN);
 
 			for (int i = 0; i < 50; i++) {
 				NarutoOodamaRasenganAbility.serverTick(player);
@@ -191,11 +192,11 @@ public final class GokuNarutoChargeGameTests implements FabricGameTest {
 		faceForward(player);
 		TestHeroes.transform(player, NarutoHero.ID);
 		Zombie target = spawnZombieAhead(player, 10.0);
-		Ability rasenshuriken = AbilityRegistry.get(AbilityIds.NARUTO_RASENSHURIKEN);
+		Ability rasenshuriken = AbilityRegistry.get(NarutoAbilities.NARUTO_RASENSHURIKEN);
 
 		helper.runAfterDelay(2, () -> {
 			grantEnergy(player);
-			AbilityRouter.activate(player, AbilityIds.NARUTO_RASENSHURIKEN);
+			AbilityRouter.activate(player, NarutoAbilities.NARUTO_RASENSHURIKEN);
 
 			for (int i = 0; i < 24; i++) {
 				NarutoRasenshurikenAbility.serverTick(player);
@@ -224,8 +225,8 @@ public final class GokuNarutoChargeGameTests implements FabricGameTest {
 		TestHeroes.transform(player, GokuHero.ID);
 		helper.runAfterDelay(2, () -> {
 			grantEnergy(player);
-			AbilityRouter.activate(player, AbilityIds.GOKU_KAMEHAMEHA);
-			Ability kamehameha = AbilityRegistry.get(AbilityIds.GOKU_KAMEHAMEHA);
+			AbilityRouter.activate(player, GokuAbilities.GOKU_KAMEHAMEHA);
+			Ability kamehameha = AbilityRegistry.get(GokuAbilities.GOKU_KAMEHAMEHA);
 			helper.assertTrue(!kamehameha.canActivate(player), "session active before death");
 
 			player.kill();
@@ -244,13 +245,13 @@ public final class GokuNarutoChargeGameTests implements FabricGameTest {
 		TestHeroes.transform(player, NarutoHero.ID);
 		helper.runAfterDelay(2, () -> {
 			grantEnergy(player);
-			AbilityRouter.activate(player, AbilityIds.NARUTO_RASENGAN);
-			helper.assertTrue(!AbilityRegistry.get(AbilityIds.NARUTO_RASENGAN).canActivate(player),
+			AbilityRouter.activate(player, NarutoAbilities.NARUTO_RASENGAN);
+			helper.assertTrue(!AbilityRegistry.get(NarutoAbilities.NARUTO_RASENGAN).canActivate(player),
 					"session active before leave");
 
 			TestPlayers.leave(player);
 			ServerPlayer rejoined = TestPlayers.rejoin(helper, player);
-			helper.assertTrue(AbilityRegistry.get(AbilityIds.NARUTO_RASENGAN).canActivate(rejoined),
+			helper.assertTrue(AbilityRegistry.get(NarutoAbilities.NARUTO_RASENGAN).canActivate(rejoined),
 					"leave clears the in-progress charge (OwnedSessionMap ClearOn.LEAVE)");
 
 			TestPlayers.leave(rejoined);
@@ -265,8 +266,8 @@ public final class GokuNarutoChargeGameTests implements FabricGameTest {
 		TestHeroes.transform(player, GokuHero.ID);
 		helper.runAfterDelay(2, () -> {
 			grantEnergy(player);
-			AbilityRouter.activate(player, AbilityIds.GOKU_KAMEHAMEHA);
-			Ability kamehameha = AbilityRegistry.get(AbilityIds.GOKU_KAMEHAMEHA);
+			AbilityRouter.activate(player, GokuAbilities.GOKU_KAMEHAMEHA);
+			Ability kamehameha = AbilityRegistry.get(GokuAbilities.GOKU_KAMEHAMEHA);
 
 			helper.assertTrue(HeroTransformService.forceUntransform(player), "untransform");
 			helper.assertTrue(!kamehameha.canActivate(player),
@@ -284,12 +285,12 @@ public final class GokuNarutoChargeGameTests implements FabricGameTest {
 		TestHeroes.transform(player, NarutoHero.ID);
 		helper.runAfterDelay(2, () -> {
 			grantEnergy(player);
-			AbilityRouter.activate(player, AbilityIds.NARUTO_RASENGAN);
-			helper.assertTrue(AbilityCooldowns.isOnCooldown(player, AbilityIds.NARUTO_RASENGAN),
+			AbilityRouter.activate(player, NarutoAbilities.NARUTO_RASENGAN);
+			helper.assertTrue(AbilityCooldowns.isOnCooldown(player, NarutoAbilities.NARUTO_RASENGAN),
 					"activation sets the cooldown immediately");
 
 			float energyAfterFirst = HeroDataStore.get(player).energy();
-			AbilityRouter.activate(player, AbilityIds.NARUTO_RASENGAN);
+			AbilityRouter.activate(player, NarutoAbilities.NARUTO_RASENGAN);
 			helper.assertTrue(HeroDataStore.get(player).energy() == energyAfterFirst,
 					"re-activation while a session lives is a free no-op (canActivate/cooldown)");
 
@@ -306,10 +307,10 @@ public final class GokuNarutoChargeGameTests implements FabricGameTest {
 		helper.runAfterDelay(2, () -> {
 			grantEnergy(player);
 			float energy = HeroDataStore.get(player).energy();
-			AbilityRouter.activate(player, AbilityIds.NARUTO_RASENGAN);
+			AbilityRouter.activate(player, NarutoAbilities.NARUTO_RASENGAN);
 			helper.assertTrue(HeroDataStore.get(player).energy() == energy,
 					"a Goku player cannot start Naruto's rasengan (hero ability list gate)");
-			helper.assertTrue(AbilityRegistry.get(AbilityIds.NARUTO_RASENGAN).canActivate(player),
+			helper.assertTrue(AbilityRegistry.get(NarutoAbilities.NARUTO_RASENGAN).canActivate(player),
 					"no session was created");
 
 			TestPlayers.leave(player);
@@ -324,8 +325,8 @@ public final class GokuNarutoChargeGameTests implements FabricGameTest {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, NarutoHero.ID);
 		grantEnergy(player);
-		AbilityRouter.activate(player, AbilityIds.NARUTO_SAGE_MODE);
-		helper.assertTrue(HeroDataStore.get(player).isActive(AbilityIds.NARUTO_SAGE_MODE),
+		AbilityRouter.activate(player, NarutoAbilities.NARUTO_SAGE_MODE);
+		helper.assertTrue(HeroDataStore.get(player).isActive(NarutoAbilities.NARUTO_SAGE_MODE),
 				"sage mode is a toggle — activation marks it active");
 		player.removeEffect(MobEffects.REGENERATION);
 
@@ -348,15 +349,15 @@ public final class GokuNarutoChargeGameTests implements FabricGameTest {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, NarutoHero.ID);
 		grantEnergy(player);
-		AbilityRouter.activate(player, AbilityIds.NARUTO_SAGE_MODE);
-		AbilityRouter.deactivate(player, AbilityIds.NARUTO_SAGE_MODE);
+		AbilityRouter.activate(player, NarutoAbilities.NARUTO_SAGE_MODE);
+		AbilityRouter.deactivate(player, NarutoAbilities.NARUTO_SAGE_MODE);
 
-		helper.assertTrue(!HeroDataStore.get(player).isActive(AbilityIds.NARUTO_SAGE_MODE),
+		helper.assertTrue(!HeroDataStore.get(player).isActive(NarutoAbilities.NARUTO_SAGE_MODE),
 				"deactivation clears the active flag");
 		helper.assertTrue(player.hasEffect(MobEffects.WEAKNESS)
 						&& player.hasEffect(MobEffects.MOVEMENT_SLOWDOWN),
 				"exiting sage mode applies weakness + slowdown");
-		helper.assertTrue(AbilityCooldowns.isOnCooldown(player, AbilityIds.NARUTO_SAGE_MODE),
+		helper.assertTrue(AbilityCooldowns.isOnCooldown(player, NarutoAbilities.NARUTO_SAGE_MODE),
 				"exiting sage mode starts a 200-tick cooldown");
 
 		TestPlayers.leave(player);
@@ -368,8 +369,8 @@ public final class GokuNarutoChargeGameTests implements FabricGameTest {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, GokuHero.ID);
 		grantEnergy(player);
-		AbilityRouter.activate(player, AbilityIds.GOKU_SUPER_SAIYAN_AURA);
-		helper.assertTrue(HeroDataStore.get(player).isActive(AbilityIds.GOKU_SUPER_SAIYAN_AURA),
+		AbilityRouter.activate(player, GokuAbilities.GOKU_SUPER_SAIYAN_AURA);
+		helper.assertTrue(HeroDataStore.get(player).isActive(GokuAbilities.GOKU_SUPER_SAIYAN_AURA),
 				"the aura is a toggle");
 		player.removeEffect(MobEffects.FIRE_RESISTANCE);
 		player.removeEffect(MobEffects.GLOWING);
@@ -394,8 +395,8 @@ public final class GokuNarutoChargeGameTests implements FabricGameTest {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, GokuHero.ID);
 		grantEnergy(player);
-		AbilityRouter.activate(player, AbilityIds.GOKU_SUPER_SAIYAN_AURA);
-		AbilityRouter.deactivate(player, AbilityIds.GOKU_SUPER_SAIYAN_AURA);
+		AbilityRouter.activate(player, GokuAbilities.GOKU_SUPER_SAIYAN_AURA);
+		AbilityRouter.deactivate(player, GokuAbilities.GOKU_SUPER_SAIYAN_AURA);
 
 		helper.assertTrue(!player.hasEffect(MobEffects.GLOWING),
 				"deactivation removes glowing");
@@ -413,7 +414,7 @@ public final class GokuNarutoChargeGameTests implements FabricGameTest {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, GokuHero.ID);
 		grantEnergy(player);
-		AbilityRouter.activate(player, AbilityIds.GOKU_KI_CHARGE);
+		AbilityRouter.activate(player, GokuAbilities.GOKU_KI_CHARGE);
 		var server = helper.getLevel().getServer();
 
 		helper.assertTrue(GokuKiStackController.getStacks(player) == 0, "no stacks before ticking");
@@ -460,7 +461,7 @@ public final class GokuNarutoChargeGameTests implements FabricGameTest {
 			GokuKiStackController.addStack(player);
 			GokuKiStackController.addStack(player);
 			GokuKiStackController.addStack(player);
-			AbilityRouter.activate(player, AbilityIds.GOKU_KAMEHAMEHA);
+			AbilityRouter.activate(player, GokuAbilities.GOKU_KAMEHAMEHA);
 			helper.assertTrue(GokuKiStackController.getStacks(player) == 0,
 					"kamehameha consumes all ki stacks for the damage multiplier");
 
@@ -511,7 +512,7 @@ public final class GokuNarutoChargeGameTests implements FabricGameTest {
 
 		helper.runAfterDelay(2, () -> {
 			grantEnergy(player);
-			AbilityRouter.activate(player, AbilityIds.NARUTO_SHADOW_CLONES);
+			AbilityRouter.activate(player, NarutoAbilities.NARUTO_SHADOW_CLONES);
 			var clones = helper.getLevel().getEntitiesOfClass(KageBunshinEntity.class,
 					player.getBoundingBox().inflate(12.0));
 			helper.assertTrue(clones.size() == 15,
@@ -536,10 +537,10 @@ public final class GokuNarutoChargeGameTests implements FabricGameTest {
 
 		helper.runAfterDelay(2, () -> {
 			grantEnergy(player);
-			AbilityRouter.activate(player, AbilityIds.NARUTO_BIJUUDAMA);
+			AbilityRouter.activate(player, NarutoAbilities.NARUTO_BIJUUDAMA);
 			helper.assertTrue(target.getHealth() < target.getMaxHealth() || !target.isAlive(),
 					"bijuudama hits hostiles near the look-point impact");
-			helper.assertTrue(AbilityCooldowns.isOnCooldown(player, AbilityIds.NARUTO_BIJUUDAMA),
+			helper.assertTrue(AbilityCooldowns.isOnCooldown(player, NarutoAbilities.NARUTO_BIJUUDAMA),
 					"instant ability still lands on cooldown");
 
 			TestPlayers.leave(player);
@@ -555,10 +556,10 @@ public final class GokuNarutoChargeGameTests implements FabricGameTest {
 		helper.runAfterDelay(2, () -> {
 			grantEnergy(player);
 			Vec3 origin = player.position();
-			AbilityRouter.activate(player, AbilityIds.GOKU_INSTANT_TRANSMISSION);
+			AbilityRouter.activate(player, GokuAbilities.GOKU_INSTANT_TRANSMISSION);
 			helper.assertTrue(player.position().distanceTo(origin) > 3.0,
 					"with no hostile in range the teleport goes 12 blocks along the view");
-			helper.assertTrue(AbilityCooldowns.isOnCooldown(player, AbilityIds.GOKU_INSTANT_TRANSMISSION),
+			helper.assertTrue(AbilityCooldowns.isOnCooldown(player, GokuAbilities.GOKU_INSTANT_TRANSMISSION),
 					"teleport lands on cooldown");
 
 			TestPlayers.leave(player);
@@ -575,7 +576,7 @@ public final class GokuNarutoChargeGameTests implements FabricGameTest {
 
 		helper.runAfterDelay(2, () -> {
 			grantEnergy(player);
-			AbilityRouter.activate(player, AbilityIds.GOKU_SOLAR_FLARE);
+			AbilityRouter.activate(player, GokuAbilities.GOKU_SOLAR_FLARE);
 			helper.assertTrue(target.hasEffect(MobEffects.BLINDNESS),
 					"solar flare blinds hostiles within 20 blocks");
 

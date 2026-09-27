@@ -1,9 +1,9 @@
-package io.github.grebeshok105.codex.effect;
+package io.github.grebeshok105.codex.hero.naruto.runtime;
 
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
-import io.github.grebeshok105.codex.hero.NarutoHero;
-import io.github.grebeshok105.codex.particle.ModParticles;
+import io.github.grebeshok105.codex.hero.naruto.NarutoHero;
+import io.github.grebeshok105.codex.hero.naruto.registry.NarutoParticles;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import io.github.grebeshok105.codex.util.SafeTeleport;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
@@ -71,7 +71,7 @@ public final class KawarimiController {
 		Vec3 origin = player.position();
 
 		// Spawn falling log decoy at original position
-		level.sendParticles(ModParticles.NARUTO_KAWARIMI_SMOKE,
+		level.sendParticles(NarutoParticles.NARUTO_KAWARIMI_SMOKE,
 				origin.x, origin.y + 1.0, origin.z, 40, 0.6, 1.0, 0.6, 0.06);
 		level.sendParticles(ParticleTypes.LARGE_SMOKE,
 				origin.x, origin.y + 1.0, origin.z, 50, 0.7, 1.0, 0.7, 0.04);
@@ -97,7 +97,7 @@ public final class KawarimiController {
 		float restored = Math.max(maxHealth * 0.3f, 1.0f);
 		player.setHealth(restored);
 
-		level.sendParticles(ModParticles.NARUTO_KAWARIMI_SMOKE,
+		level.sendParticles(NarutoParticles.NARUTO_KAWARIMI_SMOKE,
 				dest.x, dest.y + 1.0, dest.z, 30, 0.6, 1.0, 0.6, 0.06);
 		level.sendParticles(ParticleTypes.CLOUD,
 				dest.x, dest.y + 1.0, dest.z, 30, 0.5, 0.8, 0.5, 0.06);

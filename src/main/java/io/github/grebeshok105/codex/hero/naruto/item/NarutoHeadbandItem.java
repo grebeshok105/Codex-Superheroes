@@ -1,6 +1,7 @@
-package io.github.grebeshok105.codex.item;
+package io.github.grebeshok105.codex.hero.naruto.item;
 
-import io.github.grebeshok105.codex.hero.NarutoHero;
+import io.github.grebeshok105.codex.ModId;
+import net.minecraft.resources.ResourceLocation;
 import io.github.grebeshok105.codex.core.transform.TooltipFrame;
 import io.github.grebeshok105.codex.core.transform.TransformationItem;
 import net.minecraft.ChatFormatting;
@@ -12,8 +13,10 @@ import net.minecraft.world.item.TooltipFlag;
 import java.util.List;
 
 public class NarutoHeadbandItem extends TransformationItem {
+	private static final ResourceLocation NARUTO_ID = ModId.of("naruto");
+
 	public NarutoHeadbandItem(Properties properties) {
-		super(NarutoHero.ID, properties);
+		super(NARUTO_ID, properties);
 	}
 
 	@Override

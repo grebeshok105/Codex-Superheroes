@@ -1,6 +1,6 @@
-package io.github.grebeshok105.codex.effect;
+package io.github.grebeshok105.codex.hero.goku.runtime;
 
-import io.github.grebeshok105.codex.hero.GokuHero;
+import io.github.grebeshok105.codex.hero.goku.GokuHero;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;

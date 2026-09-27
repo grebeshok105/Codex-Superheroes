@@ -1,6 +1,6 @@
-package io.github.grebeshok105.codex.effect;
+package io.github.grebeshok105.codex.hero.naruto.runtime;
 
-import io.github.grebeshok105.codex.hero.NarutoHero;
+import io.github.grebeshok105.codex.hero.naruto.NarutoHero;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;

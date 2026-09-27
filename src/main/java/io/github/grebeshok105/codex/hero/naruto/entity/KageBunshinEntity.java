@@ -1,6 +1,6 @@
-package io.github.grebeshok105.codex.entity;
+package io.github.grebeshok105.codex.hero.naruto.entity;
 
-import io.github.grebeshok105.codex.particle.ModParticles;
+import io.github.grebeshok105.codex.hero.naruto.registry.NarutoParticles;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -108,7 +108,7 @@ public class KageBunshinEntity extends PathfinderMob {
 
 	private void poof() {
 		if (!(this.level() instanceof ServerLevel level)) return;
-		level.sendParticles(ModParticles.NARUTO_CLONE_POOF,
+		level.sendParticles(NarutoParticles.NARUTO_CLONE_POOF,
 				this.getX(), this.getY() + 1.0, this.getZ(), 18, 0.4, 0.6, 0.4, 0.05);
 		level.sendParticles(ParticleTypes.CLOUD,
 				this.getX(), this.getY() + 1.0, this.getZ(), 22, 0.4, 0.6, 0.4, 0.05);

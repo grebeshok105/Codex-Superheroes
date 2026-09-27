@@ -97,21 +97,6 @@ public final class ModItems {
 									new TransformationLore.Line("item.superheroes.doomsday_genome.lore.untransform", ChatFormatting.GOLD))))
 	);
 
-	public static final TransformationItem GOKU_GI = register(
-			"goku_gi",
-			new TransformationItem(ModId.of("goku"), new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC),
-					new TransformationLore(ChatFormatting.GOLD,
-							List.of(new TransformationLore.Line("item.superheroes.goku_gi.lore.line1", ChatFormatting.GOLD),
-									new TransformationLore.Line("item.superheroes.goku_gi.lore.line2", ChatFormatting.DARK_GRAY)),
-							List.of(new TransformationLore.Line("item.superheroes.goku_gi.lore.usage", ChatFormatting.YELLOW),
-									new TransformationLore.Line("item.superheroes.goku_gi.lore.untransform", ChatFormatting.RED))))
-	);
-
-	public static final NarutoHeadbandItem NARUTO_HEADBAND = register(
-			"naruto_headband",
-			new NarutoHeadbandItem(new Item.Properties().stacksTo(1).rarity(Rarity.EPIC))
-	);
-
 	public static final CaptainAmericaSuitItem CAPTAIN_AMERICA_SUIT = register(
 			"captain_america_suit",
 			new CaptainAmericaSuitItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))

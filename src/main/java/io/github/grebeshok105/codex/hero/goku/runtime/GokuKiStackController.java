@@ -1,4 +1,4 @@
-package io.github.grebeshok105.codex.effect;
+package io.github.grebeshok105.codex.hero.goku.runtime;
 
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;

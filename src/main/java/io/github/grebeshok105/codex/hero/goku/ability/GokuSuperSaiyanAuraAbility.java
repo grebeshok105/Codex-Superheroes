@@ -1,4 +1,4 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.goku.ability;
 
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.ability.Ability;
@@ -13,6 +13,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 
 public final class GokuSuperSaiyanAuraAbility implements Ability {
+	public static final ResourceLocation ID = ModId.of("goku_super_saiyan_aura");
 	private static final ResourceLocation AURA_DAMAGE = ModId.of("modifiers/goku/super_saiyan_damage");
 	private static final ResourceLocation AURA_SPEED = ModId.of("modifiers/goku/super_saiyan_speed");
 	private static final AttributeModifierSet PASSIVES = AttributeModifierSet.builder()
@@ -23,7 +24,7 @@ public final class GokuSuperSaiyanAuraAbility implements Ability {
 
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.GOKU_SUPER_SAIYAN_AURA;
+		return ID;
 	}
 
 	@Override

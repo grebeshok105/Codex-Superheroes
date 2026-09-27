@@ -5,7 +5,6 @@ import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.hero.CaptainAmericaHero;
 import io.github.grebeshok105.codex.hero.KratosHero;
 import io.github.grebeshok105.codex.hero.LokiHero;
-import io.github.grebeshok105.codex.hero.NarutoHero;
 import io.github.grebeshok105.codex.hero.RegulusHero;
 import io.github.grebeshok105.codex.hero.SungJinwooHero;
 import io.github.grebeshok105.codex.hero.ThanosHero;
@@ -33,7 +32,6 @@ public final class ThanosStoneRewardController {
 
 	static {
 		HERO_TO_STONE.put(KratosHero.ID, InfinityStoneType.POWER);
-		HERO_TO_STONE.put(NarutoHero.ID, InfinityStoneType.SPACE);
 		HERO_TO_STONE.put(SungJinwooHero.ID, InfinityStoneType.REALITY);
 		HERO_TO_STONE.put(LokiHero.ID, InfinityStoneType.MIND);
 		HERO_TO_STONE.put(CaptainAmericaHero.ID, InfinityStoneType.SOUL);
@@ -41,6 +39,11 @@ public final class ThanosStoneRewardController {
 	}
 
 	private ThanosStoneRewardController() {
+	}
+
+	/** Hero modules register their own hero→stone drop row here (the hero owns its reward). */
+	public static void registerHeroStone(ResourceLocation heroId, InfinityStoneType stone) {
+		HERO_TO_STONE.put(heroId, stone);
 	}
 
 	public static void register(HeroModuleContext ctx) {

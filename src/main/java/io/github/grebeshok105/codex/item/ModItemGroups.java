@@ -41,10 +41,6 @@ public final class ModItemGroups {
 				output.accept(ModItems.DOOMSDAY_GENOME);
 				output.accept(ModItems.KRYPTONITE_SHARD);
 
-				output.accept(ModItems.GOKU_GI);
-
-				output.accept(ModItems.NARUTO_HEADBAND);
-
 				output.accept(ModItems.CAPTAIN_AMERICA_SUIT);
 				output.accept(ModItems.VIBRANIUM_SHIELD);
 

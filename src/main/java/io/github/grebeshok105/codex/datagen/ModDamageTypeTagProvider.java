@@ -1,5 +1,7 @@
 package io.github.grebeshok105.codex.datagen;
 
+import io.github.grebeshok105.codex.bootstrap.HeroModules;
+import io.github.grebeshok105.codex.damage.DamageTypeSpec;
 import io.github.grebeshok105.codex.damage.ModDamageTypes;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricTagProvider;
@@ -31,12 +33,6 @@ public final class ModDamageTypeTagProvider extends FabricTagProvider<DamageType
 				ModDamageTypes.DOOMSDAY_BONE_SPIKE,
 				ModDamageTypes.DOOMSDAY_CHARGE_TACKLE,
 				ModDamageTypes.DOOMSDAY_DOOM_GRIP,
-				ModDamageTypes.GOKU_KAMEHAMEHA,
-				ModDamageTypes.GOKU_INSTANT_STRIKE,
-				ModDamageTypes.GOKU_SPIRIT_BOMB,
-				ModDamageTypes.NARUTO_RASENGAN,
-				ModDamageTypes.NARUTO_RASENSHURIKEN,
-				ModDamageTypes.NARUTO_BIJUUDAMA,
 				ModDamageTypes.KRATOS_BLADE,
 				ModDamageTypes.KRATOS_LEVIATHAN,
 				ModDamageTypes.LOKI_CHAOS,
@@ -63,8 +59,19 @@ public final class ModDamageTypeTagProvider extends FabricTagProvider<DamageType
 				ModDamageTypes.REPULSOR,
 				ModDamageTypes.UNIBEAM,
 				ModDamageTypes.HOMELANDER_EYE_LASER,
-				ModDamageTypes.HOMELANDER_HEAT_VISION,
-				ModDamageTypes.GOKU_KAMEHAMEHA
+				ModDamageTypes.HOMELANDER_HEAT_VISION
 		);
+
+		// Hero-owned types join their declared tags via the module specs — no hero names here.
+		var bypassesCooldown = getOrCreateTagBuilder(DamageTypeTags.BYPASSES_COOLDOWN);
+		var beam = getOrCreateTagBuilder(ModDamageTypes.BEAM);
+		for (DamageTypeSpec spec : HeroModules.damageTypeSpecs()) {
+			if (spec.tags().contains(DamageTypeTags.BYPASSES_COOLDOWN)) {
+				bypassesCooldown.add(spec.key());
+			}
+			if (spec.tags().contains(ModDamageTypes.BEAM)) {
+				beam.add(spec.key());
+			}
+		}
 	}
 }

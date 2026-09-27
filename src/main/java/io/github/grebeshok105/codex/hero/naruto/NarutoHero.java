@@ -1,7 +1,7 @@
-package io.github.grebeshok105.codex.hero;
+package io.github.grebeshok105.codex.hero.naruto;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.ability.AbilityIds;
+import io.github.grebeshok105.codex.hero.naruto.NarutoAbilities;
 import io.github.grebeshok105.codex.core.hero.AttributeModifierSet;
 import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.hero.HeroHudConfig;
@@ -98,12 +98,12 @@ public final class NarutoHero implements Hero {
 	@Override
 	public List<ResourceLocation> getAbilities() {
 		return List.of(
-				AbilityIds.NARUTO_RASENGAN,
-				AbilityIds.NARUTO_OODAMA_RASENGAN,
-				AbilityIds.NARUTO_RASENSHURIKEN,
-				AbilityIds.NARUTO_SAGE_MODE,
-				AbilityIds.NARUTO_BIJUUDAMA,
-				AbilityIds.NARUTO_SHADOW_CLONES
+				NarutoAbilities.NARUTO_RASENGAN,
+				NarutoAbilities.NARUTO_OODAMA_RASENGAN,
+				NarutoAbilities.NARUTO_RASENSHURIKEN,
+				NarutoAbilities.NARUTO_SAGE_MODE,
+				NarutoAbilities.NARUTO_BIJUUDAMA,
+				NarutoAbilities.NARUTO_SHADOW_CLONES
 		);
 	}
 

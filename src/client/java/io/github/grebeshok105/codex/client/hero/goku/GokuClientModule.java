@@ -2,7 +2,7 @@ package io.github.grebeshok105.codex.client.hero.goku;
 
 import io.github.grebeshok105.codex.client.core.module.HeroClientContext;
 import io.github.grebeshok105.codex.client.core.module.HeroClientModule;
-import io.github.grebeshok105.codex.hero.GokuHero;
+import io.github.grebeshok105.codex.hero.goku.GokuHero;
 import net.minecraft.resources.ResourceLocation;
 
 public record GokuClientModule() implements HeroClientModule {
