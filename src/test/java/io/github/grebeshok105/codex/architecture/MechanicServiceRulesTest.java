@@ -1,6 +1,5 @@
 package io.github.grebeshok105.codex.architecture;
 
-import com.tngtech.archunit.library.freeze.FreezingArchRule;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
@@ -21,17 +20,17 @@ class MechanicServiceRulesTest {
 
 	@Test
 	void motionPacketsGoThroughMotion() {
-		FreezingArchRule.freeze(noClasses().that().doNotHaveSimpleName("Motion")
+		noClasses().that().doNotHaveSimpleName("Motion")
 				.should().callConstructor(ClientboundSetEntityMotionPacket.class, Entity.class)
 			.orShould().callConstructor(ClientboundSetEntityMotionPacket.class, int.class, Vec3.class)
-				.as("velocity changes go through mechanic.motion.Motion")).check(CodexClasses.main());
+				.as("velocity changes go through mechanic.motion.Motion").check(CodexClasses.main());
 	}
 
 	@Test
 	void fxAudiencesGoThroughFxBroadcast() {
-		FreezingArchRule.freeze(noClasses().that().resideOutsideOfPackage(ROOT + ".core.net..")
+		noClasses().that().resideOutsideOfPackage(ROOT + ".core.net..")
 				.should().callMethodWhere(target(owner(simpleName("PlayerLookup")))
 						.and(target(name("tracking").or(name("around")))))
-				.as("FX audiences go through core.net.FxBroadcast")).check(CodexClasses.main());
+				.as("FX audiences go through core.net.FxBroadcast").check(CodexClasses.main());
 	}
 }

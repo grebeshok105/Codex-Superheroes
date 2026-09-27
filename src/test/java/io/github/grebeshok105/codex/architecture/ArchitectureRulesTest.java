@@ -18,7 +18,6 @@ import com.tngtech.archunit.core.domain.JavaStaticInitializer;
 import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ConditionEvents;
 import com.tngtech.archunit.lang.SimpleConditionEvent;
-import com.tngtech.archunit.library.freeze.FreezingArchRule;
 import org.junit.jupiter.api.Test;
 
 import java.util.Set;
@@ -86,48 +85,48 @@ class ArchitectureRulesTest {
 
 	@Test
 	void sharedCodeDoesNotDependOnConcreteHeroes() {
-		FreezingArchRule.freeze(noClasses().that(not(IN_HERO_MODULE)).and(not(COMPOSITION_ROOT))
+		noClasses().that(not(IN_HERO_MODULE)).and(not(COMPOSITION_ROOT))
 				.should().dependOnClassesThat(CONCRETE_HERO)
-				.as("shared code asks the hero registry and hooks, never a concrete hero")).check(CodexClasses.main());
+				.as("shared code asks the hero registry and hooks, never a concrete hero").check(CodexClasses.main());
 	}
 
 	@Test
 	void mainDoesNotDependOnClientCode() {
-		FreezingArchRule.freeze(noClasses().should().dependOnClassesThat().resideInAnyPackage(
+		noClasses().should().dependOnClassesThat().resideInAnyPackage(
 				"net.minecraft.client..", "com.mojang.blaze3d..", "net.fabricmc.fabric.api.client..", ROOT + ".client..")
-				.as("src/main loads on a dedicated server")).check(CodexClasses.main());
+				.as("src/main loads on a dedicated server").check(CodexClasses.main());
 	}
 
 	@Test
 	void onlyTheDispatcherRegistersServerTicks() {
 		String events = "net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents";
-		FreezingArchRule.freeze(noClasses().that().doNotHaveSimpleName("HeroTickDispatcher").and().doNotHaveSimpleName("HeroDataStore")
+		noClasses().that().doNotHaveSimpleName("HeroTickDispatcher").and().doNotHaveSimpleName("HeroDataStore")
 				.should().accessField(events, "END_SERVER_TICK").orShould().accessField(events, "START_SERVER_TICK")
 				.orShould().accessField(events, "END_WORLD_TICK").orShould().accessField(events, "START_WORLD_TICK")
-				.as("server ticks go through HeroTickDispatcher")).check(CodexClasses.main());
+				.as("server ticks go through HeroTickDispatcher").check(CodexClasses.main());
 	}
 
 	@Test
 	void lifecycleHooksAreRegisteredThroughRegistrars() {
-		FreezingArchRule.freeze(noClasses().that().resideOutsideOfPackages(ROOT + ".lifecycle..", ROOT + ".core..")
+		noClasses().that().resideOutsideOfPackages(ROOT + ".lifecycle..", ROOT + ".core..")
 				.should().callMethodWhere(target(owner(simpleName("PlayerLifecycle"))).and(target(nameStartingWith("on"))))
 				.orShould().callMethodWhere(target(owner(simpleName("HeroLifecycle"))).and(target(nameStartingWith("on"))))
-				.as("lifecycle hooks are registered through a module's LifecycleRegistrar")).check(CodexClasses.main());
+				.as("lifecycle hooks are registered through a module's LifecycleRegistrar").check(CodexClasses.main());
 	}
 
 	@Test
 	void nothingDependsOnCompositionRoots() {
-		FreezingArchRule.freeze(noClasses().that(not(COMPOSITION_ROOT)).should().dependOnClassesThat(COMPOSITION_ROOT)
-				.as("entrypoints and module lists sit on top; use LoggerFactory.getLogger(ModId.MOD_ID) instead of SuperheroesMod.LOGGER"))
+		noClasses().that(not(COMPOSITION_ROOT)).should().dependOnClassesThat(COMPOSITION_ROOT)
+				.as("entrypoints and module lists sit on top; use LoggerFactory.getLogger(ModId.MOD_ID) instead of SuperheroesMod.LOGGER")
 				.check(CodexClasses.mainAndClient());
 	}
 
 	@Test
 	void abilitiesDoNotCheckTheirOwnCooldown() {
-		FreezingArchRule.freeze(noClasses().that().implement(io.github.grebeshok105.codex.core.ability.Ability.class)
+		noClasses().that().implement(io.github.grebeshok105.codex.core.ability.Ability.class)
 				.should().callMethod(io.github.grebeshok105.codex.core.ability.AbilityCooldowns.class, "isOnCooldown",
 						net.minecraft.server.level.ServerPlayer.class, net.minecraft.resources.ResourceLocation.class)
-				.as("AbilityRouter owns the cooldown check; an ability may only check another ability's cooldown"))
+				.as("AbilityRouter owns the cooldown check; an ability may only check another ability's cooldown")
 				.check(CodexClasses.main());
 	}
 
