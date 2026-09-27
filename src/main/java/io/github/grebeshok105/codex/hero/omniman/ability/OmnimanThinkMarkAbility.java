@@ -4,7 +4,7 @@ import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
-import io.github.grebeshok105.codex.core.lifecycle.ControlLockKind;
+import io.github.grebeshok105.codex.core.model.ControlLockKind;
 import io.github.grebeshok105.codex.core.lifecycle.EntityControlLock;
 import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;

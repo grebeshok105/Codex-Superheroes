@@ -1,17 +1,17 @@
 package io.github.grebeshok105.codex.hero.thanos;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.core.ability.AbilityAvailability;
+import io.github.grebeshok105.codex.core.model.AbilityAvailability;
 import io.github.grebeshok105.codex.core.hero.AttributeModifierSet;
 import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.hero.HeroHudConfig;
 import io.github.grebeshok105.codex.core.hero.HeroTheme;
 import io.github.grebeshok105.codex.core.hero.JarvisThreatClass;
 import io.github.grebeshok105.codex.core.hero.PassiveGlyph;
-import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.core.model.HeroData;
 import io.github.grebeshok105.codex.hero.thanos.runtime.ThanosGauntletStateController;
 import io.github.grebeshok105.codex.hero.thanos.item.InfinityStoneType;
-import io.github.grebeshok105.codex.core.resource.ResourceKind;
+import io.github.grebeshok105.codex.core.model.ResourceKind;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -214,7 +214,7 @@ public final class ThanosHero implements Hero {
 	}
 
 	@Override
-	public boolean canUseAbility(ServerPlayer player, io.github.grebeshok105.codex.core.transform.HeroData data,
+	public boolean canUseAbility(ServerPlayer player, io.github.grebeshok105.codex.core.model.HeroData data,
 			ResourceLocation abilityId) {
 		return isAbilityUnlocked(player, abilityId);
 	}

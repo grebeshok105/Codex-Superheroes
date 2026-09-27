@@ -18,7 +18,7 @@ import io.github.grebeshok105.codex.mechanic.motion.Motion;
 import io.github.grebeshok105.codex.hero.rem.net.RemDemonismS2CPayload;
 import io.github.grebeshok105.codex.core.net.FxBroadcast;
 import io.github.grebeshok105.codex.core.net.ScreenShakeS2CPayload;
-import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.core.model.HeroData;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.BlockPos;

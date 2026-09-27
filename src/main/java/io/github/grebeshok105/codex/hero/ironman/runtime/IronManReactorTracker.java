@@ -10,7 +10,7 @@ import io.github.grebeshok105.codex.ModId;
 import net.minecraft.resources.ResourceLocation;
 import io.github.grebeshok105.codex.hero.ironman.item.IronManReactorItem;
 import io.github.grebeshok105.codex.hero.ironman.net.ReactorStateS2CPayload;
-import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.core.model.HeroData;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;

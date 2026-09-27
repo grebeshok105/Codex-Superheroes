@@ -3,7 +3,7 @@ package io.github.grebeshok105.codex.gametest;
 import io.github.grebeshok105.codex.hero.homelander.registry.HomelanderDamageTypes;
 import io.github.grebeshok105.codex.hero.naruto.runtime.KawarimiController;
 import io.github.grebeshok105.codex.hero.reinhard.runtime.ReinhardTimeSlowController;
-import io.github.grebeshok105.codex.core.lifecycle.ControlLockKind;
+import io.github.grebeshok105.codex.core.model.ControlLockKind;
 import io.github.grebeshok105.codex.hero.naruto.NarutoHero;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.gametest.framework.GameTest;

@@ -1,7 +1,7 @@
 package io.github.grebeshok105.codex;
 
 import io.github.grebeshok105.codex.core.hero.Hero;
-import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.core.model.HeroData;
 import io.github.grebeshok105.codex.core.transform.HeroDataStore;
 import io.github.grebeshok105.codex.mechanic.world.WorldDestructionPolicy;
 import com.google.gson.JsonElement;
@@ -79,7 +79,7 @@ public final class ProjectSanityTest {
 
 	// HeroData has one writer (audit B2): read-modify-write through HeroDataStore, never a stale copy.
 	private static void assertHeroDataHasSingleWriter() throws IOException {
-		Path store = MAIN_JAVA.resolve("io/github/grebeshok105/codex/core/transform/HeroDataStore.java");
+		Path store = MAIN_JAVA.resolve("io.github.grebeshok105.codex.core.transform.HeroDataStore.java");
 		Path networking = MAIN_JAVA.resolve("io/github/grebeshok105/codex/core/net/CoreNetworking.java");
 		forEachJavaFile(MAIN_JAVA, file -> {
 			if (file.equals(store) || file.equals(networking)) {

@@ -7,7 +7,7 @@ import io.github.grebeshok105.codex.mechanic.flight.FlightController;
 import io.github.grebeshok105.codex.mechanic.flight.FlightMode;
 import io.github.grebeshok105.codex.mechanic.flight.FlightModifier;
 import io.github.grebeshok105.codex.mechanic.flight.FlightProfiles;
-import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.core.model.HeroData;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 

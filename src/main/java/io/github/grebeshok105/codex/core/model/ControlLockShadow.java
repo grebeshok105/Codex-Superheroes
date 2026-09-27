@@ -1,4 +1,4 @@
-package io.github.grebeshok105.codex.core.lifecycle;
+package io.github.grebeshok105.codex.core.model;
 
 import com.mojang.serialization.Codec;
 import java.util.HashMap;

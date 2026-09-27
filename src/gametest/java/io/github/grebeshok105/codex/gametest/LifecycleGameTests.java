@@ -11,7 +11,7 @@ import io.github.grebeshok105.codex.hero.doomsday.DoomsdayHero;
 import io.github.grebeshok105.codex.hero.raiden.RaidenAbilities;
 import io.github.grebeshok105.codex.hero.raiden.RaidenHero;
 import io.github.grebeshok105.codex.hero.scaramouche.ScaramoucheHero;
-import io.github.grebeshok105.codex.core.lifecycle.ControlLockKind;
+import io.github.grebeshok105.codex.core.model.ControlLockKind;
 import io.github.grebeshok105.codex.core.lifecycle.EntityControlLock;
 import io.github.grebeshok105.codex.mechanic.effect.ModEffects;
 import io.github.grebeshok105.codex.hero.thanos.ability.ThanosSnapAbility;

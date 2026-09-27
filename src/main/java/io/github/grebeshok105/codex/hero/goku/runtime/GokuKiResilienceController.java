@@ -1,7 +1,7 @@
 package io.github.grebeshok105.codex.hero.goku.runtime;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.core.model.HeroData;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;

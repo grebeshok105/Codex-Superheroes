@@ -7,7 +7,7 @@ import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
 import io.github.grebeshok105.codex.core.transform.HeroDataStore;
 import io.github.grebeshok105.codex.sound.ModSounds;
-import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.core.model.HeroData;
 import io.github.grebeshok105.codex.mechanic.world.WorldDestructionPolicy;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;

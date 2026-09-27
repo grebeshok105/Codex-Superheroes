@@ -4,7 +4,7 @@ import io.github.grebeshok105.codex.hero.homelander.effect.HomelanderEffects;
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
-import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.core.model.HeroData;
 import io.github.grebeshok105.codex.mechanic.world.WorldDestructionPolicy;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.core.BlockPos;

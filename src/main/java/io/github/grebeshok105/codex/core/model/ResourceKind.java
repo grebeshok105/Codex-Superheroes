@@ -1,4 +1,4 @@
-package io.github.grebeshok105.codex.core.resource;
+package io.github.grebeshok105.codex.core.model;
 
 import com.mojang.serialization.Codec;
 import io.netty.buffer.ByteBuf;

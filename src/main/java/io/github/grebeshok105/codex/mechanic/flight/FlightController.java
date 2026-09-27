@@ -12,7 +12,7 @@ import io.github.grebeshok105.codex.mechanic.flight.FlightMode;
 import io.github.grebeshok105.codex.mechanic.flight.FlightPhase;
 import io.github.grebeshok105.codex.mechanic.flight.FlightPhaseResolver;
 import io.github.grebeshok105.codex.particle.ModParticles;
-import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.core.model.HeroData;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;

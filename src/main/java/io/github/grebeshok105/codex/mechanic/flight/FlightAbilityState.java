@@ -1,6 +1,6 @@
 package io.github.grebeshok105.codex.mechanic.flight;
 
-import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.core.model.HeroData;
 import net.minecraft.resources.ResourceLocation;
 
 public final class FlightAbilityState {

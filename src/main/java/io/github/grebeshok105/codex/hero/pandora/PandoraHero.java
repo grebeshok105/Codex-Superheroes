@@ -1,13 +1,13 @@
 package io.github.grebeshok105.codex.hero.pandora;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.core.ability.AbilityAvailability;
+import io.github.grebeshok105.codex.core.model.AbilityAvailability;
 import io.github.grebeshok105.codex.core.ability.AbilityRouter;
 import io.github.grebeshok105.codex.core.hero.AttributeModifierSet;
 import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.hero.HeroTheme;
-import io.github.grebeshok105.codex.core.resource.ResourceKind;
-import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.core.model.ResourceKind;
+import io.github.grebeshok105.codex.core.model.HeroData;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.Pose;
@@ -153,7 +153,7 @@ public final class PandoraHero implements Hero {
 	}
 	@Override
 	public boolean canUseAbility(net.minecraft.server.level.ServerPlayer player,
-			io.github.grebeshok105.codex.core.transform.HeroData data, ResourceLocation abilityId) {
+			io.github.grebeshok105.codex.core.model.HeroData data, ResourceLocation abilityId) {
 		return !isDimensionOnly(abilityId)
 				|| io.github.grebeshok105.codex.hero.pandora.runtime.MirrorDimensionController.hasActiveHouse(player);
 	}

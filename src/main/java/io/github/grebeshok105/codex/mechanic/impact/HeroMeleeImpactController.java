@@ -12,7 +12,7 @@ import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
 import io.github.grebeshok105.codex.core.net.HeroMeleeChargeC2SPayload;
 import io.github.grebeshok105.codex.core.net.ScreenShakeS2CPayload;
 import io.github.grebeshok105.codex.mechanic.effect.HeroBleedingController;
-import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.core.model.HeroData;
 import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.particles.ParticleOptions;

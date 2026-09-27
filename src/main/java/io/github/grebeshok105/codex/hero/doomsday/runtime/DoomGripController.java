@@ -1,6 +1,6 @@
 package io.github.grebeshok105.codex.hero.doomsday.runtime;
 
-import io.github.grebeshok105.codex.core.lifecycle.ControlLockKind;
+import io.github.grebeshok105.codex.core.model.ControlLockKind;
 import io.github.grebeshok105.codex.core.lifecycle.EntityControlLock;
 import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;

@@ -14,7 +14,7 @@ import io.github.grebeshok105.codex.hero.ironman.runtime.IronManNanoForm;
 import io.github.grebeshok105.codex.hero.ironman.runtime.IronManNanoFormController;
 import io.github.grebeshok105.codex.hero.ironman.runtime.UnibeamController;
 import io.github.grebeshok105.codex.mechanic.shockwave.ShockwaveUtil;
-import io.github.grebeshok105.codex.core.resource.ResourceKind;
+import io.github.grebeshok105.codex.core.model.ResourceKind;
 import io.github.grebeshok105.codex.hero.ironman.runtime.IronManSuitStats;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
@@ -249,11 +249,11 @@ public final class IronManHero implements Hero {
 
 	@Override
 	public float getEnergyReserveFor(ResourceLocation abilityId,
-			io.github.grebeshok105.codex.core.resource.ResourceKind binding) {
+			io.github.grebeshok105.codex.core.model.ResourceKind binding) {
 		// Unibeam always keeps a 100-energy floor available.
 		return !IronManAbilities.UNIBEAM.equals(abilityId)
 				&& getAbilities().contains(IronManAbilities.UNIBEAM)
-				&& binding == io.github.grebeshok105.codex.core.resource.ResourceKind.ENERGY ? 100f : 0f;
+				&& binding == io.github.grebeshok105.codex.core.model.ResourceKind.ENERGY ? 100f : 0f;
 	}
 
 	@Override

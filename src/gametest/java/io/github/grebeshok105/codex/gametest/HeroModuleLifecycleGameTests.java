@@ -10,7 +10,7 @@ import io.github.grebeshok105.codex.hero.raiden.runtime.RaidenState;
 import io.github.grebeshok105.codex.hero.reinhard.runtime.ReinhardState;
 import io.github.grebeshok105.codex.hero.reinhard.runtime.ReinhardSwordDrawCeremonyController;
 import io.github.grebeshok105.codex.hero.reinhard.runtime.ReinhardTimeSlowController;
-import io.github.grebeshok105.codex.core.lifecycle.ControlLockKind;
+import io.github.grebeshok105.codex.core.model.ControlLockKind;
 import io.github.grebeshok105.codex.hero.raiden.runtime.RaidenModifiers;
 import io.github.grebeshok105.codex.hero.kratos.KratosHero;
 import io.github.grebeshok105.codex.hero.raiden.RaidenAttachments;

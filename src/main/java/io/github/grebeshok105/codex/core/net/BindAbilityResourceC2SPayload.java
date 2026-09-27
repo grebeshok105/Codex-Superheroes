@@ -1,7 +1,7 @@
 package io.github.grebeshok105.codex.core.net;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.core.resource.ResourceKind;
+import io.github.grebeshok105.codex.core.model.ResourceKind;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;

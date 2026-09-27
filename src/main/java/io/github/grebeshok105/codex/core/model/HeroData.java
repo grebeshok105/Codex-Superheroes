@@ -1,6 +1,5 @@
-package io.github.grebeshok105.codex.core.transform;
+package io.github.grebeshok105.codex.core.model;
 
-import io.github.grebeshok105.codex.core.resource.ResourceKind;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.resources.ResourceLocation;

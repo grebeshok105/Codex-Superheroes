@@ -9,7 +9,7 @@ import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
 import io.github.grebeshok105.codex.hero.homelander.item.UraniumDaggerItem;
 import io.github.grebeshok105.codex.hero.homelander.net.UraniumPressureS2CPayload;
 import io.github.grebeshok105.codex.hero.homelander.net.UraniumThreatS2CPayload;
-import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.core.model.HeroData;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;

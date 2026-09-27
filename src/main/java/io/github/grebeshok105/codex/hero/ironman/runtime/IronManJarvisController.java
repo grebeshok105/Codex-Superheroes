@@ -8,7 +8,7 @@ import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.hero.JarvisThreatClass;
 import io.github.grebeshok105.codex.hero.ironman.net.JarvisDetectionS2CPayload;
-import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.core.model.HeroData;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;

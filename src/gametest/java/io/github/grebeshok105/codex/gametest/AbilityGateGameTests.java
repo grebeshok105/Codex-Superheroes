@@ -15,7 +15,7 @@ import io.github.grebeshok105.codex.hero.ironman.IronManHero;
 import io.github.grebeshok105.codex.hero.pandora.PandoraHero;
 import io.github.grebeshok105.codex.hero.scaramouche.ScaramoucheAbilities;
 import io.github.grebeshok105.codex.hero.scaramouche.ScaramoucheHero;
-import io.github.grebeshok105.codex.core.resource.ResourceKind;
+import io.github.grebeshok105.codex.core.model.ResourceKind;
 import io.github.grebeshok105.codex.core.transform.HeroDataStore;
 import io.github.grebeshok105.codex.hero.ironman.IronManAbilities;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;

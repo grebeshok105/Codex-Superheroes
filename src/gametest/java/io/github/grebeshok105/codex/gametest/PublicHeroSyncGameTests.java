@@ -2,7 +2,7 @@ package io.github.grebeshok105.codex.gametest;
 
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.hero.naruto.NarutoHero;
-import io.github.grebeshok105.codex.core.transform.HeroData;
+import io.github.grebeshok105.codex.core.model.HeroData;
 import io.github.grebeshok105.codex.core.transform.HeroDataStore;
 import io.github.grebeshok105.codex.core.transform.HeroTransformService;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
