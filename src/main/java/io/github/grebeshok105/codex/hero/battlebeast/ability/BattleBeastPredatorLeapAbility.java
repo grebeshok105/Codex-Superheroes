@@ -1,9 +1,10 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.battlebeast.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
-import io.github.grebeshok105.codex.effect.BattleBeastCurseController;
+import io.github.grebeshok105.codex.hero.battlebeast.runtime.BattleBeastCurseController;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.resources.ResourceLocation;
@@ -18,6 +19,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 public final class BattleBeastPredatorLeapAbility implements Ability {
+	public static final ResourceLocation ID = ModId.of("battle_beast_predator_leap");
 	private static final int COOLDOWN_TICKS = 8 * 20;
 	private static final double DISTANCE = 14.0;
 	private static final double HIT_RADIUS = 2.2;
@@ -25,7 +27,7 @@ public final class BattleBeastPredatorLeapAbility implements Ability {
 
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.BATTLE_BEAST_PREDATOR_LEAP;
+		return ID;
 	}
 
 	@Override

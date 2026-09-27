@@ -11,7 +11,7 @@ import io.github.grebeshok105.codex.core.hero.JarvisThreatClass;
 import io.github.grebeshok105.codex.core.transform.HeroDataStore;
 import io.github.grebeshok105.codex.core.transform.HeroTransformService;
 import io.github.grebeshok105.codex.core.transform.TransformationItem;
-import io.github.grebeshok105.codex.effect.BattleBeastCurseController;
+import io.github.grebeshok105.codex.hero.battlebeast.runtime.BattleBeastCurseController;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;

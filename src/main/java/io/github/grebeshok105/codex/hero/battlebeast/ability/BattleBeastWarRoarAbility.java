@@ -1,9 +1,10 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.battlebeast.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
-import io.github.grebeshok105.codex.effect.BattleBeastCurseController;
+import io.github.grebeshok105.codex.hero.battlebeast.runtime.BattleBeastCurseController;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.resources.ResourceLocation;
@@ -18,13 +19,14 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 public final class BattleBeastWarRoarAbility implements Ability {
+	public static final ResourceLocation ID = ModId.of("battle_beast_war_roar");
 	private static final int COOLDOWN_TICKS = 10 * 20;
 	private static final double RADIUS = 9.0;
 	private static final float DAMAGE = 8.0f;
 
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.BATTLE_BEAST_WAR_ROAR;
+		return ID;
 	}
 
 	@Override

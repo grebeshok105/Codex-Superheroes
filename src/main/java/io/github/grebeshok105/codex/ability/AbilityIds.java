@@ -65,11 +65,6 @@ public final class AbilityIds {
 	public static final ResourceLocation RAIDEN_TRANSCENDENCE = ModId.of("raiden_transcendence");
 	public static final ResourceLocation RAIDEN_MUSOU_ISSHIN = ModId.of("raiden_musou_isshin");
 
-	public static final ResourceLocation BATTLE_BEAST_PREDATOR_LEAP = ModId.of("battle_beast_predator_leap");
-	public static final ResourceLocation BATTLE_BEAST_AXE_CLEAVE = ModId.of("battle_beast_axe_cleave");
-	public static final ResourceLocation BATTLE_BEAST_WAR_ROAR = ModId.of("battle_beast_war_roar");
-	public static final ResourceLocation BATTLE_BEAST_BLOODLUST = ModId.of("battle_beast_bloodlust");
-
 	public static final ResourceLocation REM_MORNING_STAR = ModId.of("rem_morning_star");
 	public static final ResourceLocation REM_ONI_RAGE = ModId.of("rem_oni_rage");
 	public static final ResourceLocation REM_HEALING_MAGIC = ModId.of("rem_healing_magic");
