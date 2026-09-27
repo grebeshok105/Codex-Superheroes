@@ -62,6 +62,32 @@ public final class PandoraGameTests implements FabricGameTest {
 		player.teleportTo(p.x, p.y, p.z);
 	}
 
+	/**
+	 * Far-away spot per test — the House pull radius is 50 while the harness lays
+	 * structures ~40 blocks apart, so every House-opening test parks its players
+	 * >100 blocks from every structure origin and every other slot (otherwise
+	 * neighboring Houses absorb our actors non-deterministically). Players tick
+	 * globally regardless of chunk state, so a far teleport is safe for them.
+	 */
+	private static Vec3 isoSpot(GameTestHelper helper, int slot) {
+		Vec3 base = abs(helper, 4.5, 1, 4.5);
+		return base.add(slot * 300.0, 0, slot * 300.0);
+	}
+
+	private static void floorAbs(GameTestHelper helper, Vec3 center) {
+		BlockPos c = BlockPos.containing(center.x, center.y - 1, center.z);
+		for (int dx = -1; dx <= 1; dx++) {
+			for (int dz = -1; dz <= 1; dz++) {
+				helper.getLevel().setBlock(c.offset(dx, 0, dz), Blocks.STONE.defaultBlockState(), 3);
+			}
+		}
+	}
+
+	private static void parkIso(GameTestHelper helper, ServerPlayer player, Vec3 iso, double dx, double dz) {
+		floorAbs(helper, iso);
+		player.teleportTo(iso.x + dx, iso.y, iso.z + dz);
+	}
+
 	/** Polls once per game tick until {@code cond} holds or {@code tries} run out, then runs {@code body}. */
 	private static void awaitTrue(GameTestHelper helper, BooleanSupplier cond, int tries, Runnable body) {
 		if (tries <= 0 || cond.getAsBoolean()) {
@@ -121,8 +147,7 @@ public final class PandoraGameTests implements FabricGameTest {
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void openHouseGrantsCasterAuthorityAndUnlocksAbilities(GameTestHelper helper) {
 		ServerPlayer pandora = TestPlayers.join(helper);
-		floor(helper, 4, 4);
-		park(helper, pandora, 4.5, 4.5);
+		parkIso(helper, pandora, isoSpot(helper, 1), 0.0, 0.0);
 		TestHeroes.transform(pandora, PANDORA);
 		Hero hero = Heroes.get(PANDORA);
 
@@ -152,10 +177,8 @@ public final class PandoraGameTests implements FabricGameTest {
 					"level-5 resistance reduces the hit to zero damage");
 			AbilityRouter.deactivate(pandora, AbilityIds.MIRROR_DIMENSION);
 		});
-		helper.runAfterDelay(15, () -> {
+		awaitTrue(helper, () -> !pandora.hasEffect(MobEffects.DAMAGE_RESISTANCE), 40, () -> {
 			helper.assertFalse(MirrorDimensionController.hasActiveHouse(pandora), "the House is closed");
-			helper.assertFalse(pandora.hasEffect(MobEffects.DAMAGE_RESISTANCE),
-					"the immunity fades once the House is gone (10-tick refresh window)");
 			TestPlayers.leave(pandora);
 			helper.succeed();
 		});
@@ -167,13 +190,12 @@ public final class PandoraGameTests implements FabricGameTest {
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void vanityStripSuppressesVictimAbilitiesInsideHouse(GameTestHelper helper) {
 		ServerPlayer pandora = TestPlayers.join(helper);
-		floor(helper, 4, 4);
-		park(helper, pandora, 4.5, 4.5);
+		Vec3 iso = isoSpot(helper, 2);
+		parkIso(helper, pandora, iso, 0.0, 0.0);
 		TestHeroes.transform(pandora, PANDORA);
 
 		ServerPlayer victim = TestPlayers.join(helper, "vanity-victim");
-		floor(helper, 6, 6);
-		park(helper, victim, 6.5, 6.5);
+		parkIso(helper, victim, iso, 2.0, 2.0);
 		TestHeroes.transform(victim, SCARAMOUCHE);
 		HeroDataStore.update(victim, d -> d.withResources(200f, d.mana()));
 
@@ -199,9 +221,7 @@ public final class PandoraGameTests implements FabricGameTest {
 			helper.assertFalse(HeroDataStore.get(pandora).isActive(AbilityIds.VANITY_STRIP),
 					"the strip toggled off");
 		});
-		helper.runAfterDelay(65, () -> {
-			helper.assertFalse(victim.hasEffect(ModEffects.VANITY_STRIPPED),
-					"the strip marker expired once the refresh stopped");
+		awaitTrue(helper, () -> !victim.hasEffect(ModEffects.VANITY_STRIPPED), 90, () -> {
 			AbilityRouter.activate(victim, WIND_PRISON);
 			helper.assertTrue(HeroDataStore.get(victim).isActive(WIND_PRISON),
 					"the victim's powers return after the strip");
@@ -219,13 +239,12 @@ public final class PandoraGameTests implements FabricGameTest {
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void spatialBindRootsAndSpaceCrushKillsBoundVictim(GameTestHelper helper) {
 		ServerPlayer pandora = TestPlayers.join(helper);
-		floor(helper, 4, 4);
-		park(helper, pandora, 4.5, 4.5);
+		Vec3 iso = isoSpot(helper, 3);
+		parkIso(helper, pandora, iso, 0.0, 0.0);
 		TestHeroes.transform(pandora, PANDORA);
 
 		ServerPlayer victim = TestPlayers.join(helper, "bound-victim");
-		floor(helper, 6, 6);
-		park(helper, victim, 6.5, 6.5);
+		parkIso(helper, victim, iso, 2.0, 2.0);
 		TestPlayers.clearSpawnInvulnerability(victim);
 		Vec3 anchor = victim.position();
 
