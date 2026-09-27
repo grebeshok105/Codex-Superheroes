@@ -4,7 +4,6 @@ import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.ability.AbilityRouter;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
-import io.github.grebeshok105.codex.hero.kratos.KratosAbilities;
 import io.github.grebeshok105.codex.hero.kratos.net.KratosRageS2CPayload;
 import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
@@ -117,7 +116,7 @@ public final class KratosRageController {
 		ServerPlayNetworking.send(player, new KratosRageS2CPayload(getRage(player), isActive(player)));
 	}
 
-	public static void serverTick(MinecraftServer server) {
+	public static void serverTick(MinecraftServer server, ResourceLocation rageAbilityId) {
 			if (ACTIVE.size() == 0) return;
 			Iterator<Map.Entry<UUID, Boolean>> it = ACTIVE.iterator();
 			while (it.hasNext()) {
@@ -138,7 +137,7 @@ public final class KratosRageController {
 				if (next <= 0f) {
 					RAGE.put(id, id, 0f);
 					it.remove();
-					AbilityRouter.deactivate(p, KratosAbilities.SPARTAN_RAGE);
+					AbilityRouter.deactivate(p, rageAbilityId);
 					sync(p);
 				} else {
 					RAGE.put(id, id, next);

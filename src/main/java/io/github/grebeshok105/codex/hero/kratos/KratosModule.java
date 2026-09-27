@@ -46,6 +46,6 @@ public final class KratosModule implements HeroModule {
 		ThanosStoneRewardController.registerHeroStone(KratosHero.ID, InfinityStoneType.POWER);
 		KratosRageController.register(ctx);
 		KratosHandStrikeFxController.register(ctx);
-		ctx.ticks().global(KratosRageController::serverTick);
+		ctx.ticks().global(server -> KratosRageController.serverTick(server, KratosAbilities.SPARTAN_RAGE));
 	}
 }
