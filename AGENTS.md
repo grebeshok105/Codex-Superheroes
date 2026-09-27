@@ -12,17 +12,24 @@ Every substantial change should improve the whole project: reuse a healthy share
 
 **Existing code describes current behavior. It does not automatically define the desired architecture.**
 
-Playable heroes today: `src/main/java/io/github/grebeshok105/codex/hero/Heroes.java` is the roster.
+Playable heroes today: `src/main/java/io/github/grebeshok105/codex/bootstrap/HeroModules.java` (`ALL`) is the roster — one line per hero; `core/hero/Heroes` is the runtime registry it fills.
 
 ## 2. Heroes, abilities, resources
 
-- Transformation items swap the player's model and hitbox; the `HeroData` attachment stores transformation state.
-- Each hero exposes its abilities via `Hero.getAbilities()`. An ability lives in `ability/<Name>Ability.java`, has an id in `AbilityIds`, is registered in `AbilityRegistry.init()`, and is routed to hero-specific runtime by `AbilityRouter`.
-- Dual resource: Energy (auto-regen) and Mana (refilled by items). Each ability binds to a resource; when Energy runs out the system falls back to Mana. `ResourceController` owns this.
-- Server-side hero logic ticks in `effect/*Controller` classes registered in `SuperheroesMod.onInitialize()`.
-- Keybinds and slot layouts are defaults, not architecture: a hero design that needs more actions or binds must be able to get them without breaking the seam.
+A hero is a **module pair**, wired by exactly one line in each composition root — `bootstrap/HeroModules.ALL` (server) and `client/bootstrap/HeroClientModules.ALL` (client). Nothing else may name a hero class.
 
-These paths describe the current implementation. During refactors, preserve behavior intentionally while moving responsibilities to better boundaries where needed.
+- `hero/<id>/<Id>Module implements HeroModule` — `hero()` returns the hero; `register(HeroModuleContext)` wires the module through narrow registrars: `ctx.abilities()` (`Ability`s into `core/ability/AbilityRegistry`), `ctx.attachments()` (hero-owned attachments), `ctx.payloads()` (typed `CustomPayload` + `StreamCodec`), `ctx.ticks()` (`HeroTickDispatcher` phases), `ctx.lifecycle()` (`PlayerLifecycle`/`HeroLifecycle` hooks), `ctx.content()` (creative-tab entries), `damageTypes()` (module-owned damage-type specs for datagen). Hero entities/sounds/items register through the module's own `<Id>Entities`/`<Id>Sounds`/`<Id>Items` — direct `Registry`/`ModContent` calls, no shared indirection.
+- `client/hero/<id>/<Id>ClientModule implements HeroClientModule` — the client twin through `HeroClientContext`: payload receivers (`ctx.receive` — mandatory for every hero `*S2CPayload`), HUD layers, action keys, entity renderers, player layers, skin provider, sound filters, ability decorations, beam styles, client ticks.
+- `hero/<id>/<Id>Hero implements Hero` (`core/hero/Hero`) is the hero's whole contract: id, energy/mana caps, hitbox dimensions, `getAbilities()`, `getDefaultBinding()`, and the hooks shared code consults — passives (`passiveAttributes`/`applyPassives`/`removePassives`/`reapplyPassivesAfterRespawn`), `keepsHeroOnDeath`, landing/impact (`onLanded`, `suppressesLanding`, `modifyImpact`, `modifyMeleePush`), ability gates (`canUseAbility`, `onAbilityDenied`, `visibility`, `isAbilitySuppressedBy`, `getEnergyReserveFor`), presentation (`getTheme`, `getHudConfig`, `getPassiveGlyphs`, `getThreatClass`, `getImpactStyle`/`getImpactPower`), `canSuperJump`, `getMeleeBleed`, `isUraniumWeak`, `cancelsFallDamage`, `getSkinTexture`.
+- `hero/<id>/` subpackages are by role: `ability/` (one `Ability` class each, owning `public static final ResourceLocation ID = ModId.of(...)`), `runtime/` (controllers and session state), `item/`, `entity/`, `net/` (payloads), `sound/`, `registry/` (damage types). Root files — `<Id>Abilities`, `<Id>Items`, `<Id>Attachments` — only alias leaf constants. **A leaf never imports the module root**: it owns its `ModId.of(...)` literal and the root aliases it. A hero mixin goes to `mixin/hero/<id>/` (server) or `client/hero/<id>/mixin/` only when no shared hook covers it.
+
+Shared homes — nothing hero-named may live there: `core/` (hero contract + `Heroes` registry, ability router/registry/cooldowns, `resource/`, `transform/` + `HeroData`, `lifecycle/`, `net/`, `attachment/`, `content/`, `module/` contexts), `mechanic/` (hero-agnostic mechanics — flight, impact, motion, targeting, boundweapon, charge, strike, summon, falls, world — plus shared abilities in `mechanic/ability`), `content/` (hero-less `ContentModule` slices: horde, boss, admin, command), `compat/` (other-mod bridges), `bootstrap/` (composition roots). Client mirrors it: `client/core/` (module contracts, HUD framework, input, render, audio, text, shared mixins), `client/bootstrap/`, `client/hero/<id>/`.
+
+Runtime invariants: server ticks register only through `ctx.ticks()` → `HeroTickDispatcher` (phases START → EARLY → GLOBAL → LEVELS → PLAYERS → ABILITY_ACTIVE; dead players are skipped once centrally); lifecycle hooks only through `ctx.lifecycle()` → `PlayerLifecycle` (join/leave/death/respawn/server-stopped — never `ServerPlayConnectionEvents.DISCONNECT`, which can fire off the server thread) and `HeroLifecycle` (transform/clear); per-player session state lives in `OwnedSessionMap` (auto-cleared on leave/death/hero-clear/server stop — never a static `Map<UUID,…>`) or attachments: a synced attachment for long-lived client-visible state, a payload for one-shot events.
+
+Transformation items swap the player's model and hitbox; the `core/transform/HeroData` attachment stores transformation state. Dual resource stays: Energy (auto-regen) + Mana (item refills) owned by `core/resource/ResourceController`; `core/ability/AbilityRouter` validates and routes activation — hero-specific gates live on `Hero` hooks, never in the router. C2S handlers validate the sender via `core/net/C2SGuards` before acting.
+
+Keybinds and slot layouts are defaults, not architecture: a hero design that needs more actions or binds must be able to get them without breaking the seam.
 
 ## 3. How user and agent work together
 
@@ -71,8 +78,10 @@ Never pick the shortest path when it litters duplication, one-off crutches, or f
 ## 7. Hard rules
 
 - Server-authoritative gameplay; rendering, HUD, particles, camera, keybinds, and menus live client-side (`src/client`); nothing client-only in `src/main` — a dedicated server loads it.
+- Veil is client-only: `veil.*` is referenced only from `src/client` (e.g. `client/hero/<id>/fx/`, `client/core/**`), always behind `FabricLoader.isModLoaded("veil")`. `src/main` never imports Veil — Veil hard-depends on client-only Fabric modules, so a dedicated server cannot load it; `fabric.mod.json` keeps Veil `recommends` even after the full VFX port, and `servernoveil`/`runServer` plus the gametest/datagen classpaths filter it out. Server-side code reaches Veil effects only through `core/net` payloads and `FxBroadcast`.
+- Package dependency rules — `core` ← `mechanic` ← `hero.<id>`/`content`/`compat` ← `bootstrap`, hero→hero is string ids/tags only, nothing depends on a composition root — are defined in `docs/design/architecture-migration/00-overview.md` §5.2 and enforced by ArchUnit in `src/test/java/io/github/grebeshok105/codex/architecture/` (`ArchitectureRulesTest`, `ClientArchitectureRulesTest`, `PackageCycleRatchetTest`; the frozen baselines are shrink-only).
 - Public Fabric and Minecraft APIs only: `net.fabricmc.fabric.api.*`, never `net.fabricmc.fabric.impl.*`, no deprecated APIs without reason.
-- Networking is typed `CustomPayload` + `StreamCodec` via `ModNetworking` — not legacy `PacketByteBuf`-style code.
+- Networking is typed `CustomPayload` + `StreamCodec` via `core/net` — modules register through `ctx.payloads()`/`HeroClientContext.receive`, shared payloads live in `CoreNetworking`; never legacy `PacketByteBuf`-style code.
 - Reuse healthy shared mechanisms before building new ones, but never preserve a bad abstraction solely because it already exists.
 - Mixins stay narrow and scoped; injected members get `@Unique`; prefer MixinExtras `@WrapOperation` over `@Redirect` when it is the clearer and safer hook.
 - Preserve the hero seam: shared code asks the hero/registry or an appropriate shared abstraction, never which concrete hero the player is.
