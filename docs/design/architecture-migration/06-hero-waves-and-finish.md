@@ -53,7 +53,7 @@
 | I1a Kazuha + Scaramouche | ✅ | #90 |
 | I1b Loki + A-Train | ⏳ | |
 | I1c Battle Beast | ⏳ | |
-| I2a Goku + Naruto | 🔵 на ревью | #91 |
+| I2a Goku + Naruto | ✅ | #91 |
 | I2b Kratos | ⏳ | |
 | I2c Captain America | ⏳ | |
 | I3 Invincible + Omni-Man | ✅ | #92 |
