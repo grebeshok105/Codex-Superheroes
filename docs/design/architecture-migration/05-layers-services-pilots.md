@@ -50,15 +50,15 @@
 
 | Стадия | Статус | PR |
 | :-- | :-- | :-- |
-| E1 переименование корня (барьер) | ⏳ | |
-| E2 скелет `core/` и `mechanic/` | ⏳ | |
-| M1 `Motion`, `FxBroadcast`, `Targeting` | ⏳ | |
-| F1 Scorpion — сервер | ⏳ | |
-| F2 Scorpion — клиент | ⏳ | |
-| G1 Reinhard — сервер | ⏳ | |
-| G2 Reinhard — клиент | ⏳ | |
-| G3 Reinhard — межгеройские остатки | ⏳ | |
-| H architecture review gate | ⏳ | |
+| E1 переименование корня (барьер) | ✅ | merged #81 |
+| E2 скелет `core/` и `mechanic/` | ✅ | merged #83 |
+| M1 `Motion`, `FxBroadcast`, `Targeting` | ✅ | merged #84 |
+| F1 Scorpion — сервер | ✅ | merged #85 |
+| F2 Scorpion — клиент | ✅ | merged #85 |
+| G1 Reinhard — сервер | ✅ | #86 |
+| G2 Reinhard — клиент | ✅ | #87 |
+| G3 Reinhard — межгеройские остатки | ✅ | #88 |
+| H architecture review gate | ✅ | docs/h-gate |
 
 ## Контекст
 
@@ -81,7 +81,7 @@
 | R11 | Структурный M6: `Feedback.actionBar` | `displayClientMessage` — однострочный ванильный вызов без правил | Сервис `Feedback` не создаём (нет правила, которое могло бы разойтись). `Motion`, `Targeting`, `FxBroadcast` создаём — у них есть правила (синхронизация скорости, PvP/союзники/спектаторы, адресаты). |
 | R17 | Внешнее ревью: M1 делал `core/net` зависимым от `mechanic.fx.FxBroadcast` | Правило `coreDependsOnNothingAboveIt` запрещает `core → mechanic` | `FxBroadcast` — транспорт (кому отправить payload), поэтому живёт в `core/net`. В `mechanic/` — только `Motion` и `Targeting` |
 | R18 | Внешнее ревью: G1 заставлял модуль Reinhard вызывать `content/admin` | Правило запрещает `hero → content` | Метаданные для admin-отладки объявляет способность: трейт `Ability.debugTargetsMobs()` (default `false`); `AdminAbilityDebug` читает его из `AbilityRegistry`. Герой не знает про content |
-| R14 | Имя нового корневого пакета | `com.example.superheroes` | Предлагаемое по умолчанию: `io.github.grebeshok105.codex`. Это решение владельца; `E1` не стартует без подтверждения, остальные стадии от имени не зависят. |
+| R14 | Имя нового корневого пакета | `io.github.grebeshok105.codex` | **Подтверждено владельцем 2026-09-26** (предложение `io.github.grebeshok105.codex` принято). Остальные стадии от имени не зависят. |
 
 ## Зависимости стадий
 

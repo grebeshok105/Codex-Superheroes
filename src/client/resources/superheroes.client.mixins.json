@@ -1,6 +1,6 @@
 {
 	"required": true,
-	"package": "com.example.superheroes.client.mixin",
+	"package": "io.github.grebeshok105.codex.client.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"client": [
 		"PlayerRendererMixin",
@@ -10,7 +10,6 @@
 		"PlayerModelPoseMixin",
 		"GameRendererFovMixin",
 		"GuiVanillaGlitchMixin",
-		"SoundEngineMixin",
 		"MinecraftHeroMeleeChargeMixin",
 		"GuiHotbarMixin",
 		"GuiOverlayMessageMixin",
@@ -21,7 +20,8 @@
 		"PandoraCinematicMouseTurnMixin",
 		"PandoraCinematicMousePressMixin",
 		"PandoraCinematicKeyboardMixin",
-		"PandoraCinematicInputFreezeMixin"
+		"PandoraCinematicInputFreezeMixin",
+		"LightningBoltAccessor"
 	],
 	"injectors": {
 		"defaultRequire": 1

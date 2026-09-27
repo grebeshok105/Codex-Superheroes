@@ -1,9 +1,8 @@
 {
 	"required": true,
-	"package": "com.example.superheroes.mixin",
+	"package": "io.github.grebeshok105.codex.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
-		"LightningBoltAccessor",
 		"PlayerDimensionsMixin",
 		"PlayerFlightPoseMixin",
 		"LivingEntityFallDamageMixin",

@@ -147,6 +147,13 @@
 - All 4 "потенциальные" findings verified real against current code and fixed:- Architecture audit 2 is preserved as two complementary files: `docs/audits/2026-09-25-hero-modularity-audit.md` (hero locality, `HeroModule`/`HeroProfile`, Scorpion pilot, Reinhard stress-test) and `docs/audits/2026-09-25-hoplite-structural-audit.md` (package cycles, registries, router contract, services, payloads).
 - The migration that synthesizes both audits is split into six executable plans in `docs/design/architecture-migration/` (`00-overview.md` is the map; `01`–`06` are the plans). They were revised after an external review and rebased on the bugfix stages 4–12 (#40, #42–#49): plans extend the BF11 seams (`HeroTickDispatcher`, `HeroLifecycle`, `Hero` hooks), BF7 `ClientSessionState` and BF10 `PUBLIC_HERO` instead of adding parallel ones. The monolithic `docs/design/2026-09-25-architecture-migration-plan.md` is an unchanged archive of the pre-review version and is not executed or updated.
 
+## Architecture migration — stages E1 + E2 (plan 05)
+
+- **E1 (#81):** root package `com.example.superheroes` → `io.github.grebeshok105.codex` (R14, owner-approved). Pure rename: 681/683 files byte-identical modulo substitution; only build.gradle/gradle.properties differ. Acceptance: zero `com.example` refs; barrier held (no open src/ PRs at merge).
+- **E2 (#83):** `core/` + `mechanic/` skeleton — 52 moves + 3 new (`CoreAttachments` 9 shared ids byte-identical, `CoreNetworking` — `ModNetworking.init()` calls it first, `PayloadRegistrar` per F.1). `item/bound`→`mechanic/boundweapon`, `world/`→`mechanic/world`; emptied legacy packages deleted.
+- Deviations logged: `BOUND_WEAPON_ISSUES` stayed in `ModAttachments` (type in mechanic; core→mechanic forbidden — plan internally inconsistent); `PlayerLifecycle` logger → `LoggerFactory.getLogger(MOD_ID)` (R16); cycle baseline 28→31 (old top-level ring dismantled, contracts re-expressed as thin intra-core pairs — waves break them by ownership per R6); residual core→legacy edges (`HeroTransformService→particle`, `TooltipFrame→item.infinity`) noted for wave work.
+- Gate: compile all source-sets, junit 48/48, gametest 97/97; strict rules verified non-empty (`allowEmptyShould` flipped+restored); store+baseline refrozen post-integration.
+
 ## Architecture migration — stage CL2 (plan 04)
 
 - New `client/core/hud/` registry: `HudLayer` (functional iface), `HudBounds`, `MovableHud` (`layoutId()` + `bounds(w,h)`), `HudLayers` — the mod's single `HudRenderCallback` (spectator gate lives inside it), `register`/`registerMovable`, `movables()`. All 24 HUD renders in `SuperheroesClient` are now `HudLayers.register(order, id, X::render)` with `order` = former position × 100.
@@ -293,9 +300,126 @@
 - `Heroes`/`AbilityRegistry` fields + `init()` deleted; `register`/`get`/`all` kept. `SuperheroesMod`: `HeroModules.bootstrap(CoreModuleContext.INSTANCE)` at the old init site. 114 module abilities + 2 shared = 116 ids — id set identical to old init; each old ability owned by exactly one module/shared.
 - Gametest `modulesCoverEveryHeroInRegistryOrder` (verbatim from plan) + index-independent `scorpionIsRegisteredThroughItsModule`. Cycle baseline: `ability<->ability.ironman` pair resolved and removed; store auto-shrank ~42 stale `Heroes.*`/`AbilityRegistry.*` entries. qualityGate 71/71.
 
+
+## Architecture migration — stage D2b-1 (plan 03)
+
+- 22 controllers renamed `init()` → `register(HeroModuleContext ctx)` verbatim (init bodies — UseItemCallback/AttackEntity/JOIN/DISCONNECT listeners — kept identical inside register). MirrorDimension self-END → `ctx.ticks().early`, MadnessFlight self-START → `ctx.ticks().start`; both lost `ServerTickEvents` imports.
+- New `bootstrap/SharedMechanics.register(ctx)` = old shared rows in old relative order: HeroLandingTracker, HeroEquipmentLock, SuperJump, AutoSaturation, HeroPassiveRegen, MeleeImpact serverTick, BallisticBodyTracker, FlightController cleanup, HeavensStrike + content rows HordeManager(level), AdminBuildSync. Called from `HeroModules.bootstrap` between SharedAbilities and the per-module pass; `SharedMechanics.registerPost(ctx)` after the module pass holds the shared wiring that must stay after every hero listener/tick: `HeroMeleeImpactController.register` (AttackEntity: IronFists@64 consumed before MeleeImpact@67 — uniform module order can't place it between Omniman@14 and TimeSlow@11, post-pass keeps all hero listeners ahead; residual edge: a time-frozen attacker previously got MeleeImpact push+FX on the cancelled hit, now gets only the cancel), `Landing.tickPlayer`, `Flight.tickPlayer`.
+- Hero modules extended with their controllers' register + tick rows (old table order within each hero): Scorpion 1; Pandora 3 (Mirror early, Death global, SpatialBind global); Homelander 6; IronMan 7; Regulus 4; Invincible 1 + ViltrumiteCharge tick (sole-Invincible); Omniman 1 + Rush/Think ticks; BattleBeast 1; Rem 2; SungJinwoo 2; Doomsday 4 + DoomGrip/ChargeTackle/Footsteps ticks; Goku 2 + Kamehameha/SpiritBomb ticks + SAIYAN_AURA activeAbility; Naruto 2 + 3 Rasengan ticks + SAGE_MODE activeAbility.
+- `SuperheroesMod`: my init() calls + tick rows removed; kept core inits, worker-B init()s (Thanos×2, Kratos×2, Reinhard×3, RaidenPlunging) + B's tick rows + PassiveReconciler/ResourceController rows. registerPlayerLifecycle + inline damage lambdas untouched (D2b-2).
+- Tests: `assertControllersAreWired` deleted (STATIC_INIT scan, SUPERHEROES_MOD field); `controllersHaveNoStaticInit` strict rule added verbatim — RED until worker B removes the last 8 `*Controller.init()`.
+- Freeze store: `4c613794` −2 (my self-registered tick listeners); `8c45b479` — init()→register(ctx) descriptor rewrites (Invincible/Kawarimi/RegulusTotem) + +1 line shifts for import additions; `6ab35c1a` regenerated at current SuperheroesMod line numbers (uniform −22 from HEAD for onLeave/onDeath/onRespawn/onServerStopped; −15 vs stale store for earlier blocks).
+- Tick cross-reads (сверка): LandingTracker.tickPlayer reads Unibeam.isBusy and ViltrumiteCharge/Rush read FlightController.isFlightActive — both order flips were caught at integration and fixed by `SharedMechanics.registerPost` (Landing/Flight player ticks moved after the module pass, restoring Unibeam@345→Landing@347→Flight@380 freshness and charge/rush's pre-refresh isFlightActive read); reviewer additionally caught HeroMeleeImpactController's AttackEntity listener needing the same post-pass (IronFists consume-order). UraniumDefense.isUnderUraniumThreat read stays phase-safe (GLOBAL precedes PLAYERS both schemes). Residual documented above.
+- qualityGate NOT run here (orchestrator runs the gate); `controllersHaveNoStaticInit` expected-green after worker B's init() removals landed (aab21ad) — verified at gate.
+
 ## Architecture migration — stage CL3a-1 (plan 04)
 
 - Client module contracts landed: `client/core/module/{HeroClientModule,HeroClientContext,CoreClientContext}` (plan-verbatim) + `client/bootstrap/HeroClientModules` + `client/core/input/HeroActionKeys` (one END_CLIENT_TICK drains `consumeClick()` always, fires `onPress` only when local `PUBLIC_HERO` matches; no key mappings registered yet — CL3b owns them).
 - `ScorpionClientModule` owns the `ScorpionFxS2CPayload` receiver (handler byte-identical; `ClientNetworking` lost only that receiver + import — 35→34 in-file + 1 via `ctx.receive`). `heroId() = ScorpionHero.ID` — IN_CLIENT_HERO_MODULE is excluded from the sharedClientCode rule. `HeroClientModules.bootstrap()` runs right after `ClientNetworking.init()`.
 - New ArchUnit client rules (`clientHeroModulesAreReferencedOnlyByThemselvesAndTheModuleList`, `clientCoreDoesNotKnowHeroModules`, `sharedClientCodeDoesNotDependOnConcreteHeroes`) now non-vacuous. qualityGate 71/71.
 - Runtime: receiver proven to fire via temporary `[CL3A1-FX]` println (kind=2 hellfire pillar, kind=1 spear harpoon) — Veil 4.1.2 in classpath, handler dispatches to `VeilScorpionFx`. Kunai→scorpion transform, regulus regression PASS.
+
+
+## Architecture migration — stage D2b-2 worker A (plan 03)
+
+- `SuperheroesMod.registerPlayerLifecycle`/`registerTickHandlers` deleted (onInitialize 222→61 lines): core rows → `SharedMechanics`, hero rows → owning modules via `ctx.lifecycle()` or the controller's `register(ctx)`. Split by position inside the old table: rows that OPENED an event list (HTS::onPlayerJoin/HDS::syncPublicHero onJoin; HTS::onPlayerLeave+ECL::releaseOwnedBy onLeave; ECL onDeath; HTS::onPlayerRespawn; HeroReactionController::onTransformed — global cross-hero broadcast, parked shared; Horde/EnergyLocks resetAll) sit in `SharedMechanics.register` (pre-modules), rows that CLOSED a list (AbilityCooldowns::syncAll onJoin, AC::clearAndSync onDeath, ECL::releaseOwnedBy onHeroClear) sit in `registerPost` (post-modules) — documented in javadoc.
+- Per-hero hooks moved: Regulus 10 (Greed onLeave/onDeath/stop; Madness join/leave/death/respawn/heroClear/stop; Totem heroClear), Doomsday 4 (DoomGrip leave/death/heroClear/stop), Omniman 4 (ThinkMark leave/death/heroClear/stop — ACTIVE stays a plain map: clear() has unlockTarget+setPose side effects), BattleBeast 2 (Curse reapplyOnJoin + stop), Rem 2 (Demonism heroClear+stop), SungJinwoo 1 (stop; DEATH_ECHOES keyed by ServerLevel — not convertible), Pandora 3 (MirrorDim leave+stop in its register; PandoraDeath.register adds ALLOW_DAMAGE→ALLOW_DEATH in old order + onHeroClear resetOnHeroTaken).
+- OwnedSessionMap conversions (13 maps, 11 files): all cleared-only `Map<UUID,…>` — 9 charge abilities (ChargeTackle, ViltrumiteCharge, OmnimanViltrumiteRush, GokuKamehameha, GokuSpiritBomb, NarutoRasengan/Oodama/Rasenshuriken, RepulsorCharge) got ClearOn{LEAVE,DEATH}; Unibeam 3 maps ClearOn{LEAVE,DEATH,HERO_CLEAR} (covers the old heroClear row verbatim — clearState was pure drops); MonarchsDomain ClearOn{LEAVE,DEATH}; PandoraDeath.ACTIVE + SpatialBind.BOUND ClearOn{LEAVE}. Owners = the keyed player everywhere except SpatialBind (victim uuid — map is victim-keyed). Auto-drop registers at class-init; every converted class is touched at bootstrap via `new XAbility()`/`X::tick` in its module, except RepulsorChargeController (lambda body → first player tick — safe: map is empty before any use and no leave can precede a tick).
+- AbilityRules attribution (old order preserved as module order): isAftermath blocker + isMadness freeCost → HomelanderModule (MADNESS is applied by Homelander-only MilkBottleItem — сверка correction, not Regulus); VANITY_STRIPPED → PandoraModule; DISABLED_ABILITIES (applied by ThanosSnap/SoulPulse) → ThanosModule — B's push missed it; restored by worker A post-rebase.
+- §6.3 GameTests (`LifecycleSideEffectsGameTests`, registered in gametest fabric.mod.json): DoomGrip heroClear releases victim NO_AI+caster INVULNERABLE; ThinkMark heroClear restores victim AI/gravity; madness heroClear resets REGULUS_MADNESS + strips only madness-owned effect instances (foreign DAMAGE_RESISTANCE amp-5 survives); Greed owner-leave frees frozen victim; MirrorHouse caster-leave closes + victim-leave releases; Pandora heroClear drops PANDORA_REVIVED + permanent INVULNERABLE; relog reapplies BattleBeast curse (real save/load path via new `TestPlayers.rejoin` — same GameProfile). DoomGrip/ThinkMark start() are unguarded — tests drive them without transforms.
+- Cross-read сверка: none — every hook touches only its own hero's state. Order flips vs old table (all plan-accepted module order): respawn ThanosGauntlet→RegulusMadness became Regulus→Thanos (independent attachments); onLeave/onDeath hero rows now run in HeroModules.ALL position instead of table order.
+- qualityGate NOT run (orchestrator runs the gate). Frozen store 6ab35c1a: orchestrator regenerated it to EMPTY post-integration — all 70 stale lines referenced the deleted registerTickHandlers/registerPlayerLifecycle tables (ratchet only shrinks).
+- Integration: B pushed first (contrary to plan order); rebased worker-A commit onto `origin/arch-mig/D2b-2` — one conflict (SuperheroesMod: his truncated table vs my full rewrite → took the rewrite) + `fabric.mod.json` auto-merged (both test classes registered). B's commit did NOT carry the `DISABLED_ABILITIES` rule — restored it in `ThanosModule.register` post-rebase (thanos sits at module position 10, keeping the old blocker order aftermath → disabled → vanity).
+
+## Architecture migration — stage D2b-2 orchestrator fixes + verification (plan 03)
+
+- Integration: UnibeamController.pruneGone signature widened to `Iterator<? extends Map.Entry<UUID,?>>` (OwnedSessionMap's invariant entry iterator). Ceremony gametests (`reinhardCeremony{Leave,Death}ThawsFrozenMobs`) got `player.teleportTo(zombie)` — mock players join at world spawn, outside CEREMONY_RADIUS.
+- Gametest harness findings (documented for future tests): mock ServerPlayers need `setYHeadRot`/`setYBodyRot` for `getViewVector` (setYRot alone is ignored — LivingEntity view uses head rot); `ServerPlayer.canHarmPlayer` is `isPvpAllowed() && team-check` — gametest server runs pvp off, timeslow test enables it; tests that fail mid-body leak live players into `getPlayerList()` — horde's 96-block `hasAudience` counts them (hordePausesWithoutAudience now sweeps strays first).
+- Characterization corrections vs worker's assumptions: madness-clear test — the foreign effect must not be DAMAGE_RESISTANCE et al because `RemDemonismController.clear` (global onClear chain) strips those types REGARDLESS of ownership — byte-identical on main → pre-existing bug, nit backlog; test now uses INVISIBILITY. `relogReappliesBattleBeastCurse` renamed `relogClearsBattleBeastCurseKeepsBasePassives`: instrumentation proved `onPlayerJoin → reapplyLifecyclePassives → hero.removePassives → BattleBeastCurseController.clear` wipes STAGES before the module's reapplyOnJoin runs — `reapplyOnJoin` is dead code on main too (curse never survived relog) → pre-existing dead-hook bug, nit backlog + fix-ticket candidate.
+- New ArchUnit rule `controllersHaveNoStaticInit` green; archunit_store `6ab35c1a` regenerated empty (tick/lifecycle store gone). `onInitialize` ≤60 lines, no registerTickHandlers/registerPlayerLifecycle tables.
+- qualityGate FULL PASS at c3b83d5: build + JUnit + ProjectSanityTest + jar isolation + runGametest 89/89 + verifyArchitectureBaseline.
+
+## Architecture migration — stage CL3b (plan 04)
+
+- Hero keys: `RAIDEN_SWORD_DRAW` → `RaidenClientModule.actionKey`, `NANO_WEAPON`/`ESP_TOGGLE` → `IronManClientModule.actionKey`; `ModKeys` keeps only core keys (radial/bindings/tooltips/super_jump/vfx/8 slots); guard parity verified — `HeroActionKeys` fires on synced `PUBLIC_HERO`, drains clicks unconditionally.
+- HUD: 16 hero layers moved to `ctx.hud` of owner modules with orders preserved (kratos 600; regulus 900/1100/1200/1300/1500; homelander 1400; doomsday 1600; reinhard 1700/2200/2300; pandora 1900/2400; ironman jarvis_overlay 100/jarvis_detection 200/reactor_overlay 1000).
+- Renderers: `SHADOW_SOLDIER`→sungjinwoo, `KAGE_BUNSHIN`→naruto, `SHIELD_PROJECTILE`→captainamerica, `RAM`→rem, `SMART_MISSILE`/`IRON_LEGION_DRONE`→ironman via new `HeroClientContext.entityRenderer` hook (`CoreClientContext` delegates to `EntityRendererRegistry`).
+- IronMan ticks (`ClientNanoSuitUpState`, `JarvisDetectionHud`, `tickRepulsorCharge`) → module END_CLIENT_TICK regs (no ctx tick hook in plan interface — direct Fabric call is the pattern).
+- `LightningBoltAccessor` → `client/mixin/` (client mixin config); `SuperheroesClient`/`ModKeys` carry zero hero-keyed registrations.
+- Deferred to CL4 per plan: `IronManNanoFormLayer`/`NanoSuitUpLayer` (player feature layers = CL4 scope).
+- Gate: `qualityGate` green, 73/73 gametests.
+
+
+## Architecture migration — stage C4 (plan 04)
+
+- New `core/ability/AbilityAvailability` (leaf package): `record(Map<ResourceLocation, Visibility>)`, `enum Visibility {AVAILABLE,LOCKED,HIDDEN}`, CODEC + STREAM_CODEC, `visibilityOf` default AVAILABLE. Sync task in `ability.AbilityAvailabilitySync` (would create `core.ability ↔ hero` cycle if placed in core).
+- `ModAttachments.ABILITY_AVAILABILITY` — non-persistent, `syncWith(STREAM_CODEC, targetOnly())` (PUBLIC_HERO pattern).
+- `Hero.visibility(ServerPlayer, ResourceLocation)` default AVAILABLE; impls: Doomsday (isAbilityUnlocked/DOOMSDAY_PROGRESS), Thanos (stones via GauntletStateController), Pandora (hasActiveHouse), Rem (demonism), Regulus (COUNTER_STRIKE hero-scoped). Vanity-strip → all HIDDEN in the sync task.
+- `C/ClientAbilityVisibility` reads the attachment (absent = all visible, matches old pre-sync behavior); `ClientAbilityFilter` + client tier tables deleted; 6 consumers rewired (AbilityBarHud, RadialMenuHud, AbilitiesTooltipHud, HeroInfoPanelHud, BindingsScreen, SuperheroesClient key dispatch).
+- Sync dispatcher: initially the tail of the core tick table; after merging main post-D2b-1 it registers via `SharedMechanics.registerPost` (runs after all module registers) — identical last-position in PLAYERS order.
+- GameTests +6: tier1 → HIDDEN|LOCKED, tier-up → AVAILABLE, write-on-change.
+- Runtime checklist (runClient, instrumented `[C4-VIS]` attachment-write evidence): Doomsday tiers, Thanos stones, Pandora house, Rem demonism, Regulus counterstrike-only-in-madness, vanity-strip override, no-flicker — all PASSED on 0a1131a; evidence in PR #73 comment.
+- Reviewer fix verified: Regulus COUNTER_STRIKE reads REGULUS_MADNESS attachment, not ModEffects.MADNESS (Homelander milk-madness).
+
+## Architecture migration — stage D2c (plan 03)
+
+- `Hero.keepsHeroOnDeath()` (default false; DoomsdayHero → true) and `Hero.reapplyPassivesAfterRespawn(ServerPlayer)` (default removePassives+applyPassives; DoomsdayHero → applyPassives only — his removePassives resets the tier his own death hook just granted).
+- HeroTransformService hero/controller branches deleted: `reapplyLifecyclePassives` → `PassiveReconciler.capture(player, hero.getId(), () -> hero.reapplyPassivesAfterRespawn(player))`. The capture wrapper stays in HTS deliberately — a `hero → lifecycle` import would add a package 2-cycle outside the ratchet baseline; verified every hero's removePassives is pure-removal (no addEffect), so widening capture around remove+apply records the identical effect set.
+- Per-hero hooks wired in modules: `ReinhardController.register` + `ctx.lifecycle().onRespawn`; `RemDemonismController.register` + `ctx.lifecycle().onLeave(clear)`; `IronManModule` + `ctx.lifecycle().onLeave(UnibeamController.clearState)`. Module hooks are ungated (GlobalLifecycleRegistrar) → same unconditional run as the old inline calls.
+- SuperheroesMod AFTER_DEATH: `DoomsdayHero.ID` check → `Heroes.get(heroId).keepsHeroOnDeath()`; listener remains the last registered AFTER_DEATH (PlayerLifecycle.init and HeroModules.bootstrap both precede it inside onInitialize) — all death hooks still run before forceUntransform.
+- Order сверка: SharedMechanics.register runs before the module loop, so global hooks precede module hooks in every PlayerLifecycle list. New onLeave order: EnergyLocks → clearActive → module clears (Rem, then IronMan). Neither RemDemonismController.clear nor UnibeamController.clearState reads HeroData.activeAbilities → running after clearActive is safe; strict old order (clears before clearActive) preserved only for onHeroClear paths, which already ran via hero-clear. ReinhardController.onRespawn now runs after HeroDataStore.syncFull instead of before — it writes only REINHARD_STATE + modifiers, never HeroData → equivalent.
+- PassiveReconciler сверка: it did NOT replace the respawn path (it re-asserts captured infinite effects on tick; the explicit reapplyLifecyclePassives call remained) → `reapplyPassivesAfterRespawn` introduced per plan.
+- GameTest `doomsdayKeepsHeroOnDeath` (LifecycleGameTests): kill() drives the real AFTER_DEATH chain — Doomsday keeps his hero and tiers to 2, Raiden untransforms. Respawn half driven via `HeroTransformService.onPlayerRespawn` directly — mock players have no real respawn round-trip, and it is the exact hook PlayerLifecycle RESPAWN fires; asserts tier still 2 + REGENERATION re-applied.
+- archunit_store `8c45b479` shrunk: HeroTransformService→DoomsdayHero.ID frozen line removed. qualityGate NOT run (orchestrator runs the gate).
+
+## Architecture migration — stage M1 (plan 05)
+
+- core/net/FxBroadcast (tracking/trackingAndSelf/around over PlayerLookup — transport only); 5 ModNetworking loops migrated: syncFlightState/broadcastRepulsor/broadcastThanosCosmicBeam → trackingAndSelf (was send+tracking), broadcastLaser/broadcastLaserFromEntity → tracking (old `observer != shooter` was dead code — bytecode-verified `ChunkMap$TrackedEntity.updatePlayer` returns immediately on player==entity so self is never in seenBy). Audiences identical.
+- mechanic/motion/Motion (set/add + Sync{MARK, MARK_AND_SEND_TO_PLAYER}; mark=hurtMarked, send=packet to self when player).
+- mechanic/targeting/{TargetFilter,Targeting} — record, all flags off by default; respectPvp/excludeAllies = gameplay change (audit B19), never enabled.
+- Frozen rules MechanicServiceRulesTest: motion-packet ctor coverage BOTH (Entity) and (int,Vec3) — reviewer caught the id-ctor gap; store refrozen 45+16 sites (all in ability/effect/physics/entity — wave debt). GameTests: Motion +4, MechanicTargeting +6 (each flag cuts exactly its case, and()-composition, pvp, allies). 107/107.
+- Reviewer note: reviewed stale HEAD once (pre-refreeze push) — pointed at fc35585 → APPROVE.
+
+## Architecture migration — stage F (plan 05)
+
+- Scorpion is now a fully self-contained hero module: `hero/scorpion/` (ScorpionModule/ScorpionHero/ScorpionItems + ability/, runtime/ScorpionController, net/, sound/, targeting/) + `client/hero/scorpion/` (ScorpionClientModule, fx/, fx/veil/). Only composition-root lines remain in HeroModules/HeroClientModules.
+- HeroModuleContext gained `content()` (ContentRegistrar→CreativeTabContents) and `payloads()` (PayloadRegistrar.FABRIC); CoreModuleContext wires both.
+- Intra-module DAG rule established (leaf packages own constants; runtime classes use local SCORPION_ID, not root-class refs) — mandatory for G1/waves.
+- ArchUnit F.4: every hero S2C payload registers a receiver in its client module.
+- Sanctioned behavior commit: OwnedSessionMap SPEAR_PULLS/BREATHS with ClearOn.LEAVE+DEATH (was static HashMaps); creative tab order = kunai after legacy items (module registration order).
+- build.gradle: `datagen` sourceSet (Veil-free classpath — fixes pre-existing runDatagen break on server env) + `clientnoveil` sourceSet + `runClientNoVeil` run config for Veil-free client checks.
+- Gate: qualityGate green @a7aaab2 (111/111 gametests). Golden transformation_lore reordered (kunai first — registration order, content identical). ArchUnit store refrozen with 0 scorpion entries.
+- Runtime: runClient Veil + runClientNoVeil both PASSED 7/7 (transform, 4 abilities + spear pull, untransform, OwnedSessionMap ClearOn LEAVE+DEATH proven via instrumentation).
+- Reviewer: APPROVE at HEAD 1118390. Merged #85.
+
+## G1 — Reinhard server module (PR #86)
+- hero/reinhard/ full server move: module+hero+abilities(8, own ids)+items+attachments, ability/, runtime/ (10 classes), item/RoyalIcicleItem, net/ (7 payloads), sound/ReinhardSounds.
+- New core seams: C2SGuards (requireHero/requireActiveAbility), AttachmentRegistrar (persistent/transient/initializer overload).
+- Shared cleaned: AbilityIds, ModItems, ModItemGroups, ModAttachments, ModNetworking, ModSounds, AdminAbilityDebug (debugTargetsMobs via Ability contract).
+- isReinhardSwordOnly dead-code moved disconnected to ReinhardAbilities.
+- Baseline lost ability<->debug pair; golden regen (reinhard_suit first); store refrozen.
+- Gate green; reviewer APPROVE; runtime 7/7 (bounded on icicle empowered branches — pre-existing, player-scoped).
+- HeavensStrikeController.Variant.REINHARD intentionally remains (G3).
+
+## G2 — Reinhard client module (PR #87)
+- client/hero/reinhard/: state/ (5), hud/ (3), screen/WishScreen, render/ScabbardLayer; module registers muteWorldDuringTimeSlow + swordDrawReadyHalo.
+- Client core seams: ClientSoundFilters + generic SoundEngineMixin (new client.core.mixins.json), AbilityDecoration(s), ctx.soundFilter()/abilityDecoration().
+- Old SoundEngineMixin + RadialMenuHud Reinhard branch deleted; acceptance grep → HeroClientModules only.
+- Gate green; reviewer APPROVE; runtime 8/8 (darkness/sword-death bounded — render path proven, melee trigger env-blocked solo).
+
+## G3 — Reinhard leftovers (PR #88)
+- Variant.REINHARD deleted (dead); chargeFriendly now uses BoundWeaponItem.blocksChargedAttackTiers trait (only RoyalIcicle true) — zero hero ids in SuperheroesClient.
+- Acceptance G reached: Reinhard touches shared code only via HeroModules + HeroClientModules + beam.json + lang/assets.
+- Gate green; reviewer APPROVE; no runtime needed (dead-code + semantics-identical).
+
+## H — architecture review gate (GO)
+- Independent reviewer (not F/G author): GO on all 10 checklist items. No seam-fix PRs before waves.
+- Metrics §8 on main post-G3: 76/10 UUID maps, 30 cycle pairs, 17 .init(), 0 own-tick files, 70/318-line roots.
+- R21-R23 recorded (HeroClientContext bound ≤10; ClientSoundFilters single-consumer OK; entities/particles direct reg).
+- migrate-hero SKILL.md authored from F/G lessons (characterize→move→clean; DAG; seams; traps).
+- Wave order confirmed: I1a-c → I2a-c → I3 → I4a-d → I5a-c → I6a-b + IC1-3 → O.
+
+## IC1 — horde → content/horde (PR #96)
+- Horde subsystem moved to content/horde/ + client/content/horde/ on NEW ContentModule/ContentModuleContext contract (HeroModuleContext minus hero()); composition roots bootstrap/ContentModules + client/bootstrap/ContentClientModules.
+- HordeManager.ACTIVE/OVERLAY_PLAYERS → OwnedSessionMap(global(), empty ClearOn) — clears only on SERVER_STOPPED (matches old resetAll; SharedMechanics.onServerStopped dropped).
+- GeckoLib kept (removal precondition not proven). Reviewer APPROVE, CI green.

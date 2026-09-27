@@ -1,0 +1,14 @@
+{
+	"required": true,
+	"package": "io.github.grebeshok105.codex.client.core.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"client": [
+		"SoundEngineMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	},
+	"overwrites": {
+		"requireAnnotations": true
+	}
+}
