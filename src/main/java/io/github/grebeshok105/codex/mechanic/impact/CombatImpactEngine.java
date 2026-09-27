@@ -5,12 +5,12 @@ import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.hero.Heroes;
 import io.github.grebeshok105.codex.core.hero.ImpactContext;
 import io.github.grebeshok105.codex.core.hero.ImpactStyle;
+import io.github.grebeshok105.codex.core.net.FxBroadcast;
 import io.github.grebeshok105.codex.core.net.ScreenShakeS2CPayload;
 import io.github.grebeshok105.codex.core.net.WallImpactDebrisS2CPayload;
-import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
+import io.github.grebeshok105.codex.mechanic.motion.Motion;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -117,12 +117,8 @@ public final class CombatImpactEngine {
 
 	public static void applyKnockback(LivingEntity target, Vec3 direction, double horizontal, double upward) {
 		Vec3 motion = direction.scale(horizontal);
-		target.setDeltaMovement(motion.x, upward, motion.z);
-		target.hurtMarked = true;
+		Motion.set(target, new Vec3(motion.x, upward, motion.z), Motion.Sync.MARK_AND_SEND_TO_PLAYER);
 		target.hasImpulse = true;
-		if (target instanceof ServerPlayer player) {
-			player.connection.send(new ClientboundSetEntityMotionPacket(player));
-		}
 	}
 
 	private static void sweepNearby(ServerLevel level, ServerPlayer attacker, LivingEntity primary, Vec3 impact, ImpactProfile profile) {
@@ -220,7 +216,7 @@ public final class CombatImpactEngine {
 		if (profile.shakeIntensity() <= 0.01f) {
 			return;
 		}
-		for (ServerPlayer nearby : PlayerLookup.around(level, center, profile.shakeRadius())) {
+		for (ServerPlayer nearby : FxBroadcast.aroundAudience(level, center, profile.shakeRadius())) {
 			double distance = nearby.position().distanceTo(center);
 			float falloff = (float) Math.max(0.0, 1.0 - distance / profile.shakeRadius());
 			float intensity = profile.shakeIntensity() * (0.25f + falloff * 0.75f);
@@ -232,9 +228,7 @@ public final class CombatImpactEngine {
 	private static void sendDebris(ServerLevel level, Vec3 position, Vec3 direction, ImpactProfile profile) {
 		WallImpactDebrisS2CPayload payload = new WallImpactDebrisS2CPayload(
 				position, direction, profile.debrisIntensity(), new int[0]);
-		for (ServerPlayer nearby : PlayerLookup.around(level, position, 48.0)) {
-			ServerPlayNetworking.send(nearby, payload);
-		}
+		FxBroadcast.around(level, position, 48.0, payload);
 	}
 
 

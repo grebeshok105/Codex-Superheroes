@@ -1,4 +1,4 @@
-package io.github.grebeshok105.codex.hero.ironman;
+package io.github.grebeshok105.codex.hero.ironman.runtime;
 
 import io.github.grebeshok105.codex.core.hero.JarvisThreatClass;
 

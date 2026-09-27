@@ -1,6 +1,6 @@
 package io.github.grebeshok105.codex.client.hero.ironman;
 
-import io.github.grebeshok105.codex.hero.ironman.IronManSuitVariant;
+import io.github.grebeshok105.codex.hero.ironman.runtime.IronManSuitVariant;
 import io.github.grebeshok105.codex.client.hero.ironman.state.ClientSuitVariantState;
 import io.github.grebeshok105.codex.client.core.render.SkinProvider;
 import net.minecraft.client.player.AbstractClientPlayer;

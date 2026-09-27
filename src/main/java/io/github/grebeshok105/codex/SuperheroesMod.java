@@ -35,7 +35,6 @@ public class SuperheroesMod implements ModInitializer {
 		io.github.grebeshok105.codex.core.lifecycle.PassiveReconciler.init();
 		ModEffects.init();
 		io.github.grebeshok105.codex.bootstrap.HeroModules.bootstrap(io.github.grebeshok105.codex.core.module.CoreModuleContext.INSTANCE);
-		io.github.grebeshok105.codex.entity.ModEntities.init();
 		io.github.grebeshok105.codex.bootstrap.ContentModules.bootstrap(io.github.grebeshok105.codex.core.module.CoreModuleContext.INSTANCE);
 		io.github.grebeshok105.codex.item.ModDataComponents.init();
 		ModItems.init();

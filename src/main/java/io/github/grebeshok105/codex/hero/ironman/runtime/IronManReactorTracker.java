@@ -3,8 +3,9 @@ package io.github.grebeshok105.codex.hero.ironman.runtime;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.transform.HeroDataStore;
 import io.github.grebeshok105.codex.effect.EffectRefresh;
-import io.github.grebeshok105.codex.hero.ironman.IronManHero;
-import io.github.grebeshok105.codex.item.ModItems;
+import io.github.grebeshok105.codex.ModId;
+import net.minecraft.resources.ResourceLocation;
+import io.github.grebeshok105.codex.hero.ironman.item.IronManReactorItem;
 import io.github.grebeshok105.codex.hero.ironman.net.ReactorStateS2CPayload;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -23,6 +24,7 @@ import java.util.Map;
 import java.util.UUID;
 
 public final class IronManReactorTracker {
+	private static final ResourceLocation IRON_MAN_ID = ModId.of("iron_man");
 	private static final float TRIGGER_THRESHOLD = 100f; // <10% of 1000
 	private static final float REFILL_AMOUNT = 500f;     // restore to soft-cap
 	private static final int REPLACE_TICKS = 100;        // 5s standstill
@@ -49,7 +51,7 @@ public final class IronManReactorTracker {
 	public static void tick(ServerPlayer player) {
 		HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
 		UUID id = player.getUUID();
-		if (!data.hasHero() || !IronManHero.ID.equals(data.heroId()) || !player.isAlive()) {
+		if (!data.hasHero() || !IRON_MAN_ID.equals(data.heroId()) || !player.isAlive()) {
 			if (states.remove(id) != null) {
 				sendState(player, false, 0, false);
 			}
@@ -137,7 +139,7 @@ public final class IronManReactorTracker {
 		Inventory inv = player.getInventory();
 		for (int i = 0; i < inv.getContainerSize(); i++) {
 			ItemStack stack = inv.getItem(i);
-			if (!stack.isEmpty() && stack.is(ModItems.IRON_MAN_REACTOR)) {
+			if (!stack.isEmpty() && stack.getItem() instanceof IronManReactorItem) {
 				return true;
 			}
 		}
@@ -148,7 +150,7 @@ public final class IronManReactorTracker {
 		Inventory inv = player.getInventory();
 		for (int i = 0; i < inv.getContainerSize(); i++) {
 			ItemStack stack = inv.getItem(i);
-			if (!stack.isEmpty() && stack.is(ModItems.IRON_MAN_REACTOR)) {
+			if (!stack.isEmpty() && stack.getItem() instanceof IronManReactorItem) {
 				return i;
 			}
 		}

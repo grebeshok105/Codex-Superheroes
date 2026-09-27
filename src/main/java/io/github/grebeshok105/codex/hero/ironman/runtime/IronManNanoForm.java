@@ -1,4 +1,4 @@
-package io.github.grebeshok105.codex.hero.ironman;
+package io.github.grebeshok105.codex.hero.ironman.runtime;
 
 import com.mojang.serialization.Codec;
 import io.github.grebeshok105.codex.core.attachment.AttachmentRegistrar;
@@ -16,7 +16,7 @@ public enum IronManNanoForm {
 	/**
 	 * Player attachment holding the current nano-form index ({@code superheroes:nano_form},
 	 * 0 initializer + persistent + copyOnDeath — byte-identical to the old {@code ModAttachments} row).
-	 * Created eagerly at class-init — see {@link IronManAttachments#init()}.
+	 * Created eagerly at class-init — see {@link io.github.grebeshok105.codex.hero.ironman.IronManAttachments#init()}.
 	 */
 	public static final AttachmentType<Integer> ATTACHMENT =
 			AttachmentRegistrar.FABRIC.persistent("nano_form", Codec.INT, true, () -> 0);

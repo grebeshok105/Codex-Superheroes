@@ -1,6 +1,6 @@
 package io.github.grebeshok105.codex.client.hero.ironman.state;
 
-import io.github.grebeshok105.codex.hero.ironman.IronManSuitVariant;
+import io.github.grebeshok105.codex.hero.ironman.runtime.IronManSuitVariant;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.hero.ironman.IronManHero;
 import net.minecraft.Util;

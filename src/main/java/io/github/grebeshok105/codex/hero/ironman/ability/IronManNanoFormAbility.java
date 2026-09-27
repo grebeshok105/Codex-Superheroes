@@ -3,7 +3,7 @@ package io.github.grebeshok105.codex.hero.ironman.ability;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
-import io.github.grebeshok105.codex.hero.ironman.IronManNanoForm;
+import io.github.grebeshok105.codex.hero.ironman.runtime.IronManNanoForm;
 import io.github.grebeshok105.codex.hero.ironman.runtime.IronManNanoFormController;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;

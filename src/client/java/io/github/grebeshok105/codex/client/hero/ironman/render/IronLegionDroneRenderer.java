@@ -1,6 +1,6 @@
 package io.github.grebeshok105.codex.client.hero.ironman.render;
 
-import io.github.grebeshok105.codex.hero.ironman.IronManSuitVariant;
+import io.github.grebeshok105.codex.hero.ironman.runtime.IronManSuitVariant;
 import io.github.grebeshok105.codex.hero.ironman.entity.IronLegionDroneEntity;
 import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.model.geom.ModelLayers;

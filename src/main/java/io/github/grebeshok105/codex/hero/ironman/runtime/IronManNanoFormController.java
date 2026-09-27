@@ -1,6 +1,5 @@
 package io.github.grebeshok105.codex.hero.ironman.runtime;
 
-import io.github.grebeshok105.codex.hero.ironman.IronManNanoForm;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.hero.ironman.net.NanoFormS2CPayload;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;

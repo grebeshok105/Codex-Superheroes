@@ -1,7 +1,7 @@
 package io.github.grebeshok105.codex.client.hero.ironman.hud;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.hero.ironman.IronManSuitVariant;
+import io.github.grebeshok105.codex.hero.ironman.runtime.IronManSuitVariant;
 import io.github.grebeshok105.codex.client.ClientHeroState;
 import io.github.grebeshok105.codex.client.hud.HudUtil;
 import io.github.grebeshok105.codex.client.hero.ironman.state.ClientRepulsorChargeState;

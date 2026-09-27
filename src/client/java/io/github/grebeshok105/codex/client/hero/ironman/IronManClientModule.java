@@ -23,7 +23,7 @@ import io.github.grebeshok105.codex.client.hero.ironman.state.ClientReactorState
 import io.github.grebeshok105.codex.client.hero.ironman.state.ClientRepulsorChargeState;
 import io.github.grebeshok105.codex.client.hero.ironman.state.ClientSuitVariantState;
 import io.github.grebeshok105.codex.core.net.BeamFxS2CPayload;
-import io.github.grebeshok105.codex.entity.ModEntities;
+import io.github.grebeshok105.codex.hero.ironman.entity.IronManEntities;
 import io.github.grebeshok105.codex.hero.ironman.IronManHero;
 import io.github.grebeshok105.codex.hero.ironman.net.JarvisDetectionS2CPayload;
 import io.github.grebeshok105.codex.hero.ironman.net.NanoFormS2CPayload;
@@ -85,8 +85,8 @@ public record IronManClientModule() implements HeroClientModule {
 				ModKeys.CATEGORY), client -> IronManEspRenderer.cycleMode());
 
 		IronManEspRenderer.register();
-		ctx.entityRenderer(ModEntities.SMART_MISSILE, SmartMissileRenderer::new);
-		ctx.entityRenderer(ModEntities.IRON_LEGION_DRONE, IronLegionDroneRenderer::new);
+		ctx.entityRenderer(IronManEntities.SMART_MISSILE, SmartMissileRenderer::new);
+		ctx.entityRenderer(IronManEntities.IRON_LEGION_DRONE, IronLegionDroneRenderer::new);
 
 		ctx.clientTick(ClientNanoSuitUpState::clientTick);
 		ctx.clientTick(JarvisDetectionHud::tick);

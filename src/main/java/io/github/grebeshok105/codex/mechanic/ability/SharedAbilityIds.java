@@ -1,6 +1,6 @@
 package io.github.grebeshok105.codex.mechanic.ability;
 
-import io.github.grebeshok105.codex.ModId;
+import io.github.grebeshok105.codex.flight.FlightIds;
 import net.minecraft.resources.ResourceLocation;
 
 /**
@@ -14,12 +14,12 @@ public final class SharedAbilityIds {
 	public static final ResourceLocation VILTRUMITE_CHARGE = ViltrumiteChargeAbility.ID;
 
 	/**
-	 * Hero-owned flight abilities the shared flight mechanic must recognize — the mechanic is the
-	 * single owner of "which ids map to which {@code FlightMode}", so the literals live here and
-	 * the hero ability classes alias them ({@code IronManFlightAbility.ID} etc.).
+	 * Hero-owned flight abilities the shared flight mechanic must recognize — the flight package
+	 * owns the literals and the id→mode mapping ({@code FlightIds}); these aliases keep the
+	 * mechanic-facing surface ({@code IronManFlightAbility.ID} etc. alias them in turn).
 	 */
-	public static final ResourceLocation IRON_MAN_FLIGHT = ModId.of("iron_man_flight");
-	public static final ResourceLocation SUPERSONIC = ModId.of("supersonic");
+	public static final ResourceLocation IRON_MAN_FLIGHT = FlightIds.IRON_MAN_FLIGHT;
+	public static final ResourceLocation SUPERSONIC = FlightIds.SUPERSONIC;
 
 	private SharedAbilityIds() {
 	}

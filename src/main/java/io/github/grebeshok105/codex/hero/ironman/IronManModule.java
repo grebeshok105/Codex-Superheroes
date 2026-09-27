@@ -19,6 +19,11 @@ import io.github.grebeshok105.codex.hero.ironman.runtime.IronManReactorTracker;
 import io.github.grebeshok105.codex.hero.ironman.runtime.UnibeamController;
 import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.damage.DamageTypeSpec;
+import io.github.grebeshok105.codex.hero.ironman.entity.IronManEntities;
+import io.github.grebeshok105.codex.hero.ironman.net.JarvisDetectionS2CPayload;
+import io.github.grebeshok105.codex.hero.ironman.net.NanoFormS2CPayload;
+import io.github.grebeshok105.codex.hero.ironman.net.ReactorStateS2CPayload;
+import io.github.grebeshok105.codex.hero.ironman.net.SuitVariantS2CPayload;
 import io.github.grebeshok105.codex.hero.ironman.registry.IronManDamageTypes;
 import io.github.grebeshok105.codex.hero.ironman.registry.IronManParticles;
 import io.github.grebeshok105.codex.hero.ironman.sound.IronManSounds;
@@ -45,6 +50,12 @@ public final class IronManModule implements HeroModule {
 		IronManAttachments.init();
 		IronManParticles.init();
 		IronManSounds.init();
+		IronManItems.register(ctx.content());
+		IronManEntities.register();
+		ctx.payloads().s2c(ReactorStateS2CPayload.TYPE, ReactorStateS2CPayload.STREAM_CODEC);
+		ctx.payloads().s2c(JarvisDetectionS2CPayload.TYPE, JarvisDetectionS2CPayload.STREAM_CODEC);
+		ctx.payloads().s2c(SuitVariantS2CPayload.TYPE, SuitVariantS2CPayload.STREAM_CODEC);
+		ctx.payloads().s2c(NanoFormS2CPayload.TYPE, NanoFormS2CPayload.STREAM_CODEC);
 
 		ctx.abilities().register(new IronManFlightAbility());
 		ctx.abilities().register(new SupersonicAbility());

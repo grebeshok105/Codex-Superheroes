@@ -1,10 +1,12 @@
 package io.github.grebeshok105.codex.hero.ironman;
 
+import io.github.grebeshok105.codex.hero.ironman.runtime.IronManNanoForm;
+import io.github.grebeshok105.codex.hero.ironman.runtime.IronManSuitVariant;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
 
 /**
  * Iron Man's player state — the module's public surface for the attachments.
- * The types themselves are created on the leaf classes ({@link IronManNanoForm#ATTACHMENT},
+ * The types themselves are created on the runtime leaf classes ({@link IronManNanoForm#ATTACHMENT},
  * {@link IronManSuitVariant#ATTACHMENT}) so leaf code never imports the module root; these
  * aliases are what gametests and out-of-module readers use.
  */

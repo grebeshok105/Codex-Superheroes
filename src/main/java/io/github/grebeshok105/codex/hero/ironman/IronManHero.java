@@ -10,6 +10,7 @@ import io.github.grebeshok105.codex.core.hero.ImpactStyle;
 import io.github.grebeshok105.codex.core.hero.JarvisThreatClass;
 import io.github.grebeshok105.codex.core.hero.LandingImpact;
 import io.github.grebeshok105.codex.core.hero.PassiveGlyph;
+import io.github.grebeshok105.codex.hero.ironman.runtime.IronManNanoForm;
 import io.github.grebeshok105.codex.hero.ironman.runtime.IronManNanoFormController;
 import io.github.grebeshok105.codex.hero.ironman.runtime.UnibeamController;
 import io.github.grebeshok105.codex.physics.ShockwaveUtil;

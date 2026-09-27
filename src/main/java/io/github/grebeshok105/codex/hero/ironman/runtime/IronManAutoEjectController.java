@@ -1,7 +1,8 @@
 package io.github.grebeshok105.codex.hero.ironman.runtime;
 
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
-import io.github.grebeshok105.codex.hero.ironman.IronManHero;
+import io.github.grebeshok105.codex.ModId;
+import net.minecraft.resources.ResourceLocation;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
@@ -17,6 +18,7 @@ import java.util.Map;
 import java.util.UUID;
 
 public final class IronManAutoEjectController {
+	private static final ResourceLocation IRON_MAN_ID = ModId.of("iron_man");
 	private static final float HP_THRESHOLD = 0.20f;
 	private static final long COOLDOWN_TICKS = 20L * 60L; // 60 seconds
 	private static final double EJECT_VELOCITY = 1.18;    // ~8 blocks of vertical lift after gravity/drag
@@ -29,7 +31,7 @@ public final class IronManAutoEjectController {
 
 	public static void tick(ServerPlayer player, long now) {
 		HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
-		if (!data.hasHero() || !IronManHero.ID.equals(data.heroId())) {
+		if (!data.hasHero() || !IRON_MAN_ID.equals(data.heroId())) {
 			return;
 		}
 		if (!player.isAlive() || player.getHealth() <= 0f) {

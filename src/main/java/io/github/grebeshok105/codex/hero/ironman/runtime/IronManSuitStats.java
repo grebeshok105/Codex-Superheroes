@@ -1,7 +1,6 @@
 package io.github.grebeshok105.codex.hero.ironman.runtime;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.hero.ironman.IronManSuitVariant;
 import net.minecraft.core.Holder;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;

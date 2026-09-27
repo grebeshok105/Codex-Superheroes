@@ -1,4 +1,4 @@
-package io.github.grebeshok105.codex.hero.ironman;
+package io.github.grebeshok105.codex.hero.ironman.runtime;
 
 import com.mojang.serialization.Codec;
 import io.github.grebeshok105.codex.ModId;
@@ -45,7 +45,7 @@ public record IronManSuitVariant(int index, String name, String nameRu, Resource
 	/**
 	 * Player attachment holding the equipped suit-variant index ({@code superheroes:suit_variant},
 	 * 0 initializer + persistent + copyOnDeath — byte-identical to the old {@code ModAttachments} row).
-	 * Created eagerly at class-init — see {@link IronManAttachments#init()}.
+	 * Created eagerly at class-init — see {@link io.github.grebeshok105.codex.hero.ironman.IronManAttachments#init()}.
 	 */
 	public static final AttachmentType<Integer> ATTACHMENT =
 			AttachmentRegistrar.FABRIC.persistent("suit_variant", Codec.INT, true, () -> 0);

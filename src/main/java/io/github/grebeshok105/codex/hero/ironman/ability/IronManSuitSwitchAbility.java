@@ -3,7 +3,7 @@ package io.github.grebeshok105.codex.hero.ironman.ability;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
-import io.github.grebeshok105.codex.hero.ironman.IronManSuitVariant;
+import io.github.grebeshok105.codex.hero.ironman.runtime.IronManSuitVariant;
 import io.github.grebeshok105.codex.hero.ironman.sound.IronManSounds;
 import io.github.grebeshok105.codex.hero.ironman.runtime.IronManSuitStats;
 import io.github.grebeshok105.codex.hero.ironman.runtime.IronManSuitSyncController;

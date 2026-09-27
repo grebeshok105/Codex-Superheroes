@@ -3,12 +3,12 @@ package io.github.grebeshok105.codex.mechanic.impact;
 import io.github.grebeshok105.codex.core.net.ScreenShakeS2CPayload;
 import io.github.grebeshok105.codex.core.net.WallImpactDebrisS2CPayload;
 import io.github.grebeshok105.codex.mechanic.world.WorldDestructionPolicy;
-import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
+import io.github.grebeshok105.codex.core.net.FxBroadcast;
+import io.github.grebeshok105.codex.mechanic.motion.Motion;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -168,11 +168,7 @@ public final class BallisticBodyTracker {
 						} else {
 							float dmg = (float) (speed * 1.8);
 							body.hurt(level.damageSources().flyIntoWall(), dmg);
-							body.setDeltaMovement(0, body.getDeltaMovement().y, 0);
-							body.hurtMarked = true;
-							if (body instanceof ServerPlayer player) {
-								player.connection.send(new ClientboundSetEntityMotionPacket(player));
-							}
+							Motion.set(body, new Vec3(0, body.getDeltaMovement().y, 0), Motion.Sync.MARK_AND_SEND_TO_PLAYER);
 							sendWallFx(level, stepPos, dir, speed, layerIds);
 							hardStop = true;
 						}
@@ -188,11 +184,7 @@ public final class BallisticBodyTracker {
 
 				Vec3 vel = body.getDeltaMovement();
 				double velocityKeep = state.superPierce ? SUPER_VELOCITY_KEEP : VELOCITY_KEEP;
-				body.setDeltaMovement(vel.scale(velocityKeep));
-				body.hurtMarked = true;
-				if (body instanceof ServerPlayer player) {
-					player.connection.send(new ClientboundSetEntityMotionPacket(player));
-				}
+				Motion.set(body, vel.scale(velocityKeep), Motion.Sync.MARK_AND_SEND_TO_PLAYER);
 
 				// 2 сердца (4 HP) урона за каждую пробитую телом стену + добавка за крепость блока
 				body.invulnerableTime = 0;
@@ -224,11 +216,9 @@ public final class BallisticBodyTracker {
 		float intensity = Math.min(1.2f, 0.5f + (float) speed * 0.08f);
 		int[] ids = stateIds.stream().mapToInt(Integer::intValue).toArray();
 		WallImpactDebrisS2CPayload payload = new WallImpactDebrisS2CPayload(pos, dir, intensity, ids);
-		for (ServerPlayer nearby : PlayerLookup.around(level, pos, DEBRIS_RADIUS)) {
-			ServerPlayNetworking.send(nearby, payload);
-		}
+		FxBroadcast.around(level, pos, DEBRIS_RADIUS, payload);
 
-		for (ServerPlayer nearby : PlayerLookup.around(level, pos, SHAKE_RADIUS)) {
+		for (ServerPlayer nearby : FxBroadcast.aroundAudience(level, pos, SHAKE_RADIUS)) {
 			double distance = nearby.position().distanceTo(pos);
 			float falloff = (float) Math.max(0.0, 1.0 - distance / SHAKE_RADIUS);
 			float shakeIntensity = 0.6f * (0.25f + falloff * 0.75f);

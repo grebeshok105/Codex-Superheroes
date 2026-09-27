@@ -1,6 +1,5 @@
 package io.github.grebeshok105.codex.hero.ironman.entity;
 
-import io.github.grebeshok105.codex.entity.ModEntities;
 import io.github.grebeshok105.codex.hero.ironman.registry.IronManDamageTypes;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
@@ -43,7 +42,7 @@ public class SmartMissileEntity extends Projectile {
 	}
 
 	public static SmartMissileEntity launch(LivingEntity owner, Level level, Vec3 spawnPos, Vec3 dir, LivingEntity target) {
-		SmartMissileEntity m = new SmartMissileEntity(ModEntities.SMART_MISSILE, level);
+		SmartMissileEntity m = new SmartMissileEntity(IronManEntities.SMART_MISSILE, level);
 		m.setOwner(owner);
 		m.setPos(spawnPos.x, spawnPos.y, spawnPos.z);
 		m.setDeltaMovement(dir.normalize().scale(SPEED));

@@ -3,9 +3,9 @@ package io.github.grebeshok105.codex.hero.ironman.ability;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
-import io.github.grebeshok105.codex.hero.ironman.IronManSuitVariant;
+import io.github.grebeshok105.codex.hero.ironman.runtime.IronManSuitVariant;
 import io.github.grebeshok105.codex.hero.ironman.entity.IronLegionDroneEntity;
-import io.github.grebeshok105.codex.entity.ModEntities;
+import io.github.grebeshok105.codex.hero.ironman.entity.IronManEntities;
 import io.github.grebeshok105.codex.hero.ironman.sound.IronManSounds;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
@@ -56,7 +56,7 @@ public final class IronManLegionAbility implements Ability {
 
 		for (int i = 0; i < variants.size(); i++) {
 			IronManSuitVariant variant = variants.get(i);
-			IronLegionDroneEntity drone = ModEntities.IRON_LEGION_DRONE.create(level);
+			IronLegionDroneEntity drone = IronManEntities.IRON_LEGION_DRONE.create(level);
 			if (drone == null) continue;
 
 			double angle = ((double) i / variants.size()) * Math.PI * 2;

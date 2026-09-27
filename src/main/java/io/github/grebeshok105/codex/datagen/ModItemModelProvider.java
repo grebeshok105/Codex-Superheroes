@@ -1,5 +1,6 @@
 package io.github.grebeshok105.codex.datagen;
 
+import io.github.grebeshok105.codex.hero.ironman.IronManItems;
 import io.github.grebeshok105.codex.item.ModItems;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricModelProvider;
@@ -19,8 +20,8 @@ public final class ModItemModelProvider extends FabricModelProvider {
 	@Override
 	public void generateItemModels(ItemModelGenerators generator) {
 		generator.generateFlatItem(ModItems.HOMELANDER_SUIT, ModelTemplates.FLAT_ITEM);
-		generator.generateFlatItem(ModItems.IRON_MAN_SUIT, ModelTemplates.FLAT_ITEM);
-		generator.generateFlatItem(ModItems.IRON_MAN_REACTOR, ModelTemplates.FLAT_ITEM);
+		generator.generateFlatItem(IronManItems.IRON_MAN_SUIT, ModelTemplates.FLAT_ITEM);
+		generator.generateFlatItem(IronManItems.IRON_MAN_REACTOR, ModelTemplates.FLAT_ITEM);
 		generator.generateFlatItem(ModItems.COMPOUND_V, ModelTemplates.FLAT_ITEM);
 		generator.generateFlatItem(ModItems.MILK_BOTTLE, ModelTemplates.FLAT_ITEM);
 	}

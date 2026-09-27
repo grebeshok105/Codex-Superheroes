@@ -2,8 +2,7 @@ package io.github.grebeshok105.codex.hero.ironman.runtime;
 
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
-import io.github.grebeshok105.codex.hero.ironman.IronManHero;
-import io.github.grebeshok105.codex.hero.ironman.JarvisQuotes;
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.hero.JarvisThreatClass;
 import io.github.grebeshok105.codex.hero.ironman.net.JarvisDetectionS2CPayload;
 import io.github.grebeshok105.codex.core.transform.HeroData;
@@ -25,6 +24,7 @@ import java.util.UUID;
  * один раз; если цель сменила героя — объявляется заново.
  */
 public final class IronManJarvisController {
+	private static final ResourceLocation IRON_MAN_ID = ModId.of("iron_man");
 	private static final int DETECT_DELAY_TICKS = 100; // 5 секунд
 	private static final int SCAN_INTERVAL_TICKS = 20;
 
@@ -53,7 +53,7 @@ public final class IronManJarvisController {
 	private static void scan(MinecraftServer server) {
 		for (ServerPlayer ironman : server.getPlayerList().getPlayers()) {
 			UUID imId = ironman.getUUID();
-			if (!IronManHero.ID.equals(heroIdOf(ironman))) {
+			if (!IRON_MAN_ID.equals(heroIdOf(ironman))) {
 				// снял костюм — забываем, чтобы после повторной трансформации Джарвис доложил заново
 				ANNOUNCED.remove(imId);
 				PENDING.remove(imId);
@@ -83,7 +83,7 @@ public final class IronManJarvisController {
 		for (Iterator<Map.Entry<UUID, Map<UUID, Integer>>> it = PENDING.entrySet().iterator(); it.hasNext(); ) {
 			Map.Entry<UUID, Map<UUID, Integer>> entry = it.next();
 			ServerPlayer ironman = server.getPlayerList().getPlayer(entry.getKey());
-			if (ironman == null || !IronManHero.ID.equals(heroIdOf(ironman))) {
+			if (ironman == null || !IRON_MAN_ID.equals(heroIdOf(ironman))) {
 				it.remove();
 				continue;
 			}
