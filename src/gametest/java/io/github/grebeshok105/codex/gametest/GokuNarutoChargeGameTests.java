@@ -91,7 +91,7 @@ public final class GokuNarutoChargeGameTests implements FabricGameTest {
 		TestHeroes.transform(player, GokuHero.ID);
 		Zombie target = spawnZombieAhead(player, 6.0);
 
-		helper.runAfterDelay(2, () -> {
+		TestPlayers.awaitVisible(helper, target, () -> {
 			grantEnergy(player);
 			AbilityRouter.activate(player, GokuAbilities.GOKU_KAMEHAMEHA);
 			Ability kamehameha = AbilityRegistry.get(GokuAbilities.GOKU_KAMEHAMEHA);
@@ -125,7 +125,7 @@ public final class GokuNarutoChargeGameTests implements FabricGameTest {
 		// Blast center = origin + look*8 (+1.2y), radius 12 — 6 blocks ahead is inside.
 		Zombie target = spawnZombieAhead(player, 6.0);
 
-		helper.runAfterDelay(2, () -> {
+		TestPlayers.awaitVisible(helper, target, () -> {
 			grantEnergy(player);
 			AbilityRouter.activate(player, GokuAbilities.GOKU_SPIRIT_BOMB);
 			Ability spiritBomb = AbilityRegistry.get(GokuAbilities.GOKU_SPIRIT_BOMB);
@@ -153,7 +153,7 @@ public final class GokuNarutoChargeGameTests implements FabricGameTest {
 		TestHeroes.transform(player, NarutoHero.ID);
 		Zombie target = spawnZombieAhead(player, 2.5);
 
-		helper.runAfterDelay(2, () -> {
+		TestPlayers.awaitVisible(helper, target, () -> {
 			grantEnergy(player);
 			AbilityRouter.activate(player, NarutoAbilities.NARUTO_RASENGAN);
 			Ability rasengan = AbilityRegistry.get(NarutoAbilities.NARUTO_RASENGAN);
@@ -186,7 +186,7 @@ public final class GokuNarutoChargeGameTests implements FabricGameTest {
 		TestHeroes.transform(player, NarutoHero.ID);
 		Zombie target = spawnZombieAhead(player, 4.0);
 
-		helper.runAfterDelay(2, () -> {
+		TestPlayers.awaitVisible(helper, target, () -> {
 			grantEnergy(player);
 			AbilityRouter.activate(player, NarutoAbilities.NARUTO_OODAMA_RASENGAN);
 
@@ -210,10 +210,10 @@ public final class GokuNarutoChargeGameTests implements FabricGameTest {
 		faceForward(player);
 		TestHeroes.transform(player, NarutoHero.ID);
 		// A guaranteed victim on the projectile path (the session closes on any hit).
-		spawnZombieAhead(player, 10.0);
+		Zombie decoy = spawnZombieAhead(player, 10.0);
 		Ability rasenshuriken = AbilityRegistry.get(NarutoAbilities.NARUTO_RASENSHURIKEN);
 
-		helper.runAfterDelay(2, () -> {
+		TestPlayers.awaitVisible(helper, decoy, () -> {
 			grantEnergy(player);
 			AbilityRouter.activate(player, NarutoAbilities.NARUTO_RASENSHURIKEN);
 
@@ -527,7 +527,7 @@ public final class GokuNarutoChargeGameTests implements FabricGameTest {
 		Zombie hunter = spawnZombieAhead(player, 5.0);
 		hunter.setTarget(player);
 
-		helper.runAfterDelay(2, () -> {
+		TestPlayers.awaitVisible(helper, hunter, () -> {
 			grantEnergy(player);
 			AbilityRouter.activate(player, NarutoAbilities.NARUTO_SHADOW_CLONES);
 			var clones = helper.getLevel().getEntitiesOfClass(KageBunshinEntity.class,
@@ -552,7 +552,7 @@ public final class GokuNarutoChargeGameTests implements FabricGameTest {
 		// Impact = eye + look*32 (no block in the test structure); ±7 AoE box.
 		Zombie target = spawnZombieAhead(player, 30.0);
 
-		helper.runAfterDelay(2, () -> {
+		TestPlayers.awaitVisible(helper, target, () -> {
 			grantEnergy(player);
 			AbilityRouter.activate(player, NarutoAbilities.NARUTO_BIJUUDAMA);
 			helper.assertTrue(target.getHealth() < target.getMaxHealth() || !target.isAlive(),
@@ -593,7 +593,7 @@ public final class GokuNarutoChargeGameTests implements FabricGameTest {
 		TestHeroes.transform(player, GokuHero.ID);
 		Zombie target = spawnZombieAhead(player, 5.0);
 
-		helper.runAfterDelay(2, () -> {
+		TestPlayers.awaitVisible(helper, target, () -> {
 			grantEnergy(player);
 			AbilityRouter.activate(player, GokuAbilities.GOKU_SOLAR_FLARE);
 			helper.assertTrue(target.hasEffect(MobEffects.BLINDNESS),
