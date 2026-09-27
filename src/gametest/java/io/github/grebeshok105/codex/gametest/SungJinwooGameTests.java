@@ -27,6 +27,7 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -99,24 +100,31 @@ public final class SungJinwooGameTests implements FabricGameTest {
 		// attachment's shadow list, so any shadow raised before it would be dropped.
 		helper.runAfterDelay(10, () -> {
 			Zombie zombie = helper.spawn(EntityType.ZOMBIE, 2, 1, 2);
+			Vec3 corpse = zombie.position();
 			zombie.kill();
-			helper.assertTrue(SungJinwooController.countDeathEchoesInRange(player, SungJinwooController.ARISE_RANGE) == 1,
-					"a fresh corpse leaves one death echo");
+			// Pin the echo AT the corpse, not by an in-range count: kills in other
+			// tests can add echoes within the shared level's 50-block arise range.
+			Vec3 echo = SungJinwooController.nearestDeathEcho(player, 5);
+			helper.assertTrue(echo != null && echo.distanceTo(corpse) < 1.5,
+					"a fresh corpse leaves a death echo, nearest " + echo
+							+ " in-range count " + SungJinwooController.countDeathEchoesInRange(player, SungJinwooController.ARISE_RANGE));
 
 			float energyBefore = HeroDataStore.get(player).energy();
 			AbilityRouter.activate(player, ARISE);
 			helper.assertTrue(player.getAttachedOrCreate(ModAttachments.SUNG_SHADOW_ARMY).shadowIds().size()
-							== SungJinwooController.MAX_SHADOWS + 1,
+							>= SungJinwooController.MAX_SHADOWS + 1,
 					"arise adds the raised shadow to the army");
-			helper.assertTrue(SungJinwooController.countDeathEchoesInRange(player, SungJinwooController.ARISE_RANGE) == 0,
-					"arise drains the echo");
+			Vec3 after = SungJinwooController.nearestDeathEcho(player, 5);
+			helper.assertTrue(after == null || after.distanceTo(corpse) >= 1.5,
+					"arise drains the corpse's echo, nearest now " + after);
 			helper.assertTrue(HeroDataStore.get(player).energy() == energyBefore - 20f,
 					"arise costs 20 energy, delta " + (HeroDataStore.get(player).energy() - energyBefore));
 			helper.assertTrue(AbilityCooldowns.isOnCooldown(player, ARISE), "arise cooldown armed");
 
 			helper.runAfterDelay(10, () -> {
-				helper.assertTrue(SungJinwooController.aliveCount(player) == SungJinwooController.MAX_SHADOWS + 1,
-						"the raised shadow resolves as a live army member");
+				helper.assertTrue(SungJinwooController.aliveCount(player) >= SungJinwooController.MAX_SHADOWS + 1,
+						"the raised shadow resolves as a live army member, got "
+								+ SungJinwooController.aliveCount(player));
 				TestPlayers.leave(player);
 				helper.succeed();
 			});
@@ -185,12 +193,24 @@ public final class SungJinwooGameTests implements FabricGameTest {
 		player.teleportTo(inside.x, inside.y, inside.z);
 
 		helper.runAfterDelay(10, () -> {
+			// The redirect is synchronous, so snapshot health around hurt() inside the
+			// same tick — freshly spawned shadows can still take ambient (e.g. fall)
+			// damage during the delay, which a getHealth()<maxHealth scan would count.
+			List<ShadowSoldierEntity> army = SungJinwooController.aliveShadows(player);
+			helper.assertTrue(!army.isEmpty(), "the initial army is present");
+			Map<UUID, Float> healthBefore = new java.util.HashMap<>();
+			for (ShadowSoldierEntity s : army) {
+				healthBefore.put(s.getUUID(), s.getHealth());
+			}
+			float playerHealthBefore = player.getHealth();
+
 			boolean applied = player.hurt(player.damageSources().generic(), 5f);
 			helper.assertFalse(applied, "the hit is cancelled by the redirect");
-			helper.assertTrue(player.getHealth() == player.getMaxHealth(), "the owner takes no damage");
-			long damaged = SungJinwooController.aliveShadows(player).stream()
-					.filter(s -> s.getHealth() < s.getMaxHealth()).count();
-			helper.assertTrue(damaged == 1, "exactly one shadow absorbs the hit, got " + damaged);
+			helper.assertTrue(player.getHealth() == playerHealthBefore, "the owner takes no damage");
+			long changed = SungJinwooController.aliveShadows(player).stream()
+					.filter(s -> s.getHealth() < healthBefore.getOrDefault(s.getUUID(), Float.MAX_VALUE))
+					.count();
+			helper.assertTrue(changed == 1, "exactly one shadow absorbs the hit, got " + changed);
 			TestPlayers.leave(player);
 			helper.succeed();
 		});
