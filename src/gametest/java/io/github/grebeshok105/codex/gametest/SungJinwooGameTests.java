@@ -139,30 +139,15 @@ public final class SungJinwooGameTests implements FabricGameTest {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, SUNG);
 		Vec3 inside = helper.absoluteVec(new Vec3(1.5, 1.0, 1.5));
-		// Unique offset: arise drains every death echo and finishes every weakened
-		// mob in a 50-block radius, so grid-adjacent tests pollute the count.
-		double isoX = inside.x + 8000.0;
-		double isoZ = inside.z + 8000.0;
-		helper.getLevel().getChunk(BlockPos.containing(isoX, inside.y, isoZ));
-		// The isolated spot is past the test platform: lay a small floor so the
-		// victim and the raised shadow do not fall into the void.
-		for (int dx = -1; dx <= 3; dx++) {
-			for (int dz = -1; dz <= 3; dz++) {
-				helper.getLevel().setBlockAndUpdate(
-						BlockPos.containing(isoX + dx, inside.y - 1, isoZ + dz), Blocks.STONE.defaultBlockState());
-			}
-		}
-		player.teleportTo(isoX, inside.y, isoZ);
+		player.teleportTo(inside.x, inside.y, inside.z);
 
 		helper.runAfterDelay(10, () -> {
-			// Fresh spawn at the isolated spot: a teleport can lag a chunk-section
-			// update and arise's bounding-box scan then misses the mob.
-			Zombie zombie = new Zombie(EntityType.ZOMBIE, helper.getLevel());
-			helper.getLevel().getChunk(BlockPos.containing(isoX + 2, inside.y, isoZ + 2));
-			zombie.moveTo(isoX + 2, inside.y, isoZ + 2, 0f, 0f);
-			helper.getLevel().addFreshEntity(zombie);
+			Zombie zombie = helper.spawn(EntityType.ZOMBIE, 7, 1, 7);
 			zombie.setHealth(4f); // 4/20 < 25% — the weakened-finish path
-			helper.runAfterDelay(1, () -> TestPlayers.awaitVisible(helper, zombie, () -> {
+			TestPlayers.awaitVisible(helper, zombie, () -> {
+				// Sibling tests leave foreign death echoes within arise's 50-block
+				// drain radius — flush them so only the weakened finish remains.
+				SungJinwooController.drainDeathEchoesInRange(player, SungJinwooController.ARISE_RANGE);
 				AbilityRouter.activate(player, ARISE);
 				helper.assertFalse(zombie.isAlive(), "arise finishes the weakened mob");
 				helper.assertTrue(player.getAttachedOrCreate(SungJinwooAttachments.ARMY).shadowIds().size()
@@ -172,8 +157,6 @@ public final class SungJinwooGameTests implements FabricGameTest {
 						"the suppressed death leaves no echo behind");
 
 				helper.runAfterDelay(10, () -> {
-					// The slot shadows stayed at the grid and despawn once the owner
-					// is 128+ blocks away — pin the freshly raised shadow by id.
 					List<UUID> ids = player.getAttachedOrCreate(SungJinwooAttachments.ARMY).shadowIds();
 					Entity raised = player.serverLevel().getEntity(ids.get(ids.size() - 1));
 					helper.assertTrue(raised instanceof ShadowSoldierEntity ss && ss.isAlive(),
@@ -182,7 +165,7 @@ public final class SungJinwooGameTests implements FabricGameTest {
 					TestPlayers.leave(player);
 					helper.succeed();
 				});
-			}));
+			});
 		});
 	}
 
