@@ -80,7 +80,6 @@ public final class DoomsdayTierController {
 		SuperJumpController.clear(id);
 		FlightController.clear(id);
 		DoomGripController.clear(player);
-		io.github.grebeshok105.codex.hero.doomsday.ability.ChargeTackleAbility.clear(player);
 
 		applyProgress(player);
 
