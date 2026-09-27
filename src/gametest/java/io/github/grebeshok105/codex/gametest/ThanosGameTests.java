@@ -17,6 +17,7 @@ import io.github.grebeshok105.codex.hero.thanos.runtime.ThanosSnapWindupControll
 import io.github.grebeshok105.codex.hero.thanos.item.InfinityGauntletData;
 import io.github.grebeshok105.codex.hero.thanos.item.InfinityStoneItem;
 import io.github.grebeshok105.codex.hero.thanos.item.InfinityStoneType;
+import io.github.grebeshok105.codex.hero.thanos.item.InfinityStones;
 import io.github.grebeshok105.codex.hero.thanos.net.ThanosStonesS2CPayload;
 import io.netty.channel.embedded.EmbeddedChannel;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
@@ -139,10 +140,10 @@ public final class ThanosGameTests implements FabricGameTest {
 					ServerPlayer victim = victims.get(i);
 					TestPlayers.clearSpawnInvulnerability(victim);
 					kill(thanos, victim);
-					if (victim.isAlive()) {
-						// Naruto's substitution jutsu eats the first lethal hit; clear i-frames
-						// and land the second. Fires only for survivors, so it pins the real
-						// dodge behavior on the naruto row and no-ops elsewhere.
+					for (int retry = 0; victim.isAlive() && retry < 6; retry++) {
+						// Death-saves are real mechanics: kawarimi substitution, sung's shadow
+						// diversion… each consumes one hit; drain them (i-frames cleared
+						// between hits). A row still alive after 6 is a real signal.
 						victim.invulnerableTime = 0;
 						kill(thanos, victim);
 					}
@@ -630,19 +631,18 @@ public final class ThanosGameTests implements FabricGameTest {
 
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void stoneItemTooltipsEndWithTheContainsStoneLine(GameTestHelper helper) {
+		// The contains_stone tail moved to the client-side ItemTooltipCallback —
+		// server-side pin covers the data it renders: item hero id -> reward stone.
 		for (String[] row : STONE_ITEMS) {
 			Item item = item(row[0]);
-			List<Component> tooltip = new ArrayList<>();
-			item.appendHoverText(new ItemStack(item), Item.TooltipContext.EMPTY, tooltip, TooltipFlag.NORMAL);
-			int size = tooltip.size();
-			helper.assertTrue(size >= 3, row[0] + " tooltip has a stone-line tail");
-			helper.assertTrue("DIVIDER".equals(serializeLine(tooltip.get(size - 1))),
-					row[0] + " closes with a divider");
-			helper.assertTrue(("tooltip.superheroes.contains_stone@GRAY+item.superheroes."
-							+ row[2] + "_stone@LIGHT_PURPLE").equals(serializeLine(tooltip.get(size - 2))),
-					row[0] + " advertises its " + row[2] + " stone just above the close divider");
-			helper.assertTrue("EMPTY".equals(serializeLine(tooltip.get(size - 3))),
-					row[0] + " has a blank spacer before the stone line");
+			helper.assertTrue(item instanceof TransformationItem,
+					row[0] + " is a plain TransformationItem");
+			ResourceLocation heroId = ((TransformationItem) item).getHeroId();
+			helper.assertTrue(ModId.of(row[1]).equals(heroId),
+					row[0] + " carries hero id " + row[1]);
+			helper.assertTrue(InfinityStones.rewardFor(heroId)
+							== InfinityStoneType.valueOf(row[2].toUpperCase(Locale.ROOT)),
+					row[0] + " advertises its " + row[2] + " stone");
 		}
 		// The gauntlet's own lore: stone count line, per-stone bullets and the "full" flag.
 		ItemStack empty = new ItemStack(item("infinity_gauntlet"));
