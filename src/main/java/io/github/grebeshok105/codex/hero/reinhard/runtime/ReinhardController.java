@@ -2,6 +2,9 @@ package io.github.grebeshok105.codex.hero.reinhard.runtime;
 
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
+import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.damage.ModDamageTypes;
 import io.github.grebeshok105.codex.core.transform.HeroData;
@@ -28,7 +31,7 @@ import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -58,10 +61,14 @@ public final class ReinhardController {
 	private static final int COUNTER_LOCKOUT_TICKS = 40;
 	private static final float BEAM_REFLECT_MULTIPLIER = 1.5f;
 
-	private static final java.util.concurrent.ConcurrentHashMap<UUID, Long> COUNTER_LOCKOUT = new java.util.concurrent.ConcurrentHashMap<>();
-	private static final java.util.concurrent.ConcurrentHashMap<UUID, Long> LAST_DAMAGE_TICK = new java.util.concurrent.ConcurrentHashMap<>();
-	private static final Set<UUID> DAMAGE_REENTRY_GUARD = Collections.newSetFromMap(new java.util.concurrent.ConcurrentHashMap<>());
-	private static final Set<UUID> FIRST_DODGE_USED = Collections.newSetFromMap(new java.util.concurrent.ConcurrentHashMap<>());
+	private static final OwnedSessionMap<UUID, Long> COUNTER_LOCKOUT =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.of(ClearOn.HERO_CLEAR));
+	private static final OwnedSessionMap<UUID, Long> LAST_DAMAGE_TICK =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.of(ClearOn.HERO_CLEAR));
+	private static final OwnedSessionMap<UUID, Boolean> DAMAGE_REENTRY_GUARD =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.of(ClearOn.LEAVE, ClearOn.DEATH, ClearOn.HERO_CLEAR));
+	private static final OwnedSessionMap<UUID, Boolean> FIRST_DODGE_USED =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.of(ClearOn.DEATH, ClearOn.HERO_CLEAR));
 	private static final Set<ResourceKey<DamageType>> NON_TRACKED = Set.of(
 			DamageTypes.STARVE,
 			DamageTypes.IN_WALL,
@@ -197,9 +204,10 @@ public final class ReinhardController {
 
 	private static boolean onIncomingDamage(ServerPlayer player, DamageSource source, float amount) {
 		UUID pid = player.getUUID();
-		if (!DAMAGE_REENTRY_GUARD.add(pid)) {
+		if (DAMAGE_REENTRY_GUARD.containsKey(pid)) {
 			return true;
 		}
+		DAMAGE_REENTRY_GUARD.put(pid, pid, Boolean.TRUE);
 		try {
 			return onIncomingDamageInner(player, source, amount);
 		} finally {
@@ -273,7 +281,7 @@ public final class ReinhardController {
 				Vec3 push = player.position().subtract(attacker.position()).normalize().scale(-0.7);
 				attacker.push(push.x, 0.3, push.z);
 				attacker.hurtMarked = true;
-				COUNTER_LOCKOUT.put(player.getUUID(), now + COUNTER_LOCKOUT_TICKS);
+				COUNTER_LOCKOUT.put(player.getUUID(), player.getUUID(), now + COUNTER_LOCKOUT_TICKS);
 				return false;
 			}
 		}
@@ -290,7 +298,7 @@ public final class ReinhardController {
 			advancePhase(player, newPhase);
 		}
 		state = state.withAccumulatedDamage(newAccum).withPhase(newPhase);
-		LAST_DAMAGE_TICK.put(player.getUUID(), nowTick);
+		LAST_DAMAGE_TICK.put(player.getUUID(), player.getUUID(), nowTick);
 
 		// Worthy opponent tracker (минимум 4 dmg single hit или 12 cumulative за 6 секунд)
 		float worthyAccum = state.worthyAccumulatedDamage();
@@ -375,7 +383,8 @@ public final class ReinhardController {
 
 	private static boolean tryFirstDodge(ServerPlayer player, DamageSource source) {
 		if (!isProtectableAttack(source)) return false;
-		if (!FIRST_DODGE_USED.add(player.getUUID())) return false;
+		if (FIRST_DODGE_USED.containsKey(player.getUUID())) return false;
+		FIRST_DODGE_USED.put(player.getUUID(), player.getUUID(), Boolean.TRUE);
 
 		Vec3 dodge = dodgeVector(player, source.getEntity());
 		player.setDeltaMovement(player.getDeltaMovement().add(dodge.x * 0.8, 0.25, dodge.z * 0.8));
@@ -519,7 +528,6 @@ public final class ReinhardController {
 		}
 		ReinhardModifiers.REINHARD_DRAW.remove(player);
 		ReinhardModifiers.REINHARD_SECOND_COMING.remove(player);
-		FIRST_DODGE_USED.remove(player.getUUID());
 	}
 
 	public static void clearAdaptations(ServerPlayer player) {
@@ -541,9 +549,6 @@ public final class ReinhardController {
 		state = player.getAttachedOrCreate(ReinhardState.ATTACHMENT);
 		player.setAttached(ReinhardState.ATTACHMENT, state.withSwordDrawn(false));
 		ReinhardSword.removeSword(player);
-		COUNTER_LOCKOUT.remove(player.getUUID());
-		LAST_DAMAGE_TICK.remove(player.getUUID());
-		FIRST_DODGE_USED.remove(player.getUUID());
 	}
 
 	/**

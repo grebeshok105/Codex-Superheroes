@@ -32,6 +32,7 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -39,6 +40,7 @@ import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.entity.monster.warden.Warden;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 /**
@@ -351,11 +353,20 @@ public class RegulusGameTests implements FabricGameTest {
 		TestHeroes.transform(player, RegulusHero.ID);
 
 		// The victim must keep ticking — entities parked in a transient far chunk are
-		// registered but never ticked, so the magnet's pull never displaces them.
+		// registered but never ticked, so the magnet's pull never displaces them. And it
+		// must stand level with the caster: if it lands in a lower pocket the normalized
+		// pull dir goes steep and the horizontal impulse shrinks below the assert floor.
 		Zombie zombie = spawnAhead(helper, player, 4.0);
 		zombie.setNoAi(true);
+		BlockPos feet = zombie.blockPosition();
+		for (BlockPos pos : BlockPos.betweenClosed(feet.offset(-1, -1, -1), feet.offset(1, -1, 1))) {
+			helper.getLevel().setBlock(pos, Blocks.STONE.defaultBlockState(), 3);
+		}
+		zombie.moveTo(feet.getX() + 0.5, feet.getY(), feet.getZ() + 0.5, 0f, 0f);
+		zombie.setDeltaMovement(Vec3.ZERO);
 
 		TestPlayers.awaitVisible(helper, zombie, () -> {
+			awaitGreedSees(helper, player, zombie, 40, () -> {
 			// findTarget's angular hitbox is bbSize*0.6 around the eye ray — aim the ray
 			// at the victim's center or the vertical offset alone rejects it.
 			player.lookAt(EntityAnchorArgument.Anchor.EYES, zombie.getBoundingBox().getCenter());
@@ -364,23 +375,7 @@ public class RegulusGameTests implements FabricGameTest {
 			helper.assertTrue(HeroDataStore.get(player).isActive(MANIA_OF_GREED),
 					"the magnet engages on the aimed target");
 
-			helper.runAfterDelay(6, () -> {
-				// The per-tick impulse lands in the player phase; whether the victim's section
-				// actually moves it varies with chunk boundaries and tick order, so accept
-				// either observable: real displacement toward the caster, or a toward-caster
-				// deltaMovement still holding the last impulse (a non-ticking victim's delta
-				// never decays; a ticking one reads ≥ ~0.33 after one friction window). Both
-				// fail if the magnet never impulsed.
-				Vec3 pull = zombie.getDeltaMovement();
-				Vec3 toCaster = player.position().subtract(zombie.position()).normalize();
-				Vec3 moved = zombie.position().subtract(anchor);
-				double pulled = moved.horizontalDistance();
-				boolean dragged = pulled > 0.3 && (pulled < 1.0e-4
-						|| toCaster.dot(moved.normalize()) > 0);
-				boolean impulsed = pull.horizontalDistance() > 0.25 && pull.dot(toCaster) > 0;
-				helper.assertTrue(dragged || impulsed,
-						"the magnet pulls the victim toward the caster (pulled=" + pulled
-								+ " delta=" + pull + ")");
+			awaitGreedPull(helper, player, zombie, anchor, 15, () -> {
 				MobEffectInstance slow = player.getEffect(MobEffects.MOVEMENT_SLOWDOWN);
 				helper.assertTrue(slow != null && slow.getAmplifier() == 250
 								&& slow.getDuration() <= 200 && slow.isAmbient(),
@@ -420,7 +415,56 @@ public class RegulusGameTests implements FabricGameTest {
 					helper.succeed();
 				});
 			});
+			});
 		});
+	}
+
+	/**
+	 * {@link TestPlayers#awaitVisible} only waits for the entity to enter the UUID index,
+	 * but {@code ManiaOfGreedAbility.findTarget} reads the spatial section via
+	 * {@code getEntities(box)} — a fresh mob can be index-visible a tick or two before the
+	 * section sees it. Poll the same query shape the ability runs before activating.
+	 */
+	private static void awaitGreedSees(GameTestHelper helper, ServerPlayer player, LivingEntity victim,
+			int tries, Runnable body) {
+		Vec3 look = player.getViewVector(1.0f);
+		AABB box = player.getBoundingBox().expandTowards(look.scale(100.0)).inflate(1.5);
+		if (tries <= 0
+				|| helper.getLevel().getEntities(player, box, e -> e == victim).contains(victim)) {
+			body.run();
+			return;
+		}
+		helper.runAfterDelay(1, () -> awaitGreedSees(helper, player, victim, tries - 1, body));
+	}
+
+	/**
+	 * The magnet's per-tick impulse lands in the player phase; whether the victim's section
+	 * actually moves it varies with chunk boundaries and tick order, and a freshly spawned
+	 * victim can still be airborne when first sampled (its normalized dir then shrinks the
+	 * horizontal component). Accept either observable — real displacement toward the caster,
+	 * or a toward-caster deltaMovement holding the last impulse (a non-ticking victim's delta
+	 * never decays; a ticking one reads ≥ ~0.33 right after an impulse tick) — and retry
+	 * while neither holds. Both staying false means the magnet never impulsed.
+	 */
+	private static void awaitGreedPull(GameTestHelper helper, ServerPlayer player, LivingEntity victim,
+			Vec3 anchor, int tries, Runnable body) {
+		Vec3 pull = victim.getDeltaMovement();
+		Vec3 toCaster = player.position().subtract(victim.position()).normalize();
+		Vec3 moved = victim.position().subtract(anchor);
+		double pulled = moved.horizontalDistance();
+		boolean dragged = pulled > 0.3 && (pulled < 1.0e-4
+				|| toCaster.dot(moved.normalize()) > 0);
+		boolean impulsed = pull.horizontalDistance() > 0.25 && pull.dot(toCaster) > 0;
+		if (dragged || impulsed) {
+			body.run();
+			return;
+		}
+		helper.assertTrue(tries > 0, "the magnet pulls the victim toward the caster (pulled="
+				+ pulled + " delta=" + pull + " active="
+				+ HeroDataStore.get(player).isActive(MANIA_OF_GREED)
+				+ " frozen=" + RegulusGreedController.isFrozen(victim)
+				+ " alive=" + victim.isAlive() + " vtc=" + victim.tickCount + ")");
+		helper.runAfterDelay(1, () -> awaitGreedPull(helper, player, victim, anchor, tries - 1, body));
 	}
 
 	/**
