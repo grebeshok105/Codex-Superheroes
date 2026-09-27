@@ -4,7 +4,7 @@ import io.github.grebeshok105.codex.client.ClientAbilityCooldowns;
 import io.github.grebeshok105.codex.client.ClientAbilityVisibility;
 import io.github.grebeshok105.codex.client.ClientHeroState;
 import io.github.grebeshok105.codex.client.ClientSessionState;
-import io.github.grebeshok105.codex.client.ModKeys;
+import io.github.grebeshok105.codex.client.core.input.ModKeys;
 import io.github.grebeshok105.codex.client.core.hud.AbilityDecorations;
 import io.github.grebeshok105.codex.client.render.WildRenderer;
 import io.github.grebeshok105.codex.client.render.WildShaders;

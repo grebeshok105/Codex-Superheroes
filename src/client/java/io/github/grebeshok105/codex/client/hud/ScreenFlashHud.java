@@ -1,5 +1,6 @@
 package io.github.grebeshok105.codex.client.hud;
 
+import io.github.grebeshok105.codex.client.ClientHeroState;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -10,6 +11,10 @@ public final class ScreenFlashHud {
 	private static volatile long startedAtMs;
 	private static volatile int topColor;
 	private static volatile int bottomColor;
+
+	static {
+		ClientHeroState.onPresenceChange(ScreenFlashHud::trigger);
+	}
 
 	private ScreenFlashHud() {
 	}
