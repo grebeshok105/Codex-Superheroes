@@ -34,9 +34,4 @@ public final class ModItemModelProvider extends FabricModelProvider {
 	private static Item item(String path) {
 		return BuiltInRegistries.ITEM.get(ModId.of(path));
 	}
-
-	// Hero-module items are resolved by id — datagen must not import hero packages.
-	private static Item item(String path) {
-		return BuiltInRegistries.ITEM.get(ModId.of(path));
-	}
 }
