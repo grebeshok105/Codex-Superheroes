@@ -35,7 +35,6 @@ public final class ModItemGroups {
 				output.accept(ModItems.REGULUS_SUIT);
 				output.accept(ModItems.EVANGELION);
 
-				output.accept(ModItems.SHADOW_MONARCHS_CLOAK);
 
 				output.accept(ModItems.DOOMSDAY_GENOME);
 				output.accept(ModItems.KRYPTONITE_SHARD);

@@ -1,7 +1,9 @@
-package io.github.grebeshok105.codex.attachment;
+package io.github.grebeshok105.codex.hero.sungjinwoo.runtime;
 
+import io.github.grebeshok105.codex.core.attachment.AttachmentRegistrar;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
 import net.minecraft.core.UUIDUtil;
 
 import java.util.List;
@@ -27,6 +29,16 @@ public record SungShadowArmy(List<UUID> shadowIds, boolean summoned, boolean pha
 			Codec.BOOL.fieldOf("summoned").forGetter(SungShadowArmy::summoned),
 			Codec.BOOL.fieldOf("phase2").forGetter(SungShadowArmy::phase2)
 	).apply(instance, SungShadowArmy::new));
+
+	/**
+	 * The attachment type lives on this leaf record so leaf code can reach it without
+	 * importing the module root; {@code SungJinwooAttachments.ARMY} re-exports it for
+	 * module-external readers. Byte-identical to the former {@code ModAttachments.SUNG_SHADOW_ARMY}
+	 * row (id {@code superheroes:sung_shadow_army}, persistent + EMPTY initializer, not
+	 * copyOnDeath). Created eagerly at class-init — see {@code SungJinwooAttachments.init()}.
+	 */
+	public static final AttachmentType<SungShadowArmy> ATTACHMENT =
+			AttachmentRegistrar.FABRIC.persistent("sung_shadow_army", CODEC, false, () -> EMPTY);
 
 	public SungShadowArmy withShadows(List<UUID> ids) {
 		return new SungShadowArmy(List.copyOf(ids), summoned, phase2);

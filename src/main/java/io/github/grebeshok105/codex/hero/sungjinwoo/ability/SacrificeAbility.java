@@ -1,10 +1,11 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.sungjinwoo.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
-import io.github.grebeshok105.codex.effect.SungJinwooController;
-import io.github.grebeshok105.codex.entity.ShadowSoldierEntity;
+import io.github.grebeshok105.codex.hero.sungjinwoo.runtime.SungJinwooController;
+import io.github.grebeshok105.codex.hero.sungjinwoo.entity.ShadowSoldierEntity;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -23,13 +24,14 @@ import java.util.List;
  *  - После активации армия = 0.
  */
 public final class SacrificeAbility implements Ability {
+	public static final ResourceLocation ID = ModId.of("sacrifice");
 	private static final int COOLDOWN_TICKS = 1200;
 	private static final double EXPLOSION_RADIUS = 4.0;
 	private static final float EXPLOSION_DAMAGE = 8.0f;
 
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.SACRIFICE;
+		return ID;
 	}
 
 	@Override
@@ -76,7 +78,7 @@ public final class SacrificeAbility implements Ability {
 		}
 
 		SungJinwooController.disbandAll(player);
-		AbilityCooldowns.setCooldownTicks(player, AbilityIds.SACRIFICE, COOLDOWN_TICKS);
+		AbilityCooldowns.setCooldownTicks(player, ID, COOLDOWN_TICKS);
 		return true;
 	}
 }

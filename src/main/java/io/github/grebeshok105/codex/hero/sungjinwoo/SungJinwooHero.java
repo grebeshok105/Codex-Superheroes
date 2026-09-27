@@ -1,7 +1,7 @@
-package io.github.grebeshok105.codex.hero;
+package io.github.grebeshok105.codex.hero.sungjinwoo;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.ability.AbilityIds;
+import io.github.grebeshok105.codex.hero.sungjinwoo.runtime.SungJinwooController;
 import io.github.grebeshok105.codex.core.hero.AttributeModifierSet;
 import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.hero.HeroHudConfig;
@@ -95,13 +95,7 @@ public final class SungJinwooHero implements Hero {
 
 	@Override
 	public List<ResourceLocation> getAbilities() {
-		return List.of(
-				AbilityIds.ARISE,
-				AbilityIds.SHADOW_EXCHANGE,
-				AbilityIds.SACRIFICE,
-				AbilityIds.RULERS_AUTHORITY,
-				AbilityIds.SHADOW_EXTRACTION,
-				AbilityIds.MONARCHS_DOMAIN);
+		return SungJinwooAbilities.ALL;
 	}
 
 	@Override
@@ -131,7 +125,7 @@ public final class SungJinwooHero implements Hero {
 		player.removeEffect(MobEffects.DAMAGE_RESISTANCE);
 		player.removeEffect(MobEffects.REGENERATION);
 		if (player instanceof net.minecraft.server.level.ServerPlayer sp) {
-			io.github.grebeshok105.codex.effect.SungJinwooController.resetPhase(sp);
+			SungJinwooController.resetPhase(sp);
 		}
 	}
 
