@@ -1,7 +1,7 @@
 package io.github.grebeshok105.codex.attachment;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.effect.DoomsdayProgress;
+
 import io.github.grebeshok105.codex.effect.RegulusMadnessState;
 import io.github.grebeshok105.codex.mechanic.boundweapon.BoundWeaponIssues;
 import com.mojang.serialization.Codec;
@@ -15,11 +15,6 @@ public final class ModAttachments {
 	public static final AttachmentType<Boolean> REGULUS_BONUS_LIFE = AttachmentRegistry.create(ModId.of("regulus_bonus_life"), b -> b
 			.initializer(() -> Boolean.FALSE)
 			.persistent(Codec.BOOL)
-			.copyOnDeath());
-
-	public static final AttachmentType<DoomsdayProgress> DOOMSDAY_PROGRESS = AttachmentRegistry.create(ModId.of("doomsday_progress"), b -> b
-			.initializer(() -> DoomsdayProgress.EMPTY)
-			.persistent(DoomsdayProgress.CODEC)
 			.copyOnDeath());
 
 	public static final AttachmentType<Integer> SUIT_VARIANT = AttachmentRegistry.create(ModId.of("suit_variant"), b -> b

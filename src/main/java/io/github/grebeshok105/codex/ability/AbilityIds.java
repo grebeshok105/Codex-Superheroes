@@ -26,13 +26,6 @@ public final class AbilityIds {
 	public static final ResourceLocation COUNTER_STRIKE = ModId.of("counter_strike");
 
 
-	public static final ResourceLocation DOOMSDAY_SMASH = ModId.of("doomsday_smash");
-	public static final ResourceLocation DOOMSDAY_ROAR = ModId.of("doomsday_roar");
-	public static final ResourceLocation DOOMSDAY_BERSERK = ModId.of("doomsday_berserk");
-	public static final ResourceLocation DOOMSDAY_BONE_SPIKE = ModId.of("doomsday_bone_spike");
-	public static final ResourceLocation DOOMSDAY_CHARGE_TACKLE = ModId.of("doomsday_charge_tackle");
-	public static final ResourceLocation DOOMSDAY_DOOM_GRIP = ModId.of("doomsday_doom_grip");
-
 	public static final ResourceLocation THANOS_COSMIC_SLAM = ModId.of("thanos_cosmic_slam");
 	public static final ResourceLocation THANOS_REALITY_TEAR = ModId.of("thanos_reality_tear");
 	public static final ResourceLocation THANOS_MIND_PULSE = ModId.of("thanos_mind_pulse");

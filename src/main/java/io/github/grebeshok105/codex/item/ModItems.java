@@ -69,16 +69,6 @@ public final class ModItems {
 			new EvangelionItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
 	);
 
-	public static final TransformationItem DOOMSDAY_GENOME = register(
-			"doomsday_genome",
-			new TransformationItem(ModId.of("doomsday"), new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC),
-					new TransformationLore(ChatFormatting.DARK_PURPLE,
-							List.of(new TransformationLore.Line("item.superheroes.doomsday_genome.lore.line1", ChatFormatting.LIGHT_PURPLE),
-									new TransformationLore.Line("item.superheroes.doomsday_genome.lore.line2", ChatFormatting.DARK_GRAY)),
-							List.of(new TransformationLore.Line("item.superheroes.doomsday_genome.lore.usage", ChatFormatting.RED),
-									new TransformationLore.Line("item.superheroes.doomsday_genome.lore.untransform", ChatFormatting.GOLD))))
-	);
-
 	public static final InfinityGauntletItem INFINITY_GAUNTLET = register(
 			"infinity_gauntlet",
 			new InfinityGauntletItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
@@ -112,11 +102,6 @@ public final class ModItems {
 	public static final InfinityStoneItem MIND_STONE = register(
 			InfinityStoneType.MIND.getItemRegistryName(),
 			new InfinityStoneItem(InfinityStoneType.MIND, new Item.Properties().stacksTo(1).rarity(Rarity.EPIC))
-	);
-
-	public static final KryptoniteShardItem KRYPTONITE_SHARD = register(
-			"kryptonite_shard",
-			new KryptoniteShardItem(new Item.Properties().stacksTo(16).rarity(Rarity.RARE))
 	);
 
 	// persisted id kept from the Doctor Strange era — do not rename the string.

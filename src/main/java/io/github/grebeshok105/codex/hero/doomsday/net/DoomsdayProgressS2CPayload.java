@@ -1,4 +1,4 @@
-package io.github.grebeshok105.codex.network;
+package io.github.grebeshok105.codex.hero.doomsday.net;
 
 import io.github.grebeshok105.codex.ModId;
 import net.minecraft.network.RegistryFriendlyByteBuf;

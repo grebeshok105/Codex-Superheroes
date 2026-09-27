@@ -1,9 +1,10 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.doomsday.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
-import io.github.grebeshok105.codex.effect.DoomGripController;
+import io.github.grebeshok105.codex.hero.doomsday.runtime.DoomGripController;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -15,12 +16,14 @@ import java.util.Comparator;
 import java.util.List;
 
 public final class DoomGripAbility implements Ability {
+	public static final ResourceLocation ID = ModId.of("doomsday_doom_grip");
+
 	private static final int COOLDOWN_TICKS = 900; // 45s
 	private static final double SEARCH_RADIUS = 8.0;
 
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.DOOMSDAY_DOOM_GRIP;
+		return ID;
 	}
 
 	@Override

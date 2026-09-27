@@ -5,7 +5,8 @@ import io.github.grebeshok105.codex.ability.AbilityIds;
 import io.github.grebeshok105.codex.core.ability.AbilityRouter;
 import io.github.grebeshok105.codex.effect.MirrorDimensionController;
 import io.github.grebeshok105.codex.effect.ModEffects;
-import io.github.grebeshok105.codex.hero.DoomsdayHero;
+import io.github.grebeshok105.codex.hero.doomsday.DoomsdayAbilities;
+import io.github.grebeshok105.codex.hero.doomsday.DoomsdayHero;
 import io.github.grebeshok105.codex.hero.HomelanderHero;
 import io.github.grebeshok105.codex.hero.IronManHero;
 import io.github.grebeshok105.codex.hero.PandoraHero;
@@ -85,8 +86,8 @@ public final class AbilityGateGameTests implements FabricGameTest {
 		TestHeroes.transform(player, DoomsdayHero.ID);
 		helper.assertTrue(DoomsdayHero.getTier(player) == 1, "fresh Doomsday starts at tier 1");
 		float before = HeroDataStore.get(player).energy();
-		AbilityRouter.activate(player, AbilityIds.DOOMSDAY_DOOM_GRIP);
-		helper.assertFalse(AbilityCooldowns.isOnCooldown(player, AbilityIds.DOOMSDAY_DOOM_GRIP),
+		AbilityRouter.activate(player, DoomsdayAbilities.DOOMSDAY_DOOM_GRIP);
+		helper.assertFalse(AbilityCooldowns.isOnCooldown(player, DoomsdayAbilities.DOOMSDAY_DOOM_GRIP),
 				"the tier gate rejects before the ability runs");
 		helper.assertTrue(HeroDataStore.get(player).energy() == before, "nothing charged");
 		TestPlayers.leave(player);

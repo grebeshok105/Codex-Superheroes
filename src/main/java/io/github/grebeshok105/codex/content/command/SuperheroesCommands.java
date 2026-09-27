@@ -5,8 +5,6 @@ import io.github.grebeshok105.codex.core.transform.HeroDataStore;
 import io.github.grebeshok105.codex.content.admin.AdminAbilityDebug;
 import io.github.grebeshok105.codex.content.admin.AdminAttachments;
 import io.github.grebeshok105.codex.content.admin.AdminBuildSyncController;
-import io.github.grebeshok105.codex.effect.DoomsdayTierController;
-import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.hero.Heroes;
 import io.github.grebeshok105.codex.item.ModItemGroups;
@@ -16,12 +14,10 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.context.CommandContext;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
-import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.ResourceLocationArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -61,14 +57,6 @@ final class SuperheroesCommands {
 						.then(Commands.literal("mana")
 								.then(Commands.argument("amount", FloatArgumentType.floatArg(0f))
 										.executes(ctx -> setMana(ctx, FloatArgumentType.getFloat(ctx, "amount")))))
-						.then(Commands.literal("doomsday")
-								.then(Commands.literal("tier")
-										.then(Commands.argument("tier", IntegerArgumentType.integer(1, 7))
-												.executes(ctx -> setDoomsdayTier(ctx, playerOrNull(ctx),
-														IntegerArgumentType.getInteger(ctx, "tier"))))
-										.then(Commands.argument("target", EntityArgument.player())
-												.then(Commands.argument("tier", IntegerArgumentType.integer(1, 7))
-														.executes(SuperheroesCommands::setDoomsdayTierForTarget)))))
 						.then(Commands.literal("admin")
 								.executes(SuperheroesCommands::toggleAdminBuild)
 								.then(Commands.literal("on")
@@ -267,27 +255,6 @@ final class SuperheroesCommands {
 		return (int) clamped;
 	}
 
-	private static int setDoomsdayTierForTarget(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
-		return setDoomsdayTier(ctx, EntityArgument.getPlayer(ctx, "target"),
-				IntegerArgumentType.getInteger(ctx, "tier"));
-	}
-
-	private static int setDoomsdayTier(CommandContext<CommandSourceStack> ctx, ServerPlayer target, int tier) {
-		if (target == null) {
-			return 0;
-		}
-		HeroData data = target.getAttachedOrCreate(CoreAttachments.HERO_DATA);
-		// doomsday branch stays in the shared root until I4d extracts it; the id is a literal so content/ never references hero/
-		if (!data.hasHero() || !ModId.of("doomsday").equals(data.heroId())) {
-			ctx.getSource().sendFailure(Component.translatable("commands.superheroes.doomsday.not_doomsday",
-					target.getScoreboardName()));
-			return 0;
-		}
-		DoomsdayTierController.setTier(target, tier);
-		ctx.getSource().sendSuccess(() -> Component.translatable("commands.superheroes.doomsday.tier.set",
-				target.getScoreboardName(), String.valueOf(tier)), true);
-		return tier;
-	}
 
 	private static int toggleMobTargets(CommandContext<CommandSourceStack> ctx) {
 		boolean enabled = AdminAbilityDebug.togglePlayerOnlyAbilitiesTargetMobs();

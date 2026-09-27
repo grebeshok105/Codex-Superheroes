@@ -1,14 +1,15 @@
-package io.github.grebeshok105.codex.ability;
+package io.github.grebeshok105.codex.hero.doomsday.ability;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
-import io.github.grebeshok105.codex.damage.ModDamageTypes;
+import io.github.grebeshok105.codex.hero.doomsday.registry.DoomsdayDamageTypes;
 import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
+import io.github.grebeshok105.codex.mechanic.motion.Motion;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -25,6 +26,8 @@ import java.util.Set;
 import java.util.UUID;
 
 public final class ChargeTackleAbility implements Ability {
+	public static final ResourceLocation ID = ModId.of("doomsday_charge_tackle");
+
 	private static final int COOLDOWN_TICKS = 240;
 	private static final int DURATION_TICKS = 18;
 	private static final float DAMAGE = 30f;
@@ -36,7 +39,7 @@ public final class ChargeTackleAbility implements Ability {
 
 	@Override
 	public ResourceLocation getId() {
-		return AbilityIds.DOOMSDAY_CHARGE_TACKLE;
+		return ID;
 	}
 
 	@Override
@@ -67,15 +70,13 @@ public final class ChargeTackleAbility implements Ability {
 		double speed = DISTANCE / (double) DURATION_TICKS;
 		Vec3 vel = horiz.scale(speed);
 		Vec3 motion = new Vec3(vel.x, 0.05, vel.z);
-		player.setDeltaMovement(motion);
-		player.hurtMarked = true;
-		player.connection.send(new ClientboundSetEntityMotionPacket(player.getId(), motion));
+		Motion.set(player, motion, Motion.Sync.MARK_AND_SEND_TO_PLAYER);
 
 		ACTIVE.put(player.getUUID(), player.getUUID(), new ActiveCharge(DURATION_TICKS, horiz, new HashSet<>()));
 
 		ServerLevel level = player.serverLevel();
 		level.playSound(null, player.getX(), player.getY(), player.getZ(),
-				io.github.grebeshok105.codex.sound.ModSounds.DOOMSDAY_ROAR, SoundSource.PLAYERS, 1.6f, 0.95f);
+				io.github.grebeshok105.codex.hero.doomsday.sound.DoomsdaySounds.DOOMSDAY_ROAR, SoundSource.PLAYERS, 1.6f, 0.95f);
 
 		AbilityCooldowns.setCooldownTicks(player, getId(), COOLDOWN_TICKS);
 		return true;
@@ -87,10 +88,8 @@ public final class ChargeTackleAbility implements Ability {
 
 		Vec3 v = ac.dir.scale(20.0 / (double) DURATION_TICKS);
 		Vec3 motion = new Vec3(v.x, Math.max(player.getDeltaMovement().y, -0.05), v.z);
-		player.setDeltaMovement(motion);
-		player.hurtMarked = true;
 		player.fallDistance = 0;
-		player.connection.send(new ClientboundSetEntityMotionPacket(player.getId(), motion));
+		Motion.set(player, motion, Motion.Sync.MARK_AND_SEND_TO_PLAYER);
 
 		ServerLevel level = player.serverLevel();
 		AABB box = player.getBoundingBox().inflate(1.5);
@@ -98,7 +97,7 @@ public final class ChargeTackleAbility implements Ability {
 				TargetFilters.hostileTo(player).and(e -> !ac.hits.contains(e.getUUID())));
 		for (LivingEntity e : hits) {
 			ac.hits.add(e.getUUID());
-			e.hurt(ModDamageTypes.doomsdayChargeTackle(level, player), DAMAGE);
+			e.hurt(DoomsdayDamageTypes.doomsdayChargeTackle(level, player), DAMAGE);
 			Vec3 kb = ac.dir.scale(KNOCKBACK).add(0, 0.6, 0);
 			e.push(kb.x, kb.y, kb.z);
 			e.hurtMarked = true;

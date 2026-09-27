@@ -1,16 +1,19 @@
-package io.github.grebeshok105.codex.client.hud;
+package io.github.grebeshok105.codex.client.hero.doomsday.hud;
 
-import io.github.grebeshok105.codex.client.ClientDoomsdayState;
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.client.ClientHeroState;
-import io.github.grebeshok105.codex.hero.DoomsdayHero;
+import io.github.grebeshok105.codex.client.hero.doomsday.state.ClientDoomsdayState;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
 
 public final class DoomsdayGlitchHud {
+	private static final ResourceLocation DOOMSDAY_ID = ModId.of("doomsday");
+
 	private static final RandomSource RNG = RandomSource.create();
 	private static final String[] GLYPHS = {
 			"Ω", "Ψ", "Σ", "Δ", "Ξ", "Λ", "Φ", "Ϟ",
@@ -87,6 +90,6 @@ public final class DoomsdayGlitchHud {
 
 	private static boolean isDoomsday() {
 		return ClientHeroState.data().hasHero()
-				&& DoomsdayHero.ID.equals(ClientHeroState.data().heroId());
+				&& DOOMSDAY_ID.equals(ClientHeroState.data().heroId());
 	}
 }

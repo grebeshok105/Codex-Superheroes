@@ -1,9 +1,13 @@
-package io.github.grebeshok105.codex.effect;
+package io.github.grebeshok105.codex.hero.doomsday.runtime;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
-import io.github.grebeshok105.codex.hero.DoomsdayHero;
+import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.minecraft.core.Holder;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
@@ -16,7 +20,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 public final class DoomsdayEffectAdaptationController {
 	private static final long REALTIME_THRESHOLD_TICKS = 200L;
@@ -33,8 +36,12 @@ public final class DoomsdayEffectAdaptationController {
 		TRACKED.add(MobEffects.BLINDNESS);
 	}
 
-	private static final Map<UUID, Set<Holder<MobEffect>>> ADAPTED = new ConcurrentHashMap<>();
-	private static final Map<UUID, Map<Holder<MobEffect>, Long>> FIRST_HIT_TICK = new ConcurrentHashMap<>();
+	private static final ResourceLocation DOOMSDAY_ID = ModId.of("doomsday");
+
+	private static final OwnedSessionMap<UUID, Set<Holder<MobEffect>>> ADAPTED =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), Set.of(ClearOn.HERO_CLEAR));
+	private static final OwnedSessionMap<UUID, Map<Holder<MobEffect>, Long>> FIRST_HIT_TICK =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), Set.of(ClearOn.HERO_CLEAR));
 
 	private DoomsdayEffectAdaptationController() {
 	}
@@ -48,6 +55,12 @@ public final class DoomsdayEffectAdaptationController {
 		return adapted != null && adapted.contains(effect);
 	}
 
+	/** {@code MobEffectGates} entry — fast-path skips untracked effects, then defers to {@link #onApply}. */
+	public static boolean allow(ServerPlayer player, MobEffectInstance instance) {
+		if (!isTracked(instance.getEffect())) return true;
+		return onApply(player, instance);
+	}
+
 	/**
 	 * Вызывается при applyEffect mixin-ом.
 	 * @return true — эффект разрешить (накатить); false — отменить (адаптация).
@@ -56,12 +69,12 @@ public final class DoomsdayEffectAdaptationController {
 		if (!isDoomsday(player)) return true;
 		Holder<MobEffect> effect = instance.getEffect();
 		if (!TRACKED.contains(effect)) return true;
-		Set<Holder<MobEffect>> adapted = ADAPTED.computeIfAbsent(player.getUUID(), k -> new HashSet<>());
+		Set<Holder<MobEffect>> adapted = adapted(player.getUUID());
 		if (adapted.contains(effect)) {
 			return false;
 		}
 		long now = player.serverLevel().getGameTime();
-		Map<Holder<MobEffect>, Long> firstHit = FIRST_HIT_TICK.computeIfAbsent(player.getUUID(), k -> new HashMap<>());
+		Map<Holder<MobEffect>, Long> firstHit = firstHit(player.getUUID());
 		Long firstTs = firstHit.get(effect);
 		if (firstTs == null || now - firstTs > IDLE_RESET_TICKS) {
 			firstHit.put(effect, now);
@@ -81,7 +94,7 @@ public final class DoomsdayEffectAdaptationController {
 						Component.translatable("effect.minecraft." + path)),
 				true);
 		player.serverLevel().playSound(null, player.getX(), player.getY(), player.getZ(),
-				io.github.grebeshok105.codex.sound.ModSounds.DOOMSDAY_ROAR, SoundSource.PLAYERS, 0.5f, 1.0f);
+				io.github.grebeshok105.codex.hero.doomsday.sound.DoomsdaySounds.DOOMSDAY_ROAR, SoundSource.PLAYERS, 0.5f, 1.0f);
 	}
 
 	public static void clear(ServerPlayer player) {
@@ -90,8 +103,26 @@ public final class DoomsdayEffectAdaptationController {
 		FIRST_HIT_TICK.remove(id);
 	}
 
+	private static Set<Holder<MobEffect>> adapted(UUID id) {
+		Set<Holder<MobEffect>> s = ADAPTED.get(id);
+		if (s == null) {
+			s = new HashSet<>();
+			ADAPTED.put(id, id, s);
+		}
+		return s;
+	}
+
+	private static Map<Holder<MobEffect>, Long> firstHit(UUID id) {
+		Map<Holder<MobEffect>, Long> m = FIRST_HIT_TICK.get(id);
+		if (m == null) {
+			m = new HashMap<>();
+			FIRST_HIT_TICK.put(id, id, m);
+		}
+		return m;
+	}
+
 	private static boolean isDoomsday(ServerPlayer player) {
 		HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
-		return data.hasHero() && DoomsdayHero.ID.equals(data.heroId());
+		return data.hasHero() && DOOMSDAY_ID.equals(data.heroId());
 	}
 }
