@@ -553,39 +553,27 @@ public final class ThanosGameTests implements FabricGameTest {
 	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 300)
 	public void snapStillFiresAfterCasterUntransforms(GameTestHelper helper) {
 		// Pins CURRENT lifecycle policy: the pending-snap map only clears on LEAVE/DEATH,
-		// so a snap armed before untransform still goes off.
+		// so a snap armed before untransform still goes off. Asserted via hasFired (not a
+		// victim effect): the victim scan is pvp-gated at fire time, which races with the
+		// ~300 concurrent tests sharing the server's global pvp flag.
 		ServerPlayer caster = TestPlayers.join(helper, "t5-utrans");
 		TestHeroes.transform(caster, THANOS);
-		ServerPlayer victim = TestPlayers.join(helper, "t5-utrans-v");
-		double x = caster.getX() - 8000.0;
-		double z = caster.getZ() + 8000.0;
-		teleportFar(helper, caster, x, z);
-		teleportFar(helper, victim, x + 2.0, z + 2.0);
+		// Far teleport keeps the 128-radius victim scan away from neighboring tests.
+		teleportFar(helper, caster, caster.getX() - 8000.0, caster.getZ() + 8000.0);
 		ItemStack gauntlet = seatGauntlet(caster);
 		for (InfinityStoneType type : InfinityStoneType.values()) {
 			InfinityGauntletData.tryInsert(gauntlet, type);
 		}
-		boolean oldPvp = helper.getLevel().getServer().isPvpAllowed();
 		helper.runAfterDelay(2, () -> {
-			try {
-				helper.getLevel().getServer().setPvpAllowed(true);
-				AbilityRouter.activate(caster, SNAP);
-				helper.assertTrue(ThanosSnapWindupController.isWindingUp(caster), "windup scheduled");
-				helper.assertTrue(HeroTransformService.forceUntransform(caster), "untransformed mid-windup");
-			} catch (Throwable t) {
-				helper.getLevel().getServer().setPvpAllowed(oldPvp);
-				throw t;
-			}
+			AbilityRouter.activate(caster, SNAP);
+			helper.assertTrue(ThanosSnapWindupController.isWindingUp(caster), "windup scheduled");
+			helper.assertTrue(HeroTransformService.forceUntransform(caster), "untransformed mid-windup");
 		});
-		helper.runAfterDelay(120, () -> {
-			try {
-				helper.assertTrue(victim.hasEffect(ModEffects.SNAPPED),
-						"the snap fires even though the caster lost the hero (PENDING is LEAVE/DEATH-only)");
-			} finally {
-				helper.getLevel().getServer().setPvpAllowed(oldPvp);
-			}
+		// Snap fires at ~T+97; the pending entry is cleaned up at ~T+117.
+		helper.runAfterDelay(110, () -> {
+			helper.assertTrue(ThanosSnapWindupController.hasFired(caster),
+					"the snap fires even though the caster lost the hero (PENDING is LEAVE/DEATH-only)");
 			TestPlayers.leave(caster);
-			TestPlayers.leave(victim);
 			helper.succeed();
 		});
 	}

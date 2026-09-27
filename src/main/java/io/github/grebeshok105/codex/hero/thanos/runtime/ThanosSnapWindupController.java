@@ -32,6 +32,12 @@ public final class ThanosSnapWindupController {
 		return p != null && !p.snapped;
 	}
 
+	/** True while a fired snap's entry still sits in PENDING (before the endTick cleanup). */
+	public static boolean hasFired(ServerPlayer player) {
+		Pending p = PENDING.get(player.getUUID());
+		return p != null && p.snapped;
+	}
+
 	private static final class Pending {
 		final long snapAtTick;
 		final long endTick;
