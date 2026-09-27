@@ -3,8 +3,10 @@ package io.github.grebeshok105.codex.client.core.module;
 import io.github.grebeshok105.codex.client.core.FovModifier;
 import io.github.grebeshok105.codex.client.core.HudGlitchSource;
 import io.github.grebeshok105.codex.client.core.hud.AbilityDecoration;
+import io.github.grebeshok105.codex.client.core.hud.HeroPanelSection;
 import io.github.grebeshok105.codex.client.core.hud.HudLayer;
 import io.github.grebeshok105.codex.client.core.hud.MovableHud;
+import io.github.grebeshok105.codex.client.core.render.BeamStyle;
 import io.github.grebeshok105.codex.client.core.render.SkinProvider;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
@@ -23,6 +25,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 
+import java.util.UUID;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -89,4 +93,25 @@ public interface HeroClientContext {
 
 	/** Registers a per-client-tick hook (END_CLIENT_TICK). */
 	void clientTick(Consumer<Minecraft> hook);
+
+	/** Registers a beam style drawn by the unified {@code client/core/render/BeamRenderer}. */
+	void beamStyle(BeamStyle style);
+
+	/**
+	 * Registers a predicate that vetoes the hero-skin override for a player while it
+	 * returns {@code true} (e.g. an in-progress suit-up keeps the vanilla skin).
+	 */
+	void skinSuppression(Predicate<UUID> suppression);
+
+	/**
+	 * Registers a supplier that vetoes the vanilla crosshair while it returns
+	 * {@code true}. Self-gate on this module's hero being active.
+	 */
+	void crosshairSuppression(BooleanSupplier suppression);
+
+	/**
+	 * Registers the {@code HeroPanelSection} this hero draws inside the hero panel
+	 * instead of the default HP/energy rows.
+	 */
+	void heroPanelSection(HeroPanelSection section);
 }

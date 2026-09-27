@@ -1,0 +1,91 @@
+package io.github.grebeshok105.codex.hero.ironman.ability;
+
+import io.github.grebeshok105.codex.core.ability.Ability;
+import io.github.grebeshok105.codex.ModId;
+import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
+import io.github.grebeshok105.codex.hero.ironman.runtime.IronManSuitVariant;
+import io.github.grebeshok105.codex.hero.ironman.entity.IronLegionDroneEntity;
+import io.github.grebeshok105.codex.hero.ironman.entity.IronManEntities;
+import io.github.grebeshok105.codex.hero.ironman.sound.IronManSounds;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.MobSpawnType;
+
+import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
+
+public final class IronManLegionAbility implements Ability {
+	private static final int COOLDOWN_TICKS = 1200; // 60 seconds
+
+	public static final ResourceLocation ID = ModId.of("iron_man_legion");
+
+	@Override
+	public ResourceLocation getId() {
+		return ID;
+	}
+
+	@Override
+	public boolean isToggle() {
+		return false;
+	}
+
+	@Override
+	public float costOnActivate() {
+		return 200f;
+	}
+
+	@Override
+	public float costPerTick() {
+		return 0f;
+	}
+
+	@Override
+	public boolean canActivate(ServerPlayer player) {
+		return true;
+	}
+
+	@Override
+	public boolean tryActivate(ServerPlayer player) {
+		ServerLevel level = player.serverLevel();
+		int currentSuit = player.getAttachedOrCreate(IronManSuitVariant.ATTACHMENT);
+		List<IronManSuitVariant> variants = IronManSuitVariant.legionVariants(currentSuit);
+		ThreadLocalRandom rng = ThreadLocalRandom.current();
+
+		for (int i = 0; i < variants.size(); i++) {
+			IronManSuitVariant variant = variants.get(i);
+			IronLegionDroneEntity drone = IronManEntities.IRON_LEGION_DRONE.create(level);
+			if (drone == null) continue;
+
+			double angle = ((double) i / variants.size()) * Math.PI * 2;
+			double dist = 3.0 + rng.nextDouble() * 2.0;
+			double spawnX = player.getX() + Math.cos(angle) * dist;
+			double spawnZ = player.getZ() + Math.sin(angle) * dist;
+			double spawnY = player.getY() + 6.0 + rng.nextDouble() * 3.0; // hover in view, descend to fight
+
+			drone.moveTo(spawnX, spawnY, spawnZ, rng.nextFloat() * 360f - 180f, 0);
+			drone.setSuitVariant(variant.index());
+			drone.setOwnerUuid(player.getUUID());
+			drone.setCustomNameVisible(false);
+			drone.finalizeSpawn(level, level.getCurrentDifficultyAt(drone.blockPosition()),
+					MobSpawnType.MOB_SUMMONED, null);
+			level.addFreshEntity(drone);
+
+			level.sendParticles(ParticleTypes.ELECTRIC_SPARK,
+					spawnX, player.getY() + 2.0, spawnZ, 15, 0.3, 0.5, 0.3, 0.08);
+		}
+
+		// Голос Джарвиса привязан к самому Железному Человеку (entity-bound:
+		// сервер шлёт ClientboundSoundEntityPacket → звук летит вместе с игроком,
+		// а не висит в точке запуска) и слышен всем игрокам вокруг.
+		level.playSound(null, player, IronManSounds.IRONMAN_JARVIS_LEGION_LAUNCH,
+				SoundSource.PLAYERS, 2.0f, 1.0f);
+
+		// [JARVIS] сообщение о запуске легиона в чат убрано по запросу.
+
+		AbilityCooldowns.setCooldownTicks(player, getId(), COOLDOWN_TICKS);
+		return true;
+	}
+}

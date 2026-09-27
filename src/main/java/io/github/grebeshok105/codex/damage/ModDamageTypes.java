@@ -15,8 +15,6 @@ import net.minecraft.world.entity.Entity;
 
 public final class ModDamageTypes {
 	public static final ResourceKey<DamageType> EYE_LASER = key("eye_laser");
-	public static final ResourceKey<DamageType> REPULSOR = key("repulsor");
-	public static final ResourceKey<DamageType> UNIBEAM = key("unibeam");
 	public static final ResourceKey<DamageType> SHADOW_ATTACK = key("shadow_attack");
 	public static final ResourceKey<DamageType> LOKI_CHAOS = key("loki_chaos");
 	public static final ResourceKey<DamageType> CAP_SHIELD_THROW = key("cap_shield_throw");
@@ -34,8 +32,6 @@ public final class ModDamageTypes {
 
 	public static void bootstrap(BootstrapContext<DamageType> context) {
 		context.register(EYE_LASER, new DamageType("eye_laser", DamageScaling.NEVER, 0.0F, DamageEffects.BURNING));
-		context.register(REPULSOR, new DamageType("repulsor", DamageScaling.NEVER, 0.0F));
-		context.register(UNIBEAM, new DamageType("unibeam", DamageScaling.NEVER, 0.0F, DamageEffects.BURNING));
 		context.register(SHADOW_ATTACK, new DamageType("shadow_attack", DamageScaling.WHEN_CAUSED_BY_LIVING_NON_PLAYER, 0.0F));
 		context.register(LOKI_CHAOS, new DamageType("loki_chaos", DamageScaling.NEVER, 0.0F));
 		context.register(CAP_SHIELD_THROW, new DamageType("cap_shield_throw", DamageScaling.NEVER, 0.0F));
@@ -44,14 +40,6 @@ public final class ModDamageTypes {
 
 	public static DamageSource eyeLaser(ServerLevel level, Entity attacker) {
 		return source(level, EYE_LASER, attacker);
-	}
-
-	public static DamageSource repulsor(ServerLevel level, Entity attacker) {
-		return source(level, REPULSOR, attacker);
-	}
-
-	public static DamageSource unibeam(ServerLevel level, Entity attacker) {
-		return source(level, UNIBEAM, attacker);
 	}
 
 	public static DamageSource shadowAttack(ServerLevel level, Entity attacker) {

@@ -5,7 +5,7 @@ import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import io.github.grebeshok105.codex.hero.thanos.registry.ThanosDamageTypes;
-import io.github.grebeshok105.codex.network.ModNetworking;
+import io.github.grebeshok105.codex.core.net.BeamFx;
 import io.github.grebeshok105.codex.particle.ModParticles;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
@@ -79,7 +79,7 @@ public final class ThanosCosmicSlamAbility implements Ability {
 			le.hurtMarked = true;
 		}
 
-		ModNetworking.broadcastThanosCosmicBeam(player, origin, endPoint);
+		BeamFx.cosmicBeam(player, origin, endPoint);
 
 		double len = endPoint.subtract(origin).length();
 		int steps = (int) Math.max(8, len * 1.5);
