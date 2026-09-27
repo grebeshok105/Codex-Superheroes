@@ -2,7 +2,7 @@ package io.github.grebeshok105.codex.physics;
 
 import io.github.grebeshok105.codex.core.net.ScreenShakeS2CPayload;
 import io.github.grebeshok105.codex.mechanic.world.WorldDestructionPolicy;
-import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
+import io.github.grebeshok105.codex.core.net.FxBroadcast;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
@@ -88,7 +88,7 @@ public final class ShockwaveUtil {
 				SoundEvents.RAVAGER_STEP, SoundSource.HOSTILE, 1.0f, 0.6f);
 		float baseShake = (float) Math.min(2.5, 0.6 + radius / 4.0);
 		int shakeT = (int) Math.min(40, 14 + radius * 2);
-		for (ServerPlayer nearby : PlayerLookup.around(world, center, 32.0)) {
+		for (ServerPlayer nearby : FxBroadcast.aroundAudience(world, center, 32.0)) {
 			double dist = nearby.position().distanceTo(center);
 			float intensity = (float) Math.max(0.0, 1.0 - dist / 32.0) * baseShake;
 			if (intensity > 0.05f) {
@@ -165,7 +165,7 @@ public final class ShockwaveUtil {
 				SoundEvents.RAVAGER_STEP, SoundSource.PLAYERS, 1.0f, 0.6f);
 		float baseShake = (float) Math.min(2.5, 0.6 + radius / 4.0);
 		int shakeT = (int) Math.min(40, 14 + radius * 2);
-		for (ServerPlayer nearby : PlayerLookup.around(world, center, 32.0)) {
+		for (ServerPlayer nearby : FxBroadcast.aroundAudience(world, center, 32.0)) {
 			double dist = nearby.position().distanceTo(center);
 			float intensity = (float) Math.max(0.0, 1.0 - dist / 32.0) * baseShake;
 			if (intensity > 0.05f) {

@@ -4,7 +4,7 @@ import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.lifecycle.PassiveReconciler;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
-import io.github.grebeshok105.codex.effect.FlightController;
+import io.github.grebeshok105.codex.mechanic.flight.FlightController;
 import io.github.grebeshok105.codex.effect.SuperJumpController;
 import io.github.grebeshok105.codex.hero.doomsday.net.DoomsdayProgressS2CPayload;
 import io.github.grebeshok105.codex.core.transform.HeroData;

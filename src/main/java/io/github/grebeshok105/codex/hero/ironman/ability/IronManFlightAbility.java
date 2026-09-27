@@ -1,8 +1,8 @@
 package io.github.grebeshok105.codex.hero.ironman.ability;
 
 import io.github.grebeshok105.codex.core.ability.Ability;
-import io.github.grebeshok105.codex.effect.FlightController;
-import io.github.grebeshok105.codex.flight.FlightMode;
+import io.github.grebeshok105.codex.mechanic.flight.FlightController;
+import io.github.grebeshok105.codex.mechanic.flight.FlightMode;
 import io.github.grebeshok105.codex.hero.ironman.runtime.IronManSuitVariant;
 import io.github.grebeshok105.codex.hero.ironman.sound.IronManSounds;
 import io.github.grebeshok105.codex.mechanic.ability.SharedAbilityIds;

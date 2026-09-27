@@ -19,7 +19,6 @@ import io.github.grebeshok105.codex.client.network.ClientNetworking;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.mechanic.boundweapon.BoundWeaponItem;
 import io.github.grebeshok105.codex.client.core.render.BeamRenderer;
-import io.github.grebeshok105.codex.client.render.LocalLaserOverlay;
 import io.github.grebeshok105.codex.client.render.lightning.SuperheroLightningRenderer;
 import io.github.grebeshok105.codex.client.screen.BindingsScreen;
 import io.github.grebeshok105.codex.core.net.ActivateAbilityC2SPayload;
@@ -54,7 +53,6 @@ public class SuperheroesClient implements ClientModInitializer {
 		ClientHeroDimsWatcher.init();
 		io.github.grebeshok105.codex.client.render.WildShaders.register();
 		BeamRenderer.register();
-		LocalLaserOverlay.register();
 		EntityRendererRegistry.register(EntityType.LIGHTNING_BOLT, SuperheroLightningRenderer::new);
 		LivingEntityFeatureRendererRegistrationCallback.EVENT.register((entityType, entityRenderer, registrationHelper, context) -> {
 			if (entityRenderer instanceof PlayerRenderer playerRenderer) {

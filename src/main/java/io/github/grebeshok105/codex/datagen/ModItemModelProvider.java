@@ -2,6 +2,8 @@ package io.github.grebeshok105.codex.datagen;
 
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.item.ModItems;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.item.Item;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricModelProvider;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -25,10 +27,10 @@ public final class ModItemModelProvider extends FabricModelProvider {
 		generator.generateFlatItem(item("iron_man_suit"), ModelTemplates.FLAT_ITEM);
 		generator.generateFlatItem(item("iron_man_reactor"), ModelTemplates.FLAT_ITEM);
 		generator.generateFlatItem(ModItems.COMPOUND_V, ModelTemplates.FLAT_ITEM);
-		generator.generateFlatItem(ModItems.MILK_BOTTLE, ModelTemplates.FLAT_ITEM);
+		// Hero-module items are resolved by id — datagen must not import hero packages.
+		generator.generateFlatItem(item("milk_bottle"), ModelTemplates.FLAT_ITEM);
 	}
 
-	// Hero-module items are resolved by id — datagen must not import hero packages.
 	private static Item item(String path) {
 		return BuiltInRegistries.ITEM.get(ModId.of(path));
 	}

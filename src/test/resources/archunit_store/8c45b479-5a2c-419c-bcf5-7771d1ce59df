@@ -1,4 +1,1 @@
-Method <io.github.grebeshok105.codex.effect.HeroReactionController.onTransformed(net.minecraft.server.level.ServerPlayer, net.minecraft.resources.ResourceLocation)> gets field <io.github.grebeshok105.codex.hero.HomelanderHero.ID> in (HeroReactionController.java:25)
-Method <io.github.grebeshok105.codex.effect.HomelanderRegenController.tickPlayer(net.minecraft.server.MinecraftServer, net.minecraft.server.level.ServerPlayer, io.github.grebeshok105.codex.core.transform.HeroData)> gets field <io.github.grebeshok105.codex.hero.HomelanderHero.ID> in (HomelanderRegenController.java:53)
-Method <io.github.grebeshok105.codex.effect.UraniumDefenseController.isHomelander(net.minecraft.world.entity.player.Player)> gets field <io.github.grebeshok105.codex.hero.HomelanderHero.ID> in (UraniumDefenseController.java:44)
-Method <io.github.grebeshok105.codex.item.MilkBottleItem.isHomelander(net.minecraft.world.entity.player.Player)> gets field <io.github.grebeshok105.codex.hero.HomelanderHero.ID> in (MilkBottleItem.java:107)
+

@@ -19,22 +19,16 @@ public final class ModDamageTypeTagProvider extends FabricTagProvider<DamageType
 
 	@Override
 	protected void addTags(HolderLookup.Provider registries) {
-		getOrCreateTagBuilder(DamageTypeTags.BYPASSES_ARMOR).add(ModDamageTypes.EYE_LASER);
-
 		// Аудит B20: урон способностей не должен резаться i-frames (invulnerableTime).
 		// Исключения — атаки мобов ближнего боя, которые следуют ванильным правилам.
 		getOrCreateTagBuilder(DamageTypeTags.BYPASSES_COOLDOWN).add(
-				ModDamageTypes.EYE_LASER,
 				ModDamageTypes.LOKI_CHAOS,
 				ModDamageTypes.CAP_SHIELD_THROW,
 				ModDamageTypes.CAP_SHIELD_SLAM
 		);
 
 		// #superheroes:beam — beam-typed damage for a hero's adaptation check (counts even
-		// without a living attacker). Exactly the keys the old hardcoded list had.
-		getOrCreateTagBuilder(ModDamageTypes.BEAM).add(
-				ModDamageTypes.EYE_LASER
-		);
+		// without a living attacker). Membership comes from module DamageTypeSpec tags below.
 
 		// Hero- and content-owned types join their declared tags via the module specs —
 		// no module class names here.

@@ -19,7 +19,6 @@ public final class ModDamageTypeProvider extends FabricDynamicRegistryProvider {
 	@Override
 	protected void configure(HolderLookup.Provider registries, Entries entries) {
 		var lookup = registries.lookupOrThrow(Registries.DAMAGE_TYPE);
-		entries.add(lookup, ModDamageTypes.EYE_LASER);
 		entries.add(lookup, ModDamageTypes.SHADOW_ATTACK);
 		entries.add(lookup, ModDamageTypes.LOKI_CHAOS);
 		entries.add(lookup, ModDamageTypes.CAP_SHIELD_THROW);

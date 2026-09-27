@@ -1,5 +1,6 @@
 package io.github.grebeshok105.codex.hero.regulus.runtime;
 
+import io.github.grebeshok105.codex.mechanic.flight.FlightController;
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.ability.AbilityRouter;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
@@ -11,8 +12,8 @@ import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.core.resource.EnergyLocks;
 import io.github.grebeshok105.codex.effect.EffectRefresh;
-import io.github.grebeshok105.codex.effect.FlightController;
-import io.github.grebeshok105.codex.flight.FlightAbilityState;
+import io.github.grebeshok105.codex.mechanic.flight.FlightController;
+import io.github.grebeshok105.codex.mechanic.flight.FlightAbilityState;
 import io.github.grebeshok105.codex.hero.regulus.net.MadnessSyncS2CPayload;
 import io.github.grebeshok105.codex.hero.regulus.net.MadnessVisualS2CPayload;
 import io.github.grebeshok105.codex.hero.regulus.registry.RegulusDamageTypes;

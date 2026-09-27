@@ -5,12 +5,11 @@ import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import io.github.grebeshok105.codex.core.lifecycle.HeroTickDispatcher;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.effect.AutoSaturationController;
-import io.github.grebeshok105.codex.effect.FlightController;
+import io.github.grebeshok105.codex.mechanic.flight.FlightController;
 import io.github.grebeshok105.codex.effect.HeroEquipmentLock;
 import io.github.grebeshok105.codex.effect.HeroLandingTracker;
 import io.github.grebeshok105.codex.effect.HeroMeleeImpactController;
 import io.github.grebeshok105.codex.effect.HeroPassiveRegenController;
-import io.github.grebeshok105.codex.effect.HeroReactionController;
 import io.github.grebeshok105.codex.effect.SuperJumpController;
 import io.github.grebeshok105.codex.core.lifecycle.EntityControlLock;
 import io.github.grebeshok105.codex.core.lifecycle.PassiveReconciler;
@@ -44,8 +43,6 @@ public final class SharedMechanics {
 		ctx.lifecycle().onLeave(EntityControlLock::releaseOwnedBy);
 		ctx.lifecycle().onDeath(EntityControlLock::releaseOwnedBy);
 		ctx.lifecycle().onRespawn(HeroTransformService::onPlayerRespawn);
-		// Cross-hero reaction broadcast (Homelander <-> Omniman) — global by design.
-		ctx.lifecycle().onHeroTransformed(HeroReactionController::onTransformed);
 		ctx.lifecycle().onServerStopped(server -> EnergyLocks.resetAll());
 
 		HeroLandingTracker.register(ctx);

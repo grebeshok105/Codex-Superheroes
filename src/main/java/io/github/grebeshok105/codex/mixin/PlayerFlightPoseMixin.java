@@ -1,7 +1,7 @@
 package io.github.grebeshok105.codex.mixin;
 
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
-import io.github.grebeshok105.codex.effect.FlightController;
+import io.github.grebeshok105.codex.mechanic.flight.FlightController;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.player.Player;

@@ -1,15 +1,17 @@
 package io.github.grebeshok105.codex.gametest;
 
+import io.github.grebeshok105.codex.ability.AbilityIds;
+import io.github.grebeshok105.codex.hero.homelander.effect.HomelanderEffects;
 import io.github.grebeshok105.codex.hero.pandora.PandoraAbilities;
 import io.github.grebeshok105.codex.hero.pandora.runtime.VanityStrippedMobEffect;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
-import io.github.grebeshok105.codex.ability.AbilityIds;
+import io.github.grebeshok105.codex.hero.homelander.HomelanderAbilityIds;
 import io.github.grebeshok105.codex.core.ability.AbilityRouter;
 import io.github.grebeshok105.codex.hero.pandora.runtime.MirrorDimensionController;
 import io.github.grebeshok105.codex.effect.ModEffects;
 import io.github.grebeshok105.codex.hero.doomsday.DoomsdayAbilities;
 import io.github.grebeshok105.codex.hero.doomsday.DoomsdayHero;
-import io.github.grebeshok105.codex.hero.HomelanderHero;
+import io.github.grebeshok105.codex.hero.homelander.HomelanderHero;
 import io.github.grebeshok105.codex.hero.ironman.IronManHero;
 import io.github.grebeshok105.codex.hero.pandora.PandoraHero;
 import io.github.grebeshok105.codex.hero.scaramouche.ScaramoucheAbilities;
@@ -48,10 +50,10 @@ public final class AbilityGateGameTests implements FabricGameTest {
 	public void madnessMakesActivationFree(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, HomelanderHero.ID);
-		player.addEffect(new MobEffectInstance(ModEffects.MADNESS, 200));
+		player.addEffect(new MobEffectInstance(HomelanderEffects.MADNESS, 200));
 		HeroDataStore.update(player, d -> d.withResources(0f, d.mana()));
-		AbilityRouter.activate(player, AbilityIds.STUNNING_ROAR);
-		helper.assertTrue(AbilityCooldowns.isOnCooldown(player, AbilityIds.STUNNING_ROAR), "madness pays for the roar");
+		AbilityRouter.activate(player, HomelanderAbilityIds.STUNNING_ROAR);
+		helper.assertTrue(AbilityCooldowns.isOnCooldown(player, HomelanderAbilityIds.STUNNING_ROAR), "madness pays for the roar");
 		helper.succeed();
 	}
 
@@ -73,7 +75,7 @@ public final class AbilityGateGameTests implements FabricGameTest {
 	public void aftermathBlocksSilently(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, ScaramoucheHero.ID);
-		player.addEffect(new MobEffectInstance(ModEffects.MADNESS_AFTERMATH, 200));
+		player.addEffect(new MobEffectInstance(HomelanderEffects.MADNESS_AFTERMATH, 200));
 		float before = HeroDataStore.get(player).energy();
 		AbilityRouter.activate(player, ScaramoucheAbilities.SCARAMOUCHE_WIND_PRISON);
 		helper.assertFalse(HeroDataStore.get(player).isActive(ScaramoucheAbilities.SCARAMOUCHE_WIND_PRISON),
@@ -115,22 +117,22 @@ public final class AbilityGateGameTests implements FabricGameTest {
 	public void ironFistsBlocksOtherAbilities(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, HomelanderHero.ID);
-		AbilityRouter.activate(player, AbilityIds.IRON_FISTS);
-		helper.assertTrue(HeroDataStore.get(player).isActive(AbilityIds.IRON_FISTS),
+		AbilityRouter.activate(player, HomelanderAbilityIds.IRON_FISTS);
+		helper.assertTrue(HeroDataStore.get(player).isActive(HomelanderAbilityIds.IRON_FISTS),
 				"Iron Fists toggles on at full energy");
 
 		// Bound to mana so the 200-tick energy lock Iron Fists sets cannot be what blocks it.
-		AbilityRouter.bind(player, AbilityIds.X_RAY, ResourceKind.MANA);
-		AbilityRouter.activate(player, AbilityIds.X_RAY);
-		helper.assertFalse(HeroDataStore.get(player).isActive(AbilityIds.X_RAY),
+		AbilityRouter.bind(player, HomelanderAbilityIds.X_RAY, ResourceKind.MANA);
+		AbilityRouter.activate(player, HomelanderAbilityIds.X_RAY);
+		helper.assertFalse(HeroDataStore.get(player).isActive(HomelanderAbilityIds.X_RAY),
 				"the stance suppresses other abilities");
 
-		AbilityRouter.activate(player, AbilityIds.IRON_FISTS);
-		helper.assertFalse(HeroDataStore.get(player).isActive(AbilityIds.IRON_FISTS),
+		AbilityRouter.activate(player, HomelanderAbilityIds.IRON_FISTS);
+		helper.assertFalse(HeroDataStore.get(player).isActive(HomelanderAbilityIds.IRON_FISTS),
 				"pressing Iron Fists again toggles it off");
 
-		AbilityRouter.activate(player, AbilityIds.X_RAY);
-		helper.assertTrue(HeroDataStore.get(player).isActive(AbilityIds.X_RAY),
+		AbilityRouter.activate(player, HomelanderAbilityIds.X_RAY);
+		helper.assertTrue(HeroDataStore.get(player).isActive(HomelanderAbilityIds.X_RAY),
 				"with the stance down the same ability starts");
 		TestPlayers.leave(player);
 		helper.succeed();

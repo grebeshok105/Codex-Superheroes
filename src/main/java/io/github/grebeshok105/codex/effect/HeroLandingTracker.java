@@ -1,5 +1,6 @@
 package io.github.grebeshok105.codex.effect;
 
+import io.github.grebeshok105.codex.mechanic.flight.FlightController;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.core.hero.Hero;

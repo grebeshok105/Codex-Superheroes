@@ -10,9 +10,9 @@ import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.net.AbilityCooldownS2CPayload;
 import io.github.grebeshok105.codex.core.net.BeamFxS2CPayload;
 import io.github.grebeshok105.codex.core.net.WallImpactDebrisS2CPayload;
-import io.github.grebeshok105.codex.flight.FlightAbilityState;
+import io.github.grebeshok105.codex.mechanic.flight.FlightAbilityState;
 import io.github.grebeshok105.codex.core.net.HeroDataSyncS2CPayload;
-import io.github.grebeshok105.codex.network.FlightStateS2CPayload;
+import io.github.grebeshok105.codex.mechanic.flight.FlightStateS2CPayload;
 import io.github.grebeshok105.codex.core.net.ResourceUpdateS2CPayload;
 import io.github.grebeshok105.codex.core.net.ScreenShakeS2CPayload;
 import io.github.grebeshok105.codex.core.transform.HeroData;
@@ -58,8 +58,8 @@ public final class ClientNetworking {
 				context.client().execute(() -> ClientFlightState.update(
 						payload.entityId(),
 						payload.active(),
-						io.github.grebeshok105.codex.flight.FlightMode.byOrdinal(payload.mode()),
-						io.github.grebeshok105.codex.flight.FlightPhase.byOrdinal(payload.phase()),
+						io.github.grebeshok105.codex.mechanic.flight.FlightMode.byOrdinal(payload.mode()),
+						io.github.grebeshok105.codex.mechanic.flight.FlightPhase.byOrdinal(payload.phase()),
 						payload.horizontalSpeed())));
 
 		ClientPlayNetworking.registerGlobalReceiver(ScreenShakeS2CPayload.TYPE, (payload, context) ->
