@@ -187,8 +187,10 @@ public class RegulusGameTests implements FabricGameTest {
 			helper.assertFalse(ModItems.EVANGELION.use(helper.getLevel(), player, InteractionHand.MAIN_HAND)
 							.getResult().consumesAction(),
 					"evangelion refuses while mad");
-			// The amp-4 reading tail beats the amp-0 madness instance in vanilla's merge —
-			// it resurfaces only at the next tickCount % 40 ambient refresh, so poll.
+			// Mock-player effect durations never decrement, so the amp-4 reading
+			// tail cannot expire on its own — drop it the way real expiry would and
+			// let the ambient %40 refresh re-apply the amp-0 madness instance.
+			player.removeEffect(MobEffects.DAMAGE_RESISTANCE);
 			awaitTrue(helper, () -> {
 				MobEffectInstance r = player.getEffect(MobEffects.DAMAGE_RESISTANCE);
 				return r != null && r.getAmplifier() == 0 && r.isAmbient() && !r.isVisible();
