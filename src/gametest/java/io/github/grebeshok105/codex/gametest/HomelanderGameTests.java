@@ -197,7 +197,11 @@ public final class HomelanderGameTests implements FabricGameTest {
 				helper.getLevel().setBlock(remoteFeet.offset(dx, -1, dz), Blocks.STONE.defaultBlockState(), 3);
 			}
 		}
-		player.moveTo(remoteFeet.getX() + 0.5, remoteFeet.getY(), remoteFeet.getZ() + 0.5, 0f, 0f);
+		// ChunkMap tracking puts a player ticket on the remote chunk — without it the
+		// chunk never entity-ticks and the effect duration would never decrement.
+		helper.getLevel().getChunk(remoteFeet);
+		player.teleportTo(remoteFeet.getX() + 0.5, remoteFeet.getY(), remoteFeet.getZ() + 0.5);
+		helper.getLevel().getChunkSource().chunkMap.move(player);
 		player.setDeltaMovement(Vec3.ZERO);
 
 		player.addEffect(new MobEffectInstance(ModEffects.MADNESS_AFTERMATH, 25));
@@ -448,15 +452,15 @@ public final class HomelanderGameTests implements FabricGameTest {
 		helper.assertTrue(heroWeakness != null && heroWeakness.getDuration() == 200,
 				"the dagger inflicts superhero weakness for 200 ticks");
 		helper.assertTrue(victim.getHealth() < hp, "the hit lands magic damage on the victim");
-		// tryConsume pulls 200 through the victim's bound pool (energy first, mana
-		// covering the deficit); poll a few ticks in case the resource write lands late.
-		await(helper, () -> data(victim).energy() < 100f || data(victim).mana() < 100f, 10, () -> {
-			helper.assertTrue(data(victim).energy() < 100f,
-					"the dagger drains the victim's energy, got " + data(victim).energy());
-			TestPlayers.leave(attacker);
-			TestPlayers.leave(victim);
-			helper.succeed();
-		});
+		// tryConsume pulls 200 through the victim's bound pool synchronously inside
+		// hurtEnemy — energy pays first and mana covers the deficit, so a full
+		// 100/100 victim ends at 0/0. The sum stays correct if the maxes change.
+		helper.assertTrue(data(victim).energy() + data(victim).mana() < 200f,
+				"the dagger drains 200 across the victim's pools, got energy=" + data(victim).energy()
+						+ " mana=" + data(victim).mana());
+		TestPlayers.leave(attacker);
+		TestPlayers.leave(victim);
+		helper.succeed();
 	}
 
 	@GameTest(template = EMPTY_STRUCTURE)
