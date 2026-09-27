@@ -51,7 +51,7 @@
 | Стадия | Статус | PR |
 | :-- | :-- | :-- |
 | I1a Kazuha + Scaramouche | ✅ | #90 |
-| I1b Loki + A-Train | ⏳ | |
+| I1b Loki + A-Train | ✅ | #93 |
 | I1c Battle Beast | ⏳ | |
 | I2a Goku + Naruto | ✅ | #91 |
 | I2b Kratos | ⏳ | |
