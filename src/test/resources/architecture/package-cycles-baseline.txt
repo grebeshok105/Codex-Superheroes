@@ -2,7 +2,6 @@ ability <-> effect
 ability <-> flight
 ability <-> hero
 ability.ironman <-> hero
-attachment <-> effect
 attachment <-> mechanic.boundweapon
 client <-> client.hud
 content.horde <-> content.horde.entity
