@@ -423,3 +423,72 @@
 - Horde subsystem moved to content/horde/ + client/content/horde/ on NEW ContentModule/ContentModuleContext contract (HeroModuleContext minus hero()); composition roots bootstrap/ContentModules + client/bootstrap/ContentClientModules.
 - HordeManager.ACTIVE/OVERLAY_PLAYERS → OwnedSessionMap(global(), empty ClearOn) — clears only on SERVER_STOPPED (matches old resetAll; SharedMechanics.onServerStopped dropped).
 - GeckoLib kept (removal precondition not proven). Reviewer APPROVE, CI green.
+
+## I1a — Kazuha + Scaramouche (PR #90)
+- hero/kazuha, hero/scaramouche + client counterparts; first wave on the migrate-hero procedure.
+- Gate green; reviewer APPROVE.
+
+## I2a — Goku + Naruto + mechanic/charge (PR #91)
+- hero/goku, hero/naruto; shared charge mechanic → mechanic/charge/ (ChargeSession, Track).
+- Gate green; reviewer APPROVE.
+
+## I3 — Invincible + Omni-Man + mechanic/ability (PR #92)
+- hero/invincible, hero/omniman; ViltrumiteChargeAbility + shared ability helpers → mechanic/ability/.
+- Gate green; reviewer APPROVE.
+
+## I1b — Loki + A-Train (PR #93)
+- hero/loki, hero/atrain. Gate green; reviewer APPROVE.
+
+## I2c — Captain America (PR #95)
+- hero/captainamerica; shield projectile + vibranium items in-module. Gate green; reviewer APPROVE.
+
+## I2b — Kratos (PR #97)
+- hero/kratos; two review rounds broke a real ability<->runtime package cycle. Gate green; reviewer APPROVE.
+
+## I1c — Battle Beast (PR #98)
+- hero/battlebeast. Gate green; reviewer APPROVE.
+
+## IC2 — Homelander boss → content/boss/homelander (PR #99)
+- Boss encounter + minions + boss bar into a content module; hero Homelander stays for I6a.
+- Gate green; reviewer APPROVE.
+
+## I4b — Rem (PR #100)
+- hero/rem + client/hero/rem; demonism/npc interactions in-module. Gate green; reviewer APPROVE.
+
+## I4c — Raiden + mechanic/strike (PR #101)
+- hero/raiden; lightning strike engine → mechanic/strike/ (shared with other heroes).
+- Gate green; reviewer APPROVE.
+
+## I4a — Sung Jinwoo + mechanic/summon (PR #102)
+- hero/sungjinwoo; shadow-soldier summon engine → mechanic/summon/. Gate green; reviewer APPROVE.
+
+## IC3 — admin + commands → content modules (PR #103)
+- Admin infra and the /superheroes command root → content/admin + content/commands.
+- Gate green; reviewer APPROVE.
+
+## I4d — Doomsday (PR #104)
+- hero/doomsday: adaptation learning, doom grip, tier command seam (module commands()).
+- Gate green; reviewer APPROVE.
+
+## I5a — Thanos + InfinityStones (PR #108)
+- hero/thanos + client/hero/thanos; hero→stone mapping baked into InfinityStones.rewardFor(heroId) —
+  heroes never import siblings; ThanosStoneRewardController.registerHeroStone API deleted.
+- compat/falbiks/ snap hook + strip-mixin; tooltip stone line via ThanosClientModule.appendStoneLine
+  (ItemTooltipCallback). Remaining 6 TransformationItem subclasses collapsed to declarative rows.
+- Gate green; reviewer APPROVE.
+
+## I5b — Regulus (PR #110)
+- hero/regulus + client/hero/regulus (madness HUD/mixins via client/core FovModifiers + HudJitter).
+- Damage types → SPECS pattern (RegulusDamageTypes.SPECS → HeroModule.damageTypes()); RegulusSuitItem
+  deleted → declarative TransformationItem row; AbilityIds regulus rows removed; logs/latest.log untracked.
+- Gate green; reviewer APPROVE.
+
+## I5c — Pandora + shared client seams + compat (PR #109)
+- hero/pandora; 4 cinematic mixins → generic client/core/input/InputLock (lock reason registered by Pandora);
+  FontVanityCipherMixin → client/core/text/TextObfuscationLayers; Iris bridge → client/compat/iris/.
+- Gate green; reviewer APPROVE.
+
+## Test/infra fixes merged between waves
+- #76 horde audience isolation, #78 house-of-vanity release scope, #82 victim visibility + pvp flag restore,
+  #94 charge victim visibility, #105 horde wave stabilization, #107 runServer Veil-free classpath,
+  #112 doom-grip spatial-scan wait.
