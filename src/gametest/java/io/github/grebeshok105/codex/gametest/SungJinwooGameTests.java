@@ -166,7 +166,7 @@ public final class SungJinwooGameTests implements FabricGameTest {
 					TestPlayers.leave(player);
 					helper.succeed();
 				});
-			});
+			}));
 		});
 	}
 
