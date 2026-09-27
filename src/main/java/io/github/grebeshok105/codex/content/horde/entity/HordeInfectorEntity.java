@@ -49,7 +49,7 @@ public class HordeInfectorEntity extends BaseHordeEntity implements RangedAttack
 
 	@Override
 	public void performRangedAttack(LivingEntity target, float velocity) {
-		HordeAcidBombEntity bomb = new HordeAcidBombEntity(this, level());
+		HordeAcidBombEntity bomb = new HordeAcidBombEntity(HordeEntities.ACID_BOMB, this, level());
 		double dx = target.getX() - getX();
 		double dy = target.getY(0.5) - bomb.getY();
 		double dz = target.getZ() - getZ();

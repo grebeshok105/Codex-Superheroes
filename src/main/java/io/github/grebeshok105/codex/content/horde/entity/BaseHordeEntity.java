@@ -1,6 +1,5 @@
 package io.github.grebeshok105.codex.content.horde.entity;
 
-import io.github.grebeshok105.codex.content.horde.HordeManager;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
@@ -21,7 +20,7 @@ import java.util.UUID;
 
 /**
  * Base class for all horde entities. Tracks the horde instance they belong to
- * and notifies the HordeManager on death. Renders via GeckoLib using the
+ * and fires HordeDeaths on death. Renders via GeckoLib using the
  * per-mob geo/animation assets resolved by {@link HordeGeoAssets}.
  */
 public abstract class BaseHordeEntity extends Monster implements GeoEntity {
@@ -125,7 +124,7 @@ public abstract class BaseHordeEntity extends Monster implements GeoEntity {
 	public void die(DamageSource source) {
 		super.die(source);
 		if (!level().isClientSide() && hordeId != null) {
-			HordeManager.onMobDied(hordeId, getUUID());
+			HordeDeaths.fireMobDied(hordeId, getUUID());
 		}
 	}
 
