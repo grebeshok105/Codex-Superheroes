@@ -56,7 +56,7 @@
 | I2a Goku + Naruto | 🔵 на ревью | #91 |
 | I2b Kratos | ⏳ | |
 | I2c Captain America | ⏳ | |
-| I3 Invincible + Omni-Man | 🔵 на ревью | #92 |
+| I3 Invincible + Omni-Man | ✅ | #92 |
 | I4a Sung Jinwoo | ⏳ | |
 | I4b Rem | ⏳ | |
 | I4c Raiden | ⏳ | |
