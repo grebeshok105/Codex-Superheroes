@@ -36,7 +36,6 @@ public final class ModDamageTypeProvider extends FabricDynamicRegistryProvider {
 		entries.add(lookup, ModDamageTypes.THANOS_REALITY_TEAR);
 		entries.add(lookup, ModDamageTypes.CAP_SHIELD_THROW);
 		entries.add(lookup, ModDamageTypes.CAP_SHIELD_SLAM);
-		entries.add(lookup, ModDamageTypes.SPACE_CRUSH);
 		for (DamageTypeSpec spec : HeroModules.damageTypeSpecs()) {
 			entries.add(lookup, spec.key());
 		}

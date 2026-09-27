@@ -31,7 +31,6 @@ public final class ModDamageTypes {
 	public static final ResourceKey<DamageType> THANOS_REALITY_TEAR = key("thanos_reality_tear");
 	public static final ResourceKey<DamageType> CAP_SHIELD_THROW = key("cap_shield_throw");
 	public static final ResourceKey<DamageType> CAP_SHIELD_SLAM = key("cap_shield_slam");
-	public static final ResourceKey<DamageType> SPACE_CRUSH = key("space_crush");
 
 	/** Beam-type damage — read by hero code instead of a hardcoded key list (populated by datagen). */
 	public static final TagKey<DamageType> BEAM = TagKey.create(Registries.DAMAGE_TYPE, ModId.of("beam"));
@@ -61,7 +60,6 @@ public final class ModDamageTypes {
 		context.register(THANOS_REALITY_TEAR, new DamageType("thanos_reality_tear", DamageScaling.NEVER, 0.0F));
 		context.register(CAP_SHIELD_THROW, new DamageType("cap_shield_throw", DamageScaling.NEVER, 0.0F));
 		context.register(CAP_SHIELD_SLAM, new DamageType("cap_shield_slam", DamageScaling.NEVER, 0.0F));
-		context.register(SPACE_CRUSH, new DamageType("space_crush", DamageScaling.NEVER, 0.0F));
 	}
 
 	public static DamageSource eyeLaser(ServerLevel level, Entity attacker) {
@@ -131,10 +129,6 @@ public final class ModDamageTypes {
 
 	public static DamageSource capShieldSlam(ServerLevel level, Entity attacker) {
 		return source(level, CAP_SHIELD_SLAM, attacker);
-	}
-
-	public static DamageSource spaceCrush(ServerLevel level, Entity attacker) {
-		return source(level, SPACE_CRUSH, attacker);
 	}
 
 	private static DamageSource source(ServerLevel level, ResourceKey<DamageType> key, Entity attacker) {

@@ -40,8 +40,7 @@ public final class ModDamageTypeTagProvider extends FabricTagProvider<DamageType
 				ModDamageTypes.THANOS_MIND_PULSE,
 				ModDamageTypes.THANOS_REALITY_TEAR,
 				ModDamageTypes.CAP_SHIELD_THROW,
-				ModDamageTypes.CAP_SHIELD_SLAM,
-				ModDamageTypes.SPACE_CRUSH
+				ModDamageTypes.CAP_SHIELD_SLAM
 		);
 
 		// #superheroes:beam — beam-typed damage for a hero's adaptation check (counts even

@@ -43,15 +43,6 @@ public final class AbilityIds {
 
 
 
-	// Pandora — Mirror Dimension warp
-	public static final ResourceLocation MIRROR_DIMENSION = ModId.of("mirror_dimension");
-	public static final ResourceLocation MIRROR_MODE_CYCLE = ModId.of("mirror_mode_cycle");
-	// Pandora's dimension-only abilities — available ONLY while her House of Vanity is open.
-	public static final ResourceLocation SPATIAL_BIND = ModId.of("spatial_bind");
-	public static final ResourceLocation SPACE_CRUSH = ModId.of("space_crush");
-	public static final ResourceLocation VANITY_STRIP = ModId.of("vanity_strip");
-
-
 	private AbilityIds() {
 	}
 }

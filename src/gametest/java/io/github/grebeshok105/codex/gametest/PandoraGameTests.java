@@ -1,8 +1,8 @@
 package io.github.grebeshok105.codex.gametest;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.ability.AbilityIds;
-import io.github.grebeshok105.codex.attachment.ModAttachments;
+import io.github.grebeshok105.codex.hero.pandora.PandoraAbilities;
+import io.github.grebeshok105.codex.hero.pandora.PandoraAttachments;
 import io.github.grebeshok105.codex.core.ability.AbilityAvailability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import io.github.grebeshok105.codex.core.ability.AbilityRegistry;
@@ -12,10 +12,10 @@ import io.github.grebeshok105.codex.core.hero.Heroes;
 import io.github.grebeshok105.codex.core.lifecycle.ControlLockKind;
 import io.github.grebeshok105.codex.core.transform.HeroDataStore;
 import io.github.grebeshok105.codex.core.transform.HeroTransformService;
-import io.github.grebeshok105.codex.effect.MirrorDimensionController;
-import io.github.grebeshok105.codex.effect.ModEffects;
-import io.github.grebeshok105.codex.effect.PandoraDeathController;
-import io.github.grebeshok105.codex.effect.SpatialBindController;
+import io.github.grebeshok105.codex.hero.pandora.runtime.MirrorDimensionController;
+import io.github.grebeshok105.codex.hero.pandora.runtime.VanityStrippedMobEffect;
+import io.github.grebeshok105.codex.hero.pandora.runtime.PandoraDeathController;
+import io.github.grebeshok105.codex.hero.pandora.runtime.SpatialBindController;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
@@ -105,11 +105,11 @@ public final class PandoraGameTests implements FabricGameTest {
 		helper.assertTrue(pandora != null, "the pandora hero is registered");
 		List<ResourceLocation> ids = pandora.getAbilities();
 		helper.assertTrue(ids.equals(List.of(
-						AbilityIds.MIRROR_DIMENSION,
-						AbilityIds.MIRROR_MODE_CYCLE,
-						AbilityIds.SPATIAL_BIND,
-						AbilityIds.SPACE_CRUSH,
-						AbilityIds.VANITY_STRIP)),
+						PandoraAbilities.MIRROR_DIMENSION,
+						PandoraAbilities.MIRROR_MODE_CYCLE,
+						PandoraAbilities.SPATIAL_BIND,
+						PandoraAbilities.SPACE_CRUSH,
+						PandoraAbilities.VANITY_STRIP)),
 				"ability list or slot order changed: " + ids);
 		for (ResourceLocation id : ids) {
 			helper.assertTrue(AbilityRegistry.get(id) != null, id + " is not in AbilityRegistry");
@@ -152,12 +152,12 @@ public final class PandoraGameTests implements FabricGameTest {
 		TestHeroes.transform(pandora, PANDORA);
 		Hero hero = Heroes.get(PANDORA);
 
-		helper.assertTrue(hero.visibility(pandora, AbilityIds.SPATIAL_BIND)
+		helper.assertTrue(hero.visibility(pandora, PandoraAbilities.SPATIAL_BIND)
 						== AbilityAvailability.Visibility.HIDDEN
-						&& !hero.canUseAbility(pandora, HeroDataStore.get(pandora), AbilityIds.SPATIAL_BIND),
+						&& !hero.canUseAbility(pandora, HeroDataStore.get(pandora), PandoraAbilities.SPATIAL_BIND),
 				"dimension-only abilities are hidden and unusable without the House");
 
-		AbilityRouter.activate(pandora, AbilityIds.MIRROR_DIMENSION);
+		AbilityRouter.activate(pandora, PandoraAbilities.MIRROR_DIMENSION);
 
 		helper.runAfterDelay(3, () -> {
 			helper.assertTrue(MirrorDimensionController.hasActiveHouse(pandora), "the House is open");
@@ -167,16 +167,16 @@ public final class PandoraGameTests implements FabricGameTest {
 							&& pandora.getEffect(MobEffects.DAMAGE_RESISTANCE).getAmplifier() == 4
 							&& pandora.hasEffect(MobEffects.FIRE_RESISTANCE),
 					"Vanity Authority refreshes immunity on the caster each tick");
-			helper.assertTrue(hero.visibility(pandora, AbilityIds.SPATIAL_BIND)
+			helper.assertTrue(hero.visibility(pandora, PandoraAbilities.SPATIAL_BIND)
 							== AbilityAvailability.Visibility.AVAILABLE
-							&& hero.canUseAbility(pandora, HeroDataStore.get(pandora), AbilityIds.SPATIAL_BIND),
+							&& hero.canUseAbility(pandora, HeroDataStore.get(pandora), PandoraAbilities.SPATIAL_BIND),
 					"the open House unlocks the dimension-only abilities");
 
 			TestPlayers.clearSpawnInvulnerability(pandora);
 			pandora.hurt(helper.getLevel().damageSources().generic(), 5f);
 			helper.assertTrue(pandora.getHealth() == pandora.getMaxHealth(),
 					"level-5 resistance reduces the hit to zero damage");
-			AbilityRouter.deactivate(pandora, AbilityIds.MIRROR_DIMENSION);
+			AbilityRouter.deactivate(pandora, PandoraAbilities.MIRROR_DIMENSION);
 			helper.assertFalse(MirrorDimensionController.hasActiveHouse(pandora), "the House is closed");
 			// Mock-player effect durations never tick down in this harness, so the
 			// immunity-fade window cannot be observed — the closed House is the pin.
@@ -201,16 +201,16 @@ public final class PandoraGameTests implements FabricGameTest {
 		TestHeroes.transform(victim, SCARAMOUCHE);
 		HeroDataStore.update(victim, d -> d.withResources(200f, d.mana()));
 
-		AbilityRouter.activate(pandora, AbilityIds.MIRROR_DIMENSION);
+		AbilityRouter.activate(pandora, PandoraAbilities.MIRROR_DIMENSION);
 
 		helper.runAfterDelay(2, () -> {
 			helper.assertTrue(MirrorDimensionController.trappedVictims(pandora).contains(victim),
 					"the initial absorb caught the victim");
 
-			AbilityRouter.activate(pandora, AbilityIds.VANITY_STRIP);
-			helper.assertTrue(HeroDataStore.get(pandora).isActive(AbilityIds.VANITY_STRIP),
+			AbilityRouter.activate(pandora, PandoraAbilities.VANITY_STRIP);
+			helper.assertTrue(HeroDataStore.get(pandora).isActive(PandoraAbilities.VANITY_STRIP),
 					"the strip toggles on");
-			helper.assertTrue(victim.hasEffect(ModEffects.VANITY_STRIPPED),
+			helper.assertTrue(victim.hasEffect(VanityStrippedMobEffect.VANITY_STRIPPED),
 					"activation strips every trapped victim immediately");
 
 			float before = HeroDataStore.get(victim).energy();
@@ -219,18 +219,18 @@ public final class PandoraGameTests implements FabricGameTest {
 					"a stripped victim cannot activate her own abilities");
 			helper.assertTrue(HeroDataStore.get(victim).energy() == before, "nothing charged");
 
-			AbilityRouter.activate(pandora, AbilityIds.VANITY_STRIP); // second press toggles off
-			helper.assertFalse(HeroDataStore.get(pandora).isActive(AbilityIds.VANITY_STRIP),
+			AbilityRouter.activate(pandora, PandoraAbilities.VANITY_STRIP); // second press toggles off
+			helper.assertFalse(HeroDataStore.get(pandora).isActive(PandoraAbilities.VANITY_STRIP),
 					"the strip toggled off");
 			// Mock players never tick down effect durations in this harness (the victim's
 			// tickCount stays 0), so the 60t marker cannot decay naturally. Drop it the way
 			// real expiry would, then check the powers return.
-			victim.removeEffect(ModEffects.VANITY_STRIPPED);
+			victim.removeEffect(VanityStrippedMobEffect.VANITY_STRIPPED);
 			AbilityRouter.activate(victim, WIND_PRISON);
 			helper.assertTrue(HeroDataStore.get(victim).isActive(WIND_PRISON),
 					"the victim's powers return after the strip");
 			AbilityRouter.deactivate(victim, WIND_PRISON);
-			AbilityRouter.deactivate(pandora, AbilityIds.MIRROR_DIMENSION);
+			AbilityRouter.deactivate(pandora, PandoraAbilities.MIRROR_DIMENSION);
 			TestPlayers.leave(victim);
 			TestPlayers.leave(pandora);
 			helper.succeed();
@@ -252,12 +252,12 @@ public final class PandoraGameTests implements FabricGameTest {
 		TestPlayers.clearSpawnInvulnerability(victim);
 		Vec3 anchor = victim.position();
 
-		AbilityRouter.activate(pandora, AbilityIds.MIRROR_DIMENSION);
+		AbilityRouter.activate(pandora, PandoraAbilities.MIRROR_DIMENSION);
 
 		helper.runAfterDelay(2, () -> {
 			helper.assertTrue(MirrorDimensionController.trappedVictims(pandora).contains(victim),
 					"the initial absorb caught the victim");
-			AbilityRouter.activate(pandora, AbilityIds.SPATIAL_BIND);
+			AbilityRouter.activate(pandora, PandoraAbilities.SPATIAL_BIND);
 			helper.assertTrue(SpatialBindController.isBound(victim),
 					"the bind caught the trapped victim");
 		});
@@ -272,8 +272,8 @@ public final class PandoraGameTests implements FabricGameTest {
 		helper.runAfterDelay(6, () -> {
 			helper.assertTrue(Math.abs(victim.getX() - anchor.x) < 0.5,
 					"a bound victim is snapped back to the anchor");
-			AbilityRouter.activate(pandora, AbilityIds.SPACE_CRUSH);
-			helper.assertTrue(AbilityCooldowns.isOnCooldown(pandora, AbilityIds.SPACE_CRUSH),
+			AbilityRouter.activate(pandora, PandoraAbilities.SPACE_CRUSH);
+			helper.assertTrue(AbilityCooldowns.isOnCooldown(pandora, PandoraAbilities.SPACE_CRUSH),
 					"the crush goes on cooldown after firing");
 			helper.assertTrue(victim.isDeadOrDying(),
 					"space_crush executes a bound victim");
@@ -339,7 +339,7 @@ public final class PandoraGameTests implements FabricGameTest {
 					"the cinematic re-anchors her every tick");
 		});
 		awaitTrue(helper, () -> seen.get() && !PandoraDeathController.isInCinematic(pandora), 150, () -> {
-			helper.assertTrue(Boolean.TRUE.equals(pandora.getAttached(ModAttachments.PANDORA_REVIVED)),
+			helper.assertTrue(Boolean.TRUE.equals(pandora.getAttached(PandoraAttachments.PANDORA_REVIVED)),
 					"the pandora_revived attachment persisted");
 			helper.assertTrue(TestPlayers.lockOwners(pandora, ControlLockKind.INVULNERABLE)
 							.contains(pandora.getUUID()),
@@ -377,11 +377,11 @@ public final class PandoraGameTests implements FabricGameTest {
 		awaitTrue(helper, () -> seen.get() && !PandoraDeathController.isInCinematic(pandora), 150, () -> {
 			helper.assertTrue(pandora.distanceToSqr(anchor.x, anchor.y, anchor.z) < 0.5,
 					"with no killer she reappears at the anchor");
-			helper.assertTrue(Boolean.TRUE.equals(pandora.getAttached(ModAttachments.PANDORA_REVIVED)),
+			helper.assertTrue(Boolean.TRUE.equals(pandora.getAttached(PandoraAttachments.PANDORA_REVIVED)),
 					"the revived flag persisted");
 
 			HeroTransformService.forceUntransform(pandora);
-			helper.assertTrue(pandora.getAttached(ModAttachments.PANDORA_REVIVED) == null,
+			helper.assertTrue(pandora.getAttached(PandoraAttachments.PANDORA_REVIVED) == null,
 					"hero-clear strips the revived flag");
 			helper.assertTrue(TestPlayers.lockOwners(pandora, ControlLockKind.INVULNERABLE).isEmpty(),
 					"hero-clear releases the invulnerability lock");

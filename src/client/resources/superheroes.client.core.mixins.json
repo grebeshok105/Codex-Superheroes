@@ -3,7 +3,12 @@
 	"package": "io.github.grebeshok105.codex.client.core.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"client": [
-		"SoundEngineMixin"
+		"SoundEngineMixin",
+		"InputLockKeyboardInputMixin",
+		"InputLockKeyboardMixin",
+		"InputLockMousePressMixin",
+		"InputLockMouseTurnMixin",
+		"FontObfuscationMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
