@@ -39,6 +39,7 @@
 			"io.github.grebeshok105.codex.gametest.InvincibleGameTests",
 			"io.github.grebeshok105.codex.gametest.OmnimanGameTests",
 			"io.github.grebeshok105.codex.gametest.GokuNarutoChargeGameTests",
+			"io.github.grebeshok105.codex.gametest.CaptainAmericaGameTests",
 			"io.github.grebeshok105.codex.gametest.ContentRegistrationGameTests"
 		]
 	},
