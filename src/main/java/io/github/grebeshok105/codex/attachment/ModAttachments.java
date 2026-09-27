@@ -1,7 +1,7 @@
 package io.github.grebeshok105.codex.attachment;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.effect.RaidenState;
+
 import io.github.grebeshok105.codex.effect.RegulusMadnessState;
 import io.github.grebeshok105.codex.mechanic.boundweapon.BoundWeaponIssues;
 import com.mojang.serialization.Codec;
@@ -16,11 +16,6 @@ public final class ModAttachments {
 			.initializer(() -> Boolean.FALSE)
 			.persistent(Codec.BOOL)
 			.copyOnDeath());
-
-	// ВАЖНО: state Райден умышленно НЕ persistent и БЕЗ copyOnDeath —
-	// смерть/выход полностью обнуляет таймеры Глаза/Burst, как и просил пользователь.
-	public static final AttachmentType<RaidenState> RAIDEN_STATE = AttachmentRegistry.create(ModId.of("raiden_state"), b -> b
-			.initializer(() -> RaidenState.EMPTY));
 
 	public static final AttachmentType<Boolean> ADMIN_BUILD = AttachmentRegistry.create(ModId.of("admin_build"), b -> b
 			.initializer(() -> Boolean.FALSE)

@@ -84,8 +84,8 @@ public final class OmnimanGameTests implements FabricGameTest {
 		// foreign test entities so the grab can only land on our zombie. The chunk
 		// must be force-loaded first — mock connections raise no chunk tickets, so
 		// entities in a remote chunk would never enter tracking.
-		double isoX = omniman.player().getX() + 2000.0;
-		double isoZ = omniman.player().getZ() + 2000.0;
+		double isoX = omniman.player().getX() - 4000.0;
+		double isoZ = omniman.player().getZ() - 4000.0;
 		helper.getLevel().getChunk(BlockPos.containing(isoX, omniman.player().getY(), isoZ));
 		omniman.player().teleportTo(isoX, omniman.player().getY(), isoZ);
 		// The bystander keeps its spawn spot — teleporting a Wire player's connection
@@ -122,8 +122,8 @@ public final class OmnimanGameTests implements FabricGameTest {
 		TestHeroes.transform(player, ModId.of("omniman"));
 
 		// Same cone-scan hazard as the grab test: keep foreign entities out of reach.
-		double isoX = player.getX() + 2000.0;
-		double isoZ = player.getZ() + 2000.0;
+		double isoX = player.getX() - 4000.0;
+		double isoZ = player.getZ() + 4000.0;
 		helper.getLevel().getChunk(BlockPos.containing(isoX, player.getY(), isoZ));
 		player.teleportTo(isoX, player.getY(), isoZ);
 		Zombie zombie = spawnAhead(helper, player);

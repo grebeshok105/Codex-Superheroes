@@ -1,10 +1,12 @@
 package io.github.grebeshok105.codex.gametest;
 
-import io.github.grebeshok105.codex.ability.AbilityIds;
 import io.github.grebeshok105.codex.core.ability.AbilityRouter;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
-import io.github.grebeshok105.codex.hero.RaidenHero;
+import io.github.grebeshok105.codex.hero.raiden.RaidenAbilities;
+import io.github.grebeshok105.codex.hero.raiden.RaidenHero;
+import io.github.grebeshok105.codex.hero.raiden.RaidenItems;
 import io.github.grebeshok105.codex.hero.reinhard.ReinhardItems;
+import io.github.grebeshok105.codex.hero.rem.RemItems;
 import io.github.grebeshok105.codex.item.ModItems;
 import io.github.grebeshok105.codex.mechanic.boundweapon.BoundWeapons;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
@@ -23,9 +25,9 @@ public final class BoundWeaponGameTests implements FabricGameTest {
 		ServerPlayer owner = TestPlayers.join(helper);
 		TestPlayers.fillInventory(owner);
 
-		helper.assertFalse(BoundWeapons.ensureHeld(owner, ModItems.MUSOU_NO_HITOTACHI),
+		helper.assertFalse(BoundWeapons.ensureHeld(owner, RaidenItems.MUSOU_NO_HITOTACHI),
 				"a full inventory must refuse the weapon instead of dropping it");
-		helper.assertTrue(TestPlayers.count(owner, ModItems.MUSOU_NO_HITOTACHI) == 0, "no weapon was issued");
+		helper.assertTrue(TestPlayers.count(owner, RaidenItems.MUSOU_NO_HITOTACHI) == 0, "no weapon was issued");
 		assertNoItemEntities(helper, owner);
 		TestPlayers.leave(owner);
 		helper.succeed();
@@ -54,11 +56,11 @@ public final class BoundWeaponGameTests implements FabricGameTest {
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void droppedWeaponReturnsToOwner(GameTestHelper helper) {
 		ServerPlayer owner = TestPlayers.join(helper);
-		helper.assertTrue(BoundWeapons.ensureHeld(owner, ModItems.REM_MORNING_STAR), "issued into the main hand");
+		helper.assertTrue(BoundWeapons.ensureHeld(owner, RemItems.REM_MORNING_STAR), "issued into the main hand");
 
 		owner.drop(true);
 
-		helper.assertTrue(TestPlayers.count(owner, ModItems.REM_MORNING_STAR) == 1, "the mace went back to the owner");
+		helper.assertTrue(TestPlayers.count(owner, RemItems.REM_MORNING_STAR) == 1, "the mace went back to the owner");
 		assertNoItemEntities(helper, owner);
 		TestPlayers.leave(owner);
 		helper.succeed();
@@ -68,16 +70,16 @@ public final class BoundWeaponGameTests implements FabricGameTest {
 	public void stashedCopyGoesStaleWhenReissued(GameTestHelper helper) {
 		ServerPlayer owner = TestPlayers.join(helper);
 		Inventory inventory = owner.getInventory();
-		BoundWeapons.ensureHeld(owner, ModItems.REM_MORNING_STAR);
+		BoundWeapons.ensureHeld(owner, RemItems.REM_MORNING_STAR);
 		// Simulates moving the mace into a chest: the owner no longer carries it.
 		ItemStack stashed = inventory.removeItemNoUpdate(inventory.selected);
 
-		BoundWeapons.ensureHeld(owner, ModItems.REM_MORNING_STAR);
+		BoundWeapons.ensureHeld(owner, RemItems.REM_MORNING_STAR);
 		inventory.add(stashed);
-		helper.assertTrue(TestPlayers.count(owner, ModItems.REM_MORNING_STAR) == 2, "stash pulled back out");
+		helper.assertTrue(TestPlayers.count(owner, RemItems.REM_MORNING_STAR) == 2, "stash pulled back out");
 		inventory.tick();
 
-		helper.assertTrue(TestPlayers.count(owner, ModItems.REM_MORNING_STAR) == 1,
+		helper.assertTrue(TestPlayers.count(owner, RemItems.REM_MORNING_STAR) == 1,
 				"only the current issue survives an inventory tick");
 		helper.assertTrue(BoundWeapons.isValidFor(inventory.getItem(inventory.selected), owner),
 				"the surviving copy is the reissued one");
@@ -105,11 +107,11 @@ public final class BoundWeaponGameTests implements FabricGameTest {
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void unissuedCopyVanishes(GameTestHelper helper) {
 		ServerPlayer holder = TestPlayers.join(helper);
-		holder.getInventory().add(new ItemStack(ModItems.MUSOU_NO_HITOTACHI));
+		holder.getInventory().add(new ItemStack(RaidenItems.MUSOU_NO_HITOTACHI));
 
 		holder.getInventory().tick();
 
-		helper.assertTrue(TestPlayers.count(holder, ModItems.MUSOU_NO_HITOTACHI) == 0,
+		helper.assertTrue(TestPlayers.count(holder, RaidenItems.MUSOU_NO_HITOTACHI) == 0,
 				"a copy without a current issue (old save, /give) is not a free weapon");
 		TestPlayers.leave(holder);
 		helper.succeed();
@@ -121,19 +123,19 @@ public final class BoundWeaponGameTests implements FabricGameTest {
 		TestHeroes.transform(raiden, RaidenHero.ID);
 		TestPlayers.fillInventory(raiden);
 
-		AbilityRouter.activate(raiden, AbilityIds.RAIDEN_SWORD_DRAW);
-		helper.assertFalse(raiden.getAttachedOrCreate(CoreAttachments.HERO_DATA).isActive(AbilityIds.RAIDEN_SWORD_DRAW),
+		AbilityRouter.activate(raiden, RaidenAbilities.RAIDEN_SWORD_DRAW);
+		helper.assertFalse(raiden.getAttachedOrCreate(CoreAttachments.HERO_DATA).isActive(RaidenAbilities.RAIDEN_SWORD_DRAW),
 				"no room for Yamato means the draw does not start");
-		helper.assertTrue(TestPlayers.count(raiden, ModItems.MUSOU_NO_HITOTACHI) == 0, "no sword was issued");
+		helper.assertTrue(TestPlayers.count(raiden, RaidenItems.MUSOU_NO_HITOTACHI) == 0, "no sword was issued");
 
 		raiden.getInventory().items.set(raiden.getInventory().selected, ItemStack.EMPTY);
-		AbilityRouter.activate(raiden, AbilityIds.RAIDEN_SWORD_DRAW);
-		helper.assertTrue(raiden.getAttachedOrCreate(CoreAttachments.HERO_DATA).isActive(AbilityIds.RAIDEN_SWORD_DRAW),
+		AbilityRouter.activate(raiden, RaidenAbilities.RAIDEN_SWORD_DRAW);
+		helper.assertTrue(raiden.getAttachedOrCreate(CoreAttachments.HERO_DATA).isActive(RaidenAbilities.RAIDEN_SWORD_DRAW),
 				"with a free hand the draw starts");
-		helper.assertTrue(TestPlayers.count(raiden, ModItems.MUSOU_NO_HITOTACHI) == 1, "exactly one Yamato");
+		helper.assertTrue(TestPlayers.count(raiden, RaidenItems.MUSOU_NO_HITOTACHI) == 1, "exactly one Yamato");
 
-		AbilityRouter.activate(raiden, AbilityIds.RAIDEN_SWORD_DRAW);
-		helper.assertTrue(TestPlayers.count(raiden, ModItems.MUSOU_NO_HITOTACHI) == 0, "sheathing removes Yamato");
+		AbilityRouter.activate(raiden, RaidenAbilities.RAIDEN_SWORD_DRAW);
+		helper.assertTrue(TestPlayers.count(raiden, RaidenItems.MUSOU_NO_HITOTACHI) == 0, "sheathing removes Yamato");
 		TestPlayers.leave(raiden);
 		helper.succeed();
 	}

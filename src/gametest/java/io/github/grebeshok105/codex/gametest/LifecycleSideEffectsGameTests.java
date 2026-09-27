@@ -9,10 +9,10 @@ import io.github.grebeshok105.codex.hero.doomsday.runtime.DoomGripController;
 import io.github.grebeshok105.codex.effect.MirrorDimensionController;
 import io.github.grebeshok105.codex.effect.RegulusGreedController;
 import io.github.grebeshok105.codex.effect.RegulusMadnessState;
-import io.github.grebeshok105.codex.effect.RemDemonismController;
 import io.github.grebeshok105.codex.effect.SpatialBindController;
 import io.github.grebeshok105.codex.hero.battlebeast.BattleBeastHero;
-import io.github.grebeshok105.codex.item.ModItems;
+import io.github.grebeshok105.codex.hero.rem.RemItems;
+import io.github.grebeshok105.codex.hero.rem.runtime.RemDemonismController;
 import io.github.grebeshok105.codex.core.lifecycle.ControlLockKind;
 import io.github.grebeshok105.codex.core.lifecycle.EntityControlLock;
 import io.github.grebeshok105.codex.core.lifecycle.HeroLifecycle;
@@ -214,11 +214,11 @@ public final class LifecycleSideEffectsGameTests implements FabricGameTest {
 	public void heroClearReturnsRemMace(GameTestHelper helper) {
 		ServerPlayer rem = TestPlayers.join(helper, "rem-owner");
 		RemDemonismController.giveMace(rem);
-		helper.assertTrue(TestPlayers.count(rem, ModItems.REM_MORNING_STAR) > 0, "the mace was issued");
+		helper.assertTrue(TestPlayers.count(rem, RemItems.REM_MORNING_STAR) > 0, "the mace was issued");
 
 		HeroLifecycle.fireClear(rem);
 
-		helper.assertTrue(TestPlayers.count(rem, ModItems.REM_MORNING_STAR) == 0,
+		helper.assertTrue(TestPlayers.count(rem, RemItems.REM_MORNING_STAR) == 0,
 				"hero clear returns the bound mace — an item side effect, not a map drop");
 		TestPlayers.leave(rem);
 		helper.succeed();

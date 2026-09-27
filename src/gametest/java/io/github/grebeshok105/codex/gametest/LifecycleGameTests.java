@@ -2,7 +2,6 @@ package io.github.grebeshok105.codex.gametest;
 
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
-import io.github.grebeshok105.codex.ability.AbilityIds;
 import io.github.grebeshok105.codex.attachment.ModAttachments;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.hero.AttributeModifierSet;
@@ -10,7 +9,8 @@ import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.lifecycle.PlayerLifecycle;
 import io.github.grebeshok105.codex.hero.doomsday.DoomsdayAttachments;
 import io.github.grebeshok105.codex.hero.doomsday.DoomsdayHero;
-import io.github.grebeshok105.codex.hero.RaidenHero;
+import io.github.grebeshok105.codex.hero.raiden.RaidenAbilities;
+import io.github.grebeshok105.codex.hero.raiden.RaidenHero;
 import io.github.grebeshok105.codex.hero.scaramouche.ScaramoucheHero;
 import io.github.grebeshok105.codex.core.lifecycle.ControlLockKind;
 import io.github.grebeshok105.codex.core.lifecycle.EntityControlLock;
@@ -152,15 +152,15 @@ public final class LifecycleGameTests implements FabricGameTest {
 	public void forceUntransformClearsRuntimeState(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		HeroTransformService.transform(player, RaidenHero.ID);
-		AbilityCooldowns.setCooldownTicks(player, AbilityIds.RAIDEN_SWORD_DRAW, 100);
+		AbilityCooldowns.setCooldownTicks(player, RaidenAbilities.RAIDEN_SWORD_DRAW, 100);
 		Zombie zombie = helper.spawn(EntityType.ZOMBIE, 1, 1, 1);
 		EntityControlLock.acquire(zombie, ControlLockKind.NO_AI, player);
-		helper.assertTrue(AbilityCooldowns.isOnCooldown(player, AbilityIds.RAIDEN_SWORD_DRAW),
+		helper.assertTrue(AbilityCooldowns.isOnCooldown(player, RaidenAbilities.RAIDEN_SWORD_DRAW),
 				"cooldown armed");
 
 		HeroTransformService.forceUntransform(player);
 
-		helper.assertTrue(AbilityCooldowns.isOnCooldown(player, AbilityIds.RAIDEN_SWORD_DRAW),
+		helper.assertTrue(AbilityCooldowns.isOnCooldown(player, RaidenAbilities.RAIDEN_SWORD_DRAW),
 				"cooldown deadlines persist — an untransform must not reset them");
 		helper.assertFalse(zombie.isNoAi(), "held control locks released with the hero");
 		TestPlayers.leave(player);
