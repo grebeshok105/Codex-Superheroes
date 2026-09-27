@@ -42,7 +42,8 @@
 			"io.github.grebeshok105.codex.gametest.OmnimanGameTests",
 			"io.github.grebeshok105.codex.gametest.GokuNarutoChargeGameTests",
 			"io.github.grebeshok105.codex.gametest.ContentRegistrationGameTests",
-			"io.github.grebeshok105.codex.gametest.HordeGameTests"
+			"io.github.grebeshok105.codex.gametest.HordeGameTests",
+			"io.github.grebeshok105.codex.gametest.HomelanderBossGameTests"
 		]
 	},
 	"depends": {
