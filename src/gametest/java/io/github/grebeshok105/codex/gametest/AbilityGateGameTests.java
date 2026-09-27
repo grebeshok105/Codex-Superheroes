@@ -1,15 +1,17 @@
 package io.github.grebeshok105.codex.gametest;
 
+import io.github.grebeshok105.codex.hero.pandora.PandoraAbilities;
+import io.github.grebeshok105.codex.hero.pandora.runtime.VanityStrippedMobEffect;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import io.github.grebeshok105.codex.ability.AbilityIds;
 import io.github.grebeshok105.codex.core.ability.AbilityRouter;
-import io.github.grebeshok105.codex.effect.MirrorDimensionController;
+import io.github.grebeshok105.codex.hero.pandora.runtime.MirrorDimensionController;
 import io.github.grebeshok105.codex.effect.ModEffects;
 import io.github.grebeshok105.codex.hero.doomsday.DoomsdayAbilities;
 import io.github.grebeshok105.codex.hero.doomsday.DoomsdayHero;
 import io.github.grebeshok105.codex.hero.HomelanderHero;
 import io.github.grebeshok105.codex.hero.IronManHero;
-import io.github.grebeshok105.codex.hero.PandoraHero;
+import io.github.grebeshok105.codex.hero.pandora.PandoraHero;
 import io.github.grebeshok105.codex.hero.scaramouche.ScaramoucheAbilities;
 import io.github.grebeshok105.codex.hero.scaramouche.ScaramoucheHero;
 import io.github.grebeshok105.codex.core.resource.ResourceKind;
@@ -56,7 +58,7 @@ public final class AbilityGateGameTests implements FabricGameTest {
 	public void vanityStrippedPlayerCannotActivate(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, ScaramoucheHero.ID);
-		player.addEffect(new MobEffectInstance(ModEffects.VANITY_STRIPPED, 200));
+		player.addEffect(new MobEffectInstance(VanityStrippedMobEffect.VANITY_STRIPPED, 200));
 		float before = HeroDataStore.get(player).energy();
 		AbilityRouter.activate(player, ScaramoucheAbilities.SCARAMOUCHE_WIND_PRISON);
 		helper.assertFalse(HeroDataStore.get(player).isActive(ScaramoucheAbilities.SCARAMOUCHE_WIND_PRISON),
@@ -100,8 +102,8 @@ public final class AbilityGateGameTests implements FabricGameTest {
 		TestHeroes.transform(player, PandoraHero.ID);
 		helper.assertFalse(MirrorDimensionController.hasActiveHouse(player), "no House is open");
 		float before = HeroDataStore.get(player).energy();
-		AbilityRouter.activate(player, AbilityIds.SPATIAL_BIND);
-		helper.assertFalse(AbilityCooldowns.isOnCooldown(player, AbilityIds.SPATIAL_BIND),
+		AbilityRouter.activate(player, PandoraAbilities.SPATIAL_BIND);
+		helper.assertFalse(AbilityCooldowns.isOnCooldown(player, PandoraAbilities.SPATIAL_BIND),
 				"the House gate rejects before the ability runs");
 		helper.assertTrue(HeroDataStore.get(player).energy() == before, "nothing charged");
 		TestPlayers.leave(player);

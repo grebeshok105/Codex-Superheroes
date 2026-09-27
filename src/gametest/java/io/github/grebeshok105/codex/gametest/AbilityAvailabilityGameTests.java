@@ -1,5 +1,6 @@
 package io.github.grebeshok105.codex.gametest;
 
+import io.github.grebeshok105.codex.hero.pandora.runtime.VanityStrippedMobEffect;
 import io.github.grebeshok105.codex.ability.AbilityIds;
 import io.github.grebeshok105.codex.ability.AbilityAvailabilitySync;
 import io.github.grebeshok105.codex.attachment.ModAttachments;
@@ -149,7 +150,7 @@ public class AbilityAvailabilityGameTests implements FabricGameTest {
 	public void vanityStrippedHidesEverything(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, NarutoHero.ID);
-		player.addEffect(new MobEffectInstance(ModEffects.VANITY_STRIPPED, 200));
+		player.addEffect(new MobEffectInstance(VanityStrippedMobEffect.VANITY_STRIPPED, 200));
 
 		tickSync(player);
 		AbilityAvailability availability = player.getAttached(CoreAttachments.ABILITY_AVAILABILITY);

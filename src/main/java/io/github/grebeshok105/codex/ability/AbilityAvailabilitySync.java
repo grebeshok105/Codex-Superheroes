@@ -3,7 +3,7 @@ package io.github.grebeshok105.codex.ability;
 import io.github.grebeshok105.codex.core.ability.AbilityAvailability;
 import io.github.grebeshok105.codex.core.ability.AbilityAvailability.Visibility;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
-import io.github.grebeshok105.codex.effect.ModEffects;
+import io.github.grebeshok105.codex.core.ability.AbilityRules;
 import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.hero.Heroes;
 import io.github.grebeshok105.codex.core.transform.HeroData;
@@ -37,8 +37,8 @@ public final class AbilityAvailabilitySync {
 		if (hero == null) {
 			return AbilityAvailability.EMPTY;
 		}
-		// A vanity-stripped victim loses the whole list, matching the old client filter.
-		boolean stripped = ModEffects.isVanityStripped(player);
+		// A fully-suppressed victim (vanity strip, …) loses the whole list, matching the old client filter.
+		boolean stripped = AbilityRules.hidesAll(player);
 		Map<ResourceLocation, Visibility> entries = new HashMap<>();
 		for (ResourceLocation id : hero.getAbilities()) {
 			Visibility visibility = stripped ? Visibility.HIDDEN : hero.visibility(player, id);

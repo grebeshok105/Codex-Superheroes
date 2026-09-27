@@ -37,8 +37,6 @@ public final class ModItemGroups {
 				output.accept(ModItems.EVANGELION);
 
 
-				output.accept(ModItems.PANDORA_SUIT);
-
 				// Hero modules append their items here, in module registration order.
 				for (ItemLike item : CreativeTabContents.all()) {
 					output.accept(item);
