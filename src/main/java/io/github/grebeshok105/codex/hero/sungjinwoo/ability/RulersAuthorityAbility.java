@@ -4,8 +4,8 @@ import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
+import io.github.grebeshok105.codex.mechanic.motion.Motion;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -73,12 +73,9 @@ public final class RulersAuthorityAbility implements Ability {
 		target.hurt(level.damageSources().playerAttack(player), DAMAGE);
 		target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 30, 6, true, false, true));
 		target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 30, 4, true, false, true));
-		target.setDeltaMovement(target.getDeltaMovement().x, 2.0, target.getDeltaMovement().z);
-		target.hurtMarked = true;
-		target.hasImpulse = true;
-		if (target instanceof ServerPlayer targetPlayer) {
-			targetPlayer.connection.send(new ClientboundSetEntityMotionPacket(targetPlayer));
-		}
+		Motion.set(target,
+				new Vec3(target.getDeltaMovement().x, 2.0, target.getDeltaMovement().z),
+				Motion.Sync.MARK_AND_SEND_TO_PLAYER);
 
 		Vec3 p = target.position();
 		level.sendParticles(ParticleTypes.DRAGON_BREATH, p.x, p.y + 1, p.z, 80, 0.6, 0.6, 0.6, 0.05);

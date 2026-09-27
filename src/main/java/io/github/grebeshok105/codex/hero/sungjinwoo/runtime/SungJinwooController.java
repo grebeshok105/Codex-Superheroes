@@ -2,6 +2,7 @@ package io.github.grebeshok105.codex.hero.sungjinwoo.runtime;
 
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
+import io.github.grebeshok105.codex.core.net.FxBroadcast;
 import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
@@ -11,7 +12,6 @@ import io.github.grebeshok105.codex.hero.sungjinwoo.entity.SungJinwooEntities;
 import io.github.grebeshok105.codex.hero.sungjinwoo.net.SungShadowArmyS2CPayload;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
@@ -380,13 +380,8 @@ public final class SungJinwooController {
 		}
 		SungShadowArmyS2CPayload payload = new SungShadowArmyS2CPayload(
 				player.getUUID(), state.hasShadows(), state.count(), state.phase2());
-		ServerPlayNetworking.send(player, payload);
 		// Only observers who can actually see the owner need the army counter.
-		for (ServerPlayer observer : net.fabricmc.fabric.api.networking.v1.PlayerLookup.tracking(player)) {
-			if (observer != player) {
-				ServerPlayNetworking.send(observer, payload);
-			}
-		}
+		FxBroadcast.trackingAndSelf(player, payload);
 	}
 
 	private record DeathEcho(Vec3 pos, long expiresAt) {

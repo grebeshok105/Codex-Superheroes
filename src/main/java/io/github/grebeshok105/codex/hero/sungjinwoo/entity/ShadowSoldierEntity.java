@@ -1,7 +1,6 @@
 package io.github.grebeshok105.codex.hero.sungjinwoo.entity;
 
 import io.github.grebeshok105.codex.hero.sungjinwoo.registry.SungJinwooDamageTypes;
-import io.github.grebeshok105.codex.hero.sungjinwoo.runtime.SungJinwooController;
 import io.github.grebeshok105.codex.mechanic.summon.OwnableEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
@@ -50,6 +49,13 @@ import java.util.UUID;
 public class ShadowSoldierEntity extends PathfinderMob implements OwnableEntity {
 	public static final int VARIANT_COUNT = 3;
 	public static final double FOLLOW_RADIUS = 6.0;
+
+	private static ShadowArmyMembership armyMembership = (owner, shadowId) -> false;
+
+	/** The module wires the runtime legitimacy check in during registration. */
+	public static void setArmyMembership(ShadowArmyMembership membership) {
+		armyMembership = membership;
+	}
 
 	private static final EntityDataAccessor<Byte> DATA_VARIANT =
 			SynchedEntityData.defineId(ShadowSoldierEntity.class, EntityDataSerializers.BYTE);
@@ -241,7 +247,7 @@ public class ShadowSoldierEntity extends PathfinderMob implements OwnableEntity 
 		// Иначе это сохранённая копия из прошлой сессии или пережиток disband —
 		// удаляемся, как это сделал бы disbandAll для выгруженной тени.
 		if (!(owner instanceof ServerPlayer ownerSp)
-				|| !SungJinwooController.isArmyMember(ownerSp, this.getUUID())) {
+				|| !armyMembership.isMember(ownerSp, this.getUUID())) {
 			this.discard();
 			return;
 		}

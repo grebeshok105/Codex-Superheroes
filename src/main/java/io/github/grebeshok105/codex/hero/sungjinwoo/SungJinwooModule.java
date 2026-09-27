@@ -11,6 +11,7 @@ import io.github.grebeshok105.codex.hero.sungjinwoo.ability.RulersAuthorityAbili
 import io.github.grebeshok105.codex.hero.sungjinwoo.ability.SacrificeAbility;
 import io.github.grebeshok105.codex.hero.sungjinwoo.ability.ShadowExchangeAbility;
 import io.github.grebeshok105.codex.hero.sungjinwoo.ability.ShadowExtractionAbility;
+import io.github.grebeshok105.codex.hero.sungjinwoo.entity.ShadowSoldierEntity;
 import io.github.grebeshok105.codex.hero.sungjinwoo.entity.SungJinwooEntities;
 import io.github.grebeshok105.codex.hero.sungjinwoo.net.SungShadowArmyS2CPayload;
 import io.github.grebeshok105.codex.hero.sungjinwoo.registry.SungJinwooDamageTypes;
@@ -54,6 +55,8 @@ public final class SungJinwooModule implements HeroModule {
 		ThanosStoneRewardController.registerHeroStone(SungJinwooHero.ID, InfinityStoneType.REALITY);
 
 		SungJinwooController.register(ctx);
+		// Entity leaf asks the runtime for legitimacy through a wired contract (no entity→runtime edge).
+		ShadowSoldierEntity.setArmyMembership(SungJinwooController::isArmyMember);
 		ctx.ticks().player(SungJinwooController::tickPlayer);
 		ctx.ticks().player(MonarchsDomainController::tickPlayer);
 	}
