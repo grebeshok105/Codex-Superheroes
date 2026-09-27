@@ -1,6 +1,11 @@
 package io.github.grebeshok105.codex.client;
 
 import io.github.grebeshok105.codex.client.hero.doomsday.state.ClientDoomsdayState;
+import io.github.grebeshok105.codex.client.hero.ironman.state.ClientNanoFormState;
+import io.github.grebeshok105.codex.client.hero.ironman.state.ClientNanoWeaponState;
+import io.github.grebeshok105.codex.client.hero.ironman.state.ClientReactorState;
+import io.github.grebeshok105.codex.client.hero.ironman.state.ClientRepulsorChargeState;
+import io.github.grebeshok105.codex.client.hero.ironman.state.ClientSuitVariantState;
 import io.github.grebeshok105.codex.client.hero.kratos.state.ClientKratosRageState;
 import io.github.grebeshok105.codex.client.hero.rem.state.ClientRemDemonismState;
 import io.github.grebeshok105.codex.client.hero.regulus.state.ClientMadnessState;

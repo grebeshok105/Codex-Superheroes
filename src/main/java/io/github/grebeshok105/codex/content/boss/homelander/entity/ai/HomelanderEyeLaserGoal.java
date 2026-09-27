@@ -2,7 +2,7 @@ package io.github.grebeshok105.codex.content.boss.homelander.entity.ai;
 
 import io.github.grebeshok105.codex.effect.UraniumDefenseController;
 import io.github.grebeshok105.codex.content.boss.homelander.api.HomelanderBossApi;
-import io.github.grebeshok105.codex.network.ModNetworking;
+import io.github.grebeshok105.codex.core.net.BeamFx;
 import io.github.grebeshok105.codex.particle.ModParticles;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -136,7 +136,7 @@ public class HomelanderEyeLaserGoal extends Goal {
 					actualEnd.x, actualEnd.y, actualEnd.z,
 					3, 0.10, 0.10, 0.10, 0.04);
 		}
-		ModNetworking.broadcastLaserFromEntity(boss.asMob(), eye, actualEnd);
+		BeamFx.laser(boss.asMob(), eye, actualEnd);
 	}
 
 	private float damagePerTick() {

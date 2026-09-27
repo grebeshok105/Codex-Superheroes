@@ -2,10 +2,8 @@ package io.github.grebeshok105.codex.gametest;
 
 import com.mojang.authlib.GameProfile;
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.network.LaserFiredS2CPayload;
-import io.github.grebeshok105.codex.network.ModNetworking;
-import io.github.grebeshok105.codex.network.RepulsorBlastS2CPayload;
-import io.github.grebeshok105.codex.network.ThanosCosmicBeamS2CPayload;
+import io.github.grebeshok105.codex.core.net.BeamFx;
+import io.github.grebeshok105.codex.core.net.BeamFxS2CPayload;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.embedded.EmbeddedChannel;
@@ -15,6 +13,7 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.world.level.GameType;
@@ -25,14 +24,13 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Stage L2 "before" pins: the three beam payloads share the exact same wire shape
- * (UUID shooter, Vec3 start, Vec3 end -> 16 + 24 + 24 bytes) under three different
- * type ids, and the broadcast audiences differ on purpose — Homelander's laser uses
- * {@code FxBroadcast.tracking} (the shooter is NOT in it: the local overlay renders
- * the shooter's own beam), while repulsor and thanos use {@code trackingAndSelf}.
- * Phase 2 merges the three records into {@code core/net/BeamFxS2CPayload} under one id
- * and re-points the emitters; these pins carry the field/audience contract across the
- * merge (visual equivalence is verified separately).
+ * Stage L2 "after" pins: the three beam payloads merged into
+ * {@link BeamFxS2CPayload} under the single id {@code superheroes:beam_fx} with
+ * a style field (ResourceLocation + UUID + 2xVec3 on the wire), and the
+ * broadcast audiences keep the deliberate asymmetry — {@link BeamFx#laser}
+ * uses {@code FxBroadcast.tracking} (the shooter is NOT in it: the local
+ * overlay renders the shooter's own beam), while {@link BeamFx#repulsor} and
+ * {@link BeamFx#cosmicBeam} use {@code trackingAndSelf}.
  */
 public final class BeamPayloadGameTests implements FabricGameTest {
 	private static final UUID SHOOTER = UUID.fromString("12345678-1234-1234-1234-1234567890ab");
@@ -40,40 +38,33 @@ public final class BeamPayloadGameTests implements FabricGameTest {
 	private static final Vec3 END = new Vec3(40.0, 64.0, 7.5);
 
 	@GameTest(template = EMPTY_STRUCTURE)
-	public void beamPayloadTypeIdsAreTheCurrentContract(GameTestHelper helper) {
-		helper.assertTrue(LaserFiredS2CPayload.TYPE.id().equals(ModId.of("laser_fired")),
-				"homelander laser id");
-		helper.assertTrue(RepulsorBlastS2CPayload.TYPE.id().equals(ModId.of("repulsor_blast")),
-				"iron man repulsor id");
-		helper.assertTrue(ThanosCosmicBeamS2CPayload.TYPE.id().equals(ModId.of("thanos_cosmic_beam")),
-				"thanos cosmic beam id");
+	public void beamFxPayloadIdAndStyleConstantsAreTheNewContract(GameTestHelper helper) {
+		helper.assertTrue(BeamFxS2CPayload.TYPE.id().equals(ModId.of("beam_fx")),
+				"unified beam payload id");
+		helper.assertTrue(BeamFxS2CPayload.STYLE_LASER.equals(ModId.of("laser")),
+				"laser style id");
+		helper.assertTrue(BeamFxS2CPayload.STYLE_REPULSOR.equals(ModId.of("repulsor")),
+				"repulsor style id");
+		helper.assertTrue(BeamFxS2CPayload.STYLE_COSMIC_BEAM.equals(ModId.of("cosmic_beam")),
+				"cosmic beam style id");
 		helper.succeed();
 	}
 
 	@GameTest(template = EMPTY_STRUCTURE)
-	public void beamPayloadsRoundTripShooterStartEnd(GameTestHelper helper) {
+	public void beamFxPayloadRoundTripsStyleShooterStartEnd(GameTestHelper helper) {
 		ByteBuf buf = Unpooled.buffer();
 		try {
-			LaserFiredS2CPayload laser = new LaserFiredS2CPayload(SHOOTER, START, END);
-			LaserFiredS2CPayload.STREAM_CODEC.encode(buf, laser);
-			helper.assertTrue(buf.writerIndex() == 64,
-					"uuid (16) + two vec3s (2 x 24) is the whole frame, got " + buf.writerIndex());
-			LaserFiredS2CPayload laserDec = LaserFiredS2CPayload.STREAM_CODEC.decode(buf);
-			assertBeam(helper, laserDec.shooter(), laserDec.start(), laserDec.end(), "laser_fired");
-
-			buf.clear();
-			RepulsorBlastS2CPayload repulsor = new RepulsorBlastS2CPayload(SHOOTER, START, END);
-			RepulsorBlastS2CPayload.STREAM_CODEC.encode(buf, repulsor);
-			helper.assertTrue(buf.writerIndex() == 64, "repulsor frame is 64 bytes");
-			RepulsorBlastS2CPayload repulsorDec = RepulsorBlastS2CPayload.STREAM_CODEC.decode(buf);
-			assertBeam(helper, repulsorDec.shooter(), repulsorDec.start(), repulsorDec.end(), "repulsor_blast");
-
-			buf.clear();
-			ThanosCosmicBeamS2CPayload thanos = new ThanosCosmicBeamS2CPayload(SHOOTER, START, END);
-			ThanosCosmicBeamS2CPayload.STREAM_CODEC.encode(buf, thanos);
-			helper.assertTrue(buf.writerIndex() == 64, "thanos frame is 64 bytes");
-			ThanosCosmicBeamS2CPayload thanosDec = ThanosCosmicBeamS2CPayload.STREAM_CODEC.decode(buf);
-			assertBeam(helper, thanosDec.shooter(), thanosDec.start(), thanosDec.end(), "thanos_cosmic_beam");
+			for (ResourceLocation style : List.of(BeamFxS2CPayload.STYLE_LASER,
+					BeamFxS2CPayload.STYLE_REPULSOR, BeamFxS2CPayload.STYLE_COSMIC_BEAM)) {
+				buf.clear();
+				BeamFxS2CPayload beam = new BeamFxS2CPayload(style, SHOOTER, START, END);
+				BeamFxS2CPayload.STREAM_CODEC.encode(buf, beam);
+				helper.assertTrue(buf.writerIndex() > 64,
+						style + " frame is style id + uuid (16) + two vec3s (2 x 24), got " + buf.writerIndex());
+				BeamFxS2CPayload dec = BeamFxS2CPayload.STREAM_CODEC.decode(buf);
+				helper.assertTrue(dec.style().equals(style), style + " style survives");
+				assertBeam(helper, dec.shooter(), dec.start(), dec.end(), style.toString());
+			}
 		} finally {
 			buf.release();
 		}
@@ -84,13 +75,13 @@ public final class BeamPayloadGameTests implements FabricGameTest {
 	public void beamBroadcastAudiencesKeepTheAsymmetry(GameTestHelper helper) {
 		Wire shooter = joinAudible(helper, "i6-beam");
 		helper.runAfterDelay(2, () -> {
-			ModNetworking.broadcastRepulsor(shooter.player(), START, END);
-			ModNetworking.broadcastThanosCosmicBeam(shooter.player(), START, END);
+			BeamFx.repulsor(shooter.player(), START, END);
+			BeamFx.cosmicBeam(shooter.player(), START, END);
 			awaitSelfBeams(helper, shooter, new ArrayList<>(), 15, () -> {
 				// Both trackingAndSelf payloads landed. Now the tracking-only send:
 				// give the write the same kind of settle window the positives needed,
 				// then a single drain — a negative can't poll for absence.
-				ModNetworking.broadcastLaser(shooter.player(), START, END);
+				BeamFx.laser(shooter.player(), START, END);
 				helper.runAfterDelay(3, () -> {
 					helper.assertTrue(!hasLaser(drain(shooter.channel()), shooter.player().getUUID()),
 							"tracking (not self): the laser shooter does NOT get their own payload — "
@@ -104,19 +95,20 @@ public final class BeamPayloadGameTests implements FabricGameTest {
 
 	/**
 	 * Polls the wire each tick until the shooter has seen BOTH their own repulsor
-	 * and thanos payloads (or the retry budget runs out). Sends queue on the
+	 * and cosmic-beam payloads (or the retry budget runs out). Sends queue on the
 	 * embedded channel's event loop, so a single drain can legitimately read empty
 	 * even though the packet is in flight; drains consume, so packets accumulate.
 	 */
 	private static void awaitSelfBeams(GameTestHelper helper, Wire shooter, List<Object> seen,
 			int tries, Runnable done) {
 		if (tries <= 0) {
-			helper.fail("trackingAndSelf beams (repulsor+thanos) never reached their shooter");
+			helper.fail("trackingAndSelf beams (repulsor+cosmic) never reached their shooter");
 			return;
 		}
 		seen.addAll(drain(shooter.channel()));
 		UUID id = shooter.player().getUUID();
-		if (hasRepulsor(seen, id) && hasThanosBeam(seen, id)) {
+		if (hasBeam(seen, id, BeamFxS2CPayload.STYLE_REPULSOR)
+				&& hasBeam(seen, id, BeamFxS2CPayload.STYLE_COSMIC_BEAM)) {
 			done.run();
 			return;
 		}
@@ -162,22 +154,11 @@ public final class BeamPayloadGameTests implements FabricGameTest {
 		return out;
 	}
 
-	private static boolean hasRepulsor(List<Object> packets, UUID shooter) {
+	private static boolean hasBeam(List<Object> packets, UUID shooter, ResourceLocation style) {
 		for (Object o : packets) {
 			if (o instanceof ClientboundCustomPayloadPacket custom
-					&& custom.payload() instanceof RepulsorBlastS2CPayload payload
-					&& payload.shooter().equals(shooter)
-					&& vecEquals(payload.start(), START) && vecEquals(payload.end(), END)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	private static boolean hasThanosBeam(List<Object> packets, UUID shooter) {
-		for (Object o : packets) {
-			if (o instanceof ClientboundCustomPayloadPacket custom
-					&& custom.payload() instanceof ThanosCosmicBeamS2CPayload payload
+					&& custom.payload() instanceof BeamFxS2CPayload payload
+					&& payload.style().equals(style)
 					&& payload.shooter().equals(shooter)
 					&& vecEquals(payload.start(), START) && vecEquals(payload.end(), END)) {
 				return true;
@@ -189,7 +170,8 @@ public final class BeamPayloadGameTests implements FabricGameTest {
 	private static boolean hasLaser(List<Object> packets, UUID shooter) {
 		for (Object o : packets) {
 			if (o instanceof ClientboundCustomPayloadPacket custom
-					&& custom.payload() instanceof LaserFiredS2CPayload payload
+					&& custom.payload() instanceof BeamFxS2CPayload payload
+					&& payload.style().equals(BeamFxS2CPayload.STYLE_LASER)
 					&& payload.shooter().equals(shooter)) {
 				return true;
 			}

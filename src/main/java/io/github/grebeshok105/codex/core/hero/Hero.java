@@ -80,6 +80,32 @@ public interface Hero {
 	default void onLanded(ServerPlayer player, LandingImpact impact) {
 	}
 
+	/**
+	 * Whether landing-impact tracking stays suppressed for this hero right now — Iron Man's
+	 * unibeam recoil-hover must not count as a fall. Default: never suppresses.
+	 */
+	default boolean suppressesLanding(ServerPlayer player) {
+		return false;
+	}
+
+	/**
+	 * Post-processes the melee impact the engine just computed — hero-owned boosts live here
+	 * (Iron Man's nano-hammer turns the hit into a wall-piercing ballistic launch). Default:
+	 * no change.
+	 */
+	default void modifyImpact(ImpactContext context) {
+	}
+
+	/**
+	 * Post-processes the immediate shove of a plain (uncharged) melee hit in
+	 * {@code HeroMeleeImpactController}: {@code knockback} is the push scale,
+	 * {@code upwardKnockback} the minimum upward velocity, {@code launchPower} + {@code piercing}
+	 * the ballistic launch — Iron Man's nano-hammer turns the shove into a wall-piercing
+	 * ballistic launch. Default: no change.
+	 */
+	default void modifyMeleePush(ImpactContext context) {
+	}
+
 	default HeroTheme getTheme() {
 		return HeroTheme.DEFAULT;
 	}

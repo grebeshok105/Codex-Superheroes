@@ -1,24 +1,29 @@
 package io.github.grebeshok105.codex.hero.ironman;
 
-import io.github.grebeshok105.codex.ability.IronManFlightAbility;
-import io.github.grebeshok105.codex.ability.RepulsorAbility;
-import io.github.grebeshok105.codex.ability.RepulsorChargeController;
-import io.github.grebeshok105.codex.ability.SmartMissileAbility;
-import io.github.grebeshok105.codex.ability.SupersonicAbility;
-import io.github.grebeshok105.codex.ability.UnibeamAbility;
-import io.github.grebeshok105.codex.ability.ironman.IronManLegionAbility;
-import io.github.grebeshok105.codex.ability.ironman.IronManNanoFormAbility;
-import io.github.grebeshok105.codex.ability.ironman.IronManNanoFormController;
-import io.github.grebeshok105.codex.ability.ironman.IronManSuitSwitchAbility;
-import io.github.grebeshok105.codex.ability.ironman.IronManSuitSyncController;
+import io.github.grebeshok105.codex.hero.ironman.ability.IronManFlightAbility;
+import io.github.grebeshok105.codex.hero.ironman.ability.RepulsorAbility;
+import io.github.grebeshok105.codex.hero.ironman.runtime.RepulsorChargeController;
+import io.github.grebeshok105.codex.hero.ironman.ability.SmartMissileAbility;
+import io.github.grebeshok105.codex.hero.ironman.ability.SupersonicAbility;
+import io.github.grebeshok105.codex.hero.ironman.ability.UnibeamAbility;
+import io.github.grebeshok105.codex.hero.ironman.ability.IronManLegionAbility;
+import io.github.grebeshok105.codex.hero.ironman.ability.IronManNanoFormAbility;
+import io.github.grebeshok105.codex.hero.ironman.runtime.IronManNanoFormController;
+import io.github.grebeshok105.codex.hero.ironman.ability.IronManSuitSwitchAbility;
+import io.github.grebeshok105.codex.hero.ironman.runtime.IronManSuitSyncController;
 import io.github.grebeshok105.codex.core.module.HeroModule;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
-import io.github.grebeshok105.codex.effect.IronManAutoEjectController;
-import io.github.grebeshok105.codex.effect.IronManJarvisController;
-import io.github.grebeshok105.codex.effect.IronManReactorTracker;
-import io.github.grebeshok105.codex.effect.UnibeamController;
+import io.github.grebeshok105.codex.hero.ironman.runtime.IronManAutoEjectController;
+import io.github.grebeshok105.codex.hero.ironman.runtime.IronManJarvisController;
+import io.github.grebeshok105.codex.hero.ironman.runtime.IronManReactorTracker;
+import io.github.grebeshok105.codex.hero.ironman.runtime.UnibeamController;
 import io.github.grebeshok105.codex.core.hero.Hero;
-import io.github.grebeshok105.codex.hero.IronManHero;
+import io.github.grebeshok105.codex.damage.DamageTypeSpec;
+import io.github.grebeshok105.codex.hero.ironman.registry.IronManDamageTypes;
+import io.github.grebeshok105.codex.hero.ironman.registry.IronManParticles;
+import io.github.grebeshok105.codex.hero.ironman.sound.IronManSounds;
+
+import java.util.List;
 
 public final class IronManModule implements HeroModule {
 	private final IronManHero hero = new IronManHero();
@@ -29,7 +34,18 @@ public final class IronManModule implements HeroModule {
 	}
 
 	@Override
+	public List<DamageTypeSpec> damageTypes() {
+		return IronManDamageTypes.SPECS;
+	}
+
+	@Override
 	public void register(HeroModuleContext ctx) {
+		// Module-owned registry content replaces the deleted ModAttachments/ModSounds/ModParticles
+		// rows; init() forces the statics now, matching the old eager init order.
+		IronManAttachments.init();
+		IronManParticles.init();
+		IronManSounds.init();
+
 		ctx.abilities().register(new IronManFlightAbility());
 		ctx.abilities().register(new SupersonicAbility());
 		ctx.abilities().register(new RepulsorAbility());

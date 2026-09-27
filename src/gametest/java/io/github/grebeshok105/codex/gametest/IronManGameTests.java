@@ -1,9 +1,9 @@
 package io.github.grebeshok105.codex.gametest;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.ability.ironman.IronManNanoForm;
-import io.github.grebeshok105.codex.ability.ironman.IronManSuitVariant;
-import io.github.grebeshok105.codex.attachment.ModAttachments;
+import io.github.grebeshok105.codex.hero.ironman.IronManNanoForm;
+import io.github.grebeshok105.codex.hero.ironman.IronManSuitVariant;
+import io.github.grebeshok105.codex.hero.ironman.IronManAttachments;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import io.github.grebeshok105.codex.core.ability.AbilityRegistry;
 import io.github.grebeshok105.codex.core.ability.AbilityRouter;
@@ -20,12 +20,12 @@ import io.github.grebeshok105.codex.flight.FlightAbilityState;
 import io.github.grebeshok105.codex.flight.FlightMode;
 import io.github.grebeshok105.codex.flight.FlightProfiles;
 import io.github.grebeshok105.codex.flight.FlightTuning;
-import io.github.grebeshok105.codex.network.NanoFormS2CPayload;
-import io.github.grebeshok105.codex.network.ReactorStateS2CPayload;
-import io.github.grebeshok105.codex.network.SuitVariantS2CPayload;
-import io.github.grebeshok105.codex.physics.CombatImpactEngine;
-import io.github.grebeshok105.codex.physics.ImpactProfile;
-import io.github.grebeshok105.codex.physics.ImpactTier;
+import io.github.grebeshok105.codex.hero.ironman.net.NanoFormS2CPayload;
+import io.github.grebeshok105.codex.hero.ironman.net.ReactorStateS2CPayload;
+import io.github.grebeshok105.codex.hero.ironman.net.SuitVariantS2CPayload;
+import io.github.grebeshok105.codex.mechanic.impact.CombatImpactEngine;
+import io.github.grebeshok105.codex.mechanic.impact.ImpactProfile;
+import io.github.grebeshok105.codex.mechanic.impact.ImpactTier;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
@@ -339,19 +339,19 @@ public final class IronManGameTests implements FabricGameTest {
 		ServerPlayer player = TestPlayers.join(helper, "i6-nano");
 		TestHeroes.transform(player, IRON_MAN);
 		helper.runAfterDelay(2, () -> {
-			helper.assertTrue(player.getAttachedOrCreate(ModAttachments.NANO_FORM) == 0,
+			helper.assertTrue(player.getAttachedOrCreate(IronManAttachments.NANO_FORM) == 0,
 					"fresh iron man has nano form 0");
 			AbilityRouter.activate(player, NANO_FORM);
-			helper.assertTrue(player.getAttachedOrCreate(ModAttachments.NANO_FORM) == 1,
+			helper.assertTrue(player.getAttachedOrCreate(IronManAttachments.NANO_FORM) == 1,
 					"first use arms the blade");
 			helper.assertTrue(AbilityCooldowns.isOnCooldown(player, NANO_FORM),
 					"the 15-tick cooldown arms");
 			AbilityRouter.activate(player, NANO_FORM);
-			helper.assertTrue(player.getAttachedOrCreate(ModAttachments.NANO_FORM) == 1,
+			helper.assertTrue(player.getAttachedOrCreate(IronManAttachments.NANO_FORM) == 1,
 					"the cooldown blocks an immediate re-cycle");
 			helper.runAfterDelay(16, () -> {
 				AbilityRouter.activate(player, NANO_FORM);
-				helper.assertTrue(player.getAttachedOrCreate(ModAttachments.NANO_FORM) == 2,
+				helper.assertTrue(player.getAttachedOrCreate(IronManAttachments.NANO_FORM) == 2,
 						"after the cooldown the form cycles to the hammer");
 				TestPlayers.leave(player);
 				helper.succeed();
@@ -367,17 +367,17 @@ public final class IronManGameTests implements FabricGameTest {
 		ServerPlayer player = TestPlayers.join(helper, "i6-suitv");
 		TestHeroes.transform(player, IRON_MAN);
 		helper.runAfterDelay(2, () -> {
-			helper.assertTrue(player.getAttachedOrCreate(ModAttachments.SUIT_VARIANT) == 0,
+			helper.assertTrue(player.getAttachedOrCreate(IronManAttachments.SUIT_VARIANT) == 0,
 					"fresh iron man wears variant 0");
 			AbilityRouter.activate(player, SUIT_SWITCH);
-			helper.assertTrue(player.getAttachedOrCreate(ModAttachments.SUIT_VARIANT) == 1,
+			helper.assertTrue(player.getAttachedOrCreate(IronManAttachments.SUIT_VARIANT) == 1,
 					"the switch advances to variant 1 (Mark 85)");
 			helper.assertTrue("Mark 85".equals(IronManSuitVariant.get(1).name()),
 					"variant 1 is Mark 85");
 			helper.assertTrue(AbilityCooldowns.isOnCooldown(player, SUIT_SWITCH),
 					"the 40-tick cooldown arms");
 			AbilityRouter.activate(player, SUIT_SWITCH);
-			helper.assertTrue(player.getAttachedOrCreate(ModAttachments.SUIT_VARIANT) == 1,
+			helper.assertTrue(player.getAttachedOrCreate(IronManAttachments.SUIT_VARIANT) == 1,
 					"the cooldown blocks an immediate re-cycle");
 			TestPlayers.leave(player);
 			helper.succeed();
@@ -399,11 +399,11 @@ public final class IronManGameTests implements FabricGameTest {
 			helper.assertTrue(base.launchPower() == 0.0 && base.debrisIntensity() == 0f,
 					"a tier-1 punch has no ballistic launch or debris");
 
-			player.setAttached(ModAttachments.NANO_FORM, IronManNanoForm.BLADE.index());
+			player.setAttached(IronManAttachments.NANO_FORM, IronManNanoForm.BLADE.index());
 			ImpactProfile blade = CombatImpactEngine.profileFor(player, IRON_MAN, zombie, 0);
 			close(helper, blade.knockback(), base.knockback(), "the blade does not touch impact stats");
 
-			player.setAttached(ModAttachments.NANO_FORM, IronManNanoForm.HAMMER.index());
+			player.setAttached(IronManAttachments.NANO_FORM, IronManNanoForm.HAMMER.index());
 			ImpactProfile hammer = CombatImpactEngine.profileFor(player, IRON_MAN, zombie, 0);
 			close(helper, hammer.knockback(), base.knockback() * 3.6, "hammer knockback x3.6");
 			close(helper, hammer.upwardKnockback(), Math.min(0.95, base.upwardKnockback() + 0.3),

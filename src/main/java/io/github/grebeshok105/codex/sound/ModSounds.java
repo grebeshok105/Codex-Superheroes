@@ -11,21 +11,12 @@ public final class ModSounds {
 
 	public static final SoundEvent LIGHTNING_THUNDER_ANIME = register("lightning.thunder.anime");
 	public static final SoundEvent LIGHTNING_THUNDER_LOUD = register("lightning.thunder.loud");
-	public static final SoundEvent UNIBEAM_CHARGE = register("unibeam.charge");
-	public static final SoundEvent UNIBEAM_BEAM = register("unibeam.beam");
-	public static final SoundEvent UNIBEAM_BLAST = register("unibeam.blast");
 	public static final SoundEvent HOMELANDER_ROAR = register("homelander.roar");
 	public static final SoundEvent HOMELANDER_ROAR_DEEP = register("homelander.roar.deep");
 	public static final SoundEvent HOMELANDER_HAND_CLAP = register("homelander.hand_clap");
 	public static final SoundEvent HOMELANDER_IRON_FISTS_IMPACT = register("homelander.iron_fists.impact");
 	public static final SoundEvent HOMELANDER_IRON_FISTS_CHARGE = register("homelander.iron_fists.charge");
 	public static final SoundEvent HOMELANDER_OMNIMAN_REACT = register("homelander.omniman_react");
-	public static final SoundEvent IRONMAN_JARVIS_DETECT = register("ironman.jarvis_detect");
-	public static final SoundEvent IRONMAN_JARVIS_DETECT_EXCITED = register("ironman.jarvis_detect_excited");
-	public static final SoundEvent IRONMAN_JARVIS_DIAGNOSTIC = register("ironman.jarvis_diagnostic");
-	public static final SoundEvent IRONMAN_JARVIS_OUTDATED_SUIT = register("ironman.jarvis_outdated_suit");
-	public static final SoundEvent IRONMAN_JARVIS_MARK85_PRESET = register("ironman.jarvis_mark85_preset");
-	public static final SoundEvent IRONMAN_JARVIS_LEGION_LAUNCH = register("ironman.jarvis_legion_launch");
 
 	private ModSounds() {
 	}

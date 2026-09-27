@@ -7,13 +7,19 @@ import io.github.grebeshok105.codex.client.core.HudJitter;
 import io.github.grebeshok105.codex.client.core.audio.ClientSoundFilters;
 import io.github.grebeshok105.codex.client.core.hud.AbilityDecoration;
 import io.github.grebeshok105.codex.client.core.hud.AbilityDecorations;
+import io.github.grebeshok105.codex.client.core.hud.CrosshairSuppressions;
+import io.github.grebeshok105.codex.client.core.hud.HeroPanelSection;
+import io.github.grebeshok105.codex.client.core.hud.HeroPanelSections;
 import io.github.grebeshok105.codex.client.core.hud.HudLayer;
 import io.github.grebeshok105.codex.client.core.hud.HudLayers;
 import io.github.grebeshok105.codex.client.core.hud.MovableHud;
 import io.github.grebeshok105.codex.client.core.input.HeroActionKeys;
+import io.github.grebeshok105.codex.client.core.render.BeamStyle;
+import io.github.grebeshok105.codex.client.core.render.BeamStyles;
 import io.github.grebeshok105.codex.client.core.render.PlayerLayers;
 import io.github.grebeshok105.codex.client.core.render.SkinProvider;
 import io.github.grebeshok105.codex.client.core.render.SkinResolver;
+import io.github.grebeshok105.codex.client.core.render.SkinSuppressions;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
@@ -33,6 +39,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 
+import java.util.UUID;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -108,5 +116,25 @@ public final class CoreClientContext implements HeroClientContext {
 	@Override
 	public void clientTick(Consumer<Minecraft> hook) {
 		ClientTickEvents.END_CLIENT_TICK.register(hook::accept);
+	}
+
+	@Override
+	public void beamStyle(BeamStyle style) {
+		BeamStyles.register(style);
+	}
+
+	@Override
+	public void skinSuppression(Predicate<UUID> suppression) {
+		SkinSuppressions.register(suppression);
+	}
+
+	@Override
+	public void crosshairSuppression(BooleanSupplier suppression) {
+		CrosshairSuppressions.register(suppression);
+	}
+
+	@Override
+	public void heroPanelSection(HeroPanelSection section) {
+		HeroPanelSections.register(heroId, section);
 	}
 }

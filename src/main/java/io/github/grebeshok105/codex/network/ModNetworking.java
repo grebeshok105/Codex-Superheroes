@@ -4,12 +4,13 @@ import io.github.grebeshok105.codex.core.net.CoreNetworking;
 import io.github.grebeshok105.codex.core.net.FxBroadcast;
 import io.github.grebeshok105.codex.effect.HeroMeleeImpactController;
 import io.github.grebeshok105.codex.effect.SuperJumpController;
+import io.github.grebeshok105.codex.hero.ironman.net.JarvisDetectionS2CPayload;
+import io.github.grebeshok105.codex.hero.ironman.net.NanoFormS2CPayload;
+import io.github.grebeshok105.codex.hero.ironman.net.ReactorStateS2CPayload;
+import io.github.grebeshok105.codex.hero.ironman.net.SuitVariantS2CPayload;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.phys.Vec3;
-
-
 public final class ModNetworking {
 	private ModNetworking() {
 	}
@@ -21,9 +22,6 @@ public final class ModNetworking {
 		PayloadTypeRegistry.playC2S().register(HeroMeleeChargeC2SPayload.TYPE, HeroMeleeChargeC2SPayload.STREAM_CODEC);
 
 		PayloadTypeRegistry.playS2C().register(FlightStateS2CPayload.TYPE, FlightStateS2CPayload.STREAM_CODEC);
-		PayloadTypeRegistry.playS2C().register(LaserFiredS2CPayload.TYPE, LaserFiredS2CPayload.STREAM_CODEC);
-		PayloadTypeRegistry.playS2C().register(RepulsorBlastS2CPayload.TYPE, RepulsorBlastS2CPayload.STREAM_CODEC);
-		PayloadTypeRegistry.playS2C().register(ThanosCosmicBeamS2CPayload.TYPE, ThanosCosmicBeamS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(ReactorStateS2CPayload.TYPE, ReactorStateS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(UraniumPressureS2CPayload.TYPE, UraniumPressureS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(UraniumThreatS2CPayload.TYPE, UraniumThreatS2CPayload.STREAM_CODEC);
@@ -48,24 +46,4 @@ public final class ModNetworking {
 		FxBroadcast.trackingAndSelf(player, payload);
 	}
 
-
-	public static void broadcastLaser(ServerPlayer shooter, Vec3 start, Vec3 end) {
-		LaserFiredS2CPayload payload = new LaserFiredS2CPayload(shooter.getUUID(), start, end);
-		FxBroadcast.tracking(shooter, payload);
-	}
-
-	public static void broadcastLaserFromEntity(net.minecraft.world.entity.Entity shooter, Vec3 start, Vec3 end) {
-		LaserFiredS2CPayload payload = new LaserFiredS2CPayload(shooter.getUUID(), start, end);
-		FxBroadcast.tracking(shooter, payload);
-	}
-
-	public static void broadcastRepulsor(ServerPlayer shooter, Vec3 start, Vec3 end) {
-		RepulsorBlastS2CPayload payload = new RepulsorBlastS2CPayload(shooter.getUUID(), start, end);
-		FxBroadcast.trackingAndSelf(shooter, payload);
-	}
-
-	public static void broadcastThanosCosmicBeam(ServerPlayer shooter, Vec3 start, Vec3 end) {
-		ThanosCosmicBeamS2CPayload payload = new ThanosCosmicBeamS2CPayload(shooter.getUUID(), start, end);
-		FxBroadcast.trackingAndSelf(shooter, payload);
-	}
 }

@@ -1,7 +1,7 @@
 package io.github.grebeshok105.codex.flight;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.ability.AbilityIds;
+import io.github.grebeshok105.codex.mechanic.ability.SharedAbilityIds;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.minecraft.resources.ResourceLocation;
 
@@ -12,8 +12,8 @@ public final class FlightAbilityState {
 
 	public static boolean isFlightAbility(ResourceLocation abilityId) {
 		return FLIGHT_ID.equals(abilityId)
-				|| AbilityIds.IRON_MAN_FLIGHT.equals(abilityId)
-				|| AbilityIds.SUPERSONIC.equals(abilityId);
+				|| SharedAbilityIds.IRON_MAN_FLIGHT.equals(abilityId)
+				|| SharedAbilityIds.SUPERSONIC.equals(abilityId);
 	}
 
 	public static boolean isActive(HeroData data) {
@@ -25,13 +25,13 @@ public final class FlightAbilityState {
 	}
 
 	public static FlightMode activeModeExcept(HeroData data, ResourceLocation removedAbility) {
-		if (data.isActive(AbilityIds.SUPERSONIC)) {
-			if (!AbilityIds.SUPERSONIC.equals(removedAbility)) {
+		if (data.isActive(SharedAbilityIds.SUPERSONIC)) {
+			if (!SharedAbilityIds.SUPERSONIC.equals(removedAbility)) {
 				return FlightMode.SUPERSONIC;
 			}
 		}
-		if (data.isActive(AbilityIds.IRON_MAN_FLIGHT)) {
-			if (!AbilityIds.IRON_MAN_FLIGHT.equals(removedAbility)) {
+		if (data.isActive(SharedAbilityIds.IRON_MAN_FLIGHT)) {
+			if (!SharedAbilityIds.IRON_MAN_FLIGHT.equals(removedAbility)) {
 				return FlightMode.IRON_MAN;
 			}
 		}

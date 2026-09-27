@@ -1,6 +1,8 @@
 package io.github.grebeshok105.codex.entity;
 
 import io.github.grebeshok105.codex.ModId;
+import io.github.grebeshok105.codex.hero.ironman.entity.IronLegionDroneEntity;
+import io.github.grebeshok105.codex.hero.ironman.entity.SmartMissileEntity;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;

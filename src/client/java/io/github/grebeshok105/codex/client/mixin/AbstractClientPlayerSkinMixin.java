@@ -1,7 +1,7 @@
 package io.github.grebeshok105.codex.client.mixin;
 
-import io.github.grebeshok105.codex.client.ClientNanoSuitUpState;
 import io.github.grebeshok105.codex.client.core.render.SkinResolver;
+import io.github.grebeshok105.codex.client.core.render.SkinSuppressions;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.client.resources.PlayerSkin;
@@ -17,7 +17,7 @@ public abstract class AbstractClientPlayerSkinMixin {
 		AbstractClientPlayer self = (AbstractClientPlayer) (Object) this;
 		// Пока идёт нано-сборка костюма, геройский скин не подменяется:
 		// броня постепенно проявляется слоем NanoSuitUpLayer поверх игрока.
-		if (ClientNanoSuitUpState.suppressHeroSkin(self.getUUID())) {
+		if (SkinSuppressions.suppresses(self.getUUID())) {
 			return;
 		}
 		SkinResolver.ResolvedSkin skin = SkinResolver.resolve(self);

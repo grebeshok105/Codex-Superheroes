@@ -25,8 +25,6 @@ public final class ModDamageTypeTagProvider extends FabricTagProvider<DamageType
 		// Исключения — атаки мобов ближнего боя, которые следуют ванильным правилам.
 		getOrCreateTagBuilder(DamageTypeTags.BYPASSES_COOLDOWN).add(
 				ModDamageTypes.EYE_LASER,
-				ModDamageTypes.REPULSOR,
-				ModDamageTypes.UNIBEAM,
 				ModDamageTypes.LOKI_CHAOS,
 				ModDamageTypes.CAP_SHIELD_THROW,
 				ModDamageTypes.CAP_SHIELD_SLAM
@@ -35,9 +33,7 @@ public final class ModDamageTypeTagProvider extends FabricTagProvider<DamageType
 		// #superheroes:beam — beam-typed damage for a hero's adaptation check (counts even
 		// without a living attacker). Exactly the keys the old hardcoded list had.
 		getOrCreateTagBuilder(ModDamageTypes.BEAM).add(
-				ModDamageTypes.EYE_LASER,
-				ModDamageTypes.REPULSOR,
-				ModDamageTypes.UNIBEAM
+				ModDamageTypes.EYE_LASER
 		);
 
 		// Hero- and content-owned types join their declared tags via the module specs —

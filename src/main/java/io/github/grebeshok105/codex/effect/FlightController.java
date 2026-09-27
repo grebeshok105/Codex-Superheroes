@@ -225,7 +225,7 @@ public final class FlightController {
 
 	private static void tickSupersonicEffects(ServerPlayer player) {
 		ServerLevel level = player.serverLevel();
-		io.github.grebeshok105.codex.physics.BallisticBodyTracker.launch(
+		io.github.grebeshok105.codex.mechanic.impact.BallisticBodyTracker.launch(
 				player, player.getDeltaMovement(), 50.0, player);
 		Vec3 pos = player.position();
 		Vec3 dir = player.getLookAngle();

@@ -1,7 +1,7 @@
 package io.github.grebeshok105.codex.client.mixin;
 
-import io.github.grebeshok105.codex.client.ClientNanoSuitUpState;
 import io.github.grebeshok105.codex.client.core.render.SkinResolver;
+import io.github.grebeshok105.codex.client.core.render.SkinSuppressions;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelPart;
@@ -33,7 +33,7 @@ public abstract class PlayerRendererMixin {
 			return null;
 		}
 		// Во время нано-сборки рука от первого лица остаётся «голой» — броня ещё материализуется.
-		if (ClientNanoSuitUpState.suppressHeroSkin(player.getUUID())) {
+		if (SkinSuppressions.suppresses(player.getUUID())) {
 			return null;
 		}
 		SkinResolver.ResolvedSkin skin = SkinResolver.resolve(player);
