@@ -1,10 +1,10 @@
 package io.github.grebeshok105.codex.gametest;
 
-import io.github.grebeshok105.codex.horde.HordeManager;
-import io.github.grebeshok105.codex.horde.entity.BaseHordeEntity;
-import io.github.grebeshok105.codex.horde.entity.HordeEntities;
-import io.github.grebeshok105.codex.item.ModItems;
-import io.github.grebeshok105.codex.network.HordeDebugS2CPayload;
+import io.github.grebeshok105.codex.content.horde.HordeManager;
+import io.github.grebeshok105.codex.content.horde.entity.BaseHordeEntity;
+import io.github.grebeshok105.codex.content.horde.entity.HordeEntities;
+import io.github.grebeshok105.codex.content.horde.HordeItems;
+import io.github.grebeshok105.codex.content.horde.net.HordeDebugS2CPayload;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.BlockPos;
@@ -254,10 +254,10 @@ public final class HordeGameTests implements FabricGameTest {
 		ServerLevel level = helper.getLevel();
 		ServerPlayer player = TestPlayers.join(helper);
 		acquireHorde(helper, level, 52, 2800, () -> {
-			ItemStack stack = new ItemStack(ModItems.HORDE_CRYSTAL);
+			ItemStack stack = new ItemStack(HordeItems.HORDE_CRYSTAL);
 			player.setItemInHand(InteractionHand.MAIN_HAND, stack);
 			InteractionResultHolder<ItemStack> first =
-					ModItems.HORDE_CRYSTAL.use(level, player, InteractionHand.MAIN_HAND);
+					HordeItems.HORDE_CRYSTAL.use(level, player, InteractionHand.MAIN_HAND);
 			helper.assertTrue(first.getResult() == InteractionResult.CONSUME,
 					"first crystal use must consume, got " + first.getResult());
 			helper.assertTrue(HordeManager.hasActiveHorde(level),
@@ -265,10 +265,10 @@ public final class HordeGameTests implements FabricGameTest {
 			helper.assertTrue(player.getMainHandItem().isEmpty(),
 					"a successful use consumes the held crystal");
 
-			ItemStack second = new ItemStack(ModItems.HORDE_CRYSTAL);
+			ItemStack second = new ItemStack(HordeItems.HORDE_CRYSTAL);
 			player.setItemInHand(InteractionHand.MAIN_HAND, second);
 			InteractionResultHolder<ItemStack> again =
-					ModItems.HORDE_CRYSTAL.use(level, player, InteractionHand.MAIN_HAND);
+					HordeItems.HORDE_CRYSTAL.use(level, player, InteractionHand.MAIN_HAND);
 			helper.assertTrue(again.getResult() == InteractionResult.FAIL,
 					"a second use while a horde runs must fail, got " + again.getResult());
 			helper.assertTrue(second.getCount() == 1, "a failed use must not consume the crystal");

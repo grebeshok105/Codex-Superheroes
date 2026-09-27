@@ -90,7 +90,7 @@ public final class ModItemGroups {
 	 */
 	public static final List<Item> ADMIN_ONLY_ITEMS = List.of(
 			ModItems.HOMELANDER_BOSS_SPAWN_EGG,
-			ModItems.HORDE_CRYSTAL
+			io.github.grebeshok105.codex.content.horde.HordeItems.HORDE_CRYSTAL
 	);
 
 	private ModItemGroups() {

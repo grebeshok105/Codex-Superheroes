@@ -36,7 +36,7 @@ public final class SuperheroesCommands {
 
 	private static final SuggestionProvider<CommandSourceStack> HORDE_TYPE_SUGGESTIONS =
 			(ctx, builder) -> SharedSuggestionProvider.suggest(
-					io.github.grebeshok105.codex.horde.entity.HordeEntities.SPAWNABLE.keySet(), builder);
+					io.github.grebeshok105.codex.content.horde.entity.HordeEntities.SPAWNABLE.keySet(), builder);
 
 	private SuperheroesCommands() {
 	}
@@ -135,7 +135,7 @@ public final class SuperheroesCommands {
 			return 0;
 		}
 		net.minecraft.server.level.ServerLevel level = player.serverLevel();
-		io.github.grebeshok105.codex.horde.HordeManager.startHorde(level, player.position(), player);
+		io.github.grebeshok105.codex.content.horde.HordeManager.startHorde(level, player.position(), player);
 		ctx.getSource().sendSuccess(() -> Component.translatable("commands.superheroes.horde.started"), true);
 		return 1;
 	}
@@ -143,7 +143,7 @@ public final class SuperheroesCommands {
 	private static int hordeStop(CommandContext<CommandSourceStack> ctx) {
 		ServerPlayer player = playerOrNull(ctx);
 		if (player == null) return 0;
-		boolean ok = io.github.grebeshok105.codex.horde.HordeManager.stopHorde(player.serverLevel());
+		boolean ok = io.github.grebeshok105.codex.content.horde.HordeManager.stopHorde(player.serverLevel());
 		ctx.getSource().sendSuccess(() -> Component.translatable(ok ? "commands.superheroes.horde.stopped" : "commands.superheroes.horde.not_active"), true);
 		return ok ? 1 : 0;
 	}
@@ -151,7 +151,7 @@ public final class SuperheroesCommands {
 	private static int hordeClear(CommandContext<CommandSourceStack> ctx) {
 		ServerPlayer player = playerOrNull(ctx);
 		if (player == null) return 0;
-		int n = io.github.grebeshok105.codex.horde.HordeManager.clearMobs(player.serverLevel());
+		int n = io.github.grebeshok105.codex.content.horde.HordeManager.clearMobs(player.serverLevel());
 		ctx.getSource().sendSuccess(() -> Component.translatable("commands.superheroes.horde.mobs_removed", n), true);
 		return n;
 	}
@@ -159,7 +159,7 @@ public final class SuperheroesCommands {
 	private static int hordeNext(CommandContext<CommandSourceStack> ctx) {
 		ServerPlayer player = playerOrNull(ctx);
 		if (player == null) return 0;
-		boolean ok = io.github.grebeshok105.codex.horde.HordeManager.forceNextWave(player.serverLevel());
+		boolean ok = io.github.grebeshok105.codex.content.horde.HordeManager.forceNextWave(player.serverLevel());
 		ctx.getSource().sendSuccess(() -> Component.translatable(ok ? "commands.superheroes.horde.wave_started" : "commands.superheroes.horde.not_active"), true);
 		return ok ? 1 : 0;
 	}
@@ -167,7 +167,7 @@ public final class SuperheroesCommands {
 	private static int hordeStatus(CommandContext<CommandSourceStack> ctx) {
 		ServerPlayer player = playerOrNull(ctx);
 		if (player == null) return 0;
-		String status = io.github.grebeshok105.codex.horde.HordeManager.getDebugStatus(player.serverLevel());
+		String status = io.github.grebeshok105.codex.content.horde.HordeManager.getDebugStatus(player.serverLevel());
 		ctx.getSource().sendSuccess(() -> Component.literal(status), false);
 		return 1;
 	}
@@ -175,7 +175,7 @@ public final class SuperheroesCommands {
 	private static int hordeOverlayToggle(CommandContext<CommandSourceStack> ctx) {
 		ServerPlayer player = playerOrNull(ctx);
 		if (player == null) return 0;
-		boolean on = io.github.grebeshok105.codex.horde.HordeManager.toggleOverlay(player);
+		boolean on = io.github.grebeshok105.codex.content.horde.HordeManager.toggleOverlay(player);
 		ctx.getSource().sendSuccess(() -> Component.translatable("commands.superheroes.horde.debug_overlay",
 					Component.translatable(on ? "commands.superheroes.state.on" : "commands.superheroes.state.off")), false);
 		return 1;
@@ -184,7 +184,7 @@ public final class SuperheroesCommands {
 	private static int hordeOverlaySet(CommandContext<CommandSourceStack> ctx, boolean enabled) {
 		ServerPlayer player = playerOrNull(ctx);
 		if (player == null) return 0;
-		io.github.grebeshok105.codex.horde.HordeManager.setOverlay(player, enabled);
+		io.github.grebeshok105.codex.content.horde.HordeManager.setOverlay(player, enabled);
 		ctx.getSource().sendSuccess(() -> Component.translatable("commands.superheroes.horde.debug_overlay",
 					Component.translatable(enabled ? "commands.superheroes.state.on" : "commands.superheroes.state.off")), false);
 		return 1;
@@ -195,12 +195,12 @@ public final class SuperheroesCommands {
 		if (player == null) return 0;
 		String type = com.mojang.brigadier.arguments.StringArgumentType.getString(ctx, "type");
 		net.minecraft.world.entity.EntityType<?> entityType =
-				io.github.grebeshok105.codex.horde.entity.HordeEntities.SPAWNABLE.get(type);
+				io.github.grebeshok105.codex.content.horde.entity.HordeEntities.SPAWNABLE.get(type);
 		if (entityType == null) {
 			ctx.getSource().sendFailure(Component.translatable("commands.superheroes.horde.unknown_type", type));
 			return 0;
 		}
-		int n = io.github.grebeshok105.codex.horde.HordeManager.spawnSingle(
+		int n = io.github.grebeshok105.codex.content.horde.HordeManager.spawnSingle(
 				player.serverLevel(), entityType, player.position(), count);
 		ctx.getSource().sendSuccess(() -> Component.translatable("commands.superheroes.horde.spawned", n, type), true);
 		return n;
