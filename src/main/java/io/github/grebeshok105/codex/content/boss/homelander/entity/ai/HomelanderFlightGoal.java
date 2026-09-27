@@ -1,16 +1,16 @@
 package io.github.grebeshok105.codex.content.boss.homelander.entity.ai;
 
-import io.github.grebeshok105.codex.content.boss.homelander.entity.HomelanderBossEntity;
+import io.github.grebeshok105.codex.content.boss.homelander.api.HomelanderBossApi;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 
 import java.util.EnumSet;
 
 public class HomelanderFlightGoal extends Goal {
-	private final HomelanderBossEntity boss;
+	private final HomelanderBossApi boss;
 	private int recalc;
 
-	public HomelanderFlightGoal(HomelanderBossEntity boss) {
+	public HomelanderFlightGoal(HomelanderBossApi boss) {
 		this.boss = boss;
 		this.setFlags(EnumSet.of(Goal.Flag.MOVE));
 	}

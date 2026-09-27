@@ -1,6 +1,6 @@
 package io.github.grebeshok105.codex.content.boss.homelander.entity.ai;
 
-import io.github.grebeshok105.codex.content.boss.homelander.entity.HomelanderBossEntity;
+import io.github.grebeshok105.codex.content.boss.homelander.api.HomelanderBossApi;
 import io.github.grebeshok105.codex.sound.ModSounds;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
@@ -26,11 +26,11 @@ public class HomelanderRoarGoal extends Goal {
 	private static final double EFFECT_RADIUS = 14.0;
 	private static final float DAMAGE = 7.0f;
 
-	private final HomelanderBossEntity boss;
+	private final HomelanderBossApi boss;
 	private int phaseTick;
 	private boolean fired;
 
-	public HomelanderRoarGoal(HomelanderBossEntity boss) {
+	public HomelanderRoarGoal(HomelanderBossApi boss) {
 		this.boss = boss;
 		this.setFlags(EnumSet.of(Goal.Flag.LOOK));
 	}
@@ -78,8 +78,8 @@ public class HomelanderRoarGoal extends Goal {
 		} else if (!fired) {
 			fired = true;
 			AABB box = boss.getBoundingBox().inflate(EFFECT_RADIUS);
-			List<Entity> nearby = sl.getEntities(boss, box);
-			DamageSource ds = io.github.grebeshok105.codex.content.boss.homelander.registry.HomelanderBossDamageTypes.roarBoss((net.minecraft.server.level.ServerLevel) boss.level(), boss);
+			List<Entity> nearby = sl.getEntities(boss.asMob(), box);
+			DamageSource ds = io.github.grebeshok105.codex.content.boss.homelander.registry.HomelanderBossDamageTypes.roarBoss((net.minecraft.server.level.ServerLevel) boss.level(), boss.asMob());
 			for (Entity e : nearby) {
 				if (!(e instanceof LivingEntity le) || !le.isAlive()) continue;
 				if (boss.distanceToSqr(e) > EFFECT_RADIUS * EFFECT_RADIUS) continue;

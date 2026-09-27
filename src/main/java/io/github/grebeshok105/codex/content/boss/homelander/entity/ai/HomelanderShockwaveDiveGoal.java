@@ -1,6 +1,6 @@
 package io.github.grebeshok105.codex.content.boss.homelander.entity.ai;
 
-import io.github.grebeshok105.codex.content.boss.homelander.entity.HomelanderBossEntity;
+import io.github.grebeshok105.codex.content.boss.homelander.api.HomelanderBossApi;
 import io.github.grebeshok105.codex.physics.ShockwaveUtil;
 import io.github.grebeshok105.codex.sound.ModSounds;
 import net.minecraft.server.level.ServerLevel;
@@ -20,12 +20,12 @@ public class HomelanderShockwaveDiveGoal extends Goal {
 	private static final int MAX_CD = 460;
 	private static final int TIMEOUT_TICKS = 120;
 
-	private final HomelanderBossEntity boss;
+	private final HomelanderBossApi boss;
 	private int phase;
 	private int phaseTimer;
 	private Vec3 diveTarget;
 
-	public HomelanderShockwaveDiveGoal(HomelanderBossEntity boss) {
+	public HomelanderShockwaveDiveGoal(HomelanderBossApi boss) {
 		this.boss = boss;
 		this.setFlags(EnumSet.of(Goal.Flag.MOVE, Goal.Flag.JUMP));
 	}
@@ -92,9 +92,9 @@ public class HomelanderShockwaveDiveGoal extends Goal {
 				double horiz2 = dx * dx + dz * dz;
 				if (boss.getY() <= diveTarget.y + 1.0 || (boss.onGround() && horiz2 < 4.0)) {
 					ServerLevel sl = (ServerLevel) boss.level();
-					ShockwaveUtil.detonateMob(boss, sl,
+					ShockwaveUtil.detonateMob(boss.asMob(), sl,
 							boss.position(), IMPACT_RADIUS, IMPACT_DAMAGE, false,
-							io.github.grebeshok105.codex.content.boss.homelander.registry.HomelanderBossDamageTypes.shockwaveDive(sl, boss));
+							io.github.grebeshok105.codex.content.boss.homelander.registry.HomelanderBossDamageTypes.shockwaveDive(sl, boss.asMob()));
 					sl.playSound(null, boss.getX(), boss.getY(), boss.getZ(),
 							ModSounds.HOMELANDER_IRON_FISTS_IMPACT, SoundSource.HOSTILE, 1.6f, 0.85f);
 					phase = 2;

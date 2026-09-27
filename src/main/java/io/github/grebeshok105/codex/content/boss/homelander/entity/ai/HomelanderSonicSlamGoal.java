@@ -1,6 +1,6 @@
 package io.github.grebeshok105.codex.content.boss.homelander.entity.ai;
 
-import io.github.grebeshok105.codex.content.boss.homelander.entity.HomelanderBossEntity;
+import io.github.grebeshok105.codex.content.boss.homelander.api.HomelanderBossApi;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -21,12 +21,12 @@ public class HomelanderSonicSlamGoal extends Goal {
 	private static final float IMPACT_DAMAGE = 22.0f;
 	private static final double KNOCKBACK = 2.6;
 
-	private final HomelanderBossEntity boss;
+	private final HomelanderBossApi boss;
 	private int phaseTick;
 	private boolean hit;
 	private Vec3 chargeDir;
 
-	public HomelanderSonicSlamGoal(HomelanderBossEntity boss) {
+	public HomelanderSonicSlamGoal(HomelanderBossApi boss) {
 		this.boss = boss;
 		this.setFlags(EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK));
 	}
@@ -93,7 +93,7 @@ public class HomelanderSonicSlamGoal extends Goal {
 			if (chargeDir != null) {
 				Vec3 v = chargeDir.scale(2.4);
 				boss.setDeltaMovement(v);
-				boss.hasImpulse = true;
+				boss.asMob().hasImpulse = true;
 			}
 			sl.sendParticles(ParticleTypes.SWEEP_ATTACK,
 					boss.getX(), boss.getY() + 1.0, boss.getZ(),
@@ -103,7 +103,7 @@ public class HomelanderSonicSlamGoal extends Goal {
 					6, 0.4, 0.3, 0.4, 0.05);
 
 			if (boss.distanceToSqr(t) < 6.0) {
-				DamageSource ds = io.github.grebeshok105.codex.content.boss.homelander.registry.HomelanderBossDamageTypes.sonicSlam((net.minecraft.server.level.ServerLevel) boss.level(), boss);
+				DamageSource ds = io.github.grebeshok105.codex.content.boss.homelander.registry.HomelanderBossDamageTypes.sonicSlam((net.minecraft.server.level.ServerLevel) boss.level(), boss.asMob());
 				t.hurt(ds, IMPACT_DAMAGE);
 				if (chargeDir != null) {
 					Vec3 push = chargeDir.scale(KNOCKBACK).add(0.0, 0.6, 0.0);

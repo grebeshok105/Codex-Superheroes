@@ -1,6 +1,6 @@
 package io.github.grebeshok105.codex.content.boss.homelander.entity.ai;
 
-import io.github.grebeshok105.codex.content.boss.homelander.entity.HomelanderBossEntity;
+import io.github.grebeshok105.codex.content.boss.homelander.api.HomelanderBossApi;
 import io.github.grebeshok105.codex.mechanic.world.WorldDestructionPolicy;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.BlockParticleOption;
@@ -21,12 +21,12 @@ public class HomelanderBlockThrowGoal extends Goal {
 	private static final int CD_AFTER = 220;
 	private static final double RANGE = 36.0;
 
-	private final HomelanderBossEntity boss;
+	private final HomelanderBossApi boss;
 	private int phaseTick;
 	private BlockState pickedState;
 	private BlockPos pickedPos;
 
-	public HomelanderBlockThrowGoal(HomelanderBossEntity boss) {
+	public HomelanderBlockThrowGoal(HomelanderBossApi boss) {
 		this.boss = boss;
 		this.setFlags(EnumSet.of(Goal.Flag.LOOK));
 	}
@@ -92,7 +92,7 @@ public class HomelanderBlockThrowGoal extends Goal {
 			}
 		} else if (phaseTick == WINDUP_TICKS) {
 			if (pickedState != null && pickedPos != null
-					&& WorldDestructionPolicy.tryCarve(sl, pickedPos, boss)) {
+					&& WorldDestructionPolicy.tryCarve(sl, pickedPos, boss.asMob())) {
 
 				Vec3 spawn = boss.position().add(boss.getViewVector(1f).scale(2.0)).add(0, 1.5, 0);
 				FallingBlockEntity fb = FallingBlockEntity.fall(sl, BlockPos.containing(spawn), pickedState);
