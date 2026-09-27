@@ -1,8 +1,8 @@
-package io.github.grebeshok105.codex.item;
+package io.github.grebeshok105.codex.content.boss.homelander.item;
 
-import io.github.grebeshok105.codex.entity.HomelanderBossEntity;
+import io.github.grebeshok105.codex.content.boss.homelander.entity.HomelanderBossEntity;
 import io.github.grebeshok105.codex.core.transform.TooltipFrame;
-import io.github.grebeshok105.codex.entity.ModEntities;
+import io.github.grebeshok105.codex.content.boss.homelander.entity.HomelanderBossEntities;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -40,7 +40,7 @@ public class VoughtSignalItem extends Item {
 		}
 		ServerLevel level = (ServerLevel) context.getLevel();
 		BlockPos pos = context.getClickedPos().above();
-		HomelanderBossEntity boss = ModEntities.HOMELANDER_BOSS.create(level);
+		HomelanderBossEntity boss = HomelanderBossEntities.HOMELANDER_BOSS.create(level);
 		if (boss == null) {
 			return InteractionResult.FAIL;
 		}

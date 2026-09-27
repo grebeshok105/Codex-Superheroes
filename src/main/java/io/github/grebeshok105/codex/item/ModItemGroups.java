@@ -26,7 +26,6 @@ public final class ModItemGroups {
 				output.accept(ModItems.HOMELANDER_SUIT);
 				output.accept(ModItems.COMPOUND_V);
 				output.accept(ModItems.MILK_BOTTLE);
-				output.accept(ModItems.VOUGHT_SIGNAL);
 
 				output.accept(ModItems.IRON_MAN_SUIT);
 				output.accept(ModItems.IRON_MAN_REACTOR);
@@ -76,7 +75,7 @@ public final class ModItemGroups {
 	 * Не появляются в обычном креативе.
 	 */
 	public static final List<Item> ADMIN_ONLY_ITEMS = List.of(
-			ModItems.HOMELANDER_BOSS_SPAWN_EGG,
+			io.github.grebeshok105.codex.content.boss.homelander.HomelanderBossItems.HOMELANDER_BOSS_SPAWN_EGG,
 			io.github.grebeshok105.codex.content.horde.HordeItems.HORDE_CRYSTAL
 	);
 

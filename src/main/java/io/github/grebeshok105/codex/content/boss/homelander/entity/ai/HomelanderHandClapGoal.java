@@ -1,10 +1,10 @@
-package io.github.grebeshok105.codex.entity.ai;
+package io.github.grebeshok105.codex.content.boss.homelander.entity.ai;
 
-import io.github.grebeshok105.codex.damage.ModDamageTypes;
-import io.github.grebeshok105.codex.entity.HomelanderBossEntity;
+import io.github.grebeshok105.codex.content.boss.homelander.registry.HomelanderBossDamageTypes;
+import io.github.grebeshok105.codex.content.boss.homelander.api.HomelanderBossApi;
 import io.github.grebeshok105.codex.core.net.ScreenShakeS2CPayload;
 import io.github.grebeshok105.codex.sound.ModSounds;
-import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
+import io.github.grebeshok105.codex.core.net.FxBroadcast;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
@@ -30,11 +30,11 @@ public class HomelanderHandClapGoal extends Goal {
 	private static final int RECOVER_TICKS = 12;
 	private static final int CD_AFTER = 200;
 
-	private final HomelanderBossEntity boss;
+	private final HomelanderBossApi boss;
 	private int phaseTick;
 	private boolean fired;
 
-	public HomelanderHandClapGoal(HomelanderBossEntity boss) {
+	public HomelanderHandClapGoal(HomelanderBossApi boss) {
 		this.boss = boss;
 		this.setFlags(EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK));
 	}
@@ -87,8 +87,8 @@ public class HomelanderHandClapGoal extends Goal {
 			Vec3 origin = boss.position().add(0, boss.getBbHeight() * 0.7, 0);
 			Vec3 forward = boss.getViewVector(1f).normalize();
 			AABB area = new AABB(origin, origin).inflate(RANGE);
-			List<Entity> hits = sl.getEntities(boss, area);
-			DamageSource ds = ModDamageTypes.homelanderHandClap(sl, boss);
+			List<Entity> hits = sl.getEntities(boss.asMob(), area);
+			DamageSource ds = HomelanderBossDamageTypes.handClap(sl, boss.asMob());
 			for (Entity e : hits) {
 				if (!(e instanceof LivingEntity le) || !le.isAlive() || e == boss) continue;
 				Vec3 to = e.position().add(0, e.getBbHeight() * 0.5, 0).subtract(origin);
@@ -116,7 +116,7 @@ public class HomelanderHandClapGoal extends Goal {
 			sl.playSound(null, boss.getX(), boss.getY(), boss.getZ(),
 					SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.WEATHER, 1.6f, 1.1f);
 
-			for (ServerPlayer nearby : PlayerLookup.around(sl, boss.position(), 24.0)) {
+			for (ServerPlayer nearby : FxBroadcast.aroundAudience(sl, boss.position(), 24.0)) {
 				double dist = nearby.position().distanceTo(boss.position());
 				float intensity = (float) Math.max(0.0, 1.0 - dist / 24.0) * 1.8f;
 				if (intensity > 0.05f) {

@@ -8,15 +8,6 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 
 public final class ModEntities {
-	public static final EntityType<HomelanderBossEntity> HOMELANDER_BOSS = Registry.register(
-			BuiltInRegistries.ENTITY_TYPE,
-			ModId.of("homelander_boss"),
-			EntityType.Builder.of(HomelanderBossEntity::new, MobCategory.MONSTER)
-					.sized(0.6f, 1.95f)
-					.clientTrackingRange(10)
-					.build("homelander_boss")
-	);
-
 	public static final EntityType<ShadowSoldierEntity> SHADOW_SOLDIER = Registry.register(
 			BuiltInRegistries.ENTITY_TYPE,
 			ModId.of("shadow_soldier"),
@@ -60,7 +51,6 @@ public final class ModEntities {
 	}
 
 	public static void init() {
-		FabricDefaultAttributeRegistry.register(HOMELANDER_BOSS, HomelanderBossEntity.createAttributes());
 		FabricDefaultAttributeRegistry.register(SHADOW_SOLDIER, ShadowSoldierEntity.createAttributes());
 		FabricDefaultAttributeRegistry.register(RAM, RamEntity.createAttributes());
 		FabricDefaultAttributeRegistry.register(IRON_LEGION_DRONE, IronLegionDroneEntity.createAttributes());

@@ -1,6 +1,6 @@
-package io.github.grebeshok105.codex.entity.ai;
+package io.github.grebeshok105.codex.content.boss.homelander.entity.ai;
 
-import io.github.grebeshok105.codex.entity.HomelanderBossEntity;
+import io.github.grebeshok105.codex.content.boss.homelander.api.HomelanderBossApi;
 import io.github.grebeshok105.codex.physics.ShockwaveUtil;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
@@ -24,11 +24,11 @@ public class HomelanderGroundMagnetGoal extends Goal {
 	private static final float SHOCK_DAMAGE = 18.0f;
 	private static final double TRIGGER_RANGE = 26.0;
 
-	private final HomelanderBossEntity boss;
+	private final HomelanderBossApi boss;
 	private int phase;
 	private int phaseTimer;
 
-	public HomelanderGroundMagnetGoal(HomelanderBossEntity boss) {
+	public HomelanderGroundMagnetGoal(HomelanderBossApi boss) {
 		this.boss = boss;
 		this.setFlags(EnumSet.of(Goal.Flag.MOVE, Goal.Flag.JUMP));
 	}
@@ -97,7 +97,7 @@ public class HomelanderGroundMagnetGoal extends Goal {
 		} else if (phase == 1) {
 			boss.setDeltaMovement(0, boss.getDeltaMovement().y, 0);
 			AABB box = boss.getBoundingBox().inflate(PULL_RADIUS);
-			List<Entity> entities = sl.getEntities(boss, box);
+			List<Entity> entities = sl.getEntities(boss.asMob(), box);
 			Vec3 center = boss.position();
 			for (Entity e : entities) {
 				if (!(e instanceof LivingEntity le) || !le.isAlive()) continue;
@@ -121,7 +121,7 @@ public class HomelanderGroundMagnetGoal extends Goal {
 			if (phaseTimer >= PULL_TICKS) {
 				phase = 2;
 				phaseTimer = 0;
-				ShockwaveUtil.detonateMob(boss, sl, boss.position(),
+				ShockwaveUtil.detonateMob(boss.asMob(), sl, boss.position(),
 						SHOCK_RADIUS, SHOCK_DAMAGE, false);
 			}
 		} else if (phase == 2) {

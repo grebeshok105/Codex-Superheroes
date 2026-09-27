@@ -1,5 +1,6 @@
 package io.github.grebeshok105.codex.datagen;
 
+import io.github.grebeshok105.codex.bootstrap.ContentModules;
 import io.github.grebeshok105.codex.bootstrap.HeroModules;
 import io.github.grebeshok105.codex.damage.DamageTypeSpec;
 import io.github.grebeshok105.codex.damage.ModDamageTypes;
@@ -34,16 +35,13 @@ public final class ModDamageTypeProvider extends FabricDynamicRegistryProvider {
 		entries.add(lookup, ModDamageTypes.THANOS_COSMIC_SLAM);
 		entries.add(lookup, ModDamageTypes.THANOS_MIND_PULSE);
 		entries.add(lookup, ModDamageTypes.THANOS_REALITY_TEAR);
-		entries.add(lookup, ModDamageTypes.HOMELANDER_EYE_LASER);
-		entries.add(lookup, ModDamageTypes.HOMELANDER_HEAT_VISION);
-		entries.add(lookup, ModDamageTypes.HOMELANDER_HAND_CLAP);
-		entries.add(lookup, ModDamageTypes.HOMELANDER_SONIC_SLAM);
-		entries.add(lookup, ModDamageTypes.HOMELANDER_SHOCKWAVE_DIVE);
-		entries.add(lookup, ModDamageTypes.HOMELANDER_LIGHTNING_CALL);
-		entries.add(lookup, ModDamageTypes.HOMELANDER_ROAR_BOSS);
-		entries.add(lookup, ModDamageTypes.HOMELANDER_MELEE);
+		entries.add(lookup, ModDamageTypes.CAP_SHIELD_THROW);
+		entries.add(lookup, ModDamageTypes.CAP_SHIELD_SLAM);
 		entries.add(lookup, ModDamageTypes.SPACE_CRUSH);
 		for (DamageTypeSpec spec : HeroModules.damageTypeSpecs()) {
+			entries.add(lookup, spec.key());
+		}
+		for (DamageTypeSpec spec : ContentModules.damageTypeSpecs()) {
 			entries.add(lookup, spec.key());
 		}
 	}

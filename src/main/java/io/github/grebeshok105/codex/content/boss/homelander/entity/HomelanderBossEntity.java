@@ -1,15 +1,16 @@
-package io.github.grebeshok105.codex.entity;
+package io.github.grebeshok105.codex.content.boss.homelander.entity;
 
-import io.github.grebeshok105.codex.entity.ai.HomelanderBlockThrowGoal;
-import io.github.grebeshok105.codex.entity.ai.HomelanderEyeLaserGoal;
-import io.github.grebeshok105.codex.entity.ai.HomelanderFlightGoal;
-import io.github.grebeshok105.codex.entity.ai.HomelanderGroundMagnetGoal;
-import io.github.grebeshok105.codex.entity.ai.HomelanderHandClapGoal;
-import io.github.grebeshok105.codex.entity.ai.HomelanderHeatVisionSweepGoal;
-import io.github.grebeshok105.codex.entity.ai.HomelanderLightningCallGoal;
-import io.github.grebeshok105.codex.entity.ai.HomelanderRoarGoal;
-import io.github.grebeshok105.codex.entity.ai.HomelanderShockwaveDiveGoal;
-import io.github.grebeshok105.codex.entity.ai.HomelanderSonicSlamGoal;
+import io.github.grebeshok105.codex.content.boss.homelander.api.HomelanderBossApi;
+import io.github.grebeshok105.codex.content.boss.homelander.entity.ai.HomelanderBlockThrowGoal;
+import io.github.grebeshok105.codex.content.boss.homelander.entity.ai.HomelanderEyeLaserGoal;
+import io.github.grebeshok105.codex.content.boss.homelander.entity.ai.HomelanderFlightGoal;
+import io.github.grebeshok105.codex.content.boss.homelander.entity.ai.HomelanderGroundMagnetGoal;
+import io.github.grebeshok105.codex.content.boss.homelander.entity.ai.HomelanderHandClapGoal;
+import io.github.grebeshok105.codex.content.boss.homelander.entity.ai.HomelanderHeatVisionSweepGoal;
+import io.github.grebeshok105.codex.content.boss.homelander.entity.ai.HomelanderLightningCallGoal;
+import io.github.grebeshok105.codex.content.boss.homelander.entity.ai.HomelanderRoarGoal;
+import io.github.grebeshok105.codex.content.boss.homelander.entity.ai.HomelanderShockwaveDiveGoal;
+import io.github.grebeshok105.codex.content.boss.homelander.entity.ai.HomelanderSonicSlamGoal;
 import io.github.grebeshok105.codex.item.ModItems;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -35,7 +36,7 @@ import net.minecraft.server.level.ServerBossEvent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 
-public class HomelanderBossEntity extends Monster {
+public class HomelanderBossEntity extends Monster implements HomelanderBossApi {
 	private final ServerBossEvent bossEvent = new ServerBossEvent(
 			Component.translatable("entity.superheroes.homelander_boss"),
 			BossEvent.BossBarColor.GREEN,
@@ -144,7 +145,7 @@ public class HomelanderBossEntity extends Monster {
 			return super.doHurtTarget(target);
 		}
 		float damage = (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE);
-		DamageSource ds = io.github.grebeshok105.codex.damage.ModDamageTypes.homelanderMelee(sl, this);
+		DamageSource ds = io.github.grebeshok105.codex.content.boss.homelander.registry.HomelanderBossDamageTypes.melee(sl, this);
 		boolean hurt = target.hurt(ds, damage);
 		if (hurt) {
 			if (target instanceof LivingEntity le) {

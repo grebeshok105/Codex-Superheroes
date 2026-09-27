@@ -23,7 +23,5 @@ effect <-> entity
 effect <-> hero
 effect <-> item
 effect <-> network
-entity <-> entity.ai
-entity <-> item
 hero <-> physics
 item <-> mechanic.boundweapon
