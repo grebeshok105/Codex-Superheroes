@@ -54,8 +54,8 @@
 | I1b Loki + A-Train | ✅ | #93 |
 | I1c Battle Beast | ⏳ | |
 | I2a Goku + Naruto | ✅ | #91 |
-| I2b Kratos | ⏳ | |
-| I2c Captain America | ⏳ | |
+| I2b Kratos | ✅ | #97 |
+| I2c Captain America | ✅ | #95 |
 | I3 Invincible + Omni-Man | ✅ | #92 |
 | I4a Sung Jinwoo | ⏳ | |
 | I4b Rem | ⏳ | |
@@ -66,7 +66,7 @@
 | I5c Pandora | ⏳ | |
 | I6a Homelander | ⏳ | |
 | I6b Iron Man + L2 | ⏳ | |
-| IC1 орда | ⏳ | |
+| IC1 орда | ✅ | PR #96; content-модуль, GeckoLib оставлена (см. «Решения») |
 | IC2 босс Хоумлендер | ⏳ | |
 | IC3 admin и команды | ⏳ | |
 | O документация и финальная приёмка | ⏳ | |
@@ -79,6 +79,9 @@
 ### Решения
 
 Решений уровня плана пока нет; решения, принятые при исполнении (в том числе про GeckoLib в IC1), записываются сюда.
+
+- IC1 / GeckoLib: зависимость ОСТАВЛЕНА. Условие удаления («runClient показывает, что ни одна модель не рендерится через GeckoLib») не доказано: `BaseHordeEntity implements GeoEntity` сохранён, `HordeGeoRenderer` удалён ещё в N1, но без модели рендером нельзя быть уверенным, что все 25 сущностей рисуются ванильными рендерерами — зависимость в build.gradle и `implements GeoEntity` оставлены до behavior-PR.
+- IC1 / OwnedSessionMap: `HordeManager.ACTIVE`/`OVERLAY_PLAYERS` переведены на `OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.noneOf(ClearOn.class))` — семантика сохранена (очистка только на SERVER_STOPPED, как старый `resetAll`; `SharedMechanics.onServerStopped(resetAll)` удалён как дубль).
 
 ## Зависимости стадий
 

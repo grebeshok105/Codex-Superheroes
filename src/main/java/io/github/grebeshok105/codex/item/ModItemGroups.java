@@ -41,11 +41,6 @@ public final class ModItemGroups {
 				output.accept(ModItems.DOOMSDAY_GENOME);
 				output.accept(ModItems.KRYPTONITE_SHARD);
 
-				output.accept(ModItems.CAPTAIN_AMERICA_SUIT);
-				output.accept(ModItems.VIBRANIUM_SHIELD);
-
-				output.accept(ModItems.BLADE_OF_CHAOS);
-
 				output.accept(ModItems.INFINITY_GAUNTLET);
 				output.accept(ModItems.POWER_STONE);
 				output.accept(ModItems.SPACE_STONE);
@@ -82,7 +77,7 @@ public final class ModItemGroups {
 	 */
 	public static final List<Item> ADMIN_ONLY_ITEMS = List.of(
 			ModItems.HOMELANDER_BOSS_SPAWN_EGG,
-			ModItems.HORDE_CRYSTAL
+			io.github.grebeshok105.codex.content.horde.HordeItems.HORDE_CRYSTAL
 	);
 
 	private ModItemGroups() {

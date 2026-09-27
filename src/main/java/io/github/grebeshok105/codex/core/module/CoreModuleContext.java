@@ -9,7 +9,7 @@ import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
 import io.github.grebeshok105.codex.core.lifecycle.TickRegistrar;
 import io.github.grebeshok105.codex.core.net.PayloadRegistrar;
 
-public final class CoreModuleContext implements HeroModuleContext {
+public final class CoreModuleContext implements HeroModuleContext, ContentModuleContext {
 	public static final CoreModuleContext INSTANCE = new CoreModuleContext();
 
 	private CoreModuleContext() {

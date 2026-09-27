@@ -1,7 +1,7 @@
 package io.github.grebeshok105.codex.gametest;
 
 import io.github.grebeshok105.codex.effect.RegulusMadnessController;
-import io.github.grebeshok105.codex.hero.KratosHero;
+import io.github.grebeshok105.codex.hero.kratos.KratosHero;
 import io.github.grebeshok105.codex.hero.RegulusHero;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.gametest.framework.GameTest;

@@ -25,15 +25,11 @@ public final class ModDamageTypes {
 	public static final ResourceKey<DamageType> DOOMSDAY_CHARGE_TACKLE = key("doomsday_charge_tackle");
 	public static final ResourceKey<DamageType> DOOMSDAY_DOOM_GRIP = key("doomsday_doom_grip");
 	public static final ResourceKey<DamageType> SHADOW_ATTACK = key("shadow_attack");
-	public static final ResourceKey<DamageType> KRATOS_BLADE = key("kratos_blade");
-	public static final ResourceKey<DamageType> KRATOS_LEVIATHAN = key("kratos_leviathan");
 	public static final ResourceKey<DamageType> LOKI_CHAOS = key("loki_chaos");
 	public static final ResourceKey<DamageType> THANOS_SNAP = key("thanos_snap");
 	public static final ResourceKey<DamageType> THANOS_COSMIC_SLAM = key("thanos_cosmic_slam");
 	public static final ResourceKey<DamageType> THANOS_MIND_PULSE = key("thanos_mind_pulse");
 	public static final ResourceKey<DamageType> THANOS_REALITY_TEAR = key("thanos_reality_tear");
-	public static final ResourceKey<DamageType> CAP_SHIELD_THROW = key("cap_shield_throw");
-	public static final ResourceKey<DamageType> CAP_SHIELD_SLAM = key("cap_shield_slam");
 	public static final ResourceKey<DamageType> HOMELANDER_EYE_LASER = key("homelander_eye_laser");
 	public static final ResourceKey<DamageType> HOMELANDER_HEAT_VISION = key("homelander_heat_vision");
 	public static final ResourceKey<DamageType> HOMELANDER_HAND_CLAP = key("homelander_hand_clap");
@@ -66,15 +62,11 @@ public final class ModDamageTypes {
 		context.register(DOOMSDAY_CHARGE_TACKLE, new DamageType("doomsday_charge_tackle", DamageScaling.NEVER, 0.0F));
 		context.register(DOOMSDAY_DOOM_GRIP, new DamageType("doomsday_doom_grip", DamageScaling.NEVER, 0.0F));
 		context.register(SHADOW_ATTACK, new DamageType("shadow_attack", DamageScaling.WHEN_CAUSED_BY_LIVING_NON_PLAYER, 0.0F));
-		context.register(KRATOS_BLADE, new DamageType("kratos_blade", DamageScaling.NEVER, 0.0F, DamageEffects.BURNING));
-		context.register(KRATOS_LEVIATHAN, new DamageType("kratos_leviathan", DamageScaling.NEVER, 0.0F));
 		context.register(LOKI_CHAOS, new DamageType("loki_chaos", DamageScaling.NEVER, 0.0F));
 		context.register(THANOS_SNAP, new DamageType("thanos_snap", DamageScaling.NEVER, 0.0F));
 		context.register(THANOS_COSMIC_SLAM, new DamageType("thanos_cosmic_slam", DamageScaling.NEVER, 0.0F));
 		context.register(THANOS_MIND_PULSE, new DamageType("thanos_mind_pulse", DamageScaling.NEVER, 0.0F));
 		context.register(THANOS_REALITY_TEAR, new DamageType("thanos_reality_tear", DamageScaling.NEVER, 0.0F));
-		context.register(CAP_SHIELD_THROW, new DamageType("cap_shield_throw", DamageScaling.NEVER, 0.0F));
-		context.register(CAP_SHIELD_SLAM, new DamageType("cap_shield_slam", DamageScaling.NEVER, 0.0F));
 		context.register(HOMELANDER_EYE_LASER, new DamageType("homelander_eye_laser", DamageScaling.NEVER, 0.0F, DamageEffects.BURNING));
 		context.register(HOMELANDER_HEAT_VISION, new DamageType("homelander_heat_vision", DamageScaling.NEVER, 0.0F, DamageEffects.BURNING));
 		context.register(HOMELANDER_HAND_CLAP, new DamageType("homelander_hand_clap", DamageScaling.NEVER, 0.0F));
@@ -130,14 +122,6 @@ public final class ModDamageTypes {
 		return source(level, SHADOW_ATTACK, attacker);
 	}
 
-	public static DamageSource kratosBlade(ServerLevel level, Entity attacker) {
-		return source(level, KRATOS_BLADE, attacker);
-	}
-
-	public static DamageSource kratosLeviathan(ServerLevel level, Entity attacker) {
-		return source(level, KRATOS_LEVIATHAN, attacker);
-	}
-
 	public static DamageSource lokiChaos(ServerLevel level, Entity attacker) {
 		return source(level, LOKI_CHAOS, attacker);
 	}
@@ -156,14 +140,6 @@ public final class ModDamageTypes {
 
 	public static DamageSource thanosRealityTear(ServerLevel level, Entity attacker) {
 		return source(level, THANOS_REALITY_TEAR, attacker);
-	}
-
-	public static DamageSource capShieldThrow(ServerLevel level, Entity attacker) {
-		return source(level, CAP_SHIELD_THROW, attacker);
-	}
-
-	public static DamageSource capShieldSlam(ServerLevel level, Entity attacker) {
-		return source(level, CAP_SHIELD_SLAM, attacker);
 	}
 
 	public static DamageSource homelanderEyeLaser(ServerLevel level, Entity attacker) {
