@@ -1,5 +1,9 @@
 package io.github.grebeshok105.codex.client.core.module;
 
+import io.github.grebeshok105.codex.client.core.FovModifier;
+import io.github.grebeshok105.codex.client.core.FovModifiers;
+import io.github.grebeshok105.codex.client.core.HudGlitchSource;
+import io.github.grebeshok105.codex.client.core.HudJitter;
 import io.github.grebeshok105.codex.client.core.audio.ClientSoundFilters;
 import io.github.grebeshok105.codex.client.core.hud.AbilityDecoration;
 import io.github.grebeshok105.codex.client.core.hud.AbilityDecorations;
@@ -10,6 +14,7 @@ import io.github.grebeshok105.codex.client.core.input.HeroActionKeys;
 import io.github.grebeshok105.codex.client.core.render.PlayerLayers;
 import io.github.grebeshok105.codex.client.core.render.SkinProvider;
 import io.github.grebeshok105.codex.client.core.render.SkinResolver;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
@@ -88,5 +93,20 @@ public final class CoreClientContext implements HeroClientContext {
 	@Override
 	public void abilityDecoration(ResourceLocation abilityId, AbilityDecoration decoration) {
 		AbilityDecorations.register(abilityId, decoration);
+	}
+
+	@Override
+	public void fovModifier(FovModifier modifier) {
+		FovModifiers.register(modifier);
+	}
+
+	@Override
+	public void hudGlitchSource(HudGlitchSource source) {
+		HudJitter.register(source);
+	}
+
+	@Override
+	public void clientTick(Consumer<Minecraft> hook) {
+		ClientTickEvents.END_CLIENT_TICK.register(hook::accept);
 	}
 }

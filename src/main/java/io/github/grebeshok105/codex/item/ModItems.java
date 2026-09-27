@@ -57,32 +57,6 @@ public final class ModItems {
 			new UraniumDaggerItem(new Item.Properties().stacksTo(1).durability(250).rarity(Rarity.EPIC))
 	);
 
-	public static final TransformationItem REGULUS_SUIT = register(
-			"regulus_suit",
-			new TransformationItem(ModId.of("regulus"), new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC),
-					new TransformationLore(ChatFormatting.GOLD,
-							List.of(new TransformationLore.Line("item.superheroes.regulus_suit.lore.line1", ChatFormatting.GOLD),
-									new TransformationLore.Line("item.superheroes.regulus_suit.lore.line2", ChatFormatting.DARK_GRAY)),
-							List.of(new TransformationLore.Line("item.superheroes.regulus_suit.lore.usage", ChatFormatting.YELLOW),
-									new TransformationLore.Line("item.superheroes.regulus_suit.lore.untransform", ChatFormatting.GOLD))))
-	);
-
-	public static final EvangelionItem EVANGELION = register(
-			"evangelion",
-			new EvangelionItem(new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC))
-	);
-
-	// persisted id kept from the Doctor Strange era — do not rename the string.
-	public static final TransformationItem PANDORA_SUIT = register(
-			"doctor_strange_suit",
-			new TransformationItem(ModId.of("pandora"), new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.EPIC),
-					new TransformationLore(ChatFormatting.DARK_RED,
-							List.of(new TransformationLore.Line("item.superheroes.doctor_strange_suit.lore.line1", ChatFormatting.RED),
-									new TransformationLore.Line("item.superheroes.doctor_strange_suit.lore.line2", ChatFormatting.DARK_GRAY)),
-							List.of(new TransformationLore.Line("item.superheroes.doctor_strange_suit.lore.usage", ChatFormatting.YELLOW),
-									new TransformationLore.Line("item.superheroes.doctor_strange_suit.lore.untransform", ChatFormatting.GOLD))))
-	);
-
 	private ModItems() {
 	}
 

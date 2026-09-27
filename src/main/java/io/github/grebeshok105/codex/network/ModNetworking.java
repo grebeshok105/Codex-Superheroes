@@ -25,17 +25,11 @@ public final class ModNetworking {
 		PayloadTypeRegistry.playS2C().register(RepulsorBlastS2CPayload.TYPE, RepulsorBlastS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(ThanosCosmicBeamS2CPayload.TYPE, ThanosCosmicBeamS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(ReactorStateS2CPayload.TYPE, ReactorStateS2CPayload.STREAM_CODEC);
-		PayloadTypeRegistry.playS2C().register(MadnessSyncS2CPayload.TYPE, MadnessSyncS2CPayload.STREAM_CODEC);
-		PayloadTypeRegistry.playS2C().register(MadnessVisualS2CPayload.TYPE, MadnessVisualS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(UraniumPressureS2CPayload.TYPE, UraniumPressureS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(UraniumThreatS2CPayload.TYPE, UraniumThreatS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(JarvisDetectionS2CPayload.TYPE, JarvisDetectionS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(SuitVariantS2CPayload.TYPE, SuitVariantS2CPayload.STREAM_CODEC);
 		PayloadTypeRegistry.playS2C().register(NanoFormS2CPayload.TYPE, NanoFormS2CPayload.STREAM_CODEC);
-		PayloadTypeRegistry.playS2C().register(MirrorDimensionS2CPayload.TYPE, MirrorDimensionS2CPayload.STREAM_CODEC);
-		PayloadTypeRegistry.playS2C().register(PandoraCinematicS2CPayload.TYPE, PandoraCinematicS2CPayload.STREAM_CODEC);
-		PayloadTypeRegistry.playS2C().register(PandoraHouseStateS2CPayload.TYPE, PandoraHouseStateS2CPayload.STREAM_CODEC);
-		PayloadTypeRegistry.playC2S().register(MirrorDimensionStatusC2SPayload.TYPE, MirrorDimensionStatusC2SPayload.STREAM_CODEC);
 
 		ServerPlayNetworking.registerGlobalReceiver(SuperJumpC2SPayload.TYPE, (payload, context) -> {
 			ServerPlayer player = context.player();
@@ -44,10 +38,6 @@ public final class ModNetworking {
 		ServerPlayNetworking.registerGlobalReceiver(HeroMeleeChargeC2SPayload.TYPE, (payload, context) -> {
 			ServerPlayer player = context.player();
 			HeroMeleeImpactController.handleChargeInput(player, payload);
-		});
-		ServerPlayNetworking.registerGlobalReceiver(MirrorDimensionStatusC2SPayload.TYPE, (payload, context) -> {
-			ServerPlayer player = context.player();
-			io.github.grebeshok105.codex.effect.MirrorDimensionController.handleStatus(player, payload.status());
 		});
 	}
 

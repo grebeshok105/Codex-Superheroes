@@ -27,6 +27,7 @@
 	},
 	"mixins": [
 		"superheroes.mixins.json",
+		"superheroes.compat.mixins.json",
 		{
 			"config": "superheroes.client.mixins.json",
 			"environment": "client"

@@ -27,12 +27,9 @@ public final class ModDamageTypeTagProvider extends FabricTagProvider<DamageType
 				ModDamageTypes.EYE_LASER,
 				ModDamageTypes.REPULSOR,
 				ModDamageTypes.UNIBEAM,
-				ModDamageTypes.COUNTER_STRIKE,
-				ModDamageTypes.LION_ROAR,
 				ModDamageTypes.LOKI_CHAOS,
 				ModDamageTypes.CAP_SHIELD_THROW,
-				ModDamageTypes.CAP_SHIELD_SLAM,
-				ModDamageTypes.SPACE_CRUSH
+				ModDamageTypes.CAP_SHIELD_SLAM
 		);
 
 		// #superheroes:beam — beam-typed damage for a hero's adaptation check (counts even

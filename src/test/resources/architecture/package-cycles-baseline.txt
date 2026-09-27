@@ -2,7 +2,6 @@ ability <-> effect
 ability <-> flight
 ability <-> hero
 ability.ironman <-> hero
-attachment <-> effect
 attachment <-> mechanic.boundweapon
 client <-> client.hud
 content.horde <-> content.horde.entity
@@ -19,7 +18,6 @@ core.hero <-> core.transform
 core.lifecycle <-> core.transform
 core.net <-> core.transform
 core.resource <-> core.transform
-effect <-> hero
 effect <-> item
 effect <-> network
 hero <-> physics
