@@ -1,6 +1,5 @@
 package io.github.grebeshok105.codex.architecture;
 
-import com.tngtech.archunit.library.freeze.FreezingArchRule;
 import org.junit.jupiter.api.Test;
 
 import static io.github.grebeshok105.codex.architecture.ArchitectureRulesTest.*;
@@ -12,9 +11,9 @@ import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.sli
 class ClientArchitectureRulesTest {
 	@Test
 	void sharedClientCodeDoesNotDependOnConcreteHeroes() {
-		FreezingArchRule.freeze(noClasses().that().resideInAPackage(ROOT + ".client..").and(not(IN_CLIENT_HERO_MODULE)).and(not(COMPOSITION_ROOT))
+		noClasses().that().resideInAPackage(ROOT + ".client..").and(not(IN_CLIENT_HERO_MODULE)).and(not(COMPOSITION_ROOT))
 				.should().dependOnClassesThat(CONCRETE_HERO)
-				.as("shared client code reads the hero registry and hooks, never a concrete hero")).check(CodexClasses.mainAndClient());
+				.as("shared client code reads the hero registry and hooks, never a concrete hero").check(CodexClasses.mainAndClient());
 	}
 
 	@Test
