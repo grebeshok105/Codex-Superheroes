@@ -18,8 +18,7 @@ import io.github.grebeshok105.codex.client.fx.WallImpactDebrisManager;
 import io.github.grebeshok105.codex.client.network.ClientNetworking;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.mechanic.boundweapon.BoundWeaponItem;
-import io.github.grebeshok105.codex.client.render.CosmicBeamRenderer;
-import io.github.grebeshok105.codex.client.render.LaserBeamRenderer;
+import io.github.grebeshok105.codex.client.core.render.BeamRenderer;
 import io.github.grebeshok105.codex.client.render.lightning.SuperheroLightningRenderer;
 import io.github.grebeshok105.codex.client.screen.BindingsScreen;
 import io.github.grebeshok105.codex.core.net.ActivateAbilityC2SPayload;
@@ -53,8 +52,7 @@ public class SuperheroesClient implements ClientModInitializer {
 		io.github.grebeshok105.codex.client.bootstrap.ContentClientModules.bootstrap();
 		ClientHeroDimsWatcher.init();
 		io.github.grebeshok105.codex.client.render.WildShaders.register();
-		LaserBeamRenderer.register();
-		CosmicBeamRenderer.register();
+		BeamRenderer.register();
 		EntityRendererRegistry.register(EntityType.LIGHTNING_BOLT, SuperheroLightningRenderer::new);
 		LivingEntityFeatureRendererRegistrationCallback.EVENT.register((entityType, entityRenderer, registrationHelper, context) -> {
 			if (entityRenderer instanceof PlayerRenderer playerRenderer) {
@@ -63,8 +61,6 @@ public class SuperheroesClient implements ClientModInitializer {
 		});
 		ParticleFactoryRegistry.getInstance().register(ModParticles.TRANSFORM_SPARK, EndRodParticle.Provider::new);
 		ParticleFactoryRegistry.getInstance().register(ModParticles.LASER_SPARK, EndRodParticle.Provider::new);
-		ParticleFactoryRegistry.getInstance().register(ModParticles.REPULSOR_SPARK, EndRodParticle.Provider::new);
-		ParticleFactoryRegistry.getInstance().register(ModParticles.UNIBEAM_SPARK, EndRodParticle.Provider::new);
 		ParticleFactoryRegistry.getInstance().register(ModParticles.WHITE_BOOM,
 				sprites -> new io.github.grebeshok105.codex.client.fx.CustomParticleGate(sprites, EndRodParticle.Provider::new));
 		ParticleFactoryRegistry.getInstance().register(ModParticles.SWORD_EXPLOSION,
@@ -200,7 +196,7 @@ public class SuperheroesClient implements ClientModInitializer {
 			return;
 		}
 		if (shouldCharge) {
-			meleeChargeTicks = Math.min(io.github.grebeshok105.codex.physics.ImpactChargeRules.CAP_TICKS, meleeChargeTicks + 1);
+			meleeChargeTicks = Math.min(io.github.grebeshok105.codex.mechanic.impact.ImpactChargeRules.CAP_TICKS, meleeChargeTicks + 1);
 			ClientMeleeChargeState.update(true, meleeChargeTicks);
 			return;
 		}

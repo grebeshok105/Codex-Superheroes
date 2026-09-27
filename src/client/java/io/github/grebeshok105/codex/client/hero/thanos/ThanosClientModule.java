@@ -4,13 +4,14 @@ import io.github.grebeshok105.codex.client.core.module.HeroClientContext;
 import io.github.grebeshok105.codex.client.core.module.HeroClientModule;
 import io.github.grebeshok105.codex.client.hero.thanos.hud.ThanosStoneBadge;
 import io.github.grebeshok105.codex.client.hero.thanos.state.ClientThanosState;
-import io.github.grebeshok105.codex.client.render.CosmicBeamRenderer;
+import io.github.grebeshok105.codex.client.core.render.BeamDraws;
+import io.github.grebeshok105.codex.client.core.render.BeamStyle;
 import io.github.grebeshok105.codex.core.transform.TransformationItem;
 import io.github.grebeshok105.codex.hero.thanos.ThanosAbilities;
 import io.github.grebeshok105.codex.hero.thanos.ThanosHero;
 import io.github.grebeshok105.codex.hero.thanos.item.InfinityStoneType;
 import io.github.grebeshok105.codex.hero.thanos.item.InfinityStones;
-import io.github.grebeshok105.codex.network.ThanosCosmicBeamS2CPayload;
+import io.github.grebeshok105.codex.core.net.BeamFxS2CPayload;
 import io.github.grebeshok105.codex.hero.thanos.net.ThanosStonesS2CPayload;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 import net.minecraft.ChatFormatting;
@@ -32,8 +33,8 @@ public record ThanosClientModule() implements HeroClientModule {
 	@Override
 	public void register(HeroClientContext ctx) {
 		ctx.skin(new ThanosSkinProvider());
-		ctx.receive(ThanosCosmicBeamS2CPayload.TYPE, (payload, context) ->
-				context.client().execute(() -> CosmicBeamRenderer.add(payload.start(), payload.end())));
+		ctx.beamStyle(new BeamStyle(BeamFxS2CPayload.STYLE_COSMIC_BEAM,
+				BeamDraws.COSMIC_LIFETIME_MS, BeamDraws::cosmicBeam));
 		ctx.receive(ThanosStonesS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> ClientThanosState.update(payload.playerId(), payload.bitmask())));
 

@@ -1,5 +1,6 @@
 package io.github.grebeshok105.codex.client.mixin;
 
+import io.github.grebeshok105.codex.client.core.hud.CrosshairSuppressions;
 import io.github.grebeshok105.codex.client.hud.HotbarOverrideHud;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.gui.Gui;
@@ -42,11 +43,9 @@ public class GuiHotbarMixin {
 			ci.cancel();
 			return;
 		}
-		// Железный Человек: у него собственный арк-реактор-прицел J.A.R.V.I.S.,
-		// ванильный крестик прячем, чтобы не дублировался по центру.
-		var data = io.github.grebeshok105.codex.client.ClientHeroState.data();
-		if (data.hasHero() && io.github.grebeshok105.codex.hero.IronManHero.ID.equals(data.heroId())
-				&& !net.minecraft.client.Minecraft.getInstance().options.hideGui) {
+		// Железный Человек и др.: геройский прицел вместо ванильного крестика
+		// (модули регистрируют veto через CrosshairSuppressions).
+		if (CrosshairSuppressions.shouldSuppress()) {
 			ci.cancel();
 		}
 	}

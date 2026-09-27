@@ -9,8 +9,6 @@ import net.minecraft.core.registries.BuiltInRegistries;
 public final class ModParticles {
 	public static final SimpleParticleType TRANSFORM_SPARK = register("transform_spark", FabricParticleTypes.simple());
 	public static final SimpleParticleType LASER_SPARK = register("laser_spark", FabricParticleTypes.simple());
-	public static final SimpleParticleType REPULSOR_SPARK = register("repulsor_spark", FabricParticleTypes.simple());
-	public static final SimpleParticleType UNIBEAM_SPARK = register("unibeam_spark", FabricParticleTypes.simple());
 
 	public static final SimpleParticleType WHITE_BOOM = register("white_boom", FabricParticleTypes.simple());
 	public static final SimpleParticleType SWORD_EXPLOSION = register("sword_explosion", FabricParticleTypes.simple());

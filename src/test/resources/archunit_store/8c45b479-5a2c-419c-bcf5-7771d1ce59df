@@ -1,6 +1,1 @@
-Method <io.github.grebeshok105.codex.ability.RepulsorChargeController.serverTick(net.minecraft.server.level.ServerPlayer)> gets field <io.github.grebeshok105.codex.hero.IronManHero.ID> in (RepulsorChargeController.java:31)
-Method <io.github.grebeshok105.codex.effect.IronManAutoEjectController.tick(net.minecraft.server.level.ServerPlayer, long)> gets field <io.github.grebeshok105.codex.hero.IronManHero.ID> in (IronManAutoEjectController.java:32)
-Method <io.github.grebeshok105.codex.effect.IronManJarvisController.scan(net.minecraft.server.MinecraftServer)> gets field <io.github.grebeshok105.codex.hero.IronManHero.ID> in (IronManJarvisController.java:58)
-Method <io.github.grebeshok105.codex.effect.IronManJarvisController.tickPending(net.minecraft.server.MinecraftServer)> gets field <io.github.grebeshok105.codex.hero.IronManHero.ID> in (IronManJarvisController.java:88)
-Method <io.github.grebeshok105.codex.effect.IronManReactorTracker.tick(net.minecraft.server.level.ServerPlayer)> gets field <io.github.grebeshok105.codex.hero.IronManHero.ID> in (IronManReactorTracker.java:51)
-Method <io.github.grebeshok105.codex.physics.CombatImpactEngine.profileFor(net.minecraft.server.level.ServerPlayer, net.minecraft.resources.ResourceLocation, net.minecraft.world.entity.LivingEntity, int)> gets field <io.github.grebeshok105.codex.hero.IronManHero.ID> in (CombatImpactEngine.java:82)
+

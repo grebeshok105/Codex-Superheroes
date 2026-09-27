@@ -1,6 +1,6 @@
 package io.github.grebeshok105.codex.mechanic.flight;
 
-import io.github.grebeshok105.codex.ability.AbilityIds;
+import io.github.grebeshok105.codex.mechanic.ability.SharedAbilityIds;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import org.junit.jupiter.api.Test;
 
@@ -14,9 +14,9 @@ class FlightAbilityStateTest {
 	@Test
 	void supersonicHasPriorityButIronManRemainsWhenSupersonicIsRemoved() {
 		HeroData data = new HeroData(Optional.empty(), 100f, 0f, Map.of(),
-				Set.of(AbilityIds.IRON_MAN_FLIGHT, AbilityIds.SUPERSONIC));
+				Set.of(SharedAbilityIds.IRON_MAN_FLIGHT, SharedAbilityIds.SUPERSONIC));
 
 		assertEquals(FlightMode.SUPERSONIC, FlightAbilityState.activeMode(data));
-		assertEquals(FlightMode.IRON_MAN, FlightAbilityState.activeModeExcept(data, AbilityIds.SUPERSONIC));
+		assertEquals(FlightMode.IRON_MAN, FlightAbilityState.activeModeExcept(data, SharedAbilityIds.SUPERSONIC));
 	}
 }

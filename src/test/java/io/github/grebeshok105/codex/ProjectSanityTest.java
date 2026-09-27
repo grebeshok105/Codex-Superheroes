@@ -242,7 +242,7 @@ public final class ProjectSanityTest {
 	private static void assertEntityLangNames() throws IOException {
 		JsonObject en = parseJsonObject(MAIN_RESOURCES.resolve("assets/" + MOD_ID + "/lang/en_us.json"));
 		Pattern entityId = Pattern.compile("(?:ModId\\.of|register)\\(\\s*\"([a-z_]+)\"");
-		for (String file : List.of("io/github/grebeshok105/codex/entity/ModEntities.java",
+		for (String file : List.of("io/github/grebeshok105/codex/hero/ironman/entity/IronManEntities.java",
 				"io/github/grebeshok105/codex/content/horde/entity/HordeEntities.java")) {
 			Matcher ids = entityId.matcher(Files.readString(MAIN_JAVA.resolve(file)));
 			while (ids.find()) {

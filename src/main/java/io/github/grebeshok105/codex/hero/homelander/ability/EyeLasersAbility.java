@@ -9,7 +9,7 @@ import io.github.grebeshok105.codex.hero.homelander.registry.HomelanderDamageTyp
 import io.github.grebeshok105.codex.hero.homelander.runtime.UraniumDefenseController;
 import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.hero.Heroes;
-import io.github.grebeshok105.codex.network.ModNetworking;
+import io.github.grebeshok105.codex.core.net.BeamFx;
 import io.github.grebeshok105.codex.particle.ModParticles;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import io.github.grebeshok105.codex.mechanic.world.WorldDestructionPolicy;
@@ -177,7 +177,7 @@ public final class EyeLasersAbility implements Ability {
 			}
 			placeFireRing(level, player, actualEnd, 3);
 		}
-		if (!choppy) ModNetworking.broadcastLaser(player, eye, actualEnd);
+		if (!choppy) BeamFx.laser(player, eye, actualEnd);
 	}
 
 	private static void placeFireRing(ServerLevel level, ServerPlayer player, Vec3 center, int radius) {

@@ -1,23 +1,25 @@
 package io.github.grebeshok105.codex.effect;
 
-import io.github.grebeshok105.codex.attachment.ModAttachments;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.hero.Heroes;
+import io.github.grebeshok105.codex.core.hero.ImpactContext;
 import io.github.grebeshok105.codex.network.HeroMeleeChargeC2SPayload;
 import io.github.grebeshok105.codex.core.net.ScreenShakeS2CPayload;
-import io.github.grebeshok105.codex.physics.CombatImpactEngine;
-import io.github.grebeshok105.codex.physics.ImpactChargeRules;
-import io.github.grebeshok105.codex.physics.ImpactProfile;
-import io.github.grebeshok105.codex.physics.ImpactTier;
+import io.github.grebeshok105.codex.mechanic.impact.BallisticBodyTracker;
+import io.github.grebeshok105.codex.mechanic.impact.CombatImpactEngine;
+import io.github.grebeshok105.codex.mechanic.impact.ImpactChargeRules;
+import io.github.grebeshok105.codex.mechanic.impact.ImpactProfile;
+import io.github.grebeshok105.codex.mechanic.impact.ImpactTier;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -174,17 +176,22 @@ public final class HeroMeleeImpactController {
 			Vec3 direction = away.lengthSqr() > 1.0e-4
 					? new Vec3(away.x, 0.0, away.z).normalize()
 					: new Vec3(attacker.getViewVector(1f).x, 0.0, attacker.getViewVector(1f).z).normalize();
-			boolean nanoHammer = attacker.getAttachedOrCreate(ModAttachments.NANO_FORM)
-					== io.github.grebeshok105.codex.ability.ironman.IronManNanoForm.HAMMER.index();
-			double pushScale = nanoHammer ? 0.32 * 6.5 : 0.32;
-			Vec3 motion = target.getDeltaMovement().add(direction.scale(pushScale * push.heroPower()));
-			target.setDeltaMovement(motion.x, Math.max(motion.y, nanoHammer ? 0.6 : 0.12), motion.z);
+			ResourceLocation pushHeroId = attacker.getAttachedOrCreate(CoreAttachments.HERO_DATA).heroId();
+			Hero hero = Heroes.get(pushHeroId);
+			ImpactContext pushContext = new ImpactContext(attacker, pushHeroId, target, 0,
+					0.0f, 0.32, 0.12, 0.0, 0.0f, 0.0, 0.0f, 0.0f);
+			if (hero != null) {
+				hero.modifyMeleePush(pushContext);
+			}
+			Vec3 motion = target.getDeltaMovement()
+					.add(direction.scale(pushContext.knockback() * push.heroPower()));
+			target.setDeltaMovement(motion.x, Math.max(motion.y, pushContext.upwardKnockback()), motion.z);
 			target.hurtMarked = true;
-			if (nanoHammer) {
-				// Супермолот: даже обычный удар отправляет цель в баллистический полёт
+			if (pushContext.piercing()) {
+				// Супермолот и т.п.: даже обычный удар отправляет цель в баллистический полёт
 				// сквозь стены — режим супер-пробития (до ~50 блоков), стоп об несокрушимую стену.
-				io.github.grebeshok105.codex.physics.BallisticBodyTracker.launch(
-						target, target.getDeltaMovement(), 340.0, attacker, true);
+				BallisticBodyTracker.launch(
+						target, target.getDeltaMovement(), pushContext.launchPower(), attacker, true);
 			}
 		}
 		PENDING_PUSHES.clear();

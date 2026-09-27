@@ -33,6 +33,7 @@ public final class CoreNetworking {
 		registrar.s2c(ScreenShakeS2CPayload.TYPE, ScreenShakeS2CPayload.STREAM_CODEC);
 		registrar.s2c(AbilityCooldownS2CPayload.TYPE, AbilityCooldownS2CPayload.STREAM_CODEC);
 		registrar.s2c(WallImpactDebrisS2CPayload.TYPE, WallImpactDebrisS2CPayload.STREAM_CODEC);
+		registrar.s2c(BeamFxS2CPayload.TYPE, BeamFxS2CPayload.STREAM_CODEC);
 	}
 
 	public static void syncResources(ServerPlayer player, HeroData data) {

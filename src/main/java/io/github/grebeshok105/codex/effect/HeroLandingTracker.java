@@ -97,7 +97,7 @@ public final class HeroLandingTracker {
 			return;
 		}
 
-		if (flying || UnibeamController.isBusy(player)) {
+		if (flying || hero.suppressesLanding(player)) {
 			s.peakY = currentY;
 			s.tracking = !onGround;
 			s.wasOnGround = onGround;

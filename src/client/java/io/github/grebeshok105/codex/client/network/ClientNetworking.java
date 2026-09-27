@@ -4,9 +4,11 @@ import io.github.grebeshok105.codex.client.ClientAbilityCooldowns;
 import io.github.grebeshok105.codex.client.ClientFlightState;
 import io.github.grebeshok105.codex.client.ClientHeroState;
 import io.github.grebeshok105.codex.client.fx.ScreenShakeManager;
+import io.github.grebeshok105.codex.client.core.render.BeamRenderer;
 import io.github.grebeshok105.codex.client.fx.WallImpactDebrisManager;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.net.AbilityCooldownS2CPayload;
+import io.github.grebeshok105.codex.core.net.BeamFxS2CPayload;
 import io.github.grebeshok105.codex.core.net.WallImpactDebrisS2CPayload;
 import io.github.grebeshok105.codex.mechanic.flight.FlightAbilityState;
 import io.github.grebeshok105.codex.core.net.HeroDataSyncS2CPayload;
@@ -71,8 +73,9 @@ public final class ClientNetworking {
 		ClientPlayNetworking.registerGlobalReceiver(io.github.grebeshok105.codex.core.net.AbilityCooldownS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> ClientAbilityCooldowns.update(payload.abilityId(), payload.remainingTicks())));
 
-		ClientPlayNetworking.registerGlobalReceiver(io.github.grebeshok105.codex.network.SuitVariantS2CPayload.TYPE, (payload, context) ->
-				context.client().execute(() -> io.github.grebeshok105.codex.client.ClientSuitVariantState.update(payload.playerId(), payload.variant())));
+		ClientPlayNetworking.registerGlobalReceiver(BeamFxS2CPayload.TYPE, (payload, context) ->
+				context.client().execute(() -> BeamRenderer.add(
+						payload.style(), payload.start(), payload.end())));
 
 		ClientPlayNetworking.registerGlobalReceiver(io.github.grebeshok105.codex.content.admin.AdminBuildS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> {

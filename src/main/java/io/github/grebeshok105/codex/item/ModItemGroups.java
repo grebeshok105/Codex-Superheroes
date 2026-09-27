@@ -27,8 +27,6 @@ public final class ModItemGroups {
 				output.accept(ModItems.HOMELANDER_SUIT);
 				output.accept(ModItems.COMPOUND_V);
 
-				output.accept(ModItems.IRON_MAN_SUIT);
-				output.accept(ModItems.IRON_MAN_REACTOR);
 
 				// Hero modules append their items here, in module registration order.
 				for (ItemLike item : CreativeTabContents.all()) {

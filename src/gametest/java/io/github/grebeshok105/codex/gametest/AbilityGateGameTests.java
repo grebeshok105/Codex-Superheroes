@@ -12,12 +12,13 @@ import io.github.grebeshok105.codex.effect.ModEffects;
 import io.github.grebeshok105.codex.hero.doomsday.DoomsdayAbilities;
 import io.github.grebeshok105.codex.hero.doomsday.DoomsdayHero;
 import io.github.grebeshok105.codex.hero.homelander.HomelanderHero;
-import io.github.grebeshok105.codex.hero.IronManHero;
+import io.github.grebeshok105.codex.hero.ironman.IronManHero;
 import io.github.grebeshok105.codex.hero.pandora.PandoraHero;
 import io.github.grebeshok105.codex.hero.scaramouche.ScaramoucheAbilities;
 import io.github.grebeshok105.codex.hero.scaramouche.ScaramoucheHero;
 import io.github.grebeshok105.codex.core.resource.ResourceKind;
 import io.github.grebeshok105.codex.core.transform.HeroDataStore;
+import io.github.grebeshok105.codex.hero.ironman.IronManAbilities;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -143,7 +144,7 @@ public final class AbilityGateGameTests implements FabricGameTest {
 		TestHeroes.transform(player, IronManHero.ID);
 		// Above the repulsor cost (200) but below cost + the 100-energy Unibeam reserve.
 		HeroDataStore.update(player, d -> d.withResources(250f, d.mana()));
-		AbilityRouter.activate(player, AbilityIds.REPULSOR);
+		AbilityRouter.activate(player, IronManAbilities.REPULSOR);
 		helper.assertTrue(HeroDataStore.get(player).energy() == 250f,
 				"the reserve keeps a 100-energy floor for Unibeam");
 		TestPlayers.leave(player);

@@ -1,0 +1,264 @@
+package io.github.grebeshok105.codex.hero.ironman;
+
+import io.github.grebeshok105.codex.ModId;
+import io.github.grebeshok105.codex.core.hero.AttributeModifierSet;
+import io.github.grebeshok105.codex.core.hero.Hero;
+import io.github.grebeshok105.codex.core.hero.HeroHudConfig;
+import io.github.grebeshok105.codex.core.hero.HeroTheme;
+import io.github.grebeshok105.codex.core.hero.ImpactContext;
+import io.github.grebeshok105.codex.core.hero.ImpactStyle;
+import io.github.grebeshok105.codex.core.hero.JarvisThreatClass;
+import io.github.grebeshok105.codex.core.hero.LandingImpact;
+import io.github.grebeshok105.codex.core.hero.PassiveGlyph;
+import io.github.grebeshok105.codex.hero.ironman.runtime.IronManNanoForm;
+import io.github.grebeshok105.codex.hero.ironman.runtime.IronManNanoFormController;
+import io.github.grebeshok105.codex.hero.ironman.runtime.UnibeamController;
+import io.github.grebeshok105.codex.physics.ShockwaveUtil;
+import io.github.grebeshok105.codex.core.resource.ResourceKind;
+import io.github.grebeshok105.codex.hero.ironman.runtime.IronManSuitStats;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.EntityDimensions;
+import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.player.Player;
+
+import java.util.List;
+
+public final class IronManHero implements Hero {
+	public static final ResourceLocation ID = ModId.of("iron_man");
+	public static final ResourceLocation SKIN = ModId.of("textures/entity/hero/ironman.png");
+
+	private static final HeroTheme THEME = new HeroTheme(
+			0xE03A0608,
+			0xD01A0204,
+			0x99FFD24A,
+			0x44FFEEAA,
+			0xFFFFE060,
+			0xFF7A0000,
+			0xFFFF3030,
+			0x66FF6060,
+			0xFFFF3838,
+			0xFF8A4A00,
+			0xFFFFC85A,
+			0x66FFE090,
+			0xFFFFC85A,
+			0x66FF8A38,
+			0xFFFFD24A,
+			0xFFFFD24A,
+			0xFFFFEFB0,
+			0x66FF8A38
+	);
+	private static final HeroHudConfig HUD = new HeroHudConfig("hud.superheroes.energy.arc_reactor", HeroHudConfig.EnergyIconType.REACTOR, true, "IRON LEGION");
+
+	private static final ResourceLocation ARMOR_ID = ModId.of("modifiers/iron_man/armor");
+	private static final ResourceLocation TOUGHNESS_ID = ModId.of("modifiers/iron_man/toughness");
+	private static final ResourceLocation DAMAGE_ID = ModId.of("modifiers/iron_man/damage");
+	private static final ResourceLocation SPEED_ID = ModId.of("modifiers/iron_man/speed");
+	private static final ResourceLocation HP_ID = ModId.of("modifiers/iron_man/max_health");
+	private static final ResourceLocation KNOCKBACK_ID = ModId.of("modifiers/iron_man/knockback_resistance");
+
+	private static final AttributeModifierSet PASSIVES = AttributeModifierSet.builder()
+			.add(Attributes.ARMOR, ARMOR_ID, 22.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ARMOR_TOUGHNESS, TOUGHNESS_ID, 6.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.ATTACK_DAMAGE, DAMAGE_ID, 7.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.MOVEMENT_SPEED, SPEED_ID, 0.15, AttributeModifier.Operation.ADD_MULTIPLIED_BASE)
+			.add(Attributes.MAX_HEALTH, HP_ID, 10.0, AttributeModifier.Operation.ADD_VALUE)
+			.add(Attributes.KNOCKBACK_RESISTANCE, KNOCKBACK_ID, 0.6, AttributeModifier.Operation.ADD_VALUE)
+			.build();
+
+	@Override
+	public ResourceLocation getId() {
+		return ID;
+	}
+
+	@Override
+	public float getEnergyMax() {
+		return 1000f;
+	}
+
+	@Override
+	public float getEnergyRegenPerTick() {
+		return 3.0f;
+	}
+
+	@Override
+	public float getManaMax() {
+		return 0f;
+	}
+
+	@Override
+	public EntityDimensions getDimensions(Pose pose) {
+		return switch (pose) {
+			case CROUCHING -> EntityDimensions.scalable(0.6f, 1.5f).withEyeHeight(1.27f);
+			case SWIMMING, FALL_FLYING, SPIN_ATTACK -> EntityDimensions.scalable(0.6f, 0.6f).withEyeHeight(0.4f);
+			default -> EntityDimensions.scalable(0.6f, 1.8f).withEyeHeight(1.62f);
+		};
+	}
+
+	@Override
+	public List<ResourceLocation> getAbilities() {
+		return IronManAbilities.ALL;
+	}
+
+	@Override
+	public ResourceKind getDefaultBinding(ResourceLocation abilityId) {
+		return ResourceKind.ENERGY;
+	}
+
+	@Override
+	public AttributeModifierSet passiveAttributes() {
+		return PASSIVES;
+	}
+
+	@Override
+	public void applyPassives(Player player) {
+		PASSIVES.apply(player);
+		io.github.grebeshok105.codex.hero.ironman.runtime.IronManSuitStats.apply(player);
+	}
+
+	@Override
+	public void removePassives(Player player) {
+		PASSIVES.remove(player);
+		io.github.grebeshok105.codex.hero.ironman.runtime.IronManSuitStats.clear(player);
+		if (player instanceof ServerPlayer sp) {
+			io.github.grebeshok105.codex.hero.ironman.runtime.IronManNanoFormController.clear(sp);
+		}
+	}
+
+	@Override
+	public boolean cancelsFallDamage(Player player) {
+		return true;
+	}
+
+	@Override
+	public ResourceLocation getSkinTexture() {
+		return SKIN;
+	}
+
+	@Override
+	public HeroTheme getTheme() {
+		return THEME;
+	}
+
+	@Override
+	public void onLanded(ServerPlayer player, LandingImpact impact) {
+		float intensity = impact.intensity();
+		float scale = 0.30f + intensity * 1.20f;
+		double radius = 2.0 + scale * 5.5;
+		float damage = 2.0f + scale * 7.0f;
+		ShockwaveUtil.detonate(player, player.position(), radius, damage, false);
+
+		ServerLevel level = player.serverLevel();
+		double cx = player.getX();
+		double cy = player.getY();
+		double cz = player.getZ();
+
+		switch (impact.tier()) {
+			case WEAK -> {
+				level.playSound(null, cx, cy, cz, SoundEvents.NETHERITE_BLOCK_HIT, SoundSource.PLAYERS, 0.9f, 1.3f);
+				level.playSound(null, cx, cy, cz, SoundEvents.IRON_GOLEM_STEP, SoundSource.PLAYERS, 1.0f, 1.1f);
+				level.sendParticles(ParticleTypes.SMOKE, cx, cy + 0.1, cz, 8, 0.5, 0.05, 0.5, 0.02);
+			}
+			case NORMAL -> {
+				level.playSound(null, cx, cy, cz, SoundEvents.IRON_GOLEM_HURT, SoundSource.PLAYERS, 1.0f, 0.95f);
+				level.playSound(null, cx, cy, cz, SoundEvents.NETHERITE_BLOCK_HIT, SoundSource.PLAYERS, 1.3f, 0.8f);
+				level.playSound(null, cx, cy, cz, SoundEvents.ANVIL_LAND, SoundSource.PLAYERS, 0.6f, 1.6f);
+				level.sendParticles(ParticleTypes.POOF, cx, cy + 0.1, cz, 22, radius * 0.4, 0.15, radius * 0.4, 0.05);
+				level.sendParticles(ParticleTypes.SMOKE, cx, cy + 0.1, cz, 18, radius * 0.35, 0.1, radius * 0.35, 0.04);
+			}
+			case STRONG -> {
+				level.playSound(null, cx, cy, cz, SoundEvents.GENERIC_EXPLODE.value(), SoundSource.PLAYERS, 1.3f, 0.85f);
+				level.playSound(null, cx, cy, cz, SoundEvents.IRON_GOLEM_DEATH, SoundSource.PLAYERS, 1.2f, 0.75f);
+				level.playSound(null, cx, cy, cz, SoundEvents.NETHERITE_BLOCK_HIT, SoundSource.PLAYERS, 1.6f, 0.6f);
+				level.playSound(null, cx, cy, cz, SoundEvents.ANVIL_LAND, SoundSource.PLAYERS, 0.9f, 1.2f);
+				level.sendParticles(ParticleTypes.LARGE_SMOKE, cx, cy + 0.1, cz, 40, radius * 0.5, 0.2, radius * 0.5, 0.06);
+				level.sendParticles(ParticleTypes.POOF, cx, cy + 0.1, cz, 32, radius * 0.45, 0.18, radius * 0.45, 0.08);
+				level.sendParticles(ParticleTypes.SWEEP_ATTACK, cx, cy + 0.4, cz, 3, radius * 0.4, 0.1, radius * 0.4, 0.0);
+				level.sendParticles(ParticleTypes.ELECTRIC_SPARK, cx, cy + 0.3, cz, 30, radius * 0.4, 0.15, radius * 0.4, 0.15);
+			}
+			case EPIC -> {
+				level.playSound(null, cx, cy, cz, SoundEvents.GENERIC_EXPLODE.value(), SoundSource.PLAYERS, 1.8f, 0.55f);
+				level.playSound(null, cx, cy, cz, SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 1.2f, 1.1f);
+				level.playSound(null, cx, cy, cz, SoundEvents.IRON_GOLEM_DEATH, SoundSource.PLAYERS, 1.5f, 0.6f);
+				level.playSound(null, cx, cy, cz, SoundEvents.NETHERITE_BLOCK_HIT, SoundSource.PLAYERS, 2.0f, 0.5f);
+				level.playSound(null, cx, cy, cz, SoundEvents.ANVIL_LAND, SoundSource.PLAYERS, 1.3f, 0.9f);
+				level.sendParticles(ParticleTypes.EXPLOSION_EMITTER, cx, cy + 0.3, cz, 2, radius * 0.35, 0.2, radius * 0.35, 0.0);
+				level.sendParticles(ParticleTypes.LARGE_SMOKE, cx, cy + 0.1, cz, 65, radius * 0.55, 0.3, radius * 0.55, 0.1);
+				level.sendParticles(ParticleTypes.FLASH, cx, cy + 0.8, cz, 1, 0.0, 0.0, 0.0, 0.0);
+				level.sendParticles(ParticleTypes.SWEEP_ATTACK, cx, cy + 0.4, cz, 6, radius * 0.5, 0.1, radius * 0.5, 0.0);
+				level.sendParticles(ParticleTypes.ELECTRIC_SPARK, cx, cy + 0.3, cz, 60, radius * 0.5, 0.2, radius * 0.5, 0.25);
+				level.sendParticles(ParticleTypes.FIREWORK, cx, cy + 0.4, cz, 30, radius * 0.45, 0.2, radius * 0.45, 0.1);
+			}
+		}
+	}
+
+	/**
+	 * Unibeam keeps the suit hovering on recoil — that hover must not count as a fall
+	 * (replaces the {@code HeroLandingTracker -> UnibeamController} shared edge).
+	 */
+	@Override
+	public boolean suppressesLanding(ServerPlayer player) {
+		return UnibeamController.isBusy(player);
+	}
+
+	/** Nano-hammer turns the charged release into a wall-piercing ballistic launch. */
+	@Override
+	public void modifyImpact(ImpactContext context) {
+		if (IronManNanoFormController.formOf(context.attacker()) != IronManNanoForm.HAMMER) {
+			return;
+		}
+		context.setKnockback(context.knockback() * 3.6);
+		context.setUpwardKnockback(Math.min(0.95, context.upwardKnockback() + 0.3));
+		context.setLaunchPower(Math.max(context.launchPower() * 2.6, 340.0));
+		context.setShakeRadius(Math.max(context.shakeRadius(), 26.0));
+		context.setShakeIntensity(Math.max(context.shakeIntensity(), 1.4f));
+		context.setDebrisIntensity(Math.max(context.debrisIntensity(), 0.9f));
+		context.setPiercing(true);
+	}
+
+	/** Nano-hammer turns even a plain punch into a piercing ballistic shove. */
+	@Override
+	public void modifyMeleePush(ImpactContext context) {
+		if (IronManNanoFormController.formOf(context.attacker()) != IronManNanoForm.HAMMER) {
+			return;
+		}
+		context.setKnockback(context.knockback() * 6.5);
+		context.setUpwardKnockback(Math.max(context.upwardKnockback(), 0.6));
+		context.setLaunchPower(340.0);
+		context.setPiercing(true);
+	}
+
+	@Override
+	public HeroHudConfig getHudConfig() {
+		return HUD;
+	}
+	@Override
+	public io.github.grebeshok105.codex.core.hero.ImpactStyle getImpactStyle() {
+		return io.github.grebeshok105.codex.core.hero.ImpactStyle.ENERGY;
+	}
+	@Override
+	public JarvisThreatClass getThreatClass() {
+		return JarvisThreatClass.B;
+	}
+
+	@Override
+	public float getEnergyReserveFor(ResourceLocation abilityId,
+			io.github.grebeshok105.codex.core.resource.ResourceKind binding) {
+		// Unibeam always keeps a 100-energy floor available.
+		return !IronManAbilities.UNIBEAM.equals(abilityId)
+				&& getAbilities().contains(IronManAbilities.UNIBEAM)
+				&& binding == io.github.grebeshok105.codex.core.resource.ResourceKind.ENERGY ? 100f : 0f;
+	}
+
+	@Override
+	public List<PassiveGlyph> getPassiveGlyphs() {
+		return List.of(PassiveGlyph.SHIELD, PassiveGlyph.FEATHER, PassiveGlyph.REACTOR);
+	}
+
+}

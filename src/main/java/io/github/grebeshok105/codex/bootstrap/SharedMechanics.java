@@ -13,7 +13,7 @@ import io.github.grebeshok105.codex.effect.HeroPassiveRegenController;
 import io.github.grebeshok105.codex.effect.SuperJumpController;
 import io.github.grebeshok105.codex.core.lifecycle.EntityControlLock;
 import io.github.grebeshok105.codex.core.lifecycle.PassiveReconciler;
-import io.github.grebeshok105.codex.physics.BallisticBodyTracker;
+import io.github.grebeshok105.codex.mechanic.impact.BallisticBodyTracker;
 import io.github.grebeshok105.codex.core.resource.EnergyLocks;
 import io.github.grebeshok105.codex.core.resource.ResourceController;
 import io.github.grebeshok105.codex.core.transform.HeroDataStore;
@@ -66,7 +66,7 @@ public final class SharedMechanics {
 	 * AttackEntity listeners — IronFists@64 < ... < MeleeImpact@67 — so IronFists'
 	 * consuming result still short-circuits the generic melee-impact handler;
 	 * player ticks — Unibeam@345 -> Landing@347 -> Flight@380 — so Landing reads
-	 * UnibeamController.isBusy fresh and ViltrumiteCharge/Rush read
+	 * IronManHero.suppressesLanding (UnibeamController.isBusy) fresh and ViltrumiteCharge/Rush read
 	 * FlightController.isFlightActive before Flight's own player tick refreshed it.
 	 */
 	public static void registerPost(HeroModuleContext ctx) {

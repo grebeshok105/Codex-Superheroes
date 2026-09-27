@@ -1,8 +1,8 @@
 package io.github.grebeshok105.codex.client.hero.homelander.render;
 
 import io.github.grebeshok105.codex.hero.homelander.effect.HomelanderEffects;
-import io.github.grebeshok105.codex.client.render.BeamRenderer;
 import io.github.grebeshok105.codex.hero.homelander.HomelanderAbilityIds;
+import io.github.grebeshok105.codex.client.core.render.CrossBeamRenderer;
 import io.github.grebeshok105.codex.client.ClientHeroState;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
@@ -67,7 +67,7 @@ public final class LocalLaserOverlay {
 		Vec3 rightEye = eye.add(forward).add(right.scale(eyeSep));
 		float widthMul = HomelanderEffects.isMadness(player) ? 1.1f : 0.45f;
 		float intensity = HomelanderEffects.isMadness(player) ? 1.3f : 1.0f;
-		BeamRenderer.draw(context, leftEye, actualEnd, intensity, widthMul);
-		BeamRenderer.draw(context, rightEye, actualEnd, intensity, widthMul);
+		CrossBeamRenderer.draw(context, leftEye, actualEnd, intensity, widthMul);
+		CrossBeamRenderer.draw(context, rightEye, actualEnd, intensity, widthMul);
 	}
 }
