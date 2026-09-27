@@ -1,8 +1,11 @@
-package io.github.grebeshok105.codex.effect;
+package io.github.grebeshok105.codex.mechanic.falls;
 
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.hero.Heroes;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
+import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
+import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
 import io.github.grebeshok105.codex.core.transform.HeroData;
 
 import net.minecraft.core.particles.ParticleTypes;
@@ -13,9 +16,8 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.Map;
+import java.util.EnumSet;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.server.MinecraftServer;
 
 public final class SuperJumpController {
@@ -23,8 +25,10 @@ public final class SuperJumpController {
 	private static final int COOLDOWN_TICKS = 40;
 	private static final int IMMUNITY_LIFE_TICKS = 400;
 
-	private static final Map<UUID, Long> COOLDOWN = new ConcurrentHashMap<>();
-	private static final Map<UUID, Long> FALL_IMMUNITY_UNTIL = new ConcurrentHashMap<>();
+	private static final OwnedSessionMap<UUID, Long> COOLDOWN = OwnedSessionMap.create(
+			LifecycleRegistrar.global(), EnumSet.noneOf(ClearOn.class));
+	private static final OwnedSessionMap<UUID, Long> FALL_IMMUNITY_UNTIL = OwnedSessionMap.create(
+			LifecycleRegistrar.global(), EnumSet.noneOf(ClearOn.class));
 
 	private SuperJumpController() {
 	}
@@ -44,8 +48,8 @@ public final class SuperJumpController {
 		if (ready != null && now < ready) {
 			return;
 		}
-		COOLDOWN.put(id, now + COOLDOWN_TICKS);
-		FALL_IMMUNITY_UNTIL.put(id, now + IMMUNITY_LIFE_TICKS);
+		COOLDOWN.put(id, id, now + COOLDOWN_TICKS);
+		FALL_IMMUNITY_UNTIL.put(id, id, now + IMMUNITY_LIFE_TICKS);
 
 		Vec3 v = player.getDeltaMovement();
 		player.setDeltaMovement(v.x, JUMP_VELOCITY, v.z);
