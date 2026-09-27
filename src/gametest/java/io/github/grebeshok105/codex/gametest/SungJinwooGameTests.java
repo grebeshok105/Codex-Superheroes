@@ -148,7 +148,9 @@ public final class SungJinwooGameTests implements FabricGameTest {
 			Zombie zombie = helper.spawn(EntityType.ZOMBIE, 7, 1, 7);
 			zombie.teleportTo(isoX + 2, inside.y, isoZ + 2);
 			zombie.setHealth(4f); // 4/20 < 25% — the weakened-finish path
-			TestPlayers.awaitVisible(helper, zombie, () -> {
+			// Settle one tick so the chunk section registers the teleported zombie
+			// before arise's bounding-box scan runs.
+			helper.runAfterDelay(1, () -> TestPlayers.awaitVisible(helper, zombie, () -> {
 				AbilityRouter.activate(player, ARISE);
 				helper.assertFalse(zombie.isAlive(), "arise finishes the weakened mob");
 				helper.assertTrue(player.getAttachedOrCreate(SungJinwooAttachments.ARMY).shadowIds().size()
