@@ -15,6 +15,7 @@ import io.github.grebeshok105.codex.hero.sungjinwoo.entity.ShadowSoldierEntity;
 import io.github.grebeshok105.codex.hero.sungjinwoo.net.SungShadowArmyS2CPayload;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import net.minecraft.core.BlockPos;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -136,10 +137,16 @@ public final class SungJinwooGameTests implements FabricGameTest {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, SUNG);
 		Vec3 inside = helper.absoluteVec(new Vec3(1.5, 1.0, 1.5));
-		player.teleportTo(inside.x, inside.y, inside.z);
+		// Unique offset: arise drains every death echo and finishes every weakened
+		// mob in a 50-block radius, so grid-adjacent tests pollute the count.
+		double isoX = inside.x + 8000.0;
+		double isoZ = inside.z + 8000.0;
+		helper.getLevel().getChunk(BlockPos.containing(isoX, inside.y, isoZ));
+		player.teleportTo(isoX, inside.y, isoZ);
 
 		helper.runAfterDelay(10, () -> {
 			Zombie zombie = helper.spawn(EntityType.ZOMBIE, 7, 1, 7);
+			zombie.teleportTo(isoX + 2, inside.y, isoZ + 2);
 			zombie.setHealth(4f); // 4/20 < 25% — the weakened-finish path
 			TestPlayers.awaitVisible(helper, zombie, () -> {
 				AbilityRouter.activate(player, ARISE);
