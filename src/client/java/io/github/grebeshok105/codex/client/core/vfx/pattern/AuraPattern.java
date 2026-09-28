@@ -20,8 +20,10 @@ import org.jetbrains.annotations.Nullable;
  *
  * <p>Tuning keys: {@code emitIntervalTicks} (default 5),
  * {@code durationTicks} (default −1), {@code lightColor} (absent = no
- * light), {@code lightRadius} (default 8), {@code lightBrightness}
- * (default 1), {@code height} (fraction of entity height, default 0.5).
+ * light — presence, not sign, decides: {@code #AARRGGBB} with alpha ≥ 0x80
+ * parses to a negative int), {@code lightRadius} (default 8),
+ * {@code lightBrightness} (default 1), {@code height} (fraction of entity
+ * height, default 0.5).
  */
 public final class AuraPattern implements VfxEffect {
 	private final @Nullable Entity entity;
@@ -29,6 +31,7 @@ public final class AuraPattern implements VfxEffect {
 	private final ResourceLocation emitter;
 	private final int emitIntervalTicks;
 	private final int durationTicks;
+	private final boolean hasLight;
 	private final int lightRgb;
 	private final float lightRadius;
 	private final float lightBrightness;
@@ -45,7 +48,8 @@ public final class AuraPattern implements VfxEffect {
 		this.emitter = emitter;
 		this.emitIntervalTicks = Math.max(1, (int) params.number("emitIntervalTicks", 5f));
 		this.durationTicks = (int) params.number("durationTicks", -1f);
-		this.lightRgb = params.color("lightColor", -1);
+		this.hasLight = params.colors().containsKey("lightColor");
+		this.lightRgb = params.color("lightColor", 0xFFFFFFFF);
 		this.lightRadius = params.number("lightRadius", 8f);
 		this.lightBrightness = params.number("lightBrightness", 1f);
 		this.heightFraction = params.number("height", 0.5f);
@@ -70,7 +74,7 @@ public final class AuraPattern implements VfxEffect {
 		if (age % emitIntervalTicks == 0) {
 			VfxBackends.current().emit(emitter, center);
 		}
-		if (lightRgb >= 0) {
+		if (hasLight) {
 			if (light == null) {
 				light = VfxBackends.current().light(center, lightRgb, lightRadius, lightBrightness);
 			} else {

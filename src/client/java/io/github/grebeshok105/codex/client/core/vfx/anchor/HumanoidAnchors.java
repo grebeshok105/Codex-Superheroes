@@ -15,11 +15,12 @@ import org.joml.Vector3f;
  * leave the rendered eyes rather than the feet or the camera.
  *
  * <p>Eye geometry: the head pivot sits {@value #HEAD_PIVOT} blocks above the
- * feet; the eyes sit {@value #EYE_FORWARD} forward, ±{@value #EYE_LATERAL}
- * lateral and {@value #EYE_UP} up from the pivot along the head's own axes —
- * all multiplied by {@code scale}. In first person the local player uses the
- * camera frame instead: +{@value #FIRST_PERSON_FORWARD} forward, ±
- * {@value #FIRST_PERSON_LATERAL} lateral, −{@value #FIRST_PERSON_DOWN} down.
+ * feet (unscaled); the eyes sit {@value #EYE_FORWARD} forward,
+ * ±{@value #EYE_LATERAL} lateral and {@value #EYE_UP} up from the pivot along
+ * the head's own axes — the three eye offsets multiplied by {@code scale}.
+ * In first person the local player uses the camera frame instead:
+ * +{@value #FIRST_PERSON_FORWARD} forward, ±{@value #FIRST_PERSON_LATERAL}
+ * lateral, −{@value #FIRST_PERSON_DOWN} down.
  */
 public final class HumanoidAnchors {
 	private static final Vec3 UP = new Vec3(0, 1, 0);
@@ -85,7 +86,7 @@ public final class HumanoidAnchors {
 			headRight = rotate(headRight, headForward, headRollDeg);
 			headUp = headRight.cross(headForward).normalize();
 		}
-		Vec3 eyeCenter = new Vec3(0, HEAD_PIVOT * scale, 0)
+		Vec3 eyeCenter = new Vec3(0, HEAD_PIVOT, 0)
 				.add(headForward.scale(EYE_FORWARD * scale))
 				.add(headUp.scale(EYE_UP * scale));
 		Vec3 lateral = headRight.scale(EYE_LATERAL * scale);
