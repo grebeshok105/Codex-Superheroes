@@ -96,6 +96,62 @@ afterEvaluate {
 	}
 }
 
+// ============================================================================
+// Dev-only MCP companion: a second mod, codex-mcpdev, compiled from src/mcpdev
+// against BOTH our main output and the upstream MCP server jar. Fully dormant
+// without -PmcpUpstreamJar=<path> (every mcpdev task skips), so normal builds
+// never need the upstream jar. The coupling direction is mcpdev -> {main,
+// upstream}; production classes gain zero MCP imports.
+// ============================================================================
+def mcpUpstreamJar = providers.gradleProperty('mcpUpstreamJar').orNull
+def mcpCompanionEnabled = mcpUpstreamJar != null && !mcpUpstreamJar.isBlank()
+
+sourceSets {
+	// Default conventions already map this set to src/mcpdev/{java,resources};
+	// adding srcDir would register the same directory twice and duplicate every
+	// resource entry (processMcpdevResources fails on the doubled fabric.mod.json).
+	mcpdev {
+		compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+	}
+}
+
+// The Java plugin only creates jar tasks for the main source set; the companion's
+// jar is explicit. Skipped like every other mcpdev task without -PmcpUpstreamJar.
+tasks.register('jarMcpdev', Jar) {
+	group = 'build'
+	description = 'Assembles the dev-only codex-mcpdev companion jar'
+	dependsOn tasks.named('mcpdevClasses')
+	from sourceSets.mcpdev.output
+	archiveFileName = "superheroes-mcpdev-${project.version}.jar"
+}
+
+tasks.named('assemble') {
+	dependsOn tasks.named('jarMcpdev')
+}
+
+if (mcpCompanionEnabled) {
+	dependencies {
+		mcpdevCompileOnly files(mcpUpstreamJar)
+		// The upstream API surface is Jackson types (JsonNode, ObjectNode); at runtime
+		// they come from the MCP mod's bundled jar-in-jar copies, so compile-only here.
+		mcpdevCompileOnly "com.fasterxml.jackson.core:jackson-databind:2.22.1"
+		mcpdevCompileOnly "com.fasterxml.jackson.core:jackson-core:2.22.1"
+		mcpdevCompileOnly "com.fasterxml.jackson.core:jackson-annotations:2.22"
+	}
+}
+
+// No property -> the whole source set is dormant: assemble stays green with the
+// mcpdev tasks skipped instead of failing on a missing upstream jar.
+tasks.matching { it.name.toLowerCase().contains('mcpdev') }.configureEach {
+	onlyIf { mcpCompanionEnabled }
+}
+
+tasks.named('processMcpdevResources') {
+	filesMatching('fabric.mod.json') {
+		expand 'version': project.version
+	}
+}
+
 loom {
 	splitEnvironmentSourceSets()
 
