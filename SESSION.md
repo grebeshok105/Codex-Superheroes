@@ -588,3 +588,25 @@
 
 Каждый факт про код подтверждён `rg`/`sed`/`ffprobe` на текущем HEAD; один ревьюер
 дал false-positive со стейл-чекаута (pre-I6b) — его находки сверены и отброшены.
+
+## Visual Core + Homelander пилот — Task 1 (ветка `devin/1790748000-vfx-contract-checkpoint`)
+
+Выполнен Task 1 плана `2026-09-28-visual-core-homelander-pilot.md` (аудит ростера,
+shared contract, контракт-тест). Коммиты `9b1d4c6`, `c300337`.
+
+- `docs/design/visual-core-homelander/roster-visual-audit.md` — 22 героя из
+  `HeroModules.ALL`, нужды/механизмы, конечный список возможностей ядра.
+- `shared-contract.md` + `src/test/resources/contracts/homelander_pilot.json` —
+  16 звуковых строк, 14 клипов, 1 модель, 6 текстур; motion envelope, граница
+  владения, правило замены плейсхолдеров.
+- `migration-workflow.md` — 12 шагов spec §17 с привязкой к таскам пилота.
+- `src/test/java/.../assets/OggInfo.java` + `HomelanderAssetContractTest.java` —
+  проверки из плана; класс под `@Disabled("enabled in Task 2 once placeholders
+  exist")`, `contractClipEventTimesMatchManifest` под `@Disabled("enabled in Task 15")`.
+- TDD: RED на отсутствующих ресурсах (звуки/модель/текстуры — клипы уже на месте),
+  после `OggInfo` остались только resource-фейлы; 5 существующих OGG читаются
+  без ошибок (замеры сверены с ffprobe: 3448/6478/4568/1440/5112 мс — записаны
+  в `durationMs` контракта).
+- Гейт: `./gradlew qualityGate --no-daemon` BUILD SUCCESSFUL (362 game tests).
+- Дальше: Task 2 (плейсхолдеры + `HomelanderSounds`) — в соседней ветке/сессии
+  оркестратора; здесь не начинать.
