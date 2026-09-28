@@ -9,6 +9,10 @@ package io.github.grebeshok105.codex.client.core.vfx;
 public interface VfxEffect {
 	void tick();
 
+	/**
+	 * Called inside the live-effect deque iteration in {@code VfxRuntime.render} —
+	 * implementations must not call {@code VfxRuntime.spawn}/{@code channel} here.
+	 */
 	void render(VfxRenderContext ctx);
 
 	boolean done();
