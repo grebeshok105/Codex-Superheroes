@@ -16,6 +16,9 @@
 - Work against the shared contract (`docs/design/visual-core-homelander/shared-contract.md`, `src/test/resources/contracts/homelander_pilot.json`), never against the unfinished runtime branch (spec §3). Prerequisite: Visual Core plan Tasks 1–2 merged on `main` (contract + placeholders at final paths). This serializes the two streams deliberately: spec A §6 wants the contract agreed before both sides build against it, and the contract is produced inside Visual Core Task 1, so OMP cannot start earlier without it — the real dependency is the contract + the manifest/placeholder mechanism Task 2 creates (OMP edits `homelander_placeholders.txt` from its first asset task on), not runtime progress.
 - Artistic freedom over motion, posing, model styling, texture treatment and sound design (spec §3); contract ids, file paths, bone names, loop flags and approximate durations (±30 %) are fixed.
 - Contract change (spec §4, §8): document the problem, propose the smallest change, open a PR/comment on the repository path, continue unrelated work; never diverge silently. Retimes that land outside ±30 % of a recorded `durationMs` are a contract change too: update `homelander_pilot.json` in the same commit via a `contract-changes.md` entry (existing rows record the current measured durations — `iron_fists_impact` 1440, `hand_clap` 4570, `roar` 3450, `roar_deep` 6480).
+- **All 14 contract clips are pre-delivered** — `player_animations/homelander/*.animation.json` + `art-source/homelander/omp/animations/homelander_player.bbmodel` were produced by the earlier OMP pass and are already committed at the contract paths (the pilot Task-2 placeholder step never overwrites them). Verified against the contract: all 6 bones animated, numeric keyframes only, durations within ±30 %, loop flags correct, loops close on first pose. The animation portion of Tasks 2–8 is therefore **patch + verify, not authoring**: before any clip's task runs the gate, apply the two intake fixes below (do them once, in the first clip task — Task 2).
+  - **Intake fix A — `contact` events:** `clap` and `iron_fists_strike` ship with no `sound_effects`/`particle_effects`/`events` timeline keys. Each must gain a `contact` event at ≤ 0.12 s (in whichever of the three key formats the pilot Task-7 parser reads — check its parser contract first; if ambiguous, `sound_effects` with `"event": "contact"` is the Blockbench-native form) or `contractClipEventTimesMatchManifest` fails at integration.
+  - **Intake fix B — `body` root pitch:** the runtime tilts the whole body (CRUISE ≤ 55°, BOOST ≤ 80°), so baked `body` rotation must stay ≤ ±15°. Delivered clips exceed it: `flight_boost` 90°, `flight_cruise` 84°, `flight_land` 79°, `iron_fists_strike` 26°, `flight_takeoff` 18°, `sun_charge` 17°. Strip/flatten the `body` rotation channel (keep limbs/torso secondary motion); for `iron_fists_strike` and `sun_charge` either trim to ≤ 15° or file a `contract-changes.md` entry if the pitch is load-bearing. `roar` is exactly 15° — boundary-pass, leave it.
 - Production quality, not placeholders: coherent, technically valid, correctly exported, clean transforms, no obvious clipping, repeat-safe, contract-compliant, directly integrable (spec §7). Every file shipped as final must be mono — `positionalSoundsAreMono` runs over all of `FINAL`, which must cover every shipped contract file, so an existing stereo file (`hand_clap`, `roar`, `roar_deep`, `iron_fists_impact`, `iron_fists_charge` are all stereo today) cannot slip through: re-encode with `ffmpeg -ac 1` when no fuller rework is authored.
 - Runtime sounds OGG Vorbis only; check `art-source/` first; MP3 → `ffmpeg -i input.mp3 -c:a libvorbis -qscale:a 5 output.ogg`.
 - Out of scope (spec §6): bottom UI, left flying menu, chat/UI overlap, damage balance, Uranium, full roster, Veil core/runtime VFX, multiplayer, gameplay rewrites, other heroes.
@@ -70,9 +73,9 @@
   - `milkModelWithinItemBoundsAndHasAllDisplays`: all element `from/to` ∈ [−16, 32]; `display` has `thirdperson_righthand, firstperson_righthand, gui, ground, fixed`; ≥ 4 elements.
   - `vfxTexturesArePowerOfTwoWithAlpha`: width/height powers of two, ≤ 256, PNG color type 6.
   - `clipsUseNumericKeyframesOnly`: every keyframe value in every `FINAL` clip is a number array or `{pre, post}` object — any string (Molang) value fails. (The runtime parser warns and skips such clips; a clip that skips at runtime must fail here first.)
-  - `finalSetCoversAllDeliveredAssets`: every contract file that exists, is absent from `homelander_placeholders.txt`, **and** was delivered by OMP must appear in `FINAL` — 'delivered' means created at a contract path that had no file at Task-1 baseline, or whose manifest line is marked `# replaced`, or that a task reworked (each rework task adds its files to `FINAL`). Pre-existing files are swept in via their rework tasks — mandatory anyway since all five existing contract sounds are stereo — so at Task 1 `FINAL` starts empty and `positionalSoundsAreMono` is not forced red by untouched files.
+  - `finalSetCoversAllDeliveredAssets`: every contract file that exists, is absent from `homelander_placeholders.txt`, **and** was delivered by OMP must appear in `FINAL` — 'delivered' means created at a contract path that had no file at Task-1 baseline, whose manifest line is marked `# replaced`, that a task reworked, **or one of the 14 pre-delivered clips** (each clip task adds its files to `FINAL` regardless — the quality checks are the point). Pre-existing files are swept in via their rework tasks — mandatory anyway since all five existing contract sounds are stereo — so at Task 1 `FINAL` starts empty and `positionalSoundsAreMono` is not forced red by untouched files.
 - [ ] **Step 3: Run** the gate command. Expected: FAIL (compile error: `OggInfo.channels` missing).
-- [ ] **Step 4: Implement `OggInfo.channels`.** Re-run. Expected: FAIL only `clipsAnimateAtLeastThreeBones` on the `flight_hover` placeholder (proves the suite rejects placeholders). Remove the seed from `FINAL` (Task 2 re-adds it); re-run. Expected: PASS.
+- [ ] **Step 4: Implement `OggInfo.channels`.** Re-run. Expected: PASS on the delivered `flight_hover` (pre-authored, 6 bones). To keep proving the suite rejects placeholders, add a `placeholderClipFails` fixture: feed a synthetic one-bone clip to `clipsAnimateAtLeastThreeBones` and assert it fails. Remove the seed from `FINAL` (Task 2 re-adds it); re-run. Expected: PASS.
 - [ ] **Step 5: Commit** `test(assets): add Homelander OMP asset quality checks and raw inventory`.
 
 ### Task 2: Flight animations
@@ -83,9 +86,9 @@
 **Interfaces:**
 - Consumes: contract rows Takeoff/Hover/Cruise/Boost/Landing (takeoff 400 ms, land 500 ms, three loops); the runtime tilts the whole body up to 80° in BOOST and 55° in CRUISE and crossfades clips over 4 ticks, so clips carry limb/torso motion only — no root rotation baked into `body` beyond ±15°.
 
-- [ ] **Step 1: Add the five files to `FINAL`.** Run the gate. Expected: FAIL (`clipsAnimateAtLeastThreeBones` on placeholders).
-- [ ] **Step 2: Author and export** from Blockbench (Bedrock animation, names `animation.superheroes.homelander.<clip>`); hover = calm controlled float, cruise = streamlined, boost = full "superman" extension, takeoff/land read as deliberate transitions.
-- [ ] **Step 3: Run** the gate. Expected: PASS except `HomelanderPlaceholderGuardTest` (files changed, lines present) → mark their five manifest lines `# replaced` → PASS.
+- [ ] **Step 1: Add the five files to `FINAL`.** Run the gate. Expected: FAIL (`jointRotationsWithinHumanLimits` — the delivered flight clips bake `body` pitch 18–90°; intake fix B resolves it).
+- [ ] **Step 2: Apply intake fix B to the delivered clips** (pre-authored: hover = calm float, cruise = streamlined, boost = "superman" extension): strip `body` root pitch > ±15° in `flight_boost` (90°), `flight_cruise` (84°), `flight_land` (79°), `flight_takeoff` (18°); `flight_hover` needs none. Re-author only if a flatten visibly breaks the pose.
+- [ ] **Step 3: Run** the gate. Expected: PASS — the clips have no manifest lines (pre-delivered, never placeholders), nothing to mark.
 - [ ] **Step 4: In-game check (where applicable):** with Visual Core Task 8 available, `./gradlew runClient`, fly through hover → cruise → boost → land in third person (F5) at the 80° boost tilt. Expected: no limb through torso/head, no pop at crossfades. Otherwise check in Blockbench with the body pitched 80°.
 - [ ] **Step 5: Commit** `feat(assets): Homelander flight animation clips`.
 
@@ -97,9 +100,9 @@
 **Interfaces:**
 - Consumes: charge 300 ms, hold loop, release 400 ms. The runtime anchors beams to the rendered head: head rotation in these clips moves the beam origin, so keep `head` motion small (≤ 10°) during `laser_hold`; the head keeps following the player's look on top of the clip.
 
-- [ ] **Step 1: Add files to `FINAL`; run gate.** Expected: FAIL.
-- [ ] **Step 2: Author and export** (focused intense stance; charge reads as build-up, release as a controlled end).
-- [ ] **Step 3: Run gate; mark manifest lines `# replaced`; run gate.** Expected: PASS.
+- [ ] **Step 1: Add files to `FINAL`; run gate.** Expected: PASS outright possible — the delivered laser clips are contract-clean; a FAIL means something regressed.
+- [ ] **Step 2: Verify the delivered clips against the gate** (pre-authored: focused intense stance, charge = build-up, release = controlled end; all `body` ≤ 2.6° — no intake fix needed).
+- [ ] **Step 3: Run gate; run gate.** Expected: PASS (clips have no manifest lines to mark).
 - [ ] **Step 4: In-game check (where applicable, Visual Core Task 9):** hold eye lasers standing and flying. Expected: beams stay on the eyes, hold loop has no visible seam.
 - [ ] **Step 5: Commit** `feat(assets): Homelander eye-laser animation clips`.
 
@@ -112,7 +115,7 @@
 - Consumes: model path + texture ref `superheroes:item/milk_bottle` (keeps `ProjectSanityTest.assertItemModelsResolveToTextures` green); `milk_drink` 1600 ms (= `MilkBottleItem.DRINK_TICKS` 32), vanilla drink use animation still plays on the item.
 
 - [ ] **Step 1: Add files to `FINAL`; run gate.** Expected: FAIL (`milkModelWithinItemBoundsAndHasAllDisplays` on the one-cuboid placeholder).
-- [ ] **Step 2: Model, texture, export** (Java item model with all five displays); author `milk_drink`.
+- [ ] **Step 2: Model, texture, export** (Java item model with all five displays); the `milk_drink` clip is pre-delivered — verify it against the gate only.
 - [ ] **Step 3: Run gate + `./gradlew test --tests '*ProjectSanityTest' --no-daemon`; mark manifest lines `# replaced`; re-run.** Expected: PASS.
 - [ ] **Step 4: In-game check:** `/give @s superheroes:milk_bottle`, inspect hotbar, first/third person, dropped, item frame; drink it. Expected: correct scale/orientation in all five, no z-fighting.
 - [ ] **Step 5: Commit** `feat(assets): Homelander milk bottle model and drink clip`.
@@ -126,7 +129,7 @@
 - Consumes: activate 1000 ms, strike 400 ms with `contact` ≤ 120 ms (gameplay hits on the click tick), `iron_fists_charge` stays a loop-safe bed ≥ 1 s. Rework of the two existing files is mandatory when either is stereo (both are — `ffprobe` them) or misses the loudness target below; otherwise optional.
 
 - [ ] **Step 1: Add files to `FINAL`; run gate.** Expected: FAIL.
-- [ ] **Step 2: Author clips; design/export sounds** mono, 48 kHz, `-c:a libvorbis -qscale:a 5`.
+- [ ] **Step 2: Apply both intake fixes to the delivered clips** — `contact` event ≤ 0.12 s on `iron_fists_strike` (fix A) and its 26° `body` pitch → ≤ 15° or `contract-changes.md` (fix B); `iron_fists_activate` (10°) needs none. Design/export sounds mono, 48 kHz, `-c:a libvorbis -qscale:a 5`.
 - [ ] **Step 3: Run gate; mark manifest lines `# replaced`; re-run.** Expected: PASS.
 - [ ] **Step 4: Loudness check** `ffmpeg -i <f>.ogg -af ebur128 -f null - 2>&1 | rg 'I:|Peak'` for each file. Expected: integrated −16 ±2 LUFS for one-shots, true peak ≤ −1 dBFS.
 - [ ] **Step 5: Commit** `feat(assets): Homelander Iron Fists animations and sounds`.
@@ -140,7 +143,7 @@
 - Consumes: `clap` 600 ms, `contact` ≤ 120 ms; `homelander.hand_clap` event (existing 4.57 s file may be shortened; contract row is one-shot, runtime layers its own impact visuals at contact).
 
 - [ ] **Step 1: Add files to `FINAL`; run gate.** Expected: FAIL (existing `hand_clap.ogg` channel/loudness or clip placeholder).
-- [ ] **Step 2: Author clip; design sound** (transient at 0 ms aligned to contact, tail for the shockwave).
+- [ ] **Step 2: Add the `contact` event (≤ 0.12 s) to the delivered `clap` clip** (intake fix A — it's pre-authored); design the sound (transient at 0 ms aligned to contact, tail for the shockwave).
 - [ ] **Step 3: Run gate; mark manifest lines `# replaced`; re-run; loudness check as Task 5 Step 4.** Expected: PASS / within targets.
 - [ ] **Step 4: Commit** `feat(assets): Homelander Clap animation and sound`.
 
@@ -153,7 +156,7 @@
 - Consumes: `roar` 1500 ms; `homelander.roar` + `homelander.roar.deep` play together at activation (deep layer is the sub-bass bed; existing 3.45 s / 6.48 s files may be retimed to ≈ 1.5–3 s one-shots).
 
 - [ ] **Step 1: Add files to `FINAL`; run gate.** Expected: FAIL.
-- [ ] **Step 2: Author clip; design both layers** so they sum without phase cancellation.
+- [ ] **Step 2: Verify the delivered `roar` clip against the gate** (pre-authored; `body` 15° is the boundary-pass); design both sound layers so they sum without phase cancellation.
 - [ ] **Step 3: Run gate; mark manifest lines `# replaced`; re-run; loudness check.** Expected: PASS / within targets.
 - [ ] **Step 4: Commit** `feat(assets): Homelander Roar animation and sounds`.
 
@@ -166,7 +169,7 @@
 - Consumes: `sun_charge` loop pose held for the 200-tick aftermath; `sun_charge.ogg` ≈ 10 000 ms rising build-up ending into the detonation; `sun_detonate.ogg` ≈ 4000 ms (runtime plays it once at the blast; it replaces vanilla explode + thunder). Textures are sprites sampled by Quasar/pattern renderers: premultiplied-free RGBA, soft edges, no baked color grading beyond warm white/orange (runtime tints via params).
 
 - [ ] **Step 1: Add files to `FINAL`; run gate.** Expected: FAIL.
-- [ ] **Step 2: Author clip, design sounds** (charge ends at peak tension exactly at file end; detonation has a hard transient then long rumble), paint textures.
+- [ ] **Step 2: Trim `sun_charge` `body` pitch 17° → ≤ 15°** (pre-authored clip, intake fix B); design sounds (charge ends at peak tension exactly at file end; detonation has a hard transient then long rumble), paint textures.
 - [ ] **Step 3: Run gate; mark manifest lines `# replaced`; re-run; loudness check** (detonation may reach −10 LUFS integrated; peak ≤ −1 dBFS). Expected: PASS.
 - [ ] **Step 4: Commit** `feat(assets): Homelander sun build-up and detonation resources`.
 
