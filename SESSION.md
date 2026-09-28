@@ -610,3 +610,36 @@ shared contract, контракт-тест). Коммиты `9b1d4c6`, `c300337`
 - Гейт: `./gradlew qualityGate --no-daemon` BUILD SUCCESSFUL (362 game tests).
 - Дальше: Task 2 (плейсхолдеры + `HomelanderSounds`) — в соседней ветке/сессии
   оркестратора; здесь не начинать.
+
+## Visual Core + Homelander пилот — Task 2 (ветка `devin/1790748000-vfx-contract-checkpoint`)
+
+Выполнен Task 2 плана `2026-09-28-visual-core-homelander-pilot.md` (Homelander sounds
+module + плейсхолдеры контракта). Коммит `0497ecd`.
+
+- `sound/HomelanderSounds.java` — 16 событий через `ModContent.sound(...)`, вызов
+  `HomelanderSounds.init()` из `HomelanderModule.register`. Пять геройских событий
+  перенесены из `ModSounds`; `homelander.omniman_react` остаётся в `ModSounds`
+  (общий с `OmnimanReactionRule`), `ModSounds.SILENT` добавлен (пустой `sounds` в
+  sounds.json — валидный holder без звука, нужен Task 10).
+- Все call-site'ы обновлены: hero.homelander, content.boss.homelander (4 события),
+  hero.invincible / hero.doomsday / hero.raiden.
+- `sounds.json`: 11 новых событий + `silent`; `stream: true` у sun_charge,
+  sun_detonate, flight_loop, laser_loop (конвенция roar/omniman_react). Субтитры
+  в en_us + ru_ru (5 новых ключей, iron_fists переиспользует свой).
+- Плейсхолдеры только для строк без файла: 11 OGG (тримы/лупы из art-source MP3
+  и существующих OGG через ffmpeg, точные длительности 300–10000 мс), кубоидная
+  модель `models/item/milk_bottle.json` (текстура существующая, display-трансформы),
+  6 текстур `textures/vfx/homelander/*.png` (16×16, alpha=255). Манифест
+  `homelander_placeholders.txt` — 18 строк `<path> <sha256>`.
+- `datagen/ModItemModelProvider`: flat `milk_bottle` убран; `runDatagen` —
+  в `src/main/generated` удалён только `models/item/milk_bottle.json` (stale-файл
+  пришлось удалить до прогона: processResources падал на duplicate).
+- TDD: RED `manifestHashesMatchFiles` на отсутствующем манифесте → GREEN после
+  ресурсов. `finalBuildHasNoPlaceholders` под `@Disabled` до OMP Task 11/Task 15.
+  `HomelanderAssetContractTest` снят с `@Disabled` — все контрактные проверки PASS.
+- Гейт: `./gradlew qualityGate --no-daemon` BUILD SUCCESSFUL.
+- Нюанс гейта: `verifyGeneratedSources` требует чистый `git status` по
+  `src/main/generated` — удаление generated-файла надо коммитить ДО прогона
+  qualityGate (коммит предшествует гейту, не наоборот).
+- Дальше: Tasks 1–2 мёржатся в main отдельным PR (сигнал старта для OMP);
+  Task 3+ — ветка пилота.
