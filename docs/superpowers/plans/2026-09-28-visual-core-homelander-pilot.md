@@ -66,7 +66,7 @@ Client (`src/client/java/io/github/grebeshok105/codex/client/`):
 - `core/module/HeroClientContext.java` (+ its implementation) — seams `vfx`, `vfxChannel`, `flightPresentation` (modify).
 - `core/net/CoreClientReceivers.java` — receivers for the two payloads (modify).
 - `mixin/PlayerModelPoseMixin.java`, `mixin/PlayerRendererMixin.java` — apply `PoseSample` and `FlightBodyTransform` (modify).
-- `hero/homelander/fx/{HomelanderFx,EyeLaserChannel,FlightFx,SunChargeFx,SunDetonationFx,IronFistsFx,ClapFx,RoarFx}.java` — Homelander compositions (new).
+- `hero/homelander/fx/{HomelanderFx,EyeLaserChannel,FlightFx,SunChargeFx,SunDetonationFx,IronFistsFx,ClapFx,RoarFx}.java` — Homelander compositions (new). `HomelanderFx` is the registration hub: `HomelanderClientModule` calls `HomelanderFx.register(ctx)`, which wires every `HomelanderVfxIds` entry to its composition — `LANDING` → `FlightFx.landing`, `LASER` (channel) → `EyeLaserChannel`, `SUN_CHARGE` → `SunChargeFx`, `SUN_DETONATION`/`MADNESS_CRASH` → `SunDetonationFx`, `IRON_FISTS_*` → `IronFistsFx`, `CLAP` → `ClapFx`, `ROAR` → `RoarFx`, `MILK_DRINK` → small one-shot hosted inside `HomelanderFx` (`milk_drink` ACTION clip + entity-bound `homelander.milk.drink` sound).
 - `hero/homelander/HomelanderClientModule.java` — register effects/presentation; drop `LocalLaserOverlay` and the laser `beamStyle` (modify).
 - `hero/homelander/render/LocalLaserOverlay.java` — delete (superseded by `EyeLaserChannel`).
 
@@ -144,7 +144,7 @@ Models: `models/item/milk_bottle.json` (3D, Blockbench Java item model, texture 
 
 - [ ] **Step 1: Write the failing test** `HomelanderPlaceholderGuardTest.manifestHashesMatchFiles`: every manifest line's file exists and its SHA-256 equals the recorded hash (a replaced file must also drop its line — keeps the list truthful). `finalBuildHasNoPlaceholders` exists but is `@Disabled("enabled in Task 14")` and asserts the manifest has zero non-comment lines.
 - [ ] **Step 2: Run** `./gradlew test --tests '*HomelanderPlaceholderGuardTest' --no-daemon` Expected: FAIL (manifest missing).
-- [ ] **Step 3: Move sounds into `HomelanderSounds`**, same ids for the five existing events, add the new ones; update call sites.
+- [ ] **Step 3: Move sounds into `HomelanderSounds`**, same ids for the five hero-owned events (`roar`, `roar.deep`, `hand_clap`, `iron_fists.impact`, `iron_fists.charge`), add the new ones; update call sites. `homelander.omniman_react` **stays in `ModSounds`**: it is shared by `OmnimanReactionRule` (a different hero's feature), so it is not Homelander-owned — note this in the class javadoc. Also register `ModSounds.SILENT` (`superheroes:silent`, a `sounds.json` entry with an empty `sounds` list → a valid `Holder<SoundEvent>` that plays nothing; used by Task 10 to mute the explosion's own audio).
 - [ ] **Step 4: Create placeholders.** Check `art-source/sounds/homelander/` first. Sounds: trimmed/padded from existing Homelander OGGs or `ffmpeg -f lavfi -i anoisesrc=d=<s>:a=0.05 -c:a libvorbis -qscale:a 5 <file>.ogg` to the contract duration. Clips: minimal valid Bedrock JSON with correct `animation_length`, `loop`, 2 keyframes on `body`. Milk model: one-cuboid Java item model using the existing texture with `display` transforms. VFX textures: 16×16 solid-alpha PNGs. Record each path + `sha256sum` in the manifest.
 - [ ] **Step 5: Regenerate** `./gradlew runDatagen --no-daemon` Expected: `git diff --stat src/main/generated` shows only `models/item/milk_bottle.json` deleted.
 - [ ] **Step 6: Enable Task 1 test; run** `./gradlew test --tests '*HomelanderAssetContractTest' --tests '*HomelanderPlaceholderGuardTest' --no-daemon` Expected: PASS.
@@ -160,7 +160,7 @@ Models: `models/item/milk_bottle.json` (3D, Blockbench Java item model, texture 
 
 **Interfaces:**
 - Produces:
-  - `record VfxEventS2CPayload(ResourceLocation effect, int sourceEntityId, Vec3 origin, Vec3 target, float scale, int seed)`; `TYPE = new Type<>(ModId.of("vfx_event"))`; `NO_SOURCE = -1`.
+  - `record VfxEventS2CPayload(ResourceLocation effect, int sourceEntityId, Vec3 origin, Vec3 target, float scale, int seed)`; `TYPE = new Type<>(ModId.of("vfx_event"))`; `NO_SOURCE = -1`. `target` is the secondary point an effect aims at (beam end, look target); omnidirectional effects pass `origin`.
   - `record VfxChannelS2CPayload(int entityId, ResourceLocation channel, byte state, Vec3 target)`; `TYPE = ModId.of("vfx_channel")`; `START = 0, UPDATE = 1, STOP = 2`.
   - `VfxFx.event(Entity source, ResourceLocation effect, Vec3 origin, Vec3 target, float scale)` → `trackingAndSelf` for `ServerPlayer`, else `tracking`; seed = `source.level().random.nextInt()`.
   - `VfxFx.eventAround(ServerLevel level, ResourceLocation effect, Vec3 origin, Vec3 target, float scale, double radius)` → `FxBroadcast.around`.
@@ -170,7 +170,7 @@ Models: `models/item/milk_bottle.json` (3D, Blockbench Java item model, texture 
 - [ ] **Step 1: Write failing tests** `eventRoundTrips`, `channelRoundTrips` (encode→decode through `STREAM_CODEC` with a `RegistryFriendlyByteBuf`/`FriendlyByteBuf(Unpooled.buffer())`, assert record equality), `channelStateOutOfRangeRejected` (decode of `state=7` throws `DecoderException`).
 - [ ] **Step 2: Run** `./gradlew test --tests '*VfxPayloadCodecTest' --no-daemon` Expected: FAIL (classes missing).
 - [ ] **Step 3: Implement** payloads using `StreamCodecs` helpers for `Vec3`; register in `CoreNetworking` with `PayloadRegistrar`.
-- [ ] **Step 4: Run** the test Expected: PASS. Client receivers come in Task 4 — until then `everyS2CPayloadHasARegisteredReceiver` is red, so commit Tasks 3+4 together if running the gate between them.
+- [ ] **Step 4: Run** the test Expected: PASS. Client receivers come in Task 4. (`everyHeroS2CPayloadHasARegisteredReceiver` only scans `hero.**` payloads, so `core/net` payloads never trip it — either commit boundary is green; committing Tasks 3+4 together is still recommended.)
 - [ ] **Step 5: Commit** `feat(vfx): add typed VFX event and channel payloads`.
 
 ### Task 4: Client Visual Core foundation (runtime, params, backend)
@@ -235,7 +235,7 @@ Models: `models/item/milk_bottle.json` (3D, Blockbench Java item model, texture 
 - Consumes: Task 4 runtime/backend; existing `client/core/render/CrossBeamRenderer`, `client/fx/ScreenShakeManager`; `FlightBodyTransform` (record defined here in `client/core/flight/`, filled by Task 8).
 - Produces:
   - `enum PhaseTimeline.Phase { CHARGE, HOLD, RELEASE, DONE }`; `record PhaseTimeline(int chargeTicks, int releaseTicks)`; `Phase phaseAt(int age, int releasedAtAge)` (`releasedAtAge = -1` while held); `float intensity(int age, int releasedAtAge, float partial)` — 0→1 ease-out over charge, 1 in hold, 1→0 over release.
-  - `record BeamLook(float coreWidth, float glowWidth, int coreArgb, int glowArgb, float noise)`; `BeamPattern.draw(VfxRenderContext ctx, Vec3 from, Vec3 to, BeamLook look, float intensity)`.
+  - `record BeamLook(float coreWidth, float glowWidth, int coreArgb, int glowArgb, float noise)`; `BeamPattern.draw(VfxRenderContext ctx, Vec3 from, Vec3 to, BeamLook look, float intensity)` — delegates to a new `CrossBeamRenderer.draw(WorldRenderContext, Vec3, Vec3, float intensity, BeamLook look)` overload that takes colors/widths from `BeamLook` (the existing `draw(..., float widthMul)` keeps its hardcoded look so current callers are untouched; `noise` is applied by `BeamPattern` itself).
   - `ImpactPattern.spawn(VfxBackend b, Vec3 pos, Vec3 normal, ResourceLocation emitter, VfxParams p)`; `ShockwavePattern` (`VfxEffect`, expanding ring mesh: params `radius`, `durationTicks`, `color`); `AuraPattern` (`VfxEffect` following an `Entity`, periodic emitter + optional light); `TrailBuffer(int capacity)` ring of `Vec3` with `push`, `size`, `get(i)`; `TrailPattern` ribbon from a `TrailBuffer`.
   - `ScreenFlash.attenuation(double distance, double radius, boolean lineOfSight) -> float` (1 at 0, linear to 0 at `radius`, ×0.35 without LOS); `ScreenFlash.trigger(float intensity, int argb, int fadeTicks)`.
   - `CameraImpulse.shake(float intensity, int ticks)` delegating to `ScreenShakeManager`.
@@ -248,7 +248,7 @@ Models: `models/item/milk_bottle.json` (3D, Blockbench Java item model, texture 
   - `ScreenFlashTest`: `attenuation(0,64,true)==1`, `attenuation(64,64,true)==0`, `attenuation(32,64,false)≈0.175`.
   - `HumanoidAnchorsTest.eyesFollowHeadYawAndPitch` (yaw 90° → eyes offset toward −X; pitch +90° → eyes move down), `eyesFollowFlightTilt` (tilt pitch 80° moves eye midpoint ≥ 1.0 block horizontally forward of feet vs identity), `eyesSymmetric` (midpoint lies on head forward axis).
 - [ ] **Step 2: Run** `./gradlew test --tests '*client.core.vfx.pattern*' --tests '*HumanoidAnchorsTest' --no-daemon` Expected: FAIL.
-- [ ] **Step 3: Implement** (math in pure static methods; `BeamPattern` wraps `CrossBeamRenderer`).
+- [ ] **Step 3: Implement** (math in pure static methods; `BeamPattern` delegates to the new `CrossBeamRenderer` overload).
 - [ ] **Step 4: Run** tests Expected: PASS; gate Expected: BUILD SUCCESSFUL.
 - [ ] **Step 5: Commit** `feat(vfx): add reusable beam, impact, shockwave, aura, trail, flash patterns and humanoid anchors`.
 
@@ -263,6 +263,7 @@ Models: `models/item/milk_bottle.json` (3D, Blockbench Java item model, texture 
 - Produces:
   - `record AnimationClip(ResourceLocation id, float lengthSeconds, boolean loop, Map<String, BoneTrack> bones)`; `record BoneTrack(Keyframes rotation, Keyframes position)`; `Keyframes.sample(float seconds) -> Vector3f` (linear and `catmullrom`, clamp outside range).
   - `BedrockAnimationParser.parse(JsonObject root, Consumer<String> warn) -> List<AnimationClip>`; name `animation.<ns>.<hero>.<clip>` → id `<ns>:<hero>/<clip>`; `loop` true / `"hold_on_last_frame"` (treated as non-loop hold); keyframe value arrays or `{pre, post, lerp_mode}`; any string (Molang) value → warn + skip that clip; unknown bone → warn + ignore bone.
+  - Extend `HomelanderAssetContractTest` (from Task 1): new check `contractClipsSurviveTheRuntimeParser` — every contract clip file parses through `BedrockAnimationParser.parse` with zero warnings, so a Molang-valued or unknown-bone clip fails the contract instead of silently skipping at runtime.
   - `AnimationLibrary.get(ResourceLocation) -> Optional<AnimationClip>` loaded from `assets/*/player_animations/**/*.animation.json` via reload listener.
   - `enum PlayerAnimator.Layer { BASE, ACTION }`; `PlayerAnimator.play(int entityId, ResourceLocation clip, Layer layer, int fadeTicks)`, `stop(int entityId, Layer layer, int fadeTicks)`, `sample(int entityId, float partialTick) -> PoseSample`, `tick()`, `reset()` (registered with `ClientSessionState`). ACTION overrides BASE per bone by its fade weight.
   - `record PoseSample(Map<String, Vector3f> rotationDeg, Map<String, Vector3f> offsetPx, float weight)`; `EMPTY`.
@@ -285,7 +286,7 @@ Models: `models/item/milk_bottle.json` (3D, Blockbench Java item model, texture 
 - Create: `client/core/flight/{FlightPoseMath,FlightPoseTracker,FlightPresentation,FlightPresentations}.java`, `assets/superheroes/vfx/flight/pose.json`
 - Modify: `client/mixin/PlayerRendererMixin.java` (inject `setupRotations` TAIL: rotate `pitchDeg` about X, `rollDeg` about Z around body center), `client/mixin/PlayerModelPoseMixin.java` (keep existing static leg pose only when no `FlightPresentation` for the player's hero), `client/core/module/HeroClientContext.java` (`flightPresentation`)
 - Create: `client/hero/homelander/fx/FlightFx.java`, `assets/superheroes/vfx/homelander/flight.json`, `quasar/emitters/homelander_flight_*.json`
-- Modify: `hero/homelander/HomelanderHero.java:160-195` (landing impact → `VfxFx.event(player, HomelanderVfxIds.LANDING, …, radius)`; remove `sendParticles`), `client/hero/homelander/HomelanderClientModule.java`
+- Modify: `hero/homelander/HomelanderHero.java:160-195` (landing impact → `VfxFx.event(player, HomelanderVfxIds.LANDING, …, radius)`; remove **all** `sendParticles` **and** the tiered `playSound` calls — `GENERIC_EXPLODE`, `LIGHTNING_BOLT_THUNDER`, `WARDEN_SONIC_BOOM`, `WITHER_SPAWN`; the landing tier still drives the event's `scale`, and `homelander.flight.land` is now the single landing sound), `client/hero/homelander/HomelanderClientModule.java`
 - Create: `hero/homelander/HomelanderVfxIds.java`
 - Test: `src/test/java/io/github/grebeshok105/codex/client/core/flight/FlightPoseMathTest.java`, `src/test/java/io/github/grebeshok105/codex/assets/HomelanderNoVanillaParticlesTest.java`
 
@@ -303,7 +304,7 @@ Models: `models/item/milk_bottle.json` (3D, Blockbench Java item model, texture 
   - `phaseFlipDoesNotJumpPose`: from converged BOOST (80°) flip target to HOVER for one tick → pitch change ≤ 80·(1−2^(−1/3)) + 0.01.
   - `stepIsContinuousForLargeDt`: `dt=40` → result between current and target, never overshoots.
   - `boostPitchWithinLimit`, `rollClampedTo25`.
-  - `HomelanderNoVanillaParticlesTest.homelanderServerCodeSendsNoVanillaParticles`: for every file listed in `CLEANED` (starts with `HomelanderHero.java`), assert no `sendParticles(` and no `ParticleTypes.`. Later tasks append their files.
+  - `HomelanderNoVanillaParticlesTest.homelanderServerCodeSendsNoVanillaParticles`: for every file listed in `CLEANED` (starts with `HomelanderHero.java`), assert no `sendParticles(` and no `ParticleTypes.`. Later tasks append their files. Scope note: this lint only covers direct particle calls — `level.explode` visual particles are handled by Task 10's `SilentParticles` swap, and entity-based visuals by its GameTest (`no LightningBolt spawned`); it is a lint, not proof of zero vanilla visuals.
 - [ ] **Step 2: Run** `./gradlew test --tests '*FlightPoseMathTest' --tests '*HomelanderNoVanillaParticlesTest' --no-daemon` Expected: FAIL.
 - [ ] **Step 3: Implement** core flight classes, mixin changes, `FlightFx` (trail from each hand/feet anchor while CRUISE/BOOST, boost burst + shock ring on BOOST entry, landing impact effect), Homelander registration.
 - [ ] **Step 4: Run** tests Expected: PASS; gate Expected: BUILD SUCCESSFUL (goldens: `hero_presentation.txt` unchanged — `onLanded` behavior other than visuals untouched).
@@ -313,28 +314,28 @@ Models: `models/item/milk_bottle.json` (3D, Blockbench Java item model, texture 
 
 **Files:**
 - Create: `hero/homelander/ability/EyeLaserPhases.java`, `client/hero/homelander/fx/EyeLaserChannel.java`, `assets/superheroes/vfx/homelander/laser.json`, `quasar/emitters/homelander_laser_impact.json`
-- Modify: `hero/homelander/ability/EyeLasersAbility.java` (phases, channel send; remove `BeamFx.laser` and particle spark), `client/hero/homelander/HomelanderClientModule.java` (remove `LocalLaserOverlay.register()` and laser `beamStyle`; register channel)
+- Modify: `hero/homelander/ability/EyeLasersAbility.java` (phases, channel send; remove `BeamFx.laser` and particle spark), `client/hero/homelander/HomelanderClientModule.java` (remove `LocalLaserOverlay.register()` and laser `beamStyle`; register channel). If `ModParticles.LASER_SPARK` and the `STYLE_LASER` `BeamStyle` have no remaining callers after this, delete them in the same task.
 - Delete: `client/hero/homelander/render/LocalLaserOverlay.java`
 - Test: `src/test/java/io/github/grebeshok105/codex/hero/homelander/EyeLaserPhasesTest.java`, `src/gametest/java/io/github/grebeshok105/codex/gametest/HomelanderVfxGameTests.java`, append `EyeLasersAbility.java` to `HomelanderNoVanillaParticlesTest.CLEANED`
 
 **Interfaces:**
 - Consumes: `VfxFx.channel`, `VfxChannelS2CPayload` (Task 3), `PhaseTimeline`, `BeamPattern`, `ImpactPattern`, `HumanoidAnchors.eyes` (Task 6), `PlayerAnimator` (Task 7), `HomelanderSounds.LASER_*`.
 - Produces:
-  - `EyeLaserPhases.CHARGE_TICKS = 6`, `RELEASE_TICKS = 8`; `static boolean damageActive(int activeTicks)` (true from tick 6); `static boolean shouldSendUpdate(int activeTicks)` (every `VfxFx.CHANNEL_UPDATE_INTERVAL_TICKS`).
-  - Server: on activate → `START` with current end; while active → `UPDATE` with server raycast end every 2 ticks; on deactivate → `STOP`. Damage/pulse logic otherwise unchanged except it starts at `damageActive`.
+  - `EyeLaserPhases.CHARGE_TICKS = 6`, `RELEASE_TICKS = 8` — visual-only phases driving beam intensity via `PhaseTimeline`; `static boolean shouldSendUpdate(int activeTicks)` (every `VfxFx.CHANNEL_UPDATE_INTERVAL_TICKS`).
+  - Server: on activate → `START` with current end; while active → `UPDATE` with server raycast end every 2 ticks; on deactivate → `STOP`. UPDATEs keep flowing through the 10-tick `fire=false` pauses of the uranium-threat pulse so the channel never idles into `CHANNEL_TIMEOUT_TICKS = 10`; the beam stays visually lit during pauses (deliberate visual change: today `BeamFx.laser` decays during pauses). Damage and pulse logic are byte-identical to today — `target.hurt` still runs on exactly the same `fire` ticks, from tick 0; the charge phase gates nothing on the server.
   - Client `EyeLaserChannel implements VfxChannelEffect`: two beams from `HumanoidAnchors.eyes(source, partial)` to end; local player end = local raycast each frame (responsive), remote = server end lerped over 2 ticks; impact emitter + light at end, one per 3 ticks; `PhaseTimeline(6, 8)` drives intensity; ACTION clips `laser_charge` → `laser_hold` → `laser_release`; sounds charge/loop (entity-bound)/release.
 
-- [ ] **Step 1: Write failing tests:** `EyeLaserPhasesTest.noDamageDuringCharge` (`damageActive(5)==false`, `damageActive(6)==true`), `updatesEveryTwoTicks`. GameTest `eyeLaserBroadcastsStartUpdateStop`: transform player, activate `EYE_LASERS`, run 10 ticks, deactivate; capture payloads through the test sender hook used by existing FX gametests (if none exists, add a package-private `VfxFx.captureForTests(Consumer<CustomPacketPayload>)`), assert first `START`, ≥ 3 `UPDATE`, last `STOP`.
+- [ ] **Step 1: Write failing tests:** `EyeLaserPhasesTest.updatesEveryTwoTicksIncludingPulsePauses` (`shouldSendUpdate` true on every 2nd tick across the full active range, including `fire=false` pause ticks), `chargeTicksIsSix`. GameTest `eyeLaserBroadcastsStartUpdateStop`: transform player, activate `EYE_LASERS`, run 10 ticks, deactivate; capture payloads through the test sender hook used by existing FX gametests (if none exists, add a package-private `VfxFx.captureForTests(Consumer<CustomPacketPayload>)`), assert first `START`, ≥ 3 `UPDATE`, last `STOP`. Assert unchanged damage behavior with the existing laser damage assertions (damage lands from the first active tick).
 - [ ] **Step 2: Run** `./gradlew test --tests '*EyeLaserPhasesTest' --no-daemon` and `./gradlew runGametest --no-daemon` Expected: FAIL.
 - [ ] **Step 3: Implement** server phases/sends and client channel; delete overlay.
-- [ ] **Step 4: Run** both Expected: PASS; `rg -n 'LocalLaserOverlay|STYLE_LASER' src/client/java/io/github/grebeshok105/codex/client/hero/homelander` Expected: empty; gate Expected: BUILD SUCCESSFUL.
+- [ ] **Step 4: Run** both Expected: PASS; `rg -n 'LocalLaserOverlay|STYLE_LASER|LASER_SPARK' src` Expected: empty (or only callers the task kept deliberately); gate Expected: BUILD SUCCESSFUL.
 - [ ] **Step 5: Commit** `feat(homelander): eye lasers on VFX channel with eye-anchored beams and phases`.
 
 ### Task 10: Milk model, drink, sun build-up and final explosion
 
 **Files:**
 - Create: `client/hero/homelander/fx/{SunChargeFx,SunDetonationFx}.java`, `assets/superheroes/vfx/homelander/{sun_charge,sun_detonation}.json`, `quasar/emitters/homelander_sun_*.json`, `core/particle/SilentParticles.java` (+ client no-op provider registration in the core client bootstrap)
-- Modify: `hero/homelander/item/MilkBottleItem.java` (drink sound `HomelanderSounds.MILK_DRINK`, `VfxFx.event(MILK_DRINK)`; replace `WITHER_SPAWN`), `hero/homelander/runtime/HomelanderMadnessAftermathController.java` (aftermath start → `VfxFx.eventAround(SUN_CHARGE, radius 96)` + `SUN_CHARGE` sound; remove `END_ROD`/`SMALL_FLAME`/visual lightning/`BEACON_ACTIVATE`; `detonateSun` → `VfxFx.eventAround(SUN_DETONATION, radius 160)` + `SUN_DETONATE` sound; keep both explosions via the 1.21.1 `Level.explode(... ParticleOptions small, ParticleOptions large, Holder<SoundEvent>)` overload with `SilentParticles.SILENT` and the `SUN_DETONATE` holder; keep fire placement; remove visual-only lightning and vanilla explode/thunder sounds), `hero/homelander/runtime/HomelanderMadnessFlightController.java:74` (→ `VfxFx.event(MADNESS_CRASH)`)
+- Modify: `hero/homelander/item/MilkBottleItem.java` (drink sound `HomelanderSounds.MILK_DRINK`, `VfxFx.event(MILK_DRINK)`; replace `WITHER_SPAWN`), `hero/homelander/runtime/HomelanderMadnessAftermathController.java` (aftermath start → `VfxFx.eventAround(SUN_CHARGE, radius 96)` + `SUN_CHARGE` sound; remove `END_ROD`/`SMALL_FLAME`/visual lightning/`BEACON_ACTIVATE`; `detonateSun` → `VfxFx.eventAround(SUN_DETONATION, radius 160)` — this event is the **single owner** of the `homelander.sun.detonate` sting, played once client-side by `SunDetonationFx` with distance attenuation. Keep both explosions via the 1.21.1 `Level.explode(... ParticleOptions small, ParticleOptions large, Holder<SoundEvent>)` overload — `SilentParticles.SILENT` for both particle args and the `ModSounds.SILENT` `superheroes:silent` `SoundEvent` holder on **both** calls so neither explosion plays vanilla boom or a second copy of the sting; keep fire placement; remove visual-only lightning and vanilla explode/thunder sounds), `hero/homelander/runtime/HomelanderMadnessFlightController.java:74` (→ `VfxFx.event(MADNESS_CRASH)`; remove its `sendParticles` + `GENERIC_EXPLODE` playSound — MADNESS_CRASH owns both)
 - Test: append the three files to `HomelanderNoVanillaParticlesTest.CLEANED`; GameTest `sunDetonationKeepsGameplayAndSendsVfx` in `HomelanderVfxGameTests`
 
 **Interfaces:**
@@ -391,7 +392,7 @@ Models: `models/item/milk_bottle.json` (3D, Blockbench Java item model, texture 
 **Interfaces:**
 - Produces:
   - `VfxShowcases.register(ResourceLocation id, VfxShowcase scene)`; `@FunctionalInterface interface VfxShowcase { void run(ServerPlayer at, int count); }`; `ids() -> Set<ResourceLocation>`.
-  - Commands (permission 2): `/superheroes vfx play <effect> [scale]` (broadcast `VfxFx.eventAround` at the caller's look target, radius 160 — every nearby client sees it), `/superheroes vfx scene <id> [count]`, `/superheroes vfx stress <count>` (count ≤ 64: repeats the heaviest registered scene in a ring), `/superheroes vfx hud on|off` (sends `VfxEventS2CPayload` with effect `superheroes:debug/hud` to the caller).
+  - Commands (permission 2): `/superheroes vfx play <effect> [scale]` (broadcast `VfxFx.eventAround` at the caller's look target, radius 160 — every nearby client sees it), `/superheroes vfx scene <id> [count]`, `/superheroes vfx stress <count>` (count ≤ 64: repeats `homelander/combat` — the heaviest registered scene — in a ring; falls back to the lexicographically-first registered id if it is absent), `/superheroes vfx hud on|off` (sends `VfxEventS2CPayload` with effect `superheroes:debug/hud` to the caller).
   - Homelander scenes: `homelander/flight_path` (applies flight to caller), `homelander/lasers`, `homelander/lasers_flying`, `homelander/sun_detonation` (visual-only: event without explosion), `homelander/combat` (iron fists hit + clap + roar at dummy positions).
   - `VfxDebugHud`: active effects, open channels, Veil on/off, avg FPS, 1 % low, frame ms (from `VfxPerfProbe`).
   - `VfxPerfProbe.record(long frameNanos)`, `averageFps() -> double`, `onePercentLowFps() -> double` over a 600-frame window; `/superheroes vfx hud` shows them.
@@ -419,14 +420,14 @@ Models: `models/item/milk_bottle.json` (3D, Blockbench Java item model, texture 
 ### Task 15: Independent review, OMP integration, final acceptance
 
 **Files:**
-- Modify: files under the contract paths (replaced by the approved OMP package), `src/test/resources/contracts/homelander_placeholders.txt` (emptied), `HomelanderPlaceholderGuardTest.java` (remove `@Disabled` from `finalBuildHasNoPlaceholders`), `docs/design/visual-core-homelander/verification.md`
+- Modify: files under the contract paths (replaced by the approved OMP package), `src/test/resources/contracts/homelander_placeholders.txt` (emptied), `docs/design/visual-core-homelander/verification.md`. (`finalBuildHasNoPlaceholders` is already enabled by the OMP PR — Task 11 of the OMP plan — do not re-enable it here; just require it to pass.)
 
 **Interfaces:**
 - Consumes: OMP package from `docs/superpowers/plans/2026-09-28-homelander-omp-assets.md` — only after its Task 10 (third-session review) and Task 11 (user approval recorded in `docs/design/visual-core-homelander/omp-review.md`).
 
 - [ ] **Step 1: Gate check.** Run: `rg -n '^Approved by user:' docs/design/visual-core-homelander/omp-review.md` Expected: one line with date. Missing → stop; integration is blocked (spec §14).
 - [ ] **Step 2: Fourth-session review (spec §14)** — a fresh reviewer (superpowers:requesting-code-review) reviews the whole branch against the spec; every finding fixed with a test first where testable.
-- [ ] **Step 3: Integrate OMP assets** — copy approved files onto the contract paths, drop each line from the manifest. Run `./gradlew test --tests '*HomelanderAssetContractTest' --tests '*HomelanderPlaceholderGuardTest' --no-daemon` Expected: PASS with `finalBuildHasNoPlaceholders` enabled.
+- [ ] **Step 3: Integrate OMP assets** — merge the OMP Task 11 PR into the pilot branch (the OMP branch already replaces files at the contract paths; the pilot branch is the merge target the OMP session is told to PR into), then drop each remaining line from the manifest. Run `./gradlew test --tests '*HomelanderAssetContractTest' --tests '*HomelanderPlaceholderGuardTest' --no-daemon` Expected: PASS with `finalBuildHasNoPlaceholders` enabled.
 - [ ] **Step 4: Scene tuning** — adjust `vfx/homelander/*.json` (and, per OMP spec §12, OMP resources if isolation quality does not survive the scene), recording changes in `verification.md`.
 - [ ] **Step 5: Re-run Task 14 Steps 1–3 with final assets.** Expected: all rows pass.
 - [ ] **Step 6: Acceptance scenes (spec §15)** in-game, each recorded: flight; eye lasers; eye lasers while flying; flight VFX; milk final explosion. Expected: user sign-off line per scene in `verification.md`.

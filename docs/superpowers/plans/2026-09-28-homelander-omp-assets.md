@@ -13,7 +13,7 @@
 ## Global Constraints
 
 - OMP owns passive resources only; it does not touch Visual Core architecture, Veil runtime, shaders, multiplayer, gameplay, camera/screen logic, runtime timing or final integration (spec §2). No edits under `src/main/java`, `src/client/java`, `quasar/`, `pinwheel/`, `vfx/`.
-- Work against the shared contract (`docs/design/visual-core-homelander/shared-contract.md`, `src/test/resources/contracts/homelander_pilot.json`), never against the unfinished runtime branch (spec §3). Prerequisite: Visual Core plan Tasks 1–2 merged on `main` (contract + placeholders at final paths).
+- Work against the shared contract (`docs/design/visual-core-homelander/shared-contract.md`, `src/test/resources/contracts/homelander_pilot.json`), never against the unfinished runtime branch (spec §3). Prerequisite: Visual Core plan Tasks 1–2 merged on `main` (contract + placeholders at final paths). This serializes the two streams deliberately: spec A §6 wants the contract agreed before both sides build against it, and the contract is produced inside Visual Core Task 1, so OMP cannot start earlier without it.
 - Artistic freedom over motion, posing, model styling, texture treatment and sound design (spec §3); contract ids, file paths, bone names, loop flags and approximate durations (±30 %) are fixed.
 - Contract change (spec §4, §8): document the problem, propose the smallest change, open a PR/comment on the repository path, continue unrelated work; never diverge silently.
 - Production quality, not placeholders: coherent, technically valid, correctly exported, clean transforms, no obvious clipping, repeat-safe, contract-compliant, directly integrable (spec §7).
@@ -68,6 +68,8 @@
   - `jointRotationsWithinHumanLimits`: sampled every 1/20 s — `head` x ∈ [−80°, 60°], arms x ∈ [−200°, 60°], legs x ∈ [−100°, 100°], any z ∈ [−120°, 120°].
   - `milkModelWithinItemBoundsAndHasAllDisplays`: all element `from/to` ∈ [−16, 32]; `display` has `thirdperson_righthand, firstperson_righthand, gui, ground, fixed`; ≥ 4 elements.
   - `vfxTexturesArePowerOfTwoWithAlpha`: width/height powers of two, ≤ 256, PNG color type 6.
+  - `clipsUseNumericKeyframesOnly`: every keyframe value in every `FINAL` clip is a number array or `{pre, post}` object — any string (Molang) value fails. (The runtime parser warns and skips such clips; a clip that skips at runtime must fail here first.)
+  - `finalSetCoversAllDeliveredAssets`: every contract file that exists and is absent from `homelander_placeholders.txt` must appear in `FINAL` — a replaced asset that forgets to join `FINAL` escapes every quality check.
 - [ ] **Step 3: Run** the gate command. Expected: FAIL (compile error: `OggInfo.channels` missing).
 - [ ] **Step 4: Implement `OggInfo.channels`.** Re-run. Expected: FAIL only `clipsAnimateAtLeastThreeBones` on the `flight_hover` placeholder (proves the suite rejects placeholders). Remove the seed from `FINAL` (Task 2 re-adds it); re-run. Expected: PASS.
 - [ ] **Step 5: Commit** `test(assets): add Homelander OMP asset quality checks and raw inventory`.
