@@ -563,3 +563,28 @@
 **Проект переходит в режим «новый контент»:** новый герой = `hero/<id>/` + `client/hero/<id>/` +
 2 строки в bootstrap-списках + lang×2 + ассеты + golden-строки — см. `.agents/skills/add-hero/`.
 Программа миграции из PR #41 завершена.
+
+## Visual Core + OMP — ревью планов (ветка `devin/1790616018-visual-core-omp-plan-review`)
+
+Адверсариальное ревью двух планов (`docs/superpowers/plans/2026-09-28-visual-core-homelander-pilot.md`,
+`2026-09-28-homelander-omp-assets.md`): собственный проход + 5 раундов субагентов
+(spec-fidelity / тех-точность / исполняемость / consistency / spec-alignment / два final-gate).
+~65 находок, все проверены по репе и спекам, исправлены in-place (коммиты `3cb7ebc`..`7d8ecdd`).
+
+Ключевые исправления:
+- `HomelanderSounds` вынесен в `sound/` (ArchUnit запрещает `content.**`→`hero.**` и hero→hero);
+  `omniman_react` остаётся в `ModSounds`.
+- `STYLE_LASER`-регистрация сохраняется — босс `HomelanderEyeLaserGoal:155` шлёт `BeamFx.laser`.
+- `ShockwaveUtil.detonate` получает `suppressPresentation` (весь presentation-tail:
+  EXPLOSION/LARGE_SMOKE/POOF + GENERIC_EXPLODE/WOOL_PLACE/RAVAGER_STEP; урон/скриншейк сохраняются).
+- `durationMs` существующих звуков = замеренные значения (1440/4570/3450/6480);
+  ретайм вне ±30% = contract-change через `contract-changes.md` в том же коммите.
+- `contractClipEventTimesMatchManifest` связывает манифест `events` с parsed-clip `eventTimes`
+  (ms vs s, ±50мс), включается в Task 15 как `finalBuildHasNoPlaceholders`.
+- OMP: FINAL-coverage = «delivered» (baseline-diff + `# replaced` + reworked); mono-мандат;
+  prereq = Plan A Tasks 1–2 на main; PR в `feat/visual-core-homelander-pilot`.
+- Оба дизайн-спека закоммичены в `docs/design/visual-core-homelander/` — шаги, ссылающиеся
+  на spec §, теперь исполнимы из репо.
+
+Каждый факт про код подтверждён `rg`/`sed`/`ffprobe` на текущем HEAD; один ревьюер
+дал false-positive со стейл-чекаута (pre-I6b) — его находки сверены и отброшены.
