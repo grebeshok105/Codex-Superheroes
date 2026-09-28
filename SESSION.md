@@ -767,3 +767,53 @@ particles, dynamic lights, post pipelines). Коммит `804469d`.
   визуальной проверке.
 - Дальше: Task 6 — pattern layer (`pattern/*`, `anchor/*`) +
   `FlightBodyTransform` record.
+
+## Visual Core + Homelander пилот — Task 6 (ветка `feat/visual-core-homelander-pilot`)
+
+Выполнен Task 6 плана `2026-09-28-visual-core-homelander-pilot.md` (pattern layer +
+render anchors). Коммит `5f614a7`.
+
+- `client/core/vfx/pattern/` — `PhaseTimeline` (enum Phase CHARGE/HOLD/RELEASE/DONE;
+  `phaseAt(age, releasedAtAge)`, releasedAtAge=-1 пока held; `intensity` — ease-out
+  quad 0→1 за charge, 1 в hold, спад 1→0 за release; релиз до конца charge стартует
+  с текущего уровня), `BeamPattern.draw` (применяет `noise` сам — плавный sin-джиттер
+  конца луча — и делегирует новому оверлоду `CrossBeamRenderer`), `ImpactPattern.spawn`
+  (emitter со сдвигом по `normal` на `surfaceOffset`, опц. `distortion*`), `ShockwavePattern`
+  (VfxEffect, кольцо 40 сегментов, `radius`/`durationTicks`/`color`/`band`),
+  `AuraPattern` (VfxEffect за Entity: периодический emitter по `emitIntervalTicks`,
+  опц. `LightHandle` по `lightColor`/`lightRadius`/`lightBrightness`, свет снимается
+  на cancel/finish; `entity.isRemoved()` → finish), `TrailBuffer` (кольцо, get(0)=новейший),
+  `TrailPattern` (лента face-camera, фейд по `fadeTicks` после `finish()`),
+  `ScreenFlash` (`attenuation` = линейный спад по `radius` ×0.35 без LOS; `trigger`
+  держит состояние и перекормляет backend каждый тик; self-register на class-load:
+  END_CLIENT_TICK→tick, ClientSessionState→reset), `CameraImpulse` → `ScreenShakeManager`.
+- `client/core/vfx/anchor/` — `EyePair` record + `HumanoidAnchors`: pure
+  `eyesFrom(feet, bodyYaw, headYaw, headPitch, tilt, scale)` и interpolated
+  `eyes(player, partial, tilt, headAnimDeg)`; константы: pivot 1.5, eyes 0.25 fwd /
+  ±0.0625 lat / 0.0625 up; first-person — камера +0.35 fwd / ±0.11 lat / −0.08 down.
+  `FlightBodyTransform` — pitch-наклон вокруг правой оси тела от ступней
+  (head-first к направлению полёта), затем roll вокруг body-forward.
+- `client/core/flight/FlightBodyTransform` — record `(pitchDeg, rollDeg)` + `IDENTITY`;
+  заполнит Task 8 через `FlightPoseTracker`.
+- `client/core/render/` — `BeamLook` record ЛЕЖИТ ЗДЕСЬ, не в `vfx.pattern`
+  (отступление от плана): иначе `render ↔ vfx.pattern` цикл, который ловит
+  `PackageCycleRatchetTest` — сигнатура оверлода `draw(WorldRenderContext, Vec3, Vec3,
+  float intensity, BeamLook)` неизменна, приём как у `BeamStyle`. Существующий
+  `draw(..., widthMul)` сохраняет hardcoded look через общий приватный `drawLayers`
+  (выделенные `BeamLayers` слои), поведение вызывающих не изменилось.
+- Второе отступление: тик/сброс `ScreenFlash` — static-block self-registration
+  внутри самого класса, а не вызовы из `VfxRuntime` (иначе цикл `vfx ↔ vfx.pattern`).
+  Класс грузится при первом `trigger`/`attenuation`, регистрация ленивая.
+- TDD: RED — `./gradlew test --tests '*client.core.vfx.pattern*' --tests '*HumanoidAnchorsTest'`
+  BUILD FAILED (10 compile errors, классов нет) → GREEN (12 тестов: 4 timeline,
+  2 buffer, 3 flash, 3 anchors). `PackageCycleRatchetTest` поймал 2 новых цикла —
+  устранены (см. выше), baseline не тронут.
+- Гейт: `./gradlew qualityGate --no-daemon` BUILD SUCCESSFUL ×5 подряд. Внимание:
+  `runGametest` имеет нестабильные серверные тесты — в прогонах падали по одному
+  разному (regulus mania magnets / captainamerica shield lifetime / homelander
+  uranium), ретраи зелёные; к клиентским изменениям Task 6 отношения не имеет.
+- Hero-символов в `client/core/vfx/**` + `client/core/flight/` нет; зависимостей
+  не добавлено. Рендер-пути (кольцо, лента, beam-оверлод, flash) без runClient
+  не визуализированы — смотреть при Task 8 wiring.
+- Дальше: Task 7 — `PlayerAnimator` (GeoBone head sample) и Task 8 — Homelander
+  wiring (`FlightPoseTracker` → `FlightBodyTransform`, eyes → lasers).
