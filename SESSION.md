@@ -643,3 +643,30 @@ module + плейсхолдеры контракта). Коммит `0497ecd`.
   qualityGate (коммит предшествует гейту, не наоборот).
 - Дальше: Tasks 1–2 мёржатся в main отдельным PR (сигнал старта для OMP);
   Task 3+ — ветка пилота.
+
+## Visual Core + Homelander пилот — Task 3 (ветка `feat/visual-core-homelander-pilot`)
+
+Выполнен Task 3 плана `2026-09-28-visual-core-homelander-pilot.md` (типизированные
+VFX-пейлоады + серверные хелперы отправки). Коммит `563ea5f`.
+
+- `core/net/VfxEventS2CPayload` — one-shot триггер эффекта
+  `(effect, sourceEntityId, origin, target, scale, seed)`, `TYPE = vfx_event`,
+  `NO_SOURCE = -1`; `target` — вторая точка прицеливания (конец луча, точка
+  взгляда), всенаправленные эффекты передают `origin`.
+- `core/net/VfxChannelS2CPayload` — непрерывный эффект `(entityId, channel,
+  state, target)`, `TYPE = vfx_channel`, `START/UPDATE/STOP = 0/1/2`; `state`
+  валидируется на декоде — вне диапазона бросает `DecoderException`.
+- `core/net/VfxFx` — `event` (trackingAndSelf для ServerPlayer, иначе tracking;
+  seed из `level().random`), `eventAround` (`FxBroadcast.around`, NO_SOURCE),
+  `channel` (trackingAndSelf); `CHANNEL_UPDATE_INTERVAL_TICKS = 2`.
+- Оба пейлоада зарегистрированы в `CoreNetworking` через `PayloadRegistrar`;
+  клиентские ресиверы — Task 4.
+- Опциональный харденинг Step 4 (расширить `everyHeroS2CPayloadHasARegisteredReceiver`
+  на `core.net`) пропущен: правило требует зарегистрированный ресивер, а ресиверы
+  появятся только в Task 4 — расширение сейчас уронило бы гейт. Делать вместе с Task 4.
+- TDD: RED — `./gradlew test --tests '*VfxPayloadCodecTest'` FAIL (12 ошибок
+  компиляции, классов нет) → GREEN после реализации (`eventRoundTrips`,
+  `channelRoundTrips`, `channelStateOutOfRangeRejected` PASS).
+- Гейт: `./gradlew qualityGate --no-daemon` BUILD SUCCESSFUL (362 game tests).
+- Дальше: Task 4 — клиентский Visual Core (runtime, params, backend) + ресиверы
+  в `CoreClientReceivers`.
