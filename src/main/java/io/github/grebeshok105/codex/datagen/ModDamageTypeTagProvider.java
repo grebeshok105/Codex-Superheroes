@@ -22,9 +22,7 @@ public final class ModDamageTypeTagProvider extends FabricTagProvider<DamageType
 		// Аудит B20: урон способностей не должен резаться i-frames (invulnerableTime).
 		// Исключения — атаки мобов ближнего боя, которые следуют ванильным правилам.
 		getOrCreateTagBuilder(DamageTypeTags.BYPASSES_COOLDOWN).add(
-				ModDamageTypes.LOKI_CHAOS,
-				ModDamageTypes.CAP_SHIELD_THROW,
-				ModDamageTypes.CAP_SHIELD_SLAM
+				ModDamageTypes.LOKI_CHAOS
 		);
 
 		// #superheroes:beam — beam-typed damage for a hero's adaptation check (counts even
