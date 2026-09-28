@@ -4,6 +4,9 @@ import io.github.grebeshok105.codex.client.ClientAbilityCooldowns;
 import io.github.grebeshok105.codex.client.ClientFlightState;
 import io.github.grebeshok105.codex.client.ClientHeroState;
 import io.github.grebeshok105.codex.client.core.render.BeamRenderer;
+import io.github.grebeshok105.codex.client.core.vfx.VfxRuntime;
+import io.github.grebeshok105.codex.client.core.vfx.VfxSpawn;
+import io.github.grebeshok105.codex.client.core.vfx.params.VfxParamsLoader;
 import io.github.grebeshok105.codex.client.fx.ScreenShakeManager;
 import io.github.grebeshok105.codex.client.fx.WallImpactDebrisManager;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
@@ -12,6 +15,8 @@ import io.github.grebeshok105.codex.core.net.BeamFxS2CPayload;
 import io.github.grebeshok105.codex.core.net.HeroDataSyncS2CPayload;
 import io.github.grebeshok105.codex.core.net.ResourceUpdateS2CPayload;
 import io.github.grebeshok105.codex.core.net.ScreenShakeS2CPayload;
+import io.github.grebeshok105.codex.core.net.VfxChannelS2CPayload;
+import io.github.grebeshok105.codex.core.net.VfxEventS2CPayload;
 import io.github.grebeshok105.codex.core.net.WallImpactDebrisS2CPayload;
 import io.github.grebeshok105.codex.core.model.HeroData;
 import io.github.grebeshok105.codex.mechanic.flight.FlightAbilityState;
@@ -19,6 +24,7 @@ import io.github.grebeshok105.codex.mechanic.flight.FlightStateS2CPayload;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.world.entity.Entity;
 
 /**
  * Receivers for the core S2C payloads — the client mirror of {@code core/net/CoreNetworking}.
@@ -80,5 +86,26 @@ public final class CoreClientReceivers {
 		ClientPlayNetworking.registerGlobalReceiver(BeamFxS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> BeamRenderer.add(
 						payload.style(), payload.start(), payload.end())));
+
+		ClientPlayNetworking.registerGlobalReceiver(VfxEventS2CPayload.TYPE, (payload, context) ->
+				context.client().execute(() -> {
+					if (context.client().level == null) {
+						return;
+					}
+					Entity source = payload.sourceEntityId() == VfxEventS2CPayload.NO_SOURCE
+							? null
+							: context.client().level.getEntity(payload.sourceEntityId());
+					VfxRuntime.spawn(new VfxSpawn(payload.effect(), source, payload.origin(),
+							payload.target(), payload.scale(), payload.seed(),
+							VfxParamsLoader.get(payload.effect())));
+				}));
+
+		ClientPlayNetworking.registerGlobalReceiver(VfxChannelS2CPayload.TYPE, (payload, context) ->
+				context.client().execute(() -> {
+					if (context.client().level == null) {
+						return;
+					}
+					VfxRuntime.channel(payload.entityId(), payload.channel(), payload.state(), payload.target());
+				}));
 	}
 }

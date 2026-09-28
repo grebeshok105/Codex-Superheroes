@@ -273,7 +273,8 @@ public final class ProjectSanityTest {
 		Pattern clientStateFile = Pattern.compile("Client[A-Za-z0-9]+State\\.java");
 		List<String> namedSingletons = List.of(
 				"ClientAbilityCooldowns.java",
-				"JarvisDetectionHud.java", "MirrorWarpFlashHud.java", "RadialMenuHud.java");
+				"JarvisDetectionHud.java", "MirrorWarpFlashHud.java", "RadialMenuHud.java",
+				"VfxRuntime.java");
 		forEachJavaFile(CLIENT_JAVA, file -> {
 			String name = file.getFileName().toString();
 			boolean covered = clientStateFile.matcher(name).matches() && !name.equals("ClientSessionState.java");

@@ -8,6 +8,7 @@ import io.github.grebeshok105.codex.client.core.input.InputSenders;
 import io.github.grebeshok105.codex.client.core.input.MeleeChargeSender;
 import io.github.grebeshok105.codex.client.core.input.ModKeys;
 import io.github.grebeshok105.codex.client.core.net.CoreClientReceivers;
+import io.github.grebeshok105.codex.client.core.vfx.VfxRuntime;
 import io.github.grebeshok105.codex.client.fx.CoreFx;
 import io.github.grebeshok105.codex.client.hud.CoreHuds;
 import io.github.grebeshok105.codex.client.render.CoreRenderers;
@@ -21,6 +22,7 @@ public class SuperheroesClient implements ClientModInitializer {
 		ClientSessionState.init();
 		ModKeys.init();
 		CoreClientReceivers.init();
+		VfxRuntime.init();
 		HeroClientModules.bootstrap();
 		ContentClientModules.bootstrap();
 		ClientHeroDimsWatcher.init();

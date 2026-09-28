@@ -20,6 +20,9 @@ import io.github.grebeshok105.codex.client.core.render.PlayerLayers;
 import io.github.grebeshok105.codex.client.core.render.SkinProvider;
 import io.github.grebeshok105.codex.client.core.render.SkinResolver;
 import io.github.grebeshok105.codex.client.core.render.SkinSuppressions;
+import io.github.grebeshok105.codex.client.core.vfx.VfxChannelFactory;
+import io.github.grebeshok105.codex.client.core.vfx.VfxEffectFactory;
+import io.github.grebeshok105.codex.client.core.vfx.VfxRuntime;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
@@ -136,5 +139,15 @@ public final class CoreClientContext implements HeroClientContext {
 	@Override
 	public void heroPanelSection(HeroPanelSection section) {
 		HeroPanelSections.register(heroId, section);
+	}
+
+	@Override
+	public void vfx(ResourceLocation id, VfxEffectFactory factory) {
+		VfxRuntime.registerEffect(id, factory);
+	}
+
+	@Override
+	public void vfxChannel(ResourceLocation id, VfxChannelFactory factory) {
+		VfxRuntime.registerChannel(id, factory);
 	}
 }

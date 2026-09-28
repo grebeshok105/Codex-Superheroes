@@ -8,6 +8,8 @@ import io.github.grebeshok105.codex.client.core.hud.HudLayer;
 import io.github.grebeshok105.codex.client.core.hud.MovableHud;
 import io.github.grebeshok105.codex.client.core.render.BeamStyle;
 import io.github.grebeshok105.codex.client.core.render.SkinProvider;
+import io.github.grebeshok105.codex.client.core.vfx.VfxChannelFactory;
+import io.github.grebeshok105.codex.client.core.vfx.VfxEffectFactory;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
 import net.minecraft.client.KeyMapping;
@@ -114,4 +116,18 @@ public interface HeroClientContext {
 	 * instead of the default HP/energy rows.
 	 */
 	void heroPanelSection(HeroPanelSection section);
+
+	/**
+	 * Registers the factory that spawns the one-shot {@code VfxEffect} for
+	 * {@code id} when a {@code VfxEventS2CPayload} arrives. The id itself
+	 * carries the hero namespace; the factory is the only hero knowledge here.
+	 */
+	void vfx(ResourceLocation id, VfxEffectFactory factory);
+
+	/**
+	 * Registers the factory that opens the continuous {@code VfxChannelEffect}
+	 * for {@code id} when a {@code VfxChannelS2CPayload} arrives
+	 * (START/UPDATE/STOP stream on the source entity).
+	 */
+	void vfxChannel(ResourceLocation id, VfxChannelFactory factory);
 }

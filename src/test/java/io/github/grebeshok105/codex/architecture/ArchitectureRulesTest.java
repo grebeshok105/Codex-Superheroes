@@ -218,5 +218,22 @@ class ArchitectureRulesTest {
 				})
 				.allowEmptyShould(true)
 				.check(CodexClasses.mainAndClient());
+
+		classes().that().resideInAPackage(ROOT + ".core.net").and().haveSimpleNameEndingWith("S2CPayload")
+				.should(new ArchCondition<>("have its TYPE registered in CoreClientReceivers") {
+					@Override
+					public void check(JavaClass payload, ConditionEvents events) {
+						boolean registered = payload.tryGetField("TYPE").map(type -> type.getAccessesToSelf().stream()
+								.map(com.tngtech.archunit.core.domain.JavaFieldAccess::getOrigin)
+								.anyMatch(origin -> origin.getOwner().getName().equals(
+										ROOT + ".client.core.net.CoreClientReceivers")))
+								.orElse(false);
+						if (!registered) {
+							events.add(SimpleConditionEvent.violated(payload,
+									payload.getName() + " has no receiver registered in CoreClientReceivers"));
+						}
+					}
+				})
+				.check(CodexClasses.mainAndClient());
 	}
 }
