@@ -720,3 +720,50 @@ Visual Core: runtime, params, backend-seam + ресиверы Task-3 пейло�
   символов в `client/core/vfx/**` нет.
 - Дальше: Task 5 — `client/core/vfx/veil/` (реальный VeilVfxBackend: Quasar
   emitters, dynamic lights, post-distortion) + первый эффект поверх runtime.
+
+## Visual Core + Homelander пилот — Task 5 (ветка `feat/visual-core-homelander-pilot`)
+
+Выполнен Task 5 плана `2026-09-28-visual-core-homelander-pilot.md` (Veil backend:
+particles, dynamic lights, post pipelines). Коммит `804469d`.
+
+- `client/core/vfx/veil/VeilVfxBackend` — `implements VfxBackend`, публичный
+  no-arg конструктор (VfxBackends инстанцирует по имени). `emit` — тот же путь,
+  что у `VeilScorpionFx`: `renderer().getParticleManager().createEmitter(id)`
+  → `setPosition` → `addParticleSystem`. `light` —
+  `LightRenderer.addLight(PointLightData)` → `VeilLightHandle`
+  (move/set → light data + `markDirty()`, remove → `free()`); при исключении —
+  no-op handle. Весь boundary в `try/catch (Throwable)` с warn один раз.
+- `VeilPostEffects` — активация пайплайнов `superheroes:vfx_flash` /
+  `superheroes:vfx_distortion` через `PostProcessingManager.add/remove`,
+  юниформы `uIntensity`/`uColor`/`uCenter`/`uRadius`/`uStrength` через
+  `PostPipeline.getUniformSafe` (composite проксирует в шейдеры стадий).
+  Ленивый `END_CLIENT_TICK` гасит `uIntensity` за 6 тиков (та же длительность,
+  что у fallback-вспышки) и снимает пайплайн на нуле — активен только пока
+  intensity > 0.
+- Ассеты положены в `src/client/resources/assets/superheroes/pinwheel/`
+  (в плане — `src/main/resources`; выбран client source set: pinwheel-ассеты
+  чисто клиентские, в продакшн-jar попадают так же, существующие quasar-ассеты
+  остаются в main). Post-JSON: одна стадия `veil:blit` `in: minecraft:main`
+  → дефолтный `out: veil:post` (in==out запрещён кодеком), `renderStage:
+  after_level`. Программы `vfx/flash`/`vfx/distortion` — общий vertex
+  `veil:blit_screen`; `distortion.fsh` проецирует `uCenter`/`uRadius` из
+  world-space через `#include veil:space_helper` (UBO `VeilCamera`).
+- API Veil 4.1.2 сверен по jar/sources: `LightRenderHandle<T>`
+  (getLightData/markDirty/isValid/free), `PointLightData.setPosition/
+  setRadius/setColor(int)/setBrightness`, `PostProcessingManager.add/remove/
+  isActive/getPipeline`, `CompositePostPipeline.getUniformSafe` →
+  `ShaderUniformAccess` (setFloat/setVector). BlitPostStage биндит `in`-буфер
+  в `DiffuseSampler`; in==out отклоняется кодеком.
+- `VfxEffect.render` javadoc: запрещены вызовы `VfxRuntime.spawn`/`channel`
+  из `render()` — итерация живой очереди эффектов (контракт для Task 6+).
+- `VeilIsolationTest`: `import foundry.veil` вне `client/core/vfx/veil/` —
+  фейл; ноль `foundry.veil` в `src/main`; `VeilVfxBackend.java` обязан
+  существовать (нет вакуумного прохода).
+- TDD: RED — `veilBackendClassExists` FAILED до реализации → GREEN
+  (3 теста). `grep -rn 'foundry\.veil' src/main/java` пустой.
+  `./gradlew qualityGate --no-daemon` BUILD SUCCESSFUL.
+- Hero-символов в новых файлах нет; зависимостей не добавлено. Post/шейдеры
+  на GPU не прогонялись (нет runClient-верификации) — смотреть при Task 6+
+  визуальной проверке.
+- Дальше: Task 6 — pattern layer (`pattern/*`, `anchor/*`) +
+  `FlightBodyTransform` record.
