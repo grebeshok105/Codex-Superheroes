@@ -450,8 +450,14 @@ public final class HomelanderGameTests implements FabricGameTest {
 		TestPlayers.clearSpawnInvulnerability(victim);
 		float hp = victim.getHealth();
 
+		// hurtEnemy hits through indirectMagic(attacker, attacker) — the victim is a
+		// player, so ServerPlayer.canHarmPlayer gates on isPvpAllowed(); the gametest
+		// server runs pvp off. The hurt is synchronous, so toggle and restore inline.
+		boolean oldPvp = helper.getLevel().getServer().isPvpAllowed();
+		helper.getLevel().getServer().setPvpAllowed(true);
 		ItemStack dagger = new ItemStack(HomelanderItems.URANIUM_DAGGER);
 		HomelanderItems.URANIUM_DAGGER.hurtEnemy(dagger, victim, attacker);
+		helper.getLevel().getServer().setPvpAllowed(oldPvp);
 
 		MobEffectInstance weakness = victim.getEffect(MobEffects.WEAKNESS);
 		helper.assertTrue(weakness != null && weakness.getAmplifier() == 4 && weakness.getDuration() == 200,
