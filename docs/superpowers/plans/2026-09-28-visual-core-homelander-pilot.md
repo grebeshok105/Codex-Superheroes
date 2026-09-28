@@ -54,7 +54,7 @@ Server (`src/main/java/io/github/grebeshok105/codex/`):
 - `datagen/ModItemModelProvider.java` — drop flat `milk_bottle` (modify).
 
 Client (`src/client/java/io/github/grebeshok105/codex/client/`):
-- `core/vfx/{VfxEffect,VfxChannelEffect,VfxEffectFactory,VfxChannelFactory,VfxSpawn,VfxRuntime,VfxRenderContext}.java` — foundation (new).
+- `core/vfx/{VfxEffect,VfxChannelEffect,VfxEffectFactory,VfxChannelFactory,VfxSpawn,VfxRuntime,VfxRenderContext,VfxInstanceTable,VfxChannelTable}.java` — foundation (new; the two tables are package-private test surfaces).
 - `core/vfx/params/{VfxParams,VfxParamsLoader}.java` — data tuning + reload (new).
 - `core/vfx/backend/{VfxBackend,LightHandle,VfxBackends,FallbackVfxBackend}.java` — capability interface (new).
 - `core/vfx/veil/{VeilVfxBackend,VeilPostEffects}.java` — only Veil touchpoint (new).
@@ -66,8 +66,8 @@ Client (`src/client/java/io/github/grebeshok105/codex/client/`):
 - `core/module/HeroClientContext.java` (+ its implementation) — seams `vfx`, `vfxChannel`, `flightPresentation` (modify).
 - `core/net/CoreClientReceivers.java` — receivers for the two payloads (modify).
 - `mixin/PlayerModelPoseMixin.java`, `mixin/PlayerRendererMixin.java` — apply `PoseSample` and `FlightBodyTransform` (modify).
-- `hero/homelander/fx/{HomelanderFx,EyeLaserChannel,FlightFx,SunChargeFx,SunDetonationFx,IronFistsFx,ClapFx,RoarFx}.java` — Homelander compositions (new). `HomelanderFx` is the registration hub: `HomelanderClientModule` calls `HomelanderFx.register(ctx)`, which wires every `HomelanderVfxIds` entry to its composition — `LANDING` → `FlightFx.landing`, `LASER` (channel) → `EyeLaserChannel`, `SUN_CHARGE` → `SunChargeFx`, `SUN_DETONATION`/`MADNESS_CRASH` → `SunDetonationFx`, `IRON_FISTS_*` → `IronFistsFx`, `CLAP` → `ClapFx`, `ROAR` → `RoarFx`, `MILK_DRINK` → small one-shot hosted inside `HomelanderFx` (`milk_drink` ACTION clip + entity-bound `homelander.milk.drink` sound).
-- `hero/homelander/HomelanderClientModule.java` — register effects/presentation; drop `LocalLaserOverlay` and the laser `beamStyle` (modify).
+- `hero/homelander/fx/{HomelanderFx,EyeLaserChannel,FlightFx,SunChargeFx,SunDetonationFx,IronFistsFx,ClapFx,RoarFx}.java` — Homelander compositions (new). `HomelanderFx` is the registration hub: `HomelanderClientModule` calls `HomelanderFx.register(ctx)`, which wires every `HomelanderVfxIds` entry to its composition — `LANDING` → `FlightFx.landing`, `LASER` (channel) → `EyeLaserChannel`, `SUN_CHARGE` → `SunChargeFx`, `SUN_DETONATION`/`MADNESS_CRASH` → `SunDetonationFx` (the crash plays the same composition scaled down by the event's `scale` param), `IRON_FISTS_*` → `IronFistsFx`, `CLAP` → `ClapFx`, `ROAR` → `RoarFx`, `MILK_DRINK` → small one-shot hosted inside `HomelanderFx` (`milk_drink` ACTION clip + entity-bound `homelander.milk.drink` sound).
+- `hero/homelander/HomelanderClientModule.java` — register effects/presentation; drop `LocalLaserOverlay` only — the `STYLE_LASER` `beamStyle` registration stays (boss `HomelanderEyeLaserGoal` still sends it) (modify).
 - `hero/homelander/render/LocalLaserOverlay.java` — delete (superseded by `EyeLaserChannel`).
 
 Resources (`src/main/resources/assets/superheroes/`): `sounds.json`, `sounds/homelander/*.ogg`, `player_animations/homelander/*.animation.json`, `models/item/milk_bottle.json`, `textures/item/milk_bottle.png`, `textures/vfx/homelander/*.png`, `vfx/homelander/*.json`, `vfx/flight/pose.json`, `quasar/emitters/homelander_*.json`, `pinwheel/post/vfx_*.json`, `pinwheel/shaders/program/vfx/*`.
