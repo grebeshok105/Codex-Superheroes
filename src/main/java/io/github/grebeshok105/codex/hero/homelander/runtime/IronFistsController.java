@@ -11,7 +11,7 @@ import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.core.net.ScreenShakeS2CPayload;
 import io.github.grebeshok105.codex.mechanic.shockwave.ShockwaveUtil;
-import io.github.grebeshok105.codex.sound.ModSounds;
+import io.github.grebeshok105.codex.sound.HomelanderSounds;
 import io.github.grebeshok105.codex.core.model.HeroData;
 import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -110,7 +110,7 @@ public final class IronFistsController {
 			level.sendParticles(ParticleTypes.END_ROD, hp.x, hp.y, hp.z, 18, 0.3, 0.3, 0.3, 0.05);
 			level.sendParticles(ParticleTypes.CRIT, hp.x, hp.y, hp.z, 14, 0.3, 0.3, 0.3, 0.2);
 			level.playSound(null, target.getX(), target.getY(), target.getZ(),
-					ModSounds.HOMELANDER_IRON_FISTS_IMPACT, SoundSource.PLAYERS, 1.0f, 1.0f);
+					HomelanderSounds.IRON_FISTS_IMPACT, SoundSource.PLAYERS, 1.0f, 1.0f);
 
 			if (dashTarget) {
 				ShockwaveUtil.detonate(sp, target.position(), SHOCKWAVE_RADIUS, SHOCKWAVE_DAMAGE, false);
@@ -168,7 +168,7 @@ public final class IronFistsController {
 		Vec3 p = player.position();
 
 		if (elapsed > 0 && elapsed % LOOP_INTERVAL_TICKS == 0) {
-			level.playSound(null, p.x, p.y, p.z, ModSounds.HOMELANDER_IRON_FISTS_CHARGE,
+			level.playSound(null, p.x, p.y, p.z, HomelanderSounds.IRON_FISTS_CHARGE,
 					SoundSource.PLAYERS, 0.8f, 1.0f);
 		}
 

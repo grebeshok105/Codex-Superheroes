@@ -23,6 +23,7 @@ import io.github.grebeshok105.codex.hero.homelander.runtime.HomelanderMadnessAft
 import io.github.grebeshok105.codex.hero.homelander.runtime.HomelanderMadnessFlightController;
 import io.github.grebeshok105.codex.hero.homelander.runtime.UraniumDefenseController;
 import io.github.grebeshok105.codex.hero.homelander.runtime.UraniumOffhandController;
+import io.github.grebeshok105.codex.sound.HomelanderSounds;
 import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.mechanic.flight.FlightProfiles;
 
@@ -44,6 +45,7 @@ public final class HomelanderModule implements HeroModule {
 	@Override
 	public void register(HeroModuleContext ctx) {
 		HomelanderEffects.init();
+		HomelanderSounds.init();
 		HomelanderItems.register(ctx.content());
 		ctx.payloads().s2c(UraniumPressureS2CPayload.TYPE, UraniumPressureS2CPayload.STREAM_CODEC);
 		ctx.payloads().s2c(UraniumThreatS2CPayload.TYPE, UraniumThreatS2CPayload.STREAM_CODEC);

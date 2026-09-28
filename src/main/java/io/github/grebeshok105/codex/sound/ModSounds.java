@@ -11,12 +11,11 @@ public final class ModSounds {
 
 	public static final SoundEvent LIGHTNING_THUNDER_ANIME = register("lightning.thunder.anime");
 	public static final SoundEvent LIGHTNING_THUNDER_LOUD = register("lightning.thunder.loud");
-	public static final SoundEvent HOMELANDER_ROAR = register("homelander.roar");
-	public static final SoundEvent HOMELANDER_ROAR_DEEP = register("homelander.roar.deep");
-	public static final SoundEvent HOMELANDER_HAND_CLAP = register("homelander.hand_clap");
-	public static final SoundEvent HOMELANDER_IRON_FISTS_IMPACT = register("homelander.iron_fists.impact");
-	public static final SoundEvent HOMELANDER_IRON_FISTS_CHARGE = register("homelander.iron_fists.charge");
+	// Shared by HomelanderReactionRule and OmnimanReactionRule — not Homelander-owned,
+	// so it stays here while the Homelander-owned events moved to HomelanderSounds.
 	public static final SoundEvent HOMELANDER_OMNIMAN_REACT = register("homelander.omniman_react");
+	// Valid Holder<SoundEvent> backed by an empty sounds.json entry — plays nothing.
+	public static final SoundEvent SILENT = register("silent");
 
 	private ModSounds() {
 	}

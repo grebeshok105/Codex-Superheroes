@@ -6,7 +6,7 @@ import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.core.model.HeroData;
-import io.github.grebeshok105.codex.sound.ModSounds;
+import io.github.grebeshok105.codex.sound.HomelanderSounds;
 import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
@@ -108,7 +108,7 @@ public final class InvincibleCombatController {
 		level.sendParticles(ParticleTypes.CRIT, x, y, z, 12, 0.25, 0.25, 0.25, 0.16);
 		level.sendParticles(ParticleTypes.END_ROD, x, y, z, 8, 0.22, 0.22, 0.22, 0.03);
 		level.playSound(null, x, y, z,
-				ModSounds.HOMELANDER_IRON_FISTS_IMPACT, SoundSource.PLAYERS, 0.5f, 1.35f);
+				HomelanderSounds.IRON_FISTS_IMPACT, SoundSource.PLAYERS, 0.5f, 1.35f);
 	}
 
 	public static void serverTick(MinecraftServer server) {

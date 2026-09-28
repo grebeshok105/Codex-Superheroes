@@ -1,7 +1,7 @@
 package io.github.grebeshok105.codex.content.boss.homelander.entity.ai;
 
 import io.github.grebeshok105.codex.content.boss.homelander.api.HomelanderBossApi;
-import io.github.grebeshok105.codex.sound.ModSounds;
+import io.github.grebeshok105.codex.sound.HomelanderSounds;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -54,7 +54,7 @@ public class HomelanderRoarGoal extends Goal {
 		fired = false;
 		ServerLevel sl = (ServerLevel) boss.level();
 		sl.playSound(null, boss.getX(), boss.getY(), boss.getZ(),
-				ModSounds.HOMELANDER_ROAR_DEEP, SoundSource.HOSTILE, 1.8f, 0.95f);
+				HomelanderSounds.ROAR_DEEP, SoundSource.HOSTILE, 1.8f, 0.95f);
 	}
 
 	@Override
@@ -98,7 +98,7 @@ public class HomelanderRoarGoal extends Goal {
 			sl.sendParticles(ParticleTypes.SONIC_BOOM, c.x, c.y + 1.0, c.z,
 					1, 0.0, 0.0, 0.0, 0.0);
 			sl.playSound(null, c.x, c.y, c.z,
-					ModSounds.HOMELANDER_ROAR, SoundSource.HOSTILE, 1.8f, 0.85f);
+					HomelanderSounds.ROAR, SoundSource.HOSTILE, 1.8f, 0.85f);
 			sl.playSound(null, c.x, c.y, c.z,
 					SoundEvents.WARDEN_SONIC_BOOM, SoundSource.HOSTILE, 1.0f, 0.7f);
 		}

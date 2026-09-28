@@ -4,7 +4,7 @@ import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.net.ScreenShakeS2CPayload;
 import io.github.grebeshok105.codex.mechanic.strike.QueuedStrikes;
 import io.github.grebeshok105.codex.mechanic.strike.StrikeSession;
-import io.github.grebeshok105.codex.sound.ModSounds;
+import io.github.grebeshok105.codex.sound.HomelanderSounds;
 import io.github.grebeshok105.codex.mechanic.world.WorldDestructionPolicy;
 import io.github.grebeshok105.codex.core.net.FxBroadcast;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -210,7 +210,7 @@ public final class HeavensStrikeController {
 		Vec3 t = p.target;
 		Variant v = p.variant;
 
-		level.playSound(null, t.x, t.y, t.z, ModSounds.HOMELANDER_HAND_CLAP,
+		level.playSound(null, t.x, t.y, t.z, HomelanderSounds.HAND_CLAP,
 				SoundSource.PLAYERS, 4.0f, v.pitch);
 		level.playSound(null, t.x, t.y, t.z, SoundEvents.GENERIC_EXPLODE.value(),
 				SoundSource.PLAYERS, 4.0f, 0.4f);

@@ -6,7 +6,7 @@ import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
 import io.github.grebeshok105.codex.core.model.HeroData;
-import io.github.grebeshok105.codex.sound.ModSounds;
+import io.github.grebeshok105.codex.sound.HomelanderSounds;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -43,7 +43,7 @@ public final class DoomsdayFootstepsController {
 		}
 		ServerLevel level = player.serverLevel();
 		level.playSound(null, player.getX(), player.getY(), player.getZ(),
-				ModSounds.HOMELANDER_IRON_FISTS_CHARGE, SoundSource.PLAYERS, 0.85f, 0.7f);
+				HomelanderSounds.IRON_FISTS_CHARGE, SoundSource.PLAYERS, 0.85f, 0.7f);
 		NEXT_PLAY.put(id, id, now + LOOP_INTERVAL_TICKS);
 	}
 }

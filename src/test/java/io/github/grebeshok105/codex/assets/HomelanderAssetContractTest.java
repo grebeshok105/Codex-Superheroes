@@ -29,10 +29,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * references must be registered in sounds.json and backed by a real OGG Vorbis file of
  * roughly the declared duration; every clip must exist under player_animations/homelander/
  * with the declared length, loop mode and the six allowed player bones; models and
- * textures must exist at their contract paths. Disabled until Task 2 lands the
- * placeholder resources (mirrors finalBuildHasNoPlaceholders' lifecycle).
+ * textures must exist at their contract paths.
  */
-@Disabled("enabled in Task 2 once placeholders exist")
 class HomelanderAssetContractTest {
 	private static final Path ROOT = Path.of("").toAbsolutePath();
 	private static final Path ASSETS = ROOT.resolve("src/main/resources/assets/superheroes");

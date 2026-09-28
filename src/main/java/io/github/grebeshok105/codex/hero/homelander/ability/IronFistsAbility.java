@@ -8,7 +8,7 @@ import io.github.grebeshok105.codex.hero.homelander.runtime.IronFistsController;
 import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.hero.Heroes;
 import io.github.grebeshok105.codex.core.resource.EnergyLocks;
-import io.github.grebeshok105.codex.sound.ModSounds;
+import io.github.grebeshok105.codex.sound.HomelanderSounds;
 import io.github.grebeshok105.codex.core.model.HeroData;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
@@ -61,9 +61,9 @@ public final class IronFistsAbility implements Ability {
 
 		ServerLevel level = player.serverLevel();
 		Vec3 p = player.position();
-		level.playSound(null, p.x, p.y, p.z, ModSounds.HOMELANDER_IRON_FISTS_IMPACT,
+		level.playSound(null, p.x, p.y, p.z, HomelanderSounds.IRON_FISTS_IMPACT,
 				SoundSource.PLAYERS, 1.2f, 0.9f);
-		level.playSound(null, p.x, p.y, p.z, ModSounds.HOMELANDER_IRON_FISTS_CHARGE,
+		level.playSound(null, p.x, p.y, p.z, HomelanderSounds.IRON_FISTS_CHARGE,
 				SoundSource.PLAYERS, 1.0f, 1.0f);
 		level.sendParticles(ParticleTypes.FLASH, p.x, p.y + 1.0, p.z, 1, 0, 0, 0, 0);
 		level.sendParticles(ParticleTypes.END_ROD, p.x, p.y + 1.2, p.z, 30, 0.6, 0.6, 0.6, 0.05);

@@ -3,7 +3,7 @@ package io.github.grebeshok105.codex.content.boss.homelander.entity.ai;
 import io.github.grebeshok105.codex.content.boss.homelander.registry.HomelanderBossDamageTypes;
 import io.github.grebeshok105.codex.content.boss.homelander.api.HomelanderBossApi;
 import io.github.grebeshok105.codex.core.net.ScreenShakeS2CPayload;
-import io.github.grebeshok105.codex.sound.ModSounds;
+import io.github.grebeshok105.codex.sound.HomelanderSounds;
 import io.github.grebeshok105.codex.core.net.FxBroadcast;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.particles.ParticleTypes;
@@ -112,7 +112,7 @@ public class HomelanderHandClapGoal extends Goal {
 				sl.sendParticles(ParticleTypes.LARGE_SMOKE, cc.x, cc.y, cc.z, 4, spread * 0.5, 0.3, spread * 0.5, 0.03);
 			}
 			sl.playSound(null, boss.getX(), boss.getY(), boss.getZ(),
-					ModSounds.HOMELANDER_HAND_CLAP, SoundSource.HOSTILE, 2.0f, 0.95f);
+					HomelanderSounds.HAND_CLAP, SoundSource.HOSTILE, 2.0f, 0.95f);
 			sl.playSound(null, boss.getX(), boss.getY(), boss.getZ(),
 					SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.WEATHER, 1.6f, 1.1f);
 

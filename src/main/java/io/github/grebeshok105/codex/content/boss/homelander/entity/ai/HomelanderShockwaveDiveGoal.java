@@ -2,7 +2,7 @@ package io.github.grebeshok105.codex.content.boss.homelander.entity.ai;
 
 import io.github.grebeshok105.codex.content.boss.homelander.api.HomelanderBossApi;
 import io.github.grebeshok105.codex.mechanic.shockwave.ShockwaveUtil;
-import io.github.grebeshok105.codex.sound.ModSounds;
+import io.github.grebeshok105.codex.sound.HomelanderSounds;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -96,7 +96,7 @@ public class HomelanderShockwaveDiveGoal extends Goal {
 							boss.position(), IMPACT_RADIUS, IMPACT_DAMAGE, false,
 							io.github.grebeshok105.codex.content.boss.homelander.registry.HomelanderBossDamageTypes.shockwaveDive(sl, boss.asMob()));
 					sl.playSound(null, boss.getX(), boss.getY(), boss.getZ(),
-							ModSounds.HOMELANDER_IRON_FISTS_IMPACT, SoundSource.HOSTILE, 1.6f, 0.85f);
+							HomelanderSounds.IRON_FISTS_IMPACT, SoundSource.HOSTILE, 1.6f, 0.85f);
 					phase = 2;
 				}
 			}
