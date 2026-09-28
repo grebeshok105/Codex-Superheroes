@@ -670,3 +670,53 @@ VFX-пейлоады + серверные хелперы отправки). Ко
 - Гейт: `./gradlew qualityGate --no-daemon` BUILD SUCCESSFUL (362 game tests).
 - Дальше: Task 4 — клиентский Visual Core (runtime, params, backend) + ресиверы
   в `CoreClientReceivers`.
+
+## Visual Core + Homelander пилот — Task 4 (ветка `feat/visual-core-homelander-pilot`)
+
+Выполнен Task 4 плана `2026-09-28-visual-core-homelander-pilot.md` (клиентский
+Visual Core: runtime, params, backend-seam + ресиверы Task-3 пейлоадов).
+Коммит `713bfc9`.
+
+- `client/core/vfx/` — интерфейсы по контракту плана: `VfxEffect`
+  (tick/render/done/cancel), `VfxChannelEffect` (+retarget/release),
+  `VfxEffectFactory`/`VfxChannelFactory`, records `VfxSpawn` и
+  `VfxRenderContext`. Константы `MAX_ACTIVE_EFFECTS = 256`,
+  `CULL_DISTANCE = 160.0`, `CHANNEL_TIMEOUT_TICKS = 10` живут в `VfxRuntime`.
+- `VfxInstanceTable`/`VfxChannelTable` — package-private, без Minecraft:
+  вся логика бюджета/выселения/истечения каналов там, `VfxRuntime` делегирует.
+  Eviction — `cancel()` старейшего; START/UPDATE на существующем канале —
+  retarget+сброс возраста (без дублей), UPDATE на неизвестном — открывает;
+  STOP — `release()` + снятие индекса, эффект доживает в instance-таблице до
+  `done()`; тишина > `CHANNEL_TIMEOUT_TICKS` — release.
+- `VfxRuntime` — реестр фабрик, `spawn` culls по `CULL_DISTANCE` от камеры,
+  неизвестный id → debug-log один раз; tick на END_CLIENT_TICK, render на
+  AFTER_TRANSLUCENT, reset через `ClientSessionState.register` в статик-блоке,
+  `init()` в `SuperheroesClient`.
+- `params/VfxParams` (+`parse`) — числа и цвета `#RRGGBB`/`#AARRGGBB`,
+  forgiving parse; `VfxParamsLoader` — `SimpleSynchronousResourceReloadListener`
+  по `assets/<ns>/vfx/<path>.json` → `<ns>:<path>`.
+- Backend-seam: `VfxBackends.current()` при `isModLoaded("veil")` инстанцирует
+  `client.core.vfx.veil.VeilVfxBackend` по имени через рефлексию — ноль
+  `foundry.veil`-символов вне будущего пакета и компилируется без класса Task 5;
+  класс отсутствует/не грузится → fallback + warn один раз.
+  `FallbackVfxBackend`: emit/light/distortion — no-op, flash — затухающий
+  HUD-оверлей (`HudRenderCallback`).
+- Ресиверы в `CoreClientReceivers`: оба пейлоада hop на клиентский тред,
+  разрешение `sourceEntityId` (`NO_SOURCE` → null) → `VfxRuntime.spawn`;
+  channel-пейлоад → `VfxRuntime.channel`.
+- `HeroClientContext.vfx/vfxChannel` + реализация в `CoreClientContext`
+  делегируют в `VfxRuntime.register*`.
+- ArchUnit-харденинг из Task 3 сделан: `everyHeroS2CPayloadHasARegisteredReceiver`
+  теперь также требует у каждого `core.net` S2CPayload TYPE, зарегистрированный
+  в `CoreClientReceivers` — гейт зелёный. `ProjectSanityTest` дополнен пином
+  `VfxRuntime.java` в `namedSingletons` (session-reset обязателен).
+- TDD: RED — `./gradlew test --tests '*client.core.vfx*'` BUILD FAILED
+  (34 ошибки компиляции, классов нет) → GREEN после реализации (9 тестов:
+  2 budget, 4 channel, 3 params). Пойман один баг: `#AARRGGBB` с alpha>=0x80
+  давал отрицательный int и отфильтровывался как malformed — sentinel переведён
+  на long.
+- Гейт: `./gradlew qualityGate --no-daemon` BUILD SUCCESSFUL.
+- Отступлений от спека нет: `src/main` не тронут, зависимостей нет, hero-id
+  символов в `client/core/vfx/**` нет.
+- Дальше: Task 5 — `client/core/vfx/veil/` (реальный VeilVfxBackend: Quasar
+  emitters, dynamic lights, post-distortion) + первый эффект поверх runtime.
