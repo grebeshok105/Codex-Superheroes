@@ -2,7 +2,11 @@ package io.github.grebeshok105.codex.client.mixin;
 
 import io.github.grebeshok105.codex.client.ClientFlightState;
 import io.github.grebeshok105.codex.client.ClientThinkMarkState;
+import io.github.grebeshok105.codex.client.core.anim.PlayerAnimator;
+import io.github.grebeshok105.codex.client.core.anim.PlayerPoseApplier;
+import io.github.grebeshok105.codex.client.core.anim.PoseSample;
 import io.github.grebeshok105.codex.mechanic.flight.FlightPhase;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.world.entity.LivingEntity;
@@ -57,6 +61,20 @@ public abstract class PlayerModelPoseMixin<T extends LivingEntity> {
 			model.leftArm.zRot = -0.04f;
 			model.rightSleeve.copyFrom(model.rightArm);
 			model.leftSleeve.copyFrom(model.leftArm);
+		}
+
+		// --- слои скриптовых анимаций (PlayerAnimator: BASE + ACTION поверх vanilla-позы) ---
+		float partialTick = Minecraft.getInstance().getTimer()
+				.getGameTimeDeltaPartialTick(true);
+		PoseSample animated = PlayerAnimator.sample(player.getId(), partialTick);
+		if (!animated.isEmpty()) {
+			PlayerPoseApplier.apply(model, animated);
+			model.hat.copyFrom(model.head);
+			model.jacket.copyFrom(model.body);
+			model.leftSleeve.copyFrom(model.leftArm);
+			model.rightSleeve.copyFrom(model.rightArm);
+			model.leftPants.copyFrom(model.leftLeg);
+			model.rightPants.copyFrom(model.rightLeg);
 		}
 	}
 }
