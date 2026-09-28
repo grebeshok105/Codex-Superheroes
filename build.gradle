@@ -340,6 +340,25 @@ tasks.register('qualityGate') {
 	dependsOn tasks.named('auditReleaseJarIsolation')
 	dependsOn tasks.named('runGametest')
 	dependsOn tasks.named('verifyArchitectureBaseline')
+	dependsOn tasks.named('verifyGeneratedSources')
+}
+
+// Datagen must run inside the gate: registry bootstrap bugs (e.g. a damage type
+// registered twice on one BootstrapContext) crash only here, never at gametest
+// time. The follow-up porcelain check then pins src/main/generated to the
+// generator's current output so stale or hand-edited files fail the merge.
+tasks.register('verifyGeneratedSources') {
+	group = 'verification'
+	description = 'Runs datagen and fails when src/main/generated differs from committed output'
+	dependsOn tasks.named('runDatagen')
+	doLast {
+		def status = providers.exec {
+			commandLine 'git', 'status', '--porcelain', '--', 'src/main/generated'
+		}.standardOutput.asText.get().trim()
+		if (!status.isEmpty()) {
+			throw new GradleException("src/main/generated drifted — re-run ./gradlew runDatagen and commit the result:\n" + status)
+		}
+	}
 }
 
 // A stale world from an earlier run would leak players and state between GameTest runs.
