@@ -56,6 +56,22 @@ class BedrockAnimationParserTest {
 	}
 
 	@Test
+	void molangInsidePreRejected() {
+		JsonObject root = JsonParser.parseString("""
+				{"animations": {"animation.superheroes.homelander.sneaky": {
+					"animation_length": 1.0,
+					"bones": {"head": {"rotation": {"0.0":
+						{"pre": "math.sin(q.anim_time)", "post": [1, 2, 3]}}}}
+				}}}
+				""").getAsJsonObject();
+		List<String> warnings = new ArrayList<>();
+		List<AnimationClip> clips = BedrockAnimationParser.parse(root, warnings::add);
+
+		assertTrue(clips.isEmpty(), "molang hidden in 'pre' must still skip the clip");
+		assertEquals(1, warnings.size(), "expected exactly one warning, got: " + warnings);
+	}
+
+	@Test
 	void unknownBoneIgnored() {
 		JsonObject root = JsonParser.parseString("""
 				{"animations": {"animation.superheroes.homelander.tail": {

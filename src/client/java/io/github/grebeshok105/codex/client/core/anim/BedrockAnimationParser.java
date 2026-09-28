@@ -153,11 +153,11 @@ public final class BedrockAnimationParser {
 			return MOLANG;
 		}
 		if (channel.isJsonArray() || isKeyframeObject(channel)) {
-			Keyframes.Key key = parseKey(id, bone, 0f, channel, warn);
-			if (key == null) {
-				return hasStringValue(channel) ? MOLANG : Keyframes.EMPTY;
+			if (hasStringValue(channel)) {
+				return MOLANG;
 			}
-			return new Keyframes(List.of(key));
+			Keyframes.Key key = parseKey(id, bone, 0f, channel, warn);
+			return key == null ? Keyframes.EMPTY : new Keyframes(List.of(key));
 		}
 		if (!channel.isJsonObject()) {
 			warn.accept(id + ": bone '" + bone + "' channel " + channel + " ignored");
@@ -165,11 +165,14 @@ public final class BedrockAnimationParser {
 		}
 		List<Keyframes.Key> keys = new ArrayList<>();
 		for (Map.Entry<Float, JsonElement> at : sortedTimeline(channel.getAsJsonObject())) {
+			// A string ANYWHERE in the value (e.g. molang inside 'pre' while 'post'
+			// parses cleanly) is a molang clip — checked before parseKey so the
+			// post-preferred vector path cannot hide it.
+			if (hasStringValue(at.getValue())) {
+				return MOLANG;
+			}
 			Keyframes.Key key = parseKey(id, bone, at.getKey(), at.getValue(), warn);
 			if (key == null) {
-				if (hasStringValue(at.getValue())) {
-					return MOLANG;
-				}
 				warn.accept(id + ": malformed keyframe in bone '" + bone + "' at "
 						+ at.getKey() + " s skipped");
 				continue;
