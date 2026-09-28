@@ -53,6 +53,7 @@
 **Files:**
 - Create: `art-source/homelander/omp/SOURCES.md`, `docs/design/visual-core-homelander/contract-changes.md`
 - Create: `src/test/java/io/github/grebeshok105/codex/assets/HomelanderAssetQualityTest.java`
+- Modify: `src/test/java/io/github/grebeshok105/codex/assets/OggInfo.java` (add `channels(Path)`)
 
 **Interfaces:**
 - Consumes: `homelander_pilot.json` schema and `OggInfo.durationMs(Path)` (Visual Core Task 1).
