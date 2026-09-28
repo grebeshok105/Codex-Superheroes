@@ -13,7 +13,7 @@
 ## Global Constraints
 
 - OMP owns passive resources only; it does not touch Visual Core architecture, Veil runtime, shaders, multiplayer, gameplay, camera/screen logic, runtime timing or final integration (spec §2). No edits under `src/main/java`, `src/client/java`, `quasar/`, `pinwheel/`, `vfx/`.
-- Work against the shared contract (`docs/design/visual-core-homelander/shared-contract.md`, `src/test/resources/contracts/homelander_pilot.json`), never against the unfinished runtime branch (spec §3). Prerequisite: Visual Core plan Tasks 1–2 merged on `main` (contract + placeholders at final paths). This serializes the two streams deliberately: spec A §6 wants the contract agreed before both sides build against it, and the contract is produced inside Visual Core Task 1, so OMP cannot start earlier without it.
+- Work against the shared contract (`docs/design/visual-core-homelander/shared-contract.md`, `src/test/resources/contracts/homelander_pilot.json`), never against the unfinished runtime branch (spec §3). Prerequisite: Visual Core plan Tasks 1–2 merged on `main` (contract + placeholders at final paths). This serializes the two streams deliberately: spec A §6 wants the contract agreed before both sides build against it, and the contract is produced inside Visual Core Task 1, so OMP cannot start earlier without it — the real dependency is the contract + the manifest/placeholder mechanism Task 2 creates (OMP edits `homelander_placeholders.txt` from its first asset task on), not runtime progress.
 - Artistic freedom over motion, posing, model styling, texture treatment and sound design (spec §3); contract ids, file paths, bone names, loop flags and approximate durations (±30 %) are fixed.
 - Contract change (spec §4, §8): document the problem, propose the smallest change, open a PR/comment on the repository path, continue unrelated work; never diverge silently.
 - Production quality, not placeholders: coherent, technically valid, correctly exported, clean transforms, no obvious clipping, repeat-safe, contract-compliant, directly integrable (spec §7).
@@ -28,7 +28,7 @@
 2. Loop clips/sounds with a seam (last keyframe ≠ first, audible click at the loop point) → visible pop every cycle during hover/laser hold. Pinned: Task 1 `loopClipsCloseOnFirstPose`; Task 9 loop-seam listening step.
 3. Animation rotates arms/legs into the torso or head at extreme flight tilt (80° boost pitch) → clipping in the most-watched scene. Pinned: Task 1 `jointRotationsWithinHumanLimits`; Task 2 in-game tilt check.
 4. Milk model oversized or off-center in hand/GUI/ground/frame → broken inventory icon or hand pose. Pinned: Task 1 `milkModelWithinItemBoundsAndHasAllDisplays`.
-5. A replaced asset keeps its placeholder manifest line (or a placeholder is left unreplaced) → integration ships a placeholder. Pinned: existing `HomelanderPlaceholderGuardTest.manifestHashesMatchFiles` (fails on any changed-but-listed file), `finalBuildHasNoPlaceholders` enabled at the end of Task 11.
+5. A replaced asset keeps an uncommented placeholder manifest line (or a placeholder is left unreplaced) → integration ships a placeholder. Pinned: existing `HomelanderPlaceholderGuardTest.manifestHashesMatchFiles` (fails on any changed-but-still-listed file), `finalBuildHasNoPlaceholders` (also asserts every `# replaced` line's file now differs from its placeholder hash) enabled at the end of Task 11.
 
 ---
 
@@ -41,7 +41,7 @@
 - `src/main/resources/assets/superheroes/models/item/milk_bottle.json`, `textures/item/milk_bottle.png` — milk model.
 - `src/main/resources/assets/superheroes/textures/vfx/homelander/*.png` — passive explosion/laser textures.
 - `src/main/resources/assets/superheroes/sounds/homelander/*.ogg` — exported sounds (replace placeholders / existing files).
-- `src/test/resources/contracts/homelander_placeholders.txt` — remove a line when its file is final.
+- `src/test/resources/contracts/homelander_placeholders.txt` — mark a line `# replaced` when its file is final (never delete it: the recorded placeholder hash is what `finalBuildHasNoPlaceholders` verifies the final file against).
 - `src/test/java/io/github/grebeshok105/codex/assets/HomelanderAssetQualityTest.java` — production-quality checks.
 - `docs/design/visual-core-homelander/contract-changes.md` — contract change log.
 - `docs/design/visual-core-homelander/omp-review.md` — third-session review + user approval record.
@@ -84,7 +84,7 @@
 
 - [ ] **Step 1: Add the five files to `FINAL`.** Run the gate. Expected: FAIL (`clipsAnimateAtLeastThreeBones` on placeholders).
 - [ ] **Step 2: Author and export** from Blockbench (Bedrock animation, names `animation.superheroes.homelander.<clip>`); hover = calm controlled float, cruise = streamlined, boost = full "superman" extension, takeoff/land read as deliberate transitions.
-- [ ] **Step 3: Run** the gate. Expected: PASS except `HomelanderPlaceholderGuardTest` (files changed, lines present) → delete their five manifest lines → PASS.
+- [ ] **Step 3: Run** the gate. Expected: PASS except `HomelanderPlaceholderGuardTest` (files changed, lines present) → mark their five manifest lines `# replaced` → PASS.
 - [ ] **Step 4: In-game check (where applicable):** with Visual Core Task 8 available, `./gradlew runClient`, fly through hover → cruise → boost → land in third person (F5) at the 80° boost tilt. Expected: no limb through torso/head, no pop at crossfades. Otherwise check in Blockbench with the body pitched 80°.
 - [ ] **Step 5: Commit** `feat(assets): Homelander flight animation clips`.
 
@@ -98,7 +98,7 @@
 
 - [ ] **Step 1: Add files to `FINAL`; run gate.** Expected: FAIL.
 - [ ] **Step 2: Author and export** (focused intense stance; charge reads as build-up, release as a controlled end).
-- [ ] **Step 3: Run gate; drop manifest lines; run gate.** Expected: PASS.
+- [ ] **Step 3: Run gate; mark manifest lines `# replaced`; run gate.** Expected: PASS.
 - [ ] **Step 4: In-game check (where applicable, Visual Core Task 9):** hold eye lasers standing and flying. Expected: beams stay on the eyes, hold loop has no visible seam.
 - [ ] **Step 5: Commit** `feat(assets): Homelander eye-laser animation clips`.
 
@@ -112,7 +112,7 @@
 
 - [ ] **Step 1: Add files to `FINAL`; run gate.** Expected: FAIL (`milkModelWithinItemBoundsAndHasAllDisplays` on the one-cuboid placeholder).
 - [ ] **Step 2: Model, texture, export** (Java item model with all five displays); author `milk_drink`.
-- [ ] **Step 3: Run gate + `./gradlew test --tests '*ProjectSanityTest' --no-daemon`; drop manifest lines; re-run.** Expected: PASS.
+- [ ] **Step 3: Run gate + `./gradlew test --tests '*ProjectSanityTest' --no-daemon`; mark manifest lines `# replaced`; re-run.** Expected: PASS.
 - [ ] **Step 4: In-game check:** `/give @s superheroes:milk_bottle`, inspect hotbar, first/third person, dropped, item frame; drink it. Expected: correct scale/orientation in all five, no z-fighting.
 - [ ] **Step 5: Commit** `feat(assets): Homelander milk bottle model and drink clip`.
 
@@ -126,7 +126,7 @@
 
 - [ ] **Step 1: Add files to `FINAL`; run gate.** Expected: FAIL.
 - [ ] **Step 2: Author clips; design/export sounds** mono, 48 kHz, `-c:a libvorbis -qscale:a 5`.
-- [ ] **Step 3: Run gate; drop manifest lines; re-run.** Expected: PASS.
+- [ ] **Step 3: Run gate; mark manifest lines `# replaced`; re-run.** Expected: PASS.
 - [ ] **Step 4: Loudness check** `ffmpeg -i <f>.ogg -af ebur128 -f null - 2>&1 | rg 'I:|Peak'` for each file. Expected: integrated −16 ±2 LUFS for one-shots, true peak ≤ −1 dBFS.
 - [ ] **Step 5: Commit** `feat(assets): Homelander Iron Fists animations and sounds`.
 
@@ -140,7 +140,7 @@
 
 - [ ] **Step 1: Add files to `FINAL`; run gate.** Expected: FAIL (existing `hand_clap.ogg` channel/loudness or clip placeholder).
 - [ ] **Step 2: Author clip; design sound** (transient at 0 ms aligned to contact, tail for the shockwave).
-- [ ] **Step 3: Run gate; drop manifest lines; re-run; loudness check as Task 5 Step 4.** Expected: PASS / within targets.
+- [ ] **Step 3: Run gate; mark manifest lines `# replaced`; re-run; loudness check as Task 5 Step 4.** Expected: PASS / within targets.
 - [ ] **Step 4: Commit** `feat(assets): Homelander Clap animation and sound`.
 
 ### Task 7: Roar resources
@@ -153,7 +153,7 @@
 
 - [ ] **Step 1: Add files to `FINAL`; run gate.** Expected: FAIL.
 - [ ] **Step 2: Author clip; design both layers** so they sum without phase cancellation.
-- [ ] **Step 3: Run gate; drop manifest lines; re-run; loudness check.** Expected: PASS / within targets.
+- [ ] **Step 3: Run gate; mark manifest lines `# replaced`; re-run; loudness check.** Expected: PASS / within targets.
 - [ ] **Step 4: Commit** `feat(assets): Homelander Roar animation and sounds`.
 
 ### Task 8: Milk final-explosion passive resources
@@ -166,7 +166,7 @@
 
 - [ ] **Step 1: Add files to `FINAL`; run gate.** Expected: FAIL.
 - [ ] **Step 2: Author clip, design sounds** (charge ends at peak tension exactly at file end; detonation has a hard transient then long rumble), paint textures.
-- [ ] **Step 3: Run gate; drop manifest lines; re-run; loudness check** (detonation may reach −10 LUFS integrated; peak ≤ −1 dBFS). Expected: PASS.
+- [ ] **Step 3: Run gate; mark manifest lines `# replaced`; re-run; loudness check** (detonation may reach −10 LUFS integrated; peak ≤ −1 dBFS). Expected: PASS.
 - [ ] **Step 4: Commit** `feat(assets): Homelander sun build-up and detonation resources`.
 
 ### Task 9: Focused Homelander sound pass
@@ -179,7 +179,7 @@
 
 - [ ] **Step 1: Add files to `FINAL`; run gate.** Expected: FAIL.
 - [ ] **Step 2: Design/export** mono OGG; loops cut at zero crossings with matching start/end.
-- [ ] **Step 3: Run gate; drop manifest lines; re-run.** Expected: PASS.
+- [ ] **Step 3: Run gate; mark manifest lines `# replaced`; re-run.** Expected: PASS.
 - [ ] **Step 4: Package-wide consistency:** loudness check on all 16 contract sounds; loop-seam listen: `ffplay -loop 10 -nodisp sounds/homelander/<loop>.ogg` for each loop. Expected: targets met, no click at wrap.
 - [ ] **Step 5: Verify no placeholder remains:** `rg -v '^#' src/test/resources/contracts/homelander_placeholders.txt | wc -l` Expected: `0`.
 - [ ] **Step 6: Commit** `feat(assets): Homelander flight, laser and drink sounds`.
@@ -193,7 +193,7 @@
 **Interfaces:**
 - Consumes: the OMP branch at the end of Task 9; reviewer is a fresh session that did not author the assets (spec §10).
 
-- [ ] **Step 1: Review** every model, clip, sound and texture against spec §7 and §10: technical validity, export correctness, in-game appearance, clipping/transforms, transitions, timing, contract compliance, package coherence. Record each finding in `omp-review.md` (`id / asset / problem / fix / status`).
+- [ ] **Step 1: Review** every model, clip, sound and texture against spec §7 and §10: technical validity, export correctness, in-game appearance, clipping/transforms, transitions, timing, contract compliance, package coherence — plus the branch's code/resource glue (the asset-quality suite, `OggInfo.channels`, the placeholder-guard edit) and genuine integration readiness. Record each finding in `omp-review.md` (`id / asset / problem / fix / status`).
 - [ ] **Step 2: Fix every finding** (reviewer fixes directly, spec §10), re-running the gate after each.
 - [ ] **Step 3: Run** `./gradlew qualityGate --no-daemon`. Expected: BUILD SUCCESSFUL; all findings `fixed`.
 - [ ] **Step 4: Commit** `fix(assets): address third-session OMP review findings`.
