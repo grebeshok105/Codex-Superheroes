@@ -66,7 +66,7 @@
   - `soundsAre44100or48000Hz`.
   - `loopClipsCloseOnFirstPose`: for `loop:true` clips, every bone's rotation/position at `0` equals the value at `animation_length` within 0.5°/0.05 px.
   - `clipsAnimateAtLeastThreeBones` (placeholders key only `body`).
-  - `jointRotationsWithinHumanLimits`: sampled every 1/20 s — `head` x ∈ [−80°, 60°], arms x ∈ [−200°, 60°], legs x ∈ [−100°, 100°], any z ∈ [−120°, 120°].
+  - `jointRotationsWithinHumanLimits`: sampled every 1/20 s — `head` x ∈ [−80°, 60°], arms x ∈ [−200°, 60°], legs x ∈ [−100°, 100°], any z ∈ [−120°, 120°], `body` x/z ∈ [−15°, 15°] (the contract's root-rotation envelope — runtime tilts the whole body).
   - `milkModelWithinItemBoundsAndHasAllDisplays`: all element `from/to` ∈ [−16, 32]; `display` has `thirdperson_righthand, firstperson_righthand, gui, ground, fixed`; ≥ 4 elements.
   - `vfxTexturesArePowerOfTwoWithAlpha`: width/height powers of two, ≤ 256, PNG color type 6.
   - `clipsUseNumericKeyframesOnly`: every keyframe value in every `FINAL` clip is a number array or `{pre, post}` object — any string (Molang) value fails. (The runtime parser warns and skips such clips; a clip that skips at runtime must fail here first.)
