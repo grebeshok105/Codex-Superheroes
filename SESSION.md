@@ -817,3 +817,60 @@ render anchors). Коммит `5f614a7`.
   не визуализированы — смотреть при Task 8 wiring.
 - Дальше: Task 7 — `PlayerAnimator` (GeoBone head sample) и Task 8 — Homelander
   wiring (`FlightPoseTracker` → `FlightBodyTransform`, eyes → lasers).
+
+## Visual Core + Homelander пилот — Task 7 (ветка `feat/visual-core-homelander-pilot`)
+
+Выполнен Task 7 плана `2026-09-28-visual-core-homelander-pilot.md` (player animation
+runtime). Коммит `79df46f`.
+
+- `client/core/anim/` — `AnimationClip` record `(id, lengthSeconds, loop, bones,
+  eventTimes)` с вложенным `enum Loop {OFF, WRAP, HOLD}` (`loop`: absent/null→OFF,
+  `true`→WRAP, `"hold_on_last_frame"`→HOLD), `BoneTrack` record `(rotation, position)`
+  из `Keyframes`, `Keyframes.sample(float seconds)` → `Vector3f` (клэмп вне диапазона,
+  linear + Catmull-Rom по `lerp_mode` сегмента, easing применяется к сегменту,
+  НАЧИНАЮЩЕМУСЯ на ключе — Bedrock-конвенция; реализованы настоящие Penner-кривые:
+  `easeInCubic` t³, `easeOutCubic` 1−(1−t)³, `easeOutQuad` 1−(1−t)²,
+  `easeInOutSine` (1−cos πt)/2, `easeOutSine` sin(πt/2)).
+- `BedrockAnimationParser.parse(JsonObject, Consumer<String> warn)`: id-ключ
+  `animation.<ns>.<hero>.<clip>` → `<ns>:<hero>/<clip>`; формы значений —
+  `{"vector":[x,y,z],"easing":..}`, `{pre,post,lerp_mode}` (берётся post→pre),
+  bare `[x,y,z]`, канал-одиночный ключ (t=0); любой STRING (Molang) → warn +
+  пропуск клипа (не throw); неизвестная кость → warn + игнор кости, клип жив;
+  неизвестные easing/lerp_mode → warn + LINEAR; канал `scale` → warn + игнор
+  (в контракте отсутствует — отступление зафиксировано); malformed не-строковый
+  ключ → warn + пропуск ключа; `sound_effects`/`particle_effects`/`events` →
+  `eventTimes` (обе формы: `{секунды: payload}` и `{имя: число|{"time":s}}`),
+  отсутствие — не ошибка; `animation_length` отсутствует → последний ключ.
+- `AnimationLibrary` — `SimpleSynchronousResourceReloadListener` на
+  `assets/*/player_animations/**/*.animation.json`, `get(id) -> Optional`,
+  `init()` из `SuperheroesClient` (сразу после `VfxRuntime.init()`); релоад
+  заменяет снапшот, ошибки файлов — warn+skip.
+- `PlayerAnimator` — статик по entityId, слои `Layer {BASE, ACTION}`, `play/
+  stop/sample/tick/reset` + пакетные швы `useClock`/`playClip` для тестов
+  (дефолт — счётчик `clientTicks`, +1 в `tick()`); ACTION перекрывает BASE
+  попарно по костям весом фейда; повторный `play` на слое — crossfade
+  (deque лейна, кэп 8); OFF-клип по концу фейдится за свои fadeTicks и
+  отпускает в BASE; `stop(fadeTicks)` продолжает fade-out с ТЕКУЩЕГО веса
+  (непрерывно). static-init self-registration: END_CLIENT_TICK→tick,
+  `ClientSessionState`→reset — конвенция ScreenFlash, bootstrap-вызов не нужен.
+- `PoseSample` record + `EMPTY`: merged-сэмпл хранит combined/weight векторы с
+  `weight=max(baseW,topW)`, чтобы единый `×weight` в `PlayerPoseApplier` давал
+  верный per-bone бленд при любом фейде. `PlayerPoseApplier.apply` — флипы
+  GeckoLib Bedrock→Java точно по спеке (xRot += −rad(x), yRot += −rad(y),
+  zRot += rad(z); офсеты x += −px.x, y += −px.y, z += px.z), взвешенно.
+- `PlayerModelPoseMixin`: новый блок в TAIL `setupAnim` — `sample(entityId,
+  partialTick)` → `PlayerPoseApplier.apply` при непустом сэмпле, затем re-copy
+  `hat/jacket/leftSleeve/rightSleeve/leftPants/rightPants` (кадры-приложения
+  после статичных поз выше по коду — преднамеренно: клип перекрывает их).
+  partialTick — `Minecraft.getInstance().getTimer()
+  .getGameTimeDeltaPartialTick(true)` (в 1.21.1-маппингах нет `getDeltaTracker()`).
+- `HomelanderAssetContractTest.contractClipsSurviveTheRuntimeParser`: все 14
+  контрактных клипа парсятся с НУЛЕМ ворнингов и дают ожидаемый id
+  `superheroes:homelander/<clip>` — PASS.
+- TDD: RED — `test --tests '*client.core.anim*' --tests '*HomelanderAssetContractTest*'`
+  BUILD FAILED (67 compile errors, классов нет) → GREEN (10 новых тестов +
+  контрактный). Гейт: `./gradlew qualityGate --no-daemon` BUILD SUCCESSFUL
+  с первого прогона (runGametest зелёный, флейка не ловилась).
+- Hero-символов в `client/core/anim/**` нет; зависимостей не добавлено.
+- Дальше: Task 8 — Homelander flight wiring (`FlightPoseTracker` →
+  `FlightBodyTransform` + flight_* клипы на BASE-слое `PlayerAnimator`).
