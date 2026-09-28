@@ -16,7 +16,7 @@
 - Work against the shared contract (`docs/design/visual-core-homelander/shared-contract.md`, `src/test/resources/contracts/homelander_pilot.json`), never against the unfinished runtime branch (spec §3). Prerequisite: Visual Core plan Tasks 1–2 merged on `main` (contract + placeholders at final paths). This serializes the two streams deliberately: spec A §6 wants the contract agreed before both sides build against it, and the contract is produced inside Visual Core Task 1, so OMP cannot start earlier without it — the real dependency is the contract + the manifest/placeholder mechanism Task 2 creates (OMP edits `homelander_placeholders.txt` from its first asset task on), not runtime progress.
 - Artistic freedom over motion, posing, model styling, texture treatment and sound design (spec §3); contract ids, file paths, bone names, loop flags and approximate durations (±30 %) are fixed.
 - Contract change (spec §4, §8): document the problem, propose the smallest change, open a PR/comment on the repository path, continue unrelated work; never diverge silently.
-- Production quality, not placeholders: coherent, technically valid, correctly exported, clean transforms, no obvious clipping, repeat-safe, contract-compliant, directly integrable (spec §7).
+- Production quality, not placeholders: coherent, technically valid, correctly exported, clean transforms, no obvious clipping, repeat-safe, contract-compliant, directly integrable (spec §7). Every file shipped as final must be mono — `positionalSoundsAreMono` runs over all of `FINAL`, which must cover every shipped contract file, so an existing stereo file (`hand_clap`, `roar`, `roar_deep`, `iron_fists_impact`, `iron_fists_charge` are all stereo today) cannot slip through: re-encode with `ffmpeg -ac 1` when no fuller rework is authored.
 - Runtime sounds OGG Vorbis only; check `art-source/` first; MP3 → `ffmpeg -i input.mp3 -c:a libvorbis -qscale:a 5 output.ogg`.
 - Out of scope (spec §6): bottom UI, left flying menu, chat/UI overlap, damage balance, Uranium, full roster, Veil core/runtime VFX, multiplayer, gameplay rewrites, other heroes.
 - Third-session review then explicit user approval are hard gates before integration (spec §10–§11).
@@ -119,10 +119,10 @@
 ### Task 5: Iron Fists resources
 
 **Files:**
-- Modify: `player_animations/homelander/{iron_fists_activate,iron_fists_strike}.animation.json`, `sounds/homelander/iron_fists_activate.ogg`; optionally rework `iron_fists_charge.ogg`, `iron_fists_impact.ogg` (same paths); bbmodel, manifest, `FINAL`
+- Modify: `player_animations/homelander/{iron_fists_activate,iron_fists_strike}.animation.json`, `sounds/homelander/iron_fists_activate.ogg`; rework `iron_fists_charge.ogg`, `iron_fists_impact.ogg` when required (below); bbmodel, manifest, `FINAL`
 
 **Interfaces:**
-- Consumes: activate 1000 ms, strike 400 ms with `contact` ≤ 120 ms (gameplay hits on the click tick), `iron_fists_charge` stays a loop-safe bed ≥ 1 s.
+- Consumes: activate 1000 ms, strike 400 ms with `contact` ≤ 120 ms (gameplay hits on the click tick), `iron_fists_charge` stays a loop-safe bed ≥ 1 s. Rework of the two existing files is mandatory when either is stereo (both are — `ffprobe` them) or misses the loudness target below; otherwise optional.
 
 - [ ] **Step 1: Add files to `FINAL`; run gate.** Expected: FAIL.
 - [ ] **Step 2: Author clips; design/export sounds** mono, 48 kHz, `-c:a libvorbis -qscale:a 5`.
@@ -181,7 +181,7 @@
 - [ ] **Step 2: Design/export** mono OGG; loops cut at zero crossings with matching start/end.
 - [ ] **Step 3: Run gate; mark manifest lines `# replaced`; re-run.** Expected: PASS.
 - [ ] **Step 4: Package-wide consistency:** loudness check on all 16 contract sounds; loop-seam listen: `ffplay -loop 10 -nodisp sounds/homelander/<loop>.ogg` for each loop. Expected: targets met, no click at wrap.
-- [ ] **Step 5: Verify no placeholder remains:** `rg -v '^#' src/test/resources/contracts/homelander_placeholders.txt | wc -l` Expected: `0`.
+- [ ] **Step 5: Verify no placeholder remains:** `rg -v '^\s*(#|$)' src/test/resources/contracts/homelander_placeholders.txt | wc -l` Expected: `0` (blank/comment lines tolerated; the manifest only ever lists Task-2-generated placeholders — pre-existing real assets never get a line).
 - [ ] **Step 6: Commit** `feat(assets): Homelander flight, laser and drink sounds`.
 
 ### Task 10: Third-session absolute review and fixes
@@ -209,4 +209,4 @@
 - [ ] **Step 1: Present** the corrected package to the user: screenshots/clips of every animation (third person), the milk model in all displays, an audio listening list, and the review log.
 - [ ] **Step 2: Apply user feedback** as Task 10 findings until the user approves; record the approval line with the approved commit.
 - [ ] **Step 3: Enable `finalBuildHasNoPlaceholders`; run** `./gradlew qualityGate --no-daemon`. Expected: BUILD SUCCESSFUL.
-- [ ] **Step 4: Commit and open PR** `feat(assets): user-approved Homelander OMP asset package` into the branch named by the Visual Core integrator; the integrator may still adjust resources in-scene (spec §12).
+- [ ] **Step 4: Commit and open PR** `feat(assets): user-approved Homelander OMP asset package` into the pilot's feature branch (the branch Plan A Tasks 3–15 commit to — `feat/visual-core-homelander-pilot` by default; the Visual Core integrator names it if different); the integrator may still adjust resources in-scene (spec §12).
