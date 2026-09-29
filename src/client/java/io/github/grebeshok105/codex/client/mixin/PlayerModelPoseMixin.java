@@ -13,6 +13,7 @@ import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.world.entity.LivingEntity;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -27,6 +28,22 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  */
 @Mixin(PlayerModel.class)
 public abstract class PlayerModelPoseMixin<T extends LivingEntity> {
+	/**
+	 * Parts the previous {@code setupAnim}'s scripted-animation pass mutated. ModelPart
+	 * state persists between frames ({@code setupAnim} only rewrites what vanilla animates),
+	 * so the next pose computation must first revert to the pre-apply state or deltas
+	 * would accumulate every frame.
+	 */
+	@Unique
+	private PlayerPoseApplier.Restoration superheroes$animatedPose = PlayerPoseApplier.Restoration.NONE;
+
+	@Inject(method = "setupAnim(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V", at = @At("HEAD"))
+	private void superheroes$restoreAnimatedPose(T entity, float limbSwing, float limbSwingAmount,
+			float ageInTicks, float netHeadYaw, float headPitch, CallbackInfo ci) {
+		superheroes$animatedPose.restore();
+		superheroes$animatedPose = PlayerPoseApplier.Restoration.NONE;
+	}
+
 	@Inject(method = "setupAnim(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V", at = @At("TAIL"))
 	private void superheroes$heroPose(T entity, float limbSwing, float limbSwingAmount,
 			float ageInTicks, float netHeadYaw, float headPitch, CallbackInfo ci) {
@@ -72,7 +89,7 @@ public abstract class PlayerModelPoseMixin<T extends LivingEntity> {
 				.getGameTimeDeltaPartialTick(true);
 		PoseSample animated = PlayerAnimator.sample(player.getId(), partialTick);
 		if (!animated.isEmpty()) {
-			PlayerPoseApplier.apply(model, animated);
+			superheroes$animatedPose = PlayerPoseApplier.apply(model, animated);
 			model.hat.copyFrom(model.head);
 			model.jacket.copyFrom(model.body);
 			model.leftSleeve.copyFrom(model.leftArm);
