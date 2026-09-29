@@ -4,15 +4,11 @@ import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
-import io.github.grebeshok105.codex.core.net.ScreenShakeS2CPayload;
-import io.github.grebeshok105.codex.sound.HomelanderSounds;
-import io.github.grebeshok105.codex.core.net.FxBroadcast;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.core.particles.ParticleTypes;
+import io.github.grebeshok105.codex.core.net.VfxFx;
+import io.github.grebeshok105.codex.hero.homelander.vfx.HomelanderVfxIds;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
@@ -53,7 +49,8 @@ public final class StunningRoarAbility implements Ability {
 	public boolean tryActivate(ServerPlayer player) {
 		ServerLevel level = player.serverLevel();
 		Vec3 origin = player.position();
-		Vec3 mouth = player.getEyePosition().add(player.getViewVector(1f).scale(0.6));
+		Vec3 forward = player.getViewVector(1f).normalize();
+		Vec3 mouth = player.getEyePosition().add(forward.scale(0.6));
 
 		AABB box = new AABB(origin, origin).inflate(RADIUS);
 		List<Entity> hits = level.getEntities(player, box,
@@ -70,31 +67,11 @@ public final class StunningRoarAbility implements Ability {
 			}
 		}
 
-		level.sendParticles(ParticleTypes.SONIC_BOOM,
-				mouth.x, mouth.y, mouth.z, 1, 0.0, 0.0, 0.0, 0.0);
-		level.sendParticles(ParticleTypes.EXPLOSION,
-				mouth.x, mouth.y, mouth.z, 3, 0.5, 0.3, 0.5, 0.0);
-		for (int i = 0; i < 36; i++) {
-			double a = (i / 36.0) * Math.PI * 2.0;
-			double rx = Math.cos(a) * RADIUS;
-			double rz = Math.sin(a) * RADIUS;
-			level.sendParticles(ParticleTypes.LARGE_SMOKE,
-					origin.x + rx, origin.y + 0.6, origin.z + rz, 2, 0.1, 0.2, 0.1, 0.04);
-		}
-
-		level.playSound(null, player.getX(), player.getY(), player.getZ(),
-				HomelanderSounds.ROAR, SoundSource.PLAYERS, 1.6f, 1.0f);
-		level.playSound(null, player.getX(), player.getY(), player.getZ(),
-				HomelanderSounds.ROAR_DEEP, SoundSource.PLAYERS, 1.0f, 1.0f);
-
-		for (ServerPlayer nearby : FxBroadcast.aroundAudience(level, origin, 24.0)) {
-			double dist = nearby.position().distanceTo(origin);
-			if (dist > RADIUS + 4.0) continue;
-			float intensity = (float) Math.max(0.0, 1.0 - dist / (RADIUS + 4.0)) * 2.0f;
-			if (intensity > 0.05f) {
-				ServerPlayNetworking.send(nearby, new ScreenShakeS2CPayload(intensity, 24));
-			}
-		}
+		// The whole roar presentation is event-driven now: RoarFx owns both
+		// contract sounds (homelander.roar + homelander.roar.deep layered as
+		// before), the roar clip, the mouth-anchored sound-wave cone, the
+		// distortion, the dust lift and the rumble shake.
+		VfxFx.event(player, HomelanderVfxIds.ROAR, mouth, mouth.add(forward.scale(RADIUS)), 1f);
 
 		AbilityCooldowns.setCooldownTicks(player, ID, COOLDOWN_TICKS);
 		return true;

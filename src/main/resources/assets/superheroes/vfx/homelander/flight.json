@@ -1,0 +1,21 @@
+{
+  "trailCapacity": 32,
+  "trailWidth": 0.05,
+  "trailFadeTicks": 8,
+  "trailColor": "#90FFC538",
+  "boostEmitTicks": 3,
+  "boostRingRadius": 2.5,
+  "boostRingTicks": 10,
+  "boostRingColor": "#60FFC538",
+  "boostBand": 0.2,
+  "landingRingRadius": 5.0,
+  "landingRingTicks": 14,
+  "landingRingColor": "#70FFE07A",
+  "landingBand": 0.18,
+  "surfaceOffset": 0.05,
+  "distortionRadius": 1.6,
+  "distortionStrength": 0.6,
+  "landBaseVolume": 0.8,
+  "landVolumeScale": 0.5,
+  "landPitch": 1.0
+}

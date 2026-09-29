@@ -4,16 +4,11 @@ import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
-import io.github.grebeshok105.codex.core.net.ScreenShakeS2CPayload;
-import io.github.grebeshok105.codex.sound.HomelanderSounds;
-import io.github.grebeshok105.codex.core.net.FxBroadcast;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.core.particles.ParticleTypes;
+import io.github.grebeshok105.codex.core.net.VfxFx;
+import io.github.grebeshok105.codex.hero.homelander.vfx.HomelanderVfxIds;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.AABB;
@@ -70,33 +65,10 @@ public final class HandClapAbility implements Ability {
 			entity.hurtMarked = true;
 		}
 
-		Vec3 tip = origin.add(forward.scale(2.5));
-		level.sendParticles(ParticleTypes.EXPLOSION,
-				tip.x, tip.y, tip.z, 2, 0.4, 0.4, 0.4, 0.0);
-		for (int i = 1; i <= 12; i++) {
-			double t = i;
-			double spread = 0.4 + i * 0.25;
-			Vec3 c = origin.add(forward.scale(t * 1.4));
-			level.sendParticles(ParticleTypes.CLOUD,
-					c.x, c.y, c.z, 8, spread, 0.5, spread, 0.05);
-			level.sendParticles(ParticleTypes.LARGE_SMOKE,
-					c.x, c.y, c.z, 4, spread * 0.5, 0.3, spread * 0.5, 0.03);
-		}
-
-		level.playSound(null, player.getX(), player.getY(), player.getZ(),
-				HomelanderSounds.HAND_CLAP, SoundSource.PLAYERS, 2.0f, 1.0f);
-		level.playSound(null, player.getX(), player.getY(), player.getZ(),
-				SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.WEATHER, 1.6f, 1.1f);
-		level.playSound(null, player.getX(), player.getY(), player.getZ(),
-				SoundEvents.GENERIC_EXPLODE.value(), SoundSource.PLAYERS, 1.4f, 0.7f);
-
-		for (ServerPlayer nearby : FxBroadcast.aroundAudience(level, player.position(), 24.0)) {
-			double dist = nearby.position().distanceTo(player.position());
-			float intensity = (float) Math.max(0.0, 1.0 - dist / 24.0) * 1.8f;
-			if (intensity > 0.05f) {
-				ServerPlayNetworking.send(nearby, new ScreenShakeS2CPayload(intensity, 16));
-			}
-		}
+		// The whole clap presentation is event-driven now: ClapFx owns
+		// homelander.hand_clap, the clap clip, the flash between the hands,
+		// the forward cone, the distortion pulse and the proximity shake.
+		VfxFx.event(player, HomelanderVfxIds.CLAP, origin, origin.add(forward.scale(RANGE)), 1f);
 
 		AbilityCooldowns.setCooldownTicks(player, ID, COOLDOWN_TICKS);
 		return true;

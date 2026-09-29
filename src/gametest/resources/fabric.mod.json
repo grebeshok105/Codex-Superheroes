@@ -57,7 +57,8 @@
 			"io.github.grebeshok105.codex.gametest.PandoraGameTests",
 			"io.github.grebeshok105.codex.gametest.HomelanderGameTests",
 			"io.github.grebeshok105.codex.gametest.IronManGameTests",
-			"io.github.grebeshok105.codex.gametest.BeamPayloadGameTests"
+			"io.github.grebeshok105.codex.gametest.BeamPayloadGameTests",
+			"io.github.grebeshok105.codex.gametest.HomelanderVfxGameTests"
 		]
 	},
 	"depends": {

@@ -18,6 +18,35 @@ public final class CrossBeamRenderer {
 	}
 
 	public static void draw(WorldRenderContext ctx, Vec3 start, Vec3 end, float intensity, float widthMul) {
+		drawLayers(ctx, start, end, (buf, matrix, side1, side2, pulse) -> {
+			float a = intensity;
+			double wm = pulse * widthMul;
+			drawCrossLayer(buf, matrix, start, end, side1, side2, 0.22 * wm, 1f, 0.18f, 0.10f, 0.55f * a);
+			drawCrossLayer(buf, matrix, start, end, side1, side2, 0.13 * wm, 1f, 0.55f, 0.28f, 0.85f * a);
+			drawCrossLayer(buf, matrix, start, end, side1, side2, 0.06 * wm, 1f, 0.95f, 0.85f, 1f * a);
+			drawCrossLayer(buf, matrix, start, end, side1, side2, 0.022 * wm, 1f, 1f, 1f, 1f * a);
+		});
+	}
+
+	/**
+	 * Styled overload for the Visual Core pattern layer: widths and colors
+	 * come from the {@link BeamLook}; the hardcoded {@code widthMul} draw
+	 * above keeps the legacy look for its current callers.
+	 */
+	public static void draw(WorldRenderContext ctx, Vec3 start, Vec3 end, float intensity, BeamLook look) {
+		drawLayers(ctx, start, end, (buf, matrix, side1, side2, pulse) -> {
+			drawCrossLayerArgb(buf, matrix, start, end, side1, side2,
+					look.glowWidth() * pulse, look.glowArgb(), intensity);
+			drawCrossLayerArgb(buf, matrix, start, end, side1, side2,
+					look.coreWidth() * pulse, look.coreArgb(), intensity);
+		});
+	}
+
+	private interface BeamLayers {
+		void draw(VertexConsumer buf, Matrix4f matrix, Vec3 side1, Vec3 side2, float pulse);
+	}
+
+	private static void drawLayers(WorldRenderContext ctx, Vec3 start, Vec3 end, BeamLayers layers) {
 		MultiBufferSource consumers = ctx.consumers();
 		if (consumers == null) {
 			return;
@@ -48,17 +77,19 @@ public final class CrossBeamRenderer {
 		side1 = side1.normalize();
 		Vec3 side2 = beamDir.cross(side1).normalize();
 
-		long t = System.currentTimeMillis();
-		float pulse = 0.92f + 0.08f * (float) Math.sin(t * 0.018);
-		float a = intensity;
-
-		double wm = pulse * widthMul;
-		drawCrossLayer(buf, matrix, start, end, side1, side2, 0.22 * wm, 1f, 0.18f, 0.10f, 0.55f * a);
-		drawCrossLayer(buf, matrix, start, end, side1, side2, 0.13 * wm, 1f, 0.55f, 0.28f, 0.85f * a);
-		drawCrossLayer(buf, matrix, start, end, side1, side2, 0.06 * wm, 1f, 0.95f, 0.85f, 1f * a);
-		drawCrossLayer(buf, matrix, start, end, side1, side2, 0.022 * wm, 1f, 1f, 1f, 1f * a);
+		layers.draw(buf, matrix, side1, side2,
+				0.92f + 0.08f * (float) Math.sin(System.currentTimeMillis() * 0.018));
 
 		ps.popPose();
+	}
+
+	private static void drawCrossLayerArgb(VertexConsumer buf, Matrix4f matrix,
+			Vec3 a, Vec3 b, Vec3 side1, Vec3 side2, double width, int argb, float alphaMul) {
+		float alpha = ((argb >>> 24) & 0xFF) / 255f * alphaMul;
+		float r = ((argb >>> 16) & 0xFF) / 255f;
+		float g = ((argb >>> 8) & 0xFF) / 255f;
+		float bl = (argb & 0xFF) / 255f;
+		drawCrossLayer(buf, matrix, a, b, side1, side2, width, r, g, bl, alpha);
 	}
 
 	private static void drawCrossLayer(VertexConsumer buf, Matrix4f matrix,

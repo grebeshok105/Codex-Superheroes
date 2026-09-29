@@ -643,3 +643,491 @@ module + плейсхолдеры контракта). Коммит `0497ecd`.
   qualityGate (коммит предшествует гейту, не наоборот).
 - Дальше: Tasks 1–2 мёржатся в main отдельным PR (сигнал старта для OMP);
   Task 3+ — ветка пилота.
+
+## Visual Core + Homelander пилот — Task 3 (ветка `feat/visual-core-homelander-pilot`)
+
+Выполнен Task 3 плана `2026-09-28-visual-core-homelander-pilot.md` (типизированные
+VFX-пейлоады + серверные хелперы отправки). Коммит `563ea5f`.
+
+- `core/net/VfxEventS2CPayload` — one-shot триггер эффекта
+  `(effect, sourceEntityId, origin, target, scale, seed)`, `TYPE = vfx_event`,
+  `NO_SOURCE = -1`; `target` — вторая точка прицеливания (конец луча, точка
+  взгляда), всенаправленные эффекты передают `origin`.
+- `core/net/VfxChannelS2CPayload` — непрерывный эффект `(entityId, channel,
+  state, target)`, `TYPE = vfx_channel`, `START/UPDATE/STOP = 0/1/2`; `state`
+  валидируется на декоде — вне диапазона бросает `DecoderException`.
+- `core/net/VfxFx` — `event` (trackingAndSelf для ServerPlayer, иначе tracking;
+  seed из `level().random`), `eventAround` (`FxBroadcast.around`, NO_SOURCE),
+  `channel` (trackingAndSelf); `CHANNEL_UPDATE_INTERVAL_TICKS = 2`.
+- Оба пейлоада зарегистрированы в `CoreNetworking` через `PayloadRegistrar`;
+  клиентские ресиверы — Task 4.
+- Опциональный харденинг Step 4 (расширить `everyHeroS2CPayloadHasARegisteredReceiver`
+  на `core.net`) пропущен: правило требует зарегистрированный ресивер, а ресиверы
+  появятся только в Task 4 — расширение сейчас уронило бы гейт. Делать вместе с Task 4.
+- TDD: RED — `./gradlew test --tests '*VfxPayloadCodecTest'` FAIL (12 ошибок
+  компиляции, классов нет) → GREEN после реализации (`eventRoundTrips`,
+  `channelRoundTrips`, `channelStateOutOfRangeRejected` PASS).
+- Гейт: `./gradlew qualityGate --no-daemon` BUILD SUCCESSFUL (362 game tests).
+- Дальше: Task 4 — клиентский Visual Core (runtime, params, backend) + ресиверы
+  в `CoreClientReceivers`.
+
+## Visual Core + Homelander пилот — Task 4 (ветка `feat/visual-core-homelander-pilot`)
+
+Выполнен Task 4 плана `2026-09-28-visual-core-homelander-pilot.md` (клиентский
+Visual Core: runtime, params, backend-seam + ресиверы Task-3 пейлоадов).
+Коммит `713bfc9`.
+
+- `client/core/vfx/` — интерфейсы по контракту плана: `VfxEffect`
+  (tick/render/done/cancel), `VfxChannelEffect` (+retarget/release),
+  `VfxEffectFactory`/`VfxChannelFactory`, records `VfxSpawn` и
+  `VfxRenderContext`. Константы `MAX_ACTIVE_EFFECTS = 256`,
+  `CULL_DISTANCE = 160.0`, `CHANNEL_TIMEOUT_TICKS = 10` живут в `VfxRuntime`.
+- `VfxInstanceTable`/`VfxChannelTable` — package-private, без Minecraft:
+  вся логика бюджета/выселения/истечения каналов там, `VfxRuntime` делегирует.
+  Eviction — `cancel()` старейшего; START/UPDATE на существующем канале —
+  retarget+сброс возраста (без дублей), UPDATE на неизвестном — открывает;
+  STOP — `release()` + снятие индекса, эффект доживает в instance-таблице до
+  `done()`; тишина > `CHANNEL_TIMEOUT_TICKS` — release.
+- `VfxRuntime` — реестр фабрик, `spawn` culls по `CULL_DISTANCE` от камеры,
+  неизвестный id → debug-log один раз; tick на END_CLIENT_TICK, render на
+  AFTER_TRANSLUCENT, reset через `ClientSessionState.register` в статик-блоке,
+  `init()` в `SuperheroesClient`.
+- `params/VfxParams` (+`parse`) — числа и цвета `#RRGGBB`/`#AARRGGBB`,
+  forgiving parse; `VfxParamsLoader` — `SimpleSynchronousResourceReloadListener`
+  по `assets/<ns>/vfx/<path>.json` → `<ns>:<path>`.
+- Backend-seam: `VfxBackends.current()` при `isModLoaded("veil")` инстанцирует
+  `client.core.vfx.veil.VeilVfxBackend` по имени через рефлексию — ноль
+  `foundry.veil`-символов вне будущего пакета и компилируется без класса Task 5;
+  класс отсутствует/не грузится → fallback + warn один раз.
+  `FallbackVfxBackend`: emit/light/distortion — no-op, flash — затухающий
+  HUD-оверлей (`HudRenderCallback`).
+- Ресиверы в `CoreClientReceivers`: оба пейлоада hop на клиентский тред,
+  разрешение `sourceEntityId` (`NO_SOURCE` → null) → `VfxRuntime.spawn`;
+  channel-пейлоад → `VfxRuntime.channel`.
+- `HeroClientContext.vfx/vfxChannel` + реализация в `CoreClientContext`
+  делегируют в `VfxRuntime.register*`.
+- ArchUnit-харденинг из Task 3 сделан: `everyHeroS2CPayloadHasARegisteredReceiver`
+  теперь также требует у каждого `core.net` S2CPayload TYPE, зарегистрированный
+  в `CoreClientReceivers` — гейт зелёный. `ProjectSanityTest` дополнен пином
+  `VfxRuntime.java` в `namedSingletons` (session-reset обязателен).
+- TDD: RED — `./gradlew test --tests '*client.core.vfx*'` BUILD FAILED
+  (34 ошибки компиляции, классов нет) → GREEN после реализации (9 тестов:
+  2 budget, 4 channel, 3 params). Пойман один баг: `#AARRGGBB` с alpha>=0x80
+  давал отрицательный int и отфильтровывался как malformed — sentinel переведён
+  на long.
+- Гейт: `./gradlew qualityGate --no-daemon` BUILD SUCCESSFUL.
+- Отступлений от спека нет: `src/main` не тронут, зависимостей нет, hero-id
+  символов в `client/core/vfx/**` нет.
+- Дальше: Task 5 — `client/core/vfx/veil/` (реальный VeilVfxBackend: Quasar
+  emitters, dynamic lights, post-distortion) + первый эффект поверх runtime.
+
+## Visual Core + Homelander пилот — Task 5 (ветка `feat/visual-core-homelander-pilot`)
+
+Выполнен Task 5 плана `2026-09-28-visual-core-homelander-pilot.md` (Veil backend:
+particles, dynamic lights, post pipelines). Коммит `804469d`.
+
+- `client/core/vfx/veil/VeilVfxBackend` — `implements VfxBackend`, публичный
+  no-arg конструктор (VfxBackends инстанцирует по имени). `emit` — тот же путь,
+  что у `VeilScorpionFx`: `renderer().getParticleManager().createEmitter(id)`
+  → `setPosition` → `addParticleSystem`. `light` —
+  `LightRenderer.addLight(PointLightData)` → `VeilLightHandle`
+  (move/set → light data + `markDirty()`, remove → `free()`); при исключении —
+  no-op handle. Весь boundary в `try/catch (Throwable)` с warn один раз.
+- `VeilPostEffects` — активация пайплайнов `superheroes:vfx_flash` /
+  `superheroes:vfx_distortion` через `PostProcessingManager.add/remove`,
+  юниформы `uIntensity`/`uColor`/`uCenter`/`uRadius`/`uStrength` через
+  `PostPipeline.getUniformSafe` (composite проксирует в шейдеры стадий).
+  Ленивый `END_CLIENT_TICK` гасит `uIntensity` за 6 тиков (та же длительность,
+  что у fallback-вспышки) и снимает пайплайн на нуле — активен только пока
+  intensity > 0.
+- Ассеты положены в `src/client/resources/assets/superheroes/pinwheel/`
+  (в плане — `src/main/resources`; выбран client source set: pinwheel-ассеты
+  чисто клиентские, в продакшн-jar попадают так же, существующие quasar-ассеты
+  остаются в main). Post-JSON: одна стадия `veil:blit` `in: minecraft:main`
+  → дефолтный `out: veil:post` (in==out запрещён кодеком), `renderStage:
+  after_level`. Программы `vfx/flash`/`vfx/distortion` — общий vertex
+  `veil:blit_screen`; `distortion.fsh` проецирует `uCenter`/`uRadius` из
+  world-space через `#include veil:space_helper` (UBO `VeilCamera`).
+- API Veil 4.1.2 сверен по jar/sources: `LightRenderHandle<T>`
+  (getLightData/markDirty/isValid/free), `PointLightData.setPosition/
+  setRadius/setColor(int)/setBrightness`, `PostProcessingManager.add/remove/
+  isActive/getPipeline`, `CompositePostPipeline.getUniformSafe` →
+  `ShaderUniformAccess` (setFloat/setVector). BlitPostStage биндит `in`-буфер
+  в `DiffuseSampler`; in==out отклоняется кодеком.
+- `VfxEffect.render` javadoc: запрещены вызовы `VfxRuntime.spawn`/`channel`
+  из `render()` — итерация живой очереди эффектов (контракт для Task 6+).
+- `VeilIsolationTest`: `import foundry.veil` вне `client/core/vfx/veil/` —
+  фейл; ноль `foundry.veil` в `src/main`; `VeilVfxBackend.java` обязан
+  существовать (нет вакуумного прохода).
+- TDD: RED — `veilBackendClassExists` FAILED до реализации → GREEN
+  (3 теста). `grep -rn 'foundry\.veil' src/main/java` пустой.
+  `./gradlew qualityGate --no-daemon` BUILD SUCCESSFUL.
+- Hero-символов в новых файлах нет; зависимостей не добавлено. Post/шейдеры
+  на GPU не прогонялись (нет runClient-верификации) — смотреть при Task 6+
+  визуальной проверке.
+- Дальше: Task 6 — pattern layer (`pattern/*`, `anchor/*`) +
+  `FlightBodyTransform` record.
+
+## Visual Core + Homelander пилот — Task 6 (ветка `feat/visual-core-homelander-pilot`)
+
+Выполнен Task 6 плана `2026-09-28-visual-core-homelander-pilot.md` (pattern layer +
+render anchors). Коммит `5f614a7`.
+
+- `client/core/vfx/pattern/` — `PhaseTimeline` (enum Phase CHARGE/HOLD/RELEASE/DONE;
+  `phaseAt(age, releasedAtAge)`, releasedAtAge=-1 пока held; `intensity` — ease-out
+  quad 0→1 за charge, 1 в hold, спад 1→0 за release; релиз до конца charge стартует
+  с текущего уровня), `BeamPattern.draw` (применяет `noise` сам — плавный sin-джиттер
+  конца луча — и делегирует новому оверлоду `CrossBeamRenderer`), `ImpactPattern.spawn`
+  (emitter со сдвигом по `normal` на `surfaceOffset`, опц. `distortion*`), `ShockwavePattern`
+  (VfxEffect, кольцо 40 сегментов, `radius`/`durationTicks`/`color`/`band`),
+  `AuraPattern` (VfxEffect за Entity: периодический emitter по `emitIntervalTicks`,
+  опц. `LightHandle` по `lightColor`/`lightRadius`/`lightBrightness`, свет снимается
+  на cancel/finish; `entity.isRemoved()` → finish), `TrailBuffer` (кольцо, get(0)=новейший),
+  `TrailPattern` (лента face-camera, фейд по `fadeTicks` после `finish()`),
+  `ScreenFlash` (`attenuation` = линейный спад по `radius` ×0.35 без LOS; `trigger`
+  держит состояние и перекормляет backend каждый тик; self-register на class-load:
+  END_CLIENT_TICK→tick, ClientSessionState→reset), `CameraImpulse` → `ScreenShakeManager`.
+- `client/core/vfx/anchor/` — `EyePair` record + `HumanoidAnchors`: pure
+  `eyesFrom(feet, bodyYaw, headYaw, headPitch, tilt, scale)` и interpolated
+  `eyes(player, partial, tilt, headAnimDeg)`; константы: pivot 1.5, eyes 0.25 fwd /
+  ±0.0625 lat / 0.0625 up; first-person — камера +0.35 fwd / ±0.11 lat / −0.08 down.
+  `FlightBodyTransform` — pitch-наклон вокруг правой оси тела от ступней
+  (head-first к направлению полёта), затем roll вокруг body-forward.
+- `client/core/flight/FlightBodyTransform` — record `(pitchDeg, rollDeg)` + `IDENTITY`;
+  заполнит Task 8 через `FlightPoseTracker`.
+- `client/core/render/` — `BeamLook` record ЛЕЖИТ ЗДЕСЬ, не в `vfx.pattern`
+  (отступление от плана): иначе `render ↔ vfx.pattern` цикл, который ловит
+  `PackageCycleRatchetTest` — сигнатура оверлода `draw(WorldRenderContext, Vec3, Vec3,
+  float intensity, BeamLook)` неизменна, приём как у `BeamStyle`. Существующий
+  `draw(..., widthMul)` сохраняет hardcoded look через общий приватный `drawLayers`
+  (выделенные `BeamLayers` слои), поведение вызывающих не изменилось.
+- Второе отступление: тик/сброс `ScreenFlash` — static-block self-registration
+  внутри самого класса, а не вызовы из `VfxRuntime` (иначе цикл `vfx ↔ vfx.pattern`).
+  Класс грузится при первом `trigger`/`attenuation`, регистрация ленивая.
+- TDD: RED — `./gradlew test --tests '*client.core.vfx.pattern*' --tests '*HumanoidAnchorsTest'`
+  BUILD FAILED (10 compile errors, классов нет) → GREEN (12 тестов: 4 timeline,
+  2 buffer, 3 flash, 3 anchors). `PackageCycleRatchetTest` поймал 2 новых цикла —
+  устранены (см. выше), baseline не тронут.
+- Гейт: `./gradlew qualityGate --no-daemon` BUILD SUCCESSFUL ×5 подряд. Внимание:
+  `runGametest` имеет нестабильные серверные тесты — в прогонах падали по одному
+  разному (regulus mania magnets / captainamerica shield lifetime / homelander
+  uranium), ретраи зелёные; к клиентским изменениям Task 6 отношения не имеет.
+- Hero-символов в `client/core/vfx/**` + `client/core/flight/` нет; зависимостей
+  не добавлено. Рендер-пути (кольцо, лента, beam-оверлод, flash) без runClient
+  не визуализированы — смотреть при Task 8 wiring.
+- Дальше: Task 7 — `PlayerAnimator` (GeoBone head sample) и Task 8 — Homelander
+  wiring (`FlightPoseTracker` → `FlightBodyTransform`, eyes → lasers).
+
+## Visual Core + Homelander пилот — Task 7 (ветка `feat/visual-core-homelander-pilot`)
+
+Выполнен Task 7 плана `2026-09-28-visual-core-homelander-pilot.md` (player animation
+runtime). Коммит `79df46f`.
+
+- `client/core/anim/` — `AnimationClip` record `(id, lengthSeconds, loop, bones,
+  eventTimes)` с вложенным `enum Loop {OFF, WRAP, HOLD}` (`loop`: absent/null→OFF,
+  `true`→WRAP, `"hold_on_last_frame"`→HOLD), `BoneTrack` record `(rotation, position)`
+  из `Keyframes`, `Keyframes.sample(float seconds)` → `Vector3f` (клэмп вне диапазона,
+  linear + Catmull-Rom по `lerp_mode` сегмента, easing применяется к сегменту,
+  НАЧИНАЮЩЕМУСЯ на ключе — Bedrock-конвенция; реализованы настоящие Penner-кривые:
+  `easeInCubic` t³, `easeOutCubic` 1−(1−t)³, `easeOutQuad` 1−(1−t)²,
+  `easeInOutSine` (1−cos πt)/2, `easeOutSine` sin(πt/2)).
+- `BedrockAnimationParser.parse(JsonObject, Consumer<String> warn)`: id-ключ
+  `animation.<ns>.<hero>.<clip>` → `<ns>:<hero>/<clip>`; формы значений —
+  `{"vector":[x,y,z],"easing":..}`, `{pre,post,lerp_mode}` (берётся post→pre),
+  bare `[x,y,z]`, канал-одиночный ключ (t=0); любой STRING (Molang) → warn +
+  пропуск клипа (не throw); неизвестная кость → warn + игнор кости, клип жив;
+  неизвестные easing/lerp_mode → warn + LINEAR; канал `scale` → warn + игнор
+  (в контракте отсутствует — отступление зафиксировано); malformed не-строковый
+  ключ → warn + пропуск ключа; `sound_effects`/`particle_effects`/`events` →
+  `eventTimes` (обе формы: `{секунды: payload}` и `{имя: число|{"time":s}}`),
+  отсутствие — не ошибка; `animation_length` отсутствует → последний ключ.
+- `AnimationLibrary` — `SimpleSynchronousResourceReloadListener` на
+  `assets/*/player_animations/**/*.animation.json`, `get(id) -> Optional`,
+  `init()` из `SuperheroesClient` (сразу после `VfxRuntime.init()`); релоад
+  заменяет снапшот, ошибки файлов — warn+skip.
+- `PlayerAnimator` — статик по entityId, слои `Layer {BASE, ACTION}`, `play/
+  stop/sample/tick/reset` + пакетные швы `useClock`/`playClip` для тестов
+  (дефолт — счётчик `clientTicks`, +1 в `tick()`); ACTION перекрывает BASE
+  попарно по костям весом фейда; повторный `play` на слое — crossfade
+  (deque лейна, кэп 8); OFF-клип по концу фейдится за свои fadeTicks и
+  отпускает в BASE; `stop(fadeTicks)` продолжает fade-out с ТЕКУЩЕГО веса
+  (непрерывно). static-init self-registration: END_CLIENT_TICK→tick,
+  `ClientSessionState`→reset — конвенция ScreenFlash, bootstrap-вызов не нужен.
+- `PoseSample` record + `EMPTY`: merged-сэмпл хранит combined/weight векторы с
+  `weight=max(baseW,topW)`, чтобы единый `×weight` в `PlayerPoseApplier` давал
+  верный per-bone бленд при любом фейде. `PlayerPoseApplier.apply` — флипы
+  GeckoLib Bedrock→Java точно по спеке (xRot += −rad(x), yRot += −rad(y),
+  zRot += rad(z); офсеты x += −px.x, y += −px.y, z += px.z), взвешенно.
+- `PlayerModelPoseMixin`: новый блок в TAIL `setupAnim` — `sample(entityId,
+  partialTick)` → `PlayerPoseApplier.apply` при непустом сэмпле, затем re-copy
+  `hat/jacket/leftSleeve/rightSleeve/leftPants/rightPants` (кадры-приложения
+  после статичных поз выше по коду — преднамеренно: клип перекрывает их).
+  partialTick — `Minecraft.getInstance().getTimer()
+  .getGameTimeDeltaPartialTick(true)` (в 1.21.1-маппингах нет `getDeltaTracker()`).
+- `HomelanderAssetContractTest.contractClipsSurviveTheRuntimeParser`: все 14
+  контрактных клипа парсятся с НУЛЕМ ворнингов и дают ожидаемый id
+  `superheroes:homelander/<clip>` — PASS.
+- TDD: RED — `test --tests '*client.core.anim*' --tests '*HomelanderAssetContractTest*'`
+  BUILD FAILED (67 compile errors, классов нет) → GREEN (10 новых тестов +
+  контрактный). Гейт: `./gradlew qualityGate --no-daemon` BUILD SUCCESSFUL
+  с первого прогона (runGametest зелёный, флейка не ловилась).
+- Hero-символов в `client/core/anim/**` нет; зависимостей не добавлено.
+- Дальше: Task 8 — Homelander flight wiring (`FlightPoseTracker` →
+  `FlightBodyTransform` + flight_* клипы на BASE-слое `PlayerAnimator`).
+
+## Visual Core + Homelander пилот — Task 8 (ветка `feat/visual-core-homelander-pilot`)
+
+Выполнен Task 8 плана `2026-09-28-visual-core-homelander-pilot.md` (continuous flight
+pose + Homelander flight presentation). Коммит `f42bb3f`.
+
+- `client/core/flight/` — `FlightPoseMath` (pure: `target` по фазе — HOVER 0–10°
+  по скорости, CRUISE 15–55°, BOOST 80°, остальные 0; знак по vy; roll =
+  clamp(−yawRate×2.5, ±25°); `step` = экспонента `1−2^(−dt/halfLife)`, half-life 3),
+  `FlightPoseTracker` (трек по `entitiesForRendering` + `ClientFlightState` +
+  `SkinResolver.heroIdFor` → `FlightPresentations.of`; transform(id, partial)
+  лерпит previous→current; velocity из дельты позиции — работает и для remote;
+  BASE-клипы stop+play с 4-тик кроссфейдом, takeoff/land на ACTION; луп-звук —
+  свой `FlightLoopSound extends AbstractTickableSoundInstance`, volume ∝
+  horizontalSpeed; trail-эффект спавнится один раз на вход CRUISE/BOOST;
+  cleanup: отпускает lane/звук и удаляет запись, когда сущность ушла или
+  `ClientFlightState` пуст), `FlightPresentation` record (11 компонент),
+  `FlightPresentations` реестр.
+- `HeroClientContext.flightPresentation` → `CoreClientContext` регистрирует в
+  `FlightPresentations`. `SuperheroesClient`: `FlightPoseTracker.init()` после
+  `AnimationLibrary.init()`.
+- `PlayerRendererMixin.setupRotations` TAIL: `mulPose(XP,−pitch)` + `mulPose(ZP,−roll)`
+  вокруг entity origin (feet pivot — сознательное отступление от «body center»
+  в спеке: anchors и тест `eyesFollowFlightTilt` требуют feet pivot).
+  `PlayerModelPoseMixin`: статичная поза ног только если у героя игрока нет
+  `FlightPresentation`.
+- `HomelanderVfxIds` (11 id), `HomelanderFx` — регистрационный хаб (Task 8:
+  LANDING→`FlightFx.landing`, trail/boost эффекты, `FlightPresentation` с
+  клипами homelander/flight_* и звуками `HomelanderSounds.FLIGHT_*`);
+  `FlightFx` — трейлы от рук/ног (4 `TrailPattern`, self-finish при выходе из
+  CRUISE/BOOST), boost-бёрст + `ShockwavePattern`, лендинг-композит
+  (`ImpactPattern` + кольцо + `homelander.flight.land` — единый лендинг-звук).
+- `HomelanderHero.onLanded`: все `sendParticles` + тирный `playSound` заменены на
+  `VfxFx.event(player, LANDING, pos, pos, scale)`; tier по-прежнему управляет
+  scale. `ShockwaveUtil.detonate` получил `suppressPresentation`-оверлоад
+  (старые сигнатуры сохранены): пропускает ВЕСЬ presentation-хвост (все
+  частицы + звуки), оставляет damage/block-break/`ScreenShakeS2CPayload`.
+- `SkinResolver.heroIdFor` стал public (шов remote-hero для трекера/миксина);
+  `HumanoidAnchors.tiltedPoint` — новый хелпер для якорей конечностей.
+- TDD: RED (7 ошибок компиляции — классов не было) → GREEN; `qualityGate
+  --no-daemon` BUILD SUCCESSFUL. Gametest-флейка: два прогона падали на РАЗНЫХ
+  Regulus-тестах (maniaOfGreed… / greedsEmbrace…), база чистая, третий прогон —
+  362/362 PASS. `hero_presentation.txt` не тронут.
+- Реализационные отступления (см. task-8-report): feet-pivot вместо body-center;
+  `IronFistsController.detonate` оставлен без suppress (его презентацию меняет
+  Task 11); trail — один VfxEffect на активацию вместо спавна каждый тик.
+
+## Visual Core + Homelander пилот — Task 9 (ветка `feat/visual-core-homelander-pilot`)
+
+Выполнен Task 9 плана `2026-09-28-visual-core-homelander-pilot.md` (eye lasers на
+VFX-канале). Ветка содержит коммит `feat(homelander): eye lasers on VFX channel…`.
+
+- `EyeLasersAbility`: все презентационные хвосты убраны — `BeamFx.laser`,
+  `LASER_SPARK` sendParticles и все три vanilla-звука (`BLAZE_SHOOT`,
+  `GUARDIAN_ATTACK`, `BEACON_AMBIENT`). Новый `ACTIVE_TICK` счётчик идёт
+  сквозь ураниевые паузы; на нём `VfxFx.channel(LASER)` шлёт START на
+  активации (текущий raycast-end из `fireBeam`), UPDATE каждые 2 тика
+  (`EyeLaserPhases.shouldSendUpdate` — `% CHANNEL_UPDATE_INTERVAL_TICKS`,
+  паузы не паузят поток → таймаут канала 10 тиков не срабатывает), STOP на
+  деактивации. `fireBeam` геймплейно байт-в-байт: hurt/madness explode/ignite/
+  огненное кольцо на тех же fire-тиках с тика 0; raycast выделен в общий
+  `BeamRaycast` (клип + entity-hit → chest).
+- `EyeLaserChannel` (client, `VfxChannelEffect`): два луча
+  `HumanoidAnchors.eyes(source, partial, FlightPoseTracker.transform, headAnim)`
+  → конец; конец для local = собственный клиентский raycast каждый кадр,
+  для remote = серверный end с лерпом за 2 тика; impact-эффект (`ImpactPattern`
+  + точечный свет) раз в 3 тика; `PhaseTimeline(6,8)` интенсивность;
+  ACTION-клипы `laser_charge` → `laser_hold` → `laser_release`; звуки —
+  charge/loop(entity-bound `LaserLoopSound`)/release; в madness ширина/яркость
+  умножаются (`madnessWidthMul`/`madnessIntensity` из params).
+- `HomelanderVfxIds` переехал в `hero.homelander.vfx` — импорт из
+  `hero.homelander.ability` замыкал новый 2-цикл `hero.homelander <->
+  hero.homelander.ability` (PackageCycleRatchetTest отверг). Тот же цикл
+  ждал бы Task 10–12 — листовой сабпакет лечит для всех.
+- `LocalLaserOverlay` удалён; `HomelanderClientModule` регистрирует
+  `ctx.vfxChannel(LASER, EyeLaserChannel::new)` через `HomelanderFx`.
+  `STYLE_LASER` остаётся — босс-луч шлёт `BeamFx.laser`
+  (HomelanderEyeLaserGoal:155), комментарий в коде.
+- Ассеты: `vfx/homelander/laser.json` (BeamLook + impact + свет + звуки),
+  quasar-эффект `homelander_laser_impact` (shape/particle/particle_data/color).
+- TDD: RED — `EyeLaserPhasesTest` compile-fail + gametest
+  `eyeLaserBroadcastsStartUpdateStop` «condition never became true» → GREEN;
+  gametest-лейн требует регистрации класса в `src/gametest/resources/
+  fabric.mod.json` (entrypoints.fabric-gametest). `qualityGate --no-daemon`
+  BUILD SUCCESSFUL. `hero_presentation.txt` не тронут.
+- Отступления: `BeamPattern` noise остался на `System.currentTimeMillis()` —
+  `VfxChannelFactory.open` не получает seed (он живёт только в VfxSpawn),
+  протягивание = рефактор сигнатуры, вне скоупа.
+- Дальше: Task 10 — madness `level.explode` + `detonateSun` на
+  `SilentParticles`/`VfxFx`.
+
+## Completed this session (Visual Core pilot — Task 10)
+
+- `SilentParticles.SILENT` (`superheroes:silent`) — пустой `textures` в
+  `particles/silent.json` + no-op provider в `CoreFx.init()` (provider
+  возвращает null; `ParticleEngine` это обрабатывает — `NoRenderParticle`
+  недоступен, ctor protected). Подставляется в 1.21.1-оверлоад
+  `Level.explode(..., ParticleOptions small, ParticleOptions large,
+  Holder<SoundEvent>)` вместе с `wrapAsHolder(ModSounds.SILENT)` там, где
+  визуалом владеет VFX-событие.
+- Серверные send-site'ы: `MilkBottleItem.use()` — серверный guard +
+  `VfxFx.event(MILK_DRINK)`, drink/eat-звуки → `SILENT`, `WITHER_SPAWN` из
+  `finishUsingItem` убран. `HomelanderMadnessAftermathController` —
+  `eventAround(SUN_CHARGE, 96)` на старте и `eventAround(SUN_DETONATION, 160)`
+  как единственный владелец `homelander.sun.detonate`; END_ROD/SMALL_FLAME/
+  beacon/visual-lightning/thunder-плейсхолдеры удалены; оба `explode`
+  (12f/7f MOB) переведены на silent-оверлоад — урон/огонь/разрушение
+  byte-identical. `HomelanderMadnessFlightController` — `VfxFx.event(
+  MADNESS_CRASH, scale 0.35)` на точке лома; sendParticles + GENERIC_EXPLODE
+  убраны. `EyeLasersAbility` — оба madness-`explode` на silent-оверлоад.
+- Клиент: `SunChargeFx` — 200-тиковая аура (свет 4→22 радиуса, эмбер-эмиттер,
+  heat-distortion, BASE-клип `sun_charge`, entity-bound звук с рампом
+  громкости/питча, камерный тремор для игроков < 32). Событие идёт
+  `eventAround` (NO_SOURCE) — эффект биндится к ближайшему игроку в радиусе 3
+  от origin, иначе позиционный фолбэк. `SunDetonationFx` — ScreenFlash по
+  `attenuation(dist,160,LOS)·scale`, core-light 48 с затуханием 60 тиков, 2
+  shock-кольца, distortion-пульс, ember/debris эмиттеры,
+  `CameraImpulse.shake(1.6·att, 30)`; стинг `homelander.sun.detonate` только
+  для `SUN_DETONATION` — `MADNESS_CRASH` переиспользует композицию с
+  `scale=0.35`, без стинга. `MILK_DRINK` — one-shot в `HomelanderFx`:
+  ACTION-клип `milk_drink` + bound `homelander.milk.drink`.
+- Ассеты: `vfx/homelander/{sun_charge,sun_detonation}.json`, quasar-эмиттеры
+  `homelander_sun_{ember,debris}` (+shape/particle/particle_data; цвет —
+  существующие `homelander_gold`/`homelander_dust`).
+- Тесты: `HomelanderNoVanillaParticlesTest.CLEANED` += MilkBottleItem,
+  HomelanderMadnessAftermathController, HomelanderMadnessFlightController
+  (EyeLasersAbility уже был). GameTest `sunDetonationKeepsGameplayAndSendsVfx`
+  — блоки в радиусе ломаются, ровно одно событие `sun_detonation`,
+  `LightningBolt` не спавнится.
+- Подводный камень: wire-игроки (EmbeddedChannel) в gametest НЕ тикаются как
+  LivingEntity — `MobEffectInstance` длительность не убывает; тест
+  прокручивает `aftermath.tick(player, ...)` вручную до границы детонации.
+- RED→GREEN подтверждено; `runGametest` — 364/364 (maniaofgreedmagnets и
+  shieldthrowrestorestheshield флаки — проходят на перезапуске);
+  `qualityGate --no-daemon` BUILD SUCCESSFUL. `hero_presentation.txt`
+  не тронут, Veil-импортов в src/main нет.
+- Дальше: Task 11/12 по плану; runClient-проверка sun-композиций не делалась
+  (headless) — только code review.
+
+## Completed this session (Visual Core pilot — Task 11)
+
+- Iron Fists на Visual Core: `IronFistsController` — aura-интервал теперь
+  шлёт `VfxFx.event(IRON_FISTS_ON)` каждые 4 тика (клиент дедупит повторные
+  в один бегущий эффект — так aura видна и поздно подключившимся трекерам);
+  hit-ветка — `VfxFx.event(IRON_FISTS_HIT, scale=SHOCKWAVE_RADIUS)` вместо
+  END_ROD/CRIT/`playSound(IRON_FISTS_IMPACT)`; `ShockwaveUtil.detonate` —
+  `suppressPresentation=true` (damage/knockback/ScreenShakeS2CPayload
+  сохранены, ванильный взрыв выключен — как у landing); `markDeactivated`
+  шлёт `IRON_FISTS_OFF`; `SHOCKWAVE_RADIUS` → package-private; серверные
+  charge-loop `playSound` и `spawnHandAura` удалены. `IronFistsAbility` —
+  tryActivate/onDeactivate очищены от ванильных звуков/частиц (события
+  владеют `homelander.iron_fists.*`).
+- Клиент `IronFistsFx`: `activate` — аура 200 тиков (`DURATION_TICKS`),
+  два эмиттера `homelander_iron_fists_hand` на якорях рук
+  (`HumanoidAnchors.tiltedPoint`, lateral ±0.34 / up 1.0 / fwd 0.15,
+  tilt-aware через `FlightPoseTracker`), ACTION-клип
+  `iron_fists_activate`, звук activate + entity-bound loop charge;
+  дедуп по `Map<entityId,aura>` (повторный ON → factory null → spawn
+  дропается). `deactivate` — cancel ауры. `hit` — `ShockwavePattern`
+  (радиус = scale·ringRadius), `ImpactPattern` (`surfaceOffset`,
+  distortion), `CameraImpulse` по близости, ACTION-клип `iron_fists_strike`,
+  звук impact.
+- Ассеты: `vfx/homelander/iron_fists.json`; quasar-квартеты
+  `homelander_iron_fists_{hand,impact}` (sprite `vfx/homelander/ember.png`,
+  цвет `homelander_gold`).
+- Тесты: `HomelanderNoVanillaParticlesTest.CLEANED` += IronFistsAbility +
+  IronFistsController — RED (оба файла флагались) → GREEN после реализации;
+  `qualityGate --no-daemon` BUILD SUCCESSFUL с первого прогона (runGametest
+  без флаков). `hero_presentation.txt` не тронут, геймплей
+  (dash/damage/knockback/shockwave) byte-identical, Veil-импортов в
+  src/main нет.
+- Дальше: Task 12+ по плану; runClient-проверка не делалась (headless).
+
+## Completed this session (Visual Core pilot — Task 12)
+
+- Clap + Roar на Visual Core: `HandClapAbility` — активация шлёт
+  `VfxFx.event(CLAP, eye, eye+forward·RANGE, 1)` вместо EXPLOSION/CLOUD/
+  LARGE_SMOKE `sendParticles`, `playSound(HAND_CLAP)` и ванильных
+  LIGHTNING_BOLT_THUNDER/GENERIC_EXPLODE слоёв; proximity
+  `ScreenShakeS2CPayload` убран вместе с ними — тряской теперь владеет
+  `ClapFx` (те же intensity 1.8·(1−d/24), 16 тиков, иначе был бы дабл-шейк).
+  `StunningRoarAbility` — `VfxFx.event(ROAR, mouth, mouth+forward·RADIUS, 1)`
+  вместо SONIC_BOOM/EXPLOSION/LARGE_SMOKE, `playSound(ROAR/ROAR_DEEP)` и
+  shake-пейлоуда (rumble через `RoarFx`). Геймплей (knockback/stun/radius/
+  damage/darkness/cooldown) byte-identical.
+- Клиент `ClapFx`: ACTION-клип `clap`, entity-bound `homelander.hand_clap`
+  (vol 2.0), на `contact` — flash-light между рук (затухание 8 тиков),
+  `ImpactPattern`-бёрст с distortion-пульсом, `ShockwavePattern`-кольцо,
+  dust-эмиттеры вперёд по конусу (10 шагов × 1.5 блока) + пыль у ног,
+  `CameraImpulse` по близости. Отклонение по контракту: в поставленном
+  `clap.animation.json` пока нет `contact`-event — вспышка привязана к
+  `contactSeconds=0.083` (ключ кадр сведения рук 0.0833с, внутри окна
+  ≤120мс от старта клипа); как только клип принесёт `eventTimes`, код сам
+  переключится на него.
+- Клиент `RoarFx`: ACTION-клип `roar`, оба контрактных звука слоями как
+  раньше (`homelander.roar` vol 1.6 + `homelander.roar.deep` vol 1.0,
+  entity-bound), рот реанкорится к энтити каждый тик (eye+view·0.6),
+  кольца `ShockwavePattern` + эмиттер `homelander_roar_wave` маршируют по
+  взгляду каждые 3 тика (~1500мс = длина клипа), distortion-пульс каждые
+  10 тиков, пыль у ног каждые 5, низкий rumble-shake по близости.
+- Ассеты: `vfx/homelander/{clap,roar}.json`; quasar-квартеты
+  `homelander_clap_{flash,dust}` и `homelander_roar_{wave,dust}` (спрайты
+  `vfx/homelander/shock_ring.png` + `particle/white_boom_0.png`; новый цвет
+  `homelander_shock` — холодный бело-голубой для хлопка и рыка).
+- Тесты: `HomelanderNoVanillaParticlesTest.CLEANED` += HandClapAbility +
+  StunningRoarAbility — RED (оба файла флагались) → GREEN. Binding-check
+  `rg -n 'sendParticles|ParticleTypes\.' src/main/.../hero/homelander` —
+  EMPTY: hero-дерево в src/main полностью очищено от ванильной презентации.
+  `qualityGate --no-daemon` BUILD SUCCESSFUL (364/364 gametests, datagen
+  без диффа), `hero_presentation.txt` не тронут.
+- Дальше: Task 13 по плану; runClient-проверка не делалась (headless).
+## Completed this session (Visual Core pilot — Task 13)
+
+- `core/vfx/VfxShowcases` — серверный hero-agnostic реестр showcase-сцен:
+  `register(id, VfxShowcase)` / `get` / `ids`; `VfxShowcase.run(ServerPlayer, count)`.
+- `/superheroes vfx` (perm 2) в `SuperheroesCommands`: `play <effect> [scale]`
+  — `eventAround` на look-target (pick 160), радиус 160; `scene <id> [count≤64]`
+  с suggest по `VfxShowcases.ids()`; `stress <count>` — `homelander/combat`
+  (fallback — первый id по toString), >64 → `vfx.stress.too_many`, ничего не
+  шлётся; `hud on|off` — `VfxEventS2CPayload(superheroes:debug/hud)` только
+  вызывавшему, состояние закодировано в `scale` (1/0) — детерминировано,
+  а не blind-toggle.
+- `hero/homelander/HomelanderShowcases` (зарегистрирован из `HomelanderModule`):
+  `flight_path`/`lasers`/`lasers_flying` дёргают реальный `AbilityRouter.activate`
+  (ensureHomelander — best-effort transform + взлётный импульс), `sun_detonation`
+  — только event, без взрыва (visual-only), `combat` — IRON_FISTS_HIT (scale
+  `SHOCKWAVE_RADIUS`, сделан public) + CLAP + ROAR на кольце из count точек.
+- Клиент `core/vfx/debug/`: `VfxPerfProbe` (окно 600 кадров, avgFps /
+  onePercentLowFps / frame-ms) и `VfxDebugHud` (эффекты, открытые каналы,
+  Veil on/off, FPS-статы; фрейм-тайминги снимаются внутри HUD-render вызова,
+  слой 900). `VfxRuntime.openChannelCount()` — минимальный аксессор.
+  init — `SuperheroesClient` (hero-agnostic core bootstrap).
+- Тесты: `VfxPerfProbeTest` (avg≈97/1%-low≈20, окно сбрасывает старое);
+  `VfxShowcaseGameTests` — scene вещает обоим игрокам в 20 блоках,
+  `stress 1000` → ошибка и пустой канал. RED подтверждён (compile fail),
+  GREEN: 364/364 gametests, `qualityGate --no-daemon` BUILD SUCCESSFUL.
+- Отклонения: `HomelanderShowcases` лежит в `hero.homelander` (не `.vfx`) —
+  иначе новый package-цикл `hero.homelander <-> hero.homelander.vfx`;
+  on/off вместо toggle; scene count — повторения по кольцу.
+- Дальше: Task 14 по плану; runClient-проверка не делалась (headless).
+## Completed this session (Visual Core pilot — fourth-session review, spec §14 Stream B)
+
+- Абсолютное ревью ветки `feat/visual-core-homelander-pilot` (32 коммита над main, 231 файл): все 9 областей §14.4 проверены, отчёт — `docs/design/visual-core-homelander/fourth-session-review.md`.
+- Три реальных дефекта найдены и исправлены (`fix(vfx)` коммиты с воспроизводящими тестами):
+  - `b717b06` — `PlayerAnimator.stop` гасил ВСЮ полосу слоя: SunChargeFx убивал `flight_*` BASE-луп, трекер полёта убивал `sun_charge`, EyeLaserChannel на DONE/cancel сносил чужие ACTION-клипы; `release()` никогда не гасил WRAP `laser_hold` (маскировалось лейн-киллом). Теперь `stop(entityId, layer, fadeTicks, clipIds...)` — по-клипово.
+  - `c0c2b1a` — легаси `FlightTrailManager` (ванильные END_ROD/CLOUD) работал и для Homelander → двойной след поверх FlightFx-лент. `FlightPoseTracker` маркирует presentation-owned в `ClientFlightState` (без package-цикла fx⇄core), трейл-менеджер их пропускает.
+  - `308515e` — `VeilPostEffects`/`FallbackVfxBackend` пинили вспышку на пике: 60-тиковый фейд ScreenFlash рисовался ~3с на максимуме + хвост. Новый `FlashEnvelope` (feed принимается при `intensity >= shown`) делится обоими бэкендами.
+- Тесты: `PlayerAnimatorTest` +2 (per-clip stop, fade-sibling), `FlashEnvelopeTest` (6 кейсов), `ClientFlightStateTest` (mark/unmark/clearAll). `qualityGate --no-daemon` BUILD SUCCESSFUL — test, 364/364 gametests, arch-baseline, jar-isolation, datagen-verify.
+- Паркованное не трогал (BeamPattern noise-seed, `VfxSpawn.seed` unread, roar shake 0.8 vs 2.0 — настройка в params, не контракт).
+- Вердикт: **Pilot ready for final integration**; §16 gaps — только ожидаемые OMP-блокировки.
+## Completed this session (Visual Core pilot — Task 15, final acceptance)
+
+- OMP gate: FAILED — реализационной OMP-ветки нет вообще; `omp-review.md` отсутствует на всех ref'ах, в манифесте все 18 placeholder-строк живые. Gap зафиксирован в `docs/design/visual-core-homelander/verification.md`, Steps 3 (merge+contract tests) и 5-final-assets не выполнимы.
+- Step 4 tuning: `roar.json` `ringSpacing` 1.5→1.1 (кольца выплёвывались ~15.7b при радиусе урона 12b → теперь ~12.1b). Остальные parked-minors — без дефектов в свежих записях, не тронуты.
+- Step 5: `da47948..HEAD` — три фикса параллельного ревью (b717b06 per-clip stop, c0c2b1a legacy trail off, 308515e FlashEnvelope). Перепроверено в игре на 1b58334: ленты трейла спавнятся и рендерятся (`effects: 1` в CRUISE), белая ванильная колонна исчезла, флэш детонации плавно затухает, лазеры гасятся на релизе. Механика подтверждена временным логом (revert): телепорты дают hSpeed=0 → фаза HOVER → трейла нет; нужен реальный ввод. На границе 0.08 b/t фаза флапает CRUISE↔HOVER → трейл мигает (minor, запарковано).
+- Step 6: все 5 сцен §15 пересняты/подтверждены на `1b58334`, таблица в verification.md — 5×PASS (bounded: placeholder-ассеты, llvmpipe). §16 DoD gap: только OMP-строки + ~100 FPS на Sodium-железе.
+- Риг: tmux `vfx-server` + runClient Player758; `pin-energy` убит, полёт/лазеры выключены.

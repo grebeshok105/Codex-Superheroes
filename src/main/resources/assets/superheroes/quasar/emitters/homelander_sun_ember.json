@@ -1,0 +1,11 @@
+{
+  "max_lifetime": 20,
+  "loop": false,
+  "rate": 1,
+  "count": 24,
+  "emitter_settings": {
+    "shape": "superheroes:homelander_sun_ember",
+    "particle_settings": "superheroes:homelander_sun_ember"
+  },
+  "particle_data": "superheroes:homelander_sun_ember"
+}

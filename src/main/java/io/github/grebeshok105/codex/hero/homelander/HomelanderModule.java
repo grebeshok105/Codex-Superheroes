@@ -63,6 +63,7 @@ public final class HomelanderModule implements HeroModule {
 		ctx.ticks().player(UraniumOffhandController::tickPlayer);
 		ctx.lifecycle().onHeroTransformed(HomelanderReactionRule::onTransformed);
 		FlightProfiles.registerModifier(HomelanderHero.ID, new HomelanderFlightModifier());
+		HomelanderShowcases.register();
 		// Homelander's own ability rules: his MADNESS_AFTERMATH blocks casting silently;
 		// while MADNESS (milk) is up his abilities are free. Order preserved.
 		AbilityRules.blocker((player, id) -> HomelanderEffects.isAftermath(player) ? AbilityDenial.SILENT : null);

@@ -1,5 +1,6 @@
 package io.github.grebeshok105.codex.client.fx;
 
+import io.github.grebeshok105.codex.core.particle.SilentParticles;
 import io.github.grebeshok105.codex.particle.ModParticles;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
@@ -51,6 +52,10 @@ public final class CoreFx {
 				sprites -> new CustomParticleGate(sprites, EndRodParticle.Provider::new));
 		ParticleFactoryRegistry.getInstance().register(ModParticles.MOONVEIL,
 				sprites -> new CustomParticleGate(sprites, EndRodParticle.Provider::new));
+		// superheroes:silent mutes vanilla explosion particles — the provider
+		// returns null so nothing renders (ParticleEngine handles a null result).
+		ParticleFactoryRegistry.getInstance().register(SilentParticles.SILENT,
+				(type, level, x, y, z, xSpeed, ySpeed, zSpeed) -> null);
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			ScreenShakeManager.tick();

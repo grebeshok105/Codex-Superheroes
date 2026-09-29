@@ -1,7 +1,11 @@
 package io.github.grebeshok105.codex.content.command;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
+import io.github.grebeshok105.codex.core.net.VfxEventS2CPayload;
+import io.github.grebeshok105.codex.core.net.VfxFx;
 import io.github.grebeshok105.codex.core.transform.HeroDataStore;
+import io.github.grebeshok105.codex.core.vfx.VfxShowcases;
 import io.github.grebeshok105.codex.content.admin.AdminAbilityDebug;
 import io.github.grebeshok105.codex.content.admin.AdminAttachments;
 import io.github.grebeshok105.codex.content.admin.AdminBuildSyncController;
@@ -22,8 +26,12 @@ import net.minecraft.commands.arguments.ResourceLocationArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.Vec3;
+
+import java.util.Comparator;
 
 final class SuperheroesCommands {
 	private static final SuggestionProvider<CommandSourceStack> HERO_SUGGESTIONS =
@@ -32,6 +40,16 @@ final class SuperheroesCommands {
 	private static final SuggestionProvider<CommandSourceStack> HORDE_TYPE_SUGGESTIONS =
 			(ctx, builder) -> SharedSuggestionProvider.suggest(
 					io.github.grebeshok105.codex.content.horde.entity.HordeEntities.SPAWNABLE.keySet(), builder);
+
+	private static final SuggestionProvider<CommandSourceStack> VFX_SCENE_SUGGESTIONS =
+			(ctx, builder) -> SharedSuggestionProvider.suggestResource(VfxShowcases.ids(), builder);
+
+	private static final ResourceLocation DEBUG_HUD_EFFECT = ModId.of("debug/hud");
+	/** The stress scene — the heaviest registered scene; a literal since content must not import hero. */
+	private static final ResourceLocation STRESS_SCENE = ModId.of("homelander/combat");
+	private static final int STRESS_CAP = 64;
+	private static final double VFX_PLAY_RANGE = 160.0;
+	private static final double VFX_BROADCAST_RADIUS = 160.0;
 
 	private SuperheroesCommands() {
 	}
@@ -97,6 +115,29 @@ final class SuperheroesCommands {
 												.executes(ctx -> hordeSpawn(ctx, 1))
 												.then(Commands.argument("count", IntegerArgumentType.integer(1, 50))
 														.executes(ctx -> hordeSpawn(ctx, IntegerArgumentType.getInteger(ctx, "count")))))))
+						.then(Commands.literal("vfx")
+								.then(Commands.literal("play")
+										.then(Commands.argument("effect", ResourceLocationArgument.id())
+												.executes(ctx -> vfxPlay(ctx, 1f))
+												.then(Commands.argument("scale", FloatArgumentType.floatArg(0.01f))
+														.executes(ctx -> vfxPlay(ctx,
+																FloatArgumentType.getFloat(ctx, "scale"))))))
+								.then(Commands.literal("scene")
+										.then(Commands.argument("id", ResourceLocationArgument.id())
+												.suggests(VFX_SCENE_SUGGESTIONS)
+												.executes(ctx -> vfxScene(ctx, 1))
+												.then(Commands.argument("count", IntegerArgumentType.integer(1, STRESS_CAP))
+														.executes(ctx -> vfxScene(ctx,
+																IntegerArgumentType.getInteger(ctx, "count"))))))
+								.then(Commands.literal("stress")
+										.then(Commands.argument("count", IntegerArgumentType.integer(0))
+												.executes(ctx -> vfxStress(ctx,
+														IntegerArgumentType.getInteger(ctx, "count")))))
+								.then(Commands.literal("hud")
+										.then(Commands.literal("on")
+												.executes(ctx -> vfxHud(ctx, true)))
+										.then(Commands.literal("off")
+												.executes(ctx -> vfxHud(ctx, false)))))
 						.then(Commands.literal("abilities")
 								.executes(SuperheroesCommands::listAbilities))
 						.then(Commands.literal("info")
@@ -357,6 +398,82 @@ final class SuperheroesCommands {
 		int finalCount = count;
 		ctx.getSource().sendSuccess(() -> Component.translatable("commands.superheroes.admin_build.given", finalCount), false);
 		return count;
+	}
+
+	// ───────────────────────────── vfx showcase / debug ─────────────────
+
+	/** Broadcasts the requested effect at the caller's look target so every nearby client sees it. */
+	private static int vfxPlay(CommandContext<CommandSourceStack> ctx, float scale) {
+		ServerPlayer player = playerOrNull(ctx);
+		if (player == null) {
+			return 0;
+		}
+		ResourceLocation effect = ResourceLocationArgument.getId(ctx, "effect");
+		Vec3 target = player.pick(VFX_PLAY_RANGE, 0f, false).getLocation();
+		VfxFx.eventAround(player.serverLevel(), effect, target, target, scale, VFX_BROADCAST_RADIUS);
+		ctx.getSource().sendSuccess(() -> Component.translatable("commands.superheroes.vfx.play",
+				effect.toString(), String.format("%.2f", scale)), true);
+		return 1;
+	}
+
+	private static int vfxScene(CommandContext<CommandSourceStack> ctx, int count) {
+		ServerPlayer player = playerOrNull(ctx);
+		if (player == null) {
+			return 0;
+		}
+		ResourceLocation id = ResourceLocationArgument.getId(ctx, "id");
+		VfxShowcases.VfxShowcase scene = VfxShowcases.get(id);
+		if (scene == null) {
+			ctx.getSource().sendFailure(Component.translatable(
+					"commands.superheroes.vfx.scene.unknown", id.toString()));
+			return 0;
+		}
+		scene.run(player, count);
+		ctx.getSource().sendSuccess(() -> Component.translatable(
+				"commands.superheroes.vfx.scene.done", id.toString(), count), true);
+		return count;
+	}
+
+	private static int vfxStress(CommandContext<CommandSourceStack> ctx, int count) {
+		ServerPlayer player = playerOrNull(ctx);
+		if (player == null) {
+			return 0;
+		}
+		if (count > STRESS_CAP) {
+			ctx.getSource().sendFailure(Component.translatable(
+					"commands.superheroes.vfx.stress.too_many", count));
+			return 0;
+		}
+		ResourceLocation id = VfxShowcases.get(STRESS_SCENE) != null ? STRESS_SCENE
+				: VfxShowcases.ids().stream().min(Comparator.comparing(ResourceLocation::toString))
+						.orElse(null);
+		if (id == null) {
+			ctx.getSource().sendFailure(Component.translatable(
+					"commands.superheroes.vfx.scene.unknown", STRESS_SCENE.toString()));
+			return 0;
+		}
+		VfxShowcases.get(id).run(player, count);
+		final ResourceLocation ran = id;
+		ctx.getSource().sendSuccess(() -> Component.translatable(
+				"commands.superheroes.vfx.stress.done", ran.toString(), count), true);
+		return count;
+	}
+
+	/** Sends the {@code superheroes:debug/hud} one-shot to the caller — the client factory flips the HUD. */
+	private static int vfxHud(CommandContext<CommandSourceStack> ctx, boolean enabled) {
+		ServerPlayer player = playerOrNull(ctx);
+		if (player == null) {
+			return 0;
+		}
+		Vec3 pos = player.position();
+		ServerPlayNetworking.send(player, new VfxEventS2CPayload(DEBUG_HUD_EFFECT,
+				VfxEventS2CPayload.NO_SOURCE, pos, pos, enabled ? 1f : 0f,
+				player.level().random.nextInt()));
+		ctx.getSource().sendSuccess(() -> Component.translatable("commands.superheroes.vfx.hud",
+				Component.translatable(enabled
+						? "commands.superheroes.state.on"
+						: "commands.superheroes.state.off")), false);
+		return enabled ? 1 : 0;
 	}
 
 	private static ServerPlayer playerOrNull(CommandContext<CommandSourceStack> ctx) {

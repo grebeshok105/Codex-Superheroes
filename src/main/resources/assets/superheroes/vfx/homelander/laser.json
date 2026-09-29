@@ -1,0 +1,21 @@
+{
+  "coreWidth": 0.05,
+  "glowWidth": 0.18,
+  "coreColor": "#FFFFF3E8",
+  "glowColor": "#8CFF3C14",
+  "noise": 0.35,
+  "madnessWidthMul": 2.4,
+  "madnessIntensity": 1.3,
+  "surfaceOffset": 0.05,
+  "distortionRadius": 0.8,
+  "distortionStrength": 0.35,
+  "lightColor": "#FF6A3C",
+  "lightRadius": 7.0,
+  "lightBrightness": 0.85,
+  "chargeVolume": 0.9,
+  "chargePitch": 1.0,
+  "loopVolume": 0.7,
+  "loopPitch": 1.0,
+  "releaseVolume": 0.9,
+  "releasePitch": 1.0
+}

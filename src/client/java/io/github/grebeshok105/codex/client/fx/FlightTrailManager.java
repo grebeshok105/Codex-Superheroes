@@ -26,6 +26,10 @@ public final class FlightTrailManager {
 			if (ClientFlightState.get(player.getId()) == null) {
 				continue;
 			}
+			if (ClientFlightState.isPresentationOwned(player.getId())) {
+				// A FlightPresentation owns this player's trail (see FlightPoseTracker).
+				continue;
+			}
 			Vec3 velocity = player.getDeltaMovement();
 			if (velocity.lengthSqr() < MIN_SPEED_SQR) {
 				continue;

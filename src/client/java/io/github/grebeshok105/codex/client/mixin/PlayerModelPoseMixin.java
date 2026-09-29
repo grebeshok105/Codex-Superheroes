@@ -2,7 +2,13 @@ package io.github.grebeshok105.codex.client.mixin;
 
 import io.github.grebeshok105.codex.client.ClientFlightState;
 import io.github.grebeshok105.codex.client.ClientThinkMarkState;
+import io.github.grebeshok105.codex.client.core.anim.PlayerAnimator;
+import io.github.grebeshok105.codex.client.core.flight.FlightPresentations;
+import io.github.grebeshok105.codex.client.core.render.SkinResolver;
+import io.github.grebeshok105.codex.client.core.anim.PlayerPoseApplier;
+import io.github.grebeshok105.codex.client.core.anim.PoseSample;
 import io.github.grebeshok105.codex.mechanic.flight.FlightPhase;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.world.entity.LivingEntity;
@@ -29,10 +35,12 @@ public abstract class PlayerModelPoseMixin<T extends LivingEntity> {
 		}
 		PlayerModel<?> model = (PlayerModel<?>) (Object) this;
 
-		// --- статичная поза ног в полёте (для всех летающих героев) ---
+		// --- статичная поза ног в полёте (для летающих героев без FlightPresentation;
+		//     герои с презентацией получают позу от PlayerAnimator-клипов) ---
 		ClientFlightState.State flight = ClientFlightState.get(player.getId());
 		if (flight != null && flight.phase() != FlightPhase.IDLE && flight.phase() != FlightPhase.LANDING
-				&& !player.isCrouching()) {
+				&& !player.isCrouching()
+				&& FlightPresentations.of(SkinResolver.heroIdFor(player)).isEmpty()) {
 			// ноги прямые, вместе, слегка отведены назад — стабильная «полётная» поза,
 			// перекрывает остаточный limbSwing от прыжка/падения
 			float back = -0.22f;
@@ -57,6 +65,20 @@ public abstract class PlayerModelPoseMixin<T extends LivingEntity> {
 			model.leftArm.zRot = -0.04f;
 			model.rightSleeve.copyFrom(model.rightArm);
 			model.leftSleeve.copyFrom(model.leftArm);
+		}
+
+		// --- слои скриптовых анимаций (PlayerAnimator: BASE + ACTION поверх vanilla-позы) ---
+		float partialTick = Minecraft.getInstance().getTimer()
+				.getGameTimeDeltaPartialTick(true);
+		PoseSample animated = PlayerAnimator.sample(player.getId(), partialTick);
+		if (!animated.isEmpty()) {
+			PlayerPoseApplier.apply(model, animated);
+			model.hat.copyFrom(model.head);
+			model.jacket.copyFrom(model.body);
+			model.leftSleeve.copyFrom(model.leftArm);
+			model.rightSleeve.copyFrom(model.rightArm);
+			model.leftPants.copyFrom(model.leftLeg);
+			model.rightPants.copyFrom(model.rightLeg);
 		}
 	}
 }

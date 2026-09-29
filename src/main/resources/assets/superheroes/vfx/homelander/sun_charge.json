@@ -1,0 +1,18 @@
+{
+  "durationTicks": 200,
+  "emitIntervalTicks": 4,
+  "distortionIntervalTicks": 6,
+  "lightColor": "#FFB020",
+  "lightRadiusStart": 4.0,
+  "lightRadiusEnd": 22.0,
+  "lightBrightnessStart": 0.4,
+  "lightBrightnessEnd": 1.6,
+  "distortionRadius": 6.0,
+  "distortionStrength": 0.5,
+  "trembleRadius": 32.0,
+  "trembleMaxIntensity": 0.25,
+  "trembleIntervalTicks": 4,
+  "chargeVolume": 0.9,
+  "chargePitch": 0.9,
+  "chargePitchRise": 0.5
+}

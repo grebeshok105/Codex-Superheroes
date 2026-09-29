@@ -40,6 +40,7 @@ class HomelanderAssetContractTest {
 	private static final Path CONTRACT = ROOT.resolve("src/test/resources/contracts/homelander_pilot.json");
 	private static final String CLIP_KEY_PREFIX = "animation.superheroes.homelander.";
 	private static final String SOUND_NAME_PREFIX = "superheroes:homelander/";
+	private static final String CLIP_ID_PREFIX = "superheroes:homelander/";
 	private static final Set<String> ALLOWED_BONES =
 			Set.of("head", "body", "right_arm", "left_arm", "right_leg", "left_leg");
 	private static final String HOLD_ON_LAST_FRAME = "hold_on_last_frame";
@@ -211,6 +212,22 @@ class HomelanderAssetContractTest {
 						row.clip() + " event " + declared.getKey() + " at " + actual
 								+ " s vs contract " + declared.getValue() + " ms");
 			}
+		}
+	}
+
+	@Test
+	void contractClipsSurviveTheRuntimeParser() throws IOException {
+		for (ClipRow row : clips) {
+			JsonObject clip = parseClip(row);
+			List<String> warnings = new ArrayList<>();
+			List<io.github.grebeshok105.codex.client.core.anim.AnimationClip> parsed =
+					io.github.grebeshok105.codex.client.core.anim.BedrockAnimationParser
+							.parse(clip, warnings::add);
+			assertTrue(warnings.isEmpty(),
+					row.file() + " produced parser warnings: " + warnings);
+			assertTrue(parsed.stream().anyMatch(c -> c.id().toString()
+							.equals(CLIP_ID_PREFIX + row.clip())),
+					row.file() + " produced no clip " + CLIP_ID_PREFIX + row.clip());
 		}
 	}
 

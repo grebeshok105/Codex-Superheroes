@@ -98,10 +98,28 @@ public final class ShockwaveUtil {
 	}
 
 	public static void detonate(ServerPlayer source, Vec3 center, double radius, float damage, boolean breakBlocks) {
-		detonate(source, center, radius, damage, breakBlocks, source.damageSources().playerAttack(source));
+		detonate(source, center, radius, damage, breakBlocks, source.damageSources().playerAttack(source), false);
+	}
+
+	/**
+	 * {@code suppressPresentation} skips the entire presentation tail — every
+	 * particle and sound — while damage, knockback, block-breaking and the
+	 * {@code ScreenShakeS2CPayload} feel stay. Heroes whose landing/impact
+	 * presentation is event-driven ({@code VfxFx}) pass {@code true} so the
+	 * vanilla placeholder visuals don't double up.
+	 */
+	public static void detonate(ServerPlayer source, Vec3 center, double radius, float damage,
+			boolean breakBlocks, boolean suppressPresentation) {
+		detonate(source, center, radius, damage, breakBlocks,
+				source.damageSources().playerAttack(source), suppressPresentation);
 	}
 
 	public static void detonate(ServerPlayer source, Vec3 center, double radius, float damage, boolean breakBlocks, DamageSource damageSource) {
+		detonate(source, center, radius, damage, breakBlocks, damageSource, false);
+	}
+
+	private static void detonate(ServerPlayer source, Vec3 center, double radius, float damage,
+			boolean breakBlocks, DamageSource damageSource, boolean suppressPresentation) {
 		ServerLevel world = source.serverLevel();
 		AABB box = new AABB(
 				center.x - radius, center.y - 1.0, center.z - radius,
@@ -148,21 +166,23 @@ public final class ShockwaveUtil {
 				}
 			}
 		}
-		world.sendParticles(ParticleTypes.EXPLOSION,
-				center.x, center.y + 0.2, center.z,
-				12, radius * 0.4, 0.2, radius * 0.4, 0.0);
-		world.sendParticles(ParticleTypes.LARGE_SMOKE,
-				center.x, center.y + 0.1, center.z,
-				40, radius * 0.5, 0.3, radius * 0.5, 0.05);
-		world.sendParticles(ParticleTypes.POOF,
-				center.x, center.y + 0.1, center.z,
-				30, radius * 0.5, 0.2, radius * 0.5, 0.1);
-		world.playSound(null, center.x, center.y, center.z,
-				SoundEvents.GENERIC_EXPLODE.value(), SoundSource.PLAYERS, 1.4f, 0.5f);
-		world.playSound(null, center.x, center.y, center.z,
-				SoundEvents.WOOL_PLACE, SoundSource.PLAYERS, 1.6f, 0.4f);
-		world.playSound(null, center.x, center.y, center.z,
-				SoundEvents.RAVAGER_STEP, SoundSource.PLAYERS, 1.0f, 0.6f);
+		if (!suppressPresentation) {
+			world.sendParticles(ParticleTypes.EXPLOSION,
+					center.x, center.y + 0.2, center.z,
+					12, radius * 0.4, 0.2, radius * 0.4, 0.0);
+			world.sendParticles(ParticleTypes.LARGE_SMOKE,
+					center.x, center.y + 0.1, center.z,
+					40, radius * 0.5, 0.3, radius * 0.5, 0.05);
+			world.sendParticles(ParticleTypes.POOF,
+					center.x, center.y + 0.1, center.z,
+					30, radius * 0.5, 0.2, radius * 0.5, 0.1);
+			world.playSound(null, center.x, center.y, center.z,
+					SoundEvents.GENERIC_EXPLODE.value(), SoundSource.PLAYERS, 1.4f, 0.5f);
+			world.playSound(null, center.x, center.y, center.z,
+					SoundEvents.WOOL_PLACE, SoundSource.PLAYERS, 1.6f, 0.4f);
+			world.playSound(null, center.x, center.y, center.z,
+					SoundEvents.RAVAGER_STEP, SoundSource.PLAYERS, 1.0f, 0.6f);
+		}
 		float baseShake = (float) Math.min(2.5, 0.6 + radius / 4.0);
 		int shakeT = (int) Math.min(40, 14 + radius * 2);
 		for (ServerPlayer nearby : FxBroadcast.aroundAudience(world, center, 32.0)) {

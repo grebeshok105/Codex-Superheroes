@@ -1,0 +1,17 @@
+{
+  "sprite_data": {
+    "sprite": "superheroes:textures/particle/white_boom_0.png"
+  },
+  "render_style": "billboard",
+  "additive": false,
+  "init_modules": [],
+  "update_modules": [],
+  "collision_modules": [],
+  "forces": [],
+  "render_modules": [
+    "superheroes:color/homelander_dust"
+  ],
+  "face_velocity": true,
+  "velocity_stretch_factor": 0.3,
+  "should_collide": true
+}
