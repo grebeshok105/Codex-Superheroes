@@ -21,16 +21,17 @@
 - Ability-scoped attribute buffs are transient (never serialize); hero base passives stay permanent.
 - Flight pose: pitch is head-first 0..80° in every phase (no descend negation); eye anchors must apply roll-then-pitch to match the renderer's `mulPose(XP)·mulPose(ZP)` order; clip limbs are zeroed (`resetDrivenLimbs`) before `apply` so clips render as absolute poses while the head keeps view tracking.
 
-## Completed this session (Homelander UX fix — presentation phase)
+## Completed this session (Homelander UX fix — presentation phase, REVERTED)
 
-- Root cause of «в игре ничего не работает»: `FlightPhaseResolver.resolve` видит только серверную `deltaMovement` ≈ 0 для packet-driven локального игрока → synced phase застревал в HOVER → CRUISE-клипы, тилт, трейл, буст-звук и громкость лупа были мертвы в реальной игре. `FlightPoseTracker` теперь вычисляет `presentationPhase` из реальной клиентской скорости (pos-delta per tick), с teleport-guard (>10 b/t → HOVER); `TrailFx` гейтится на `FlightPoseTracker.phase(entityId)`; loop-volume берёт `max(synced, real)` hSpeed.
-- Verified: `qualityGate` green; runClient — `effects:` 0→9 при полёте с зажатым W (трейл спавнится), лазеры идут из глаз. F5 застрял в first-person (dev-client quirk) — визуальный тилт проверяет юзер.
+- Root cause of «в игре ничего не работает»: `FlightPhaseResolver.resolve` видит только серверную `deltaMovement` ≈ 0 для packet-driven локального игрока → synced phase застревал в HOVER → CRUISE-клипы, тилт, трейл, буст-звук и громкость лупа были мертвы в реальной игре. `FlightPoseTracker` вычислял `presentationPhase` из реальной клиентской скорости (pos-delta per tick), с teleport-guard (>10 b/t → HOVER); `TrailFx` гейтился на `FlightPoseTracker.phase(entityId)`; loop-volume брал `max(synced, real)` hSpeed.
+- Verified in runClient: `effects:` 0→9 при полёте с зажатым W (трейл спавнился), лазеры из глаз.
+- **REVERTED** (`a4cbe8c`): в билде 4.1.2 для юзера стало заметно хуже чем 4.1.1 — пользователь потребовал откат. Урок: презентационная фаза по сырой pos-delta ведёт себя хуже серверной фазы в его окружении — не повторять без нового разбора причины.
 
 ## Known issues / follow-ups
 
 - `auto-approve-pr.yml` auto-approves green PRs (audit §3) — repository-owner decision, unchanged.
 - `homelanderbossgametests.bosstargetsplayerandshowsbar` is flaky in CI (racy chunk/nearest-hostile scan, fails ~1/N runs, passes on re-run) — candidate for hardening.
-- `FlightPhaseResolver` reads server-side `deltaMovement`, which is ~0 for packet-driven players — presentation now re-derives the phase client-side (`FlightPoseTracker.presentationPhase` mirrors the resolver rules + teleport guard); TrailFx gates on `FlightPoseTracker.phase(entityId)`. The synced phase still drives server logic; revisit if that logic ever needs real speeds on a dedicated server.
+- `FlightPhaseResolver` reads server-side `deltaMovement`, which is ~0 for packet-driven players — the client inertial speed (up to 2.9 b/t) is invisible to it, so CRUISE/BOOST and trail gating only trigger on server-visible motion. A client-side `presentationPhase` derivation was tried and REVERTED (made in-game behavior worse for the user).
 - On the 0.08 b/t boundary the phase flaps CRUISE↔HOVER and the trail blinks (parked minor).
 - Owner decision needed before plan 5 stage `E1`: new root package name (proposed `io.github.grebeshok105.codex`, decision R14).
 
