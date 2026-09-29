@@ -920,5 +920,47 @@ pose + Homelander flight presentation). Коммит `f42bb3f`.
 - Реализационные отступления (см. task-8-report): feet-pivot вместо body-center;
   `IronFistsController.detonate` оставлен без suppress (его презентацию меняет
   Task 11); trail — один VfxEffect на активацию вместо спавна каждый тик.
-- Дальше: Task 9 — lasers (`LASER` channel id уже есть в `HomelanderVfxIds`;
-  eyes-anchors через `FlightPoseTracker.transform` + `HumanoidAnchors.eyes`).
+
+## Visual Core + Homelander пилот — Task 9 (ветка `feat/visual-core-homelander-pilot`)
+
+Выполнен Task 9 плана `2026-09-28-visual-core-homelander-pilot.md` (eye lasers на
+VFX-канале). Ветка содержит коммит `feat(homelander): eye lasers on VFX channel…`.
+
+- `EyeLasersAbility`: все презентационные хвосты убраны — `BeamFx.laser`,
+  `LASER_SPARK` sendParticles и все три vanilla-звука (`BLAZE_SHOOT`,
+  `GUARDIAN_ATTACK`, `BEACON_AMBIENT`). Новый `ACTIVE_TICK` счётчик идёт
+  сквозь ураниевые паузы; на нём `VfxFx.channel(LASER)` шлёт START на
+  активации (текущий raycast-end из `fireBeam`), UPDATE каждые 2 тика
+  (`EyeLaserPhases.shouldSendUpdate` — `% CHANNEL_UPDATE_INTERVAL_TICKS`,
+  паузы не паузят поток → таймаут канала 10 тиков не срабатывает), STOP на
+  деактивации. `fireBeam` геймплейно байт-в-байт: hurt/madness explode/ignite/
+  огненное кольцо на тех же fire-тиках с тика 0; raycast выделен в общий
+  `BeamRaycast` (клип + entity-hit → chest).
+- `EyeLaserChannel` (client, `VfxChannelEffect`): два луча
+  `HumanoidAnchors.eyes(source, partial, FlightPoseTracker.transform, headAnim)`
+  → конец; конец для local = собственный клиентский raycast каждый кадр,
+  для remote = серверный end с лерпом за 2 тика; impact-эффект (`ImpactPattern`
+  + точечный свет) раз в 3 тика; `PhaseTimeline(6,8)` интенсивность;
+  ACTION-клипы `laser_charge` → `laser_hold` → `laser_release`; звуки —
+  charge/loop(entity-bound `LaserLoopSound`)/release; в madness ширина/яркость
+  умножаются (`madnessWidthMul`/`madnessIntensity` из params).
+- `HomelanderVfxIds` переехал в `hero.homelander.vfx` — импорт из
+  `hero.homelander.ability` замыкал новый 2-цикл `hero.homelander <->
+  hero.homelander.ability` (PackageCycleRatchetTest отверг). Тот же цикл
+  ждал бы Task 10–12 — листовой сабпакет лечит для всех.
+- `LocalLaserOverlay` удалён; `HomelanderClientModule` регистрирует
+  `ctx.vfxChannel(LASER, EyeLaserChannel::new)` через `HomelanderFx`.
+  `STYLE_LASER` остаётся — босс-луч шлёт `BeamFx.laser`
+  (HomelanderEyeLaserGoal:155), комментарий в коде.
+- Ассеты: `vfx/homelander/laser.json` (BeamLook + impact + свет + звуки),
+  quasar-эффект `homelander_laser_impact` (shape/particle/particle_data/color).
+- TDD: RED — `EyeLaserPhasesTest` compile-fail + gametest
+  `eyeLaserBroadcastsStartUpdateStop` «condition never became true» → GREEN;
+  gametest-лейн требует регистрации класса в `src/gametest/resources/
+  fabric.mod.json` (entrypoints.fabric-gametest). `qualityGate --no-daemon`
+  BUILD SUCCESSFUL. `hero_presentation.txt` не тронут.
+- Отступления: `BeamPattern` noise остался на `System.currentTimeMillis()` —
+  `VfxChannelFactory.open` не получает seed (он живёт только в VfxSpawn),
+  протягивание = рефактор сигнатуры, вне скоупа.
+- Дальше: Task 10 — madness `level.explode` + `detonateSun` на
+  `SilentParticles`/`VfxFx`.
