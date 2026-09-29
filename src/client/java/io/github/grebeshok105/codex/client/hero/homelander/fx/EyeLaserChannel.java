@@ -118,7 +118,8 @@ public final class EyeLaserChannel implements VfxChannelEffect {
 		if (phase == PhaseTimeline.Phase.DONE) {
 			stopLoop();
 			removeLight();
-			PlayerAnimator.stop(source.getId(), PlayerAnimator.Layer.ACTION, 0);
+			PlayerAnimator.stop(source.getId(), PlayerAnimator.Layer.ACTION,
+					0, CLIP_CHARGE, CLIP_HOLD);
 			return;
 		}
 		if (phase == PhaseTimeline.Phase.HOLD && !holdStarted) {
@@ -154,6 +155,9 @@ public final class EyeLaserChannel implements VfxChannelEffect {
 			return;
 		}
 		releasedAtAge = age;
+		// The WRAP hold loop must be stopped or it keeps looping beside RELEASE.
+		PlayerAnimator.stop(source.getId(), PlayerAnimator.Layer.ACTION,
+				CLIP_FADE_TICKS, CLIP_HOLD);
 		PlayerAnimator.play(source.getId(), CLIP_RELEASE, PlayerAnimator.Layer.ACTION, CLIP_FADE_TICKS);
 		playBound(HomelanderSounds.LASER_RELEASE, params.number("releaseVolume", 0.9f),
 				params.number("releasePitch", 1f));
@@ -190,7 +194,8 @@ public final class EyeLaserChannel implements VfxChannelEffect {
 	public void cancel() {
 		stopLoop();
 		removeLight();
-		PlayerAnimator.stop(source.getId(), PlayerAnimator.Layer.ACTION, 0);
+		PlayerAnimator.stop(source.getId(), PlayerAnimator.Layer.ACTION,
+				0, CLIP_CHARGE, CLIP_HOLD, CLIP_RELEASE);
 	}
 
 	private Vec3 endAt(float partial) {

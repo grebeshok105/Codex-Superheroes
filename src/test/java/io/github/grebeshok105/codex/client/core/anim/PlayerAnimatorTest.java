@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
  * {@link PlayerAnimator} layered blending: ACTION overrides BASE per bone by its fade
@@ -21,6 +22,8 @@ class PlayerAnimatorTest {
 			ResourceLocation.fromNamespaceAndPath("superheroes", "test/base");
 	private static final ResourceLocation ACTION_ID =
 			ResourceLocation.fromNamespaceAndPath("superheroes", "test/action");
+	private static final ResourceLocation OTHER_ID =
+			ResourceLocation.fromNamespaceAndPath("superheroes", "test/other");
 
 	private final float[] now = {0f};
 
@@ -62,6 +65,36 @@ class PlayerAnimatorTest {
 	}
 
 	@Test
+	void stopRemovesOnlyTheNamedClip() {
+		// A flight-style BASE loop plus a foreign clip on the same lane:
+		// stopping the loop must leave the other clip playing.
+		playClip(BASE_ID, AnimationClip.Loop.WRAP, 10f, "right_arm", new Vector3f(90, 0, 0), 0);
+		playClip(OTHER_ID, AnimationClip.Loop.WRAP, 10f, "left_arm", new Vector3f(-60, 0, 0), 0);
+
+		PlayerAnimator.stop(ENTITY, PlayerAnimator.Layer.BASE, 0, BASE_ID);
+
+		PoseSample sample = PlayerAnimator.sample(ENTITY, 0);
+		assertEquals(-60f, sample.rotationDeg().get("left_arm").x, 1e-3,
+				"unrelated clip on the lane keeps playing");
+		assertNull(sample.rotationDeg().get("right_arm"),
+				"only the named clip was stopped");
+	}
+
+	@Test
+	void stopWithFadeLeavesSiblingClipsUnaffected() {
+		playClip(BASE_ID, AnimationClip.Loop.WRAP, 10f, "right_arm", new Vector3f(90, 0, 0), 0);
+		playClip(OTHER_ID, AnimationClip.Loop.WRAP, 10f, "left_arm", new Vector3f(-90, 0, 0), 0);
+
+		PlayerAnimator.stop(ENTITY, PlayerAnimator.Layer.BASE, 4, OTHER_ID);
+		now[0] = 2f;
+		PoseSample sample = PlayerAnimator.sample(ENTITY, 0);
+		assertEquals(-45f, sample.rotationDeg().get("left_arm").x, 1e-3,
+				"stopped clip fades out: -90 at half weight");
+		assertEquals(90f, sample.rotationDeg().get("right_arm").x, 1e-3,
+				"sibling clip unaffected by the fade-out");
+	}
+
+	@Test
 	void loopWraps() {
 		Keyframes keys = new Keyframes(List.of(
 				new Keyframes.Key(0f, new Vector3f(0, 0, 0)),
@@ -81,6 +114,6 @@ class PlayerAnimatorTest {
 		AnimationClip clip = new AnimationClip(id, length, loop,
 				Map.of(bone, new BoneTrack(keys, Keyframes.EMPTY)), Map.of());
 		PlayerAnimator.playClip(ENTITY, clip,
-				id.equals(BASE_ID) ? PlayerAnimator.Layer.BASE : PlayerAnimator.Layer.ACTION, fadeTicks);
+				id.equals(ACTION_ID) ? PlayerAnimator.Layer.ACTION : PlayerAnimator.Layer.BASE, fadeTicks);
 	}
 }

@@ -160,7 +160,10 @@ public final class FlightPoseTracker {
 			default -> null;
 		};
 		if (!Objects.equals(baseClip, tracked.baseClip)) {
-			PlayerAnimator.stop(player.getId(), PlayerAnimator.Layer.BASE, CROSSFADE_TICKS);
+			if (tracked.baseClip != null) {
+				PlayerAnimator.stop(player.getId(), PlayerAnimator.Layer.BASE,
+						CROSSFADE_TICKS, tracked.baseClip);
+			}
 			if (baseClip != null) {
 				PlayerAnimator.play(player.getId(), baseClip, PlayerAnimator.Layer.BASE, CROSSFADE_TICKS);
 			}
@@ -221,7 +224,10 @@ public final class FlightPoseTracker {
 	}
 
 	private static void release(Minecraft client, int entityId, Tracked tracked) {
-		PlayerAnimator.stop(entityId, PlayerAnimator.Layer.BASE, CROSSFADE_TICKS);
+		if (tracked.baseClip != null) {
+			PlayerAnimator.stop(entityId, PlayerAnimator.Layer.BASE,
+					CROSSFADE_TICKS, tracked.baseClip);
+		}
 		stopLoop(client, tracked);
 	}
 

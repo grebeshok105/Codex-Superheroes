@@ -88,8 +88,13 @@ public final class PlayerAnimator {
 		}
 	}
 
-	/** Fades the layer's live clips out over {@code fadeTicks}; 0 stops them immediately. */
-	public static void stop(int entityId, Layer layer, int fadeTicks) {
+	/**
+	 * Fades out only the lane entries playing one of {@code clipIds} over
+	 * {@code fadeTicks}; {@code 0} removes them immediately. Sibling clips the
+	 * caller does not own keep playing — a lane is shared, so a stop is always
+	 * scoped to the clips the caller played.
+	 */
+	public static void stop(int entityId, Layer layer, int fadeTicks, ResourceLocation... clipIds) {
 		EnumMap<Layer, Deque<Playing>> lanes = PLAYERS.get(entityId);
 		if (lanes == null) {
 			return;
@@ -98,13 +103,16 @@ public final class PlayerAnimator {
 		if (lane == null || lane.isEmpty()) {
 			return;
 		}
+		Set<ResourceLocation> ids = Set.of(clipIds);
 		if (fadeTicks <= 0) {
-			lane.clear();
+			lane.removeIf(playing -> ids.contains(playing.clip.id()));
 			return;
 		}
 		float now = clock.nowTicks();
 		for (Playing playing : lane) {
-			playing.beginFadeOut(now, fadeTicks);
+			if (ids.contains(playing.clip.id())) {
+				playing.beginFadeOut(now, fadeTicks);
+			}
 		}
 	}
 

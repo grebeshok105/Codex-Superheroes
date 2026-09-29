@@ -195,7 +195,8 @@ public final class SunChargeFx {
 				sound = null;
 			}
 			if (entity != null) {
-				PlayerAnimator.stop(entity.getId(), PlayerAnimator.Layer.BASE, CLIP_FADE_TICKS);
+				PlayerAnimator.stop(entity.getId(), PlayerAnimator.Layer.BASE,
+						CLIP_FADE_TICKS, CLIP_SUN_CHARGE);
 			}
 		}
 	}
