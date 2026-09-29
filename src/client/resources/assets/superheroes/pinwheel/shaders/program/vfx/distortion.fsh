@@ -13,10 +13,13 @@ out vec4 fragColor;
 
 void main() {
     // uCenter/uRadius are world space; project them through the VeilCamera UBO.
-    vec2 centerUv = worldToScreenSpacePosition(uCenter).xy;
+    // Call worldToScreenSpace directly: the *Position convenience macros lose
+    // their argument under Veil's dynamic-shader recompile path (the driver
+    // sees `pos` unbound and the program fails to compile).
+    vec2 centerUv = worldToScreenSpace(vec4(uCenter, 1.0)).xy;
     vec3 worldRight = normalize((VeilCamera.IViewMat * vec4(1.0, 0.0, 0.0, 0.0)).xyz);
     float screenRadius = max(distance(
-            worldToScreenSpacePosition(uCenter + worldRight * uRadius).xy, centerUv), 1.0e-4);
+            worldToScreenSpace(vec4(uCenter + worldRight * uRadius, 1.0)).xy, centerUv), 1.0e-4);
 
     vec2 offset = texCoord - centerUv;
     float dist = length(offset) / screenRadius;
