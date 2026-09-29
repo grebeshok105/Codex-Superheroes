@@ -15,9 +15,12 @@ import net.minecraft.world.phys.Vec3;
  * The boss-facing surface the AI goals drive: the nine ability cooldowns plus the vanilla
  * navigation/sensing members the goals read. Implemented by the entity package — this package
  * imports nothing from it, so ai -> api stays a leaf edge and entity -> ai stays one-way.
- * Every member is an inherited {@link Mob}/{@link Entity} method: implementors satisfy the
- * interface for free. {@link #asMob()} hands call sites the entity where a vanilla helper
- * wants an {@link Entity} argument.
+ *
+ * Vanilla-mirroring members MUST stay {@code default} delegates through {@link #asMob()}:
+ * interface methods cannot be "satisfied for free" by superclass inheritance because vanilla
+ * method names are remapped to intermediary names in the production jar while interface
+ * member names are not — an abstract mirror leaves the implementor with only the obfuscated
+ * superclass method and {@code invokeinterface} throws {@link AbstractMethodError}.
  */
 public interface HomelanderBossApi {
 	default Mob asMob() {
@@ -61,46 +64,88 @@ public interface HomelanderBossApi {
 
 	void setHandClapCooldown(int ticks);
 
-	// ── vanilla members the goals touch (inherited impls satisfy these) ──
-	Level level();
+	// ── vanilla members the goals touch (default delegates: remap-safe) ──
+	default Level level() {
+		return asMob().level();
+	}
 
-	Vec3 position();
+	default Vec3 position() {
+		return asMob().position();
+	}
 
-	BlockPos blockPosition();
+	default BlockPos blockPosition() {
+		return asMob().blockPosition();
+	}
 
-	RandomSource getRandom();
+	default RandomSource getRandom() {
+		return asMob().getRandom();
+	}
 
-	double getX();
+	default double getX() {
+		return asMob().getX();
+	}
 
-	double getY();
+	default double getY() {
+		return asMob().getY();
+	}
 
-	double getZ();
+	default double getZ() {
+		return asMob().getZ();
+	}
 
-	LivingEntity getTarget();
+	default LivingEntity getTarget() {
+		return asMob().getTarget();
+	}
 
-	double distanceToSqr(Entity other);
+	default double distanceToSqr(Entity other) {
+		return asMob().distanceToSqr(other);
+	}
 
-	LookControl getLookControl();
+	default LookControl getLookControl() {
+		return asMob().getLookControl();
+	}
 
-	MoveControl getMoveControl();
+	default MoveControl getMoveControl() {
+		return asMob().getMoveControl();
+	}
 
-	Vec3 getDeltaMovement();
+	default Vec3 getDeltaMovement() {
+		return asMob().getDeltaMovement();
+	}
 
-	void setDeltaMovement(Vec3 delta);
+	default void setDeltaMovement(Vec3 delta) {
+		asMob().setDeltaMovement(delta);
+	}
 
-	void setDeltaMovement(double x, double y, double z);
+	default void setDeltaMovement(double x, double y, double z) {
+		asMob().setDeltaMovement(x, y, z);
+	}
 
-	Vec3 getViewVector(float partialTicks);
+	default Vec3 getViewVector(float partialTicks) {
+		return asMob().getViewVector(partialTicks);
+	}
 
-	Vec3 getEyePosition();
+	default Vec3 getEyePosition() {
+		return asMob().getEyePosition();
+	}
 
-	AABB getBoundingBox();
+	default AABB getBoundingBox() {
+		return asMob().getBoundingBox();
+	}
 
-	void setNoGravity(boolean noGravity);
+	default void setNoGravity(boolean noGravity) {
+		asMob().setNoGravity(noGravity);
+	}
 
-	boolean onGround();
+	default boolean onGround() {
+		return asMob().onGround();
+	}
 
-	float getBbHeight();
+	default float getBbHeight() {
+		return asMob().getBbHeight();
+	}
 
-	boolean hasLineOfSight(Entity other);
+	default boolean hasLineOfSight(Entity other) {
+		return asMob().hasLineOfSight(other);
+	}
 }
