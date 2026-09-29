@@ -13,9 +13,7 @@ import net.minecraft.world.phys.Vec3;
 public final class FallbackVfxBackend implements VfxBackend {
 	private static final float FLASH_TICKS = 6f;
 
-	private static float flashIntensity;
-	private static int flashRgb;
-	private static float flashTicksLeft;
+	private static final FlashEnvelope flash = new FlashEnvelope(FLASH_TICKS);
 
 	private static final LightHandle NOOP_LIGHT = new LightHandle() {
 		@Override
@@ -42,14 +40,7 @@ public final class FallbackVfxBackend implements VfxBackend {
 
 	@Override
 	public void flash(float intensity, int rgb) {
-		if (intensity <= 0f) {
-			return;
-		}
-		if (intensity >= flashIntensity || flashTicksLeft <= 0f) {
-			flashIntensity = Math.min(intensity, 1f);
-			flashRgb = rgb & 0xFFFFFF;
-		}
-		flashTicksLeft = FLASH_TICKS;
+		flash.feed(intensity, rgb);
 	}
 
 	@Override
@@ -58,13 +49,14 @@ public final class FallbackVfxBackend implements VfxBackend {
 
 	/** Draws the current flash as a fading full-screen HUD overlay (registered by {@code VfxRuntime.init}). */
 	public static void renderFlashHud(GuiGraphics graphics, DeltaTracker delta) {
-		if (flashTicksLeft <= 0f || flashIntensity <= 0f) {
-			return;
+		float intensity = flash.shown();
+		if (intensity > 0f) {
+			int alpha = (int) (255f * intensity);
+			if (alpha > 0) {
+				graphics.fill(0, 0, graphics.guiWidth(), graphics.guiHeight(),
+						alpha << 24 | flash.argb());
+			}
 		}
-		int alpha = (int) (255f * flashIntensity * (flashTicksLeft / FLASH_TICKS));
-		if (alpha > 0) {
-			graphics.fill(0, 0, graphics.guiWidth(), graphics.guiHeight(), alpha << 24 | flashRgb);
-		}
-		flashTicksLeft -= delta.getGameTimeDeltaTicks();
+		flash.tick(delta.getGameTimeDeltaTicks());
 	}
 }

@@ -4,6 +4,7 @@ import foundry.veil.api.client.render.VeilRenderSystem;
 import foundry.veil.api.client.render.post.PostPipeline;
 import foundry.veil.api.client.render.post.PostProcessingManager;
 import io.github.grebeshok105.codex.ModId;
+import io.github.grebeshok105.codex.client.core.vfx.backend.FlashEnvelope;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
@@ -25,9 +26,7 @@ final class VeilPostEffects {
 	/** Matches {@code FallbackVfxBackend}'s flash duration so both backends fade alike. */
 	private static final float FADE_TICKS = 6f;
 
-	private static float flashPeak;
-	private static int flashRgb;
-	private static float flashTicksLeft;
+	private static final FlashEnvelope flash = new FlashEnvelope(FADE_TICKS);
 
 	private static Vec3 distortionCenter;
 	private static float distortionRadius;
@@ -45,11 +44,7 @@ final class VeilPostEffects {
 			if (intensity <= 0f) {
 				return;
 			}
-			if (intensity >= flashPeak || flashTicksLeft <= 0f) {
-				flashPeak = Math.min(intensity, 1f);
-				flashRgb = rgb & 0xFFFFFF;
-			}
-			flashTicksLeft = FADE_TICKS;
+			flash.feed(intensity, rgb);
 			ensureTick();
 			apply();
 		} catch (Throwable t) {
@@ -81,10 +76,8 @@ final class VeilPostEffects {
 	}
 
 	private static void tick() {
-		boolean active = flashTicksLeft > 0f || distortionTicksLeft > 0f;
-		if (flashTicksLeft > 0f) {
-			flashTicksLeft--;
-		}
+		boolean active = flash.active() || distortionTicksLeft > 0f;
+		flash.tick(1f);
 		if (distortionTicksLeft > 0f) {
 			distortionTicksLeft--;
 		}
@@ -96,7 +89,7 @@ final class VeilPostEffects {
 
 	private static void apply() {
 		PostProcessingManager manager = VeilRenderSystem.renderer().getPostProcessingManager();
-		applyFlash(manager, flashTicksLeft > 0f ? flashPeak * (flashTicksLeft / FADE_TICKS) : 0f);
+		applyFlash(manager, flash.shown());
 		applyDistortion(manager, distortionTicksLeft > 0f ? distortionTicksLeft / FADE_TICKS : 0f);
 	}
 
@@ -111,10 +104,11 @@ final class VeilPostEffects {
 			return;
 		}
 		pipeline.getUniformSafe("uIntensity").setFloat(intensity);
+		int rgb = flash.argb();
 		pipeline.getUniformSafe("uColor").setVector(
-				((flashRgb >> 16) & 0xFF) / 255f,
-				((flashRgb >> 8) & 0xFF) / 255f,
-				(flashRgb & 0xFF) / 255f);
+				((rgb >> 16) & 0xFF) / 255f,
+				((rgb >> 8) & 0xFF) / 255f,
+				(rgb & 0xFF) / 255f);
 	}
 
 	private static void applyDistortion(PostProcessingManager manager, float intensity) {
