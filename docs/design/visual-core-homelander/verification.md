@@ -109,3 +109,140 @@ instead of black frames: `verification/distortion-fixed-detonation.png`.
 - All FPS rows bounded by llvmpipe; a hardware-GPU + Sodium run is needed for
   the spec's ≈100 FPS claim.
 - T10's live capture is weak; the spec'd behavior is code-verified.
+
+---
+
+# Task 15 — OMP gate, tuning, acceptance scenes
+
+## OMP integration gap (Step 1 gate check)
+
+The OMP approval gate could not pass: **no OMP implementation branch exists**.
+
+Probed (2026-09-29, `git fetch origin` fresh):
+
+- `git ls-remote --heads origin` — the only OMP-adjacent branches are
+  `devin/1790616018-visual-core-omp-plan-review` (the merged plan-review
+  branch of PR #129) and `devin/1790748000-vfx-contract-checkpoint` (pilot
+  Tasks 1–2 checkpoint). No `feat/*omp*`, `homelander-omp` or similar
+  implementation branch.
+- `git grep -n '^Approved by user:' <ref> -- docs/design/visual-core-homelander/omp-review.md`
+  on `devin/1790748000-vfx-contract-checkpoint`,
+  `devin/1790616018-visual-core-omp-plan-review`,
+  `docs/visual-core-homelander-plan`, `feat/visual-core-homelander-pilot`
+  and `main` → **empty on every ref**; `omp-review.md` does not exist
+  anywhere (OMP plan Task 10 third-session review and Task 11 user
+  approval never landed in git).
+- `src/test/resources/contracts/homelander_placeholders.txt` on HEAD:
+  all 18 lines uncommented — 11 sounds, `models/item/milk_bottle.json`,
+  6 VFX textures remain placeholders.
+
+What already arrived through another path: the 14 OMP animation clips
+(`player_animations/homelander/*.animation.json`) and
+`homelander_player.bbmodel` came in via the user-delivered intake commit
+`5ce60db` on `main` (an ancestor of this branch). They were never tracked
+in the placeholder manifest and are already in use — the gap covers only
+the remaining contract assets above.
+
+Consequence: Step 3 (merge + `# replaced` marks +
+`finalBuildHasNoPlaceholders` / `contractClipEventTimesMatchManifest`
+green) **could not run**. Step 5's "final assets" re-run had no new final
+assets for the remaining placeholders. The spec-§16 DoD lines about final
+passive assets, zero placeholder dependency, OMP review, user approval
+and final integration stay blocked on the missing OMP package — see
+"Integration readiness" below.
+
+## Scene tuning (Step 4)
+
+Parked minors re-assessed against the recorded evidence only (placeholder
+constraint: final assets come from the absent OMP package, so tuning to
+placeholder quirks is out of scope).
+
+| Parked item | Evidence check | Decision |
+|---|---|---|
+| Roar `shakeIntensity` 0.8 feel | Task 14 `roar-disorient-damage` / `roar-knockback`: shake reads as a hit-stagger; already recorded acceptable at this scale | not tuned |
+| Roar wave overshoot ~15b vs 12b cone | Arithmetic confirms it: `ringIntervalTicks` 3 over `durationTicks` 30 spawns 10 rings at indices 0–9 × `ringSpacing` 1.5 → crest at 13.5 b, plus ring expansion 2.2 → visual reach ≈ 15.7 b while `StunningRoarAbility.RADIUS` damages only to 12.0 b | **tuned**: `roar.json` `ringSpacing` 1.5 → 1.1 — crest ≈ 9.9 + 2.2 ≈ 12.1 b; same cadence, honest reach |
+| BOOST re-entry sound spam threshold | `FlightPhaseResolver` promotes to BOOST at `horizontalSpeed ≥ 1.1`; `FlightPoseTracker.onPhaseChange` replays the boost one-shot + burst on every re-entry — a code-side hysteresis question, not a JSON value; no recorded flutter repro | not tuned — needs code-side debounce and a real repro first |
+| Release-fade light brightness | `sun-flash-observer` / `distortion-fixed-detonation` show the fade reading cleanly; no recorded defect | not tuned |
+
+## Task 14 re-verification (Step 5)
+
+`git log da47948..1b58334` is **not** empty — the parallel fourth-session
+review landed three runtime/client fixes during this session:
+
+- `b717b06` — per-clip `PlayerAnimator.stop` (lane-kill bug: flight-pose
+  stops were killing `sun_charge`'s BASE clip; `EyeLaserChannel` release
+  never faded the WRAP `laser_hold` clip);
+- `c0c2b1a` — legacy `FlightTrailManager` (vanilla END_ROD/CLOUD column)
+  suppressed for `FlightPresentation`-owned players;
+- `308515e` — `FlashEnvelope` feed fix: the 60-tick detonation flash now
+  decays with the caller's fade instead of pinning ~3 s at peak.
+
+Affected checklist rows re-run in-game on `1b58334` (same rig, actor
+Player758; temporary phase/spawn logging in the worktree client+server
+used to confirm mechanism, reverted afterwards):
+
+- Flight trails now **spawn and render**: `FlightPoseTracker` spawns
+  `homelander/flight_trail` on CRUISE/BOOST entry; debug HUD reads
+  `effects: 1` in steady cruise; golden ribbons render from all four limb
+  anchors — clean first-person and front-cam views in
+  `acc-flight-vfx.mp4`. The old white particle column is gone —
+  `c0c2b1a` behaves as intended.
+- Detonation flash **decays smoothly** — bloom around the player then
+  fade to clear sky (~6–8 s end to end), no pinned peak — `308515e`
+  verified in `acc-sun-detonation.mp4`.
+- Laser release now ends cleanly on camera — beam dies with the channel
+  after deactivate; no stuck hold pose observed (`b717b06`, bounded —
+  release-fade itself is a few frames at 30 fps).
+- Re-verification notes for the record:
+  - Teleport-driven motion keeps server `hSpeed` = 0 → phase stays
+    HOVER → no trail spawn; real input flight is required for
+    CRUISE/BOOST (NORMAL-mode cruise plateaus ~0.18 b/t).
+  - At the 0.08 b/t hover/cruise boundary the phase can flicker
+    CRUISE↔HOVER, which respawns/drains the trail repeatedly — a minor
+    visual artifact parked for the next session (trailSpawned re-arms
+    per phase change, so no leak accumulates).
+
+## Acceptance scenes (spec §15)
+
+Review package on the current (placeholder) assets. Recordings ≤ 30 s,
+captured in-game on the same rig as Task 14 (`runServer` offline +
+`runClient`, llvmpipe — motion, not fidelity, is what these clips prove).
+
+| # | Scene | §15 criterion | Evidence | Result |
+|---|-------|---------------|----------|--------|
+| 1 | flight | no unexplained flips, no instant pose snapping between climb/descend/hover/horizontal; continuous transitions | `verification/acc-flight-vfx.mp4`, `verification/acc-flight.png` | **PASS** — superman pose, hover/cruise tilt transitions continuous across the new-code take; no flips or snaps |
+| 2 | eye lasers | beam starts directly from the eyes; charge/hold/release phases readable; impact visually connected to the beam | `verification/acc-lasers.mp4`, `verification/acc-lasers.png`, impact endpoint `verification/acc-lasers-impact.png` | **PASS** — twin pink beams leave the eyes and track the look ray; activate/hold/release phases readable on `1b58334`; beam dies cleanly at release (b717b06). Impact-endpoint evidence predates the fixes but the fix touched release clips only, not the impact path |
+| 3 | eye lasers while flying | no origin drift, facial intersection, lag or breakup while moving | `verification/acc-lasers-flying.mp4`, `verification/acc-lasers-flying.png` | **PASS** — beams stay anchored at the eyes through the approach-and-dive pass; no drift or facial intersection on `1b58334` |
+| 4 | flight VFX | effects stay spatially attached and coherent through acceleration, turning, climb, descend, hover | `verification/acc-flight-vfx.mp4`, `verification/acc-flight-vfx.png` | **PASS** — golden limb ribbons spawn on CRUISE and trail the fist/foot anchors; no legacy smoke column (c0c2b1a); ribbons stay attached while the pose banks through the take |
+| 5 | milk final explosion | presentation clearly replaces the old vanilla-particle look; reads as a deliberate large-scale event | `verification/acc-sun-detonation.mp4`, `verification/acc-sun-detonation.png` | **PASS** — sun-ray bloom shell + ring + screen wash, then smooth decay to clear sky on `1b58334` (308515e); unmistakably a staged event, not vanilla particles |
+
+All five rows: placeholder assets, llvmpipe software rasterizer — motion,
+attachment, phasing and the review-fix behaviors are what these clips
+prove; material quality/alpha reads are bounded by the placeholder
+textures.
+
+Scene 5 note: the `sun_detonation` showcase scene is the milk-aftermath
+detonation presentation (`/superheroes vfx scene homelander/sun_detonation`)
+— scene-triggered, visual-only (no gameplay blast), same effect the real
+`HomelanderMadnessAftermathController` fires at the end of the drink chain.
+
+## Integration readiness
+
+Honest §16 status as of this commit:
+
+- **Blocked on OMP (cannot close without it):** required passive assets
+  final; no Homelander production path depends on temporary placeholders;
+  third-session OMP review complete; user visual approval of the OMP
+  package complete; final integration complete.
+- **Closed this session:** fourth-session Devin review complete — verdict
+  "pilot ready for final integration" in
+  `docs/design/visual-core-homelander/fourth-session-review.md`; its three
+  runtime/client fixes re-verified in-game above (Step 5).
+- **Blocked on hardware:** ~100 FPS on the Sodium setup — llvmpipe cannot
+  prove it; needs a hardware-GPU run.
+- **Provable now and recorded above:** Visual Core on Veil; Homelander on
+  the new system for the pilot scope; vanilla-particle presentation
+  replaced; flight presentation fixed; lasers reworked incl. while
+  flying; milk final explosion new presentation; animation/sound
+  integration; multiplayer tested; stress without catastrophic behavior;
+  final in-game verification (this doc + Task 14 rows).

@@ -2,7 +2,7 @@
   "durationTicks": 30,
   "mouthForward": 0.6,
   "ringIntervalTicks": 3,
-  "ringSpacing": 1.5,
+  "ringSpacing": 1.1,
   "ringRadius": 2.2,
   "ringTicks": 12,
   "ringColor": "#70D8ECFF",
