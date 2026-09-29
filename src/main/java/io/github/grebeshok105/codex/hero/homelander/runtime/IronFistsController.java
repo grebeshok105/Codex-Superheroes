@@ -10,15 +10,14 @@ import io.github.grebeshok105.codex.hero.homelander.ability.IronFistsAbility;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.core.net.ScreenShakeS2CPayload;
+import io.github.grebeshok105.codex.core.net.VfxFx;
+import io.github.grebeshok105.codex.hero.homelander.vfx.HomelanderVfxIds;
 import io.github.grebeshok105.codex.mechanic.shockwave.ShockwaveUtil;
-import io.github.grebeshok105.codex.sound.HomelanderSounds;
 import io.github.grebeshok105.codex.core.model.HeroData;
 import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.animal.Animal;
@@ -51,9 +50,8 @@ public final class IronFistsController {
 	private static final int LMB_COOLDOWN_TICKS = 40;
 	private static final double DASH_FORCE = 0.85;
 	private static final double DASH_LIFT = 0.15;
-	private static final double SHOCKWAVE_RADIUS = 4.5;
+	static final double SHOCKWAVE_RADIUS = 4.5;
 	private static final float SHOCKWAVE_DAMAGE = 8.0f;
-	private static final int LOOP_INTERVAL_TICKS = 100;
 	private static final int AURA_INTERVAL_TICKS = 4;
 
 	// No lifecycle clearOn: markDeactivated / the not-active branch of tickPlayer
@@ -107,13 +105,11 @@ public final class IronFistsController {
 			target.hurtMarked = true;
 
 			Vec3 hp = target.position().add(0, target.getBbHeight() * 0.5, 0);
-			level.sendParticles(ParticleTypes.END_ROD, hp.x, hp.y, hp.z, 18, 0.3, 0.3, 0.3, 0.05);
-			level.sendParticles(ParticleTypes.CRIT, hp.x, hp.y, hp.z, 14, 0.3, 0.3, 0.3, 0.2);
-			level.playSound(null, target.getX(), target.getY(), target.getZ(),
-					HomelanderSounds.IRON_FISTS_IMPACT, SoundSource.PLAYERS, 1.0f, 1.0f);
+			VfxFx.event(sp, HomelanderVfxIds.IRON_FISTS_HIT, hp, target.position(),
+					(float) SHOCKWAVE_RADIUS);
 
 			if (dashTarget) {
-				ShockwaveUtil.detonate(sp, target.position(), SHOCKWAVE_RADIUS, SHOCKWAVE_DAMAGE, false);
+				ShockwaveUtil.detonate(sp, target.position(), SHOCKWAVE_RADIUS, SHOCKWAVE_DAMAGE, false, true);
 			}
 
 			if (target instanceof ServerPlayer victim) {
@@ -148,6 +144,10 @@ public final class IronFistsController {
 	public static void markDeactivated(ServerPlayer player) {
 		ACTIVATE_TICK.remove(player.getUUID());
 		LAST_DASH.remove(player.getUUID());
+		if (!player.level().isClientSide()) {
+			Vec3 p = player.position();
+			VfxFx.event(player, HomelanderVfxIds.IRON_FISTS_OFF, p, p, 1f);
+		}
 	}
 
 	public static void tickActive(ServerPlayer player) {
@@ -167,27 +167,12 @@ public final class IronFistsController {
 		ServerLevel level = player.serverLevel();
 		Vec3 p = player.position();
 
-		if (elapsed > 0 && elapsed % LOOP_INTERVAL_TICKS == 0) {
-			level.playSound(null, p.x, p.y, p.z, HomelanderSounds.IRON_FISTS_CHARGE,
-					SoundSource.PLAYERS, 0.8f, 1.0f);
+		// The aura lives client-side now: re-sending ON every aura interval keeps
+		// the effect alive for observers who start tracking mid-activation, and
+		// the client dedupes the resends into a single running aura.
+		if (elapsed % AURA_INTERVAL_TICKS == 0 && !level.isClientSide()) {
+			VfxFx.event(player, HomelanderVfxIds.IRON_FISTS_ON, p, p, 1f);
 		}
-
-		if (elapsed % AURA_INTERVAL_TICKS == 0) {
-			spawnHandAura(player);
-		}
-	}
-
-	private static void spawnHandAura(ServerPlayer player) {
-		ServerLevel level = player.serverLevel();
-		Vec3 forward = player.getViewVector(1f).normalize();
-		Vec3 right = new Vec3(-forward.z, 0.0, forward.x).normalize();
-		Vec3 base = player.position().add(0.0, 1.05, 0.0).add(forward.scale(0.25));
-		Vec3 leftHand = base.add(right.scale(-0.35));
-		Vec3 rightHand = base.add(right.scale(0.35));
-		level.sendParticles(ParticleTypes.END_ROD,
-				leftHand.x, leftHand.y, leftHand.z, 2, 0.06, 0.06, 0.06, 0.0);
-		level.sendParticles(ParticleTypes.END_ROD,
-				rightHand.x, rightHand.y, rightHand.z, 2, 0.06, 0.06, 0.06, 0.0);
 	}
 
 	public static void tickPlayer(MinecraftServer server, ServerPlayer player, HeroData data) {

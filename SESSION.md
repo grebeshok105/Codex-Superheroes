@@ -1012,3 +1012,37 @@ VFX-канале). Ветка содержит коммит `feat(homelander): e
   не тронут, Veil-импортов в src/main нет.
 - Дальше: Task 11/12 по плану; runClient-проверка sun-композиций не делалась
   (headless) — только code review.
+
+## Completed this session (Visual Core pilot — Task 11)
+
+- Iron Fists на Visual Core: `IronFistsController` — aura-интервал теперь
+  шлёт `VfxFx.event(IRON_FISTS_ON)` каждые 4 тика (клиент дедупит повторные
+  в один бегущий эффект — так aura видна и поздно подключившимся трекерам);
+  hit-ветка — `VfxFx.event(IRON_FISTS_HIT, scale=SHOCKWAVE_RADIUS)` вместо
+  END_ROD/CRIT/`playSound(IRON_FISTS_IMPACT)`; `ShockwaveUtil.detonate` —
+  `suppressPresentation=true` (damage/knockback/ScreenShakeS2CPayload
+  сохранены, ванильный взрыв выключен — как у landing); `markDeactivated`
+  шлёт `IRON_FISTS_OFF`; `SHOCKWAVE_RADIUS` → package-private; серверные
+  charge-loop `playSound` и `spawnHandAura` удалены. `IronFistsAbility` —
+  tryActivate/onDeactivate очищены от ванильных звуков/частиц (события
+  владеют `homelander.iron_fists.*`).
+- Клиент `IronFistsFx`: `activate` — аура 200 тиков (`DURATION_TICKS`),
+  два эмиттера `homelander_iron_fists_hand` на якорях рук
+  (`HumanoidAnchors.tiltedPoint`, lateral ±0.34 / up 1.0 / fwd 0.15,
+  tilt-aware через `FlightPoseTracker`), ACTION-клип
+  `iron_fists_activate`, звук activate + entity-bound loop charge;
+  дедуп по `Map<entityId,aura>` (повторный ON → factory null → spawn
+  дропается). `deactivate` — cancel ауры. `hit` — `ShockwavePattern`
+  (радиус = scale·ringRadius), `ImpactPattern` (`surfaceOffset`,
+  distortion), `CameraImpulse` по близости, ACTION-клип `iron_fists_strike`,
+  звук impact.
+- Ассеты: `vfx/homelander/iron_fists.json`; quasar-квартеты
+  `homelander_iron_fists_{hand,impact}` (sprite `vfx/homelander/ember.png`,
+  цвет `homelander_gold`).
+- Тесты: `HomelanderNoVanillaParticlesTest.CLEANED` += IronFistsAbility +
+  IronFistsController — RED (оба файла флагались) → GREEN после реализации;
+  `qualityGate --no-daemon` BUILD SUCCESSFUL с первого прогона (runGametest
+  без флаков). `hero_presentation.txt` не тронут, геймплей
+  (dash/damage/knockback/shockwave) byte-identical, Veil-импортов в
+  src/main нет.
+- Дальше: Task 12+ по плану; runClient-проверка не делалась (headless).

@@ -41,6 +41,9 @@ public final class HomelanderFx {
 		ctx.vfx(HomelanderVfxIds.SUN_DETONATION, SunDetonationFx::create);
 		ctx.vfx(HomelanderVfxIds.MADNESS_CRASH, SunDetonationFx::create);
 		ctx.vfx(HomelanderVfxIds.MILK_DRINK, HomelanderFx::milkDrink);
+		ctx.vfx(HomelanderVfxIds.IRON_FISTS_ON, IronFistsFx::activate);
+		ctx.vfx(HomelanderVfxIds.IRON_FISTS_OFF, IronFistsFx::deactivate);
+		ctx.vfx(HomelanderVfxIds.IRON_FISTS_HIT, IronFistsFx::hit);
 		ctx.flightPresentation(new FlightPresentation(
 				clip("flight_takeoff"),
 				clip("flight_hover"),

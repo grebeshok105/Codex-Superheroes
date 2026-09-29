@@ -8,14 +8,9 @@ import io.github.grebeshok105.codex.hero.homelander.runtime.IronFistsController;
 import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.hero.Heroes;
 import io.github.grebeshok105.codex.core.resource.EnergyLocks;
-import io.github.grebeshok105.codex.sound.HomelanderSounds;
 import io.github.grebeshok105.codex.core.model.HeroData;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.phys.Vec3;
 
 public final class IronFistsAbility implements Ability {
 	public static final ResourceLocation ID = ModId.of("iron_fists");
@@ -58,15 +53,6 @@ public final class IronFistsAbility implements Ability {
 
 		EnergyLocks.lockTicks(player, DURATION_TICKS);
 		IronFistsController.markActivated(player);
-
-		ServerLevel level = player.serverLevel();
-		Vec3 p = player.position();
-		level.playSound(null, p.x, p.y, p.z, HomelanderSounds.IRON_FISTS_IMPACT,
-				SoundSource.PLAYERS, 1.2f, 0.9f);
-		level.playSound(null, p.x, p.y, p.z, HomelanderSounds.IRON_FISTS_CHARGE,
-				SoundSource.PLAYERS, 1.0f, 1.0f);
-		level.sendParticles(ParticleTypes.FLASH, p.x, p.y + 1.0, p.z, 1, 0, 0, 0, 0);
-		level.sendParticles(ParticleTypes.END_ROD, p.x, p.y + 1.2, p.z, 30, 0.6, 0.6, 0.6, 0.05);
 		return true;
 	}
 
@@ -78,9 +64,5 @@ public final class IronFistsAbility implements Ability {
 	@Override
 	public void onDeactivate(ServerPlayer player) {
 		IronFistsController.markDeactivated(player);
-		ServerLevel level = player.serverLevel();
-		Vec3 p = player.position();
-		level.sendParticles(ParticleTypes.END_ROD, p.x, p.y + 1.0, p.z,
-				24, 0.5, 0.5, 0.5, 0.08);
 	}
 }

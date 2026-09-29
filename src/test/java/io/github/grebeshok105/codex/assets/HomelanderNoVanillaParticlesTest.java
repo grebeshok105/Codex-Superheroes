@@ -30,7 +30,9 @@ class HomelanderNoVanillaParticlesTest {
 			"src/main/java/io/github/grebeshok105/codex/hero/homelander/ability/EyeLasersAbility.java",
 			"src/main/java/io/github/grebeshok105/codex/hero/homelander/item/MilkBottleItem.java",
 			"src/main/java/io/github/grebeshok105/codex/hero/homelander/runtime/HomelanderMadnessAftermathController.java",
-			"src/main/java/io/github/grebeshok105/codex/hero/homelander/runtime/HomelanderMadnessFlightController.java");
+			"src/main/java/io/github/grebeshok105/codex/hero/homelander/runtime/HomelanderMadnessFlightController.java",
+			"src/main/java/io/github/grebeshok105/codex/hero/homelander/ability/IronFistsAbility.java",
+			"src/main/java/io/github/grebeshok105/codex/hero/homelander/runtime/IronFistsController.java");
 
 	private static final List<String> FORBIDDEN = List.of(
 			"sendParticles(", "ParticleTypes.", "playSound(", "SoundEvents.");
