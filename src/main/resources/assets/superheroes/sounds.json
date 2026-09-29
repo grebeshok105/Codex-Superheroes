@@ -85,6 +85,101 @@
       }
     ]
   },
+  "homelander.iron_fists.activate": {
+    "subtitle": "subtitles.superheroes.homelander.iron_fists",
+    "sounds": [
+      {
+        "name": "superheroes:homelander/iron_fists_activate"
+      }
+    ]
+  },
+  "homelander.flight.takeoff": {
+    "subtitle": "subtitles.superheroes.homelander.flight",
+    "sounds": [
+      {
+        "name": "superheroes:homelander/flight_takeoff"
+      }
+    ]
+  },
+  "homelander.flight.loop": {
+    "subtitle": "subtitles.superheroes.homelander.flight",
+    "sounds": [
+      {
+        "name": "superheroes:homelander/flight_loop",
+        "stream": true
+      }
+    ]
+  },
+  "homelander.flight.boost": {
+    "subtitle": "subtitles.superheroes.homelander.flight",
+    "sounds": [
+      {
+        "name": "superheroes:homelander/flight_boost"
+      }
+    ]
+  },
+  "homelander.flight.land": {
+    "subtitle": "subtitles.superheroes.homelander.flight",
+    "sounds": [
+      {
+        "name": "superheroes:homelander/flight_land"
+      }
+    ]
+  },
+  "homelander.laser.charge": {
+    "subtitle": "subtitles.superheroes.homelander.laser",
+    "sounds": [
+      {
+        "name": "superheroes:homelander/laser_charge"
+      }
+    ]
+  },
+  "homelander.laser.loop": {
+    "subtitle": "subtitles.superheroes.homelander.laser",
+    "sounds": [
+      {
+        "name": "superheroes:homelander/laser_loop",
+        "stream": true
+      }
+    ]
+  },
+  "homelander.laser.release": {
+    "subtitle": "subtitles.superheroes.homelander.laser",
+    "sounds": [
+      {
+        "name": "superheroes:homelander/laser_release"
+      }
+    ]
+  },
+  "homelander.milk.drink": {
+    "subtitle": "subtitles.superheroes.homelander.milk_drink",
+    "sounds": [
+      {
+        "name": "superheroes:homelander/milk_drink"
+      }
+    ]
+  },
+  "homelander.sun.charge": {
+    "subtitle": "subtitles.superheroes.homelander.sun_charge",
+    "sounds": [
+      {
+        "name": "superheroes:homelander/sun_charge",
+        "stream": true
+      }
+    ]
+  },
+  "homelander.sun.detonate": {
+    "subtitle": "subtitles.superheroes.homelander.sun_detonate",
+    "sounds": [
+      {
+        "name": "superheroes:homelander/sun_detonate",
+        "stream": true
+      }
+    ]
+  },
+  "silent": {
+    "sounds": []
+  },
   "doomsday.roar": {
     "subtitle": "subtitles.superheroes.doomsday.roar",
     "sounds": [

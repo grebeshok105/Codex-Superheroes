@@ -5,7 +5,7 @@ import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import io.github.grebeshok105.codex.core.net.ScreenShakeS2CPayload;
-import io.github.grebeshok105.codex.sound.ModSounds;
+import io.github.grebeshok105.codex.sound.HomelanderSounds;
 import io.github.grebeshok105.codex.core.net.FxBroadcast;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.particles.ParticleTypes;
@@ -83,9 +83,9 @@ public final class StunningRoarAbility implements Ability {
 		}
 
 		level.playSound(null, player.getX(), player.getY(), player.getZ(),
-				ModSounds.HOMELANDER_ROAR, SoundSource.PLAYERS, 1.6f, 1.0f);
+				HomelanderSounds.ROAR, SoundSource.PLAYERS, 1.6f, 1.0f);
 		level.playSound(null, player.getX(), player.getY(), player.getZ(),
-				ModSounds.HOMELANDER_ROAR_DEEP, SoundSource.PLAYERS, 1.0f, 1.0f);
+				HomelanderSounds.ROAR_DEEP, SoundSource.PLAYERS, 1.0f, 1.0f);
 
 		for (ServerPlayer nearby : FxBroadcast.aroundAudience(level, origin, 24.0)) {
 			double dist = nearby.position().distanceTo(origin);

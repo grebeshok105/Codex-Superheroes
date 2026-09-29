@@ -28,7 +28,7 @@ public final class ModItemModelProvider extends FabricModelProvider {
 		generator.generateFlatItem(item("iron_man_reactor"), ModelTemplates.FLAT_ITEM);
 		generator.generateFlatItem(ModItems.COMPOUND_V, ModelTemplates.FLAT_ITEM);
 		// Hero-module items are resolved by id — datagen must not import hero packages.
-		generator.generateFlatItem(item("milk_bottle"), ModelTemplates.FLAT_ITEM);
+		// milk_bottle ships a hand-written 3D model at assets/superheroes/models/item/milk_bottle.json.
 	}
 
 	private static Item item(String path) {
