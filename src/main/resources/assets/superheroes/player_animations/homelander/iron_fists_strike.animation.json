@@ -51,31 +51,31 @@
           "rotation": {
             "0.0": {
               "vector": [
-                -10,
-                18,
+                -8.3,
+                10.4,
                 0
               ]
             },
             "0.0833": {
               "vector": [
-                12,
-                -18,
+                10,
+                -10.4,
                 -8
               ],
               "easing": "easeInCubic"
             },
             "0.1667": {
               "vector": [
-                18,
-                -26,
+                15,
+                -15,
                 -8
               ],
               "easing": "easeOutCubic"
             },
             "0.2917": {
               "vector": [
-                6,
-                -9,
+                5,
+                -5.2,
                 -3
               ],
               "easing": "easeInOutSine"
@@ -302,6 +302,11 @@
               "easing": "easeInOutSine"
             }
           }
+        }
+      },
+      "events": {
+        "0.12": {
+          "name": "contact"
         }
       }
     }

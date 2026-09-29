@@ -38,9 +38,9 @@ import net.minecraft.world.phys.Vec3;
  * a {@link ShockwavePattern} ring and a dust cone marching along the event's
  * origin → target axis (the server sends the eye position and the eye +
  * forward · RANGE point), plus a proximity-scaled {@link CameraImpulse}.
- * The delivered clip carries no {@code contact} event yet, so the burst
- * falls back to {@code contactSeconds} (83 ms — the clip's arm-cross
- * keyframe, inside the contract's ≤ 120 ms window). Tuning lives in
+ * The clip declares {@code contact} at 83 ms (its arm-cross keyframe,
+ * inside the contract's ≤ 120 ms window); {@code contactSeconds} is the
+ * fallback when a clip carries no event. Tuning lives in
  * {@code vfx/homelander/clap.json}.
  */
 public final class ClapFx {
@@ -103,8 +103,8 @@ public final class ClapFx {
 					.add(0, -p.number("handDrop", 0.25f), 0);
 			this.ground = spawn.origin().add(0, -1.4, 0);
 
-			// Contact event from the clip when it declares one; the delivered
-			// clap clip has none yet, so the param stands in at 83 ms (≤ 120 ms).
+			// Contact event from the clip when it declares one (the shipped
+			// clap clip declares 83 ms); the param is the fallback (≤ 120 ms).
 			Float clipContact = AnimationLibrary.get(CLIP)
 					.map(clip -> clip.eventTimes().get("contact"))
 					.orElse(null);
