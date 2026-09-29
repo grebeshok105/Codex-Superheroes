@@ -964,3 +964,51 @@ VFX-канале). Ветка содержит коммит `feat(homelander): e
   протягивание = рефактор сигнатуры, вне скоупа.
 - Дальше: Task 10 — madness `level.explode` + `detonateSun` на
   `SilentParticles`/`VfxFx`.
+
+## Completed this session (Visual Core pilot — Task 10)
+
+- `SilentParticles.SILENT` (`superheroes:silent`) — пустой `textures` в
+  `particles/silent.json` + no-op provider в `CoreFx.init()` (provider
+  возвращает null; `ParticleEngine` это обрабатывает — `NoRenderParticle`
+  недоступен, ctor protected). Подставляется в 1.21.1-оверлоад
+  `Level.explode(..., ParticleOptions small, ParticleOptions large,
+  Holder<SoundEvent>)` вместе с `wrapAsHolder(ModSounds.SILENT)` там, где
+  визуалом владеет VFX-событие.
+- Серверные send-site'ы: `MilkBottleItem.use()` — серверный guard +
+  `VfxFx.event(MILK_DRINK)`, drink/eat-звуки → `SILENT`, `WITHER_SPAWN` из
+  `finishUsingItem` убран. `HomelanderMadnessAftermathController` —
+  `eventAround(SUN_CHARGE, 96)` на старте и `eventAround(SUN_DETONATION, 160)`
+  как единственный владелец `homelander.sun.detonate`; END_ROD/SMALL_FLAME/
+  beacon/visual-lightning/thunder-плейсхолдеры удалены; оба `explode`
+  (12f/7f MOB) переведены на silent-оверлоад — урон/огонь/разрушение
+  byte-identical. `HomelanderMadnessFlightController` — `VfxFx.event(
+  MADNESS_CRASH, scale 0.35)` на точке лома; sendParticles + GENERIC_EXPLODE
+  убраны. `EyeLasersAbility` — оба madness-`explode` на silent-оверлоад.
+- Клиент: `SunChargeFx` — 200-тиковая аура (свет 4→22 радиуса, эмбер-эмиттер,
+  heat-distortion, BASE-клип `sun_charge`, entity-bound звук с рампом
+  громкости/питча, камерный тремор для игроков < 32). Событие идёт
+  `eventAround` (NO_SOURCE) — эффект биндится к ближайшему игроку в радиусе 3
+  от origin, иначе позиционный фолбэк. `SunDetonationFx` — ScreenFlash по
+  `attenuation(dist,160,LOS)·scale`, core-light 48 с затуханием 60 тиков, 2
+  shock-кольца, distortion-пульс, ember/debris эмиттеры,
+  `CameraImpulse.shake(1.6·att, 30)`; стинг `homelander.sun.detonate` только
+  для `SUN_DETONATION` — `MADNESS_CRASH` переиспользует композицию с
+  `scale=0.35`, без стинга. `MILK_DRINK` — one-shot в `HomelanderFx`:
+  ACTION-клип `milk_drink` + bound `homelander.milk.drink`.
+- Ассеты: `vfx/homelander/{sun_charge,sun_detonation}.json`, quasar-эмиттеры
+  `homelander_sun_{ember,debris}` (+shape/particle/particle_data; цвет —
+  существующие `homelander_gold`/`homelander_dust`).
+- Тесты: `HomelanderNoVanillaParticlesTest.CLEANED` += MilkBottleItem,
+  HomelanderMadnessAftermathController, HomelanderMadnessFlightController
+  (EyeLasersAbility уже был). GameTest `sunDetonationKeepsGameplayAndSendsVfx`
+  — блоки в радиусе ломаются, ровно одно событие `sun_detonation`,
+  `LightningBolt` не спавнится.
+- Подводный камень: wire-игроки (EmbeddedChannel) в gametest НЕ тикаются как
+  LivingEntity — `MobEffectInstance` длительность не убывает; тест
+  прокручивает `aftermath.tick(player, ...)` вручную до границы детонации.
+- RED→GREEN подтверждено; `runGametest` — 364/364 (maniaofgreedmagnets и
+  shieldthrowrestorestheshield флаки — проходят на перезапуске);
+  `qualityGate --no-daemon` BUILD SUCCESSFUL. `hero_presentation.txt`
+  не тронут, Veil-импортов в src/main нет.
+- Дальше: Task 11/12 по плану; runClient-проверка sun-композиций не делалась
+  (headless) — только code review.
