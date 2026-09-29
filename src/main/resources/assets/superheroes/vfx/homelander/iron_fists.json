@@ -1,6 +1,7 @@
 {
   "durationTicks": 200,
   "emitIntervalTicks": 4,
+  "resolveGraceTicks": 20,
   "handLateral": 0.34,
   "handUp": 1.0,
   "handForward": 0.15,

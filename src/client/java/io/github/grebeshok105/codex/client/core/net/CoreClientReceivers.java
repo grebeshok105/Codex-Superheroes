@@ -95,8 +95,8 @@ public final class CoreClientReceivers {
 					Entity source = payload.sourceEntityId() == VfxEventS2CPayload.NO_SOURCE
 							? null
 							: context.client().level.getEntity(payload.sourceEntityId());
-					VfxRuntime.spawn(new VfxSpawn(payload.effect(), source, payload.origin(),
-							payload.target(), payload.scale(), payload.seed(),
+					VfxRuntime.spawn(new VfxSpawn(payload.effect(), source, payload.sourceEntityId(),
+							payload.origin(), payload.target(), payload.scale(), payload.seed(),
 							VfxParamsLoader.get(payload.effect())));
 				}));
 

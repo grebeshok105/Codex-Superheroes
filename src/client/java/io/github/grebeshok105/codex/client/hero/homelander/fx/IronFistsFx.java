@@ -22,8 +22,10 @@ import io.github.grebeshok105.codex.client.core.vfx.params.VfxParamsLoader;
 import io.github.grebeshok105.codex.client.core.vfx.pattern.CameraImpulse;
 import io.github.grebeshok105.codex.client.core.vfx.pattern.ImpactPattern;
 import io.github.grebeshok105.codex.client.core.vfx.pattern.ShockwavePattern;
+import io.github.grebeshok105.codex.core.net.VfxEventS2CPayload;
 import io.github.grebeshok105.codex.sound.HomelanderSounds;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.resources.sounds.AbstractTickableSoundInstance;
 import net.minecraft.client.resources.sounds.EntityBoundSoundInstance;
@@ -40,8 +42,10 @@ import net.minecraft.world.phys.Vec3;
  * Homelander's Iron Fists presentation ({@code superheroes:homelander/
  * iron_fists_*}). The server re-sends ON every aura interval while the ability
  * is active so late-tracking observers still get the effect — {@link
- * #ACTIVE_AURAS} dedupes those resends into one running aura per source entity.
- * ON: a 200-tick aura emitting the hand emitter at both arm anchors (arm
+ * #ACTIVE_AURAS} keys on the raw {@code sourceEntityId} and dedupes those
+ * resends into one running aura per source, even while the entity has not
+ * reached the client level yet (an ON arriving first waits, binds on resolve,
+ * and still cancels on OFF). ON: a 200-tick aura emitting the hand emitter at both arm anchors (arm
  * pivots rotated ~10px down), the ACTION {@code iron_fists_activate} clip, a
  * one-shot {@code homelander.iron_fists.activate} and an entity-bound {@code
  * homelander.iron_fists.charge} loop. OFF: ends the aura early. HIT: a
@@ -71,24 +75,21 @@ public final class IronFistsFx {
 	}
 
 	public static VfxEffect activate(VfxSpawn spawn) {
-		Entity source = spawn.source();
-		if (source != null && ACTIVE_AURAS.containsKey(source.getId())) {
+		int entityId = spawn.sourceEntityId();
+		if (entityId != VfxEventS2CPayload.NO_SOURCE && ACTIVE_AURAS.containsKey(entityId)) {
 			return null;
 		}
 		HandAuraFx aura = new HandAuraFx(spawn);
-		if (source != null) {
-			ACTIVE_AURAS.put(source.getId(), aura);
+		if (entityId != VfxEventS2CPayload.NO_SOURCE) {
+			ACTIVE_AURAS.put(entityId, aura);
 		}
 		return aura;
 	}
 
 	public static VfxEffect deactivate(VfxSpawn spawn) {
-		Entity source = spawn.source();
-		if (source != null) {
-			HandAuraFx aura = ACTIVE_AURAS.remove(source.getId());
-			if (aura != null) {
-				aura.cancel();
-			}
+		HandAuraFx aura = ACTIVE_AURAS.remove(spawn.sourceEntityId());
+		if (aura != null) {
+			aura.cancel();
 		}
 		return new DoneFx();
 	}
@@ -103,11 +104,11 @@ public final class IronFistsFx {
 	}
 
 	private static final class HandAuraFx implements VfxEffect {
-		private final @Nullable Entity entity;
 		private final int entityId;
 		private final Vec3 fallback;
 		private final int durationTicks;
 		private final int emitIntervalTicks;
+		private final int resolveGraceTicks;
 		private final float handLateral;
 		private final float handUp;
 		private final float handForward;
@@ -115,18 +116,25 @@ public final class IronFistsFx {
 		private final float lightRadius;
 		private final float lightBrightness;
 
+		private @Nullable Entity entity;
 		private int age;
 		private @Nullable LightHandle light;
 		private @Nullable ChargeLoopSound loop;
 		private boolean finished;
 
+		private final float activateVolume;
+		private final float activatePitch;
+		private final float chargeVolume;
+		private final float chargePitch;
+
 		private HandAuraFx(VfxSpawn spawn) {
 			this.entity = spawn.source();
-			this.entityId = entity != null ? entity.getId() : -1;
+			this.entityId = spawn.sourceEntityId();
 			this.fallback = spawn.origin();
 			VfxParams p = params(spawn);
 			this.durationTicks = Math.max(1, (int) p.number("durationTicks", 200f));
 			this.emitIntervalTicks = Math.max(1, (int) p.number("emitIntervalTicks", 4f));
+			this.resolveGraceTicks = Math.max(1, (int) p.number("resolveGraceTicks", 20f));
 			this.handLateral = p.number("handLateral", 0.34f);
 			this.handUp = p.number("handUp", 1.0f);
 			this.handForward = p.number("handForward", 0.15f);
@@ -134,24 +142,34 @@ public final class IronFistsFx {
 					? p.color("lightColor", 0) & 0xFFFFFF : -1;
 			this.lightRadius = p.number("lightRadius", 5f);
 			this.lightBrightness = p.number("lightBrightness", 0.8f);
+			this.activateVolume = p.number("activateVolume", 1f);
+			this.activatePitch = p.number("activatePitch", 1f);
+			this.chargeVolume = p.number("chargeVolume", 0.8f);
+			this.chargePitch = p.number("chargePitch", 1f);
 
-			float activateVolume = p.number("activateVolume", 1f);
-			float activatePitch = p.number("activatePitch", 1f);
 			if (entity != null) {
-				PlayerAnimator.play(entityId, CLIP_ACTIVATE,
-						PlayerAnimator.Layer.ACTION, CLIP_FADE_TICKS);
-				Minecraft.getInstance().getSoundManager().play(new EntityBoundSoundInstance(
-						HomelanderSounds.IRON_FISTS_ACTIVATE, SoundSource.PLAYERS,
-						activateVolume, activatePitch, entity, entity.getRandom().nextLong()));
-				this.loop = new ChargeLoopSound(entity,
-						p.number("chargeVolume", 0.8f), p.number("chargePitch", 1f));
-				Minecraft.getInstance().getSoundManager().play(loop);
-			} else {
+				bindPresentation();
+			} else if (entityId == VfxEventS2CPayload.NO_SOURCE) {
 				Minecraft.getInstance().getSoundManager().play(new SimpleSoundInstance(
 						HomelanderSounds.IRON_FISTS_ACTIVATE, SoundSource.PLAYERS,
 						activateVolume, activatePitch, RandomSource.create(),
 						fallback.x, fallback.y, fallback.z));
 			}
+		}
+
+		/** Clip + activate sting + charge loop — once the source entity exists. */
+		private void bindPresentation() {
+			Entity e = entity;
+			if (e == null) {
+				return;
+			}
+			PlayerAnimator.play(entityId, CLIP_ACTIVATE,
+					PlayerAnimator.Layer.ACTION, CLIP_FADE_TICKS);
+			Minecraft.getInstance().getSoundManager().play(new EntityBoundSoundInstance(
+					HomelanderSounds.IRON_FISTS_ACTIVATE, SoundSource.PLAYERS,
+					activateVolume, activatePitch, e, e.getRandom().nextLong()));
+			this.loop = new ChargeLoopSound(e, chargeVolume, chargePitch);
+			Minecraft.getInstance().getSoundManager().play(loop);
 		}
 
 		@Override
@@ -160,6 +178,19 @@ public final class IronFistsFx {
 				return;
 			}
 			age++;
+			if (entity == null && entityId != VfxEventS2CPayload.NO_SOURCE) {
+				// ON beat the entity here: hold emission, bind once it loads, give
+				// up after the grace window so nothing lingers for a dead source.
+				ClientLevel level = Minecraft.getInstance().level;
+				Entity resolved = level != null ? level.getEntity(entityId) : null;
+				if (resolved != null) {
+					entity = resolved;
+					bindPresentation();
+				} else if (age > resolveGraceTicks) {
+					finish();
+				}
+				return;
+			}
 			Vec3 feet = entity != null ? (entity.isRemoved() ? null : entity.position())
 					: fallback;
 			if (feet == null) {

@@ -215,7 +215,8 @@ public final class FlightPoseTracker {
 	}
 
 	private static void spawnEffect(AbstractClientPlayer player, ResourceLocation effect) {
-		VfxRuntime.spawn(new VfxSpawn(effect, player, player.position(), player.position(),
+		VfxRuntime.spawn(new VfxSpawn(effect, player, player.getId(),
+				player.position(), player.position(),
 				1f, player.getRandom().nextInt(), VfxParamsLoader.get(effect)));
 	}
 
