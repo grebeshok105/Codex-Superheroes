@@ -1046,3 +1046,42 @@ VFX-канале). Ветка содержит коммит `feat(homelander): e
   (dash/damage/knockback/shockwave) byte-identical, Veil-импортов в
   src/main нет.
 - Дальше: Task 12+ по плану; runClient-проверка не делалась (headless).
+
+## Completed this session (Visual Core pilot — Task 12)
+
+- Clap + Roar на Visual Core: `HandClapAbility` — активация шлёт
+  `VfxFx.event(CLAP, eye, eye+forward·RANGE, 1)` вместо EXPLOSION/CLOUD/
+  LARGE_SMOKE `sendParticles`, `playSound(HAND_CLAP)` и ванильных
+  LIGHTNING_BOLT_THUNDER/GENERIC_EXPLODE слоёв; proximity
+  `ScreenShakeS2CPayload` убран вместе с ними — тряской теперь владеет
+  `ClapFx` (те же intensity 1.8·(1−d/24), 16 тиков, иначе был бы дабл-шейк).
+  `StunningRoarAbility` — `VfxFx.event(ROAR, mouth, mouth+forward·RADIUS, 1)`
+  вместо SONIC_BOOM/EXPLOSION/LARGE_SMOKE, `playSound(ROAR/ROAR_DEEP)` и
+  shake-пейлоуда (rumble через `RoarFx`). Геймплей (knockback/stun/radius/
+  damage/darkness/cooldown) byte-identical.
+- Клиент `ClapFx`: ACTION-клип `clap`, entity-bound `homelander.hand_clap`
+  (vol 2.0), на `contact` — flash-light между рук (затухание 8 тиков),
+  `ImpactPattern`-бёрст с distortion-пульсом, `ShockwavePattern`-кольцо,
+  dust-эмиттеры вперёд по конусу (10 шагов × 1.5 блока) + пыль у ног,
+  `CameraImpulse` по близости. Отклонение по контракту: в поставленном
+  `clap.animation.json` пока нет `contact`-event — вспышка привязана к
+  `contactSeconds=0.083` (ключ кадр сведения рук 0.0833с, внутри окна
+  ≤120мс от старта клипа); как только клип принесёт `eventTimes`, код сам
+  переключится на него.
+- Клиент `RoarFx`: ACTION-клип `roar`, оба контрактных звука слоями как
+  раньше (`homelander.roar` vol 1.6 + `homelander.roar.deep` vol 1.0,
+  entity-bound), рот реанкорится к энтити каждый тик (eye+view·0.6),
+  кольца `ShockwavePattern` + эмиттер `homelander_roar_wave` маршируют по
+  взгляду каждые 3 тика (~1500мс = длина клипа), distortion-пульс каждые
+  10 тиков, пыль у ног каждые 5, низкий rumble-shake по близости.
+- Ассеты: `vfx/homelander/{clap,roar}.json`; quasar-квартеты
+  `homelander_clap_{flash,dust}` и `homelander_roar_{wave,dust}` (спрайты
+  `vfx/homelander/shock_ring.png` + `particle/white_boom_0.png`; новый цвет
+  `homelander_shock` — холодный бело-голубой для хлопка и рыка).
+- Тесты: `HomelanderNoVanillaParticlesTest.CLEANED` += HandClapAbility +
+  StunningRoarAbility — RED (оба файла флагались) → GREEN. Binding-check
+  `rg -n 'sendParticles|ParticleTypes\.' src/main/.../hero/homelander` —
+  EMPTY: hero-дерево в src/main полностью очищено от ванильной презентации.
+  `qualityGate --no-daemon` BUILD SUCCESSFUL (364/364 gametests, datagen
+  без диффа), `hero_presentation.txt` не тронут.
+- Дальше: Task 13 по плану; runClient-проверка не делалась (headless).

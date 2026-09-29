@@ -44,6 +44,8 @@ public final class HomelanderFx {
 		ctx.vfx(HomelanderVfxIds.IRON_FISTS_ON, IronFistsFx::activate);
 		ctx.vfx(HomelanderVfxIds.IRON_FISTS_OFF, IronFistsFx::deactivate);
 		ctx.vfx(HomelanderVfxIds.IRON_FISTS_HIT, IronFistsFx::hit);
+		ctx.vfx(HomelanderVfxIds.CLAP, ClapFx::create);
+		ctx.vfx(HomelanderVfxIds.ROAR, RoarFx::create);
 		ctx.flightPresentation(new FlightPresentation(
 				clip("flight_takeoff"),
 				clip("flight_hover"),

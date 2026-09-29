@@ -1,0 +1,11 @@
+{
+  "max_lifetime": 10,
+  "loop": false,
+  "rate": 1,
+  "count": 10,
+  "emitter_settings": {
+    "shape": "superheroes:homelander_roar_wave",
+    "particle_settings": "superheroes:homelander_roar_wave"
+  },
+  "particle_data": "superheroes:homelander_roar_wave"
+}

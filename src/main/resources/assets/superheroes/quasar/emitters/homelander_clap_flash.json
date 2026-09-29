@@ -1,0 +1,11 @@
+{
+  "max_lifetime": 10,
+  "loop": false,
+  "rate": 1,
+  "count": 28,
+  "emitter_settings": {
+    "shape": "superheroes:homelander_clap_flash",
+    "particle_settings": "superheroes:homelander_clap_flash"
+  },
+  "particle_data": "superheroes:homelander_clap_flash"
+}
