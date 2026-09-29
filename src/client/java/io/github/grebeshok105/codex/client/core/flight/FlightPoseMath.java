@@ -12,7 +12,7 @@ import net.minecraft.world.phys.Vec3;
  * <p>Tuning keys (from {@code vfx/flight/pose.json}):
  * {@code hoverMaxPitch}/{@code hoverRefSpeed},
  * {@code cruiseMinPitch}/{@code cruiseMaxPitch}/{@code cruiseRefSpeed},
- * {@code boostPitch}, {@code descendEps}, {@code rollFactor},
+ * {@code boostPitch}, {@code rollFactor},
  * {@code rollMax}, {@code halfLifeTicks}.
  */
 public final class FlightPoseMath {
@@ -25,9 +25,10 @@ public final class FlightPoseMath {
 	/**
 	 * Pose target for the phase: HOVER leans 0–{@code hoverMaxPitch} by
 	 * horizontal speed, CRUISE up to {@code cruiseMaxPitch}, BOOST a fixed
-	 * {@code boostPitch}, IDLE/TAKEOFF/LANDING zero. Descending (vertical
-	 * velocity below −{@code descendEps}) flips the pitch sign; roll banks
-	 * {@code -yawRate × rollFactor}, clamped to ±{@code rollMax}.
+	 * {@code boostPitch}, IDLE/TAKEOFF/LANDING zero. Pitch stays positive in
+	 * every phase — a head-first lean must never flip the body belly-up while
+	 * descending; roll banks {@code -yawRate × rollFactor}, clamped to
+	 * ±{@code rollMax}.
 	 */
 	public static FlightBodyTransform target(FlightPhase phase, Vec3 velocity,
 			float yawRateDegPerTick, VfxParams p) {
@@ -44,9 +45,6 @@ public final class FlightPoseMath {
 			case BOOST -> p.number("boostPitch", 80f);
 			default -> 0f;
 		};
-		if (pitch != 0f && velocity.y < -p.number("descendEps", 0.05f)) {
-			pitch = -pitch;
-		}
 		float rollMax = p.number("rollMax", 25f);
 		float roll = clamp(-yawRateDegPerTick * p.number("rollFactor", 2.5f), -rollMax, rollMax);
 		return new FlightBodyTransform(pitch, roll);

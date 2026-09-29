@@ -52,11 +52,11 @@ class FlightPoseMathTest {
 		assertTrue(Math.abs(boost.pitchDeg()) <= 80f + 0.001f,
 				"boost pitch exceeded the 80° limit: " + boost.pitchDeg());
 		assertEquals(80f, boost.pitchDeg(), 0.001f, "boost defaults to a full 80° head-first pitch");
-		// Pitch sign follows vertical velocity: descending flips the lean.
+		// Pitch never flips belly-up: diving keeps the positive head-first lean.
 		FlightBodyTransform diving = FlightPoseMath.target(
 				FlightPhase.BOOST, new Vec3(1.2, -0.5, 0.0), 0f, DEFAULTS);
-		assertEquals(-80f, diving.pitchDeg(), 0.001f,
-				"descending boost should flip pitch sign, got " + diving.pitchDeg());
+		assertEquals(80f, diving.pitchDeg(), 0.001f,
+				"descending boost must not flip pitch sign, got " + diving.pitchDeg());
 	}
 
 	@Test

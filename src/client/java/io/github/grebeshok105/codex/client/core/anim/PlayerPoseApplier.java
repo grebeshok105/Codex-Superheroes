@@ -25,6 +25,8 @@ import java.util.Map;
  */
 public final class PlayerPoseApplier {
 	private static final float DEG_TO_RAD = (float) (Math.PI / 180.0);
+	/** Bones that keep their vanilla pose under {@link #resetDrivenLimbs}: the head still tracks the view. */
+	private static final String HEAD_BONE = "head";
 
 	private PlayerPoseApplier() {
 	}
@@ -58,6 +60,35 @@ public final class PlayerPoseApplier {
 			return new Vector3f();
 		}
 		return new Vector3f(-v.x, -v.y, -v.z).mul(sample.weight());
+	}
+
+	/**
+	 * Clears the vanilla rotation of every limb the sample drives so the
+	 * clip's authored pose shows through instead of overlaying residual
+	 * swing (e.g. dangling legs under a flight clip). The head is skipped —
+	 * it keeps tracking the view while the clip adds its authored offset.
+	 * Run before {@link #apply}; the returned Restoration still reverts only
+	 * the apply deltas, and vanilla rewrites the pose next frame anyway.
+	 */
+	public static void resetDrivenLimbs(HumanoidModel<?> model, PoseSample sample) {
+		for (String bone : sample.rotationDeg().keySet()) {
+			resetPart(model, bone);
+		}
+		for (String bone : sample.offsetPx().keySet()) {
+			resetPart(model, bone);
+		}
+	}
+
+	private static void resetPart(HumanoidModel<?> model, String bone) {
+		if (HEAD_BONE.equals(bone)) {
+			return;
+		}
+		ModelPart part = part(model, bone);
+		if (part != null) {
+			part.xRot = 0f;
+			part.yRot = 0f;
+			part.zRot = 0f;
+		}
 	}
 
 	public static Restoration apply(HumanoidModel<?> model, PoseSample sample) {

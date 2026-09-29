@@ -122,12 +122,14 @@ public final class HumanoidAnchors {
 
 	private static Vec3 applyTilt(Vec3 offset, Vec3 bodyRight, Vec3 bodyForward, FlightBodyTransform tilt) {
 		// Positive pitch leans head-first toward body forward; positive roll
-		// banks toward the player's right.
-		if (tilt.pitchDeg() != 0f) {
-			offset = rotate(offset, bodyRight, -tilt.pitchDeg());
-		}
+		// banks toward the player's right. Roll runs first — the renderer's
+		// mulPose(XP·(-pitch))·mulPose(ZP·(-roll)) applies roll to the vector
+		// before pitch, so the same order keeps anchors glued to the render.
 		if (tilt.rollDeg() != 0f) {
 			offset = rotate(offset, bodyForward, tilt.rollDeg());
+		}
+		if (tilt.pitchDeg() != 0f) {
+			offset = rotate(offset, bodyRight, -tilt.pitchDeg());
 		}
 		return offset;
 	}

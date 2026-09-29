@@ -55,9 +55,10 @@ public abstract class PlayerModelPoseMixin<T extends LivingEntity> {
 		// --- статичная поза ног в полёте (для летающих героев без FlightPresentation;
 		//     герои с презентацией получают позу от PlayerAnimator-клипов) ---
 		ClientFlightState.State flight = ClientFlightState.get(player.getId());
-		if (flight != null && flight.phase() != FlightPhase.IDLE && flight.phase() != FlightPhase.LANDING
-				&& !player.isCrouching()
-				&& FlightPresentations.of(SkinResolver.heroIdFor(player)).isEmpty()) {
+		boolean flying = flight != null && flight.phase() != FlightPhase.IDLE
+				&& flight.phase() != FlightPhase.LANDING && !player.isCrouching();
+		boolean hasPresentation = FlightPresentations.of(SkinResolver.heroIdFor(player)).isPresent();
+		if (flying && !hasPresentation) {
 			// ноги прямые, вместе, слегка отведены назад — стабильная «полётная» поза,
 			// перекрывает остаточный limbSwing от прыжка/падения
 			float back = -0.22f;
@@ -89,6 +90,12 @@ public abstract class PlayerModelPoseMixin<T extends LivingEntity> {
 				.getGameTimeDeltaPartialTick(true);
 		PoseSample animated = PlayerAnimator.sample(player.getId(), partialTick);
 		if (!animated.isEmpty()) {
+			// В полёте клипы презентации — абсолютная поза: сначала обнуляем
+			// у конечностей остаточный vanilla-свинг, иначе ноги «болтаются»
+			// под клипом. Голова остаётся на vanilla-трекинге взгляда.
+			if (flying && hasPresentation) {
+				PlayerPoseApplier.resetDrivenLimbs(model, animated);
+			}
 			superheroes$animatedPose = PlayerPoseApplier.apply(model, animated);
 			model.hat.copyFrom(model.head);
 			model.jacket.copyFrom(model.body);
