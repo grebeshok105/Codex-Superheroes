@@ -1114,3 +1114,13 @@ VFX-канале). Ветка содержит коммит `feat(homelander): e
   иначе новый package-цикл `hero.homelander <-> hero.homelander.vfx`;
   on/off вместо toggle; scene count — повторения по кольцу.
 - Дальше: Task 14 по плану; runClient-проверка не делалась (headless).
+## Completed this session (Visual Core pilot — fourth-session review, spec §14 Stream B)
+
+- Абсолютное ревью ветки `feat/visual-core-homelander-pilot` (32 коммита над main, 231 файл): все 9 областей §14.4 проверены, отчёт — `docs/design/visual-core-homelander/fourth-session-review.md`.
+- Три реальных дефекта найдены и исправлены (`fix(vfx)` коммиты с воспроизводящими тестами):
+  - `b717b06` — `PlayerAnimator.stop` гасил ВСЮ полосу слоя: SunChargeFx убивал `flight_*` BASE-луп, трекер полёта убивал `sun_charge`, EyeLaserChannel на DONE/cancel сносил чужие ACTION-клипы; `release()` никогда не гасил WRAP `laser_hold` (маскировалось лейн-киллом). Теперь `stop(entityId, layer, fadeTicks, clipIds...)` — по-клипово.
+  - `c0c2b1a` — легаси `FlightTrailManager` (ванильные END_ROD/CLOUD) работал и для Homelander → двойной след поверх FlightFx-лент. `FlightPoseTracker` маркирует presentation-owned в `ClientFlightState` (без package-цикла fx⇄core), трейл-менеджер их пропускает.
+  - `308515e` — `VeilPostEffects`/`FallbackVfxBackend` пинили вспышку на пике: 60-тиковый фейд ScreenFlash рисовался ~3с на максимуме + хвост. Новый `FlashEnvelope` (feed принимается при `intensity >= shown`) делится обоими бэкендами.
+- Тесты: `PlayerAnimatorTest` +2 (per-clip stop, fade-sibling), `FlashEnvelopeTest` (6 кейсов), `ClientFlightStateTest` (mark/unmark/clearAll). `qualityGate --no-daemon` BUILD SUCCESSFUL — test, 364/364 gametests, arch-baseline, jar-isolation, datagen-verify.
+- Паркованное не трогал (BeamPattern noise-seed, `VfxSpawn.seed` unread, roar shake 0.8 vs 2.0 — настройка в params, не контракт).
+- Вердикт: **Pilot ready for final integration**; §16 gaps — только ожидаемые OMP-блокировки.
