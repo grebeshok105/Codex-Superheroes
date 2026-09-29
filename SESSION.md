@@ -874,3 +874,51 @@ runtime). Коммит `79df46f`.
 - Hero-символов в `client/core/anim/**` нет; зависимостей не добавлено.
 - Дальше: Task 8 — Homelander flight wiring (`FlightPoseTracker` →
   `FlightBodyTransform` + flight_* клипы на BASE-слое `PlayerAnimator`).
+
+## Visual Core + Homelander пилот — Task 8 (ветка `feat/visual-core-homelander-pilot`)
+
+Выполнен Task 8 плана `2026-09-28-visual-core-homelander-pilot.md` (continuous flight
+pose + Homelander flight presentation). Коммит `f42bb3f`.
+
+- `client/core/flight/` — `FlightPoseMath` (pure: `target` по фазе — HOVER 0–10°
+  по скорости, CRUISE 15–55°, BOOST 80°, остальные 0; знак по vy; roll =
+  clamp(−yawRate×2.5, ±25°); `step` = экспонента `1−2^(−dt/halfLife)`, half-life 3),
+  `FlightPoseTracker` (трек по `entitiesForRendering` + `ClientFlightState` +
+  `SkinResolver.heroIdFor` → `FlightPresentations.of`; transform(id, partial)
+  лерпит previous→current; velocity из дельты позиции — работает и для remote;
+  BASE-клипы stop+play с 4-тик кроссфейдом, takeoff/land на ACTION; луп-звук —
+  свой `FlightLoopSound extends AbstractTickableSoundInstance`, volume ∝
+  horizontalSpeed; trail-эффект спавнится один раз на вход CRUISE/BOOST;
+  cleanup: отпускает lane/звук и удаляет запись, когда сущность ушла или
+  `ClientFlightState` пуст), `FlightPresentation` record (11 компонент),
+  `FlightPresentations` реестр.
+- `HeroClientContext.flightPresentation` → `CoreClientContext` регистрирует в
+  `FlightPresentations`. `SuperheroesClient`: `FlightPoseTracker.init()` после
+  `AnimationLibrary.init()`.
+- `PlayerRendererMixin.setupRotations` TAIL: `mulPose(XP,−pitch)` + `mulPose(ZP,−roll)`
+  вокруг entity origin (feet pivot — сознательное отступление от «body center»
+  в спеке: anchors и тест `eyesFollowFlightTilt` требуют feet pivot).
+  `PlayerModelPoseMixin`: статичная поза ног только если у героя игрока нет
+  `FlightPresentation`.
+- `HomelanderVfxIds` (11 id), `HomelanderFx` — регистрационный хаб (Task 8:
+  LANDING→`FlightFx.landing`, trail/boost эффекты, `FlightPresentation` с
+  клипами homelander/flight_* и звуками `HomelanderSounds.FLIGHT_*`);
+  `FlightFx` — трейлы от рук/ног (4 `TrailPattern`, self-finish при выходе из
+  CRUISE/BOOST), boost-бёрст + `ShockwavePattern`, лендинг-композит
+  (`ImpactPattern` + кольцо + `homelander.flight.land` — единый лендинг-звук).
+- `HomelanderHero.onLanded`: все `sendParticles` + тирный `playSound` заменены на
+  `VfxFx.event(player, LANDING, pos, pos, scale)`; tier по-прежнему управляет
+  scale. `ShockwaveUtil.detonate` получил `suppressPresentation`-оверлоад
+  (старые сигнатуры сохранены): пропускает ВЕСЬ presentation-хвост (все
+  частицы + звуки), оставляет damage/block-break/`ScreenShakeS2CPayload`.
+- `SkinResolver.heroIdFor` стал public (шов remote-hero для трекера/миксина);
+  `HumanoidAnchors.tiltedPoint` — новый хелпер для якорей конечностей.
+- TDD: RED (7 ошибок компиляции — классов не было) → GREEN; `qualityGate
+  --no-daemon` BUILD SUCCESSFUL. Gametest-флейка: два прогона падали на РАЗНЫХ
+  Regulus-тестах (maniaOfGreed… / greedsEmbrace…), база чистая, третий прогон —
+  362/362 PASS. `hero_presentation.txt` не тронут.
+- Реализационные отступления (см. task-8-report): feet-pivot вместо body-center;
+  `IronFistsController.detonate` оставлен без suppress (его презентацию меняет
+  Task 11); trail — один VfxEffect на активацию вместо спавна каждый тик.
+- Дальше: Task 9 — lasers (`LASER` channel id уже есть в `HomelanderVfxIds`;
+  eyes-anchors через `FlightPoseTracker.transform` + `HumanoidAnchors.eyes`).
