@@ -1124,3 +1124,10 @@ VFX-канале). Ветка содержит коммит `feat(homelander): e
 - Тесты: `PlayerAnimatorTest` +2 (per-clip stop, fade-sibling), `FlashEnvelopeTest` (6 кейсов), `ClientFlightStateTest` (mark/unmark/clearAll). `qualityGate --no-daemon` BUILD SUCCESSFUL — test, 364/364 gametests, arch-baseline, jar-isolation, datagen-verify.
 - Паркованное не трогал (BeamPattern noise-seed, `VfxSpawn.seed` unread, roar shake 0.8 vs 2.0 — настройка в params, не контракт).
 - Вердикт: **Pilot ready for final integration**; §16 gaps — только ожидаемые OMP-блокировки.
+## Completed this session (Visual Core pilot — Task 15, final acceptance)
+
+- OMP gate: FAILED — реализационной OMP-ветки нет вообще; `omp-review.md` отсутствует на всех ref'ах, в манифесте все 18 placeholder-строк живые. Gap зафиксирован в `docs/design/visual-core-homelander/verification.md`, Steps 3 (merge+contract tests) и 5-final-assets не выполнимы.
+- Step 4 tuning: `roar.json` `ringSpacing` 1.5→1.1 (кольца выплёвывались ~15.7b при радиусе урона 12b → теперь ~12.1b). Остальные parked-minors — без дефектов в свежих записях, не тронуты.
+- Step 5: `da47948..HEAD` — три фикса параллельного ревью (b717b06 per-clip stop, c0c2b1a legacy trail off, 308515e FlashEnvelope). Перепроверено в игре на 1b58334: ленты трейла спавнятся и рендерятся (`effects: 1` в CRUISE), белая ванильная колонна исчезла, флэш детонации плавно затухает, лазеры гасятся на релизе. Механика подтверждена временным логом (revert): телепорты дают hSpeed=0 → фаза HOVER → трейла нет; нужен реальный ввод. На границе 0.08 b/t фаза флапает CRUISE↔HOVER → трейл мигает (minor, запарковано).
+- Step 6: все 5 сцен §15 пересняты/подтверждены на `1b58334`, таблица в verification.md — 5×PASS (bounded: placeholder-ассеты, llvmpipe). §16 DoD gap: только OMP-строки + ~100 FPS на Sodium-железе.
+- Риг: tmux `vfx-server` + runClient Player758; `pin-energy` убит, полёт/лазеры выключены.
