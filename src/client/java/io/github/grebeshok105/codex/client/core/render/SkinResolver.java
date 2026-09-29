@@ -58,8 +58,14 @@ public final class SkinResolver {
 				slimModel);
 	}
 
+	/**
+	 * The hero id of {@code player} through the module seam: {@code ClientHeroState}
+	 * for the local player, the synced {@code CoreAttachments.PUBLIC_HERO}
+	 * attachment for everyone else. Exposed for other render-adjacent systems
+	 * (e.g. the flight pose tracker) that branch on the player's hero.
+	 */
 	@Nullable
-	private static ResourceLocation heroIdFor(AbstractClientPlayer player) {
+	public static ResourceLocation heroIdFor(AbstractClientPlayer player) {
 		Minecraft mc = Minecraft.getInstance();
 		if (mc.player != null && player.getUUID().equals(mc.player.getUUID())) {
 			return ClientHeroState.heroId();

@@ -75,6 +75,20 @@ public final class HumanoidAnchors {
 		return computeEyes(feet, bodyYaw, headYaw, headPitch, headAnimDeg.z, tilt, player.getScale());
 	}
 
+	/**
+	 * A generic body anchor: {@code lateral}/{@code up}/{@code forward} blocks
+	 * off the feet along the body axes (right/up/forward), then tilted by the
+	 * flight transform exactly like the eye anchors — used by trail effects
+	 * that leave from hands and feet.
+	 */
+	public static Vec3 tiltedPoint(Vec3 feet, float bodyYawDeg, double lateral, double up,
+			double forward, FlightBodyTransform tilt) {
+		Vec3 bodyForward = Vec3.directionFromRotation(0f, bodyYawDeg);
+		Vec3 bodyRight = rightOf(bodyForward, new Vec3(1, 0, 0));
+		Vec3 offset = bodyRight.scale(lateral).add(UP.scale(up)).add(bodyForward.scale(forward));
+		return feet.add(applyTilt(offset, bodyRight, bodyForward, tilt));
+	}
+
 	private static EyePair computeEyes(Vec3 feet, float bodyYawDeg, float headYawDeg, float headPitchDeg,
 			float headRollDeg, FlightBodyTransform tilt, float scale) {
 		Vec3 bodyForward = Vec3.directionFromRotation(0f, bodyYawDeg);

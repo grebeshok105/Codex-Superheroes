@@ -3,6 +3,8 @@ package io.github.grebeshok105.codex.client.mixin;
 import io.github.grebeshok105.codex.client.ClientFlightState;
 import io.github.grebeshok105.codex.client.ClientThinkMarkState;
 import io.github.grebeshok105.codex.client.core.anim.PlayerAnimator;
+import io.github.grebeshok105.codex.client.core.flight.FlightPresentations;
+import io.github.grebeshok105.codex.client.core.render.SkinResolver;
 import io.github.grebeshok105.codex.client.core.anim.PlayerPoseApplier;
 import io.github.grebeshok105.codex.client.core.anim.PoseSample;
 import io.github.grebeshok105.codex.mechanic.flight.FlightPhase;
@@ -33,10 +35,12 @@ public abstract class PlayerModelPoseMixin<T extends LivingEntity> {
 		}
 		PlayerModel<?> model = (PlayerModel<?>) (Object) this;
 
-		// --- статичная поза ног в полёте (для всех летающих героев) ---
+		// --- статичная поза ног в полёте (для летающих героев без FlightPresentation;
+		//     герои с презентацией получают позу от PlayerAnimator-клипов) ---
 		ClientFlightState.State flight = ClientFlightState.get(player.getId());
 		if (flight != null && flight.phase() != FlightPhase.IDLE && flight.phase() != FlightPhase.LANDING
-				&& !player.isCrouching()) {
+				&& !player.isCrouching()
+				&& FlightPresentations.of(SkinResolver.heroIdFor(player)).isEmpty()) {
 			// ноги прямые, вместе, слегка отведены назад — стабильная «полётная» поза,
 			// перекрывает остаточный limbSwing от прыжка/падения
 			float back = -0.22f;

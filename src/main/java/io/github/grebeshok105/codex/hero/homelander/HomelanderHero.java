@@ -11,14 +11,11 @@ import io.github.grebeshok105.codex.core.hero.JarvisThreatClass;
 import io.github.grebeshok105.codex.core.hero.LandingImpact;
 import io.github.grebeshok105.codex.core.hero.PassiveGlyph;
 import io.github.grebeshok105.codex.core.model.HeroData;
+import io.github.grebeshok105.codex.core.net.VfxFx;
 import io.github.grebeshok105.codex.mechanic.shockwave.ShockwaveUtil;
 import io.github.grebeshok105.codex.core.model.ResourceKind;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityDimensions;
@@ -155,44 +152,11 @@ public final class HomelanderHero implements Hero {
 		float scale = 0.30f + intensity * 1.20f;
 		double radius = 3.0 + scale * 8.0;
 		float damage = 4.0f + scale * 10.0f;
-		ShockwaveUtil.detonate(player, player.position(), radius, damage, false);
+		ShockwaveUtil.detonate(player, player.position(), radius, damage, false, true);
 
-		ServerLevel level = player.serverLevel();
-		double cx = player.getX();
-		double cy = player.getY();
-		double cz = player.getZ();
-
-		switch (impact.tier()) {
-			case WEAK -> {
-				level.playSound(null, cx, cy, cz, SoundEvents.GENERIC_EXPLODE.value(), SoundSource.PLAYERS, 0.7f, 1.4f);
-				level.sendParticles(ParticleTypes.CLOUD, cx, cy + 0.1, cz, 12, 0.6, 0.05, 0.6, 0.02);
-			}
-			case NORMAL -> {
-				level.playSound(null, cx, cy, cz, SoundEvents.GENERIC_EXPLODE.value(), SoundSource.PLAYERS, 1.1f, 0.95f);
-				level.playSound(null, cx, cy, cz, SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.PLAYERS, 0.8f, 1.1f);
-				level.sendParticles(ParticleTypes.POOF, cx, cy + 0.1, cz, 28, radius * 0.4, 0.15, radius * 0.4, 0.06);
-				level.sendParticles(ParticleTypes.CLOUD, cx, cy + 0.1, cz, 16, radius * 0.3, 0.1, radius * 0.3, 0.05);
-			}
-			case STRONG -> {
-				level.playSound(null, cx, cy, cz, SoundEvents.GENERIC_EXPLODE.value(), SoundSource.PLAYERS, 1.6f, 0.7f);
-				level.playSound(null, cx, cy, cz, SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.PLAYERS, 1.4f, 0.9f);
-				level.playSound(null, cx, cy, cz, SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 0.9f, 1.0f);
-				level.sendParticles(ParticleTypes.LARGE_SMOKE, cx, cy + 0.1, cz, 50, radius * 0.55, 0.25, radius * 0.55, 0.08);
-				level.sendParticles(ParticleTypes.POOF, cx, cy + 0.1, cz, 40, radius * 0.5, 0.2, radius * 0.5, 0.1);
-				level.sendParticles(ParticleTypes.SWEEP_ATTACK, cx, cy + 0.5, cz, 4, radius * 0.4, 0.1, radius * 0.4, 0.0);
-			}
-			case EPIC -> {
-				level.playSound(null, cx, cy, cz, SoundEvents.GENERIC_EXPLODE.value(), SoundSource.PLAYERS, 2.0f, 0.5f);
-				level.playSound(null, cx, cy, cz, SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.PLAYERS, 2.0f, 0.7f);
-				level.playSound(null, cx, cy, cz, SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 1.5f, 0.85f);
-				level.playSound(null, cx, cy, cz, SoundEvents.WITHER_SPAWN, SoundSource.PLAYERS, 0.9f, 1.4f);
-				level.sendParticles(ParticleTypes.EXPLOSION_EMITTER, cx, cy + 0.3, cz, 3, radius * 0.4, 0.2, radius * 0.4, 0.0);
-				level.sendParticles(ParticleTypes.LARGE_SMOKE, cx, cy + 0.1, cz, 80, radius * 0.6, 0.4, radius * 0.6, 0.12);
-				level.sendParticles(ParticleTypes.FLASH, cx, cy + 1.0, cz, 1, 0.0, 0.0, 0.0, 0.0);
-				level.sendParticles(ParticleTypes.SWEEP_ATTACK, cx, cy + 0.5, cz, 8, radius * 0.5, 0.2, radius * 0.5, 0.0);
-				level.sendParticles(ParticleTypes.LAVA, cx, cy + 0.2, cz, 20, radius * 0.5, 0.2, radius * 0.5, 0.05);
-			}
-		}
+		// The whole landing presentation is event-driven now: the client plays
+		// homelander.flight.land + the impact effect; the tier still drives scale.
+		VfxFx.event(player, HomelanderVfxIds.LANDING, player.position(), player.position(), scale);
 	}
 
 	@Override

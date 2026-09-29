@@ -5,6 +5,8 @@ import io.github.grebeshok105.codex.client.core.FovModifiers;
 import io.github.grebeshok105.codex.client.core.HudGlitchSource;
 import io.github.grebeshok105.codex.client.core.HudJitter;
 import io.github.grebeshok105.codex.client.core.audio.ClientSoundFilters;
+import io.github.grebeshok105.codex.client.core.flight.FlightPresentation;
+import io.github.grebeshok105.codex.client.core.flight.FlightPresentations;
 import io.github.grebeshok105.codex.client.core.hud.AbilityDecoration;
 import io.github.grebeshok105.codex.client.core.hud.AbilityDecorations;
 import io.github.grebeshok105.codex.client.core.hud.CrosshairSuppressions;
@@ -149,5 +151,10 @@ public final class CoreClientContext implements HeroClientContext {
 	@Override
 	public void vfxChannel(ResourceLocation id, VfxChannelFactory factory) {
 		VfxRuntime.registerChannel(id, factory);
+	}
+
+	@Override
+	public void flightPresentation(FlightPresentation presentation) {
+		FlightPresentations.register(heroId, presentation);
 	}
 }

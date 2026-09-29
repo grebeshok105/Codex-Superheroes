@@ -2,6 +2,7 @@ package io.github.grebeshok105.codex.client.core.module;
 
 import io.github.grebeshok105.codex.client.core.FovModifier;
 import io.github.grebeshok105.codex.client.core.HudGlitchSource;
+import io.github.grebeshok105.codex.client.core.flight.FlightPresentation;
 import io.github.grebeshok105.codex.client.core.hud.AbilityDecoration;
 import io.github.grebeshok105.codex.client.core.hud.HeroPanelSection;
 import io.github.grebeshok105.codex.client.core.hud.HudLayer;
@@ -130,4 +131,11 @@ public interface HeroClientContext {
 	 * (START/UPDATE/STOP stream on the source entity).
 	 */
 	void vfxChannel(ResourceLocation id, VfxChannelFactory factory);
+
+	/**
+	 * Opts this module's hero into continuous flight presentation: the pose
+	 * tracker drives body tilt, phase clips and flight sounds for every
+	 * rendered player of the hero from the synced {@code ClientFlightState}.
+	 */
+	void flightPresentation(FlightPresentation presentation);
 }

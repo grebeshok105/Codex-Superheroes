@@ -1,0 +1,11 @@
+{
+  "max_lifetime": 6,
+  "loop": false,
+  "rate": 1,
+  "count": 36,
+  "emitter_settings": {
+    "shape": "superheroes:homelander_boost",
+    "particle_settings": "superheroes:homelander_boost"
+  },
+  "particle_data": "superheroes:homelander_boost"
+}
