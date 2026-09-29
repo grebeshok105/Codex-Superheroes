@@ -26,7 +26,8 @@ class HomelanderNoVanillaParticlesTest {
 
 	/** Server files cleaned of vanilla presentation; later tasks append theirs. */
 	private static final List<String> CLEANED = List.of(
-			"src/main/java/io/github/grebeshok105/codex/hero/homelander/HomelanderHero.java");
+			"src/main/java/io/github/grebeshok105/codex/hero/homelander/HomelanderHero.java",
+			"src/main/java/io/github/grebeshok105/codex/hero/homelander/ability/EyeLasersAbility.java");
 
 	private static final List<String> FORBIDDEN = List.of(
 			"sendParticles(", "ParticleTypes.", "playSound(", "SoundEvents.");

@@ -1,0 +1,17 @@
+{
+  "sprite_data": {
+    "sprite": "superheroes:textures/vfx/homelander/laser_glow.png"
+  },
+  "render_style": "billboard",
+  "additive": true,
+  "init_modules": [],
+  "update_modules": [],
+  "collision_modules": [],
+  "forces": [],
+  "render_modules": [
+    "superheroes:color/homelander_laser"
+  ],
+  "face_velocity": false,
+  "velocity_stretch_factor": 0.0,
+  "should_collide": false
+}

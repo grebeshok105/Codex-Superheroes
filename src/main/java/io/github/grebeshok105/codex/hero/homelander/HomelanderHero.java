@@ -12,6 +12,7 @@ import io.github.grebeshok105.codex.core.hero.LandingImpact;
 import io.github.grebeshok105.codex.core.hero.PassiveGlyph;
 import io.github.grebeshok105.codex.core.model.HeroData;
 import io.github.grebeshok105.codex.core.net.VfxFx;
+import io.github.grebeshok105.codex.hero.homelander.vfx.HomelanderVfxIds;
 import io.github.grebeshok105.codex.mechanic.shockwave.ShockwaveUtil;
 import io.github.grebeshok105.codex.core.model.ResourceKind;
 import net.minecraft.resources.ResourceLocation;

@@ -6,7 +6,7 @@ import io.github.grebeshok105.codex.client.core.module.HeroClientModule;
 import io.github.grebeshok105.codex.client.hero.homelander.fx.HomelanderFx;
 import io.github.grebeshok105.codex.client.hero.homelander.hud.SunWindupHud;
 import io.github.grebeshok105.codex.client.hero.homelander.hud.UraniumThreatHud;
-import io.github.grebeshok105.codex.client.hero.homelander.render.LocalLaserOverlay;
+
 import io.github.grebeshok105.codex.client.hero.homelander.state.ClientUraniumPressureState;
 import io.github.grebeshok105.codex.client.hero.homelander.state.ClientUraniumThreatState;
 import io.github.grebeshok105.codex.client.core.render.BeamDraws;
@@ -28,7 +28,9 @@ public record HomelanderClientModule() implements HeroClientModule {
 		ctx.skin(new HomelanderSkinProvider());
 		ctx.hud(900, ModId.of("sun_windup"), SunWindupHud::render);
 		ctx.hud(1400, ModId.of("uranium_threat"), UraniumThreatHud::render);
-		LocalLaserOverlay.register();
+		// The boss entity still sends BeamFx.laser (HomelanderEyeLaserGoal);
+		// STYLE_LASER stays registered for that path. Player eye lasers now
+		// render through the homelander/laser VFX channel instead.
 		ctx.beamStyle(new BeamStyle(BeamFxS2CPayload.STYLE_LASER,
 				BeamDraws.LASER_LIFETIME_MS, BeamDraws::laserPair));
 		HomelanderFx.register(ctx);

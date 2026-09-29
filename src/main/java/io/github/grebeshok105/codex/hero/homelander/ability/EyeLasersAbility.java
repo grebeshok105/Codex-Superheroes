@@ -1,6 +1,7 @@
 package io.github.grebeshok105.codex.hero.homelander.ability;
 
 import io.github.grebeshok105.codex.hero.homelander.effect.HomelanderEffects;
+import io.github.grebeshok105.codex.hero.homelander.vfx.HomelanderVfxIds;
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
@@ -12,8 +13,8 @@ import io.github.grebeshok105.codex.core.hero.Heroes;
 import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
-import io.github.grebeshok105.codex.core.net.BeamFx;
-import io.github.grebeshok105.codex.particle.ModParticles;
+import io.github.grebeshok105.codex.core.net.VfxChannelS2CPayload;
+import io.github.grebeshok105.codex.core.net.VfxFx;
 import io.github.grebeshok105.codex.core.model.HeroData;
 import io.github.grebeshok105.codex.mechanic.world.WorldDestructionPolicy;
 import net.minecraft.core.BlockPos;
@@ -23,8 +24,6 @@ import java.util.EnumSet;
 import java.util.UUID;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.level.ClipContext;
@@ -36,6 +35,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 
 public final class EyeLasersAbility implements Ability {
 	public static final ResourceLocation ID = ModId.of("eye_lasers");
@@ -62,6 +62,11 @@ public final class EyeLasersAbility implements Ability {
 	private static final OwnedSessionMap<UUID, Integer> PULSE_TICK =
 			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.noneOf(ClearOn.class));
 
+	// Ticks since activation — the VFX channel heartbeat clock. Separate from
+	// PULSE_TICK: it counts through the uranium pauses PULSE_TICK pauses on.
+	private static final OwnedSessionMap<UUID, Integer> ACTIVE_TICK =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.noneOf(ClearOn.class));
+
 	@Override
 	public ResourceLocation getId() {
 		return ID;
@@ -84,34 +89,40 @@ public final class EyeLasersAbility implements Ability {
 
 	@Override
 	public boolean tryActivate(ServerPlayer player) {
-		ServerLevel level = player.serverLevel();
-		level.playSound(null, player.getX(), player.getY(), player.getZ(),
-				SoundEvents.BLAZE_SHOOT, SoundSource.PLAYERS, 0.6f, 1.8f);
 		PULSE_TICK.put(player.getUUID(), player.getUUID(), 0);
-		fireBeam(player);
+		ACTIVE_TICK.put(player.getUUID(), player.getUUID(), 0);
+		Vec3 end = fireBeam(player);
+		VfxFx.channel(player, HomelanderVfxIds.LASER, VfxChannelS2CPayload.START, end);
 		return true;
 	}
 
 	@Override
 	public void onDeactivate(ServerPlayer player) {
 		PULSE_TICK.remove(player.getUUID());
+		ACTIVE_TICK.remove(player.getUUID());
+		VfxFx.channel(player, HomelanderVfxIds.LASER, VfxChannelS2CPayload.STOP,
+				player.getEyePosition());
 	}
 
 	@Override
 	public void onTickActive(ServerPlayer player) {
+		Integer storedActive = ACTIVE_TICK.get(player.getUUID());
+		int activeTicks = storedActive == null ? 0 : storedActive;
+		if (EyeLaserPhases.shouldSendUpdate(activeTicks)) {
+			VfxFx.channel(player, HomelanderVfxIds.LASER, VfxChannelS2CPayload.UPDATE,
+					raycastBeam(player).actualEnd());
+		}
+		ACTIVE_TICK.put(player.getUUID(), player.getUUID(), activeTicks + 1);
+
 		boolean madness = HomelanderEffects.isMadness(player);
 		boolean uraniumThreat = UraniumDefenseController.isUnderUraniumThreat(player);
 		boolean fire;
-		boolean phaseStart = false;
 		if (madness || !uraniumThreat) {
 			PULSE_TICK.remove(player.getUUID());
 			fire = true;
 		} else {
 			Integer stored = PULSE_TICK.get(player.getUUID());
 			int phase = stored == null ? 0 : stored;
-			if (phase == 0 || phase == PULSE_PHASE_PAUSE1_END) {
-				phaseStart = true;
-			}
 			if (phase < PULSE_PHASE_SHOT1_END) {
 				fire = true;
 			} else if (phase < PULSE_PHASE_PAUSE1_END) {
@@ -127,23 +138,18 @@ public final class EyeLasersAbility implements Ability {
 		}
 		if (fire) {
 			fireBeam(player);
-			if (phaseStart) {
-				player.serverLevel().playSound(null, player.getX(), player.getY(), player.getZ(),
-						SoundEvents.GUARDIAN_ATTACK, SoundSource.PLAYERS, 0.5f, 1.4f);
-			}
-			if (player.tickCount % 6 == 0) {
-				player.serverLevel().playSound(null, player.getX(), player.getY(), player.getZ(),
-						SoundEvents.BEACON_AMBIENT, SoundSource.PLAYERS, 0.35f, 1.6f);
-			}
 		}
 	}
 
-	private static void fireBeam(ServerPlayer player) {
+	private record BeamRaycast(@Nullable EntityHitResult hit, BlockHitResult blockHit,
+			Vec3 actualEnd) {
+	}
+
+	private static BeamRaycast raycastBeam(ServerPlayer player) {
 		Vec3 eye = player.getEyePosition();
 		Vec3 dir = player.getViewVector(1f);
 		Vec3 end = eye.add(dir.scale(RANGE));
 		ServerLevel level = player.serverLevel();
-		boolean madness = HomelanderEffects.isMadness(player);
 		BlockHitResult blockHit = level.clip(new ClipContext(
 				eye, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player));
 		Vec3 entitySearchEnd = blockHit.getType() == HitResult.Type.BLOCK ? blockHit.getLocation() : end;
@@ -152,6 +158,19 @@ public final class EyeLasersAbility implements Ability {
 				level, player, eye, entitySearchEnd, box,
 				e -> e instanceof LivingEntity le && TargetFilters.hostileTo(player).test(le));
 		Vec3 actualEnd = entitySearchEnd;
+		if (hit != null && hit.getEntity() instanceof LivingEntity target) {
+			actualEnd = new Vec3(target.getX(), target.getY() + target.getBbHeight() * CHEST_FRACTION,
+					target.getZ());
+		}
+		return new BeamRaycast(hit, blockHit, actualEnd);
+	}
+
+	private static Vec3 fireBeam(ServerPlayer player) {
+		ServerLevel level = player.serverLevel();
+		boolean madness = HomelanderEffects.isMadness(player);
+		BeamRaycast ray = raycastBeam(player);
+		EntityHitResult hit = ray.hit();
+		Vec3 actualEnd = ray.actualEnd();
 		float damage = damagePerTick(player) * (madness ? MADNESS_DAMAGE_MUL : 1f);
 		boolean choppy = false;
 		if (hit != null && hit.getEntity() instanceof net.minecraft.world.entity.player.Player victim
@@ -164,10 +183,6 @@ public final class EyeLasersAbility implements Ability {
 		if (hit != null) {
 			LivingEntity target = (LivingEntity) hit.getEntity();
 			if (damage > 0f) target.hurt(HomelanderDamageTypes.eyeLaser(level, player), damage);
-			actualEnd = new Vec3(target.getX(), target.getY() + target.getBbHeight() * CHEST_FRACTION, target.getZ());
-			level.sendParticles(ModParticles.LASER_SPARK,
-					actualEnd.x, actualEnd.y, actualEnd.z,
-					3, 0.10, 0.10, 0.10, 0.04);
 			if (madness) {
 				if (player.tickCount % 2 == 0) {
 					level.explode(player, actualEnd.x, actualEnd.y, actualEnd.z,
@@ -176,14 +191,14 @@ public final class EyeLasersAbility implements Ability {
 				}
 				placeFireRing(level, player, actualEnd, 3);
 			}
-		} else if (madness && blockHit.getType() == HitResult.Type.BLOCK) {
+		} else if (madness && ray.blockHit().getType() == HitResult.Type.BLOCK) {
 			if (player.tickCount % 2 == 0) {
 				level.explode(player, actualEnd.x, actualEnd.y, actualEnd.z,
 						2.0f, true, Level.ExplosionInteraction.MOB);
 			}
 			placeFireRing(level, player, actualEnd, 3);
 		}
-		if (!choppy) BeamFx.laser(player, eye, actualEnd);
+		return actualEnd;
 	}
 
 	private static void placeFireRing(ServerLevel level, ServerPlayer player, Vec3 center, int radius) {

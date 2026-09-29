@@ -1,0 +1,46 @@
+{
+  "module": "color",
+  "interpolant": "q.agePercent",
+  "gradient": {
+    "rgb_points": [
+      {
+        "percent": 0,
+        "color": [
+          1.0,
+          0.95,
+          0.85
+        ]
+      },
+      {
+        "percent": 0.4,
+        "color": [
+          1.0,
+          0.45,
+          0.15
+        ]
+      },
+      {
+        "percent": 1,
+        "color": [
+          0.7,
+          0.08,
+          0.02
+        ]
+      }
+    ],
+    "alpha_points": [
+      {
+        "percent": 0,
+        "alpha": 1
+      },
+      {
+        "percent": 0.6,
+        "alpha": 0.9
+      },
+      {
+        "percent": 1,
+        "alpha": 0
+      }
+    ]
+  }
+}

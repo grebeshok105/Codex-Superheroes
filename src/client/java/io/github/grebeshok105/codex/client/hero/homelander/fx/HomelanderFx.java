@@ -3,7 +3,7 @@ package io.github.grebeshok105.codex.client.hero.homelander.fx;
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.client.core.flight.FlightPresentation;
 import io.github.grebeshok105.codex.client.core.module.HeroClientContext;
-import io.github.grebeshok105.codex.hero.homelander.HomelanderVfxIds;
+import io.github.grebeshok105.codex.hero.homelander.vfx.HomelanderVfxIds;
 import io.github.grebeshok105.codex.sound.HomelanderSounds;
 import net.minecraft.resources.ResourceLocation;
 
@@ -22,6 +22,7 @@ public final class HomelanderFx {
 		ctx.vfx(HomelanderVfxIds.LANDING, FlightFx::landing);
 		ctx.vfx(FlightFx.TRAIL, FlightFx::trail);
 		ctx.vfx(FlightFx.BOOST, FlightFx::boost);
+		ctx.vfxChannel(HomelanderVfxIds.LASER, EyeLaserChannel::new);
 		ctx.flightPresentation(new FlightPresentation(
 				clip("flight_takeoff"),
 				clip("flight_hover"),
