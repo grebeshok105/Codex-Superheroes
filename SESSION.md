@@ -4,7 +4,7 @@
 
 - Homelander UX fix round — two open PRs, both CI green, awaiting user in-game check:
   - PR #137 `devin/1790691597-homelander-sounds`: all 7 flight/laser placeholder oggs → real sourced recordings (Mixkit + Pixabay), same filenames, `sounds.json` untouched, `homelander_pilot.json` retimed + `contract-changes.md` logged.
-  - PR #138 `devin/1790691307-homelander-vfx-fix`: belly-up descend flip removed, clip limbs locked against vanilla swing, eye anchors roll-then-pitch (match renderer), golden trail → supersonic vapor-cone + streaks + ⊥ shockwave rings.
+  - PR #138 `devin/1790691307-homelander-vfx-fix`: belly-up descend flip removed, clip limbs locked against vanilla swing, eye anchors roll-then-pitch (match renderer), golden trail → supersonic vapor-cone + streaks + ⊥ shockwave rings, presentation phase derived from real client velocity (server phase stalls in HOVER for packet-driven players).
 - State of the program: architecture migration (`docs/design/architecture-migration/`) landed through O-final; Visual Core + Homelander pilot delivered through Task 15 (verification table: `docs/design/visual-core-homelander/verification.md`).
 - Remaining OMP gap: sounds/textures/milk-model placeholders — no OMP implementation branch exists; see `contract-changes.md`.
 - Delivery rules: `qualityGate` before every PR; per-plan «Статус стадий» tables are the trackers; user verifies all in-game behavior themselves — never claim visual verification for them.
@@ -21,11 +21,16 @@
 - Ability-scoped attribute buffs are transient (never serialize); hero base passives stay permanent.
 - Flight pose: pitch is head-first 0..80° in every phase (no descend negation); eye anchors must apply roll-then-pitch to match the renderer's `mulPose(XP)·mulPose(ZP)` order; clip limbs are zeroed (`resetDrivenLimbs`) before `apply` so clips render as absolute poses while the head keeps view tracking.
 
+## Completed this session (Homelander UX fix — presentation phase)
+
+- Root cause of «в игре ничего не работает»: `FlightPhaseResolver.resolve` видит только серверную `deltaMovement` ≈ 0 для packet-driven локального игрока → synced phase застревал в HOVER → CRUISE-клипы, тилт, трейл, буст-звук и громкость лупа были мертвы в реальной игре. `FlightPoseTracker` теперь вычисляет `presentationPhase` из реальной клиентской скорости (pos-delta per tick), с teleport-guard (>10 b/t → HOVER); `TrailFx` гейтится на `FlightPoseTracker.phase(entityId)`; loop-volume берёт `max(synced, real)` hSpeed.
+- Verified: `qualityGate` green; runClient — `effects:` 0→9 при полёте с зажатым W (трейл спавнится), лазеры идут из глаз. F5 застрял в first-person (dev-client quirk) — визуальный тилт проверяет юзер.
+
 ## Known issues / follow-ups
 
 - `auto-approve-pr.yml` auto-approves green PRs (audit §3) — repository-owner decision, unchanged.
 - `homelanderbossgametests.bosstargetsplayerandshowsbar` is flaky in CI (racy chunk/nearest-hostile scan, fails ~1/N runs, passes on re-run) — candidate for hardening.
-- `FlightPhaseResolver` reads server-side `deltaMovement`, which is ~0 for packet-driven players — the client inertial speed (up to 2.9 b/t) is invisible to it, so CRUISE/BOOST and trail gating only trigger on server-visible motion. Works for local play; revisit if the trail needs speed-accurate gating on a real server.
+- `FlightPhaseResolver` reads server-side `deltaMovement`, which is ~0 for packet-driven players — presentation now re-derives the phase client-side (`FlightPoseTracker.presentationPhase` mirrors the resolver rules + teleport guard); TrailFx gates on `FlightPoseTracker.phase(entityId)`. The synced phase still drives server logic; revisit if that logic ever needs real speeds on a dedicated server.
 - On the 0.08 b/t boundary the phase flaps CRUISE↔HOVER and the trail blinks (parked minor).
 - Owner decision needed before plan 5 stage `E1`: new root package name (proposed `io.github.grebeshok105.codex`, decision R14).
 
