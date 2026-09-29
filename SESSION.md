@@ -1085,3 +1085,32 @@ VFX-канале). Ветка содержит коммит `feat(homelander): e
   `qualityGate --no-daemon` BUILD SUCCESSFUL (364/364 gametests, datagen
   без диффа), `hero_presentation.txt` не тронут.
 - Дальше: Task 13 по плану; runClient-проверка не делалась (headless).
+## Completed this session (Visual Core pilot — Task 13)
+
+- `core/vfx/VfxShowcases` — серверный hero-agnostic реестр showcase-сцен:
+  `register(id, VfxShowcase)` / `get` / `ids`; `VfxShowcase.run(ServerPlayer, count)`.
+- `/superheroes vfx` (perm 2) в `SuperheroesCommands`: `play <effect> [scale]`
+  — `eventAround` на look-target (pick 160), радиус 160; `scene <id> [count≤64]`
+  с suggest по `VfxShowcases.ids()`; `stress <count>` — `homelander/combat`
+  (fallback — первый id по toString), >64 → `vfx.stress.too_many`, ничего не
+  шлётся; `hud on|off` — `VfxEventS2CPayload(superheroes:debug/hud)` только
+  вызывавшему, состояние закодировано в `scale` (1/0) — детерминировано,
+  а не blind-toggle.
+- `hero/homelander/HomelanderShowcases` (зарегистрирован из `HomelanderModule`):
+  `flight_path`/`lasers`/`lasers_flying` дёргают реальный `AbilityRouter.activate`
+  (ensureHomelander — best-effort transform + взлётный импульс), `sun_detonation`
+  — только event, без взрыва (visual-only), `combat` — IRON_FISTS_HIT (scale
+  `SHOCKWAVE_RADIUS`, сделан public) + CLAP + ROAR на кольце из count точек.
+- Клиент `core/vfx/debug/`: `VfxPerfProbe` (окно 600 кадров, avgFps /
+  onePercentLowFps / frame-ms) и `VfxDebugHud` (эффекты, открытые каналы,
+  Veil on/off, FPS-статы; фрейм-тайминги снимаются внутри HUD-render вызова,
+  слой 900). `VfxRuntime.openChannelCount()` — минимальный аксессор.
+  init — `SuperheroesClient` (hero-agnostic core bootstrap).
+- Тесты: `VfxPerfProbeTest` (avg≈97/1%-low≈20, окно сбрасывает старое);
+  `VfxShowcaseGameTests` — scene вещает обоим игрокам в 20 блоках,
+  `stress 1000` → ошибка и пустой канал. RED подтверждён (compile fail),
+  GREEN: 364/364 gametests, `qualityGate --no-daemon` BUILD SUCCESSFUL.
+- Отклонения: `HomelanderShowcases` лежит в `hero.homelander` (не `.vfx`) —
+  иначе новый package-цикл `hero.homelander <-> hero.homelander.vfx`;
+  on/off вместо toggle; scene count — повторения по кольцу.
+- Дальше: Task 14 по плану; runClient-проверка не делалась (headless).

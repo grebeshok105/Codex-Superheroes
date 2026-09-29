@@ -50,7 +50,7 @@ public final class IronFistsController {
 	private static final int LMB_COOLDOWN_TICKS = 40;
 	private static final double DASH_FORCE = 0.85;
 	private static final double DASH_LIFT = 0.15;
-	static final double SHOCKWAVE_RADIUS = 4.5;
+	public static final double SHOCKWAVE_RADIUS = 4.5;
 	private static final float SHOCKWAVE_DAMAGE = 8.0f;
 	private static final int AURA_INTERVAL_TICKS = 4;
 

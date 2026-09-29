@@ -119,6 +119,11 @@ public final class VfxRuntime {
 		return instances.size();
 	}
 
+	/** Live channel effects — the debug HUD's "open channels" count. */
+	public static int openChannelCount() {
+		return channels.size();
+	}
+
 	/** Session reset (disconnect / world leave): drops every live effect and channel. */
 	public static void reset() {
 		instances = new VfxInstanceTable(MAX_ACTIVE_EFFECTS);

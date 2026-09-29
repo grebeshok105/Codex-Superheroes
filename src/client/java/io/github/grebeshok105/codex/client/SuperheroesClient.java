@@ -11,6 +11,7 @@ import io.github.grebeshok105.codex.client.core.input.MeleeChargeSender;
 import io.github.grebeshok105.codex.client.core.input.ModKeys;
 import io.github.grebeshok105.codex.client.core.net.CoreClientReceivers;
 import io.github.grebeshok105.codex.client.core.vfx.VfxRuntime;
+import io.github.grebeshok105.codex.client.core.vfx.debug.VfxDebugHud;
 import io.github.grebeshok105.codex.client.fx.CoreFx;
 import io.github.grebeshok105.codex.client.hud.CoreHuds;
 import io.github.grebeshok105.codex.client.render.CoreRenderers;
@@ -25,6 +26,7 @@ public class SuperheroesClient implements ClientModInitializer {
 		ModKeys.init();
 		CoreClientReceivers.init();
 		VfxRuntime.init();
+		VfxDebugHud.init();
 		AnimationLibrary.init();
 		FlightPoseTracker.init();
 		HeroClientModules.bootstrap();
