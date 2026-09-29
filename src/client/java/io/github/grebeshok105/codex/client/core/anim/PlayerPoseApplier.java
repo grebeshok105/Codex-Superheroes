@@ -40,6 +40,26 @@ public final class PlayerPoseApplier {
 		}
 	}
 
+	/**
+	 * The rotation delta {@link #apply} writes into a bone, expressed in entity
+	 * terms (x = pitch, y = yaw, z = roll about the forward axis) rather than raw
+	 * Bedrock sample space. The renderer maps the full pose through
+	 * {@code Ry(180-yaw)·scale(-1,-1,1)} — a 180° rotation about X — so the
+	 * model's +z axis points backward and a positive {@code zRot} rolls about
+	 * the back axis, i.e. a negative roll about the forward axis. Every
+	 * component is therefore the negation of the sampled degrees, scaled by the
+	 * sample weight. Stored values are pre-divided by the merged fade weight;
+	 * multiplying back by {@code sample.weight()} restores the effective
+	 * per-bone degrees.
+	 */
+	public static Vector3f renderedRotationDeg(PoseSample sample, String bone) {
+		Vector3f v = sample.rotationDeg().get(bone);
+		if (v == null || sample.weight() <= 0f) {
+			return new Vector3f();
+		}
+		return new Vector3f(-v.x, -v.y, -v.z).mul(sample.weight());
+	}
+
 	public static Restoration apply(HumanoidModel<?> model, PoseSample sample) {
 		float weight = sample.weight();
 		if (weight <= 0f) {

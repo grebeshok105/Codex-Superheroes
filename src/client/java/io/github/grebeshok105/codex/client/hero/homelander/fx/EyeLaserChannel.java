@@ -2,6 +2,7 @@ package io.github.grebeshok105.codex.client.hero.homelander.fx;
 
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.client.core.anim.PlayerAnimator;
+import io.github.grebeshok105.codex.client.core.anim.PlayerPoseApplier;
 import io.github.grebeshok105.codex.client.core.anim.PoseSample;
 import io.github.grebeshok105.codex.client.core.flight.FlightBodyTransform;
 import io.github.grebeshok105.codex.client.core.flight.FlightPoseTracker;
@@ -239,10 +240,7 @@ public final class EyeLaserChannel implements VfxChannelEffect {
 
 	private static Vector3f headAnim(int entityId, float partial) {
 		PoseSample sample = PlayerAnimator.sample(entityId, partial);
-		Vector3f head = sample.rotationDeg().get("head");
-		// Sampled rotations are pre-divided by the merged fade weight; scaling
-		// back by weight() restores the effective per-bone degrees.
-		return head == null ? new Vector3f() : new Vector3f(head).mul(sample.weight());
+		return PlayerPoseApplier.renderedRotationDeg(sample, "head");
 	}
 
 	private void playBound(SoundEvent sound, float volume, float pitch) {

@@ -27,7 +27,8 @@ public final class HumanoidAnchors {
 
 	private static final double HEAD_PIVOT = 1.5;
 	private static final double EYE_FORWARD = 0.25;
-	private static final double EYE_LATERAL = 0.0625;
+	// 2px eye centers on the 8px-wide head face (1px = 0.0625 blocks).
+	private static final double EYE_LATERAL = 0.125;
 	private static final double EYE_UP = 0.0625;
 
 	private static final double FIRST_PERSON_FORWARD = 0.35;
@@ -51,8 +52,9 @@ public final class HumanoidAnchors {
 	/**
 	 * Anchors for a live player: interpolated position and rotations.
 	 * {@code headAnimDeg} adds the head channel of the current animation
-	 * sample (x = pitch, y = yaw, z = roll, degrees); pass a zero vector
-	 * while no animation runtime feeds it.
+	 * sample already in rendered/entity terms — x = pitch, y = yaw, z = roll
+	 * about the forward axis (see {@code PlayerPoseApplier#renderedRotationDeg});
+	 * pass a zero vector while no animation runtime feeds it.
 	 */
 	public static EyePair eyes(AbstractClientPlayer player, float partial, FlightBodyTransform tilt,
 			Vector3f headAnimDeg) {
