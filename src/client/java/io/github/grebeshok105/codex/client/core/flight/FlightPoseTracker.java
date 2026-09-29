@@ -109,6 +109,7 @@ public final class FlightPoseTracker {
 				continue;
 			}
 			alive.add(entity.getId());
+			ClientFlightState.markPresentationOwned(entity.getId());
 			track(client, player, state, presentation, pose, halfLife);
 		}
 		for (Iterator<Map.Entry<Integer, Tracked>> it = TRACKED.entrySet().iterator(); it.hasNext();) {
@@ -224,6 +225,7 @@ public final class FlightPoseTracker {
 	}
 
 	private static void release(Minecraft client, int entityId, Tracked tracked) {
+		ClientFlightState.unmarkPresentationOwned(entityId);
 		if (tracked.baseClip != null) {
 			PlayerAnimator.stop(entityId, PlayerAnimator.Layer.BASE,
 					CROSSFADE_TICKS, tracked.baseClip);
