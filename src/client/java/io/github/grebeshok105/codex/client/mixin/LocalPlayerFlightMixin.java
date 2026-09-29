@@ -23,6 +23,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Player.class)
 public abstract class LocalPlayerFlightMixin {
+
 	@Inject(method = "travel", at = @At("HEAD"), cancellable = true)
 	private void superheroes$inertialFlight(Vec3 input, CallbackInfo ci) {
 		Player self = (Player) (Object) this;
@@ -52,7 +53,6 @@ public abstract class LocalPlayerFlightMixin {
 				player.input != null && player.input.jumping,
 				player.input != null && player.input.shiftKeyDown);
 		FlightVector next = FlightMotionMath.next(new FlightVector(motion.x, motion.y, motion.z), controls, tuning, phase);
-
 		self.setDeltaMovement(next.x(), next.y(), next.z());
 		self.move(MoverType.SELF, self.getDeltaMovement());
 		ci.cancel();
