@@ -2,14 +2,16 @@ package io.github.grebeshok105.codex.hero.homelander.item;
 
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.hero.homelander.effect.HomelanderEffects;
+import io.github.grebeshok105.codex.hero.homelander.vfx.HomelanderVfxIds;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.model.HeroData;
+import io.github.grebeshok105.codex.core.net.VfxFx;
 import io.github.grebeshok105.codex.core.transform.TooltipFrame;
+import io.github.grebeshok105.codex.sound.ModSounds;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -55,12 +57,14 @@ public class MilkBottleItem extends Item {
 
 	@Override
 	public SoundEvent getDrinkingSound() {
-		return SoundEvents.GENERIC_DRINK;
+		// Silent so vanilla sipping doesn't stutter over the designed 1600 ms
+		// one-shot the MILK_DRINK event plays.
+		return ModSounds.SILENT;
 	}
 
 	@Override
 	public SoundEvent getEatingSound() {
-		return SoundEvents.GENERIC_DRINK;
+		return ModSounds.SILENT;
 	}
 
 	@Override
@@ -76,6 +80,10 @@ public class MilkBottleItem extends Item {
 			return InteractionResultHolder.fail(stack);
 		}
 		player.startUsingItem(hand);
+		if (!level.isClientSide()) {
+			VfxFx.event(player, HomelanderVfxIds.MILK_DRINK,
+					player.position(), player.position(), 1f);
+		}
 		return InteractionResultHolder.consume(stack);
 	}
 
@@ -88,9 +96,6 @@ public class MilkBottleItem extends Item {
 			return stack;
 		}
 		serverPlayer.addEffect(new MobEffectInstance(HomelanderEffects.MADNESS, MADNESS_DURATION_TICKS, 0, false, true, true));
-		serverPlayer.serverLevel().playSound(null,
-				serverPlayer.getX(), serverPlayer.getY(), serverPlayer.getZ(),
-				SoundEvents.WITHER_SPAWN, net.minecraft.sounds.SoundSource.PLAYERS, 0.4f, 1.6f);
 		if (!serverPlayer.getAbilities().instabuild) {
 			stack.shrink(1);
 			ItemStack empty = new ItemStack(net.minecraft.world.item.Items.GLASS_BOTTLE);

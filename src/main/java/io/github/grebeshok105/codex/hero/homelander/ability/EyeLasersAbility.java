@@ -16,8 +16,11 @@ import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
 import io.github.grebeshok105.codex.core.net.VfxChannelS2CPayload;
 import io.github.grebeshok105.codex.core.net.VfxFx;
 import io.github.grebeshok105.codex.core.model.HeroData;
+import io.github.grebeshok105.codex.core.particle.SilentParticles;
 import io.github.grebeshok105.codex.mechanic.world.WorldDestructionPolicy;
+import io.github.grebeshok105.codex.sound.ModSounds;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.EnumSet;
@@ -185,16 +188,20 @@ public final class EyeLasersAbility implements Ability {
 			if (damage > 0f) target.hurt(HomelanderDamageTypes.eyeLaser(level, player), damage);
 			if (madness) {
 				if (player.tickCount % 2 == 0) {
-					level.explode(player, actualEnd.x, actualEnd.y, actualEnd.z,
-							2.4f, true, Level.ExplosionInteraction.MOB);
+					level.explode(player, null, null, actualEnd.x, actualEnd.y, actualEnd.z,
+							2.4f, true, Level.ExplosionInteraction.MOB,
+							SilentParticles.SILENT, SilentParticles.SILENT,
+							BuiltInRegistries.SOUND_EVENT.wrapAsHolder(ModSounds.SILENT));
 					target.igniteForSeconds(8f);
 				}
 				placeFireRing(level, player, actualEnd, 3);
 			}
 		} else if (madness && ray.blockHit().getType() == HitResult.Type.BLOCK) {
 			if (player.tickCount % 2 == 0) {
-				level.explode(player, actualEnd.x, actualEnd.y, actualEnd.z,
-						2.0f, true, Level.ExplosionInteraction.MOB);
+				level.explode(player, null, null, actualEnd.x, actualEnd.y, actualEnd.z,
+						2.0f, true, Level.ExplosionInteraction.MOB,
+						SilentParticles.SILENT, SilentParticles.SILENT,
+						BuiltInRegistries.SOUND_EVENT.wrapAsHolder(ModSounds.SILENT));
 			}
 			placeFireRing(level, player, actualEnd, 3);
 		}

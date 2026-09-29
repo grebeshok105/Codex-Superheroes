@@ -1,18 +1,17 @@
 package io.github.grebeshok105.codex.hero.homelander.runtime;
 
 import io.github.grebeshok105.codex.hero.homelander.effect.HomelanderEffects;
+import io.github.grebeshok105.codex.hero.homelander.vfx.HomelanderVfxIds;
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
 import io.github.grebeshok105.codex.core.model.HeroData;
+import io.github.grebeshok105.codex.core.net.VfxFx;
 import io.github.grebeshok105.codex.mechanic.world.WorldDestructionPolicy;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
@@ -71,13 +70,8 @@ public final class HomelanderMadnessFlightController {
 			broke |= breakJagged(level, player, center, playerPos, forwardH);
 		}
 		if (broke) {
-			level.sendParticles(ParticleTypes.EXPLOSION,
-					player.getX() + dir.x, player.getY() + 1.0 + dir.y, player.getZ() + dir.z,
-					1, 0.2, 0.2, 0.2, 0.0);
-			if (player.tickCount % 6 == 0) {
-				level.playSound(null, player.getX(), player.getY(), player.getZ(),
-						SoundEvents.GENERIC_EXPLODE.value(), SoundSource.PLAYERS, 0.45f, 1.7f);
-			}
+			Vec3 impact = new Vec3(player.getX() + dir.x, player.getY() + 1.0 + dir.y, player.getZ() + dir.z);
+			VfxFx.event(player, HomelanderVfxIds.MADNESS_CRASH, impact, impact, 0.35f);
 		}
 	}
 

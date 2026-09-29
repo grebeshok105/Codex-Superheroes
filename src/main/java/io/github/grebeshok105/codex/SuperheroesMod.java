@@ -36,6 +36,7 @@ public class SuperheroesMod implements ModInitializer {
 		ModItems.init();
 		ModItemGroups.init();
 		ModParticles.init();
+		io.github.grebeshok105.codex.core.particle.SilentParticles.init();
 		ModSounds.init();
 		CoreNetworking.init();
 		HeroDataStore.init();

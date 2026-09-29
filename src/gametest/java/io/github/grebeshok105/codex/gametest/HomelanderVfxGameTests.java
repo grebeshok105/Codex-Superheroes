@@ -3,8 +3,10 @@ package io.github.grebeshok105.codex.gametest;
 import com.mojang.authlib.GameProfile;
 import io.github.grebeshok105.codex.core.ability.AbilityRouter;
 import io.github.grebeshok105.codex.core.net.VfxChannelS2CPayload;
+import io.github.grebeshok105.codex.core.net.VfxEventS2CPayload;
 import io.github.grebeshok105.codex.hero.homelander.HomelanderAbilityIds;
 import io.github.grebeshok105.codex.hero.homelander.HomelanderHero;
+import io.github.grebeshok105.codex.hero.homelander.effect.HomelanderEffects;
 import io.github.grebeshok105.codex.hero.homelander.vfx.HomelanderVfxIds;
 import io.netty.channel.embedded.EmbeddedChannel;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
@@ -14,10 +16,16 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.monster.Zombie;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
@@ -70,6 +78,66 @@ public final class HomelanderVfxGameTests implements FabricGameTest {
 					helper.succeed();
 				});
 			});
+		});
+	}
+
+	/**
+	 * Task 10: the aftermath detonation keeps its gameplay (blocks destroyed)
+	 * while presentation moves to one {@code superheroes:homelander/sun_detonation}
+	 * VFX event — no visual-only {@link LightningBolt} entities remain.
+	 */
+	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 200)
+	public void sunDetonationKeepsGameplayAndSendsVfx(GameTestHelper helper) {
+		Wire homelander = joinAudible(helper, "sun-homelander");
+		ServerPlayer player = homelander.player();
+		TestHeroes.transform(player, HomelanderHero.ID);
+		ServerLevel level = helper.getLevel();
+		// The blast must not kill the test player mid-assertion — the real
+		// aftermath grants DAMAGE_RESISTANCE 4 for exactly this reason.
+		player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 400, 4, false, false));
+
+		BlockPos feet = BlockPos.containing(player.position());
+		List<BlockPos> placed = new ArrayList<>();
+		for (BlockPos pos : BlockPos.betweenClosed(feet.offset(2, 0, -1), feet.offset(4, 2, 1))) {
+			level.setBlockAndUpdate(pos, Blocks.STONE.defaultBlockState());
+			placed.add(pos.immutable());
+		}
+		int placedCount = placed.size();
+
+		drain(homelander.channel());
+		player.addEffect(new MobEffectInstance(HomelanderEffects.MADNESS_AFTERMATH, 6, 0, false, false));
+		MobEffectInstance aftermath = player.getEffect(HomelanderEffects.MADNESS_AFTERMATH);
+		helper.assertTrue(aftermath != null, "aftermath effect applied to the test player");
+		// Wire players joined through an EmbeddedChannel are not LivingEntity-ticked,
+		// so the effect clock never advances on its own — drive it to the detonation
+		// boundary (getDuration() <= 1) and let the END_SERVER_TICK detonate.
+		for (int i = 0; i < 5; i++) {
+			aftermath.tick(player, () -> { });
+		}
+		List<VfxEventS2CPayload> detonations = new ArrayList<>();
+		await(helper, () -> {
+			for (Object o : drain(homelander.channel())) {
+				if (o instanceof ClientboundCustomPayloadPacket custom
+						&& custom.payload() instanceof VfxEventS2CPayload event
+						&& event.effect().equals(HomelanderVfxIds.SUN_DETONATION)) {
+					detonations.add(event);
+				}
+			}
+			return !detonations.isEmpty();
+		}, 30, () -> {
+			helper.assertTrue(detonations.size() == 1,
+					"exactly one sun_detonation VFX event, got " + detonations.size());
+			long intact = placed.stream()
+					.filter(pos -> !level.getBlockState(pos).isAir())
+					.count();
+			helper.assertTrue(intact < placedCount,
+					"detonation still destroys blocks: all " + placedCount + " placed blocks intact");
+			AABB blast = new AABB(feet).inflate(40.0);
+			helper.assertTrue(
+					level.getEntities(EntityType.LIGHTNING_BOLT, blast, bolt -> true).isEmpty(),
+					"no visual LightningBolt entities spawned by the detonation");
+			TestPlayers.leave(player);
+			helper.succeed();
 		});
 	}
 
