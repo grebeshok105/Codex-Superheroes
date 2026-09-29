@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * {@link PlayerPoseApplier} frame-pose lifecycle: deltas land on top of the
@@ -91,5 +92,38 @@ class PlayerPoseApplierTest {
 		ModelPart part = new ModelPart(List.of(), Map.of());
 		part.setInitialPose(PartPose.ZERO);
 		return part;
+	}
+
+	// --- renderedRotationDeg convention ---
+
+	@Test
+	void renderedRotationNegatesEveryComponent() {
+		PoseSample sample = new PoseSample(
+				Map.of("head", new Vector3f(-65f, 8f, 4f)), Map.of(), 1f);
+		Vector3f rendered = PlayerPoseApplier.renderedRotationDeg(sample, "head");
+		assertEquals(65f, rendered.x, 1e-6);
+		assertEquals(-8f, rendered.y, 1e-6);
+		assertEquals(-4f, rendered.z, 1e-6);
+	}
+
+	@Test
+	void renderedRotationRescalesByMergedWeight() {
+		// Stored rotations are pre-divided by the merged fade weight; the
+		// effective delta recovers them via sample.weight().
+		PoseSample sample = new PoseSample(
+				Map.of("head", new Vector3f(-130f, 0f, 0f)), Map.of(), 0.5f);
+		assertEquals(65f, PlayerPoseApplier.renderedRotationDeg(sample, "head").x, 1e-6);
+	}
+
+	@Test
+	void missingBoneAndZeroWeightGiveZeroDelta() {
+		PoseSample empty = new PoseSample(Map.of(), Map.of(), 1f);
+		Vector3f none = PlayerPoseApplier.renderedRotationDeg(empty, "head");
+		assertTrue(none.lengthSquared() < 1e-12);
+
+		PoseSample faded = new PoseSample(
+				Map.of("head", new Vector3f(10f, 0f, 0f)), Map.of(), 0f);
+		Vector3f zero = PlayerPoseApplier.renderedRotationDeg(faded, "head");
+		assertTrue(zero.lengthSquared() < 1e-12);
 	}
 }

@@ -1,8 +1,13 @@
 package io.github.grebeshok105.codex.client.core.vfx.anchor;
 
+import io.github.grebeshok105.codex.client.core.anim.PlayerPoseApplier;
+import io.github.grebeshok105.codex.client.core.anim.PoseSample;
 import io.github.grebeshok105.codex.client.core.flight.FlightBodyTransform;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Vector3f;
 import org.junit.jupiter.api.Test;
+
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -46,6 +51,23 @@ class HumanoidAnchorsTest {
 		// Forward at yaw 0 is +Z: the lean moves eyes toward +Z, not sideways.
 		assertTrue(mid.z > 0, "tilt pitch leans eyes along body forward (+Z), got z=" + mid.z);
 		assertEquals(0.0, mid.x, 0.35, "no sideways drift for pure pitch tilt");
+	}
+
+	@Test
+	void eyesTrackRenderedHeadPitchUnderFlightTilt() {
+		// flight_cruise bends the rendered head ~65° down: Bedrock head.x is
+		// -65, which the renderer applies as +65 entity pitch. Under an 80°
+		// body tilt the eyes must ride that head — low and ahead of the feet —
+		// instead of floating high at the untilted eye line.
+		PoseSample cruise = new PoseSample(
+				Map.of("head", new Vector3f(-65f, 0f, 0f)), Map.of(), 1f);
+		Vector3f delta = PlayerPoseApplier.renderedRotationDeg(cruise, "head");
+		Vec3 mid = midpoint(HumanoidAnchors.eyesFrom(FEET, 0f, 0f, delta.x,
+				new FlightBodyTransform(80f, 0f), 1f));
+		assertTrue(mid.y < 0.2,
+				"pitched-down head drops the eyes near the ground, got y=" + mid.y);
+		assertTrue(mid.z < 1.6,
+				"eyes stay on the head, not thrown past its reach, got z=" + mid.z);
 	}
 
 	@Test
