@@ -121,12 +121,10 @@ public final class FlightFx {
 		@Override
 		public void tick() {
 			Entity source = entity;
-			// Gate on the presentation phase — the synced server phase can stall
-			// in HOVER for packet-driven players while the real speed is high.
-			FlightPhase phase = source != null
-					? FlightPoseTracker.phase(source.getId()) : FlightPhase.IDLE;
-			boolean active = source != null && !source.isRemoved() && phase != null
-					&& (phase == FlightPhase.CRUISE || phase == FlightPhase.BOOST);
+			ClientFlightState.State state = source != null
+					? ClientFlightState.get(source.getId()) : null;
+			boolean active = source != null && !source.isRemoved() && state != null
+					&& (state.phase() == FlightPhase.CRUISE || state.phase() == FlightPhase.BOOST);
 			if (!active) {
 				finishing = true;
 				ribbons.forEach(TrailPattern::finish);

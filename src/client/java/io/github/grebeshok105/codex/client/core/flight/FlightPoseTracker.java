@@ -9,7 +9,6 @@ import io.github.grebeshok105.codex.client.core.vfx.VfxRuntime;
 import io.github.grebeshok105.codex.client.core.vfx.VfxSpawn;
 import io.github.grebeshok105.codex.client.core.vfx.params.VfxParams;
 import io.github.grebeshok105.codex.client.core.vfx.params.VfxParamsLoader;
-import io.github.grebeshok105.codex.mechanic.flight.FlightMode;
 import io.github.grebeshok105.codex.mechanic.flight.FlightPhase;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.Minecraft;
@@ -54,13 +53,6 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class FlightPoseTracker {
 	private static final ResourceLocation POSE_PARAMS = ModId.of("flight/pose");
-	/** Same thresholds as {@code FlightPhaseResolver} — the resolver's speed comes
-	 *  from server-side {@code deltaMovement}, which stays ~0 for packet-driven
-	 *  players, so presentation phases are re-derived from real client velocity. */
-	private static final double HOVER_HORIZONTAL_SPEED = 0.08;
-	private static final double HOVER_VERTICAL_SPEED = 0.06;
-	private static final double BOOST_HORIZONTAL_SPEED = 1.1;
-	private static final double TELEPORT_SPEED = 10.0;
 	/** BASE lane crossfade length, per the pilot contract. */
 	private static final int CROSSFADE_TICKS = 4;
 	/** Fade-in for the ACTION-layer takeoff/land one-shots. */
@@ -140,7 +132,7 @@ public final class FlightPoseTracker {
 		tracked.lastPos = pos;
 		tracked.lastYaw = player.getYRot();
 
-		FlightPhase phase = presentationPhase(state.phase(), state.mode(), velocity);
+		FlightPhase phase = state.phase();
 		if (phase != tracked.phase) {
 			onPhaseChange(client, player, tracked, phase, presentation);
 			tracked.phase = phase;
@@ -151,7 +143,7 @@ public final class FlightPoseTracker {
 		tracked.current = FlightPoseMath.step(tracked.current,
 				FlightPoseMath.target(phase, velocity, yawRate, pose), 1f, halfLife);
 
-		updateLoopSound(client, player, tracked, state, velocity, phase, presentation, pose);
+		updateLoopSound(client, player, tracked, state, phase, presentation, pose);
 
 		if ((phase == FlightPhase.CRUISE || phase == FlightPhase.BOOST)
 				&& presentation.trailEffect() != null && !tracked.trailSpawned) {
@@ -202,7 +194,7 @@ public final class FlightPoseTracker {
 	}
 
 	private static void updateLoopSound(Minecraft client, AbstractClientPlayer player,
-			Tracked tracked, ClientFlightState.State state, Vec3 velocity, FlightPhase phase,
+			Tracked tracked, ClientFlightState.State state, FlightPhase phase,
 			FlightPresentation presentation, VfxParams pose) {
 		boolean airborne = phase == FlightPhase.TAKEOFF || phase == FlightPhase.HOVER
 				|| phase == FlightPhase.CRUISE || phase == FlightPhase.BOOST;
@@ -216,8 +208,7 @@ public final class FlightPoseTracker {
 			sounds.play(tracked.loop);
 		}
 		float ref = Math.max(0.01f, pose.number("loopRefSpeed", 1.0f));
-		float hSpeed = (float) Math.sqrt(velocity.x * velocity.x + velocity.z * velocity.z);
-		float volume = Math.min(1f, Math.max(state.horizontalSpeed(), hSpeed) / ref)
+		float volume = Math.min(1f, Math.max(0f, state.horizontalSpeed()) / ref)
 				* pose.number("loopVolumeMax", 0.85f);
 		tracked.loop.setVolume(volume);
 	}
@@ -247,40 +238,6 @@ public final class FlightPoseTracker {
 			client.getSoundManager().stop(tracked.loop);
 			tracked.loop = null;
 		}
-	}
-
-	/**
-	 * Latest presentation phase for {@code entityId} — {@link FlightPhase#IDLE}
-	 * when untracked. Used by effects that gate on CRUISE/BOOST.
-	 */
-	public static FlightPhase phase(int entityId) {
-		Tracked tracked = TRACKED.get(entityId);
-		return tracked != null && tracked.phase != null ? tracked.phase : FlightPhase.IDLE;
-	}
-
-	/**
-	 * Phase the player actually sees: server phases own the lifecycle edges
-	 * (TAKEOFF/LANDING/IDLE pass through), but the airborne phases are re-derived
-	 * from real client velocity — the server-side {@code deltaMovement} of a
-	 * packet-driven player stays ~0, which would pin the visuals in HOVER.
-	 */
-	private static FlightPhase presentationPhase(FlightPhase phase, @Nullable FlightMode mode,
-			Vec3 velocity) {
-		return switch (phase) {
-			case TAKEOFF, LANDING, IDLE -> phase;
-			default -> {
-				double hSpeed = Math.sqrt(velocity.x * velocity.x + velocity.z * velocity.z);
-				if (hSpeed > TELEPORT_SPEED) {
-					yield FlightPhase.HOVER;
-				}
-				boolean moving = hSpeed > HOVER_HORIZONTAL_SPEED
-						|| Math.abs(velocity.y) > HOVER_VERTICAL_SPEED;
-				if (mode == FlightMode.SUPERSONIC || hSpeed >= BOOST_HORIZONTAL_SPEED) {
-					yield FlightPhase.BOOST;
-				}
-				yield moving ? FlightPhase.CRUISE : FlightPhase.HOVER;
-			}
-		};
 	}
 
 	/** Session reset (disconnect / world leave): drops every tracked pose. */
