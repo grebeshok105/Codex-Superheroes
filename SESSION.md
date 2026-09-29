@@ -1156,3 +1156,9 @@ VFX-канале). Ветка содержит коммит `feat(homelander): e
   - `laser.json`: coreWidth 0.05→0.04, glowWidth 0.18→0.11, core `#FFFF3322`, glow `#8CE61400`, light `#FF2200`, noise 0.35→0.3. Impact gradient `homelander_laser.json` shifted hot-red → red → dark-red.
 - Tests: new `PlayerPoseApplierTest` (sign convention, weight rescale, empty cases); `HumanoidAnchorsTest` + eyes-under-tilted-head case. Scoped `./gradlew test` green.
 - Verification: in-game repro of the OLD bug captured (single pale beam from air). In-game re-verification of the fix STOPPED per user instruction — user verifies themselves. Beams render via `CrossBeamRenderer` (backend-independent → fallback gets the same two red eye-anchored beams).
+## Completed this session (Homelander flight/laser SFX — real recordings)
+
+- Branch `devin/1790691597-homelander-sounds` off `main` HEAD. Replaced the 7 synthesized placeholder tones (`flight_takeoff`, `flight_loop`, `flight_boost`, `flight_land`, `laser_charge`, `laser_loop`, `laser_release`) with real recordings — same filenames, `sounds.json` untouched, other hero/homelander oggs untouched.
+- Sources: user-downloaded Pixabay mp3s in `art-source/sounds/homelander/` (thunderclap → boost, ground-impact → land) plus Mixkit SFX downloaded this session (raw mp3s kept in art-source, full URL+license table in `art-source/sounds/homelander/SOURCES.md`).
+- Mastering: layered mixes in numpy float32 @44.1kHz; one-shots ≈ −15 LUFS, loops ≈ −16 LUFS integrated; post-Vorbis decode peaks ≤0.96 (re-encode loop kills codec overshoot clipping); both loops rebuilt seamless — wrap tail ghosted into head via equal-power crossfade (wrap sample step inside the natural step distribution, no click).
+- Verification: ffprobe codec/sr/duration, decode-peak, wrap-seam and band-energy checks all programmatic — NOT verified in game (user verifies everything themselves).
