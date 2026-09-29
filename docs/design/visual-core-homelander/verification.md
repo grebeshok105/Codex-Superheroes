@@ -151,6 +151,24 @@ passive assets, zero placeholder dependency, OMP review, user approval
 and final integration stay blocked on the missing OMP package — see
 "Integration readiness" below.
 
+**Update (2026-09-29, intake fixes applied):** the OMP plan's two pending
+intake fixes are now in — partial OMP integration, clips contract-clean.
+
+- Fix A (contact events): `clap` and `iron_fists_strike` now carry a
+  `contact` event on the `events` timeline — `{"name": "contact"}` at
+  0.0833 s (arm-cross keyframe) and 0.12 s (fist full extension)
+  respectively, both ≤ 120 ms and matching the contract rows.
+- Fix B (body root pitch ≤ ±15°): the `body` rotation channel was
+  flattened on `flight_boost` (90°), `flight_cruise` (84°), `flight_land`
+  (79°), `flight_takeoff` (18°), `iron_fists_strike` (26°) and
+  `sun_charge` (17°) — per-axis scale so every component stays ≤ ±15°
+  while limb/torso secondary motion survives; the runtime supplies the
+  real tilt (CRUISE ≤ 55°, BOOST ≤ 80°). `roar` (exactly 15°) untouched.
+- `contractClipEventTimesMatchManifest` is enabled and green.
+- Remaining gap unchanged: 11 sounds, `models/item/milk_bottle.json` and
+  the 6 VFX textures are still placeholders — `finalBuildHasNoPlaceholders`
+  stays disabled until the OMP package lands.
+
 ## Scene tuning (Step 4)
 
 Parked minors re-assessed against the recorded evidence only (placeholder

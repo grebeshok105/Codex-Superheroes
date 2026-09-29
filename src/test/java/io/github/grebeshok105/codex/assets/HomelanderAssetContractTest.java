@@ -193,7 +193,6 @@ class HomelanderAssetContractTest {
 	}
 
 	@Test
-	@Disabled("enabled in Task 15")
 	void contractClipEventTimesMatchManifest() throws IOException {
 		for (ClipRow row : clips) {
 			if (row.events().isEmpty()) {

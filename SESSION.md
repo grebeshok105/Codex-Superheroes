@@ -1131,3 +1131,11 @@ VFX-канале). Ветка содержит коммит `feat(homelander): e
 - Step 5: `da47948..HEAD` — три фикса параллельного ревью (b717b06 per-clip stop, c0c2b1a legacy trail off, 308515e FlashEnvelope). Перепроверено в игре на 1b58334: ленты трейла спавнятся и рендерятся (`effects: 1` в CRUISE), белая ванильная колонна исчезла, флэш детонации плавно затухает, лазеры гасятся на релизе. Механика подтверждена временным логом (revert): телепорты дают hSpeed=0 → фаза HOVER → трейла нет; нужен реальный ввод. На границе 0.08 b/t фаза флапает CRUISE↔HOVER → трейл мигает (minor, запарковано).
 - Step 6: все 5 сцен §15 пересняты/подтверждены на `1b58334`, таблица в verification.md — 5×PASS (bounded: placeholder-ассеты, llvmpipe). §16 DoD gap: только OMP-строки + ~100 FPS на Sodium-железе.
 - Риг: tmux `vfx-server` + runClient Player758; `pin-energy` убит, полёт/лазеры выключены.
+## Completed this session (OMP intake fixes — Homelander clips)
+
+- Branch `devin/1790664303-omp-intake-fixes` off `main` HEAD (post-#131). Applied the two pending OMP intake fixes from `docs/superpowers/plans/2026-09-28-homelander-omp-assets.md` §Global Constraints.
+- Tripwire: `HomelanderAssetContractTest.contractClipEventTimesMatchManifest` un-`@Disabled`ed — verified RED first (missing `contact`), GREEN after fixes. `finalBuildHasNoPlaceholders` stays disabled (11 sounds, milk model, 6 VFX textures still placeholders).
+- Fix A: `events` timeline `{"<s>": {"name": "contact"}}` — `clap` at 0.0833 (arm-cross keyframe, matches `ClapFx` fallback) and `iron_fists_strike` at 0.12 (fist full extension); both ≤120 ms. Both `BedrockAnimationParser.eventTimes` and the test helper read `effect`/`name` under `sound_effects`/`particle_effects`/`events` — `"event"` is NOT a recognised field.
+- Fix B: `body` rotation flattened per-axis to ≤±15° (scale keeps temporal shape): `flight_boost` 90°, `flight_cruise` 84°, `flight_land` 79°, `flight_takeoff` 18°, `iron_fists_strike` 26° (y-twist + 18° x), `sun_charge` 17°. `roar` = exactly 15° untouched. Runtime supplies real tilt (CRUISE ≤55°, BOOST 80°) — no contract-changes entry needed.
+- Docs: `verification.md` OMP-integration-gap section updated; stale `ClapFx` comments corrected (clip now declares `contact`).
+- Remaining OMP gap: sounds/textures/milk-model placeholders; no OMP implementation branch exists.
