@@ -11,6 +11,7 @@ import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import io.github.grebeshok105.codex.core.ability.AbilityRegistry;
 import io.github.grebeshok105.codex.core.ability.AbilityRouter;
 import io.github.grebeshok105.codex.core.model.HeroData;
+import io.github.grebeshok105.codex.core.net.VfxEventS2CPayload;
 import io.github.grebeshok105.codex.core.transform.HeroDataStore;
 import io.github.grebeshok105.codex.core.transform.HeroTransformService;
 import io.github.grebeshok105.codex.core.hero.Heroes;
@@ -22,6 +23,7 @@ import io.github.grebeshok105.codex.hero.homelander.HomelanderItems;
 import io.github.grebeshok105.codex.mechanic.ability.SharedAbilityIds;
 import io.github.grebeshok105.codex.hero.homelander.net.UraniumPressureS2CPayload;
 import io.github.grebeshok105.codex.hero.homelander.net.UraniumThreatS2CPayload;
+import io.github.grebeshok105.codex.hero.homelander.vfx.HomelanderVfxIds;
 import io.netty.channel.embedded.EmbeddedChannel;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.core.BlockPos;
@@ -158,6 +160,114 @@ public final class HomelanderGameTests implements FabricGameTest {
 				"madness start grants regen 5");
 		TestPlayers.leave(player);
 		helper.succeed();
+	}
+
+	/** The authored 6.3 s milk sequence owns the whole use bar (EMF plan Stage 8). */
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void milkBottleUseDurationMatchesAuthoredSequence(GameTestHelper helper) {
+		ServerPlayer player = TestPlayers.join(helper);
+		ItemStack bottle = new ItemStack(HomelanderItems.MILK_BOTTLE);
+		helper.assertTrue(HomelanderItems.MILK_BOTTLE.getUseDuration(bottle, player) == 126,
+				"milk use duration is the authored 126 ticks (6.3 s), got "
+						+ HomelanderItems.MILK_BOTTLE.getUseDuration(bottle, player));
+		TestPlayers.leave(player);
+		helper.succeed();
+	}
+
+	/**
+	 * Stage 8: releasing use before the sequence finishes cancels the drink —
+	 * the vanilla {@code releaseUsingItem} path (what the release-use packet
+	 * drives server-side) ends the use, the drink tracker sees the falling
+	 * edge and broadcasts MILK_CANCEL to tracking + self, and no MADNESS is
+	 * granted. Only a full 126-tick use pays out.
+	 */
+	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 60)
+	public void milkEarlyReleaseBroadcastsCancelAndGrantsNothing(GameTestHelper helper) {
+		Wire homelander = joinAudible(helper, "milk-canceller");
+		ServerPlayer player = homelander.player();
+		startMilkDrink(helper, homelander, player);
+		// The server-side shape of a real early release: the client's
+		// RELEASE_USE_ITEM action ends in LivingEntity.releaseUsingItem,
+		// which stops the use.
+		player.releaseUsingItem();
+		helper.assertFalse(player.isUsingItem(), "early release stops the use");
+		awaitMilkCancel(helper, homelander, player);
+	}
+
+	/**
+	 * Stage 8: a hotbar slot swap or an offhand swap ends the use through
+	 * {@code stopUsingItem}, which never runs {@code Item.releaseUsing} —
+	 * the drink tracker must still broadcast exactly one MILK_CANCEL or the
+	 * authored clip would linger on remote clients until the weight expires.
+	 */
+	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 60)
+	public void milkStopUsingItemBroadcastsCancel(GameTestHelper helper) {
+		Wire homelander = joinAudible(helper, "milk-swapper");
+		ServerPlayer player = homelander.player();
+		startMilkDrink(helper, homelander, player);
+		// Server-side shape of handleSetCarriedItem / SWAP_ITEM_WITH_OFFHAND:
+		// both call stopUsingItem and nothing else.
+		player.stopUsingItem();
+		helper.assertFalse(player.isUsingItem(), "a swap-style stop ends the use");
+		awaitMilkCancel(helper, homelander, player);
+	}
+
+	/**
+	 * Stage 8: a completed 126-tick use disarms the tracker — the falling edge
+	 * that follows a natural finish broadcasts no MILK_CANCEL.
+	 */
+	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 60)
+	public void milkFinishedDrinkBroadcastsNoCancel(GameTestHelper helper) {
+		Wire homelander = joinAudible(helper, "milk-finisher");
+		ServerPlayer player = homelander.player();
+		startMilkDrink(helper, homelander, player);
+		// Vanilla order inside completeUsingItem: finishUsingItem, then stopUsingItem.
+		HomelanderItems.MILK_BOTTLE.finishUsingItem(player.getUseItem(), helper.getLevel(), player);
+		player.stopUsingItem();
+		helper.runAfterDelay(4, () -> {
+			boolean cancelled = drain(homelander.channel()).stream()
+					.anyMatch(o -> o instanceof ClientboundCustomPayloadPacket custom
+							&& custom.payload() instanceof VfxEventS2CPayload event
+							&& event.effect().equals(HomelanderVfxIds.MILK_CANCEL));
+			helper.assertFalse(cancelled, "a completed drink broadcasts no milk_cancel");
+			TestPlayers.leave(player);
+			helper.succeed();
+		});
+	}
+
+	private static void startMilkDrink(GameTestHelper helper, Wire wire, ServerPlayer player) {
+		TestHeroes.transform(player, HomelanderHero.ID);
+		player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(HomelanderItems.MILK_BOTTLE));
+		InteractionResultHolder<ItemStack> result =
+				HomelanderItems.MILK_BOTTLE.use(helper.getLevel(), player, InteractionHand.MAIN_HAND);
+		helper.assertTrue(result.getResult() == InteractionResult.CONSUME, "use() starts drinking");
+		helper.assertTrue(player.isUsingItem(), "the player is using the bottle");
+		drain(wire.channel());
+	}
+
+	private static void awaitMilkCancel(GameTestHelper helper, Wire wire, ServerPlayer player) {
+		List<VfxEventS2CPayload> cancels = new ArrayList<>();
+		await(helper, () -> {
+			for (Object o : drain(wire.channel())) {
+				if (o instanceof ClientboundCustomPayloadPacket custom
+						&& custom.payload() instanceof VfxEventS2CPayload event
+						&& event.effect().equals(HomelanderVfxIds.MILK_CANCEL)) {
+					cancels.add(event);
+				}
+			}
+			return !cancels.isEmpty();
+		}, 20, () -> {
+			helper.assertTrue(cancels.size() == 1,
+					"exactly one milk_cancel event, got " + cancels.size());
+			helper.assertTrue(cancels.get(0).sourceEntityId() == player.getId(),
+					"milk_cancel is bound to the drinker");
+			helper.assertFalse(player.hasEffect(HomelanderEffects.MADNESS),
+					"a cancelled drink grants no madness");
+			helper.assertTrue(player.getItemInHand(InteractionHand.MAIN_HAND).is(HomelanderItems.MILK_BOTTLE),
+					"the bottle is not consumed");
+			TestPlayers.leave(player);
+			helper.succeed();
+		});
 	}
 
 	@GameTest(template = EMPTY_STRUCTURE)

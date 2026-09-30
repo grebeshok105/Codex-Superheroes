@@ -42,7 +42,11 @@ import java.util.UUID;
  * <p>A {@code CLAP} event resets the clap clip clock and plays it once over
  * 1.92 s while {@code clap_w} and the master {@code hl_w} ease in/out (the jem
  * blends it over the hover/boost group, so it works in flight too);
- * {@code CLAP_CANCEL} releases the weights early (§7 stage 7).
+ * {@code CLAP_CANCEL} releases the weights early (§7 stage 7). A
+ * {@code MILK_DRINK} event does the same for the 6.3 s milk clip via
+ * {@link #startMilk}/{@link #cancelMilk}: {@code milk_w} = 1 while the clip
+ * is inside 6.3 s and returns to 0 the tick it finishes or cancels, and the
+ * master weight eases in/out with it (§7 stage 8).
  */
 final class HomelanderPoseState {
 
@@ -97,6 +101,7 @@ final class HomelanderPoseState {
 		float clapWeight;
 		float milkWeight;
 		boolean clapPlaying;
+		boolean milkPlaying;
 		/** Signed forward/strafe speeds (b/t) projected on body yaw from the smoothed velocity. */
 		float forward;
 		float strafe;
@@ -127,7 +132,7 @@ final class HomelanderPoseState {
 			boolean activation = flying && !this.flying;
 			this.flying = flying;
 			activePrev = active;
-			active = HomelanderPoseMath.activeWeight(active, flying || clapPlaying, 1f);
+			active = HomelanderPoseMath.activeWeight(active, flying || clapPlaying || milkPlaying, 1f);
 			takeoffWeightPrev = takeoffWeight;
 			boostWeightPrev = boostWeight;
 			if (activation) {
@@ -146,6 +151,11 @@ final class HomelanderPoseState {
 				}
 			}
 			milk.advance(TICK_SECONDS);
+			if (milkPlaying && milk.finished(HomelanderPoseMath.MILK_CLIP_SECONDS)) {
+				milkPlaying = false;
+			}
+			milkWeight = HomelanderPoseMath.oneShotWeight(
+					milkPlaying, milk.time(), HomelanderPoseMath.MILK_CLIP_SECONDS);
 			takeoffWeight = HomelanderPoseMath.takeoffWeight(takeoffWeight, flying, takeoff.time(), 1f);
 			clapWeight = HomelanderPoseMath.approach(clapWeight, clapPlaying ? 1f : 0f, CLAP_HALF_LIFE_TICKS, 1f);
 		}
@@ -250,6 +260,24 @@ final class HomelanderPoseState {
 		Entry entry = STATES.get(uuid);
 		if (entry != null) {
 			entry.clapPlaying = false;
+		}
+	}
+
+	/**
+	 * MILK_DRINK on an owned player: restart the milk clip clock and arm the
+	 * one-shot so {@code superheroes_hl_milk_*} drives the authored sequence.
+	 */
+	static void startMilk(UUID uuid) {
+		Entry entry = STATES.computeIfAbsent(uuid, id -> new Entry());
+		entry.milk.reset();
+		entry.milkPlaying = true;
+	}
+
+	/** MILK_CANCEL (early release): the weight returns to 0 next tick. */
+	static void cancelMilk(UUID uuid) {
+		Entry entry = STATES.get(uuid);
+		if (entry != null) {
+			entry.milkPlaying = false;
 		}
 	}
 

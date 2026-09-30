@@ -1,5 +1,16 @@
 # SESSION.md
 
+## Completed this session (Homelander EMF — Stage 8)
+
+- Stage 8 of `docs/superpowers/plans/2026-09-30-homelander-emf-presentation.md` («milk and props») implemented on `devin/1790798102-homelander-milk-s8` (base Stage 1 head `337327e3`), `mod_version` 4.2.0 → 4.3.0.
+- `MilkBottleItem` `getUseDuration` 32 → **126 ticks** (approved 6.3 s authored sequence); `finishUsingItem` MADNESS semantics unchanged. Cancels are owned by new `item/MilkDrinkTracker` (`ctx.ticks().hero` falling-edge detector; lives beside the item because `runtime/` can't reference `hero.homelander`/`item` without a package 2-cycle): `use()` arms the mark, `finishUsingItem` disarms it, and any armed use that ends unfinished broadcasts `HomelanderVfxIds.MILK_CANCEL` to tracking + self — covers the release-use packet AND the swap paths (`handleSetCarriedItem`, `SWAP_ITEM_WITH_OFFHAND` call `stopUsingItem`, which never fires `Item.releaseUsing` — verified in bytecode; review found the original `releaseUsing` override missed those). Death/disconnect/hero-clear drop the mark silently.
+- `HomelanderPoseState`: `startMilk`/`cancelMilk` arm/disarm the milk clip clock; `milkWeight` = `oneShotWeight(playing, clock, 6.3 s)` → clean 0 on finish or cancel; master `weight` = max(active, takeoff, clap, milk) so `superheroes_hl_w` = 1 while milk plays.
+- `HomelanderFx.milkDrink` calls `HomelanderEmf.milkStarted(source)` (sound path unchanged); new `milkCancel` factory wired to `MILK_CANCEL` → `milkCancelled`.
+- Held-item hiding: hero-agnostic `client/core/emf/EmfHeldItemSuppression` predicate registry (keeps `client/mixin` out of the hero package for ArchUnit); `HomelanderEmf` registers `owned && milkWeight>0`; new `client/mixin/ItemInHandLayerMixin` cancels `ItemInHandLayer.render` at HEAD. Non-owned entities and first-person hands untouched.
+- Tests: gametests `milkBottleUseDurationMatchesAuthoredSequence` (126), `milkEarlyReleaseBroadcastsCancelAndGrantsNothing` (`releaseUsingItem` = the real release-use path), `milkStopUsingItemBroadcastsCancel` (swap path — `stopUsingItem` does NOT fire `Item.releaseUsing` — verified in bytecode), `milkFinishedDrinkBroadcastsNoCancel` (finish disarms the tracker), JUnit `oneShotWeight` boundary.
+- Verification: `./gradlew test --no-daemon` green; `./gradlew qualityGate --no-daemon` green (368 gametests incl. the four new). Unverified in-game per rule — user checks: bottle appears, cap unscrews, mouth opens, bottle lowers; no vanilla bottle doubling; cancel stops cleanly; observer sees it; first person unchanged.
+
+
 ## Completed this session (Homelander EMF — Stage 7)
 
 - Stage 7 («hand clap») implemented on `devin/1790798096-homelander-clap-s7` (base `devin/1790789702-homelander-emf-stage1` @ `337327e3`), shipped as its own PR, `mod_version` 4.2.0 → 4.3.0.

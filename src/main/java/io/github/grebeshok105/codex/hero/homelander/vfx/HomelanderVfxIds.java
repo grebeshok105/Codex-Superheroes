@@ -29,6 +29,7 @@ public final class HomelanderVfxIds {
 	public static final ResourceLocation CLAP_CANCEL = ModId.of("homelander/clap_cancel");
 	public static final ResourceLocation ROAR = ModId.of("homelander/roar");
 	public static final ResourceLocation MILK_DRINK = ModId.of("homelander/milk_drink");
+	public static final ResourceLocation MILK_CANCEL = ModId.of("homelander/milk_cancel");
 
 	private HomelanderVfxIds() {
 	}

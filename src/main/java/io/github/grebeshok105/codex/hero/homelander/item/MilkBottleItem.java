@@ -28,7 +28,9 @@ import java.util.List;
 public class MilkBottleItem extends Item {
 	private static final net.minecraft.resources.ResourceLocation HOMELANDER_ID = ModId.of("homelander");
 
-	private static final int DRINK_TICKS = 32;
+	// The authored 6.3 s milk sequence owns the whole use bar; MADNESS lands
+	// in finishUsingItem only when all 126 ticks elapse.
+	private static final int DRINK_TICKS = 126;
 	private static final int MADNESS_DURATION_TICKS = 15 * 20;
 
 	public MilkBottleItem(Properties properties) {
@@ -57,7 +59,7 @@ public class MilkBottleItem extends Item {
 
 	@Override
 	public SoundEvent getDrinkingSound() {
-		// Silent so vanilla sipping doesn't stutter over the designed 1600 ms
+		// Silent so vanilla sipping doesn't stutter over the designed
 		// one-shot the MILK_DRINK event plays.
 		return ModSounds.SILENT;
 	}
@@ -80,7 +82,8 @@ public class MilkBottleItem extends Item {
 			return InteractionResultHolder.fail(stack);
 		}
 		player.startUsingItem(hand);
-		if (!level.isClientSide()) {
+		if (player instanceof ServerPlayer serverPlayer) {
+			MilkDrinkTracker.started(serverPlayer);
 			VfxFx.event(player, HomelanderVfxIds.MILK_DRINK,
 					player.position(), player.position(), 1f);
 		}
@@ -95,6 +98,7 @@ public class MilkBottleItem extends Item {
 		if (!isHomelander(serverPlayer)) {
 			return stack;
 		}
+		MilkDrinkTracker.finished(serverPlayer);
 		serverPlayer.addEffect(new MobEffectInstance(HomelanderEffects.MADNESS, MADNESS_DURATION_TICKS, 0, false, true, true));
 		if (!serverPlayer.getAbilities().instabuild) {
 			stack.shrink(1);

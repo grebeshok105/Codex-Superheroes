@@ -21,6 +21,7 @@ import io.github.grebeshok105.codex.hero.homelander.runtime.HomelanderRegenContr
 import io.github.grebeshok105.codex.hero.homelander.runtime.IronFistsController;
 import io.github.grebeshok105.codex.hero.homelander.runtime.HomelanderMadnessAftermathController;
 import io.github.grebeshok105.codex.hero.homelander.runtime.HomelanderMadnessFlightController;
+import io.github.grebeshok105.codex.hero.homelander.item.MilkDrinkTracker;
 import io.github.grebeshok105.codex.hero.homelander.runtime.UraniumDefenseController;
 import io.github.grebeshok105.codex.hero.homelander.runtime.UraniumOffhandController;
 import io.github.grebeshok105.codex.sound.HomelanderSounds;
@@ -64,6 +65,7 @@ public final class HomelanderModule implements HeroModule {
 		ctx.ticks().player(HomelanderRegenController::tickPlayer);
 		ctx.ticks().player(IronFistsController::tickPlayer);
 		ctx.ticks().player(UraniumOffhandController::tickPlayer);
+		ctx.ticks().hero(HomelanderHero.ID, MilkDrinkTracker::tickPlayer);
 		ctx.lifecycle().onHeroTransformed(HomelanderReactionRule::onTransformed);
 		FlightProfiles.registerModifier(HomelanderHero.ID, new HomelanderFlightModifier());
 		HomelanderShowcases.register();
