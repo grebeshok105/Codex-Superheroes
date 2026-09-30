@@ -4,6 +4,8 @@ import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.client.core.module.HeroClientContext;
 import io.github.grebeshok105.codex.client.core.module.HeroClientModule;
 import io.github.grebeshok105.codex.client.hero.homelander.emf.EmfAssets;
+import io.github.grebeshok105.codex.client.hero.homelander.emf.HomelanderActionClipWatch;
+import io.github.grebeshok105.codex.client.hero.homelander.flight.HomelanderBodyTransform;
 import io.github.grebeshok105.codex.client.hero.homelander.flight.HomelanderEmfLayer;
 import io.github.grebeshok105.codex.client.hero.homelander.flight.HomelanderFlightDriver;
 import io.github.grebeshok105.codex.client.hero.homelander.flight.HomelanderPoseApi;
@@ -13,6 +15,7 @@ import io.github.grebeshok105.codex.client.hero.homelander.hud.UraniumThreatHud;
 
 import io.github.grebeshok105.codex.client.hero.homelander.state.ClientUraniumPressureState;
 import io.github.grebeshok105.codex.client.hero.homelander.state.ClientUraniumThreatState;
+import io.github.grebeshok105.codex.client.core.flight.FlightCameraOffsets;
 import io.github.grebeshok105.codex.client.core.render.BeamDraws;
 import io.github.grebeshok105.codex.client.core.render.BeamStyle;
 import io.github.grebeshok105.codex.hero.homelander.HomelanderBlocks;
@@ -23,6 +26,10 @@ import io.github.grebeshok105.codex.core.net.BeamFxS2CPayload;
 import io.github.grebeshok105.codex.hero.homelander.net.UraniumPressureS2CPayload;
 import io.github.grebeshok105.codex.hero.homelander.net.UraniumThreatS2CPayload;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 
 public record HomelanderClientModule() implements HeroClientModule {
 	@Override
@@ -46,7 +53,11 @@ public record HomelanderClientModule() implements HeroClientModule {
 		EmfAssets.init();
 		ctx.playerLayer(HomelanderEmfLayer::new);
 		ctx.playerModelSuppression(HomelanderPoseApi::suppressesVanillaModel);
+		// Third-person camera keeps the tilted EMF body centered — the mixin
+		// consumes this through the hero-free FlightCameraOffsets seam.
+		FlightCameraOffsets.register(HomelanderClientModule::flightCameraOffset);
 		ctx.clientTick(HomelanderFlightDriver::tick);
+		ctx.clientTick(HomelanderActionClipWatch::tick);
 		HomelanderFx.register(ctx);
 		ctx.receive(UraniumPressureS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> ClientUraniumPressureState.update(payload.pressuredHomelanders())));
@@ -55,5 +66,15 @@ public record HomelanderClientModule() implements HeroClientModule {
 		// The scorch decal carries alpha in its texture; without cutout the
 		// transparent corners render as opaque black.
 		BlockRenderLayerMap.INSTANCE.putBlock(HomelanderBlocks.LASER_SCORCH, RenderType.cutout());
+	}
+
+	/** {@link FlightCameraOffsets} provider — the tilted body's chest-center offset in blocks. */
+	private static @Nullable Vec3 flightCameraOffset(LivingEntity entity, float tickDelta) {
+		HomelanderBodyTransform body = HomelanderPoseApi.currentBodyTransform(entity.getId(), tickDelta);
+		if (body.equals(HomelanderBodyTransform.IDENTITY)) {
+			return null;
+		}
+		float bodyYaw = Mth.rotLerp(tickDelta, entity.yBodyRotO, entity.yBodyRot);
+		return body.cameraCenterOffsetBlocks(bodyYaw);
 	}
 }

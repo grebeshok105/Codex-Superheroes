@@ -8,7 +8,9 @@ import net.minecraft.resources.ResourceLocation;
  * {@link #LASER} is a channel id ({@code VfxChannelS2CPayload}); the rest are
  * one-shot {@code VfxEventS2CPayload} effect ids. Server code sends them via
  * {@code VfxFx}; {@code client/hero/homelander/fx/HomelanderFx} registers the
- * matching client factories.
+ * matching client factories. The clap is split: {@link #CLAP_WINDUP} starts the
+ * EMF clip at cast, {@link #CLAP} fires the impact burst + sound at the clip's
+ * contact frame.
  */
 public final class HomelanderVfxIds {
 	public static final ResourceLocation LANDING = ModId.of("homelander/landing");
@@ -20,6 +22,7 @@ public final class HomelanderVfxIds {
 	public static final ResourceLocation IRON_FISTS_OFF = ModId.of("homelander/iron_fists_off");
 	public static final ResourceLocation IRON_FISTS_HIT = ModId.of("homelander/iron_fists_hit");
 	public static final ResourceLocation CLAP = ModId.of("homelander/clap");
+	public static final ResourceLocation CLAP_WINDUP = ModId.of("homelander/clap_windup");
 	public static final ResourceLocation ROAR = ModId.of("homelander/roar");
 	public static final ResourceLocation MILK_DRINK = ModId.of("homelander/milk_drink");
 

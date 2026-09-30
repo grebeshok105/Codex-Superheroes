@@ -1,10 +1,8 @@
 package io.github.grebeshok105.codex.client.mixin;
 
+import io.github.grebeshok105.codex.client.core.flight.FlightCameraOffsets;
 import io.github.grebeshok105.codex.client.fx.ScreenShakeManager;
-import io.github.grebeshok105.codex.client.hero.homelander.flight.HomelanderBodyTransform;
-import io.github.grebeshok105.codex.client.hero.homelander.flight.HomelanderPoseApi;
 import net.minecraft.client.Camera;
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.BlockGetter;
@@ -46,8 +44,10 @@ public abstract class CameraMixin {
 	/**
 	 * Third-person pivot shift: while a flight presentation owns the focused
 	 * entity the feet-pivot tilt has moved its visual center off the vanilla
-	 * eye point, so the camera slides by the same offset and keeps the tilted
-	 * body centered. First person ({@code thirdPerson == false}) is untouched.
+	 * eye point, so the camera slides by the registered offset and keeps the
+	 * tilted body centered. First person ({@code thirdPerson == false}) is
+	 * untouched. Hero code plugs in through {@link FlightCameraOffsets} —
+	 * mixins never import {@code client.hero.*}.
 	 */
 	@Inject(method = "setup", at = @At("TAIL"))
 	private void superheroes$centerFlightBody(BlockGetter area, Entity focused, boolean thirdPerson,
@@ -55,12 +55,9 @@ public abstract class CameraMixin {
 		if (!thirdPerson || !(focused instanceof LivingEntity living)) {
 			return;
 		}
-		HomelanderBodyTransform body =
-				HomelanderPoseApi.currentBodyTransform(focused.getId(), tickDelta);
-		if (body.equals(HomelanderBodyTransform.IDENTITY)) {
-			return;
+		Vec3 offset = FlightCameraOffsets.of(living, tickDelta);
+		if (offset != null) {
+			this.setPosition(this.getPosition().add(offset));
 		}
-		float bodyYaw = Mth.rotLerp(tickDelta, living.yBodyRotO, living.yBodyRot);
-		this.setPosition(this.getPosition().add(body.cameraCenterOffsetBlocks(bodyYaw)));
 	}
 }

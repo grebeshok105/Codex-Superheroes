@@ -6,6 +6,7 @@ import io.github.grebeshok105.codex.client.core.module.HeroClientContext;
 import io.github.grebeshok105.codex.client.core.vfx.VfxEffect;
 import io.github.grebeshok105.codex.client.core.vfx.VfxRenderContext;
 import io.github.grebeshok105.codex.client.core.vfx.VfxSpawn;
+import io.github.grebeshok105.codex.client.hero.homelander.emf.HomelanderActionClipWatch;
 import io.github.grebeshok105.codex.client.hero.homelander.flight.HomelanderPoseApi;
 import io.github.grebeshok105.codex.hero.homelander.vfx.HomelanderVfxIds;
 import io.github.grebeshok105.codex.sound.HomelanderSounds;
@@ -27,6 +28,7 @@ import net.minecraft.world.phys.Vec3;
  */
 public final class HomelanderFx {
 	private static final ResourceLocation CLIP_MILK_DRINK = ModId.of("homelander/milk_drink");
+	private static final ResourceLocation CLIP_HAND_CLAP = ModId.of("homelander/hand_clap");
 
 	private HomelanderFx() {
 	}
@@ -44,6 +46,7 @@ public final class HomelanderFx {
 		ctx.vfx(HomelanderVfxIds.IRON_FISTS_ON, IronFistsFx::activate);
 		ctx.vfx(HomelanderVfxIds.IRON_FISTS_OFF, IronFistsFx::deactivate);
 		ctx.vfx(HomelanderVfxIds.IRON_FISTS_HIT, IronFistsFx::hit);
+		ctx.vfx(HomelanderVfxIds.CLAP_WINDUP, HomelanderFx::clapWindup);
 		ctx.vfx(HomelanderVfxIds.CLAP, ClapFx::create);
 		ctx.vfx(HomelanderVfxIds.ROAR, RoarFx::create);
 		// Clips are no longer registered here — the EMF runtime owns
@@ -60,16 +63,34 @@ public final class HomelanderFx {
 	}
 
 	/**
+	 * CLAP_WINDUP one-shot — the ACTION {@code hand_clap} clip on the caster.
+	 * The impact burst + sound ride the separate {@code homelander/clap} event
+	 * the server sends at the clip's contact frame; the watch fades the clip
+	 * back out once it plays through (one-shots never auto-fade).
+	 */
+	private static VfxEffect clapWindup(VfxSpawn spawn) {
+		Entity source = spawn.source();
+		if (source != null) {
+			HomelanderPoseApi.playClip(source.getId(), CLIP_HAND_CLAP);
+			HomelanderActionClipWatch.watchEndFade(source.getId(), CLIP_HAND_CLAP);
+		}
+		return new DoneFx();
+	}
+
+	/**
 	 * MILK_DRINK one-shot — the ACTION {@code milk_drink} clip plus the bound
 	 * {@code homelander.milk.drink} sound on the drinking player. Hosted here
-	 * in the hub rather than as its own class: no patterns, no state.
+	 * in the hub rather than as its own class: no patterns, no state. The
+	 * watch fades the clip at the end AND on a pre-sip release so the
+	 * bottle/cap/mouth props never stay visible.
 	 */
 	private static VfxEffect milkDrink(VfxSpawn spawn) {
 		Entity source = spawn.source();
 		if (source != null) {
 			// EMF action-lane clip — weight fades in, milk_bottle/milk_cap prop
-			// bones un-hide while it plays. Agent B re-authors timing on this API.
+			// bones un-hide while it plays.
 			HomelanderPoseApi.playClip(source.getId(), CLIP_MILK_DRINK);
+			HomelanderActionClipWatch.watchMilkDrink(source.getId(), CLIP_MILK_DRINK);
 			Minecraft.getInstance().getSoundManager().play(new EntityBoundSoundInstance(
 					HomelanderSounds.MILK_DRINK, SoundSource.PLAYERS, 1f, 1f,
 					source, source.getRandom().nextLong()));
