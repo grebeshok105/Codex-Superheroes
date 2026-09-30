@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.client.core.anim.PlayerAnimator;
 import io.github.grebeshok105.codex.client.core.vfx.VfxEffect;
 import io.github.grebeshok105.codex.client.core.vfx.VfxRenderContext;
 import io.github.grebeshok105.codex.client.core.vfx.VfxSpawn;
@@ -28,9 +27,9 @@ import net.minecraft.world.phys.Vec3;
 
 /**
  * Homelander's stunning roar ({@code superheroes:homelander/roar}): the
- * ACTION {@code roar} clip on the source, the two contract sounds
+ * two contract sounds
  * ({@code homelander.roar} + {@code homelander.roar.deep} layered exactly as
- * the old server-side pair), then — over the clip's 1500 ms — a
+ * the old server-side pair), then — over the following 1500 ms — a
  * mouth-anchored sound-wave cone: {@link ShockwavePattern} rings and the
  * {@code homelander_roar_wave} emitter spawned in sequence along the look
  * axis, a periodic distortion pulse, dust lifting off the ground and a low
@@ -43,8 +42,6 @@ public final class RoarFx {
 	private static final ResourceLocation PARAMS = ModId.of("homelander/roar");
 	private static final ResourceLocation WAVE_EMITTER = ModId.of("homelander_roar_wave");
 	private static final ResourceLocation DUST_EMITTER = ModId.of("homelander_roar_dust");
-	private static final ResourceLocation CLIP = ModId.of("homelander/roar");
-	private static final int CLIP_FADE_TICKS = 4;
 
 	private RoarFx() {
 	}
@@ -100,9 +97,6 @@ public final class RoarFx {
 			this.distortionIntervalTicks = Math.max(1, (int) p.number("distortionIntervalTicks", 10f));
 			this.dustIntervalTicks = Math.max(1, (int) p.number("dustIntervalTicks", 5f));
 
-			if (source != null) {
-				PlayerAnimator.play(source.getId(), CLIP, PlayerAnimator.Layer.ACTION, CLIP_FADE_TICKS);
-			}
 			playSound(spawn, HomelanderSounds.ROAR,
 					p.number("roarVolume", 1.6f), p.number("roarPitch", 1f));
 			playSound(spawn, HomelanderSounds.ROAR_DEEP,

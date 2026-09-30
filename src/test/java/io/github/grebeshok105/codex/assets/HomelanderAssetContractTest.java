@@ -28,7 +28,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * src/test/resources/contracts/homelander_pilot.json). Every sound event the runtime
  * references must be registered in sounds.json and backed by a real OGG Vorbis file of
  * roughly the declared duration; every clip must exist under player_animations/homelander/
- * with the declared length, loop mode and the six allowed player bones; models and
+ * with the declared length, loop mode and the six allowed player bones (the EMF
+ * cutover emptied the clip rows — the checks reactivate if rows return); models and
  * textures must exist at their contract paths.
  */
 class HomelanderAssetContractTest {
