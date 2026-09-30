@@ -1,5 +1,14 @@
 # SESSION.md
 
+## Completed this session (Homelander EMF — Stage 3)
+
+- Stage 3 of `docs/superpowers/plans/2026-09-30-homelander-emf-presentation.md` («TAKEOFF») implemented on `devin/1790801246-homelander-takeoff-s3` (base Stage-2 head `309c816b`), `mod_version` 4.3.0 → 4.4.0.
+- `HomelanderPoseState.Entry.advance(flying, grounded)`: the activation edge (`flying && !wasFlying`) resets the takeoff clock to `0` on ground or `TAKEOFF_AIRBORNE_START_SECONDS = 0.28` airborne (skips the crouch dip, root ty bottoms at 0.20 s). `HomelanderPoseMath.takeoffWeight` targets 1 while `flying && takeoff_t < 0.65 s`, eases out with 2-tick half-life, and pins to exactly 0 at `takeoff_t >= 0.8` — the clip's last frame equals the HOVER start height (6.6 px) so the crossfade is continuous with hover already at weight ~1 underneath. `takeoffWeight` gained `takeoffWeightPrev` interpolation like the master weight; `WeightReader`/`registerWeight` now take the partial tick (boost/clap/milk stubs keep the same signature).
+- `onGround` for remote players: `ClientFlightState` has no such field and vanilla never writes `Entity.onGround` for remote entities client-side (verified in mapped 1.21.1 bytecode: `RemotePlayer.aiStep` only runs lerp steps — no `move()`/`setOnGround`; not synced entity data, stays `false`). Fallback in `isSupportedNow(player)`: `player.onGround()` (authoritative for `LocalPlayer`) OR a collision probe — `level.noCollision(player, boundingBox.expandTowards(0, -0.05, 0))` — evaluated only on the activation edge, so no per-frame cost.
+- Re-activation within the clip restarts the same clock (one takeoff ever runs); flight-off mid-takeoff fades takeoff + active weights out while the hover clock free-runs.
+- Tests added: 8 in `HomelanderPoseMathTest` (grounded/airborne start offsets, edge-only grounded flag, flight-off fade without hover reset, re-activation restart, hold→ease→pin-0 weight curve, partial-tick weight interpolation, pure `takeoffWeight` math). Existing `advance(...)` call sites updated to the two-arg form.
+- Verification: `python3 -m unittest art-source/homelander/emf/test_bake_jem.py` — 15/15; `./gradlew test --no-daemon` green; `./gradlew qualityGate --no-daemon` green (sanity, jar isolation, 364 gametests, datagen check). No in-game verification per the standing rule — Stage 3 visual checklist marked unverified in the PR.
+
 ## Completed this session (Homelander EMF — Stage 2)
 
 - Stage 2 of `docs/superpowers/plans/2026-09-30-homelander-emf-presentation.md` («HOVER») implemented on `devin/1790798101-homelander-emf-hover-s2` (base Stage-1 head `337327e3`), `mod_version` 4.2.0 → 4.3.0.
@@ -23,7 +32,7 @@
 
 ## Active work
 
-- Homelander EMF staged plan continues — Stage 1 PR open for review. Stages 2+ (authored-motion wiring: drive `superheroes_hl_*` weights/clocks from flight phase + ability events) remain in `docs/superpowers/plans/2026-09-30-homelander-emf-presentation.md` §7.
+- Homelander EMF staged plan continues — Stages 1–2 merged on `devin/1790798101-homelander-emf-hover-s2`; Stage 3 PR open for review. Stage 4 (BOOST) runs in parallel off the same Stage-2 base; later stages remain in `docs/superpowers/plans/2026-09-30-homelander-emf-presentation.md` §7.
 - PR #137 `devin/1790691597-homelander-sounds`: real flight/laser sfx replacing placeholder oggs — open, CI green, in the combined jar.
 - PR #138 `devin/1790691307-homelander-vfx-fix`: flight pose/limbs/eye-anchor/trail fixes with the presentation-phase commit reverted — open, CI green.
 - Standing rule: the user verifies all in-game behavior themselves — never claim visual verification for them.

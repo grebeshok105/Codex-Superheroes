@@ -23,12 +23,17 @@ import java.util.UUID;
  * the render partial tick, so the sampled values track wall time independent
  * of frame rate (§4.5 of the plan). The hover clock is free-running and never
  * resets — HOVER loops, so blending it in mid-phase is continuous, and flight
- * on/off flips cannot snap the pose.
+ * on/off flips cannot snap the pose. The takeoff clock restarts on every
+ * flight-activation edge: from 0 when the player was on the ground, or past
+ * the crouch dip ({@link HomelanderPoseMath#TAKEOFF_AIRBORNE_START_SECONDS})
+ * when flight activated airborne (§7 stage 3).
  */
 final class HomelanderPoseState {
 
 	private static final int MAX_ENTITIES = 64;
 	private static final float TICK_SECONDS = 1f / 20f;
+	/** Depth below the feet probed for support when {@code onGround} is untrusted. */
+	private static final float SUPPORT_PROBE_BLOCKS = 0.05f;
 
 	private static final Map<UUID, Entry> STATES = new LinkedHashMap<>(16, 0.75f, true) {
 		@Override
@@ -60,10 +65,12 @@ final class HomelanderPoseState {
 		final HomelanderPoseMath.ClipClock boost = new HomelanderPoseMath.ClipClock();
 		final HomelanderPoseMath.ClipClock clap = new HomelanderPoseMath.ClipClock();
 		final HomelanderPoseMath.ClipClock milk = new HomelanderPoseMath.ClipClock();
+		boolean flying;
 		float active;
 		float activePrev;
 		float boostWeight;
 		float takeoffWeight;
+		float takeoffWeightPrev;
 		float clapWeight;
 		float milkWeight;
 		float forward;
@@ -71,20 +78,37 @@ final class HomelanderPoseState {
 		float pitchDeg;
 		float bankDeg;
 
-		/** One client tick of state. The hover clock is never reset (§7 stage 2). */
-		void advance(boolean flying) {
+		/**
+		 * One client tick of state. The hover clock is never reset (§7 stage 2);
+		 * {@code grounded} is the support probe evaluated by {@link #tick} and is
+		 * only consulted on the flight-activation edge (flying on the previous
+		 * tick means there is no new takeoff to start).
+		 */
+		void advance(boolean flying, boolean grounded) {
+			boolean activation = flying && !this.flying;
+			this.flying = flying;
 			activePrev = active;
 			active = HomelanderPoseMath.activeWeight(active, flying, 1f);
+			takeoffWeightPrev = takeoffWeight;
+			if (activation) {
+				takeoff.reset(grounded ? 0f : HomelanderPoseMath.TAKEOFF_AIRBORNE_START_SECONDS);
+			}
 			hover.advance(TICK_SECONDS);
 			takeoff.advance(TICK_SECONDS);
 			boost.advance(TICK_SECONDS);
 			clap.advance(TICK_SECONDS);
 			milk.advance(TICK_SECONDS);
+			takeoffWeight = HomelanderPoseMath.takeoffWeight(takeoffWeight, flying, takeoff.time(), 1f);
 		}
 
 		/** Master weight interpolated to the render partial tick. */
 		float weight(float partial) {
 			return activePrev + (active - activePrev) * partial;
+		}
+
+		/** TAKEOFF weight interpolated to the render partial tick. */
+		float takeoffWeight(float partial) {
+			return takeoffWeightPrev + (takeoffWeight - takeoffWeightPrev) * partial;
 		}
 
 		/** HOVER loop-local time, interpolated forward by the partial tick. */
@@ -109,8 +133,29 @@ final class HomelanderPoseState {
 				continue;
 			}
 			Entry entry = STATES.computeIfAbsent(player.getUUID(), uuid -> new Entry());
-			entry.advance(ClientFlightState.get(player.getId()) != null);
+			boolean flying = ClientFlightState.get(player.getId()) != null;
+			// the support probe only fires on the activation edge — once per
+			// takeoff, never per frame
+			boolean grounded = flying && !entry.flying && isSupportedNow(player);
+			entry.advance(flying, grounded);
 		}
+	}
+
+	/**
+	 * Whether the player reads as standing on ground right now.
+	 * {@code ClientFlightState} carries no {@code onGround} bit, and vanilla
+	 * never updates {@code Entity.onGround} for remote players on the client
+	 * (remote entities lerp their position without running collision
+	 * {@code move()}, and the flag is not synced entity data — it stays
+	 * {@code false} for them forever). The local player's flag is authoritative;
+	 * for remote players we fall back to a collision probe just below the feet.
+	 */
+	private static boolean isSupportedNow(AbstractClientPlayer player) {
+		if (player.onGround()) {
+			return true;
+		}
+		return !player.level().noCollision(
+				player, player.getBoundingBox().expandTowards(0.0, -SUPPORT_PROBE_BLOCKS, 0.0));
 	}
 
 	private static Entry entryOf(UUID uuid) {
@@ -157,22 +202,22 @@ final class HomelanderPoseState {
 		return entry == null ? 0f : entry.milk.time() + partial * TICK_SECONDS;
 	}
 
-	static float boostWeight(UUID uuid) {
+	static float boostWeight(UUID uuid, float partial) {
 		Entry entry = entryOf(uuid);
 		return entry == null ? 0f : entry.boostWeight;
 	}
 
-	static float takeoffWeight(UUID uuid) {
+	static float takeoffWeight(UUID uuid, float partial) {
 		Entry entry = entryOf(uuid);
-		return entry == null ? 0f : entry.takeoffWeight;
+		return entry == null ? 0f : entry.takeoffWeight(partial);
 	}
 
-	static float clapWeight(UUID uuid) {
+	static float clapWeight(UUID uuid, float partial) {
 		Entry entry = entryOf(uuid);
 		return entry == null ? 0f : entry.clapWeight;
 	}
 
-	static float milkWeight(UUID uuid) {
+	static float milkWeight(UUID uuid, float partial) {
 		Entry entry = entryOf(uuid);
 		return entry == null ? 0f : entry.milkWeight;
 	}
