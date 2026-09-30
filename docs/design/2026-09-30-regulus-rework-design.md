@@ -30,10 +30,13 @@
 ### Правила
 
 - **Кто получает**: `LivingEntity` с `EntityType` из namespace `minecraft`,
-  в радиусе 20 блоков, не игрок, не уже отмечена. Кастомные сущности
+  в радиусе 20 блоков, не игрок, **не враждебная** (`Enemy` исключены —
+  сердце живёт в мирных/нейтральных носителях; решение заказчика
+  2026-09-30), не уже отмечена. Кастомные сущности
   (призванная Рем, боссы мода) исключены по namespace + дата-тегом
   `superheroes:heartless` (data-driven запрет для особых ванильных типов —
-  напр. боссы `wither`/`warden`/`ender_dragon` вносятся в тег сразу).
+  напр. боссы `wither`/`warden`/`ender_dragon` вносятся в тег сразу,
+  `armor_stand` тоже).
 - **Метка**: attachment на сущность `REGULUS_HEART_OWNER` (UUID владельца).
   Одна сущность = максимум одно сердце одного Регулуса (первый взявший).
 - **Сбор**: аура проверяет радиус раз в 20t через `ctx.ticks().player`.
@@ -304,9 +307,12 @@ fallback — минимальные ванильные партиклы. Ник�
 Источник: `D:/WorkFlow/BlockBench 3d models/workbench/regulus_emf_animation_pack/source/Regulus_All_Animations.bbmodel`;
 authoring: `export/Regulus_EMF_Authoring.json` (+ `emf_lab` внутри .bbmodel);
 handoff: `3d models vault/10 Analysis/regulus_emf_animation_pack/HANDOFF.md`.
-EMF — объявляется зависимостью мода (решение заказчика); плеер-риг с extra
+EMF — объявляется зависимостью мода (`depends`, hard — решение заказчика);
+мод становится **client-only** (`environment: "client"`, dedicated-server
+совместимость снята осознанно; `servernoveil`/`runServer` инфраструктура
+удаляется). Плеер-риг с extra
 shoulder/forearm/hand/shin/foot bones + `mouth_open` и EMF-рантайм реализуются
-отдельной задачей — эта спека потребляет её выход и не задаёт его формат.
+отдельной задачей — эта спека потребляет её выход и не задаёт её формат.
 
 Клипы (prefix `animation.regulus.`; секунды от начала клипа — канон, 10 штук):
 
