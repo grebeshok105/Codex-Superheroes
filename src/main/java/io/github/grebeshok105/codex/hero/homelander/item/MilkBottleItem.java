@@ -82,22 +82,12 @@ public class MilkBottleItem extends Item {
 			return InteractionResultHolder.fail(stack);
 		}
 		player.startUsingItem(hand);
-		if (!level.isClientSide()) {
+		if (player instanceof ServerPlayer serverPlayer) {
+			MilkDrinkTracker.started(serverPlayer);
 			VfxFx.event(player, HomelanderVfxIds.MILK_DRINK,
 					player.position(), player.position(), 1f);
 		}
 		return InteractionResultHolder.consume(stack);
-	}
-
-	@Override
-	public void releaseUsing(ItemStack stack, Level level, LivingEntity user, int timeLeft) {
-		// Vanilla fires releaseUsing on every unfinished use (key release,
-		// slot swap, stopUsingItem): the authored sequence cancels with it.
-		if (!level.isClientSide() && user instanceof ServerPlayer serverPlayer
-				&& isHomelander(serverPlayer)) {
-			VfxFx.event(serverPlayer, HomelanderVfxIds.MILK_CANCEL,
-					serverPlayer.position(), serverPlayer.position(), 1f);
-		}
 	}
 
 	@Override
@@ -108,6 +98,7 @@ public class MilkBottleItem extends Item {
 		if (!isHomelander(serverPlayer)) {
 			return stack;
 		}
+		MilkDrinkTracker.finished(serverPlayer);
 		serverPlayer.addEffect(new MobEffectInstance(HomelanderEffects.MADNESS, MADNESS_DURATION_TICKS, 0, false, true, true));
 		if (!serverPlayer.getAbilities().instabuild) {
 			stack.shrink(1);
