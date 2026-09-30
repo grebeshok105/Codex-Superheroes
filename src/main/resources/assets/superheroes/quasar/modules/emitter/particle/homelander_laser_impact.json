@@ -9,7 +9,7 @@
   ],
   "random_initial_direction": true,
   "random_initial_rotation": true,
-  "particle_size_variation": 0.1,
+  "particle_size_variation": 0.05,
   "particle_lifetime": 10,
   "particle_lifetime_variation": 4.0,
   "particle_speed": 0.9,

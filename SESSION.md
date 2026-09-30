@@ -2,7 +2,7 @@
 
 ## Active work
 
-- Branch `devin/1790790868-homelander-laser-impact-s11` (base `devin/1790691307-homelander-vfx-fix`, PR #138): EMF plan **Stage 11 — laser impact VFX**. Data-only tuning: impact emitter `count 14→5`, `max_lifetime 6→4`; particle `base_particle_size 0.12→0.06` and emitter sphere `dimensions 0.12→0.06` (~50% smaller); `color/homelander_laser` gradient rgb+alpha ×0.6 (~40% dimmer); `vfx/homelander/laser.json` `lightBrightness 0.85→0.4`, `lightRadius 7→3.5`, `distortionRadius 0.8→0.35`. No `impactFlashScale` — `ImpactPattern` has no flash quad, per plan. `IMPACT_INTERVAL_TICKS` stays 3. New `VfxQuasarResourcesParseTest` parses every quasar/vfx JSON. `mod_version` 4.1.3 → 4.2.0 (normal update → minor +0.1). In-game checks unverified — user will check.
+- Branch `devin/1790790868-homelander-laser-impact-s11` (PR #142; base `devin/1790691307-homelander-vfx-fix`, PR #138): EMF plan **Stage 11 — laser impact VFX**. Data-only tuning: impact emitter `count 14→5`, `max_lifetime 6→4`; particle `base_particle_size 0.12→0.06` + `particle_size_variation 0.1→0.05` (review fix — with `random_size` the mean size is now ~50%, not ~35%) and emitter sphere `dimensions 0.12→0.06` (~50% smaller); `color/homelander_laser` gradient rgb+alpha ×0.6 (~40% dimmer); `vfx/homelander/laser.json` `lightBrightness 0.85→0.4`, `lightRadius 7→3.5`, `distortionRadius 0.8→0.35`. No `impactFlashScale` — `ImpactPattern` has no flash quad, per plan. `IMPACT_INTERVAL_TICKS` stays 3. New `VfxQuasarResourcesParseTest` parses every quasar/vfx JSON. `mod_version` 4.1.3 → 4.2.0 (normal update → minor +0.1). In-game checks unverified — user will check.
 
 ## Completed this session (Homelander UX fix round — presentation-phase REVERTED)
 
