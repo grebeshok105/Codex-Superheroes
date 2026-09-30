@@ -17,8 +17,20 @@ public final class ImpactPattern {
 
 	public static void spawn(VfxBackend backend, Vec3 pos, Vec3 normal, ResourceLocation emitter,
 			VfxParams params) {
+		spawn(backend, pos, normal, emitter, params, 0);
+	}
+
+	/**
+	 * Same one-shot impact plus {@code extraBursts} additional emitter spawns
+	 * at the same surface point — the caller's knob for scaling the particle
+	 * count on heavier impacts. Distortion stays a single kick.
+	 */
+	public static void spawn(VfxBackend backend, Vec3 pos, Vec3 normal, ResourceLocation emitter,
+			VfxParams params, int extraBursts) {
 		Vec3 at = pos.add(normal.scale(params.number("surfaceOffset", 0.05f)));
-		backend.emit(emitter, at);
+		for (int i = 0; i <= extraBursts; i++) {
+			backend.emit(emitter, at);
+		}
 		float distortionRadius = params.number("distortionRadius", 0f);
 		if (distortionRadius > 0f) {
 			backend.distortion(at, distortionRadius, params.number("distortionStrength", 0.5f));

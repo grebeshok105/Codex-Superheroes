@@ -21,7 +21,7 @@
 		{
 			"event": "homelander.flight.land",
 			"file": "flight_land.ogg",
-			"durationMs": 500,
+			"durationMs": 1440,
 			"loop": false
 		},
 		{

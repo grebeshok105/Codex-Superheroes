@@ -1,5 +1,13 @@
 # SESSION.md
 
+## Completed this session (Homelander EMF plan — Stage 14 landing audio)
+
+- Stage 14 of `docs/superpowers/plans/2026-09-30-homelander-emf-presentation.md` (branch `devin/1790792031-homelander-landing-audio-s14`, base `devin/1790691307-homelander-vfx-fix`): impact-scaled landing audio/presentation.
+  - `FlightFx.LandingFx`: `LandingSoundMapping.fromScale(scale)` inverts the server `scale = 0.30 + intensity*1.20` mapping → `s`; sound volume `0.4 + 0.8*s`, pitch `1.15 - 0.3*s`; `ImpactPattern.spawn` gained an additive `extraBursts` overload so the dust particle count scales by `s`; new proximity-scaled `CameraImpulse` screen shake (`landShake*` keys in `homelander/flight.json`, same falloff pattern as ClapFx/IronFistsFx).
+  - `flight_land.ogg` replaced with real OGG Vorbis from `art-source/sounds/homelander/cUsersstravvberyDownloadsuniversfield-ground-impact-352053.mp3` (`ffmpeg -c:a libvorbis -qscale:a 5`); its line in `homelander_placeholders.txt` marked `# replaced`. **Asset choice flagged to user for confirmation in the PR.**
+  - `LandingSoundMappingTest` pins the mapping endpoints/midpoint/clamp; `mod_version` 4.1.3 → 4.2.0 (normal update).
+- No in-game verification (repo rule) — the Stage 14 user checklist is marked "unverified: user will check" in the PR.
+
 ## Completed this session (Homelander EMF — Stage 13)
 
 - Stage 13 of `docs/superpowers/plans/2026-09-30-homelander-emf-presentation.md` («trail and sonic rings») implemented on `devin/1790803301-homelander-trail-s13` (base Stage-4 head `4adfb99d`), `mod_version` 4.4.0 → 4.5.0.
@@ -24,7 +32,7 @@
 - Review pass: `ScorchMarkRenderer` no longer allocates corner/uv arrays per mark (unit tables hoisted to statics) and distance-culls before the block lookup — plan §0's no-per-frame-allocation budget.
 - In-game verification: none (repo rule — the user checks): marks stay after 10 min / relog / server restart; observer sees them; no z-fighting; breaking the block removes the mark.
 
-## Previous session (Homelander EMF plan — Stage 10, laser damage cadence)
+## Completed this session (Homelander EMF plan — Stage 10, laser damage cadence)
 
 - `devin/1790790873-homelander-laser-damage-s10` off PR #138's head (`2dc02edc`): eye-laser damage now lands on an explicit 10-tick cadence instead of every firing tick. `EyeLaserPhases.shouldDamage(firingTick)` (`DAMAGE_INTERVAL_TICKS = 10`) gates the `hurt` call; the gate runs on a new `DAMAGE_TICK` clock that counts *firing* ticks only — unlike `ACTIVE_TICK` it freezes through the uranium-pulse `fire=false` pauses, so pauses cannot shift the hit grid. Per-hit damage is `dps * 10 / 20` with the user-approved `MIN_DPS = 8`, `MAX_DPS = 16` (was 56–120 — an intended ~7–15× nerf); hurt feedback becomes pulsed at 2 hits/s. Madness ×3 and its every-2-tick explosions, uranium pulses, beam VFX and UPDATE cadence are all unchanged.
 - Tests: `EyeLaserDamageCadenceTest` (pure helper) + `eyeLasersDamageLandsEveryTenTicks` gametest asserting total damage over the window inside the 4–5 hit band.
@@ -119,6 +127,7 @@
 ## Active work
 
 - Homelander EMF staged plan continues — all 14 stage branches merging on this integration branch; Stage 15 (cutover/version bump) remains in `docs/superpowers/plans/2026-09-30-homelander-emf-presentation.md` §7.
+- PR `devin/1790792031-homelander-landing-audio-s14` (Stage 14): impact-scaled landing audio — this session's PR.
 - PR #137 `devin/1790691597-homelander-sounds`: real flight/laser sfx replacing placeholder oggs — open, CI green, in the combined jar.
 - PR #138 `devin/1790691307-homelander-vfx-fix`: flight pose/limbs/eye-anchor/trail fixes with the presentation-phase commit reverted — open, CI green; Stage 10 is based on its head.
 - EMF plan Stage 9 on `devin/1790790883-homelander-laser-sound-s9` (base PR #138): continuous laser loop sound — `EyeLaserChannel` starts `LaserLoopSound` at channel open (silent → `loopVolume` ramp over `CHARGE_TICKS`), `release()` fades it over `RELEASE_TICKS` (self-stops at 0), `cancel()` still hard-stops; `LASER_CHARGE`/`LASER_RELEASE` playback removed (SoundEvent registrations + `sounds.json` kept for resource packs); per-source `LIVE` registry makes a re-START during the old tail adopt+revive it instead of stacking. New pure `LaserLoopVolume` envelope + `LaserLoopVolumeTest`. `mod_version` → 4.2.0. `qualityGate` green; in-game unverified — user will check.
