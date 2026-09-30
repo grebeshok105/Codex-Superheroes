@@ -1,6 +1,16 @@
 # SESSION.md
 
-## Completed this session (Homelander EMF — Stage 1)
+## Completed this session (Homelander EMF — Stage 7)
+
+- Stage 7 («hand clap») implemented on `devin/1790798096-homelander-clap-s7` (base `devin/1790789702-homelander-emf-stage1` @ `337327e3`), shipped as its own PR, `mod_version` 4.2.0 → 4.3.0.
+- Approved timing: `HandClapAbility.IMPACT_TICKS = 30` — activation sends `CLAP` (starts the authored clip for everyone) and schedules the hit in a `PENDING` `OwnedSessionMap<UUID, Long>` (`ClearOn.LEAVE` only; death/hero-clear go through explicit `cancelPending` hooks so `CLAP_CANCEL` can broadcast first); `ctx.ticks().global` `serverTick` fires `impact()` at the deadline — same `OwnedSessionMap` + global-tick pattern as `ThanosSnapWindupController`. Range/cone/damage/knockback/cooldown untouched; the hit recomputes eye position + view vector at impact (follows the player's facing at hand-contact, not at cast).
+- Cancel paths: `ctx.lifecycle().onDeath`/`onHeroClear` → `cancelPending`; in-tick `isDeadOrDying() || isStunned()` (stun = `ModEffects.DISABLED_ABILITIES` or `HomelanderEffects.isAftermath` — the two ability-blocking states in the codebase) → drop + `CLAP_CANCEL`. Cooldown still applies from activation.
+- New `HomelanderVfxIds.CLAP_IMPACT`/`CLAP_CANCEL`; `HomelanderFx` wires `CLAP` → `HomelanderEmf.clapStarted`, `CLAP_IMPACT` → existing `ClapFx` (sound + burst; `contactSeconds` now 0 in `clap.json` since the event lands on the authored frame), `CLAP_CANCEL` → `HomelanderEmf.clapCancelled`.
+- `HomelanderPoseState`: `clapPlaying` gates the clap clock (resets on `CLAP`, holds at 1.92 s); `clap_w` and master `hl_w` ease in/out with the same 3-tick half-life — the jem blends clap over the hover/boost group, so it works in flight. `startClap`/`cancelClap` are not ownership-gated so late skin resolution still lands.
+- Gametests: `handClapKnocksBackAHeadCone` joins a `joinAudible` Wire and asserts the `CLAP` payload at activation, no `CLAP_IMPACT` during windup, then `CLAP_IMPACT` + zombie damage at `IMPACT_TICKS + 2`; `handClapImpactCancelsOnDeath` kills the caster at tick 10 and asserts `CLAP_CANCEL` arrives and `CLAP_IMPACT` never does. Timing is asserted on the S2C payload stream because gametest structures pack ~13 blocks apart — inside the 18-block cone — so neighbouring tests' claps legitimately hit each other's zombies and any damage-source/health assertion is racy both ways. (`zombie.hurtMarked` also can't be asserted post-hit: it is consumed by the entity's own next tick.)
+- Verification: `./gradlew test --no-daemon` green; `./gradlew qualityGate --no-daemon` green (ProjectSanityTest, jar isolation, 365 gametests, ArchUnit baseline, datagen verify). No in-game verification per the standing rule — Stage 7 user checklist stays unverified (windup visible, shockwave on the hand-contact frame, observer parity, cooldown retrigger block, clap-over-hover in flight).
+
+## Previously (Homelander EMF — Stage 1)
 
 - Stage 1 of `docs/superpowers/plans/2026-09-30-homelander-emf-presentation.md` («EMF foundation and Homelander model integration») implemented on `devin/1790789702-homelander-emf-stage1` (base `devin/1790782256-homelander-emf-plan`) and shipped as its own PR, `mod_version` 4.1.3 → 4.2.0.
 - EMF 3.3.9 + ETF 7.2.4 ship jar-in-jar (`modImplementation` + `include`); `fabric.mod.json` gains `depends: entity_model_features >=3.3` only. Gametest log proves the env-skip: dedicated classpath loads 45 mods with EMF/ETF env-disabled (both declare `"environment": "client"`), no `traben.*` loading, no crash, `depends` tolerates the env-disabled bundle. Both jems + `milk.png` verified inside the release jar (`auditReleaseJarIsolation` green).
@@ -13,7 +23,7 @@
 
 ## Active work
 
-- Homelander EMF staged plan continues — Stage 1 PR open for review. Stages 2+ (authored-motion wiring: drive `superheroes_hl_*` weights/clocks from flight phase + ability events) remain in `docs/superpowers/plans/2026-09-30-homelander-emf-presentation.md` §7.
+- Homelander EMF staged plan continues — Stage 1 PR merged-boundary base; Stage 7 PR open for review. Remaining stages (2–6, 8–12: authored-motion wiring, milk/laser/scorch) are in `docs/superpowers/plans/2026-09-30-homelander-emf-presentation.md` §7.
 - PR #137 `devin/1790691597-homelander-sounds`: real flight/laser sfx replacing placeholder oggs — open, CI green, in the combined jar.
 - PR #138 `devin/1790691307-homelander-vfx-fix`: flight pose/limbs/eye-anchor/trail fixes with the presentation-phase commit reverted — open, CI green.
 - Standing rule: the user verifies all in-game behavior themselves — never claim visual verification for them.
