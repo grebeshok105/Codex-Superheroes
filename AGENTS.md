@@ -141,6 +141,10 @@ PRs follow the same player-first scheme as Jujutsu:
 
 The version source of truth is `gradle.properties` (`mod_version`). Release tags use `vX.Y.Z`. Version changes follow semantic intent: bugfix-only work normally increments patch, meaningful feature releases increment minor, and intentionally breaking or milestone releases increment major.
 
+Every build that produces a jar for the user MUST bump `mod_version` first — never ship two jars with the same version:
+- fix (bugfix-only) → patch +0.0.1 (e.g. `4.1.1` → `4.1.2`)
+- normal update (features, balance, content) → minor +0.1, patch resets (e.g. `4.1.1` → `4.2.0`)
+
 The existing release infrastructure is under audit during the revival. Do not infer current release behavior from legacy branches, tags, comments, or workflows. Do not publish a release or change release automation unless the task explicitly requires it. When release work is requested, inspect the current workflow, tags, built artifact naming, and target branch first; then use or create a current project release procedure based on verified reality.
 
 ## 14. Documentation

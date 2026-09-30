@@ -121,6 +121,10 @@ public final class HumanoidAnchors {
 	}
 
 	private static Vec3 applyTilt(Vec3 offset, Vec3 bodyRight, Vec3 bodyForward, FlightBodyTransform tilt) {
+		// EMF lean rotates the model root via ModelPart rotationZYX — pitch about
+		// bodyRight first, then roll about bodyForward; anchors must compose in
+		// the same order to stay glued to the tilted body.
 		return tilt.applyTo(offset, bodyRight, bodyForward);
+
 	}
 }
