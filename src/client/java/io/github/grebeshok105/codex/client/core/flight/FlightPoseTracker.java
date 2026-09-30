@@ -140,13 +140,15 @@ public final class FlightPoseTracker {
 			tracked.trailSpawned = false;
 		}
 
+		boolean owned = EmfPresentationOwnership.isOwned(player);
 		VfxParams targetParams = pose;
-		if (presentation.poseParams() != null && EmfPresentationOwnership.isOwned(player)) {
+		if (presentation.poseParams() != null && owned) {
 			targetParams = mergedPoseParams(tracked, pose, presentation.poseParams());
 		}
 		tracked.previous = tracked.current;
 		tracked.current = FlightPoseMath.step(tracked.current,
-				FlightPoseMath.target(phase, velocity, yawRate, targetParams), 1f, halfLife);
+				poseTarget(player, phase, velocity, yawRate, targetParams, owned, tracked),
+				1f, halfLife);
 
 		updateLoopSound(client, player, tracked, state, phase, presentation, pose);
 
@@ -173,6 +175,27 @@ public final class FlightPoseTracker {
 			tracked.poseMergeOverlay = overlay;
 		}
 		return tracked.poseMergeResult;
+	}
+
+	/**
+	 * Pose target for the tick (plan §7 stage 5): EMF-owned players whose
+	 * presentation exposes live directional inputs through
+	 * {@link DirectionalPoseSource} — its own smoothed render velocity plus
+	 * boost weight — take the continuous {@link FlightPoseMath#directional}
+	 * path, which handles forward/backward/strafe/vertical flight without a
+	 * phase switch. Everybody else, and owned players before their first
+	 * pose-state tick, keeps the phase-switched {@link FlightPoseMath#target}
+	 * unchanged.
+	 */
+	private static FlightBodyTransform poseTarget(AbstractClientPlayer player,
+			FlightPhase phase, Vec3 velocity, float yawRate, VfxParams params,
+			boolean owned, Tracked tracked) {
+		if (owned && DirectionalPoseSource.fill(player, tracked.directional)) {
+			DirectionalPoseSource.Input in = tracked.directional;
+			return FlightPoseMath.directional(in.forward, in.strafe, in.vertical,
+					yawRate, in.boostWeight, params);
+		}
+		return FlightPoseMath.target(phase, velocity, yawRate, params);
 	}
 
 	private static void onPhaseChange(Minecraft client, AbstractClientPlayer player,
@@ -284,6 +307,7 @@ public final class FlightPoseTracker {
 		private VfxParams poseMergeBase;
 		private VfxParams poseMergeOverlay;
 		private VfxParams poseMergeResult;
+		private final DirectionalPoseSource.Input directional = new DirectionalPoseSource.Input();
 	}
 
 	/**
