@@ -9,7 +9,7 @@
 
 ## Active work
 
-- Plan-only PR `devin/1790782256-homelander-emf-plan`: `docs/superpowers/plans/2026-09-30-homelander-emf-presentation.md` (audit + 15-stage EMF migration plan for Homelander, baseline PR #138 head `2dc02edc`, PR #140 excluded). No code. Stages 7, 8 and 10 need user decisions (clap hit delay, milk duration, laser DPS).
+- Plan-only PR `devin/1790782256-homelander-emf-plan`: `docs/superpowers/plans/2026-09-30-homelander-emf-presentation.md` (audit + staged EMF migration plan for Homelander, baseline PR #138 head `2dc02edc`, PR #140 excluded). No code. User approved clap impact at 1.50 s, milk duration 126 ticks / 6.3 s, and laser damage every 10 ticks at 8–16 DPS. Stage 1 now requires deleting all legacy Homelander player-animation JSONs and removing all Homelander PlayerAnimator play/stop/sample paths; no legacy fallback or bridge.
 
 - PR #137 `devin/1790691597-homelander-sounds`: real flight/laser sfx replacing placeholder oggs — open, CI green, in the combined jar.
 - PR #138 `devin/1790691307-homelander-vfx-fix`: flight pose/limbs/eye-anchor/trail fixes with the presentation-phase commit reverted — open, CI green.
