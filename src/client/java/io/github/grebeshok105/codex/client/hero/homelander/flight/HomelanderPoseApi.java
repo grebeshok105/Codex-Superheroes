@@ -7,7 +7,10 @@ import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
@@ -121,6 +124,20 @@ public final class HomelanderPoseApi {
 				Math.toDegrees(runtime.lerpLeanPitch(partialTick)),
 				Math.toDegrees(runtime.lerpLeanRoll(partialTick)),
 				runtime.lerpLeanY(partialTick));
+	}
+
+	/**
+	 * {@code HeroClientContext.flightCameraFocus} provider: the third-person
+	 * camera offset that keeps the tilted EMF body centered, or {@code null}
+	 * when the entity is not presenting.
+	 */
+	public static @Nullable Vec3 cameraFocusOffset(LivingEntity entity, float tickDelta) {
+		HomelanderBodyTransform body = currentBodyTransform(entity.getId(), tickDelta);
+		if (body.equals(HomelanderBodyTransform.IDENTITY)) {
+			return null;
+		}
+		float bodyYaw = Mth.rotLerp(tickDelta, entity.yBodyRotO, entity.yBodyRot);
+		return body.cameraCenterOffsetBlocks(bodyYaw);
 	}
 
 	static @Nullable HomelanderEmfRuntime runtimeFor(int entityId) {

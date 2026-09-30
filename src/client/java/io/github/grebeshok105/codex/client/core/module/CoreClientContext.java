@@ -5,6 +5,7 @@ import io.github.grebeshok105.codex.client.core.FovModifiers;
 import io.github.grebeshok105.codex.client.core.HudGlitchSource;
 import io.github.grebeshok105.codex.client.core.HudJitter;
 import io.github.grebeshok105.codex.client.core.audio.ClientSoundFilters;
+import io.github.grebeshok105.codex.client.core.flight.FlightCameraFocus;
 import io.github.grebeshok105.codex.client.core.flight.FlightPresentation;
 import io.github.grebeshok105.codex.client.core.flight.FlightPresentations;
 import io.github.grebeshok105.codex.client.core.hud.AbilityDecoration;
@@ -44,8 +45,11 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.UUID;
+import java.util.function.BiFunction;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -162,5 +166,10 @@ public final class CoreClientContext implements HeroClientContext {
 	@Override
 	public void flightPresentation(FlightPresentation presentation) {
 		FlightPresentations.register(heroId, presentation);
+	}
+
+	@Override
+	public void flightCameraFocus(BiFunction<LivingEntity, Float, Vec3> focus) {
+		FlightCameraFocus.register(focus);
 	}
 }

@@ -46,6 +46,7 @@ public record HomelanderClientModule() implements HeroClientModule {
 		EmfAssets.init();
 		ctx.playerLayer(HomelanderEmfLayer::new);
 		ctx.playerModelSuppression(HomelanderPoseApi::suppressesVanillaModel);
+		ctx.flightCameraFocus(HomelanderPoseApi::cameraFocusOffset);
 		ctx.clientTick(HomelanderFlightDriver::tick);
 		HomelanderFx.register(ctx);
 		ctx.receive(UraniumPressureS2CPayload.TYPE, (payload, context) ->
