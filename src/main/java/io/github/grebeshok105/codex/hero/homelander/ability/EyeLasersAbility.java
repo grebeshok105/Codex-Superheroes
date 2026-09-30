@@ -43,8 +43,8 @@ import org.jetbrains.annotations.Nullable;
 public final class EyeLasersAbility implements Ability {
 	public static final ResourceLocation ID = ModId.of("eye_lasers");
 	private static final double RANGE = 64.0;
-	private static final float MIN_DPS = 56.0f;
-	private static final float MAX_DPS = 120.0f;
+	private static final float MIN_DPS = 8.0f;
+	private static final float MAX_DPS = 16.0f;
 	private static final float MADNESS_DAMAGE_MUL = 3.0f;
 	private static final double CHEST_FRACTION = 0.7;
 
@@ -68,6 +68,14 @@ public final class EyeLasersAbility implements Ability {
 	// Ticks since activation — the VFX channel heartbeat clock. Separate from
 	// PULSE_TICK: it counts through the uranium pauses PULSE_TICK pauses on.
 	private static final OwnedSessionMap<UUID, Integer> ACTIVE_TICK =
+			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.noneOf(ClearOn.class));
+
+	// Firing ticks since activation — the damage cadence clock. Unlike
+	// ACTIVE_TICK it does not count through the uranium-pulse fire=false
+	// pauses: it advances only on ticks where the beam fires, so a pause
+	// freezes the hit grid instead of shifting it. The stored value is the
+	// index of the firing tick about to run (the activation beam is index 0).
+	private static final OwnedSessionMap<UUID, Integer> DAMAGE_TICK =
 			OwnedSessionMap.create(LifecycleRegistrar.global(), EnumSet.noneOf(ClearOn.class));
 
 	@Override
@@ -94,6 +102,8 @@ public final class EyeLasersAbility implements Ability {
 	public boolean tryActivate(ServerPlayer player) {
 		PULSE_TICK.put(player.getUUID(), player.getUUID(), 0);
 		ACTIVE_TICK.put(player.getUUID(), player.getUUID(), 0);
+		// The activation beam below is firing tick 0 and lands its hit.
+		DAMAGE_TICK.put(player.getUUID(), player.getUUID(), 1);
 		Vec3 end = fireBeam(player);
 		VfxFx.channel(player, HomelanderVfxIds.LASER, VfxChannelS2CPayload.START, end);
 		return true;
@@ -103,6 +113,7 @@ public final class EyeLasersAbility implements Ability {
 	public void onDeactivate(ServerPlayer player) {
 		PULSE_TICK.remove(player.getUUID());
 		ACTIVE_TICK.remove(player.getUUID());
+		DAMAGE_TICK.remove(player.getUUID());
 		VfxFx.channel(player, HomelanderVfxIds.LASER, VfxChannelS2CPayload.STOP,
 				player.getEyePosition());
 	}
@@ -140,7 +151,10 @@ public final class EyeLasersAbility implements Ability {
 			PULSE_TICK.put(player.getUUID(), player.getUUID(), phase);
 		}
 		if (fire) {
-			fireBeam(player);
+			Integer storedDamage = DAMAGE_TICK.get(player.getUUID());
+			int damageTicks = storedDamage == null ? 0 : storedDamage;
+			fireBeam(player, EyeLaserPhases.shouldDamage(damageTicks));
+			DAMAGE_TICK.put(player.getUUID(), player.getUUID(), damageTicks + 1);
 		}
 	}
 
@@ -169,12 +183,16 @@ public final class EyeLasersAbility implements Ability {
 	}
 
 	private static Vec3 fireBeam(ServerPlayer player) {
+		return fireBeam(player, true);
+	}
+
+	private static Vec3 fireBeam(ServerPlayer player, boolean applyDamage) {
 		ServerLevel level = player.serverLevel();
 		boolean madness = HomelanderEffects.isMadness(player);
 		BeamRaycast ray = raycastBeam(player);
 		EntityHitResult hit = ray.hit();
 		Vec3 actualEnd = ray.actualEnd();
-		float damage = damagePerTick(player) * (madness ? MADNESS_DAMAGE_MUL : 1f);
+		float damage = damagePerHit(player) * (madness ? MADNESS_DAMAGE_MUL : 1f);
 		boolean choppy = false;
 		if (hit != null && hit.getEntity() instanceof net.minecraft.world.entity.player.Player victim
 				&& UraniumDefenseController.hasUraniumDagger(victim)) {
@@ -185,7 +203,8 @@ public final class EyeLasersAbility implements Ability {
 		}
 		if (hit != null) {
 			LivingEntity target = (LivingEntity) hit.getEntity();
-			if (damage > 0f) target.hurt(HomelanderDamageTypes.eyeLaser(level, player), damage);
+			if (applyDamage && damage > 0f)
+				target.hurt(HomelanderDamageTypes.eyeLaser(level, player), damage);
 			if (madness) {
 				if (player.tickCount % 2 == 0) {
 					level.explode(player, null, null, actualEnd.x, actualEnd.y, actualEnd.z,
@@ -230,7 +249,7 @@ public final class EyeLasersAbility implements Ability {
 		}
 	}
 
-	private static float damagePerTick(ServerPlayer player) {
+	private static float damagePerHit(ServerPlayer player) {
 		HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
 		float frac = 0f;
 		if (data.hasHero()) {
@@ -240,6 +259,6 @@ public final class EyeLasersAbility implements Ability {
 			}
 		}
 		float dps = MIN_DPS + (MAX_DPS - MIN_DPS) * frac;
-		return dps / 20f;
+		return dps * EyeLaserPhases.DAMAGE_INTERVAL_TICKS / 20f;
 	}
 }
