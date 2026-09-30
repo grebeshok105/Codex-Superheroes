@@ -4,7 +4,7 @@
 
 **Goal:** Move Homelander's player-model presentation onto Entity Model Features (EMF) using the authored `Homelander_All_Animations.bbmodel` (HOVER, TAKEOFF, BOOST, HAND CLAP, MILK DRINK), and fix the surrounding presentation (directional flight transforms, F5 framing, continuous laser audio, laser damage cadence, smaller impact, persistent burn marks, soft contrail, landing audio) without changing other heroes and without changing gameplay except where this plan names an explicit, justified change.
 
-**Architecture (one paragraph):** Server gameplay stays authoritative and unchanged in shape (`FlightController`, abilities, `VfxFx` payloads). A new Homelander-only client state (`HomelanderPoseState`) turns already-synced data (flight state, VFX events, render-interpolated velocity) into a handful of smoothed scalars (clip clocks and blend weights). Codex registers those scalars as EMF animation variables through `EMFAnimationApi`. A generated `player.jem` / `player_slim.jem` (shipped in the mod jar under the EMF-only path) contains the authored geometry and the authored clips as sampled `keyframe(...)` tables and blends them over the vanilla pose with those weights. The legacy `PlayerAnimator` pipeline stays for every other hero; for an EMF-owned Homelander it is not applied to the model, and the remaining legacy Homelander clips (laser, iron fists, roar, sun charge) are fed into the jem as variables instead of being ported. Whole-body pitch/bank stays in `PlayerRendererMixin` (single owner). VFX anchors read a per-entity snapshot of the EMF-animated vanilla parts.
+**Architecture (one paragraph):** Server gameplay stays authoritative and unchanged in shape (`FlightController`, abilities, `VfxFx` payloads). A new Homelander-only client state (`HomelanderPoseState`) turns already-synced data (flight state, VFX events, render-interpolated velocity) into a handful of smoothed scalars (clip clocks and blend weights). Codex registers those scalars as EMF animation variables through `EMFAnimationApi`. A generated `player.jem` / `player_slim.jem` (shipped in the mod jar under the EMF-only path) contains the authored geometry and the authored clips as sampled `keyframe(...)` tables and blends them over the vanilla pose with those weights. The legacy `PlayerAnimator` pipeline stays for other heroes only; once Homelander is EMF-owned, Homelander never uses `PlayerAnimator` again. All legacy Homelander animation resources and all Homelander `PlayerAnimator.play/stop` calls are removed in Stage 1. Abilities that do not yet have a new authored EMF animation (laser, iron fists, roar, sun charge, landing) temporarily have no player animation rather than falling back to the old clips. Whole-body pitch/bank stays in `PlayerRendererMixin` (single owner). VFX anchors read a per-entity snapshot of the EMF-animated vanilla parts.
 
 **Tech stack:** Java 21, Minecraft 1.21.1 (Mojang mappings), Fabric Loader 0.19.2, Fabric API 0.116.12+1.21.1, Veil 4.1.2 (Quasar), EMF `3.3.9-fabric-1.21`, ETF `7.2.4-fabric-1.21`, JUnit 5, Fabric GameTest, ArchUnit, Python 3 (offline bake script only).
 
@@ -19,7 +19,7 @@
 - No global migration: other heroes keep `PlayerAnimator`, `FlightPresentation`, `FlightPoseTracker` exactly as today. Diffs to shared classes must be additive (new method, new optional parameter via overload) and must keep existing behaviour byte-for-byte for non-EMF entities.
 - No in-game verification by agents (repo rule `codex-superheroes-no-ingame-testing`). Every "in-game verification" block below is a checklist for the user; the PR must list it as "unverified: user will check".
 - Finishing gate for every PR: `./gradlew qualityGate --no-daemon` (fast loop: `./gradlew test --no-daemon`, `./gradlew assemble --no-daemon`).
-- Do not use `PlayerAnimator` or legacy `.animation.json` files as the source for new Homelander motion. The `.bbmodel` is the source of truth.
+- Homelander must not use `PlayerAnimator` after Stage 1. Delete every legacy Homelander `.animation.json` resource and remove every Homelander `PlayerAnimator.play/stop/sample` dependency that exists only to drive those clips. There is no legacy Homelander animation fallback. The `.bbmodel` is the only source of truth for the new Homelander motion. Other heroes may continue using `PlayerAnimator`.
 - Performance: no per-frame allocation in the variable suppliers, in the pose-state update, in the anchor cache or in trail/burn-mark rendering; every collection bounded.
 
 ---
@@ -33,7 +33,7 @@
 | `core/anim/AnimationLibrary` | Reload listener, loads `assets/<ns>/player_animations/**/*.animation.json` | yes | keep, untouched |
 | `core/anim/BedrockAnimationParser` | Bedrock JSON → `AnimationClip` | yes | keep, untouched |
 | `core/anim/AnimationClip`, `BoneTrack`, `PoseSample` | Data types (six vanilla bones, deg + px) | yes | keep, untouched |
-| `core/anim/PlayerAnimator` | Per-entity `BASE`/`ACTION` lanes, crossfade, `play/stop/sample/tick/reset` | yes | keep; Homelander stops *playing flight/clap/milk clips* into it, other Homelander clips still play |
+| `core/anim/PlayerAnimator` | Per-entity `BASE`/`ACTION` lanes, crossfade, `play/stop/sample/tick/reset` | yes | keep for other heroes; after Stage 1 Homelander must never play/sample any legacy clip through it |
 | `core/anim/PlayerPoseApplier` | Applies `PoseSample` to `HumanoidModel` parts, `resetDrivenLimbs`, `renderedRotationDeg` | yes | keep, untouched |
 | `mixin/PlayerModelPoseMixin` | `setupAnim` tail: restore, static flight legs, Think Mark pose, apply `PlayerAnimator.sample`, copy to overlay parts | yes (global) | add one early-return gate for EMF-owned entities (Stage 1) |
 | `mixin/PlayerRendererMixin` | Whole-body flight pitch/roll on the `PoseStack` (`Axis.XP -pitch`, `Axis.ZP -roll`) | yes | keep as the only owner of whole-body rotation; add anchor snapshot hook (Stage 1) |
@@ -130,7 +130,7 @@ Sources checked: EMF repository `Traben-0/Entity_Model_Features` (cloned, `mod_v
 ### 4.1 Versions and packaging
 - EMF `3.3.9-fabric-1.21` (Modrinth: game versions 1.21, 1.21.1; loaders fabric, quilt), client-only per its `fabric.mod.json`, required dependency ETF (`BVzZfTc1`). Available as `maven.modrinth:entity-model-features:3.3.9-fabric-1.21` (POM returns 200).
 - ETF `7.2.4-fabric-1.21` (1.21/1.21.1) as `maven.modrinth:entitytexturefeatures:7.2.4-fabric-1.21` (POM returns 200). EMF 3.3.9 builds against ETF 7.2.2, so 7.2.4 satisfies it.
-- EMF mod id `entity_model_features`, ETF mod id `entity_texture_features`. Both are client-only: they cannot go into `depends` of `fabric.mod.json` (the mod is `environment: *`, and a dedicated server would refuse to start). Use `recommends` plus a client bootstrap check (Stage 1). EMF is still the only supported presentation path; the no-EMF client just keeps the legacy fallback and logs one warning.
+- EMF mod id `entity_model_features`, ETF mod id `entity_texture_features`. Both are client-only, so Stage 1 must verify the correct Fabric packaging/metadata strategy that keeps the dedicated server valid while making EMF+ETF mandatory for the supported client configuration. **Do not implement a Homelander legacy animation fallback when EMF is absent.**
 
 ### 4.2 Player CEM
 - Files: `player.jem`, `player_slim.jem`, `player_cape.jem`. Parts: `head, headwear, body, left_arm, right_arm, left_leg, right_leg, ear, left_sleeve, right_sleeve, left_pants, right_pants, jacket, cloak`.
@@ -170,7 +170,7 @@ There is no public EMF API that returns transformed part matrices. After EMF ani
 
 | Conflict | Risk | Prevention |
 |---|---|---|
-| EMF vs `PlayerAnimator` | Both write `head/body/arms/legs` → jitter, double poses | `PlayerModelPoseMixin` returns early (after restore) when `EmfPresentationOwnership.isOwned(player)`; `FlightPoseTracker` skips `PlayerAnimator.play` for flight clips when owned; `HomelanderFx.milkDrink`/`ClapFx` stop playing legacy clips when owned; other legacy Homelander clips reach the jem via `superheroes_hl_legacy_*` variables, not via the mixin |
+| EMF vs `PlayerAnimator` | Both write `head/body/arms/legs` → jitter, double poses | Homelander is cut over completely in Stage 1: `PlayerModelPoseMixin` does not apply `PlayerAnimator` to EMF-owned Homelander, every Homelander legacy play/stop/sample call is removed, and all Homelander legacy animation resources are deleted. No bridge between the two animation engines. |
 | EMF root vs procedural tilt | BOOST -86° baked + `boostPitch 80` in renderer → 166°, belly-up | Mean root rotation stripped at bake time and moved to `flight.json`; renderer remains the only whole-body rotation |
 | Flight presentation vs eye anchors | Beams leave the vanilla head position while the EMF head moved | Anchors take head offsets/rotation from `RenderedPoseCache` (captured after EMF) plus renderer tilt |
 | Body pitch/bank vs F5 camera | Camera follows eye position that swings with tilt → nausea | Camera anchor = smoothed body centre in world space, independent of tilt; tilt never feeds camera rotation |
@@ -190,8 +190,8 @@ New files (all client unless stated):
 - `client/core/emf/EmfBridge.java`: `isAvailable()`, `registerFloatVariable(String name, String explanation, Supplier<Float>)`, `currentEntityUuid()` (nullable), `registerVanillaModelCondition(Predicate<UUID>)`. The only class under `client/core` that imports `traben.*`. Every method no-ops when EMF is absent.
 - `client/core/emf/EmfPresentationOwnership.java`: `static void register(Predicate<AbstractClientPlayer> owner)`, `static boolean isOwned(AbstractClientPlayer)`. Hero-agnostic; `false` when EMF is absent.
 - `client/core/emf/RenderedPoseCache.java`: `capture(int entityId, PlayerModel<?> model)`, `headOffsetPx(int id, Vector3f out)`, `headRotationRad(int id, Vector3f out)`, `clear(int id)`, `clearAll()`; fixed arrays, capacity 64 entities, LRU by last frame.
-- `client/hero/homelander/emf/HomelanderPoseState.java`: per-entity state (`ClipClock` for HOVER/BOOST loops, TAKEOFF/CLAP/MILK one-shots; weights `active`, `boost`, `takeoff`, `clap`, `milk`, `legacy`); `tick()` from client tick, `read(UUID, float partial)`; directional values `forward`, `strafe`, `pitchDeg`, `bankDeg`. Pure logic in `HomelanderPoseMath` (unit-tested).
-- `client/hero/homelander/emf/HomelanderEmfVariables.java`: registers `superheroes_hl_w`, `superheroes_hl_hover_t`, `superheroes_hl_boost_t`, `superheroes_hl_boost_w`, `superheroes_hl_takeoff_t`, `superheroes_hl_takeoff_w`, `superheroes_hl_clap_t`, `superheroes_hl_clap_w`, `superheroes_hl_milk_t`, `superheroes_hl_milk_w`, `superheroes_hl_legacy_w` and `superheroes_hl_legacy_<bone>_<rx|ry|rz|tx|ty|tz>` for the six vanilla bones.
+- `client/hero/homelander/emf/HomelanderPoseState.java`: per-entity state (`ClipClock` for HOVER/BOOST loops and TAKEOFF/CLAP/MILK one-shots; weights `active`, `boost`, `takeoff`, `clap`, `milk`); `tick()` from client tick, `read(UUID, float partial)`; directional values `forward`, `strafe`, `pitchDeg`, `bankDeg`. Pure logic in `HomelanderPoseMath` (unit-tested).
+- `client/hero/homelander/emf/HomelanderEmfVariables.java`: registers only the variables required by the new EMF-authored HOVER/BOOST/TAKEOFF/CLAP/MILK presentation. It must not expose legacy `PlayerAnimator` bone channels.
 - `art-source/homelander/emf/bake_jem.py` + `art-source/homelander/emf/test_bake_jem.py`: offline generator; outputs `src/main/resources/assets/minecraft/emf/cem/player.jem` and `player_slim.jem` (committed), and prints the root-mean values for `flight.json`.
 - Server (Stage 12): `hero/homelander/scorch/LaserScorchData.java` (`SavedData`), `core/net/ScorchMarksS2CPayload.java`.
 
@@ -199,11 +199,11 @@ Jem expression shape (per channel, generated):
 
 ```
 "right_arm.rx": "lerp(superheroes_hl_w, right_arm.rx,
-    lerp(superheroes_hl_legacy_w,
-      lerp(max(superheroes_hl_takeoff_w, max(superheroes_hl_clap_w, superheroes_hl_milk_w)),
-           lerp(superheroes_hl_boost_w, keyframeloop(superheroes_hl_hover_t*20, ...), keyframeloop(superheroes_hl_boost_t*20, ...)),
-           <active one-shot keyframe(...)>),
-      torad(superheroes_hl_legacy_right_arm_rx)))"
+    lerp(max(superheroes_hl_takeoff_w, max(superheroes_hl_clap_w, superheroes_hl_milk_w)),
+         lerp(superheroes_hl_boost_w,
+              keyframeloop(superheroes_hl_hover_t*20, ...),
+              keyframeloop(superheroes_hl_boost_t*20, ...)),
+         <active one-shot keyframe(...)>))"
 ```
 
 Only one one-shot weight is non-zero at a time (`HomelanderPoseState` enforces it), so the generator emits `superheroes_hl_takeoff_w*keyframe(takeoff) + superheroes_hl_clap_w*keyframe(clap) + superheroes_hl_milk_w*keyframe(milk)` normalised by their sum. Sample rate: 20 Hz (`keyframe` interpolates with Catmull-Rom, matching the author's 60 Hz curves within 0.5° on these clips; the bake test asserts the max error).
@@ -216,13 +216,13 @@ Each stage: goal, current state, files, symbols, steps, constraints, automated v
 
 ### Stage 1: EMF foundation and Homelander model integration (PR 1)
 
-**Goal:** EMF/ETF on the client classpath; generated Homelander jem in the jar; Homelander (and only Homelander) rendered by EMF with all weights 0 (vanilla-equivalent pose); legacy pipeline gated for the EMF owner; legacy Homelander action clips still visible through legacy variables; anchor cache in place.
+**Goal:** EMF/ETF integrated for the supported client configuration; generated Homelander jem in the jar; Homelander (and only Homelander) owned by EMF; every legacy Homelander animation resource and every Homelander `PlayerAnimator` animation call removed; anchor cache in place. Abilities without a new EMF-authored clip temporarily have no player animation.
 
 **Current state:** no EMF; `PlayerModelPoseMixin` applies `PlayerAnimator` to everybody.
 
 **Files:**
 - Modify `build.gradle`: in `dependencies`, `modCompileOnly "maven.modrinth:entity-model-features:3.3.9-fabric-1.21"`, `modCompileOnly "maven.modrinth:entitytexturefeatures:7.2.4-fabric-1.21"`, `modLocalRuntime` for both; extend the existing `filter { !it.path.contains('veil') }` server/gametest filters to also drop paths containing `entity-model-features` and `entitytexturefeatures`. Modrinth maven repo block already exists (Iris).
-- Modify `src/main/resources/fabric.mod.json`: `"recommends": { "veil": ">=4.1.2", "entity_model_features": ">=3.3.9", "entity_texture_features": ">=7.2.4" }`.
+- Modify dependency metadata after verifying the correct Fabric strategy for a universal mod with client-only EMF/ETF: the supported client configuration must require EMF+ETF, while dedicated-server startup must remain valid. Do not solve this by keeping a legacy Homelander animation fallback.
 - Add `art-source/homelander/emf/Homelander_All_Animations.bbmodel`, `bake_jem.py`, `test_bake_jem.py`.
 - Add `src/main/resources/assets/minecraft/emf/cem/player.jem`, `player_slim.jem` (generated; slim differs only in arm widths 3 px and arm pivots per vanilla slim).
 - Add `client/core/emf/EmfBridge.java`, `EmfPresentationOwnership.java`, `RenderedPoseCache.java`.
@@ -230,9 +230,10 @@ Each stage: goal, current state, files, symbols, steps, constraints, automated v
 - Modify `client/hero/homelander/HomelanderClientModule.java`: call `HomelanderEmf.register(ctx)`.
 - Modify `client/mixin/PlayerModelPoseMixin.java`: after the restore step, `if (EmfPresentationOwnership.isOwned(player)) return;`.
 - Modify `client/mixin/PlayerRendererMixin.java`: after the model is set up and before rendering, `RenderedPoseCache.capture(player.getId(), getModel())` for owned players.
-- Modify `client/core/flight/FlightPoseTracker.java`: skip `PlayerAnimator.play/stop` of flight clips when `EmfPresentationOwnership.isOwned`; sounds/trail unchanged.
-- Modify `client/core/vfx/anchor/HumanoidAnchors.java`: add `eyes(AbstractClientPlayer, float, FlightBodyTransform, Vector3f headAnimDeg, @Nullable Vector3f headOffsetPx)`; the old overload delegates with `null`.
-- Modify `client/hero/homelander/fx/EyeLaserChannel.java`: `headAnim` reads `RenderedPoseCache` when owned.
+- Modify `client/core/flight/FlightPoseTracker.java`: Homelander must no longer play/stop any legacy flight clip; sounds/trail remain.
+- Modify `client/core/vfx/anchor/HumanoidAnchors.java` and `client/hero/homelander/fx/EyeLaserChannel.java` so eye anchors come from the EMF-rendered pose and do not depend on `PlayerAnimator.sample`.
+- Remove Homelander legacy animation calls from `HomelanderFx`, `ClapFx`, `EyeLaserChannel`, `IronFistsFx`, `RoarFx`, `SunChargeFx` and any other Homelander call site found by repo-wide search.
+- Delete every file under `src/main/resources/assets/superheroes/player_animations/homelander/`: `clap.animation.json`, `flight_boost.animation.json`, `flight_cruise.animation.json`, `flight_hover.animation.json`, `flight_land.animation.json`, `flight_takeoff.animation.json`, `iron_fists_activate.animation.json`, `iron_fists_strike.animation.json`, `laser_charge.animation.json`, `laser_hold.animation.json`, `laser_release.animation.json`, `milk_drink.animation.json`, `roar.animation.json`, `sun_charge.animation.json`.
 - Modify `client/ClientSessionState` reset path: `RenderedPoseCache.clearAll()`, `HomelanderPoseState.clearAll()`.
 - Tests: `src/test/java/.../client/hero/homelander/emf/HomelanderPoseMathTest.java`, `src/test/java/.../client/core/emf/RenderedPoseCacheTest.java`, `src/test/java/.../HomelanderJemContractTest.java` (parses the shipped jem: required parts/ids present, every custom id from the bbmodel present, no `NaN`, all five clips present, no `emf_lab` expressions); extend the ArchUnit rule so `traben..` is only imported from `client.core.emf..` and `client.hero.homelander.emf..`.
 
@@ -241,14 +242,14 @@ Each stage: goal, current state, files, symbols, steps, constraints, automated v
 - [ ] Write `test_bake_jem.py` first: composing identity parents returns the child; composing root rx -86 then removing the mean returns the residual; ZYX Euler round-trip error < 1e-4 rad; 20 Hz Catmull-Rom resample error < 0.5° versus the 60 Hz source for every channel of every shipped clip.
 - [ ] Implement `bake_jem.py` (inputs: bbmodel path, `--slim`; outputs jem + printed root means). Run `python3 -m unittest art-source/homelander/emf/test_bake_jem.py` and the bake.
 - [ ] Hide vanilla overlay parts in the jem (`headwear`, `jacket`, sleeves, pants: `"visible": "false"` equivalent via animation `visible_boxes`) because the baked parts contain the overlay boxes.
-- [ ] Implement bridge, ownership, cache, pose state (weights all 0 in this stage except `legacy_w`), variables; gate mixins.
+- [ ] Implement bridge, ownership, cache and minimal pose state with the new EMF variables only; gate the legacy model mixin for Homelander. There is no `legacy_w` and no legacy bone-variable bridge.
 - [ ] `./gradlew test --no-daemon`, then `./gradlew qualityGate --no-daemon`.
 
-**Constraints:** no visual motion yet except legacy clips via variables; no gameplay changes; no clip deleted.
+**Constraints:** no new authored motion yet; no gameplay changes. Old Homelander player animations are intentionally gone. Laser, iron fists, roar, sun charge and landing may temporarily have no player animation.
 
 **Automated verification:** unit tests above; `grep -rn "traben\." src/client/java | grep -v "/client/core/emf/\|/client/hero/homelander/emf/"` returns nothing; `grep -rn "traben\." src/main/java` returns nothing; `runServer`-style gametest classpath without EMF passes (`qualityGate`).
 
-**User in-game verification:** with EMF+ETF installed, Homelander stands/walks like vanilla (same skin, no gaps at elbows/knees, normal and slim skin); non-Homelander players unchanged; sun charge, roar, iron fists and laser clips still visible on Homelander; F3+T reload does not break; without EMF the game starts and a single warning is logged.
+**User in-game verification:** with EMF+ETF installed, Homelander stands/walks correctly (same skin, no gaps at elbows/knees, normal and slim skin); non-Homelander players unchanged; flight/laser/iron fists/roar/sun/landing gameplay and VFX still function even where player animation is temporarily absent; F3+T reload does not break. No legacy Homelander animation should play anywhere.
 
 **Rollback boundary:** revert PR 1 completely; nothing else depends on it yet.
 
@@ -348,7 +349,7 @@ Each stage: goal, current state, files, symbols, steps, constraints, automated v
 
 **Current state:** damage/knockback applied instantly in `HandClapAbility.tryActivate`, VFX at the same tick.
 
-**Decision (explicit gameplay timing change, requires user approval in the PR):** the server keeps range, cone, damage, knockback and cooldown, but schedules the hit `IMPACT_TICKS = 30` ticks after activation. Reason: a 1.5 s windup with instant damage makes the hit land before the hands meet. Cancellation: if the player dies, is swapped out of the hero, or is stunned before tick 30, the hit is cancelled and a `CLAP_CANCEL` event is sent; cooldown still applies from activation. Two events: `CLAP` at activation (starts clip for everybody) and `CLAP_IMPACT` at tick 30 (existing `ClapFx` VFX + `HomelanderSounds.HAND_CLAP`). If the user rejects the delay, fallback: keep instant server hit and start the client clip at `t = 1.50 s - 0.05` so the impact frame lines up with the hit (loses windup).
+**Confirmed gameplay timing:** the server keeps range, cone, damage, knockback and cooldown, but schedules the hit `IMPACT_TICKS = 30` ticks after activation so gameplay impact, sound and VFX land on the authored ~1.50 s hand-contact frame. Cancellation: if the player dies, is swapped out of the hero, or is stunned before tick 30, the hit is cancelled and a `CLAP_CANCEL` event is sent; cooldown still applies from activation. Two events: `CLAP` at activation (starts clip for everybody) and `CLAP_IMPACT` at tick 30 (existing `ClapFx` VFX + `HomelanderSounds.HAND_CLAP`). This timing is approved by the user.
 
 **Files:** `hero/homelander/ability/HandClapAbility.java` (pending-clap map using the same `OwnedSessionMap` pattern as `EyeLasersAbility`), `hero/homelander/HomelanderVfxIds.java` (`CLAP_IMPACT`, `CLAP_CANCEL`), `client/hero/homelander/fx/ClapFx.java` (no legacy clip for owner; impact visuals move to the impact event), `HomelanderPoseState` (clap clock/weight), `HomelanderFx.register`, `src/gametest/java/.../HomelanderGameTests.java` (hit happens at tick 30, not tick 0; cancelled on death).
 
@@ -362,7 +363,7 @@ Each stage: goal, current state, files, symbols, steps, constraints, automated v
 
 **Current state:** `DRINK_TICKS = 32` (1.6 s), vanilla held-item drinking, legacy `milk_drink` clip.
 
-**Decision (explicit gameplay timing change, requires user approval):** `MilkBottleItem.getUseDuration` = 126 ticks (6.3 s) so the effect lands after the sip; MADNESS is applied in `finishUsingItem` as today. Releasing use early cancels (vanilla `releaseUsing`), sends `MILK_CANCEL`, no effect. Fallback if rejected: keep 32 ticks and play only the 1.17 s to 5.68 s part time-scaled ×2.8 (documented as visibly rushed). While the milk weight > 0, the third-person held item is hidden for the owner (new small mixin on `ItemInHandLayer.renderArmWithItem` checking `HomelanderPoseState.milkWeight(id) > 0`), because the authored bottle replaces it. First-person drinking stays vanilla (out of scope).
+**Confirmed gameplay timing:** `MilkBottleItem.getUseDuration` = 126 ticks (6.3 s) so the real use duration matches the authored sequence and the gameplay effect lands after the sip. MADNESS is applied in `finishUsingItem` as today. Releasing use early cancels (vanilla `releaseUsing`), sends `MILK_CANCEL`, no effect. While the milk weight > 0, the third-person held item is hidden for the owner because the authored bottle replaces it. First-person drinking stays vanilla (out of scope). This timing is approved by the user.
 
 **Files:** `hero/homelander/item/MilkBottleItem.java`, `HomelanderVfxIds.MILK_CANCEL`, `HomelanderFx.milkDrink` (owner: no legacy clip; sound unchanged), `HomelanderPoseState`, new `client/mixin/ItemInHandLayerMixin.java` + entry in `superheroes.client.mixins.json`, gametest for duration and cancel.
 
@@ -391,7 +392,7 @@ Each stage: goal, current state, files, symbols, steps, constraints, automated v
 
 **Goal:** explicit, less frequent damage and lower DPS, beam still continuous.
 
-**Decision:** damage every `DAMAGE_INTERVAL_TICKS = 10` ticks (aligned with vanilla invulnerability, 2 hits/s) instead of calling `hurt` 20 times/s; per-hit damage `dps * 10 / 20`. New `MIN_DPS = 8`, `MAX_DPS = 16` (effective normal DPS today 5.6 to 12; the brief asks for a lower total, so the intended comparison is against the nominal 56 to 120 which players see through i-frame bypasses from other sources; final numbers are a user decision, record them in the PR). Madness keeps ×3 and its every-2-tick explosions unchanged. Visual beam, UPDATE cadence and uranium pulse phases unchanged; the damage clock is separate from `ACTIVE_TICK` so pauses do not shift it.
+**Confirmed gameplay balance:** damage every `DAMAGE_INTERVAL_TICKS = 10` ticks (2 hits/s) instead of calling `hurt` 20 times/s; per-hit damage `dps * 10 / 20`. Use `MIN_DPS = 8`, `MAX_DPS = 16`. Madness keeps ×3 and its every-2-tick explosions unchanged. Visual beam, UPDATE cadence and uranium pulse phases unchanged; the damage clock is separate from `ACTIVE_TICK` so pauses do not shift it. These cadence/DPS values are approved by the user.
 
 **Hit feedback consequence:** red flash and hurt sound already only played on landed hits (~2/s); unchanged. Knockback from the damage source also only on landed hits.
 
@@ -475,7 +476,7 @@ Each stage: goal, current state, files, symbols, steps, constraints, automated v
 - [ ] Late tracking: observer entering range mid-flight/mid-milk/mid-laser: pose state starts from `ClientFlightState` (hover), laser via existing channel UPDATE-opens-channel behaviour, milk/clap one-shots are skipped if the start event was missed (acceptable, documented).
 - [ ] Session reset: `ClientSessionState` clears all new caches; dimension change clears `RenderedPoseCache`.
 - [ ] Profiling hooks: count variable supplier calls per frame in a debug flag; ensure `HomelanderPoseState.read` is O(1) (cache last UUID → state).
-- [ ] README: dependency note (EMF+ETF required on clients for Homelander presentation).
+- [ ] README: dependency note that EMF+ETF are required for the supported client configuration.
 - [ ] `qualityGate`, update `SESSION.md`, bump `mod_version`.
 
 **Rollback boundary:** revert PR 15 only.
@@ -486,16 +487,16 @@ Each stage: goal, current state, files, symbols, steps, constraints, automated v
 
 | PR | Depends on | Scope | Explicit exclusions | Acceptance |
 |---|---|---|---|---|
-| 1 EMF foundation | baseline | deps, jem, bridge, gates, anchor cache, legacy variables | any new motion, gameplay | §7 Stage 1 checks green, vanilla-equivalent look |
+| 1 EMF foundation | baseline | deps, jem, bridge, ownership, anchor cache, full removal of legacy Homelander animation resources/calls | any new authored motion, gameplay | §7 Stage 1 checks green, no legacy Homelander animation path remains |
 | 2 HOVER | 1 | hover loop + active weight | boost, takeoff | hover visible, frame-rate independent |
 | 3 TAKEOFF | 2 | takeoff one-shot | gameplay lift | no snap into hover |
 | 4 BOOST | 2 | directional boost weight | trail/sound gating | no belly-up, hysteresis |
 | 5 Transforms | 4 | `FlightPoseMath.directional` | camera | backward lean, bank, bounded |
 | 6 Camera | 5 | framing offset | rotation changes | body centred, no jumps |
-| 7 Clap | 1 | clap clip + delayed hit (user-approved) | damage/range/cooldown | impact at 1.50 s |
-| 8 Milk | 1 | milk clip, props, duration (user-approved) | first-person | full sequence |
+| 7 Clap | 1 | clap clip + approved delayed hit | damage/range/cooldown values | impact at 1.50 s |
+| 8 Milk | 1 | milk clip, props, approved 126-tick duration | first-person | full sequence |
 | 9 Laser sound | baseline | single loop + fade | laser visuals | no stacking |
-| 10 Laser damage | baseline | cadence + DPS (user numbers) | madness explosions | 2 hits/s, lower DPS |
+| 10 Laser damage | baseline | approved 10-tick cadence + 8–16 DPS | madness explosions | 2 hits/s, lower DPS |
 | 11 Laser impact | baseline | data tuning | new VFX system | small impact |
 | 12 Burn marks | 10 | persistent decals | block damage | persist + sync |
 | 13 Trail | 4 | soft trail, rings | new graphics framework | smooth, bounded |
@@ -514,7 +515,7 @@ Multiplayer (dedicated server, two clients): observer watches takeoff, hover, bo
 
 Transitions: takeoff → hover; hover → boost; boost → hover; hover → backward; backward → forward; flight → laser; flight → clap; flight cancel (toggle, damage, landing).
 
-Visual regressions: normal skin; slim skin; armor (all tiers); cape; held items (sword, shield, bow draw); first-person arms; spectator; death animation; relog; non-Homelander players unchanged; client without EMF starts.
+Visual regressions: normal skin; slim skin; armor (all tiers); cape; held items (sword, shield, bow draw); first-person arms; spectator; death animation; relog; non-Homelander players unchanged. Supported client testing always includes EMF+ETF.
 
 Automated (agents): `python3 -m unittest art-source/homelander/emf/test_bake_jem.py`; `./gradlew test --no-daemon`; `./gradlew qualityGate --no-daemon` (includes gametests and ArchUnit).
 
@@ -534,11 +535,11 @@ Automated (agents): `python3 -m unittest art-source/homelander/emf/test_bake_jem
 - Missed one-shot events on late tracking: accepted, documented.
 - Clock drift between clients: one-shot clocks start from event receipt, loops are cosmetic; acceptable.
 - Server-delayed clap: hit timing identical for everybody because the server applies it.
-- Clients without EMF see vanilla + legacy clips for Homelander; server never depends on EMF.
+- There is no no-EMF Homelander animation fallback. Dedicated-server compatibility must be preserved without reintroducing legacy player animations.
 
 ## 12. Acceptance criteria (whole plan)
 
-1. Homelander rendered by EMF from the shipped jem with the authored hierarchy (forearms, shins, feet, knees, mouth, bottle, cap) on normal and slim skins; other heroes and players unchanged.
+1. Homelander rendered by EMF from the shipped jem with the authored hierarchy (forearms, shins, feet, knees, mouth, bottle, cap) on normal and slim skins; other heroes and players unchanged. No legacy Homelander `.animation.json` or Homelander `PlayerAnimator` animation path remains.
 2. No frame where both `PlayerAnimator` and EMF drive the same Homelander part (code gate + ArchUnit).
 3. HOVER, TAKEOFF, BOOST, HAND CLAP, MILK DRINK play with authored timing (tests assert lengths 3.2/0.8/2.6/1.92/6.3 s and impact 1.50 s).
 4. BOOST only on forward motion relative to body yaw; backward stays upright with ≤ 8° lean; no belly-up in any tested direction (unit tests on `directional`).
@@ -556,6 +557,6 @@ Automated (agents): `python3 -m unittest art-source/homelander/emf/test_bake_jem
 
 - **Start from:** commit `2dc02edc` (head of PR #138, branch `origin/devin/1790691307-homelander-vfx-fix`). If PR #138 has been merged into `main` by then, start from `origin/main` after that merge. Never start from, merge, or cherry-pick `origin/devin/1790767119-homelander-emf` (PR #140).
 - **Implement first:** Stage 1 (EMF foundation). Begin with its spike (§4.7) and the bake script tests; report spike results in the PR before wiring mixins.
-- **Do not touch:** other heroes' presentation, `PlayerAnimator`/`AnimationLibrary`/`BedrockAnimationParser`/`PoseSample`/`PlayerPoseApplier` internals, `ClientFlightState`, `FlightPhaseResolver`, `FlightTrailManager`, legacy `.animation.json` files, `src/main/generated/`, gameplay constants (except the user-approved changes in Stages 7, 8, 10), the reverted presentation-phase approach (`5c3be771`).
+- **Do not touch:** other heroes' presentation, `PlayerAnimator`/`AnimationLibrary`/`BedrockAnimationParser`/`PoseSample`/`PlayerPoseApplier` internals for other heroes, `ClientFlightState`, `FlightPhaseResolver`, `FlightTrailManager`, `src/main/generated/`, gameplay constants outside the already-approved changes in Stages 7, 8, 10, the reverted presentation-phase approach (`5c3be771`). **Stage 1 must delete all legacy Homelander `.animation.json` files and remove their Homelander call sites.**
 - **Sources of truth:** this plan; `art-source/homelander/emf/Homelander_All_Animations.bbmodel` (after Stage 1 copies it); `AGENTS.md`; `SESSION.md`; EMF docs `.github/emf_animation.txt`, `.github/emf_part.txt`, `FEATURES.md` and `EMFAnimationApi.java` in `Traben-0/Entity_Model_Features` at `mod_version=3.3.9`.
-- **After Stage 1 is verified by the user:** Stage 2 (HOVER). Stages 9, 10, 11, 14 may run in parallel at any time because they do not depend on EMF. Stages 7 and 8 need the user's answer on the timing changes before implementation.
+- **After Stage 1 is verified by the user:** Stage 2 (HOVER). Stages 9, 10, 11, 14 may run in parallel at any time because they do not depend on EMF. Clap timing, milk duration and laser damage cadence/DPS are already approved by the user; no further decision gate is needed for Stages 7, 8 or 10.
