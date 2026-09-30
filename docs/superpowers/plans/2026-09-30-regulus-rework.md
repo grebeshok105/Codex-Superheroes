@@ -325,7 +325,7 @@ public record RegulusAnimS2CPayload(java.util.UUID playerId, String clipId)
 
 **Files:**
 - Modify: `src/client/java/io/github/grebeshok105/codex/client/hero/regulus/hud/BloodRainHud.java`, `MadnessHudOverlay.java`
-- Modify: `build.gradle` + `src/main/resources/fabric.mod.json` — EMF `entity_model_features` объявляется `depends` (hard dep, решение заказчика подтверждено): мод становится client-only, dedicated-server совместимость снимается намеренно; `fabric.mod.json` `environment: "*"` сменить на клиент-ориентированную маркировку если загрузчик её требует (проверить по EMF docs; modrinth-maven координата по актуальному релизу 1.21.1).
+- Modify: `build.gradle` + `src/main/resources/fabric.mod.json` — EMF `entity_model_features` в `depends` (hard dep, подтверждено заказчиком); `fabric.mod.json` `environment` → `"client"`; **мёртвая server-инфраструктура удаляется**: source sets `servernoveil`/`clientnoveil` и таска `runServer` в `build.gradle` теряют смысл (их назначение — выживание dedicated server без Veil/EMF); то же касается `servernoveil`-класспас-фильтров в gametest/datagen-конфигурации. ⚠️ **Проект-контракт:** AGENTS.md §7 «dedicated server loads src/main» устаревает этим решением — в Task 9 же обновить правило §7 (мод client-only; server-safe `src/main` остаётся хорошей гигиеной, но не гейтом).
 - Create: `src/main/resources/assets/superheroes/textures/gui/regulus/blood_*.png` (4–6 спрайтов)
 - Create: `src/client/java/io/github/grebeshok105/codex/client/hero/regulus/fx/veil/RegulusVeilFx.java` (+ emitters за `isModLoaded("veil")`)
 - Create: `src/client/java/io/github/grebeshok105/codex/client/hero/regulus/anim/RegulusAnimationDriver.java` + `state/ClientRegulusAnimState.java`
@@ -362,11 +362,10 @@ public record RegulusAnimS2CPayload(java.util.UUID playerId, String clipId)
 
 ## Open design questions (что осталось)
 
-1. Дробь: 9 лучей × 7 dmg с bypass-cooldown; по крупной цели point-blank суммарный урон высокий (pellet-rule как у дробовика). Dedupe/cap по цели — только по решению заказчика.
-
-Решённые заказчиком (в плане уже применено):
+Открытых вопросов нет — все развилки закрыты заказчиком:
 - Сердца НЕ цепляются на враждебных мобов (`!(e instanceof Enemy)` в скане, Task 3) — backlash на мирных/нейтральных остаётся механикой риска.
-- EMF — hard `depends`, мод client-only; dedicated-server совместимость снята осознанно (runServer-smoke убран из Task 10).
+- Дробь point-blank без dedupe/cap (pellet-rule как у ванильного дробовика) — подтверждено.
+- EMF — hard `depends`, мод client-only (`environment: "client"`); dedicated-server совместимость снята осознанно, `servernoveil`/`clientnoveil`/`runServer` инфраструктура удаляется в Task 9, AGENTS.md §7 правится там же.
 
 ## Self-review заметки
 
