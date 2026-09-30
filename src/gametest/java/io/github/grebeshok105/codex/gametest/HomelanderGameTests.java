@@ -595,6 +595,38 @@ public final class HomelanderGameTests implements FabricGameTest {
 		});
 	}
 
+	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 90)
+	public void eyeLasersDamageLandsEveryTenTicks(GameTestHelper helper) {
+		ServerPlayer player = TestPlayers.join(helper);
+		TestHeroes.transform(player, HomelanderHero.ID);
+		// Full mana pins the beam at MAX_DPS = 16 → 8 damage per landed hit.
+		HeroDataStore.update(player, d -> d.withResources(100f, 100f));
+		Zombie zombie = spawnAhead(helper, player);
+		zombie.setNoAi(true);
+		// Knockback immunity pins it on the beam line: displacement would add
+		// fall/suffocation noise to the health delta.
+		zombie.getAttribute(Attributes.KNOCKBACK_RESISTANCE).setBaseValue(1.0);
+		// 200 hp keeps the victim alive through the window so the health delta
+		// measures every landed hit; fire resistance removes sun-burn noise.
+		zombie.getAttribute(Attributes.MAX_HEALTH).setBaseValue(200.0);
+		zombie.setHealth(200f);
+		zombie.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, 600));
+		TestPlayers.awaitVisible(helper, zombie, () -> {
+			AbilityRouter.activate(player, HomelanderAbilityIds.EYE_LASERS);
+			helper.runAfterDelay(45, () -> {
+				float lost = 200f - zombie.getHealth();
+				// 2 hits/s: the activation hit plus one hit per 10 firing ticks —
+				// 4 to 5 hits of 8 in this window. The pre-cadence build dealt
+				// 6.0/tick here (~240 damage), far outside this band.
+				helper.assertTrue(lost >= 30f && lost <= 42f,
+						"laser lands ~4-5 hits of 8 over the window, got " + lost);
+				AbilityRouter.deactivate(player, HomelanderAbilityIds.EYE_LASERS);
+				TestPlayers.leave(player);
+				helper.succeed();
+			});
+		});
+	}
+
 	// ---- uranium items -----------------------------------------------------
 
 	@GameTest(template = EMPTY_STRUCTURE)
