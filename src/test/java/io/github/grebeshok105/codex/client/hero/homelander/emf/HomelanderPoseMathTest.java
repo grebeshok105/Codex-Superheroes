@@ -398,13 +398,13 @@ class HomelanderPoseMathTest {
 		// 1.2 b/t forward facing +Z — smoothed velocity crosses emfBoostEnter.
 		for (int i = 0; i < 30; i++) {
 			z += 1.2;
-			entry.advance(true, 0, 0, z, 0f, false, 0.9f, 0.6f, false);
+			entry.advance(true, 0, 0, z, 0f, false, false, 0.9f, 0.6f, false);
 		}
 		assertTrue(entry.boostWeight > 0.9f, "boost converged near 1 at 1.2 b/t: " + entry.boostWeight);
 		// slow into the hysteresis band (0.7 b/t): the latch holds, weight stays.
 		for (int i = 0; i < 30; i++) {
 			z += 0.7;
-			entry.advance(true, 0, 0, z, 0f, false, 0.9f, 0.6f, false);
+			entry.advance(true, 0, 0, z, 0f, false, false, 0.9f, 0.6f, false);
 		}
 		assertTrue(entry.forward > 0.6f && entry.forward < 0.9f,
 				"smoothed forward sits in the band: " + entry.forward);
@@ -413,7 +413,7 @@ class HomelanderPoseMathTest {
 		// under the exit threshold the weight decays to 0.
 		for (int i = 0; i < 60; i++) {
 			z += 0.4;
-			entry.advance(true, 0, 0, z, 0f, false, 0.9f, 0.6f, false);
+			entry.advance(true, 0, 0, z, 0f, false, false, 0.9f, 0.6f, false);
 		}
 		assertEquals(0f, entry.boostWeight, 0.02f, "below exit the weight releases");
 	}
@@ -422,7 +422,7 @@ class HomelanderPoseMathTest {
 	void backwardSpeedKeepsBoostWeightAtZero() {
 		HomelanderPoseState.Entry entry = new HomelanderPoseState.Entry();
 		for (int i = 0; i < 40; i++) {
-			entry.advance(true, 0, 0, -(i + 1) * 2.0, 0f, false, 0.9f, 0.6f, false);
+			entry.advance(true, 0, 0, -(i + 1) * 2.0, 0f, false, false, 0.9f, 0.6f, false);
 		}
 		assertTrue(entry.forward < -1.9f, "moving backward fast: " + entry.forward);
 		assertEquals(0f, entry.boostWeight, 1e-6, "backward flight stays upright — no boost");
@@ -432,7 +432,7 @@ class HomelanderPoseMathTest {
 	void sidewaysSpeedKeepsBoostWeightAtZero() {
 		HomelanderPoseState.Entry entry = new HomelanderPoseState.Entry();
 		for (int i = 0; i < 40; i++) {
-			entry.advance(true, (i + 1) * 2.0, 0, 0, 0f, false, 0.9f, 0.6f, false);
+			entry.advance(true, (i + 1) * 2.0, 0, 0, 0f, false, false, 0.9f, 0.6f, false);
 		}
 		assertTrue(Math.abs(entry.strafe) > 1.9f, "pure strafe at speed: " + entry.strafe);
 		assertEquals(0f, entry.boostWeight, 1e-6, "sideways speed never enters boost");
@@ -442,7 +442,7 @@ class HomelanderPoseMathTest {
 	void supersonicModeBoostsAtLowForwardSpeed() {
 		HomelanderPoseState.Entry entry = new HomelanderPoseState.Entry();
 		for (int i = 0; i < 40; i++) {
-			entry.advance(true, 0, 0, (i + 1) * 0.4, 0f, true, 0.9f, 0.6f, false);
+			entry.advance(true, 0, 0, (i + 1) * 0.4, 0f, true, false, 0.9f, 0.6f, false);
 		}
 		assertTrue(entry.forward > 0.3f, "supersonic forward: " + entry.forward);
 		assertTrue(entry.boostWeight > 0.9f,
@@ -455,17 +455,17 @@ class HomelanderPoseMathTest {
 		double z = 0;
 		for (int i = 0; i < 40; i++) {
 			z += 1.5;
-			entry.advance(true, 0, 0, z, 0f, false, 0.9f, 0.6f, false);
+			entry.advance(true, 0, 0, z, 0f, false, false, 0.9f, 0.6f, false);
 		}
 		assertTrue(entry.boostWeight > 0.95f, "fully boosted: " + entry.boostWeight);
 		// one tick where the synced flight state drops out — still moving.
 		z += 1.5;
-		entry.advance(false, 0, 0, z, 0f, false, 0.9f, 0.6f, false);
+		entry.advance(false, 0, 0, z, 0f, false, false, 0.9f, 0.6f, false);
 		assertTrue(entry.boostWeight > 0.8f,
 				"a single-tick drop does not reset the smoothed weight: " + entry.boostWeight);
 		for (int i = 0; i < 20; i++) {
 			z += 1.5;
-			entry.advance(true, 0, 0, z, 0f, false, 0.9f, 0.6f, false);
+			entry.advance(true, 0, 0, z, 0f, false, false, 0.9f, 0.6f, false);
 		}
 		assertTrue(entry.boostWeight > 0.95f, "recovers once flying again: " + entry.boostWeight);
 	}
@@ -489,11 +489,11 @@ class HomelanderPoseMathTest {
 		double z = 0;
 		for (int i = 0; i < 40; i++) {
 			z += 1.5;
-			entry.advance(true, 0, 0, z, 0f, false, 0.9f, 0.6f, false);
+			entry.advance(true, 0, 0, z, 0f, false, false, 0.9f, 0.6f, false);
 		}
 		float boundary = entry.boostWeight(1f);
 		z += 1.5;
-		entry.advance(true, 0, 0, z, 0f, false, 0.9f, 0.6f, false);
+		entry.advance(true, 0, 0, z, 0f, false, false, 0.9f, 0.6f, false);
 		assertEquals(boundary, entry.boostWeight(0f), 1e-6,
 				"read opens at the previous tick value — no step at the boundary");
 		assertEquals(entry.boostWeight, entry.boostWeight(1f), 1e-6);

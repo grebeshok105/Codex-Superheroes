@@ -27,11 +27,17 @@ public final class FlightPoseMath {
 
 	/**
 	 * Squared per-tick position delta (blocks/tick)² past which a move cannot
-	 * be flight motion — 8 b/t covers dimension changes, respawns and teleports.
-	 * Consumers feeding a pose path from position deltas inject a zero delta
-	 * instead of letting the spike read as a huge speed for one tick.
+	 * be flight motion — 16 b/t covers dimension changes, respawns and
+	 * teleports. The bound must sit above the fastest legit motion a pose
+	 * path can observe: supersonic flight under madness at full energy tops
+	 * out near 10.4 b/t ({@code FlightProfiles} SUPERSONIC × MADNESS ×
+	 * IRON_MAN multipliers on the per-axis speed caps), so a lower threshold
+	 * would zero live velocity every tick and falsely release the BOOST
+	 * latch at max speed. Consumers feeding a pose path from position
+	 * deltas inject a zero delta instead of letting the spike read as a
+	 * huge speed for one tick.
 	 */
-	public static final double TELEPORT_MIN_DELTA_SQ = 64.0;
+	public static final double TELEPORT_MIN_DELTA_SQ = 256.0;
 
 	/**
 	 * Upright cone half-angle for {@link #directional}: 90° − 4° margin.

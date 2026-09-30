@@ -10,6 +10,7 @@ import io.github.grebeshok105.codex.client.core.flight.FlightPoseMath;
 import io.github.grebeshok105.codex.client.core.vfx.params.VfxParams;
 import io.github.grebeshok105.codex.client.core.vfx.params.VfxParamsLoader;
 import io.github.grebeshok105.codex.mechanic.flight.FlightMode;
+import io.github.grebeshok105.codex.mechanic.flight.FlightPhase;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.AbstractClientPlayer;
@@ -53,8 +54,10 @@ import java.util.UUID;
  * mid-presentation sees a fresh {@link Entry}. The flight sync resends within
  * {@code SYNC_INTERVAL_TICKS}, so the pose lands in HOVER directly — the
  * takeoff clock starts parked at its end and the activation edge only fires
- * once the entry has observed a tick ({@code primed}), never on the entry's
- * first advance. The one-shot clips (TAKEOFF, HAND CLAP, MILK DRINK) arm
+ * once the entry has observed a tick ({@code primed}) AND the synced phase
+ * still sits inside the server's TAKEOFF window; a resync landing after a
+ * real activation reports HOVER/CRUISE/BOOST and never re-arms the clip.
+ * The one-shot clips (TAKEOFF, HAND CLAP, MILK DRINK) arm
  * only on their start events: a missed event means the clip simply never
  * plays for that observer — an accepted gap, since re-deriving clip progress
  * from entity state would need extra wire data for near-zero gain.
@@ -154,8 +157,22 @@ public final class HomelanderPoseState {
 		 * {@code onGround} synced by the move/teleport packets, so the
 		 * previous-tick flag is the correct activation-time value on both paths.
 		 */
+		/**
+		 * Same as {@link #advance(boolean, boolean, boolean)} for drive paths
+		 * that model a live activation — an edge observed inside the server's
+		 * TAKEOFF window (tests).
+		 */
 		void advance(boolean flying, boolean groundedNow) {
-			boolean activation = flying && primed && !this.flying;
+			advance(flying, groundedNow, true);
+		}
+
+		void advance(boolean flying, boolean groundedNow, boolean takeoffWindow) {
+			// The edge also requires the synced phase to still sit inside the
+			// server's TAKEOFF window: a resync arriving after the entry primed
+			// (e.g. an observer that started tracking mid-flight, whose first
+			// sync lands ≤ SYNC_INTERVAL_TICKS later) reports HOVER/CRUISE/BOOST
+			// even though flying flips true here.
+			boolean activation = flying && primed && !this.flying && takeoffWindow;
 			this.flying = flying;
 			primed = true;
 			activePrev = active;
@@ -197,7 +214,8 @@ public final class HomelanderPoseState {
 		 * forward speed only.
 		 */
 		void advance(boolean flying, double x, double y, double z, float bodyYawDeg,
-				boolean supersonic, float boostEnter, float boostExit, boolean groundedNow) {
+				boolean supersonic, boolean takeoffWindow,
+				float boostEnter, float boostExit, boolean groundedNow) {
 			float rawX = hasLastPos ? (float) (x - lastX) : 0f;
 			float rawY = hasLastPos ? (float) (y - lastY) : 0f;
 			float rawZ = hasLastPos ? (float) (z - lastZ) : 0f;
@@ -220,7 +238,7 @@ public final class HomelanderPoseState {
 			strafe = HomelanderPoseMath.strafeComponent(velX, velZ, bodyYawDeg);
 			boostEngaged = HomelanderPoseMath.boostEngaged(
 					boostEngaged, forward, supersonic, boostEnter, boostExit);
-			advance(flying, groundedNow);
+			advance(flying, groundedNow, takeoffWindow);
 			boostWeight = HomelanderPoseMath.boostWeight(
 					boostWeight, flying && boostEngaged, 1f);
 		}
@@ -276,6 +294,7 @@ public final class HomelanderPoseState {
 			Vec3 pos = player.position();
 			entry.advance(state != null, pos.x, pos.y, pos.z, player.yBodyRot,
 					state != null && state.mode() == FlightMode.SUPERSONIC,
+					state != null && state.phase() == FlightPhase.TAKEOFF,
 					boostEnter, boostExit, player.onGround());
 		}
 	}
