@@ -13,5 +13,5 @@
   "particle_lifetime": 10,
   "particle_lifetime_variation": 4.0,
   "particle_speed": 0.9,
-  "base_particle_size": 0.12
+  "base_particle_size": 0.06
 }
