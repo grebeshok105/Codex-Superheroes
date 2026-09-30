@@ -22,9 +22,7 @@ public final class HomelanderSounds {
 	public static final SoundEvent FLIGHT_LOOP = ModContent.sound("homelander.flight.loop");
 	public static final SoundEvent FLIGHT_BOOST = ModContent.sound("homelander.flight.boost");
 	public static final SoundEvent FLIGHT_LAND = ModContent.sound("homelander.flight.land");
-	public static final SoundEvent LASER_CHARGE = ModContent.sound("homelander.laser.charge");
 	public static final SoundEvent LASER_LOOP = ModContent.sound("homelander.laser.loop");
-	public static final SoundEvent LASER_RELEASE = ModContent.sound("homelander.laser.release");
 	public static final SoundEvent MILK_DRINK = ModContent.sound("homelander.milk.drink");
 	public static final SoundEvent SUN_CHARGE = ModContent.sound("homelander.sun.charge");
 	public static final SoundEvent SUN_DETONATE = ModContent.sound("homelander.sun.detonate");
