@@ -42,7 +42,8 @@
 		"minecraft": "~1.21.1",
 		"java": ">=21",
 		"fabric-api": ">=0.116.12",
-		"geckolib": ">=4.5.0"
+		"geckolib": ">=4.5.0",
+		"entity_model_features": ">=3.3"
 	},
 	"recommends": {
 		"veil": ">=4.1.2"

@@ -34,4 +34,13 @@ class ClientArchitectureRulesTest {
 		classes().that(IN_CLIENT_HERO_MODULE).should(onlyReferencedByOwnModuleOr(ROOT + ".client.hero.", HERO_CLIENT_MODULES))
 				.allowEmptyShould(true).check(CodexClasses.mainAndClient());
 	}
+
+	@Test
+	void trabenTypesStayInsideTheEmfPackages() {
+		noClasses().that().resideOutsideOfPackages(
+						ROOT + ".client.core.emf..", ROOT + ".client.hero.homelander.emf..")
+				.should().dependOnClassesThat().resideInAPackage("traben..")
+				.as("traben.* (EMF/ETF) is confined to EmfBridge and the homelander EMF module")
+				.allowEmptyShould(true).check(CodexClasses.mainAndClient());
+	}
 }

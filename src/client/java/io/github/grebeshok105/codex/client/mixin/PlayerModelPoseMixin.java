@@ -3,6 +3,7 @@ package io.github.grebeshok105.codex.client.mixin;
 import io.github.grebeshok105.codex.client.ClientFlightState;
 import io.github.grebeshok105.codex.client.ClientThinkMarkState;
 import io.github.grebeshok105.codex.client.core.anim.PlayerAnimator;
+import io.github.grebeshok105.codex.client.core.emf.EmfPresentationOwnership;
 import io.github.grebeshok105.codex.client.core.flight.FlightPresentations;
 import io.github.grebeshok105.codex.client.core.render.SkinResolver;
 import io.github.grebeshok105.codex.client.core.anim.PlayerPoseApplier;
@@ -49,6 +50,9 @@ public abstract class PlayerModelPoseMixin<T extends LivingEntity> {
 			float ageInTicks, float netHeadYaw, float headPitch, CallbackInfo ci) {
 		if (!(entity instanceof AbstractClientPlayer player)) {
 			return;
+		}
+		if (EmfPresentationOwnership.isOwned(player)) {
+			return; // EMF drives the model for owned players (jem in assets/minecraft/emf/cem/)
 		}
 		PlayerModel<?> model = (PlayerModel<?>) (Object) this;
 
