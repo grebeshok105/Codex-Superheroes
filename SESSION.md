@@ -1,6 +1,16 @@
 # SESSION.md
 
-## Completed this session (Homelander EMF — Stage 1)
+## Completed this session (Homelander EMF — Stage 8)
+
+- Stage 8 of `docs/superpowers/plans/2026-09-30-homelander-emf-presentation.md` («milk and props») implemented on `devin/1790798102-homelander-milk-s8` (base Stage 1 head `337327e3`), `mod_version` 4.2.0 → 4.3.0.
+- `MilkBottleItem` `getUseDuration` 32 → **126 ticks** (approved 6.3 s authored sequence); new `releaseUsing` override broadcasts `HomelanderVfxIds.MILK_CANCEL` to tracking + self on any unfinished use — early release cancels the sequence, grants no MADNESS. `finishUsingItem` MADNESS semantics unchanged.
+- `HomelanderPoseState`: `startMilk`/`cancelMilk` arm/disarm the milk clip clock; `milkWeight` = `oneShotWeight(playing, clock, 6.3 s)` → clean 0 on finish or cancel; master `weight` = max(active, takeoff, clap, milk) so `superheroes_hl_w` = 1 while milk plays.
+- `HomelanderFx.milkDrink` calls `HomelanderEmf.milkStarted(source)` (sound path unchanged); new `milkCancel` factory wired to `MILK_CANCEL` → `milkCancelled`.
+- Held-item hiding: hero-agnostic `client/core/emf/EmfHeldItemSuppression` predicate registry (keeps `client/mixin` out of the hero package for ArchUnit); `HomelanderEmf` registers `owned && milkWeight>0`; new `client/mixin/ItemInHandLayerMixin` cancels `ItemInHandLayer.render` at HEAD. Non-owned entities and first-person hands untouched.
+- Tests: gametests `milkBottleUseDurationMatchesAuthoredSequence` (126) + `milkEarlyReleaseBroadcastsCancelAndGrantsNothing` (`releaseUsingItem` = the real release-use path; `stopUsingItem` does NOT fire `Item.releaseUsing` — verified in bytecode), JUnit `oneShotWeight` boundary.
+- Verification: `./gradlew test --no-daemon` green; `./gradlew qualityGate --no-daemon` green (366 gametests incl. the two new). Unverified in-game per rule — user checks: bottle appears, cap unscrews, mouth opens, bottle lowers; no vanilla bottle doubling; cancel stops cleanly; observer sees it; first person unchanged.
+
+## Completed earlier (Homelander EMF — Stage 1)
 
 - Stage 1 of `docs/superpowers/plans/2026-09-30-homelander-emf-presentation.md` («EMF foundation and Homelander model integration») implemented on `devin/1790789702-homelander-emf-stage1` (base `devin/1790782256-homelander-emf-plan`) and shipped as its own PR, `mod_version` 4.1.3 → 4.2.0.
 - EMF 3.3.9 + ETF 7.2.4 ship jar-in-jar (`modImplementation` + `include`); `fabric.mod.json` gains `depends: entity_model_features >=3.3` only. Gametest log proves the env-skip: dedicated classpath loads 45 mods with EMF/ETF env-disabled (both declare `"environment": "client"`), no `traben.*` loading, no crash, `depends` tolerates the env-disabled bundle. Both jems + `milk.png` verified inside the release jar (`auditReleaseJarIsolation` green).
@@ -13,7 +23,7 @@
 
 ## Active work
 
-- Homelander EMF staged plan continues — Stage 1 PR open for review. Stages 2+ (authored-motion wiring: drive `superheroes_hl_*` weights/clocks from flight phase + ability events) remain in `docs/superpowers/plans/2026-09-30-homelander-emf-presentation.md` §7.
+- Homelander EMF staged plan continues — Stage 8 PR open on the Stage 1 branch. Remaining stages (authored-motion wiring: drive `superheroes_hl_*` weights/clocks from flight phase + ability events) are in `docs/superpowers/plans/2026-09-30-homelander-emf-presentation.md` §7.
 - PR #137 `devin/1790691597-homelander-sounds`: real flight/laser sfx replacing placeholder oggs — open, CI green, in the combined jar.
 - PR #138 `devin/1790691307-homelander-vfx-fix`: flight pose/limbs/eye-anchor/trail fixes with the presentation-phase commit reverted — open, CI green.
 - Standing rule: the user verifies all in-game behavior themselves — never claim visual verification for them.

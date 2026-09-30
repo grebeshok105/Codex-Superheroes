@@ -56,6 +56,18 @@ class HomelanderPoseMathTest {
 	}
 
 	@Test
+	void oneShotWeightIsFullInsideTheClipAndCleanZeroAfter() {
+		float len = HomelanderPoseMath.MILK_CLIP_SECONDS;
+		assertEquals(1f, HomelanderPoseMath.oneShotWeight(true, 0f, len), 1e-6);
+		assertEquals(1f, HomelanderPoseMath.oneShotWeight(true, len - 0.01f, len), 1e-6);
+		// the exact boundary already reads finished — the weight returns to 0
+		assertEquals(0f, HomelanderPoseMath.oneShotWeight(true, len, len), 1e-6);
+		assertEquals(0f, HomelanderPoseMath.oneShotWeight(true, len + 1f, len), 1e-6);
+		// cancel drops the weight mid-clip
+		assertEquals(0f, HomelanderPoseMath.oneShotWeight(false, 2f, len), 1e-6);
+	}
+
+	@Test
 	void loopTimeWrapsIntoLength() {
 		assertEquals(0.5f, HomelanderPoseMath.loopTime(3.7f, 3.2f), 1e-6);
 		assertEquals(0f, HomelanderPoseMath.loopTime(6.4f, 3.2f), 1e-6);

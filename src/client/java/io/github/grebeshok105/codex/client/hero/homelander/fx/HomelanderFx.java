@@ -5,6 +5,7 @@ import io.github.grebeshok105.codex.client.core.module.HeroClientContext;
 import io.github.grebeshok105.codex.client.core.vfx.VfxEffect;
 import io.github.grebeshok105.codex.client.core.vfx.VfxRenderContext;
 import io.github.grebeshok105.codex.client.core.vfx.VfxSpawn;
+import io.github.grebeshok105.codex.client.hero.homelander.emf.HomelanderEmf;
 import io.github.grebeshok105.codex.hero.homelander.vfx.HomelanderVfxIds;
 import io.github.grebeshok105.codex.sound.HomelanderSounds;
 import net.minecraft.client.Minecraft;
@@ -36,6 +37,7 @@ public final class HomelanderFx {
 		ctx.vfx(HomelanderVfxIds.SUN_DETONATION, SunDetonationFx::create);
 		ctx.vfx(HomelanderVfxIds.MADNESS_CRASH, SunDetonationFx::create);
 		ctx.vfx(HomelanderVfxIds.MILK_DRINK, HomelanderFx::milkDrink);
+		ctx.vfx(HomelanderVfxIds.MILK_CANCEL, HomelanderFx::milkCancel);
 		ctx.vfx(HomelanderVfxIds.IRON_FISTS_ON, IronFistsFx::activate);
 		ctx.vfx(HomelanderVfxIds.IRON_FISTS_OFF, IronFistsFx::deactivate);
 		ctx.vfx(HomelanderVfxIds.IRON_FISTS_HIT, IronFistsFx::hit);
@@ -54,12 +56,13 @@ public final class HomelanderFx {
 	}
 
 	/**
-	 * MILK_DRINK one-shot — the bound {@code homelander.milk.drink} sound on
-	 * the drinking player. Hosted here in the hub rather than as its own
-	 * class: no patterns, no state.
+	 * MILK_DRINK one-shot — arms the authored milk sequence on the drinker
+	 * (bottle, cap and mouth channels) and plays the bound
+	 * {@code homelander.milk.drink} sound.
 	 */
 	private static VfxEffect milkDrink(VfxSpawn spawn) {
 		Entity source = spawn.source();
+		HomelanderEmf.milkStarted(source);
 		if (source != null) {
 			Minecraft.getInstance().getSoundManager().play(new EntityBoundSoundInstance(
 					HomelanderSounds.MILK_DRINK, SoundSource.PLAYERS, 1f, 1f,
@@ -70,6 +73,12 @@ public final class HomelanderFx {
 					HomelanderSounds.MILK_DRINK, SoundSource.PLAYERS, 1f, 1f,
 					RandomSource.create(), pos.x, pos.y, pos.z));
 		}
+		return new DoneFx();
+	}
+
+	/** MILK_CANCEL — early release drops the authored sequence back to the vanilla pose. */
+	private static VfxEffect milkCancel(VfxSpawn spawn) {
+		HomelanderEmf.milkCancelled(spawn.source());
 		return new DoneFx();
 	}
 

@@ -20,6 +20,10 @@ import java.util.UUID;
  * <p>Stage 1 registers the variables but never drives the weights, so every
  * weight reads 0 and owned players render the vanilla pose. Clip clocks
  * advance freely so they hold real values once Stage 2 starts animating.
+ *
+ * <p>Stage 8 drives the milk one-shot: {@link #startMilk} arms it on the
+ * MILK_DRINK event, {@link #cancelMilk} on MILK_CANCEL, and the weight
+ * returns to 0 the tick the 6.3 s clip finishes.
  */
 final class HomelanderPoseState {
 
@@ -51,6 +55,7 @@ final class HomelanderPoseState {
 		float takeoffWeight;
 		float clapWeight;
 		float milkWeight;
+		boolean milkPlaying;
 		float forward;
 		float strafe;
 		float pitchDeg;
@@ -77,13 +82,37 @@ final class HomelanderPoseState {
 			entry.boost.advance(TICK_SECONDS);
 			entry.clap.advance(TICK_SECONDS);
 			entry.milk.advance(TICK_SECONDS);
+			entry.milkWeight = HomelanderPoseMath.oneShotWeight(
+					entry.milkPlaying, entry.milk.time(), HomelanderPoseMath.MILK_CLIP_SECONDS);
 		}
 	}
 
-	/** Master presentation weight (0 = vanilla pose). */
+	/**
+	 * MILK_DRINK on an owned player: restart the milk clip clock and arm the
+	 * one-shot so {@code superheroes_hl_milk_*} drives the authored sequence.
+	 */
+	static void startMilk(UUID uuid) {
+		Entry entry = STATES.computeIfAbsent(uuid, id -> new Entry());
+		entry.milk.reset();
+		entry.milkPlaying = true;
+	}
+
+	/** MILK_CANCEL (early release): the weight returns to 0 next tick. */
+	static void cancelMilk(UUID uuid) {
+		Entry entry = STATES.get(uuid);
+		if (entry != null) {
+			entry.milkPlaying = false;
+		}
+	}
+
+	/** Master presentation weight (0 = vanilla pose): flight-active or any one-shot up. */
 	static float weight(UUID uuid) {
 		Entry entry = STATES.get(uuid);
-		return entry == null ? 0f : entry.active;
+		if (entry == null) {
+			return 0f;
+		}
+		return Math.max(entry.active,
+				Math.max(entry.takeoffWeight, Math.max(entry.clapWeight, entry.milkWeight)));
 	}
 
 	/** Clip-local times, interpolated forward by the render partial tick. */

@@ -10,6 +10,9 @@ final class HomelanderPoseMath {
 
 	private static final float ACTIVE_HALF_LIFE_TICKS = 3f;
 
+	/** Length of the authored MILK DRINK clip — matches the 126-tick use duration. */
+	static final float MILK_CLIP_SECONDS = 6.3f;
+
 	private HomelanderPoseMath() {
 	}
 
@@ -22,6 +25,14 @@ final class HomelanderPoseMath {
 	static float approach(float current, float target, float halfLifeTicks, float dtTicks) {
 		float decay = (float) Math.pow(0.5, dtTicks / halfLifeTicks);
 		return target + (current - target) * decay;
+	}
+
+	/**
+	 * One-shot clip weight: full while the clip is playing and its clock is
+	 * inside the clip, clean 0 once it finishes or is cancelled.
+	 */
+	static float oneShotWeight(boolean playing, float clockSeconds, float clipSeconds) {
+		return playing && clockSeconds < clipSeconds ? 1f : 0f;
 	}
 
 	/** Loop-local time in {@code [0, length)}; non-positive lengths return {@code t} (one-shots). */

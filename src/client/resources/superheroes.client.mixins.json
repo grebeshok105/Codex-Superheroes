@@ -14,7 +14,8 @@
 		"ChatComponentMixin",
 		"GuiEffectsMixin",
 		"GameRendererBlurMixin",
-		"LightningBoltAccessor"
+		"LightningBoltAccessor",
+		"ItemInHandLayerMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

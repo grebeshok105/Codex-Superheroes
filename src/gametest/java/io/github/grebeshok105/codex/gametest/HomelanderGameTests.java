@@ -8,6 +8,7 @@ import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import io.github.grebeshok105.codex.core.ability.AbilityRegistry;
 import io.github.grebeshok105.codex.core.ability.AbilityRouter;
 import io.github.grebeshok105.codex.core.model.HeroData;
+import io.github.grebeshok105.codex.core.net.VfxEventS2CPayload;
 import io.github.grebeshok105.codex.core.transform.HeroDataStore;
 import io.github.grebeshok105.codex.core.transform.HeroTransformService;
 import io.github.grebeshok105.codex.core.hero.Heroes;
@@ -19,6 +20,7 @@ import io.github.grebeshok105.codex.hero.homelander.HomelanderItems;
 import io.github.grebeshok105.codex.mechanic.ability.SharedAbilityIds;
 import io.github.grebeshok105.codex.hero.homelander.net.UraniumPressureS2CPayload;
 import io.github.grebeshok105.codex.hero.homelander.net.UraniumThreatS2CPayload;
+import io.github.grebeshok105.codex.hero.homelander.vfx.HomelanderVfxIds;
 import io.netty.channel.embedded.EmbeddedChannel;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.core.BlockPos;
@@ -155,6 +157,66 @@ public final class HomelanderGameTests implements FabricGameTest {
 				"madness start grants regen 5");
 		TestPlayers.leave(player);
 		helper.succeed();
+	}
+
+	/** The authored 6.3 s milk sequence owns the whole use bar (EMF plan Stage 8). */
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void milkBottleUseDurationMatchesAuthoredSequence(GameTestHelper helper) {
+		ServerPlayer player = TestPlayers.join(helper);
+		ItemStack bottle = new ItemStack(HomelanderItems.MILK_BOTTLE);
+		helper.assertTrue(HomelanderItems.MILK_BOTTLE.getUseDuration(bottle, player) == 126,
+				"milk use duration is the authored 126 ticks (6.3 s), got "
+						+ HomelanderItems.MILK_BOTTLE.getUseDuration(bottle, player));
+		TestPlayers.leave(player);
+		helper.succeed();
+	}
+
+	/**
+	 * Stage 8: releasing use before the sequence finishes cancels the drink —
+	 * the vanilla {@code releaseUsingItem} path (what the release-use packet
+	 * drives server-side) broadcasts MILK_CANCEL to tracking + self and no
+	 * MADNESS is granted. Only a full 126-tick use pays out.
+	 */
+	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 60)
+	public void milkEarlyReleaseBroadcastsCancelAndGrantsNothing(GameTestHelper helper) {
+		Wire homelander = joinAudible(helper, "milk-canceller");
+		ServerPlayer player = homelander.player();
+		TestHeroes.transform(player, HomelanderHero.ID);
+		player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(HomelanderItems.MILK_BOTTLE));
+
+		InteractionResultHolder<ItemStack> result =
+				HomelanderItems.MILK_BOTTLE.use(helper.getLevel(), player, InteractionHand.MAIN_HAND);
+		helper.assertTrue(result.getResult() == InteractionResult.CONSUME, "use() starts drinking");
+		helper.assertTrue(player.isUsingItem(), "the player is using the bottle");
+		drain(homelander.channel());
+		// The server-side shape of a real early release: the client's
+		// RELEASE_USE_ITEM action ends in LivingEntity.releaseUsingItem,
+		// which fires Item.releaseUsing and then stops the use.
+		player.releaseUsingItem();
+		helper.assertFalse(player.isUsingItem(), "early release stops the use");
+
+		List<VfxEventS2CPayload> cancels = new ArrayList<>();
+		await(helper, () -> {
+			for (Object o : drain(homelander.channel())) {
+				if (o instanceof ClientboundCustomPayloadPacket custom
+						&& custom.payload() instanceof VfxEventS2CPayload event
+						&& event.effect().equals(HomelanderVfxIds.MILK_CANCEL)) {
+					cancels.add(event);
+				}
+			}
+			return !cancels.isEmpty();
+		}, 20, () -> {
+			helper.assertTrue(cancels.size() == 1,
+					"exactly one milk_cancel event, got " + cancels.size());
+			helper.assertTrue(cancels.get(0).sourceEntityId() == player.getId(),
+					"milk_cancel is bound to the drinker");
+			helper.assertFalse(player.hasEffect(HomelanderEffects.MADNESS),
+					"early release grants no madness");
+			helper.assertTrue(player.getItemInHand(InteractionHand.MAIN_HAND).is(HomelanderItems.MILK_BOTTLE),
+					"the bottle is not consumed");
+			TestPlayers.leave(player);
+			helper.succeed();
+		});
 	}
 
 	@GameTest(template = EMPTY_STRUCTURE)
