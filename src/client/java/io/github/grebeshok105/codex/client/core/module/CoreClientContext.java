@@ -21,6 +21,7 @@ import io.github.grebeshok105.codex.client.core.render.BeamStyles;
 import io.github.grebeshok105.codex.client.core.render.PlayerLayers;
 import io.github.grebeshok105.codex.client.core.render.SkinProvider;
 import io.github.grebeshok105.codex.client.core.render.SkinResolver;
+import io.github.grebeshok105.codex.client.core.render.PlayerModelSuppressions;
 import io.github.grebeshok105.codex.client.core.render.SkinSuppressions;
 import io.github.grebeshok105.codex.client.core.vfx.VfxChannelFactory;
 import io.github.grebeshok105.codex.client.core.vfx.VfxEffectFactory;
@@ -131,6 +132,11 @@ public final class CoreClientContext implements HeroClientContext {
 	@Override
 	public void skinSuppression(Predicate<UUID> suppression) {
 		SkinSuppressions.register(suppression);
+	}
+
+	@Override
+	public void playerModelSuppression(Predicate<AbstractClientPlayer> suppression) {
+		PlayerModelSuppressions.register(suppression);
 	}
 
 	@Override
