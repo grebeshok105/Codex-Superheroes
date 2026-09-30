@@ -4,6 +4,7 @@ import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.client.ClientFlightState;
 import io.github.grebeshok105.codex.client.core.flight.FlightBodyTransform;
 import io.github.grebeshok105.codex.client.core.flight.FlightPoseTracker;
+import io.github.grebeshok105.codex.client.core.flight.LandingSoundScale;
 import io.github.grebeshok105.codex.client.core.vfx.VfxEffect;
 import io.github.grebeshok105.codex.client.core.vfx.VfxRenderContext;
 import io.github.grebeshok105.codex.client.core.vfx.VfxSpawn;
@@ -20,7 +21,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
@@ -33,16 +33,20 @@ import java.util.List;
  * <ul>
  *   <li>{@link #trail} — golden ribbons leaving each hand and foot while the
  *       tracked player is CRUISE/BOOST (self-terminates otherwise);</li>
- *   <li>{@link #boost} — emitter burst + shock ring on BOOST entry;</li>
+ *   <li>{@link #boost} — emitter burst + shock ring on BOOST entry, aligned
+ *       to the flight axis;</li>
+ *   <li>{@link #speedRing} — axis-aligned shock ring for hard accel events
+ *       (triggered/rate-limited by {@code FlightPoseTracker}'s gate);</li>
  *   <li>{@link #landing} — impact composite for the {@code LANDING} event:
  *       dust emitter + distortion through {@link ImpactPattern}, an expanding
  *       {@link ShockwavePattern}, and {@code homelander.flight.land} — the
- *       single landing sound.</li>
+ *       single landing sound, pitched/volumed by impact.</li>
  * </ul>
  */
 public final class FlightFx {
 	static final ResourceLocation TRAIL = ModId.of("homelander/flight_trail");
 	static final ResourceLocation BOOST = ModId.of("homelander/flight_boost");
+	static final ResourceLocation SPEED_RING = ModId.of("homelander/flight_speed_ring");
 
 	private static final ResourceLocation PARAMS = ModId.of("homelander/flight");
 	private static final ResourceLocation BOOST_EMITTER = ModId.of("homelander_flight_boost");
@@ -64,6 +68,10 @@ public final class FlightFx {
 		return new BoostFx(spawn);
 	}
 
+	public static VfxEffect speedRing(VfxSpawn spawn) {
+		return new SpeedRingFx(spawn);
+	}
+
 	public static VfxEffect landing(VfxSpawn spawn) {
 		return new LandingFx(spawn);
 	}
@@ -73,6 +81,15 @@ public final class FlightFx {
 		// effect-id params file may not exist, so merge spawn params as fallback.
 		VfxParams p = VfxParamsLoader.get(PARAMS);
 		return p == VfxParams.EMPTY ? spawn.params() : p;
+	}
+
+	/** Ring axis: spawn.target() carries the flight velocity; falls back to UP. */
+	private static Vec3 flightAxis(VfxSpawn spawn) {
+		Vec3 target = spawn.target();
+		if (target == null || target.lengthSqr() < 1e-6) {
+			return UP;
+		}
+		return target.normalize();
 	}
 
 	/** Golden ribbons tracking the four limb anchors while CRUISE/BOOST. */
@@ -137,7 +154,7 @@ public final class FlightFx {
 		}
 	}
 
-	/** BOOST-entry burst: quasar emitter + expanding shock ring. */
+	/** BOOST-entry burst: quasar emitter + shock ring perpendicular to the flight axis. */
 	private static final class BoostFx implements VfxEffect {
 		private final Vec3 center;
 		private final ShockwavePattern ring;
@@ -150,7 +167,8 @@ public final class FlightFx {
 			float radius = p.number("boostRingRadius", 2.5f) * Math.max(0.1f, spawn.scale());
 			this.ring = new ShockwavePattern(center, radius,
 					Math.max(1, (int) p.number("boostRingTicks", 10f)),
-					p.color("boostRingColor", 0x60FFC538), p.number("boostBand", 0.2f));
+					p.color("boostRingColor", 0x60FFC538), p.number("boostBand", 0.2f),
+					flightAxis(spawn));
 			this.emitTicks = Math.max(1, (int) p.number("boostEmitTicks", 3f));
 		}
 
@@ -174,7 +192,36 @@ public final class FlightFx {
 		}
 	}
 
-	/** LANDING event composite: emitter + distortion + shock ring + land sound. */
+	/** Axis-aligned shock ring for hard-accel events: spawn.target() is the flight velocity. */
+	private static final class SpeedRingFx implements VfxEffect {
+		private final ShockwavePattern ring;
+
+		private SpeedRingFx(VfxSpawn spawn) {
+			VfxParams p = params(spawn);
+			this.ring = new ShockwavePattern(spawn.origin(),
+					p.number("ringRadius", 3f) * Math.max(0.1f, spawn.scale()),
+					Math.max(1, (int) p.number("ringTicks", 12f)),
+					p.color("ringColor", 0x55FFF4D6), p.number("ringBand", 0.16f),
+					flightAxis(spawn));
+		}
+
+		@Override
+		public void tick() {
+			ring.tick();
+		}
+
+		@Override
+		public void render(VfxRenderContext ctx) {
+			ring.render(ctx);
+		}
+
+		@Override
+		public boolean done() {
+			return ring.done();
+		}
+	}
+
+	/** LANDING event composite: emitter + distortion + shock ring + impact-scaled land sound. */
 	private static final class LandingFx implements VfxEffect {
 		private final ShockwavePattern ring;
 
@@ -187,12 +234,12 @@ public final class FlightFx {
 					Math.max(1, (int) p.number("landingRingTicks", 14f)),
 					p.color("landingRingColor", 0x70FFE07A), p.number("landingBand", 0.18f));
 			ImpactPattern.spawn(VfxBackends.current(), center, UP, LANDING_EMITTER, p);
-			float volume = Mth.clamp(
-					p.number("landBaseVolume", 0.8f) + scale * p.number("landVolumeScale", 0.5f),
-					0f, 4f);
+			// spawn.scale() carries the server LANDING intensity (0.30–1.50).
+			LandingSoundScale sound = LandingSoundScale.of(p);
+			float factor = (float) LandingSoundScale.speedFactor(scale - 0.30, 1.20);
 			Minecraft.getInstance().getSoundManager().play(new SimpleSoundInstance(
-					HomelanderSounds.FLIGHT_LAND, SoundSource.PLAYERS, volume,
-					p.number("landPitch", 1f), RandomSource.create(),
+					HomelanderSounds.FLIGHT_LAND, SoundSource.PLAYERS, sound.volume(factor),
+					sound.pitch(factor), RandomSource.create(),
 					center.x, center.y, center.z));
 		}
 

@@ -7,6 +7,7 @@ import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.hero.homelander.registry.HomelanderDamageTypes;
+import io.github.grebeshok105.codex.hero.homelander.runtime.LaserBurnMarks;
 import io.github.grebeshok105.codex.hero.homelander.runtime.UraniumDefenseController;
 import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.hero.Heroes;
@@ -205,6 +206,9 @@ public final class EyeLasersAbility implements Ability {
 						BuiltInRegistries.SOUND_EVENT.wrapAsHolder(ModSounds.SILENT));
 			}
 			placeFireRing(level, player, actualEnd, 3);
+		}
+		if (hit == null && ray.blockHit().getType() == HitResult.Type.BLOCK) {
+			LaserBurnMarks.tryMark(level, ray.blockHit(), player);
 		}
 		return actualEnd;
 	}

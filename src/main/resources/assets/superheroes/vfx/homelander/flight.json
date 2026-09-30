@@ -15,7 +15,12 @@
   "surfaceOffset": 0.05,
   "distortionRadius": 1.6,
   "distortionStrength": 0.6,
-  "landBaseVolume": 0.8,
-  "landVolumeScale": 0.5,
-  "landPitch": 1.0
+  "landVolumeMin": 0.45,
+  "landVolumeMax": 2.0,
+  "landPitchHigh": 1.02,
+  "landPitchLow": 0.62,
+  "ringRadius": 3.0,
+  "ringTicks": 12,
+  "ringColor": "#55FFF4D6",
+  "ringBand": 0.16
 }

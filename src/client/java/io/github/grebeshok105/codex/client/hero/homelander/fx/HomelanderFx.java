@@ -36,6 +36,7 @@ public final class HomelanderFx {
 		ctx.vfx(HomelanderVfxIds.LANDING, FlightFx::landing);
 		ctx.vfx(FlightFx.TRAIL, FlightFx::trail);
 		ctx.vfx(FlightFx.BOOST, FlightFx::boost);
+		ctx.vfx(FlightFx.SPEED_RING, FlightFx::speedRing);
 		ctx.vfxChannel(HomelanderVfxIds.LASER, EyeLaserChannel::new);
 		ctx.vfx(HomelanderVfxIds.SUN_CHARGE, SunChargeFx::create);
 		ctx.vfx(HomelanderVfxIds.SUN_DETONATION, SunDetonationFx::create);
@@ -54,6 +55,7 @@ public final class HomelanderFx {
 				clip("flight_land"),
 				FlightFx.TRAIL,
 				FlightFx.BOOST,
+				FlightFx.SPEED_RING,
 				HomelanderSounds.FLIGHT_LOOP,
 				HomelanderSounds.FLIGHT_TAKEOFF,
 				HomelanderSounds.FLIGHT_BOOST,

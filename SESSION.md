@@ -1156,3 +1156,14 @@ VFX-канале). Ветка содержит коммит `feat(homelander): e
   - `laser.json`: coreWidth 0.05→0.04, glowWidth 0.18→0.11, core `#FFFF3322`, glow `#8CE61400`, light `#FF2200`, noise 0.35→0.3. Impact gradient `homelander_laser.json` shifted hot-red → red → dark-red.
 - Tests: new `PlayerPoseApplierTest` (sign convention, weight rescale, empty cases); `HumanoidAnchorsTest` + eyes-under-tilted-head case. Scoped `./gradlew test` green.
 - Verification: in-game repro of the OLD bug captured (single pale beam from air). In-game re-verification of the fix STOPPED per user instruction — user verifies themselves. Beams render via `CrossBeamRenderer` (backend-independent → fallback gets the same two red eye-anchored beams).
+## Completed this session (wave D — trail smoothing, speed rings, landing sound, F5 camera, burn marks)
+
+- Branch `devin/1790767488-flight-fx` off `devin/1790767119-homelander-emf`. Five deliverables; no PR (parent integrates).
+- Trail: `TrailPattern` reworked — Catmull-Rom resample (5/segment) + two-pass gradient strips (3x halo at 0.35 alpha, core) with smoothstep tail taper. GL path untestable headless.
+- Speed rings: `SpeedRingGate` (accel delta >= ringAccelDelta AND speed >= ringMinSpeed AND ringCooldownTicks elapsed) in `FlightPoseTracker.track`; `ShockwavePattern` gained an axis ctor; `VfxSpawn.target()` carries flight velocity; new `homelander/flight_speed_ring` effect + `speedRingEffect` slot on `FlightPresentation` (ArchUnit keeps core free of hero deps).
+- Landing sound: `LandingSoundScale` (volume 0.45..2.0, pitch 1.02..0.62) over impact = max(|vy|, hSpeed)/landRefSpeed; both triggers wired (phase-change via prevVelocity, Vfx event via spawn.scale). New `flight_land.ogg` synthesized by `art-source/homelander/make_flight_land.py` (sub sine 75->30Hz + LP noise crack + 130Hz thud + rumble tail, 0.85s).
+- F5 camera: `HomelanderPoseApi.currentBodyTransform` (feet-pivot tilt -> world-space chest offset in px); `CameraMixin` TAIL inject shifts camera position by offset/16 when `thirdPerson && isPresentationOwned`.
+- Burn marks: `LaserScorchBlock` (MultifaceBlock, no item, instabreak, replaceable, no loot) + `LaserBurnMarks.tryMark` at the `EyeLasersAbility.fireBeam` block-hit point — policy-gated via `WorldDestructionPolicy.tryPlace`; skips unbreakable/ability_immune/fluids/already-marked; `ScorchJournal` 200t per-cell cooldown (cap 512 LRU) + 2-block Chebyshev spacing. Vanilla glow_lichen blockstate/model mirrored, 16px procedural PNG.
+- Tests: SpeedRingGateTest, LandingSoundScaleTest, HomelanderPoseApiTest, ScorchJournalTest, LaserScorchGameTests (6 tests).
+- mod_version left 4.1.1 — version decision belongs to the integration session.
+- Unverified in game (GL/sound/camera): user checks.

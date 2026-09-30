@@ -46,6 +46,7 @@ public final class HomelanderModule implements HeroModule {
 	public void register(HeroModuleContext ctx) {
 		HomelanderEffects.init();
 		HomelanderSounds.init();
+		HomelanderBlocks.init();
 		HomelanderItems.register(ctx.content());
 		ctx.payloads().s2c(UraniumPressureS2CPayload.TYPE, UraniumPressureS2CPayload.STREAM_CODEC);
 		ctx.payloads().s2c(UraniumThreatS2CPayload.TYPE, UraniumThreatS2CPayload.STREAM_CODEC);
