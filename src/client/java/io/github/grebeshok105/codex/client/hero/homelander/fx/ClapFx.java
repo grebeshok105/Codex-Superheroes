@@ -17,7 +17,6 @@ import io.github.grebeshok105.codex.client.core.vfx.params.VfxParamsLoader;
 import io.github.grebeshok105.codex.client.core.vfx.pattern.CameraImpulse;
 import io.github.grebeshok105.codex.client.core.vfx.pattern.ImpactPattern;
 import io.github.grebeshok105.codex.client.core.vfx.pattern.ShockwavePattern;
-import io.github.grebeshok105.codex.client.hero.homelander.flight.HomelanderPoseApi;
 import io.github.grebeshok105.codex.sound.HomelanderSounds;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -30,25 +29,23 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * Homelander's hand clap ({@code superheroes:homelander/clap}): the EMF
- * {@code hand_clap} clip on the source (played through
- * {@link HomelanderPoseApi}), the {@code homelander.hand_clap} contract
- * sound, then — timed to the {@code contactSeconds} param (0.083 s, the
- * clip's arm-cross keyframe, inside the contract's ≤ 120 ms window) — a
- * light flash between the hands, an {@link ImpactPattern} burst with a
- * distortion pulse, a {@link ShockwavePattern} ring and a dust cone
- * marching along the event's origin → target axis (the server sends the
- * eye position and the eye + forward · RANGE point), plus a
- * proximity-scaled {@link CameraImpulse}. Tuning lives in
+ * Homelander's hand clap impact ({@code superheroes:homelander/clap}): the
+ * server sends this event at the EMF {@code hand_clap} clip's contact frame
+ * (see {@code HandClapAbility#CONTACT_TICKS}), so the burst fires on the
+ * first tick — the {@code homelander.hand_clap} contract sound, a light
+ * flash between the hands, an {@link ImpactPattern} burst with a distortion
+ * pulse, a {@link ShockwavePattern} ring and a dust cone marching along the
+ * event's origin → target axis (the server sends the eye position and the
+ * eye + forward · RANGE point captured at cast), plus a proximity-scaled
+ * {@link CameraImpulse}. The clip itself is played by the separate
+ * {@code homelander/clap_windup} event at cast. Tuning lives in
  * {@code vfx/homelander/clap.json}.
  */
 public final class ClapFx {
 	private static final ResourceLocation PARAMS = ModId.of("homelander/clap");
 	private static final ResourceLocation FLASH_EMITTER = ModId.of("homelander_clap_flash");
 	private static final ResourceLocation DUST_EMITTER = ModId.of("homelander_clap_dust");
-	private static final ResourceLocation CLIP = ModId.of("homelander/hand_clap");
 	private static final Vec3 UP = new Vec3(0, 1, 0);
-	private static final float TICKS_PER_SECOND = 20f;
 
 	private ClapFx() {
 	}
@@ -66,7 +63,6 @@ public final class ClapFx {
 		private final Vec3 clapPoint;
 		private final Vec3 dir;
 		private final Vec3 ground;
-		private final int contactTicks;
 		private final int coneSteps;
 		private final double coneStep;
 		private final int coneIntervalTicks;
@@ -80,7 +76,7 @@ public final class ClapFx {
 		private final VfxParams params;
 		private final List<ShockwavePattern> rings = new ArrayList<>();
 
-		private int age;
+		private int burstAge;
 		private boolean burst;
 		private int emittedConeSteps;
 		private @Nullable LightHandle light;
@@ -91,21 +87,12 @@ public final class ClapFx {
 			VfxParams p = params;
 
 			Entity source = spawn.source();
-			if (source != null) {
-				HomelanderPoseApi.playClip(source.getId(), CLIP);
-			}
 
 			Vec3 axis = spawn.target().subtract(spawn.origin());
 			this.dir = axis.lengthSqr() > 1e-6 ? axis.normalize() : new Vec3(1, 0, 0);
 			this.clapPoint = spawn.origin().add(dir.scale(p.number("handForward", 0.55f)))
 					.add(0, -p.number("handDrop", 0.25f), 0);
 			this.ground = spawn.origin().add(0, -1.4, 0);
-
-			// The EMF hand_clap clip carries no named events — the contact beat
-			// comes from the param (0.083 s default, matching the clip's
-			// arm-cross keyframe and the contract's ≤ 120 ms window).
-			this.contactTicks = Math.max(0,
-					Math.round(p.number("contactSeconds", 0.083f) * TICKS_PER_SECOND));
 
 			this.coneSteps = Math.max(0, (int) p.number("coneSteps", 10f));
 			this.coneStep = p.number("coneStep", 1.5f);
@@ -137,33 +124,33 @@ public final class ClapFx {
 			if (finished) {
 				return;
 			}
-			age++;
-			if (!burst && age >= contactTicks) {
+			// The event already lands at the clip's contact frame — the burst
+			// fires on the first tick, no delay param.
+			if (!burst) {
 				fireBurst();
 			}
-			if (burst) {
-				VfxBackend backend = VfxBackends.current();
-				while (emittedConeSteps < coneSteps
-						&& age - contactTicks >= (emittedConeSteps + 1) * coneIntervalTicks) {
-					emittedConeSteps++;
-					backend.emit(DUST_EMITTER, clapPoint.add(dir.scale(emittedConeSteps * coneStep)));
+			burstAge++;
+			VfxBackend backend = VfxBackends.current();
+			while (emittedConeSteps < coneSteps
+					&& burstAge >= (emittedConeSteps + 1) * coneIntervalTicks) {
+				emittedConeSteps++;
+				backend.emit(DUST_EMITTER, clapPoint.add(dir.scale(emittedConeSteps * coneStep)));
+			}
+			if (light != null) {
+				float fade = Math.max(0f, 1f - (float) burstAge / lightFadeTicks);
+				if (fade <= 0f) {
+					light.remove();
+					light = null;
+				} else {
+					light.set(lightRgb, lightRadius * fade, lightBrightness * fade);
 				}
-				if (light != null) {
-					float fade = Math.max(0f, 1f - (float) (age - contactTicks) / lightFadeTicks);
-					if (fade <= 0f) {
-						light.remove();
-						light = null;
-					} else {
-						light.set(lightRgb, lightRadius * fade, lightBrightness * fade);
-					}
-				}
-				rings.removeIf(ring -> {
-					ring.tick();
-					return ring.done();
-				});
-				if (emittedConeSteps >= coneSteps && rings.isEmpty() && light == null) {
-					finished = true;
-				}
+			}
+			rings.removeIf(ring -> {
+				ring.tick();
+				return ring.done();
+			});
+			if (emittedConeSteps >= coneSteps && rings.isEmpty() && light == null) {
+				finished = true;
 			}
 		}
 

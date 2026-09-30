@@ -4,6 +4,7 @@ import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.client.core.module.HeroClientContext;
 import io.github.grebeshok105.codex.client.core.module.HeroClientModule;
 import io.github.grebeshok105.codex.client.hero.homelander.emf.EmfAssets;
+import io.github.grebeshok105.codex.client.hero.homelander.emf.HomelanderActionClipWatch;
 import io.github.grebeshok105.codex.client.hero.homelander.flight.HomelanderEmfLayer;
 import io.github.grebeshok105.codex.client.hero.homelander.flight.HomelanderFlightDriver;
 import io.github.grebeshok105.codex.client.hero.homelander.flight.HomelanderPoseApi;
@@ -48,6 +49,7 @@ public record HomelanderClientModule() implements HeroClientModule {
 		ctx.playerModelSuppression(HomelanderPoseApi::suppressesVanillaModel);
 		ctx.flightCameraFocus(HomelanderPoseApi::cameraFocusOffset);
 		ctx.clientTick(HomelanderFlightDriver::tick);
+		ctx.clientTick(HomelanderActionClipWatch::tick);
 		HomelanderFx.register(ctx);
 		ctx.receive(UraniumPressureS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> ClientUraniumPressureState.update(payload.pressuredHomelanders())));
@@ -57,4 +59,5 @@ public record HomelanderClientModule() implements HeroClientModule {
 		// transparent corners render as opaque black.
 		BlockRenderLayerMap.INSTANCE.putBlock(HomelanderBlocks.LASER_SCORCH, RenderType.cutout());
 	}
+
 }

@@ -44,8 +44,10 @@ public abstract class CameraMixin {
 	/**
 	 * Third-person pivot shift: while a flight presentation owns the focused
 	 * entity the feet-pivot tilt has moved its visual center off the vanilla
-	 * eye point, so the camera slides by the same offset and keeps the tilted
-	 * body centered. First person ({@code thirdPerson == false}) is untouched.
+	 * eye point, so the camera slides by the registered offset and keeps the
+	 * tilted body centered. First person ({@code thirdPerson == false}) is
+	 * untouched. Hero code plugs in through {@link FlightCameraFocus} —
+	 * mixins never import {@code client.hero.*}.
 	 */
 	@Inject(method = "setup", at = @At("TAIL"))
 	private void superheroes$centerFlightBody(BlockGetter area, Entity focused, boolean thirdPerson,
