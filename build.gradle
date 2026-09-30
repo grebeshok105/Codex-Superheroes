@@ -225,6 +225,13 @@ dependencies {
 	// NOT bundled, NOT required at runtime; guarded by FabricLoader.isModLoaded("iris").
 	modCompileOnly "maven.modrinth:iris:1.8.8+1.21.1-fabric"
 
+	// EMF + ETF — the animation/model engine behind the Homelander player
+	// presentation (emf/homelander model + clips). Client-environment mods:
+	// required on the client, env-skipped on dedicated servers (fabric.mod.json
+	// lists them under "recommends" so servers still resolve).
+	modImplementation "maven.modrinth:entity-model-features:3.2.4-fabric-1.21"
+	modImplementation "maven.modrinth:entitytexturefeatures:7.1-fabric-1.21"
+
 	testImplementation platform("org.junit:junit-bom:5.10.2")
 	testImplementation "org.junit.jupiter:junit-jupiter"
 	testRuntimeOnly "org.junit.platform:junit-platform-launcher"
