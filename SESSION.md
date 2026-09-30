@@ -1,5 +1,14 @@
 # SESSION.md
 
+## Completed this session (Homelander EMF — Stage 3)
+
+- Stage 3 of `docs/superpowers/plans/2026-09-30-homelander-emf-presentation.md` («TAKEOFF») implemented on `devin/1790801246-homelander-takeoff-s3` (base Stage-2 head `309c816b`), `mod_version` 4.3.0 → 4.4.0.
+- `HomelanderPoseState.Entry.advance(flying, groundedNow)`: the activation edge (`flying && !wasFlying`) resets the takeoff clock to `0` when the player was on the ground the tick BEFORE activation, or `TAKEOFF_AIRBORNE_START_SECONDS = 0.28` airborne (skips the crouch dip, root ty bottoms at 0.20 s). The edge must read the stored previous-tick flag, not the current tick's: `LocalPlayerFlightMixin` applies the TAKEOFF min-lift (0.28 b/t) inside `travel` during the same client tick the flight state arrives, so by `END_CLIENT_TICK` the local player's `onGround` is already false — a current-tick read misdetects every local ground takeoff as airborne. `onGround` is the right signal on both paths: authoritative for `LocalPlayer`, and synced for remote entities (`ClientboundMoveEntityPacket`/`ClientboundTeleportEntityPacket` carry it; `ServerEntity` writes `entity.onGround()` — verified in mapped 1.21.1 bytecode). New entries seed `grounded` from the player's current flag so a first-observed-tick activation still resolves.
+- `HomelanderPoseMath.takeoffWeight` is pinned to exactly 1 while `flying && takeoff_t < 0.65 s` (the plan's literal "weight = 1 for 0 to 0.65 s" — a ramp here would only mix HOVER into the crouch dip and mask it; the vanilla→authored blend is already carried by the master `hl_w` ramp), eases out with 2-tick half-life, and pins to exactly 0 at `takeoff_t >= 0.8` — the clip's last frame equals the HOVER start height (6.6 px) so the crossfade is continuous with hover already at weight ~1 underneath. The takeoff clock stops advancing at clip end (`finished(0.8)` guard — bounded value, no per-frame allocation). `takeoffWeight` gained `takeoffWeightPrev` interpolation like the master weight; `WeightReader`/`registerWeight` now take the partial tick (boost/clap/milk stubs keep the same signature).
+- Re-activation within the clip restarts the same clock (one takeoff ever runs); flight-off mid-takeoff fades takeoff + active weights out while the hover clock free-runs.
+- Tests added: 9 in `HomelanderPoseMathTest` (grounded/airborne start offsets incl. the pre-activation-flag edge case, first-observed-tick flying default, edge-only grounded flag, flight-off fade without hover reset, re-activation restart, hold→ease→pin-0 weight curve, partial-tick weight interpolation, pure `takeoffWeight` math). Existing `advance(...)` call sites updated to the two-arg form.
+- Verification: `python3 -m unittest art-source/homelander/emf/test_bake_jem.py` — 15/15; `./gradlew test --no-daemon` green; `./gradlew qualityGate --no-daemon` green (sanity, jar isolation, 364 gametests, datagen check). No in-game verification per the standing rule — Stage 3 visual checklist marked unverified in the PR.
+
 ## Completed this session (Homelander EMF — Stage 2)
 
 - Stage 2 of `docs/superpowers/plans/2026-09-30-homelander-emf-presentation.md` («HOVER») implemented on `devin/1790798101-homelander-emf-hover-s2` (base Stage-1 head `337327e3`), `mod_version` 4.2.0 → 4.3.0.
@@ -23,7 +32,7 @@
 
 ## Active work
 
-- Homelander EMF staged plan continues — Stage 1 PR open for review. Stages 2+ (authored-motion wiring: drive `superheroes_hl_*` weights/clocks from flight phase + ability events) remain in `docs/superpowers/plans/2026-09-30-homelander-emf-presentation.md` §7.
+- Homelander EMF staged plan continues — Stages 1–2 merged on `devin/1790798101-homelander-emf-hover-s2`; Stage 3 PR open for review. Stage 4 (BOOST) runs in parallel off the same Stage-2 base; later stages remain in `docs/superpowers/plans/2026-09-30-homelander-emf-presentation.md` §7.
 - PR #137 `devin/1790691597-homelander-sounds`: real flight/laser sfx replacing placeholder oggs — open, CI green, in the combined jar.
 - PR #138 `devin/1790691307-homelander-vfx-fix`: flight pose/limbs/eye-anchor/trail fixes with the presentation-phase commit reverted — open, CI green.
 - Standing rule: the user verifies all in-game behavior themselves — never claim visual verification for them.

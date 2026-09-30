@@ -42,7 +42,7 @@ final class HomelanderEmfVariables {
 
 	@FunctionalInterface
 	private interface WeightReader {
-		float weight(UUID uuid);
+		float weight(UUID uuid, float partial);
 	}
 
 	private static void registerClock(String name, String explanation, ClockReader reader) {
@@ -51,7 +51,8 @@ final class HomelanderEmfVariables {
 	}
 
 	private static void registerWeight(String name, String explanation, WeightReader reader) {
-		EmfBridge.registerFloatVariable(name, explanation, () -> reader.weight(currentUuid()));
+		EmfBridge.registerFloatVariable(name, explanation,
+				() -> reader.weight(currentUuid(), partialTick()));
 	}
 
 	private static UUID currentUuid() {
