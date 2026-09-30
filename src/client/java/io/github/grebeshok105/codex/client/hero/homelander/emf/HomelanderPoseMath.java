@@ -10,6 +10,9 @@ final class HomelanderPoseMath {
 
 	private static final float ACTIVE_HALF_LIFE_TICKS = 3f;
 
+	/** Authored HOVER clip length; the emitted jem table loops at exactly this boundary. */
+	static final float HOVER_LENGTH_SECONDS = 3.2f;
+
 	private HomelanderPoseMath() {
 	}
 

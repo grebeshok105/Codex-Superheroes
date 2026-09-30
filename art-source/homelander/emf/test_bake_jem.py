@@ -190,6 +190,30 @@ class BakeContractTest(unittest.TestCase):
                                 f"{name}.{chan} clip={clip_id} rate={rate} "
                                 f"err={worst}")
 
+    def test_hover_loop_closes(self):
+        """Stage 2 contract (§7 stage 2): the authored HOVER loop must close —
+        each emitted channel's value at t=0 equals the value at t=length,
+        else keyframeloop pops every 3.2 s."""
+        tol = {"r": math.radians(0.5), "t": 0.05, "s": 0.005}
+        clip = self.model.clips["hover"]
+        checked = 0
+        for part in bake_jem.all_parts(self.jem):
+            part_id = part.get("part") or part.get("id", "")[3:]
+            owner = part.get("part") if part.get("part") in bake_jem.CARRIER_PARTS \
+                else part.get("id", "")[3:]
+            for anim in part.get("animations", []):
+                for key, expr in anim.items():
+                    chan = key.rsplit(".", 1)[-1]
+                    if chan not in bake_jem.CHANNELS or "hover" not in _clip_terms(expr):
+                        continue
+                    truth = _truth_fn(self.model, self.clip_means, owner, chan)
+                    self.assertAlmostEqual(
+                        truth(clip, 0.0), truth(clip, clip.length_seconds),
+                        delta=tol[chan[0]],
+                        msg=f"{part_id}.{chan} HOVER loop does not close")
+                    checked += 1
+        self.assertGreater(checked, 0, "no HOVER channels emitted")
+
     def test_keyframe_uses_frame_index_not_seconds(self):
         expr = bake_jem.channel_expression(self.jem, "head", "rx")
         self.assertIsNotNone(expr)
