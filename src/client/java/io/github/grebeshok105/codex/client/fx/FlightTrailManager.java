@@ -27,7 +27,7 @@ public final class FlightTrailManager {
 				continue;
 			}
 			if (ClientFlightState.isPresentationOwned(player.getId())) {
-				// A FlightPresentation owns this player's trail (see FlightPoseTracker).
+				// A FlightPresentation owns this player's trail (see HomelanderFlightDriver).
 				continue;
 			}
 			Vec3 velocity = player.getDeltaMovement();

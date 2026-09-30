@@ -38,8 +38,8 @@ public final class ClientFlightState {
 
 	/**
 	 * Marks a player whose flight visuals are owned by a {@code FlightPresentation}
-	 * ({@code FlightPoseTracker}); legacy visual managers such as
-	 * {@code FlightTrailManager} stand down for marked players.
+	 * ({@code HomelanderFlightDriver} drives the EMF clips); legacy visual
+	 * managers such as {@code FlightTrailManager} stand down for marked players.
 	 */
 	public static synchronized void markPresentationOwned(int entityId) {
 		PRESENTATION_OWNED.add(entityId);

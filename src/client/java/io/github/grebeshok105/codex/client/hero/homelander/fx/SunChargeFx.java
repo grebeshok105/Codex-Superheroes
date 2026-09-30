@@ -1,7 +1,6 @@
 package io.github.grebeshok105.codex.client.hero.homelander.fx;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.client.core.anim.PlayerAnimator;
 import io.github.grebeshok105.codex.client.core.vfx.VfxEffect;
 import io.github.grebeshok105.codex.client.core.vfx.VfxRenderContext;
 import io.github.grebeshok105.codex.client.core.vfx.VfxSpawn;
@@ -11,6 +10,7 @@ import io.github.grebeshok105.codex.client.core.vfx.backend.VfxBackends;
 import io.github.grebeshok105.codex.client.core.vfx.params.VfxParams;
 import io.github.grebeshok105.codex.client.core.vfx.params.VfxParamsLoader;
 import io.github.grebeshok105.codex.client.core.vfx.pattern.CameraImpulse;
+import io.github.grebeshok105.codex.client.hero.homelander.flight.HomelanderPoseApi;
 import io.github.grebeshok105.codex.sound.HomelanderSounds;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -43,7 +43,6 @@ public final class SunChargeFx {
 	private static final ResourceLocation EMBER_EMITTER = ModId.of("homelander_sun_ember");
 	private static final ResourceLocation CLIP_SUN_CHARGE = ModId.of("homelander/sun_charge");
 	private static final double BIND_RADIUS = 3.0;
-	private static final int CLIP_FADE_TICKS = 4;
 
 	private SunChargeFx() {
 	}
@@ -110,8 +109,7 @@ public final class SunChargeFx {
 			this.trembleMaxIntensity = p.number("trembleMaxIntensity", 0.25f);
 			this.trembleIntervalTicks = Math.max(1, (int) p.number("trembleIntervalTicks", 4f));
 			if (entity != null) {
-				PlayerAnimator.play(entity.getId(), CLIP_SUN_CHARGE,
-						PlayerAnimator.Layer.BASE, CLIP_FADE_TICKS);
+				HomelanderPoseApi.playClip(entity.getId(), CLIP_SUN_CHARGE);
 			}
 			this.sound = new ChargeSound(entity, fallback, durationTicks,
 					p.number("chargeVolume", 0.9f),
@@ -195,8 +193,7 @@ public final class SunChargeFx {
 				sound = null;
 			}
 			if (entity != null) {
-				PlayerAnimator.stop(entity.getId(), PlayerAnimator.Layer.BASE,
-						CLIP_FADE_TICKS, CLIP_SUN_CHARGE);
+				HomelanderPoseApi.stopClip(entity.getId(), CLIP_SUN_CHARGE);
 			}
 		}
 	}

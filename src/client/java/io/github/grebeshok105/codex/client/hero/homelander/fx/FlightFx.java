@@ -3,7 +3,6 @@ package io.github.grebeshok105.codex.client.hero.homelander.fx;
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.client.ClientFlightState;
 import io.github.grebeshok105.codex.client.core.flight.FlightBodyTransform;
-import io.github.grebeshok105.codex.client.core.flight.FlightPoseTracker;
 import io.github.grebeshok105.codex.client.core.vfx.VfxEffect;
 import io.github.grebeshok105.codex.client.core.vfx.VfxRenderContext;
 import io.github.grebeshok105.codex.client.core.vfx.VfxSpawn;
@@ -14,6 +13,7 @@ import io.github.grebeshok105.codex.client.core.vfx.params.VfxParamsLoader;
 import io.github.grebeshok105.codex.client.core.vfx.pattern.ImpactPattern;
 import io.github.grebeshok105.codex.client.core.vfx.pattern.ShockwavePattern;
 import io.github.grebeshok105.codex.client.core.vfx.pattern.TrailPattern;
+import io.github.grebeshok105.codex.client.hero.homelander.flight.HomelanderPoseApi;
 import io.github.grebeshok105.codex.sound.HomelanderSounds;
 import io.github.grebeshok105.codex.mechanic.flight.FlightPhase;
 import net.minecraft.client.Minecraft;
@@ -108,7 +108,7 @@ public final class FlightFx {
 				finishing = true;
 				ribbons.forEach(TrailPattern::finish);
 			} else {
-				FlightBodyTransform tilt = FlightPoseTracker.transform(source.getId(), 1f);
+				FlightBodyTransform tilt = HomelanderPoseApi.currentBodyTransform(source.getId(), 1f).tilt();
 				Vec3 feet = source.position();
 				float bodyYaw = source instanceof net.minecraft.world.entity.LivingEntity living
 						? living.yBodyRot : source.getYRot();

@@ -7,9 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.client.ClientSessionState;
-import io.github.grebeshok105.codex.client.core.anim.PlayerAnimator;
 import io.github.grebeshok105.codex.client.core.flight.FlightBodyTransform;
-import io.github.grebeshok105.codex.client.core.flight.FlightPoseTracker;
 import io.github.grebeshok105.codex.client.core.vfx.VfxEffect;
 import io.github.grebeshok105.codex.client.core.vfx.VfxRenderContext;
 import io.github.grebeshok105.codex.client.core.vfx.VfxSpawn;
@@ -22,6 +20,7 @@ import io.github.grebeshok105.codex.client.core.vfx.params.VfxParamsLoader;
 import io.github.grebeshok105.codex.client.core.vfx.pattern.CameraImpulse;
 import io.github.grebeshok105.codex.client.core.vfx.pattern.ImpactPattern;
 import io.github.grebeshok105.codex.client.core.vfx.pattern.ShockwavePattern;
+import io.github.grebeshok105.codex.client.hero.homelander.flight.HomelanderPoseApi;
 import io.github.grebeshok105.codex.core.net.VfxEventS2CPayload;
 import io.github.grebeshok105.codex.sound.HomelanderSounds;
 import net.minecraft.client.Minecraft;
@@ -62,7 +61,6 @@ public final class IronFistsFx {
 	private static final ResourceLocation CLIP_ACTIVATE = ModId.of("homelander/iron_fists_activate");
 	private static final ResourceLocation CLIP_STRIKE = ModId.of("homelander/iron_fists_strike");
 	private static final Vec3 UP = new Vec3(0, 1, 0);
-	private static final int CLIP_FADE_TICKS = 4;
 
 	/** Running auras by source entity id — dedupes ON resends; OFF cancels. */
 	private static final Map<Integer, HandAuraFx> ACTIVE_AURAS = new ConcurrentHashMap<>();
@@ -163,8 +161,7 @@ public final class IronFistsFx {
 			if (e == null) {
 				return;
 			}
-			PlayerAnimator.play(entityId, CLIP_ACTIVATE,
-					PlayerAnimator.Layer.ACTION, CLIP_FADE_TICKS);
+			HomelanderPoseApi.playClip(entityId, CLIP_ACTIVATE);
 			Minecraft.getInstance().getSoundManager().play(new EntityBoundSoundInstance(
 					HomelanderSounds.IRON_FISTS_ACTIVATE, SoundSource.PLAYERS,
 					activateVolume, activatePitch, e, e.getRandom().nextLong()));
@@ -200,7 +197,8 @@ public final class IronFistsFx {
 			float bodyYaw = entity instanceof LivingEntity living
 					? living.yBodyRot : (entity != null ? entity.getYRot() : 0f);
 			FlightBodyTransform tilt = entityId >= 0
-					? FlightPoseTracker.transform(entityId, 1f) : FlightBodyTransform.IDENTITY;
+					? HomelanderPoseApi.currentBodyTransform(entityId, 1f).tilt()
+					: FlightBodyTransform.IDENTITY;
 			VfxBackend backend = VfxBackends.current();
 			if (age % emitIntervalTicks == 0) {
 				backend.emit(HAND_EMITTER, HumanoidAnchors.tiltedPoint(
@@ -281,8 +279,7 @@ public final class IronFistsFx {
 
 			Entity source = spawn.source();
 			if (source != null) {
-				PlayerAnimator.play(source.getId(), CLIP_STRIKE,
-						PlayerAnimator.Layer.ACTION, CLIP_FADE_TICKS);
+				HomelanderPoseApi.playClip(source.getId(), CLIP_STRIKE);
 			}
 			Minecraft.getInstance().getSoundManager().play(new SimpleSoundInstance(
 					HomelanderSounds.IRON_FISTS_IMPACT, SoundSource.PLAYERS,
