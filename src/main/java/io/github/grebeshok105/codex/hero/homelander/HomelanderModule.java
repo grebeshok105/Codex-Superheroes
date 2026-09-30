@@ -57,6 +57,9 @@ public final class HomelanderModule implements HeroModule {
 		HomelanderMadnessFlightController.register(ctx);
 		IronFistsController.register(ctx);
 		ctx.ticks().global(UraniumDefenseController::serverTick);
+		ctx.ticks().global(HandClapAbility::serverTick);
+		ctx.lifecycle().onDeath(HandClapAbility::cancelPending);
+		ctx.lifecycle().onHeroClear(HandClapAbility::cancelPending);
 		ctx.ticks().player(HomelanderMadnessAftermathController::tickPlayer);
 		ctx.ticks().player(HomelanderRegenController::tickPlayer);
 		ctx.ticks().player(IronFistsController::tickPlayer);

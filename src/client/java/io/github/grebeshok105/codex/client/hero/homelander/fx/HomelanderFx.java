@@ -1,6 +1,7 @@
 package io.github.grebeshok105.codex.client.hero.homelander.fx;
 
 import io.github.grebeshok105.codex.client.core.flight.FlightPresentation;
+import io.github.grebeshok105.codex.client.hero.homelander.emf.HomelanderEmf;
 import io.github.grebeshok105.codex.client.core.module.HeroClientContext;
 import io.github.grebeshok105.codex.client.core.vfx.VfxEffect;
 import io.github.grebeshok105.codex.client.core.vfx.VfxRenderContext;
@@ -39,7 +40,9 @@ public final class HomelanderFx {
 		ctx.vfx(HomelanderVfxIds.IRON_FISTS_ON, IronFistsFx::activate);
 		ctx.vfx(HomelanderVfxIds.IRON_FISTS_OFF, IronFistsFx::deactivate);
 		ctx.vfx(HomelanderVfxIds.IRON_FISTS_HIT, IronFistsFx::hit);
-		ctx.vfx(HomelanderVfxIds.CLAP, ClapFx::create);
+		ctx.vfx(HomelanderVfxIds.CLAP, HomelanderFx::clapStart);
+		ctx.vfx(HomelanderVfxIds.CLAP_IMPACT, ClapFx::create);
+		ctx.vfx(HomelanderVfxIds.CLAP_CANCEL, HomelanderFx::clapCancel);
 		ctx.vfx(HomelanderVfxIds.ROAR, RoarFx::create);
 		// No player clips: the EMF jem presents Homelander's model. The
 		// presentation stays registered for trail/boost effects and sounds;
@@ -54,6 +57,24 @@ public final class HomelanderFx {
 				HomelanderSounds.FLIGHT_BOOST,
 				HomelanderSounds.FLIGHT_LAND,
 				FlightFx.PARAMS));
+	}
+
+	/** {@code CLAP} one-shot — starts the authored clip via the EMF pose state. */
+	private static VfxEffect clapStart(VfxSpawn spawn) {
+		Entity source = spawn.source();
+		if (source != null) {
+			HomelanderEmf.clapStarted(source);
+		}
+		return new DoneFx();
+	}
+
+	/** {@code CLAP_CANCEL} one-shot — the server dropped the pending hit. */
+	private static VfxEffect clapCancel(VfxSpawn spawn) {
+		Entity source = spawn.source();
+		if (source != null) {
+			HomelanderEmf.clapCancelled(source);
+		}
+		return new DoneFx();
 	}
 
 	/**

@@ -85,11 +85,13 @@ final class HomelanderPoseMath {
 		return approach(current, raw, VELOCITY_HALF_LIFE_TICKS, dtTicks);
 	}
 
-	/** Exponential approach of {@code current} toward the flight target, half-life 3 ticks. */
-	static float activeWeight(float current, boolean flying, float dtTicks) {
-		return approach(current, flying ? 1f : 0f, ACTIVE_HALF_LIFE_TICKS, dtTicks);
+	/** Exponential approach of {@code current} toward the authored-presentation target, half-life 3 ticks. */
+	static float activeWeight(float current, boolean presenting, float dtTicks) {
+		return approach(current, presenting ? 1f : 0f, ACTIVE_HALF_LIFE_TICKS, dtTicks);
 	}
 
+	/**
+	 * TAKEOFF one-shot weight: pinned to 1 while the clip is inside the 0.65 s
 	 * hold — the plan's literal "weight = 1 for 0 to 0.65 s" — then eases to 0
 	 * with a 2-tick half-life, and to 0 immediately once flight stops. The
 	 * vanilla→authored blend is already carried by the master weight's ramp, so

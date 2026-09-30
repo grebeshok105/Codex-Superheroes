@@ -4,6 +4,9 @@ import com.mojang.authlib.GameProfile;
 import io.github.grebeshok105.codex.hero.homelander.effect.HomelanderEffects;
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.hero.homelander.HomelanderAbilityIds;
+import io.github.grebeshok105.codex.hero.homelander.ability.HandClapAbility;
+import io.github.grebeshok105.codex.hero.homelander.vfx.HomelanderVfxIds;
+import io.github.grebeshok105.codex.core.net.VfxEventS2CPayload;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import io.github.grebeshok105.codex.core.ability.AbilityRegistry;
 import io.github.grebeshok105.codex.core.ability.AbilityRouter;
@@ -364,22 +367,64 @@ public final class HomelanderGameTests implements FabricGameTest {
 		});
 	}
 
-	@GameTest(template = EMPTY_STRUCTURE)
+	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 80)
 	public void handClapKnocksBackAHeadCone(GameTestHelper helper) {
-		ServerPlayer player = TestPlayers.join(helper);
+		Wire wire = joinAudible(helper, "clap-caster");
+		ServerPlayer player = wire.player();
 		TestHeroes.transform(player, HomelanderHero.ID);
 		Zombie zombie = spawnAhead(helper, player);
+		List<Object> packets = new ArrayList<>();
 		TestPlayers.awaitVisible(helper, zombie, () -> {
+			drainAll(wire);
 			AbilityRouter.activate(player, HomelanderAbilityIds.HAND_CLAP);
-			helper.assertTrue(zombie.getHealth() < zombie.getMaxHealth(),
-					"hand clap hits mobs in front");
-			helper.assertTrue(zombie.hurtMarked, "clap victim is knocked back");
+			packets.addAll(drain(wire.channel()));
+			helper.assertTrue(hasVfxEvent(packets, HomelanderVfxIds.CLAP, player.getId()),
+					"CLAP fires at activation so every client starts the clip");
+			helper.assertTrue(!hasVfxEvent(packets, HomelanderVfxIds.CLAP_IMPACT, player.getId()),
+					"no impact event at activation");
 			helper.assertTrue(AbilityCooldowns.isOnCooldown(player, HomelanderAbilityIds.HAND_CLAP),
 					"hand clap goes on a 240-tick cooldown");
 			helper.assertTrue(data(player).energy() == 50f,
 					"hand clap costs 50 energy, got " + data(player).energy());
-			TestPlayers.leave(player);
-			helper.succeed();
+			helper.runAfterDelay(HandClapAbility.IMPACT_TICKS - 3, () -> {
+				packets.addAll(drain(wire.channel()));
+				helper.assertTrue(!hasVfxEvent(packets, HomelanderVfxIds.CLAP_IMPACT, player.getId()),
+						"no impact event before the authored hand-contact frame");
+				helper.runAfterDelay(5, () -> {
+					packets.addAll(drain(wire.channel()));
+					helper.assertTrue(hasVfxEvent(packets, HomelanderVfxIds.CLAP_IMPACT, player.getId()),
+							"CLAP_IMPACT lands " + HandClapAbility.IMPACT_TICKS + " ticks after activation");
+					helper.assertTrue(zombie.getHealth() < zombie.getMaxHealth(),
+							"the impact damages mobs in the cone");
+					TestPlayers.leave(player);
+					helper.succeed();
+				});
+			});
+		});
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 80)
+	public void handClapImpactCancelsOnDeath(GameTestHelper helper) {
+		Wire wire = joinAudible(helper, "clap-dies");
+		ServerPlayer player = wire.player();
+		TestHeroes.transform(player, HomelanderHero.ID);
+		List<Object> packets = new ArrayList<>();
+		helper.runAfterDelay(5, () -> {
+			drainAll(wire);
+			AbilityRouter.activate(player, HomelanderAbilityIds.HAND_CLAP);
+			helper.runAfterDelay(10, () -> {
+				player.hurt(helper.getLevel().damageSources().genericKill(), 1000f);
+				helper.assertFalse(player.isAlive(), "the winding-up player really died");
+				helper.runAfterDelay(HandClapAbility.IMPACT_TICKS, () -> {
+					packets.addAll(drain(wire.channel()));
+					helper.assertTrue(hasVfxEvent(packets, HomelanderVfxIds.CLAP_CANCEL, player.getId()),
+							"death during the windup broadcasts CLAP_CANCEL");
+					helper.assertTrue(!hasVfxEvent(packets, HomelanderVfxIds.CLAP_IMPACT, player.getId()),
+							"a clap cancelled by death never lands");
+					TestPlayers.leave(player);
+					helper.succeed();
+				});
+			});
 		});
 	}
 
@@ -629,6 +674,19 @@ public final class HomelanderGameTests implements FabricGameTest {
 		return false;
 	}
 
+	/** Source-filtered event check: neighbouring structures' claps reach this wire too. */
+	private static boolean hasVfxEvent(List<Object> packets, ResourceLocation effect, int sourceEntityId) {
+		for (Object o : packets) {
+			if (o instanceof ClientboundCustomPayloadPacket custom
+					&& custom.payload() instanceof VfxEventS2CPayload vfx
+					&& vfx.effect().equals(effect)
+					&& vfx.sourceEntityId() == sourceEntityId) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	private static boolean hasThreat(List<Object> packets, boolean self, int count) {
 		for (Object o : packets) {
 			if (o instanceof ClientboundCustomPayloadPacket custom
@@ -648,4 +706,5 @@ public final class HomelanderGameTests implements FabricGameTest {
 		helper.getLevel().addFreshEntity(zombie);
 		return zombie;
 	}
+
 }

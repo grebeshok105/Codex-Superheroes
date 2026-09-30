@@ -38,6 +38,11 @@ import java.util.UUID;
  * before activation, or past the crouch dip
  * ({@link HomelanderPoseMath#TAKEOFF_AIRBORNE_START_SECONDS}) when flight
  * activated airborne (§7 stage 3).
+ *
+ * <p>A {@code CLAP} event resets the clap clip clock and plays it once over
+ * 1.92 s while {@code clap_w} and the master {@code hl_w} ease in/out (the jem
+ * blends it over the hover/boost group, so it works in flight too);
+ * {@code CLAP_CANCEL} releases the weights early (§7 stage 7).
  */
 final class HomelanderPoseState {
 
@@ -45,6 +50,10 @@ final class HomelanderPoseState {
 	private static final float TICK_SECONDS = 1f / 20f;
 	/** {@code vfx/homelander/flight.json} — carries the {@code emfBoost*} keys (§7 stage 4). */
 	private static final ResourceLocation FLIGHT_PARAMS = ModId.of("homelander/flight");
+	/** Authored HAND CLAP length (windup + hold). */
+	private static final float CLAP_SECONDS = 1.92f;
+	/** Same ease-in/out as the master weight, so ramp-in and release look symmetric. */
+	private static final float CLAP_HALF_LIFE_TICKS = 3f;
 
 	private static final Map<UUID, Entry> STATES = new LinkedHashMap<>(16, 0.75f, true) {
 		@Override
@@ -87,6 +96,7 @@ final class HomelanderPoseState {
 		float takeoffWeightPrev;
 		float clapWeight;
 		float milkWeight;
+		boolean clapPlaying;
 		/** Signed forward/strafe speeds (b/t) projected on body yaw from the smoothed velocity. */
 		float forward;
 		float strafe;
@@ -117,7 +127,7 @@ final class HomelanderPoseState {
 			boolean activation = flying && !this.flying;
 			this.flying = flying;
 			activePrev = active;
-			active = HomelanderPoseMath.activeWeight(active, flying, 1f);
+			active = HomelanderPoseMath.activeWeight(active, flying || clapPlaying, 1f);
 			takeoffWeightPrev = takeoffWeight;
 			boostWeightPrev = boostWeight;
 			if (activation) {
@@ -129,9 +139,15 @@ final class HomelanderPoseState {
 				takeoff.advance(TICK_SECONDS);
 			}
 			boost.advance(TICK_SECONDS);
-			clap.advance(TICK_SECONDS);
+			if (clapPlaying) {
+				clap.advance(TICK_SECONDS);
+				if (clap.finished(CLAP_SECONDS)) {
+					clapPlaying = false;
+				}
+			}
 			milk.advance(TICK_SECONDS);
 			takeoffWeight = HomelanderPoseMath.takeoffWeight(takeoffWeight, flying, takeoff.time(), 1f);
+			clapWeight = HomelanderPoseMath.approach(clapWeight, clapPlaying ? 1f : 0f, CLAP_HALF_LIFE_TICKS, 1f);
 		}
 
 		/**
@@ -219,6 +235,21 @@ final class HomelanderPoseState {
 			entry.advance(state != null, pos.x, pos.y, pos.z, player.yBodyRot,
 					state != null && state.mode() == FlightMode.SUPERSONIC,
 					boostEnter, boostExit, player.onGround());
+		}
+	}
+
+	/** {@code CLAP}: restart the authored clip. Not gated on ownership — a late skin resolve still lands. */
+	static void startClap(UUID uuid) {
+		Entry entry = STATES.computeIfAbsent(uuid, key -> new Entry());
+		entry.clap.reset();
+		entry.clapPlaying = true;
+	}
+
+	/** {@code CLAP_CANCEL}: the hit was dropped server-side; release the weights early. */
+	static void cancelClap(UUID uuid) {
+		Entry entry = STATES.get(uuid);
+		if (entry != null) {
+			entry.clapPlaying = false;
 		}
 	}
 

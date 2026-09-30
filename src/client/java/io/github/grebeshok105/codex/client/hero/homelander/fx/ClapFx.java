@@ -29,11 +29,12 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * Homelander's hand clap ({@code superheroes:homelander/clap}): the
- * {@code homelander.hand_clap} contract sound, then — timed to
- * {@code contactSeconds} (the authored 83 ms arm-cross, inside the
- * contract's ≤ 120 ms window) — a light flash between the hands, an
- * {@link ImpactPattern} burst with a distortion pulse, a
+ * Homelander's hand-clap impact ({@code superheroes:homelander/clap_impact}):
+ * the server emits it at the authored ~1.50 s hand-contact frame, so the
+ * {@code homelander.hand_clap} contract sound plays at construction and the
+ * burst lands on the hands meeting — {@code contactSeconds} stays as a
+ * tunable offset (0 in {@code clap.json}). A light flash between the hands,
+ * an {@link ImpactPattern} burst with a distortion pulse, a
  * {@link ShockwavePattern} ring and a dust cone marching along the event's
  * origin → target axis (the server sends the eye position and the eye +
  * forward · RANGE point), plus a proximity-scaled {@link CameraImpulse}.
@@ -93,8 +94,9 @@ public final class ClapFx {
 					.add(0, -p.number("handDrop", 0.25f), 0);
 			this.ground = spawn.origin().add(0, -1.4, 0);
 
-			// The authored contact is 83 ms; the param keeps it tunable (≤ 120 ms).
-			float contactSeconds = p.number("contactSeconds", 0.083f);
+			// The event already lands on the authored contact frame; the param
+			// only offsets the burst when tuned above 0.
+			float contactSeconds = p.number("contactSeconds", 0f);
 			this.contactTicks = Math.max(0, Math.round(contactSeconds * TICKS_PER_SECOND));
 
 			this.coneSteps = Math.max(0, (int) p.number("coneSteps", 10f));

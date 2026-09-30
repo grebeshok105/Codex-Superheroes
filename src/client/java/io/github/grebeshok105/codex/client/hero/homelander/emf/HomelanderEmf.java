@@ -8,6 +8,8 @@ import io.github.grebeshok105.codex.client.core.module.HeroClientContext;
 import io.github.grebeshok105.codex.client.core.render.SkinResolver;
 import io.github.grebeshok105.codex.hero.homelander.HomelanderHero;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.world.entity.Entity;
 
 /**
  * Homelander EMF integration: owns the player model (and only Homelander's)
@@ -40,5 +42,19 @@ public final class HomelanderEmf {
 		// otherwise every player on the server would render through our jem.
 		EmfBridge.registerVanillaModelCondition(uuid -> !EmfPresentationOwnership.isOwned(uuid));
 		ClientTickEvents.END_CLIENT_TICK.register(HomelanderPoseState::tick);
+	}
+
+	/** {@code CLAP} event: start the authored clip for the source player. */
+	public static void clapStarted(Entity entity) {
+		if (EmfBridge.isAvailable() && entity instanceof AbstractClientPlayer player) {
+			HomelanderPoseState.startClap(player.getUUID());
+		}
+	}
+
+	/** {@code CLAP_CANCEL} event: the hit was dropped — release the clip early. */
+	public static void clapCancelled(Entity entity) {
+		if (EmfBridge.isAvailable() && entity instanceof AbstractClientPlayer player) {
+			HomelanderPoseState.cancelClap(player.getUUID());
+		}
 	}
 }
