@@ -11,6 +11,7 @@
 - Tests: `LaserScorchDataTest` (ring wrap/eviction, spacing, 6/s cap, per-caster isolation, save→load round-trip) + `ScorchMarksCodecTest` (round-trip, 16-byte wire size, list bound) + `HomelanderScorchGameTests` (sturdy-only admission, SavedData round-trip, chunked reset-flagged sync, append broadcast — joined mock players on `EmbeddedChannel`).
 - Deviations from the plan: (a) the sync packet carries a `reset` flag — required for the client to drop the previous dimension's marks without a second packet type; (b) the receiver lives in `CoreClientReceivers`, not `ctx.receive` — repo ArchUnit pins core.net payloads to `CoreClientReceivers`, and client.core may not import client.hero classes, so the render-facing storage sits in `client/core/net/ScorchMarkStore` while the hero renderer only reads it.
 - `./gradlew test` (142 tests) + `./gradlew qualityGate` (369 gametests) green under `JAVA_HOME=$JAVA_HOME_21_X64`; `mod_version` 4.2.0 → 4.3.0.
+- Review pass: `ScorchMarkRenderer` no longer allocates corner/uv arrays per mark (unit tables hoisted to statics) and distance-culls before the block lookup — plan §0's no-per-frame-allocation budget.
 - In-game verification: none (repo rule — the user checks): marks stay after 10 min / relog / server restart; observer sees them; no z-fighting; breaking the block removes the mark.
 
 ## Previous session (Homelander EMF plan — Stage 10, laser damage cadence)

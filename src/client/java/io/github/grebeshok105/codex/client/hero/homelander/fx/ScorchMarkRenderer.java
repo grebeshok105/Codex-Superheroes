@@ -38,6 +38,9 @@ public final class ScorchMarkRenderer {
 	private static final double NORMAL_OFFSET = 0.002;
 	/** Extra slack past render distance so a mark's edge doesn't pop at the boundary. */
 	private static final double CULL_SLACK = 2.0;
+	/** Unit quad corners in the (u, v) face plane; scaled by the mark's half-size at emit. */
+	private static final float[][] CORNERS = {{-1f, -1f}, {1f, -1f}, {1f, 1f}, {-1f, 1f}};
+	private static final float[][] TEX_UV = {{0f, 1f}, {1f, 1f}, {1f, 0f}, {0f, 0f}};
 
 	private ScorchMarkRenderer() {
 	}
@@ -71,14 +74,14 @@ public final class ScorchMarkRenderer {
 				continue;
 			}
 			pos.set(ScorchMarkStore.posLong(i));
-			Direction dir = Direction.from3DDataValue(ScorchMarkStore.face(i));
-			if (!mc.level.getBlockState(pos).isFaceSturdy(mc.level, pos, dir)) {
-				continue;
-			}
 			double dx = pos.getX() + 0.5 - cam.x;
 			double dy = pos.getY() + 0.5 - cam.y;
 			double dz = pos.getZ() + 0.5 - cam.z;
 			if (dx * dx + dy * dy + dz * dz > maxDistSqr) {
+				continue;
+			}
+			Direction dir = Direction.from3DDataValue(ScorchMarkStore.face(i));
+			if (!mc.level.getBlockState(pos).isFaceSturdy(mc.level, pos, dir)) {
 				continue;
 			}
 			lightPos.set(pos).move(dir);
@@ -142,18 +145,15 @@ public final class ScorchMarkRenderer {
 		float cos = (float) Math.cos(rad);
 		float sin = (float) Math.sin(rad);
 		float h = size * 0.5f;
-		// corners (du,dv) — rotated in the face plane.
-		float[][] corners = {{-h, -h}, {h, -h}, {h, h}, {-h, h}};
-		float[][] texUv = {{0f, 1f}, {1f, 1f}, {1f, 0f}, {0f, 0f}};
 		for (int c = 0; c < 4; c++) {
-			float du = corners[c][0] * cos - corners[c][1] * sin;
-			float dv = corners[c][0] * sin + corners[c][1] * cos;
+			float du = CORNERS[c][0] * h * cos - CORNERS[c][1] * h * sin;
+			float dv = CORNERS[c][0] * h * sin + CORNERS[c][1] * h * cos;
 			bb.addVertex(matrix,
 					cx + uAx * du + vAx * dv,
 					cy + uAy * du + vAy * dv,
 					cz + uAz * du + vAz * dv)
 				.setColor(1f, 1f, 1f, 1f)
-				.setUv(texUv[c][0], texUv[c][1])
+				.setUv(TEX_UV[c][0], TEX_UV[c][1])
 				.setOverlay(OverlayTexture.NO_OVERLAY)
 				.setLight(light)
 				.setNormal(nx, ny, nz);
