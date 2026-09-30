@@ -14,6 +14,7 @@ import io.github.grebeshok105.codex.client.core.vfx.params.VfxParamsLoader;
 import io.github.grebeshok105.codex.client.core.vfx.pattern.ImpactPattern;
 import io.github.grebeshok105.codex.client.core.vfx.pattern.ShockwavePattern;
 import io.github.grebeshok105.codex.client.core.vfx.pattern.TrailPattern;
+import io.github.grebeshok105.codex.client.hero.homelander.emf.HomelanderPoseState;
 import io.github.grebeshok105.codex.sound.HomelanderSounds;
 import io.github.grebeshok105.codex.mechanic.flight.FlightPhase;
 import net.minecraft.client.Minecraft;
@@ -33,10 +34,11 @@ import java.util.List;
  * Homelander's flight effects, tuned by {@code vfx/homelander/flight.json}:
  * <ul>
  *   <li>{@link #trail} — supersonic signature while the tracked player is
- *       CRUISE/BOOST: a vapor cone trailing the body (core + wide faint
- *       sheath), thin speed streaks off the fists, and pressure rings
- *       popping perpendicular to the flight direction — the look of
- *       punching through the air barrier (self-terminates otherwise);</li>
+ *       CRUISE/BOOST: a soft vapor contrail trailing the body (core +
+ *       wide faint sheath), thin speed streaks off the fists, and pressure
+ *       rings popping perpendicular to the smoothed flight direction once
+ *       the speed stays supersonic — the look of punching through the air
+ *       barrier (self-terminates otherwise);</li>
  *   <li>{@link #boost} — emitter burst + shock ring on BOOST entry;</li>
  *   <li>{@link #landing} — impact composite for the {@code LANDING} event:
  *       dust emitter + distortion through {@link ImpactPattern}, an expanding
@@ -52,6 +54,8 @@ public final class FlightFx {
 	private static final ResourceLocation BOOST_EMITTER = ModId.of("homelander_flight_boost");
 	private static final ResourceLocation LANDING_EMITTER = ModId.of("homelander_flight_landing");
 	private static final Vec3 UP = new Vec3(0, 1, 0);
+	private static final ResourceLocation SOFT_TRAIL_TEXTURE =
+			ModId.of("textures/effect/soft_trail.png");
 
 	/** Fist anchors in body space: (lateral, up, forward). */
 	private static final double[][] FIST_OFFSETS = {
@@ -82,23 +86,29 @@ public final class FlightFx {
 	}
 
 	/**
-	 * Supersonic signature: a vapor cone off the chest (dense core ribbon +
+	 * Supersonic signature: a soft vapor contrail off the chest (dense core +
 	 * wide translucent sheath), hairline speed streaks off the fists, and a
 	 * pressure ring popped every {@code ringIntervalTicks} perpendicular to
-	 * the flight direction — the air-barrier break left hanging behind.
+	 * the smoothed flight direction once the speed has held at or above
+	 * {@code ringSpeed} for {@link #RING_SUSTAIN_TICKS} consecutive ticks —
+	 * the air-barrier break left hanging behind.
 	 */
 	private static final class TrailFx implements VfxEffect {
 		private static final int CONE_CORE = 0;
 		private static final int CONE_SHEATH = 1;
 		private static final int STREAK_L = 2;
 		private static final int STREAK_R = 3;
+		/** Ticks the smoothed speed must stay at {@code ringSpeed} before rings emit. */
+		private static final int RING_SUSTAIN_TICKS = 5;
 
 		private final @Nullable Entity entity;
 		private final VfxParams params;
 		private final List<TrailPattern> ribbons;
 		private final List<ShockwavePattern> rings = new ArrayList<>();
 		private final int ringInterval;
+		private final float ringSpeed;
 		private int ringClock;
+		private int fastTicks;
 		private boolean finishing;
 
 		private TrailFx(VfxSpawn spawn) {
@@ -107,15 +117,16 @@ public final class FlightFx {
 			int capacity = Math.max(4, (int) params.number("trailCapacity", 48f));
 			int fade = Math.max(1, (int) params.number("trailFadeTicks", 10f));
 			this.ribbons = List.of(
-					new TrailPattern(capacity, params.number("coneCoreWidth", 0.16f),
-							params.color("coneCoreColor", 0x5AF4FAFF), fade),
-					new TrailPattern(capacity, params.number("coneSheathWidth", 0.5f),
-							params.color("coneSheathColor", 0x28D9F2FF), fade),
-					new TrailPattern(capacity, params.number("streakWidth", 0.03f),
-							params.color("streakColor", 0x4DFFFFFF), fade),
-					new TrailPattern(capacity, params.number("streakWidth", 0.03f),
-							params.color("streakColor", 0x4DFFFFFF), fade));
-			this.ringInterval = Math.max(1, (int) params.number("ringIntervalTicks", 4f));
+					TrailPattern.soft(capacity, params.number("coneCoreWidth", 0.16f),
+							params.color("coneCoreColor", 0x5AF4FAFF), fade, SOFT_TRAIL_TEXTURE),
+					TrailPattern.soft(capacity, params.number("coneSheathWidth", 0.5f),
+							params.color("coneSheathColor", 0x28D9F2FF), fade, SOFT_TRAIL_TEXTURE),
+					TrailPattern.soft(capacity, params.number("streakWidth", 0.03f),
+							params.color("streakColor", 0x4DFFFFFF), fade, SOFT_TRAIL_TEXTURE),
+					TrailPattern.soft(capacity, params.number("streakWidth", 0.03f),
+							params.color("streakColor", 0x4DFFFFFF), fade, SOFT_TRAIL_TEXTURE));
+			this.ringInterval = Math.max(1, (int) params.number("ringIntervalTicks", 12f));
+			this.ringSpeed = params.number("ringSpeed", 1.0f);
 		}
 
 		@Override
@@ -142,13 +153,19 @@ public final class FlightFx {
 					ribbons.get(STREAK_L + i).push(HumanoidAnchors.tiltedPoint(
 							feet, bodyYaw, o[0], o[1], o[2], tilt));
 				}
-				if (++ringClock % ringInterval == 0) {
+				Vec3 velocity = flightVelocity(source);
+				if (velocity.length() >= ringSpeed) {
+					fastTicks++;
+				} else {
+					fastTicks = 0;
+				}
+				if (++ringClock % ringInterval == 0 && fastTicks >= RING_SUSTAIN_TICKS) {
 					rings.add(new ShockwavePattern(chest,
 							params.number("ringRadius", 1.4f),
 							Math.max(1, (int) params.number("ringTicks", 9f)),
 							params.color("ringColor", 0x40E8FAFF),
 							params.number("ringBand", 0.22f),
-							flightDirection(source)));
+							velocity));
 				}
 			}
 			ribbons.forEach(TrailPattern::tick);
@@ -158,13 +175,20 @@ public final class FlightFx {
 			});
 		}
 
-		/** Flight direction for the ring plane: velocity, else the view vector. */
-		private static Vec3 flightDirection(Entity source) {
-			Vec3 motion = source.getDeltaMovement();
-			if (motion.lengthSqr() > 1e-4) {
-				return motion;
+		/**
+		 * Velocity driving the ring gate and ring plane: the pose state's
+		 * smoothed render velocity (the same source the EMF pose consumes —
+		 * tracked for remote players too) when available; otherwise the
+		 * entity's raw delta movement. A ring only emits above
+		 * {@code ringSpeed}, so this vector is never degenerate at emission.
+		 */
+		private static Vec3 flightVelocity(Entity source) {
+			Vec3 smoothed = HomelanderPoseState.smoothedVelocity(source.getUUID());
+			if (smoothed != null) {
+				return smoothed;
 			}
-			return source.getViewVector(1f);
+			Vec3 motion = source.getDeltaMovement();
+			return motion.lengthSqr() > 1e-4 ? motion : Vec3.ZERO;
 		}
 
 		@Override

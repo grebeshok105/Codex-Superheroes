@@ -48,7 +48,7 @@ import java.util.UUID;
  * is inside 6.3 s and returns to 0 the tick it finishes or cancels, and the
  * master weight eases in/out with it (§7 stage 8).
  */
-final class HomelanderPoseState {
+public final class HomelanderPoseState {
 
 	private static final int MAX_ENTITIES = 64;
 	private static final float TICK_SECONDS = 1f / 20f;
@@ -395,6 +395,17 @@ final class HomelanderPoseState {
 		Vec3 bodyCentre = player.position()
 				.add(0.0, HomelanderPoseMath.bodyCentreHeight(rootTy), 0.0);
 		return bodyCentre.subtract(player.getEyePosition(1f)).scale(weight);
+	}
+
+	/**
+	 * Smoothed render velocity (blocks/tick) of an owned player — the same
+	 * vector the pose projections consume (§7 stage 13 rings read it). Allocates
+	 * once per call — tick-path use only. {@code null} when the player is not
+	 * tracked (not EMF-owned or EMF absent).
+	 */
+	public static @Nullable Vec3 smoothedVelocity(UUID uuid) {
+		Entry entry = entryOf(uuid);
+		return entry == null ? null : new Vec3(entry.velX, entry.velY, entry.velZ);
 	}
 
 	static void clearAll() {
