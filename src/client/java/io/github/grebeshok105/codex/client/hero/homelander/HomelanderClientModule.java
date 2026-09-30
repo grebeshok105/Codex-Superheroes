@@ -11,7 +11,10 @@ import io.github.grebeshok105.codex.client.hero.homelander.state.ClientUraniumPr
 import io.github.grebeshok105.codex.client.hero.homelander.state.ClientUraniumThreatState;
 import io.github.grebeshok105.codex.client.core.render.BeamDraws;
 import io.github.grebeshok105.codex.client.core.render.BeamStyle;
+import io.github.grebeshok105.codex.hero.homelander.HomelanderBlocks;
 import io.github.grebeshok105.codex.hero.homelander.HomelanderHero;
+import net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap;
+import net.minecraft.client.renderer.RenderType;
 import io.github.grebeshok105.codex.core.net.BeamFxS2CPayload;
 import io.github.grebeshok105.codex.hero.homelander.net.UraniumPressureS2CPayload;
 import io.github.grebeshok105.codex.hero.homelander.net.UraniumThreatS2CPayload;
@@ -38,5 +41,8 @@ public record HomelanderClientModule() implements HeroClientModule {
 				context.client().execute(() -> ClientUraniumPressureState.update(payload.pressuredHomelanders())));
 		ctx.receive(UraniumThreatS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> ClientUraniumThreatState.update(payload.self(), payload.sourceCount())));
+		// The scorch decal carries alpha in its texture; without cutout the
+		// transparent corners render as opaque black.
+		BlockRenderLayerMap.INSTANCE.putBlock(HomelanderBlocks.LASER_SCORCH, RenderType.cutout());
 	}
 }
