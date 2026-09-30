@@ -1,6 +1,7 @@
 package io.github.grebeshok105.codex.client.core.vfx.debug;
 
 import io.github.grebeshok105.codex.ModId;
+import io.github.grebeshok105.codex.client.core.emf.EmfProfiler;
 import io.github.grebeshok105.codex.client.core.hud.HudLayers;
 import io.github.grebeshok105.codex.client.core.vfx.VfxEffect;
 import io.github.grebeshok105.codex.client.core.vfx.VfxRenderContext;
@@ -20,7 +21,10 @@ import net.minecraft.resources.ResourceLocation;
  * {@link VfxEffect} that only flips {@link #visible}. While visible the HUD
  * shows live-effect/channel counts, which backend is active, and the
  * {@link VfxPerfProbe} frame stats. Frame durations are sampled inside the
- * per-frame HUD render call — no extra hook needed.
+ * per-frame HUD render call — no extra hook needed. The same flag enables
+ * the {@link EmfProfiler} supplier-call counters (plan §7 stage 15): this
+ * render call is also the profiler's frame boundary, and the HUD shows the
+ * last frame's total plus the most-called variable.
  */
 public final class VfxDebugHud {
 	static final ResourceLocation HUD_EFFECT = ModId.of("debug/hud");
@@ -63,6 +67,8 @@ public final class VfxDebugHud {
 	}
 
 	private static void render(GuiGraphics graphics, DeltaTracker delta) {
+		EmfProfiler.setEnabled(visible);
+		EmfProfiler.endFrame();
 		if (!visible) {
 			lastFrameNanos = 0L;
 			return;
@@ -83,6 +89,10 @@ public final class VfxDebugHud {
 				String.format("avg: %.0f fps  1%% low: %.0f fps  %.1f ms",
 						VfxPerfProbe.averageFps(), VfxPerfProbe.onePercentLowFps(),
 						VfxPerfProbe.averageFrameMillis()),
+				String.format("emf vars: %d/frame  top: %s %d",
+						EmfProfiler.lastFrameTotal(),
+						EmfProfiler.lastFrameTopName(),
+						EmfProfiler.lastFrameTopCount()),
 		};
 		int x = 4;
 		int y = 4;

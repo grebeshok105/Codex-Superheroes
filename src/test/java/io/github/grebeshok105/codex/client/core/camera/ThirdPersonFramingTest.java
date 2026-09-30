@@ -1,5 +1,6 @@
 package io.github.grebeshok105.codex.client.core.camera;
 
+import io.github.grebeshok105.codex.client.ClientSessionState;
 import net.minecraft.world.phys.Vec3;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -105,6 +106,15 @@ class ThirdPersonFramingTest {
 	void resetClearsFraming() {
 		ThirdPersonFraming.advance(PLAYER, new Vec3(0.0, 0.5, 0.0));
 		ThirdPersonFraming.reset();
+		assertNull(ThirdPersonFraming.sample(PLAYER, 0.5f));
+	}
+
+	@Test
+	void sessionResetClearsFraming() {
+		// The disconnect path runs the holder's registered reset — this pins
+		// the static {@code ClientSessionState.register} wiring (§7 stage 15).
+		ThirdPersonFraming.advance(PLAYER, new Vec3(0.0, 0.5, 0.0));
+		ClientSessionState.resetAll();
 		assertNull(ThirdPersonFraming.sample(PLAYER, 0.5f));
 	}
 

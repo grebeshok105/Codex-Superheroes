@@ -31,6 +31,9 @@ public final class RenderedPoseCache {
 
 	static {
 		ClientSessionState.register(RenderedPoseCache::clearAll);
+		// Snapshots are keyed by entity id inside one ClientLevel; a level swap
+		// (dimension change, respawn, rejoin) must not leak poses across.
+		ClientSessionState.registerLevelReset(RenderedPoseCache::clearAll);
 	}
 
 	private RenderedPoseCache() {

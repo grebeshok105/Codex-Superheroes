@@ -201,13 +201,15 @@ class HomelanderPoseMathTest {
 	}
 
 	@Test
-	void firstObservedTickFlyingDefaultsToAirborneStart() {
+	void firstObservedTickFlyingStaysInHover() {
 		// entry created while the player is already flying (observer joined or
-		// the player entered render distance mid-flight): there is no prior
-		// ground reading, so the edge resolves airborne instead of crouching
+		// the player entered render distance mid-flight): late tracking lands
+		// in HOVER — the TAKEOFF one-shot is skipped like every other missed
+		// start event (§7 stage 15), never replayed from the airborne start.
 		HomelanderPoseState.Entry entry = new HomelanderPoseState.Entry();
 		entry.advance(true, false);
-		assertEquals(0.28f + 0.05f, entry.takeoff.time(), 1e-6);
+		assertEquals(0.8f, entry.takeoff.time(), 1e-6,
+				"takeoff clock stays parked at clip end — no replay for late trackers");
 	}
 
 	@Test

@@ -26,6 +26,14 @@ public final class FlightPoseMath {
 	public static final float DEFAULT_HALF_LIFE_TICKS = 3f;
 
 	/**
+	 * Squared per-tick position delta (blocks/tick)² past which a move cannot
+	 * be flight motion — 8 b/t covers dimension changes, respawns and teleports.
+	 * Consumers feeding a pose path from position deltas inject a zero delta
+	 * instead of letting the spike read as a huge speed for one tick.
+	 */
+	public static final double TELEPORT_MIN_DELTA_SQ = 64.0;
+
+	/**
 	 * Upright cone half-angle for {@link #directional}: 90° − 4° margin.
 	 * Past this the body reads belly-up — the inversion PR #138 removed.
 	 */

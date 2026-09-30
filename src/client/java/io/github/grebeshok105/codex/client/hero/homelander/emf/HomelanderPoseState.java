@@ -6,6 +6,7 @@ import io.github.grebeshok105.codex.client.ClientSessionState;
 import io.github.grebeshok105.codex.client.core.camera.ThirdPersonFraming;
 import io.github.grebeshok105.codex.client.core.emf.EmfPresentationOwnership;
 import io.github.grebeshok105.codex.client.core.flight.DirectionalPoseSource;
+import io.github.grebeshok105.codex.client.core.flight.FlightPoseMath;
 import io.github.grebeshok105.codex.client.core.vfx.params.VfxParams;
 import io.github.grebeshok105.codex.client.core.vfx.params.VfxParamsLoader;
 import io.github.grebeshok105.codex.mechanic.flight.FlightMode;
@@ -47,6 +48,16 @@ import java.util.UUID;
  * {@link #startMilk}/{@link #cancelMilk}: {@code milk_w} = 1 while the clip
  * is inside 6.3 s and returns to 0 the tick it finishes or cancels, and the
  * master weight eases in/out with it (§7 stage 8).
+ *
+ * <p>Late tracking (§7 stage 15): an observer that starts tracking a player
+ * mid-presentation sees a fresh {@link Entry}. The flight sync resends within
+ * {@code SYNC_INTERVAL_TICKS}, so the pose lands in HOVER directly — the
+ * takeoff clock starts parked at its end and the activation edge only fires
+ * once the entry has observed a tick ({@code primed}), never on the entry's
+ * first advance. The one-shot clips (TAKEOFF, HAND CLAP, MILK DRINK) arm
+ * only on their start events: a missed event means the clip simply never
+ * plays for that observer — an accepted gap, since re-deriving clip progress
+ * from entity state would need extra wire data for near-zero gain.
  */
 public final class HomelanderPoseState {
 
@@ -105,6 +116,13 @@ public final class HomelanderPoseState {
 		/** Signed forward/strafe speeds (b/t) projected on body yaw from the smoothed velocity. */
 		float forward;
 		float strafe;
+		/**
+		 * Whether the entry has completed a first {@link #advance} tick. Gates
+		 * the takeoff edge: an entry born while its player is already flying
+		 * (late tracking) must not replay the TAKEOFF clip — the presentation
+		 * starts in HOVER (late tracking, §7 stage 15).
+		 */
+		private boolean primed;
 		private double lastX;
 		private double lastY;
 		private double lastZ;
@@ -114,6 +132,14 @@ public final class HomelanderPoseState {
 		private float velY;
 		private float velZ;
 		private boolean boostEngaged;
+
+		Entry() {
+			// Park the takeoff clock at clip end: it free-runs forward whenever
+			// unfinished, so an entry born mid-flight (late tracking) would
+			// otherwise produce a full TAKEOFF replay — weight pinned at 1 for
+			// the whole hold — on the observer that missed the activation.
+			takeoff.reset(HomelanderPoseMath.TAKEOFF_LENGTH_SECONDS);
+		}
 
 		/**
 		 * One client tick of state. The hover clock is never reset (§7 stage 2).
@@ -129,8 +155,9 @@ public final class HomelanderPoseState {
 		 * previous-tick flag is the correct activation-time value on both paths.
 		 */
 		void advance(boolean flying, boolean groundedNow) {
-			boolean activation = flying && !this.flying;
+			boolean activation = flying && primed && !this.flying;
 			this.flying = flying;
+			primed = true;
 			activePrev = active;
 			active = HomelanderPoseMath.activeWeight(active, flying || clapPlaying || milkPlaying, 1f);
 			takeoffWeightPrev = takeoffWeight;
@@ -174,6 +201,14 @@ public final class HomelanderPoseState {
 			float rawX = hasLastPos ? (float) (x - lastX) : 0f;
 			float rawY = hasLastPos ? (float) (y - lastY) : 0f;
 			float rawZ = hasLastPos ? (float) (z - lastZ) : 0f;
+			if (rawX * rawX + rawY * rawY + rawZ * rawZ > FlightPoseMath.TELEPORT_MIN_DELTA_SQ) {
+				// Dimension change / teleport: relocation, not motion — inject a
+				// zero delta so the smoothed velocity decays instead of spiking
+				// into a false BOOST latch (§7 stage 15).
+				rawX = 0f;
+				rawY = 0f;
+				rawZ = 0f;
+			}
 			lastX = x;
 			lastY = y;
 			lastZ = z;
@@ -232,9 +267,6 @@ public final class HomelanderPoseState {
 			Entry entry = STATES.get(player.getUUID());
 			if (entry == null) {
 				entry = new Entry();
-				// seed the support flag so a takeoff already active on the first
-				// observed tick still resolves the pre-activation ground state
-				entry.grounded = player.onGround();
 				STATES.put(player.getUUID(), entry);
 			}
 			// onGround is authoritative for the local player and synced for remote

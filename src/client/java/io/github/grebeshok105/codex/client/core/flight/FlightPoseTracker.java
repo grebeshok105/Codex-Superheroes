@@ -130,6 +130,12 @@ public final class FlightPoseTracker {
 		Vec3 velocity = tracked.lastPos != null ? pos.subtract(tracked.lastPos) : Vec3.ZERO;
 		float yawRate = tracked.lastPos != null
 				? Mth.wrapDegrees(player.getYRot() - tracked.lastYaw) : 0f;
+		if (velocity.lengthSqr() > FlightPoseMath.TELEPORT_MIN_DELTA_SQ) {
+			// Dimension change / teleport: the delta is relocation, not motion —
+			// keep it out of the pose target and the yaw-rate roll.
+			velocity = Vec3.ZERO;
+			yawRate = 0f;
+		}
 		tracked.lastPos = pos;
 		tracked.lastYaw = player.getYRot();
 

@@ -34,13 +34,21 @@ public final class EmfBridge {
 	 * Register a singleton animation variable (evaluated once per part per
 	 * frame — the supplier must not allocate). {@code name} is the full
 	 * variable name as the jem references it, e.g. {@code superheroes_hl_w}.
+	 *
+	 * <p>The supplier is wrapped in an {@link EmfProfiler} counter — a no-op
+	 * one boolean read deep unless the VFX debug HUD flag is on, so the wrap
+	 * is decided once here and stays valid under live toggling.
 	 */
 	public static void registerFloatVariable(String name, String explanation, Supplier<Float> supplier) {
 		if (!isAvailable()) {
 			return;
 		}
 		try {
-			EMFAnimationApi.registerSingletonAnimationVariable(ModId.MOD_ID, name, explanation, supplier);
+			EMFAnimationApi.registerSingletonAnimationVariable(ModId.MOD_ID, name, explanation,
+					() -> {
+						EmfProfiler.count(name);
+						return supplier.get();
+					});
 		} catch (Exception e) {
 			LOGGER.error("EMF variable {} failed to register", name, e);
 		}
