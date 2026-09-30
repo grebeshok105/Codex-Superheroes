@@ -4,6 +4,7 @@ import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.client.ClientFlightState;
 import io.github.grebeshok105.codex.client.ClientSessionState;
 import io.github.grebeshok105.codex.client.core.emf.EmfPresentationOwnership;
+import io.github.grebeshok105.codex.client.core.flight.DirectionalPoseSource;
 import io.github.grebeshok105.codex.client.core.vfx.params.VfxParams;
 import io.github.grebeshok105.codex.client.core.vfx.params.VfxParamsLoader;
 import io.github.grebeshok105.codex.mechanic.flight.FlightMode;
@@ -86,8 +87,6 @@ final class HomelanderPoseState {
 		/** Signed forward/strafe speeds (b/t) projected on body yaw from the smoothed velocity. */
 		float forward;
 		float strafe;
-		float pitchDeg;
-		float bankDeg;
 		private double lastX;
 		private double lastY;
 		private double lastZ;
@@ -267,6 +266,28 @@ final class HomelanderPoseState {
 	static float boostWeight(UUID uuid, float partial) {
 		Entry entry = entryOf(uuid);
 		return entry == null ? 0f : entry.boostWeight(partial);
+	}
+
+	/**
+	 * Directional flight inputs for {@code FlightPoseMath.directional} (§7
+	 * stage 5), served to {@code FlightPoseTracker} through
+	 * {@link DirectionalPoseSource}: the same smoothed render velocity that
+	 * drives the boost latch — projected forward/strafe components plus the
+	 * vertical component — and the smoothed boost weight. {@code false}
+	 * while the entity has no entry (e.g. the tracker ticks before the pose
+	 * state on the first flying tick), so the caller falls back to the
+	 * legacy target instead of reading zeros.
+	 */
+	static boolean fillDirectional(UUID uuid, DirectionalPoseSource.Input out) {
+		Entry entry = entryOf(uuid);
+		if (entry == null) {
+			return false;
+		}
+		out.forward = entry.forward;
+		out.strafe = entry.strafe;
+		out.vertical = entry.velY;
+		out.boostWeight = entry.boostWeight;
+		return true;
 	}
 
 	static float takeoffWeight(UUID uuid, float partial) {

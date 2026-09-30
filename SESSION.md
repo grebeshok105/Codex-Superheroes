@@ -1,5 +1,15 @@
 # SESSION.md
 
+## Completed this session (Homelander EMF — Stage 5)
+
+- Stage 5 of `docs/superpowers/plans/2026-09-30-homelander-emf-presentation.md` («procedural flight transforms and backward flight») implemented on `devin/1790803277-homelander-transforms-s5` (base Stage-4 head `4adfb99d`), `mod_version` 4.4.0 → 4.5.0.
+- `FlightPoseMath.directional(forward, strafe, vertical, yawRateDegPerTick, boostWeight, p)`: continuous signed-speed pose target for EMF owners — pitch `lerp(boostWeight, clamp(forward/hoverRefSpeed,±1) × (forward ≥ 0 ? hoverForwardPitch 12 : hoverBackwardPitch 8), emfBoostRootPitch)`, a bounded `verticalPitch 6` term gated at `boostWeight < 0.5` and clamped inside the ±86° upright cone (PR #138 descent rule kept), roll `clamp(−strafe/strafeRef 0.5 × strafeRoll 14 − yawRate × rollFactor, ±rollMax)`. Smoothing stays in `step` (halfLifeTicks) — frame-rate independent by construction.
+- New seam `client/core/flight/DirectionalPoseSource`: hero-agnostic provider registry (same shape as `EmfPresentationOwnership`). `FlightPoseTracker` calls `directional` only when `EmfPresentationOwnership.isOwned` **and** a provider fills the tracked entry's reusable `Input` — per-tick `Input` holder, zero per-frame allocation; non-owned players and owners before their first pose-state tick take the byte-identical `target(...)` path. Homelander registers `HomelanderPoseState.fillDirectional` from `HomelanderEmf.register`: forward/strafe/vertical come from the already-smoothed render velocity (half-life 3 ticks, Stage 4), yawRate from the tracker's existing per-tick yaw delta — no second smoothing path. Dead `Entry.pitchDeg/bankDeg` stubs removed (body tilt lives in the tracker → `PlayerRendererMixin`, not the pose state).
+- Tuning added to `vfx/homelander/flight.json` (the `poseParams` overlay): `hoverForwardPitch 12`, `hoverBackwardPitch 8`, `verticalRef 0.6`, `verticalPitch 6`, `strafeRef 0.5`, `strafeRoll 14`. `emfBoostRootRoll` (2.985) stays unused — the Stage 5 roll formula is verbatim dynamic, noted for a later stage.
+- NOT touched: `ClientFlightState`, `FlightPhaseResolver`, trail/sound gating, camera (Stage 6), clip clocks.
+- Tests added: 9 in `FlightPoseMathTest` (backward pitch ∈ [−8, 0] sweep, strafe roll opposite signs, roll clamp, boost blend to 86/midpoint/boostPitch fallback, vertical gating at w=0.5, full-speed descent never >86/no sign flip, step convergence 30 vs 240 fps within 0.1° after 1 s, alternating forward/backward boundedness).
+- Verification: `./gradlew test --no-daemon` green; `./gradlew qualityGate --no-daemon` green (sanity, jar isolation, 364 gametests, ArchUnit baseline, datagen check). No in-game verification per the standing rule — Stage 5 checklist marked unverified in the PR.
+
 ## Completed this session (Homelander EMF — Stage 4)
 
 - Stage 4 of `docs/superpowers/plans/2026-09-30-homelander-emf-presentation.md` («BOOST») implemented on `devin/1790800950-homelander-boost-s4` (base Stage-2 head `309c816b`), `mod_version` 4.3.0 → 4.4.0.

@@ -2,6 +2,7 @@ package io.github.grebeshok105.codex.client.hero.homelander.emf;
 
 import io.github.grebeshok105.codex.client.core.emf.EmfBridge;
 import io.github.grebeshok105.codex.client.core.emf.EmfPresentationOwnership;
+import io.github.grebeshok105.codex.client.core.flight.DirectionalPoseSource;
 import io.github.grebeshok105.codex.client.core.module.HeroClientContext;
 import io.github.grebeshok105.codex.client.core.render.SkinResolver;
 import io.github.grebeshok105.codex.hero.homelander.HomelanderHero;
@@ -26,6 +27,10 @@ public final class HomelanderEmf {
 		}
 		EmfPresentationOwnership.register(
 				player -> HomelanderHero.ID.equals(SkinResolver.heroIdFor(player)));
+		// Directional flight inputs for the pose tracker (§7 stage 5):
+		// the same smoothed render velocity the boost latch consumes.
+		DirectionalPoseSource.register((player, out) ->
+				HomelanderPoseState.fillDirectional(player.getUUID(), out));
 		HomelanderEmfVariables.register();
 		// EMF must fall back to the vanilla model for everyone we do not own —
 		// otherwise every player on the server would render through our jem.

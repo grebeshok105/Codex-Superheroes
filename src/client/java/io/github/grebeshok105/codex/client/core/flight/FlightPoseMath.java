@@ -16,11 +16,20 @@ import net.minecraft.world.phys.Vec3;
  * {@code rollMax}, {@code halfLifeTicks}. A presentation that carries a
  * {@code poseParams} overlay (e.g. EMF-owned Homelander) may additionally
  * supply {@code emfBoostRootPitch} — the authored BOOST root rotation —
- * which then replaces {@code boostPitch} as the BOOST pitch target.
+ * which then replaces {@code boostPitch} as the BOOST pitch target, plus
+ * the {@link #directional} keys {@code hoverForwardPitch},
+ * {@code hoverBackwardPitch}, {@code verticalRef}/{@code verticalPitch}
+ * and {@code strafeRef}/{@code strafeRoll}.
  */
 public final class FlightPoseMath {
 	/** Default {@link #step} half-life in ticks (also the pose.json default). */
 	public static final float DEFAULT_HALF_LIFE_TICKS = 3f;
+
+	/**
+	 * Upright cone half-angle for {@link #directional}: 90° − 4° margin.
+	 * Past this the body reads belly-up — the inversion PR #138 removed.
+	 */
+	private static final float UPRIGHT_PITCH_LIMIT = 86f;
 
 	private FlightPoseMath() {
 	}
@@ -50,6 +59,47 @@ public final class FlightPoseMath {
 		};
 		float rollMax = p.number("rollMax", 25f);
 		float roll = clamp(-yawRateDegPerTick * p.number("rollFactor", 2.5f), -rollMax, rollMax);
+		return new FlightBodyTransform(pitch, roll);
+	}
+
+	/**
+	 * Directional pose target for EMF-owned players (plan §7 stage 5) —
+	 * continuous in signed speed, no phase switch:
+	 *
+	 * <ul><li>pitch follows {@code forward} — up to {@code hoverForwardPitch}
+	 * ahead and down to −{@code hoverBackwardPitch} behind — then lerps to
+	 * the authored {@code emfBoostRootPitch} as {@code boostWeight} → 1.</li>
+	 * <li>while {@code boostWeight < 0.5} a bounded vertical-speed term leans
+	 * the nose into climbs/descents; the sum is clamped to the upright cone
+	 * so a dive can never flip the body belly-up (the PR #138 rule).</li>
+	 * <li>roll banks from strafe plus yaw rate, clamped to ±{@code rollMax}.</li></ul>
+	 *
+	 * <p>Smoothing stays the caller's job via {@link #step}; inputs come from
+	 * the presentation's already-smoothed render velocity through
+	 * {@link DirectionalPoseSource}, never a second smoothing path.
+	 */
+	public static FlightBodyTransform directional(float forward, float strafe,
+			float vertical, float yawRateDegPerTick, float boostWeight, VfxParams p) {
+		float hoverRef = Math.max(1e-3f, p.number("hoverRefSpeed", 0.3f));
+		float hoverPitch = clamp(forward / hoverRef, -1f, 1f)
+				* (forward >= 0f
+						? p.number("hoverForwardPitch", 12f)
+						: p.number("hoverBackwardPitch", 8f));
+		float w = clamp01(boostWeight);
+		float pitch = hoverPitch
+				+ (p.number("emfBoostRootPitch", p.number("boostPitch", 80f)) - hoverPitch) * w;
+		if (w < 0.5f) {
+			float verticalRef = Math.max(1e-3f, p.number("verticalRef", 0.6f));
+			pitch = clamp(pitch + clamp(-vertical / verticalRef, -1f, 1f)
+					* p.number("verticalPitch", 6f),
+					-UPRIGHT_PITCH_LIMIT, UPRIGHT_PITCH_LIMIT);
+		}
+		float rollMax = p.number("rollMax", 25f);
+		float strafeRef = Math.max(1e-3f, p.number("strafeRef", 0.5f));
+		float roll = clamp(
+				-strafe / strafeRef * p.number("strafeRoll", 14f)
+						- yawRateDegPerTick * p.number("rollFactor", 2.5f),
+				-rollMax, rollMax);
 		return new FlightBodyTransform(pitch, roll);
 	}
 
