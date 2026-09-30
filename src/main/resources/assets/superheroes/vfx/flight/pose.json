@@ -10,5 +10,13 @@
   "rollFactor": 2.5,
   "rollMax": 25,
   "loopRefSpeed": 1.0,
-  "loopVolumeMax": 0.85
+  "loopVolumeMax": 0.85,
+  "ringAccelDelta": 0.08,
+  "ringMinSpeed": 0.45,
+  "ringCooldownTicks": 20,
+  "landRefSpeed": 1.2,
+  "landVolumeMin": 0.45,
+  "landVolumeMax": 2.0,
+  "landPitchHigh": 1.02,
+  "landPitchLow": 0.62
 }

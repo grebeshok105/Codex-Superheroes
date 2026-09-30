@@ -10,8 +10,9 @@ import org.jetbrains.annotations.Nullable;
  * ACTION as one-shots), the one-shot effects spawned while flying, and the
  * entity-bound sounds. {@code trailEffect} runs while CRUISE/BOOST and
  * finishes itself when the phase leaves; {@code boostEffect} fires once on
- * BOOST entry. Both are {@code VfxRuntime} effect ids and may be
- * {@code null} when the hero wants no effect there.
+ * BOOST entry; {@code speedRingEffect} fires on hard acceleration events
+ * (cooldown-gated in the tracker). All are {@code VfxRuntime} effect ids and
+ * may be {@code null} when the hero wants no effect there.
  */
 public record FlightPresentation(
 		ResourceLocation takeoffClip,
@@ -21,6 +22,7 @@ public record FlightPresentation(
 		ResourceLocation landClip,
 		@Nullable ResourceLocation trailEffect,
 		@Nullable ResourceLocation boostEffect,
+		@Nullable ResourceLocation speedRingEffect,
 		SoundEvent loopSound,
 		SoundEvent takeoffSound,
 		SoundEvent boostSound,

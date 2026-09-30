@@ -134,7 +134,7 @@ public final class FlightPoseTracker {
 
 		FlightPhase phase = state.phase();
 		if (phase != tracked.phase) {
-			onPhaseChange(client, player, tracked, phase, presentation);
+			onPhaseChange(client, player, tracked, phase, presentation, pose, velocity);
 			tracked.phase = phase;
 			tracked.trailSpawned = false;
 		}
@@ -150,10 +150,20 @@ public final class FlightPoseTracker {
 			tracked.trailSpawned = true;
 			spawnEffect(player, presentation.trailEffect());
 		}
+
+		if ((phase == FlightPhase.CRUISE || phase == FlightPhase.BOOST)
+				&& presentation.speedRingEffect() != null
+				&& SpeedRingGate.shouldFire(tracked.prevVelocity, velocity, pose,
+						tracked.lastSpeedRingTick, client.level.getGameTime())) {
+			tracked.lastSpeedRingTick = client.level.getGameTime();
+			spawnEffect(player, presentation.speedRingEffect(), velocity, 1f);
+		}
+		tracked.prevVelocity = velocity;
 	}
 
 	private static void onPhaseChange(Minecraft client, AbstractClientPlayer player,
-			Tracked tracked, FlightPhase phase, FlightPresentation presentation) {
+			Tracked tracked, FlightPhase phase, FlightPresentation presentation,
+			VfxParams pose, Vec3 velocity) {
 		ResourceLocation baseClip = switch (phase) {
 			case TAKEOFF, HOVER -> presentation.hoverClip();
 			case CRUISE -> presentation.cruiseClip();
@@ -180,13 +190,14 @@ public final class FlightPoseTracker {
 			case BOOST -> {
 				playOneShot(client, player, presentation.boostSound());
 				if (presentation.boostEffect() != null) {
-					spawnEffect(player, presentation.boostEffect());
+					spawnEffect(player, presentation.boostEffect(), velocity, 1f);
 				}
 			}
 			case LANDING -> {
 				PlayerAnimator.play(entityId, presentation.landClip(),
 						PlayerAnimator.Layer.ACTION, ACTION_FADE_TICKS);
-				playOneShot(client, player, presentation.landSound());
+				playLandingSound(client, player, presentation.landSound(),
+						tracked.prevVelocity, pose);
 			}
 			default -> {
 			}
@@ -218,10 +229,33 @@ public final class FlightPoseTracker {
 				1f, 1f, player, player.getRandom().nextLong()));
 	}
 
+	/**
+	 * Landing thump scaled by approach speed: {@code prevVelocity} still
+	 * carries the descent/dive vector because the touchdown tick's own
+	 * position delta is already ~0. Keys in {@code flight/pose.json}:
+	 * {@code landRefSpeed} (b/t mapped to full impact) plus the
+	 * {@link LandingSoundScale} keys.
+	 */
+	private static void playLandingSound(Minecraft client, AbstractClientPlayer player,
+			SoundEvent sound, Vec3 approachVelocity, VfxParams pose) {
+		double impact = Math.max(Math.abs(approachVelocity.y),
+				Math.hypot(approachVelocity.x, approachVelocity.z));
+		LandingSoundScale scale = LandingSoundScale.of(pose);
+		float factor = (float) LandingSoundScale.speedFactor(
+				impact, pose.number("landRefSpeed", 1.2f));
+		client.getSoundManager().play(new EntityBoundSoundInstance(sound, SoundSource.PLAYERS,
+				scale.volume(factor), scale.pitch(factor), player, player.getRandom().nextLong()));
+	}
+
 	private static void spawnEffect(AbstractClientPlayer player, ResourceLocation effect) {
+		spawnEffect(player, effect, player.position(), 1f);
+	}
+
+	private static void spawnEffect(AbstractClientPlayer player, ResourceLocation effect,
+			Vec3 target, float scale) {
 		VfxRuntime.spawn(new VfxSpawn(effect, player, player.getId(),
-				player.position(), player.position(),
-				1f, player.getRandom().nextInt(), VfxParamsLoader.get(effect)));
+				player.position(), target,
+				scale, player.getRandom().nextInt(), VfxParamsLoader.get(effect)));
 	}
 
 	private static void release(Minecraft client, int entityId, Tracked tracked) {
@@ -247,12 +281,14 @@ public final class FlightPoseTracker {
 
 	private static final class Tracked {
 		private Vec3 lastPos;
+		private Vec3 prevVelocity = Vec3.ZERO;
 		private float lastYaw;
 		private FlightPhase phase;
 		private FlightBodyTransform current = FlightBodyTransform.IDENTITY;
 		private FlightBodyTransform previous = FlightBodyTransform.IDENTITY;
 		private ResourceLocation baseClip;
 		private boolean trailSpawned;
+		private long lastSpeedRingTick = -1;
 		private FlightLoopSound loop;
 	}
 
