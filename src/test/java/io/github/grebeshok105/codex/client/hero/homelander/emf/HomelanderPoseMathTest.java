@@ -328,6 +328,19 @@ class HomelanderPoseMathTest {
 		assertTrue(entry.boostWeight > 0.95f, "recovers once flying again: " + entry.boostWeight);
 	}
 
+	// --- Stage 6: third-person framing body centre (§7 stage 6) ---
+
+	@Test
+	void bodyCentreHeightAddsPixelLiftToStandingChest() {
+		assertEquals(1.1f, HomelanderPoseMath.bodyCentreHeight(0f), 1e-6,
+				"no root lift keeps the standing chest height");
+		assertEquals(1.1f + 6.619f / 16f,
+				HomelanderPoseMath.bodyCentreHeight(HomelanderPoseMath.DEFAULT_HOVER_ROOT_TY),
+				1e-6, "feet + 1.1 + hoverRootTy/16 from the plan");
+		assertEquals(2.1f, HomelanderPoseMath.bodyCentreHeight(16f), 1e-6,
+				"16 model pixels are one block");
+	}
+
 	@Test
 	void boostWeightReadInterpolatesBetweenTickValues() {
 		HomelanderPoseState.Entry entry = new HomelanderPoseState.Entry();

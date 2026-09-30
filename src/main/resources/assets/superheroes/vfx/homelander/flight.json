@@ -36,5 +36,6 @@
   "verticalRef": 0.6,
   "verticalPitch": 6.0,
   "strafeRef": 0.5,
-  "strafeRoll": 14.0
+  "strafeRoll": 14.0,
+  "hoverRootTy": 6.619
 }
