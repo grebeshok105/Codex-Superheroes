@@ -24,7 +24,8 @@
   "surfaceOffset": 0.05,
   "distortionRadius": 1.6,
   "distortionStrength": 0.6,
-  "landBaseVolume": 0.8,
-  "landVolumeScale": 0.5,
-  "landPitch": 1.0
+  "landingExtraBursts": 2,
+  "landShakeRadius": 10,
+  "landShakeIntensity": 0.7,
+  "landShakeTicks": 10
 }

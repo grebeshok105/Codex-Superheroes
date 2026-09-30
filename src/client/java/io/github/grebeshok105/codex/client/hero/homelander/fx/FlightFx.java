@@ -11,16 +11,17 @@ import io.github.grebeshok105.codex.client.core.vfx.anchor.HumanoidAnchors;
 import io.github.grebeshok105.codex.client.core.vfx.backend.VfxBackends;
 import io.github.grebeshok105.codex.client.core.vfx.params.VfxParams;
 import io.github.grebeshok105.codex.client.core.vfx.params.VfxParamsLoader;
+import io.github.grebeshok105.codex.client.core.vfx.pattern.CameraImpulse;
 import io.github.grebeshok105.codex.client.core.vfx.pattern.ImpactPattern;
 import io.github.grebeshok105.codex.client.core.vfx.pattern.ShockwavePattern;
 import io.github.grebeshok105.codex.client.core.vfx.pattern.TrailPattern;
 import io.github.grebeshok105.codex.sound.HomelanderSounds;
 import io.github.grebeshok105.codex.mechanic.flight.FlightPhase;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
@@ -40,8 +41,9 @@ import java.util.List;
  *   <li>{@link #boost} — emitter burst + shock ring on BOOST entry;</li>
  *   <li>{@link #landing} — impact composite for the {@code LANDING} event:
  *       dust emitter + distortion through {@link ImpactPattern}, an expanding
- *       {@link ShockwavePattern}, and {@code homelander.flight.land} — the
- *       single landing sound.</li>
+ *       {@link ShockwavePattern}, proximity-scaled camera shake, and
+ *       {@code homelander.flight.land} — volume/pitch recovered from the wire
+ *       scale via {@link LandingSoundMapping}.</li>
  * </ul>
  */
 public final class FlightFx {
@@ -222,7 +224,7 @@ public final class FlightFx {
 		}
 	}
 
-	/** LANDING event composite: emitter + distortion + shock ring + land sound. */
+	/** LANDING event composite: emitter + distortion + shock ring + shake + land sound. */
 	private static final class LandingFx implements VfxEffect {
 		private final ShockwavePattern ring;
 
@@ -234,14 +236,30 @@ public final class FlightFx {
 					p.number("landingRingRadius", 5f) * scale,
 					Math.max(1, (int) p.number("landingRingTicks", 14f)),
 					p.color("landingRingColor", 0x70FFE07A), p.number("landingBand", 0.18f));
-			ImpactPattern.spawn(VfxBackends.current(), center, UP, LANDING_EMITTER, p);
-			float volume = Mth.clamp(
-					p.number("landBaseVolume", 0.8f) + scale * p.number("landVolumeScale", 0.5f),
-					0f, 4f);
+			LandingSoundMapping.Mapped sound = LandingSoundMapping.fromScale(scale);
+			float s = sound.intensity();
+			int extraBursts = Math.round(s * p.number("landingExtraBursts", 2f));
+			ImpactPattern.spawn(VfxBackends.current(), center, UP, LANDING_EMITTER, p, extraBursts);
+			shake(center, p, s);
 			Minecraft.getInstance().getSoundManager().play(new SimpleSoundInstance(
-					HomelanderSounds.FLIGHT_LAND, SoundSource.PLAYERS, volume,
-					p.number("landPitch", 1f), RandomSource.create(),
+					HomelanderSounds.FLIGHT_LAND, SoundSource.PLAYERS, sound.volume(),
+					sound.pitch(), RandomSource.create(),
 					center.x, center.y, center.z));
+		}
+
+		/** Impact-scaled camera shake for nearby observers (same proximity falloff as clap). */
+		private static void shake(Vec3 center, VfxParams p, float s) {
+			float shakeRadius = p.number("landShakeRadius", 10f);
+			LocalPlayer self = Minecraft.getInstance().player;
+			if (s <= 0f || self == null || shakeRadius <= 0f) {
+				return;
+			}
+			double dist = self.position().distanceTo(center);
+			if (dist < shakeRadius) {
+				float proximity = 1f - (float) (dist / shakeRadius);
+				CameraImpulse.shake(p.number("landShakeIntensity", 0.7f) * s * proximity,
+						Math.max(1, (int) p.number("landShakeTicks", 10f)));
+			}
 		}
 
 		@Override
