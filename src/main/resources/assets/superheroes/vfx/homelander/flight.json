@@ -26,5 +26,9 @@
   "distortionStrength": 0.6,
   "landBaseVolume": 0.8,
   "landVolumeScale": 0.5,
-  "landPitch": 1.0
+  "landPitch": 1.0,
+  "emfBoostEnter": 0.9,
+  "emfBoostExit": 0.6,
+  "emfBoostRootPitch": 86.0,
+  "emfBoostRootRoll": 2.985
 }

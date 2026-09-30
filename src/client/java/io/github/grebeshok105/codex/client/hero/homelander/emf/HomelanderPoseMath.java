@@ -21,7 +21,62 @@ final class HomelanderPoseMath {
 	/** Airborne activation starts past the crouch dip (root ty bottoms at 0.20 s). */
 	static final float TAKEOFF_AIRBORNE_START_SECONDS = 0.28f;
 
+	/** Fallback {@code emfBoostEnter} (b/t forward) when the vfx params omit it. */
+	static final float DEFAULT_BOOST_ENTER = 0.9f;
+	/** Fallback {@code emfBoostExit} (b/t forward) when the vfx params omit it. */
+	static final float DEFAULT_BOOST_EXIT = 0.6f;
+	/** SUPERSONIC flight boosts at any forward speed above this (plan §7 stage 4). */
+	static final float SUPERSONIC_BOOST_FORWARD = 0.3f;
+	private static final float BOOST_HALF_LIFE_TICKS = 4f;
+	private static final float VELOCITY_HALF_LIFE_TICKS = 3f;
+
 	private HomelanderPoseMath() {
+	}
+
+	/**
+	 * BOOST latch with hysteresis (§7 stage 4): engages at {@code forward >= enter}
+	 * — or at {@code forward > 0.3} while SUPERSONIC — and releases only below
+	 * {@code exit}. Between the two thresholds the previous state holds, so
+	 * jitter inside the band cannot flap the clip. Backward and sideways
+	 * speeds project to {@code forward <= 0} and never engage.
+	 */
+	static boolean boostEngaged(boolean was, float forward, boolean supersonic,
+			float enter, float exit) {
+		if (forward >= enter || (supersonic && forward > SUPERSONIC_BOOST_FORWARD)) {
+			return true;
+		}
+		if (forward < exit) {
+			return false;
+		}
+		return was;
+	}
+
+	/**
+	 * Signed speed along the body-yaw forward axis, in blocks/tick. Minecraft
+	 * yaw: 0 faces +Z, 90 faces −X — the forward axis is (−sin θ, cos θ).
+	 */
+	static float forwardComponent(float vx, float vz, float bodyYawDeg) {
+		double rad = Math.toRadians(bodyYawDeg);
+		return (float) (-Math.sin(rad) * vx + Math.cos(rad) * vz);
+	}
+
+	/**
+	 * Signed speed along the body-yaw right axis, in blocks/tick — the
+	 * forward axis rotated −90°: (−cos θ, −sin θ).
+	 */
+	static float strafeComponent(float vx, float vz, float bodyYawDeg) {
+		double rad = Math.toRadians(bodyYawDeg);
+		return (float) (-Math.cos(rad) * vx - Math.sin(rad) * vz);
+	}
+
+	/** BOOST weight approach, half-life 4 ticks (§7 stage 4). */
+	static float boostWeight(float current, boolean engaged, float dtTicks) {
+		return approach(current, engaged ? 1f : 0f, BOOST_HALF_LIFE_TICKS, dtTicks);
+	}
+
+	/** Smoothed render velocity component, half-life 3 ticks (§7 stage 4). */
+	static float smoothedVelocity(float current, float raw, float dtTicks) {
+		return approach(current, raw, VELOCITY_HALF_LIFE_TICKS, dtTicks);
 	}
 
 	/** Exponential approach of {@code current} toward the flight target, half-life 3 ticks. */

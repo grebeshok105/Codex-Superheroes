@@ -1,11 +1,17 @@
 package io.github.grebeshok105.codex.client.hero.homelander.emf;
 
+import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.client.ClientFlightState;
 import io.github.grebeshok105.codex.client.ClientSessionState;
 import io.github.grebeshok105.codex.client.core.emf.EmfPresentationOwnership;
+import io.github.grebeshok105.codex.client.core.vfx.params.VfxParams;
+import io.github.grebeshok105.codex.client.core.vfx.params.VfxParamsLoader;
+import io.github.grebeshok105.codex.mechanic.flight.FlightMode;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -33,6 +39,8 @@ final class HomelanderPoseState {
 
 	private static final int MAX_ENTITIES = 64;
 	private static final float TICK_SECONDS = 1f / 20f;
+	/** {@code vfx/homelander/flight.json} — carries the {@code emfBoost*} keys (§7 stage 4). */
+	private static final ResourceLocation FLIGHT_PARAMS = ModId.of("homelander/flight");
 
 	private static final Map<UUID, Entry> STATES = new LinkedHashMap<>(16, 0.75f, true) {
 		@Override
@@ -70,14 +78,25 @@ final class HomelanderPoseState {
 		float active;
 		float activePrev;
 		float boostWeight;
+		float boostWeightPrev;
 		float takeoffWeight;
 		float takeoffWeightPrev;
 		float clapWeight;
 		float milkWeight;
+		/** Signed forward/strafe speeds (b/t) projected on body yaw from the smoothed velocity. */
 		float forward;
 		float strafe;
 		float pitchDeg;
 		float bankDeg;
+		private double lastX;
+		private double lastY;
+		private double lastZ;
+		private boolean hasLastPos;
+		/** Per-tick position delta smoothed with half-life 3 ticks (b/t). */
+		private float velX;
+		private float velY;
+		private float velZ;
+		private boolean boostEngaged;
 
 		/**
 		 * One client tick of state. The hover clock is never reset (§7 stage 2).
@@ -98,6 +117,7 @@ final class HomelanderPoseState {
 			activePrev = active;
 			active = HomelanderPoseMath.activeWeight(active, flying, 1f);
 			takeoffWeightPrev = takeoffWeight;
+			boostWeightPrev = boostWeight;
 			if (activation) {
 				takeoff.reset(grounded ? 0f : HomelanderPoseMath.TAKEOFF_AIRBORNE_START_SECONDS);
 			}
@@ -112,6 +132,36 @@ final class HomelanderPoseState {
 			takeoffWeight = HomelanderPoseMath.takeoffWeight(takeoffWeight, flying, takeoff.time(), 1f);
 		}
 
+		/**
+		 * One client tick including the render-velocity update (§7 stage 4):
+		 * the raw position delta is smoothed with half-life 3 ticks — remote
+		 * players' server-lerped positions jitter the same way and the
+		 * smoothing plus hysteresis absorbs it — then projected onto the
+		 * body-yaw forward/right axes into {@link #forward}/{@link #strafe}.
+		 * The BOOST latch and weight (half-life 4 ticks) follow the signed
+		 * forward speed only.
+		 */
+		void advance(boolean flying, double x, double y, double z, float bodyYawDeg,
+				boolean supersonic, float boostEnter, float boostExit, boolean groundedNow) {
+			float rawX = hasLastPos ? (float) (x - lastX) : 0f;
+			float rawY = hasLastPos ? (float) (y - lastY) : 0f;
+			float rawZ = hasLastPos ? (float) (z - lastZ) : 0f;
+			lastX = x;
+			lastY = y;
+			lastZ = z;
+			hasLastPos = true;
+			velX = HomelanderPoseMath.smoothedVelocity(velX, rawX, 1f);
+			velY = HomelanderPoseMath.smoothedVelocity(velY, rawY, 1f);
+			velZ = HomelanderPoseMath.smoothedVelocity(velZ, rawZ, 1f);
+			forward = HomelanderPoseMath.forwardComponent(velX, velZ, bodyYawDeg);
+			strafe = HomelanderPoseMath.strafeComponent(velX, velZ, bodyYawDeg);
+			boostEngaged = HomelanderPoseMath.boostEngaged(
+					boostEngaged, forward, supersonic, boostEnter, boostExit);
+			advance(flying, groundedNow);
+			boostWeight = HomelanderPoseMath.boostWeight(
+					boostWeight, flying && boostEngaged, 1f);
+		}
+
 		/** Master weight interpolated to the render partial tick. */
 		float weight(float partial) {
 			return activePrev + (active - activePrev) * partial;
@@ -120,6 +170,11 @@ final class HomelanderPoseState {
 		/** TAKEOFF weight interpolated to the render partial tick. */
 		float takeoffWeight(float partial) {
 			return takeoffWeightPrev + (takeoffWeight - takeoffWeightPrev) * partial;
+		}
+
+		/** BOOST weight interpolated to the render partial tick. */
+		float boostWeight(float partial) {
+			return boostWeightPrev + (boostWeight - boostWeightPrev) * partial;
 		}
 
 		/** HOVER loop-local time, interpolated forward by the partial tick. */
@@ -137,6 +192,9 @@ final class HomelanderPoseState {
 			}
 			return;
 		}
+		VfxParams params = VfxParamsLoader.get(FLIGHT_PARAMS);
+		float boostEnter = params.number("emfBoostEnter", HomelanderPoseMath.DEFAULT_BOOST_ENTER);
+		float boostExit = params.number("emfBoostExit", HomelanderPoseMath.DEFAULT_BOOST_EXIT);
 		List<AbstractClientPlayer> players = level.players();
 		for (int i = 0; i < players.size(); i++) {
 			AbstractClientPlayer player = players.get(i);
@@ -154,7 +212,11 @@ final class HomelanderPoseState {
 			// onGround is authoritative for the local player and synced for remote
 			// ones (ClientboundMoveEntityPacket/ClientboundTeleportEntityPacket
 			// carry it); the entry keeps the previous tick's reading for the edge
-			entry.advance(ClientFlightState.get(player.getId()) != null, player.onGround());
+			ClientFlightState.State state = ClientFlightState.get(player.getId());
+			Vec3 pos = player.position();
+			entry.advance(state != null, pos.x, pos.y, pos.z, player.yBodyRot,
+					state != null && state.mode() == FlightMode.SUPERSONIC,
+					boostEnter, boostExit, player.onGround());
 		}
 	}
 
@@ -204,7 +266,7 @@ final class HomelanderPoseState {
 
 	static float boostWeight(UUID uuid, float partial) {
 		Entry entry = entryOf(uuid);
-		return entry == null ? 0f : entry.boostWeight;
+		return entry == null ? 0f : entry.boostWeight(partial);
 	}
 
 	static float takeoffWeight(UUID uuid, float partial) {

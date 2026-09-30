@@ -13,7 +13,10 @@ import net.minecraft.world.phys.Vec3;
  * {@code hoverMaxPitch}/{@code hoverRefSpeed},
  * {@code cruiseMinPitch}/{@code cruiseMaxPitch}/{@code cruiseRefSpeed},
  * {@code boostPitch}, {@code rollFactor},
- * {@code rollMax}, {@code halfLifeTicks}.
+ * {@code rollMax}, {@code halfLifeTicks}. A presentation that carries a
+ * {@code poseParams} overlay (e.g. EMF-owned Homelander) may additionally
+ * supply {@code emfBoostRootPitch} — the authored BOOST root rotation —
+ * which then replaces {@code boostPitch} as the BOOST pitch target.
  */
 public final class FlightPoseMath {
 	/** Default {@link #step} half-life in ticks (also the pose.json default). */
@@ -42,7 +45,7 @@ public final class FlightPoseMath {
 				yield lo + (hi - lo)
 						* clamp01(horizontalSpeed / Math.max(1e-3f, p.number("cruiseRefSpeed", 0.8f)));
 			}
-			case BOOST -> p.number("boostPitch", 80f);
+			case BOOST -> p.number("emfBoostRootPitch", p.number("boostPitch", 80f));
 			default -> 0f;
 		};
 		float rollMax = p.number("rollMax", 25f);

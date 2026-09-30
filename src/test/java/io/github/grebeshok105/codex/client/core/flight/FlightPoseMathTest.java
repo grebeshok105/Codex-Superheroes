@@ -60,6 +60,29 @@ class FlightPoseMathTest {
 	}
 
 	@Test
+	void boostTargetPrefersEmfRootPitchWhenPresent() {
+		// Owned (EMF) presentations carry the authored BOOST root rotation as
+		// emfBoostRootPitch in their poseParams overlay (§7 stage 4).
+		VfxParams emf = new VfxParams(java.util.Map.of(
+				"emfBoostRootPitch", 86f, "boostPitch", 80f), java.util.Map.of());
+		FlightBodyTransform boost = FlightPoseMath.target(
+				FlightPhase.BOOST, new Vec3(1.2, 0.0, 0.0), 0f, emf);
+		assertEquals(86f, boost.pitchDeg(), 0.001f,
+				"owned players boost at the authored 86° root pitch");
+	}
+
+	@Test
+	void boostTargetFallsBackToBoostPitch() {
+		// Params without the EMF key keep the pre-existing 80° default —
+		// byte-for-byte parity for non-owned players.
+		VfxParams plain = new VfxParams(java.util.Map.of("boostPitch", 72f), java.util.Map.of());
+		FlightBodyTransform boost = FlightPoseMath.target(
+				FlightPhase.BOOST, new Vec3(1.2, 0.0, 0.0), 0f, plain);
+		assertEquals(72f, boost.pitchDeg(), 0.001f,
+				"non-owned params still read boostPitch");
+	}
+
+	@Test
 	void rollClampedTo25() {
 		FlightBodyTransform banking = FlightPoseMath.target(
 				FlightPhase.CRUISE, new Vec3(0.5, 0.0, 0.0), 100f, DEFAULTS);

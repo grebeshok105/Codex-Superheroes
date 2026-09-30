@@ -4,6 +4,7 @@ import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.client.ClientFlightState;
 import io.github.grebeshok105.codex.client.ClientSessionState;
 import io.github.grebeshok105.codex.client.core.anim.PlayerAnimator;
+import io.github.grebeshok105.codex.client.core.emf.EmfPresentationOwnership;
 import io.github.grebeshok105.codex.client.core.render.SkinResolver;
 import io.github.grebeshok105.codex.client.core.vfx.VfxRuntime;
 import io.github.grebeshok105.codex.client.core.vfx.VfxSpawn;
@@ -139,9 +140,13 @@ public final class FlightPoseTracker {
 			tracked.trailSpawned = false;
 		}
 
+		VfxParams targetParams = pose;
+		if (presentation.poseParams() != null && EmfPresentationOwnership.isOwned(player)) {
+			targetParams = mergedPoseParams(tracked, pose, presentation.poseParams());
+		}
 		tracked.previous = tracked.current;
 		tracked.current = FlightPoseMath.step(tracked.current,
-				FlightPoseMath.target(phase, velocity, yawRate, pose), 1f, halfLife);
+				FlightPoseMath.target(phase, velocity, yawRate, targetParams), 1f, halfLife);
 
 		updateLoopSound(client, player, tracked, state, phase, presentation, pose);
 
@@ -150,6 +155,24 @@ public final class FlightPoseTracker {
 			tracked.trailSpawned = true;
 			spawnEffect(player, presentation.trailEffect());
 		}
+	}
+
+	/**
+	 * {@code pose.json} overlaid with the presentation's {@code poseParams}
+	 * (e.g. authored {@code emfBoost*} keys) for EMF-owned players. Memoized
+	 * on the tracked entry: both inputs are loader-stable instances between
+	 * resource reloads, so the merge allocates only when tuning reloads.
+	 */
+	private static VfxParams mergedPoseParams(Tracked tracked, VfxParams pose,
+			ResourceLocation overlayId) {
+		VfxParams overlay = VfxParamsLoader.get(overlayId);
+		if (tracked.poseMergeResult == null || tracked.poseMergeBase != pose
+				|| tracked.poseMergeOverlay != overlay) {
+			tracked.poseMergeResult = pose.withOverrides(overlay);
+			tracked.poseMergeBase = pose;
+			tracked.poseMergeOverlay = overlay;
+		}
+		return tracked.poseMergeResult;
 	}
 
 	private static void onPhaseChange(Minecraft client, AbstractClientPlayer player,
@@ -258,6 +281,9 @@ public final class FlightPoseTracker {
 		private ResourceLocation baseClip;
 		private boolean trailSpawned;
 		private FlightLoopSound loop;
+		private VfxParams poseMergeBase;
+		private VfxParams poseMergeOverlay;
+		private VfxParams poseMergeResult;
 	}
 
 	/**
