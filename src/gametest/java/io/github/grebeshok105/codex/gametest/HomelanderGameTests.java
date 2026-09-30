@@ -378,22 +378,27 @@ public final class HomelanderGameTests implements FabricGameTest {
 			drainAll(wire);
 			AbilityRouter.activate(player, HomelanderAbilityIds.HAND_CLAP);
 			packets.addAll(drain(wire.channel()));
-			helper.assertTrue(hasVfxEvent(packets, HomelanderVfxIds.CLAP),
+			helper.assertTrue(hasVfxEvent(packets, HomelanderVfxIds.CLAP, player.getId()),
 					"CLAP fires at activation so every client starts the clip");
-			helper.assertTrue(!hasVfxEvent(packets, HomelanderVfxIds.CLAP_IMPACT),
-					"no impact event during the windup");
+			helper.assertTrue(!hasVfxEvent(packets, HomelanderVfxIds.CLAP_IMPACT, player.getId()),
+					"no impact event at activation");
 			helper.assertTrue(AbilityCooldowns.isOnCooldown(player, HomelanderAbilityIds.HAND_CLAP),
 					"hand clap goes on a 240-tick cooldown");
 			helper.assertTrue(data(player).energy() == 50f,
 					"hand clap costs 50 energy, got " + data(player).energy());
-			helper.runAfterDelay(HandClapAbility.IMPACT_TICKS + 2, () -> {
+			helper.runAfterDelay(HandClapAbility.IMPACT_TICKS - 3, () -> {
 				packets.addAll(drain(wire.channel()));
-				helper.assertTrue(hasVfxEvent(packets, HomelanderVfxIds.CLAP_IMPACT),
-						"CLAP_IMPACT lands " + HandClapAbility.IMPACT_TICKS + " ticks after activation");
-				helper.assertTrue(zombie.getHealth() < zombie.getMaxHealth(),
-						"the impact damages mobs in the cone");
-				TestPlayers.leave(player);
-				helper.succeed();
+				helper.assertTrue(!hasVfxEvent(packets, HomelanderVfxIds.CLAP_IMPACT, player.getId()),
+						"no impact event before the authored hand-contact frame");
+				helper.runAfterDelay(5, () -> {
+					packets.addAll(drain(wire.channel()));
+					helper.assertTrue(hasVfxEvent(packets, HomelanderVfxIds.CLAP_IMPACT, player.getId()),
+							"CLAP_IMPACT lands " + HandClapAbility.IMPACT_TICKS + " ticks after activation");
+					helper.assertTrue(zombie.getHealth() < zombie.getMaxHealth(),
+							"the impact damages mobs in the cone");
+					TestPlayers.leave(player);
+					helper.succeed();
+				});
 			});
 		});
 	}
@@ -412,9 +417,9 @@ public final class HomelanderGameTests implements FabricGameTest {
 				helper.assertFalse(player.isAlive(), "the winding-up player really died");
 				helper.runAfterDelay(HandClapAbility.IMPACT_TICKS, () -> {
 					packets.addAll(drain(wire.channel()));
-					helper.assertTrue(hasVfxEvent(packets, HomelanderVfxIds.CLAP_CANCEL),
+					helper.assertTrue(hasVfxEvent(packets, HomelanderVfxIds.CLAP_CANCEL, player.getId()),
 							"death during the windup broadcasts CLAP_CANCEL");
-					helper.assertTrue(!hasVfxEvent(packets, HomelanderVfxIds.CLAP_IMPACT),
+					helper.assertTrue(!hasVfxEvent(packets, HomelanderVfxIds.CLAP_IMPACT, player.getId()),
 							"a clap cancelled by death never lands");
 					TestPlayers.leave(player);
 					helper.succeed();
@@ -669,11 +674,13 @@ public final class HomelanderGameTests implements FabricGameTest {
 		return false;
 	}
 
-	private static boolean hasVfxEvent(List<Object> packets, ResourceLocation effect) {
+	/** Source-filtered event check: neighbouring structures' claps reach this wire too. */
+	private static boolean hasVfxEvent(List<Object> packets, ResourceLocation effect, int sourceEntityId) {
 		for (Object o : packets) {
 			if (o instanceof ClientboundCustomPayloadPacket custom
 					&& custom.payload() instanceof VfxEventS2CPayload vfx
-					&& vfx.effect().equals(effect)) {
+					&& vfx.effect().equals(effect)
+					&& vfx.sourceEntityId() == sourceEntityId) {
 				return true;
 			}
 		}

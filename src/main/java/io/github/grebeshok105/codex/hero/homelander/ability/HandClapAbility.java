@@ -4,13 +4,12 @@ import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
+import io.github.grebeshok105.codex.core.ability.AbilityRules;
 import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
 import io.github.grebeshok105.codex.core.net.VfxFx;
-import io.github.grebeshok105.codex.hero.homelander.effect.HomelanderEffects;
 import io.github.grebeshok105.codex.hero.homelander.vfx.HomelanderVfxIds;
-import io.github.grebeshok105.codex.mechanic.effect.ModEffects;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -97,7 +96,7 @@ public final class HandClapAbility implements Ability {
 				it.remove();
 				continue;
 			}
-			if (player.isDeadOrDying() || isStunned(player)) {
+			if (player.isDeadOrDying() || isCastBlocked(player)) {
 				it.remove();
 				sendCancel(player);
 				continue;
@@ -119,8 +118,9 @@ public final class HandClapAbility implements Ability {
 		}
 	}
 
-	private static boolean isStunned(ServerPlayer player) {
-		return player.hasEffect(ModEffects.DISABLED_ABILITIES) || HomelanderEffects.isAftermath(player);
+	/** "Stunned" = whatever would deny this cast at the router: any {@link AbilityRules} blocker (Snap stun, Homelander aftermath, Vanity strip). */
+	private static boolean isCastBlocked(ServerPlayer player) {
+		return AbilityRules.firstBlock(player, ID) != null;
 	}
 
 	private static void sendCancel(ServerPlayer player) {
