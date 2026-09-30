@@ -11,6 +11,8 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
+import java.util.function.IntFunction;
+
 /**
  * Camera-facing ribbon drawn through a {@link TrailBuffer}. The owning
  * composition pushes anchor points each tick; {@link #finish()} starts a
@@ -44,7 +46,7 @@ public final class TrailPattern implements VfxEffect {
 		this.width = width;
 		this.argb = argb;
 		this.fadeTicks = Math.max(1, fadeTicks);
-		this.soft = softTexture == null ? null : new SoftProfile(softTexture, capacity);
+		this.soft = softTexture == null ? null : new SoftProfile(softTexture, points, capacity);
 	}
 
 	/**
@@ -169,7 +171,7 @@ public final class TrailPattern implements VfxEffect {
 		float b = (argb & 0xFF) / 255f;
 
 		Vector3f[] spine = softProfile.spine;
-		int count = TrailGeometry.subdivide(points::get, points.size(), spine);
+		int count = TrailGeometry.subdivide(softProfile.pointGetter, points.size(), spine);
 		if (count < 2) {
 			return;
 		}
@@ -179,7 +181,7 @@ public final class TrailPattern implements VfxEffect {
 		PoseStack pose = ctx.pose();
 		pose.pushPose();
 		pose.translate(-cam.x, -cam.y, -cam.z);
-		VertexConsumer buf = ctx.buffers().getBuffer(RenderType.eyes(softProfile.texture));
+		VertexConsumer buf = ctx.buffers().getBuffer(softProfile.renderType);
 		Matrix4f matrix = pose.last().pose();
 
 		Vector3f tangent = softProfile.tangent;
@@ -256,15 +258,17 @@ public final class TrailPattern implements VfxEffect {
 
 	/** Preallocated scratch for the soft profile — bounded, never grown per frame. */
 	private static final class SoftProfile {
-		private final ResourceLocation texture;
+		private final RenderType renderType;
+		private final IntFunction<Vec3> pointGetter;
 		private final Vector3f[] spine;
 		private final Vector3f tangent = new Vector3f();
 		private final Vector3f toCam = new Vector3f();
 		private final Vector3f sideA = new Vector3f();
 		private final Vector3f sideB = new Vector3f();
 
-		private SoftProfile(ResourceLocation texture, int storedCapacity) {
-			this.texture = texture;
+		private SoftProfile(ResourceLocation texture, TrailBuffer points, int storedCapacity) {
+			this.renderType = RenderType.eyes(texture);
+			this.pointGetter = points::get;
 			this.spine = new Vector3f[TrailGeometry.subdividedCapacity(storedCapacity)];
 			for (int i = 0; i < spine.length; i++) {
 				spine[i] = new Vector3f();
