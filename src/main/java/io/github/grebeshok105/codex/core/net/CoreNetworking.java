@@ -28,6 +28,7 @@ public final class CoreNetworking {
 		registrar.s2c(BeamFxS2CPayload.TYPE, BeamFxS2CPayload.STREAM_CODEC);
 		registrar.s2c(VfxEventS2CPayload.TYPE, VfxEventS2CPayload.STREAM_CODEC);
 		registrar.s2c(VfxChannelS2CPayload.TYPE, VfxChannelS2CPayload.STREAM_CODEC);
+		registrar.s2c(ScorchMarksS2CPayload.TYPE, ScorchMarksS2CPayload.STREAM_CODEC);
 	}
 
 	public static void syncResources(ServerPlayer player, HeroData data) {
