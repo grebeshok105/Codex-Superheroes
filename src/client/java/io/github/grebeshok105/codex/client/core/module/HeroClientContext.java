@@ -27,8 +27,11 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.UUID;
+import java.util.function.BiFunction;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -107,6 +110,14 @@ public interface HeroClientContext {
 	void skinSuppression(Predicate<UUID> suppression);
 
 	/**
+	 * Registers a predicate that hides the vanilla {@code PlayerModel} for a
+	 * player while it returns {@code true} — the hero's own render layer
+	 * (registered via {@link #playerLayer}) draws the substitute model.
+	 * Homelander's EMF presentation uses this seam.
+	 */
+	void playerModelSuppression(Predicate<AbstractClientPlayer> suppression);
+
+	/**
 	 * Registers a supplier that vetoes the vanilla crosshair while it returns
 	 * {@code true}. Self-gate on this module's hero being active.
 	 */
@@ -138,4 +149,13 @@ public interface HeroClientContext {
 	 * rendered player of the hero from the synced {@code ClientFlightState}.
 	 */
 	void flightPresentation(FlightPresentation presentation);
+
+	/**
+	 * Registers a third-person camera recenter: {@code (entity, tickDelta) ->
+	 * offset blocks} applied on top of the vanilla camera position in
+	 * {@code CameraMixin}, or {@code null} when this hero does not present the
+	 * entity. Flight presentations whose tilted body pivots at the feet use
+	 * this to keep the visual center of mass on screen.
+	 */
+	void flightCameraFocus(BiFunction<LivingEntity, Float, Vec3> focus);
 }

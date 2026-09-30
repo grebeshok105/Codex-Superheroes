@@ -19,6 +19,7 @@ import io.github.grebeshok105.codex.hero.homelander.runtime.HomelanderFlightModi
 import io.github.grebeshok105.codex.hero.homelander.runtime.HomelanderReactionRule;
 import io.github.grebeshok105.codex.hero.homelander.runtime.HomelanderRegenController;
 import io.github.grebeshok105.codex.hero.homelander.runtime.IronFistsController;
+import io.github.grebeshok105.codex.hero.homelander.runtime.HandClapWindupController;
 import io.github.grebeshok105.codex.hero.homelander.runtime.HomelanderMadnessAftermathController;
 import io.github.grebeshok105.codex.hero.homelander.runtime.HomelanderMadnessFlightController;
 import io.github.grebeshok105.codex.hero.homelander.runtime.UraniumDefenseController;
@@ -46,6 +47,7 @@ public final class HomelanderModule implements HeroModule {
 	public void register(HeroModuleContext ctx) {
 		HomelanderEffects.init();
 		HomelanderSounds.init();
+		HomelanderBlocks.init();
 		HomelanderItems.register(ctx.content());
 		ctx.payloads().s2c(UraniumPressureS2CPayload.TYPE, UraniumPressureS2CPayload.STREAM_CODEC);
 		ctx.payloads().s2c(UraniumThreatS2CPayload.TYPE, UraniumThreatS2CPayload.STREAM_CODEC);
@@ -57,6 +59,7 @@ public final class HomelanderModule implements HeroModule {
 		HomelanderMadnessFlightController.register(ctx);
 		IronFistsController.register(ctx);
 		ctx.ticks().global(UraniumDefenseController::serverTick);
+		ctx.ticks().global(HandClapWindupController::serverTick);
 		ctx.ticks().player(HomelanderMadnessAftermathController::tickPlayer);
 		ctx.ticks().player(HomelanderRegenController::tickPlayer);
 		ctx.ticks().player(IronFistsController::tickPlayer);

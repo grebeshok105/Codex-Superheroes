@@ -126,28 +126,12 @@
       }
     ]
   },
-  "homelander.laser.charge": {
-    "subtitle": "subtitles.superheroes.homelander.laser",
-    "sounds": [
-      {
-        "name": "superheroes:homelander/laser_charge"
-      }
-    ]
-  },
   "homelander.laser.loop": {
     "subtitle": "subtitles.superheroes.homelander.laser",
     "sounds": [
       {
         "name": "superheroes:homelander/laser_loop",
         "stream": true
-      }
-    ]
-  },
-  "homelander.laser.release": {
-    "subtitle": "subtitles.superheroes.homelander.laser",
-    "sounds": [
-      {
-        "name": "superheroes:homelander/laser_release"
       }
     ]
   },

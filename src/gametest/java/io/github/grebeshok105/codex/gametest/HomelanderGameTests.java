@@ -13,6 +13,8 @@ import io.github.grebeshok105.codex.core.transform.HeroTransformService;
 import io.github.grebeshok105.codex.core.hero.Heroes;
 import io.github.grebeshok105.codex.mechanic.flight.FlightController;
 import io.github.grebeshok105.codex.mechanic.effect.ModEffects;
+import io.github.grebeshok105.codex.hero.homelander.ability.HandClapAbility;
+import io.github.grebeshok105.codex.hero.homelander.runtime.HandClapWindupController;
 import io.github.grebeshok105.codex.hero.homelander.runtime.UraniumDefenseController;
 import io.github.grebeshok105.codex.hero.homelander.HomelanderHero;
 import io.github.grebeshok105.codex.hero.homelander.HomelanderItems;
@@ -364,22 +366,59 @@ public final class HomelanderGameTests implements FabricGameTest {
 		});
 	}
 
-	@GameTest(template = EMPTY_STRUCTURE)
+	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 120)
 	public void handClapKnocksBackAHeadCone(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, HomelanderHero.ID);
 		Zombie zombie = spawnAhead(helper, player);
+		zombie.setNoAi(true); // stays in the cone during the windup — walk-to-melee would drop it below the eye-line
 		TestPlayers.awaitVisible(helper, zombie, () -> {
 			AbilityRouter.activate(player, HomelanderAbilityIds.HAND_CLAP);
-			helper.assertTrue(zombie.getHealth() < zombie.getMaxHealth(),
-					"hand clap hits mobs in front");
-			helper.assertTrue(zombie.hurtMarked, "clap victim is knocked back");
+			helper.assertTrue(HandClapWindupController.isWindingUp(player),
+					"the clap enters a windup instead of hitting instantly");
 			helper.assertTrue(AbilityCooldowns.isOnCooldown(player, HomelanderAbilityIds.HAND_CLAP),
 					"hand clap goes on a 240-tick cooldown");
 			helper.assertTrue(data(player).energy() == 50f,
 					"hand clap costs 50 energy, got " + data(player).energy());
-			TestPlayers.leave(player);
-			helper.succeed();
+			helper.runAfterDelay(HandClapAbility.CONTACT_TICKS - 2, () ->
+					helper.assertTrue(zombie.getLastHurtByMob() == null,
+							"no attacker damage during the windup — the cone lands at the contact frame"));
+			// +1 tick, not more: hurtMarked is consumed by the velocity sync within a tick.
+			helper.runAfterDelay(HandClapAbility.CONTACT_TICKS + 1, () -> {
+				helper.assertTrue(zombie.getLastHurtByMob() == player,
+						"the caster lands the clap at the contact frame");
+				helper.assertTrue(zombie.getHealth() < zombie.getMaxHealth(),
+						"the clap hits mobs in front at the contact frame");
+				helper.assertTrue(zombie.getDeltaMovement().lengthSqr() > 0.5,
+						"the knockback impulse pushes the victim, got " + zombie.getDeltaMovement());
+				TestPlayers.leave(player);
+				helper.succeed();
+			});
+		});
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 80)
+	public void handClapCancelledOnDeathDealsNoDamage(GameTestHelper helper) {
+		ServerPlayer player = TestPlayers.join(helper);
+		TestHeroes.transform(player, HomelanderHero.ID);
+		Zombie zombie = spawnAhead(helper, player);
+		zombie.setNoAi(true);
+		TestPlayers.awaitVisible(helper, zombie, () -> {
+			AbilityRouter.activate(player, HomelanderAbilityIds.HAND_CLAP);
+			helper.assertTrue(HandClapWindupController.isWindingUp(player),
+					"the clap enters a windup");
+			// Mock players join with 60-tick spawn invulnerability that silently eats kill().
+			helper.runAfterDelay(HandClapAbility.CONTACT_TICKS - 5, () -> {
+				TestPlayers.clearSpawnInvulnerability(player);
+				player.kill();
+			});
+			helper.runAfterDelay(HandClapAbility.CONTACT_TICKS + 10, () -> {
+				helper.assertFalse(player.isAlive(), "the caster is dead before the contact frame");
+				helper.assertTrue(zombie.getLastHurtByMob() == null,
+						"a dead caster's pending clap is cancelled — no impact");
+				TestPlayers.leave(player);
+				helper.succeed();
+			});
 		});
 	}
 

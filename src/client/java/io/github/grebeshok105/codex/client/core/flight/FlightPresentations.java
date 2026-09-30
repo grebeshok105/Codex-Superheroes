@@ -10,7 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Hero-id → {@link FlightPresentation} registry. Client modules opt their
  * hero into continuous flight presentation via
- * {@code HeroClientContext.flightPresentation}; {@link FlightPoseTracker}
+ * {@code HeroClientContext.flightPresentation}; hero-scoped flight drivers
  * and the model mixin consult {@link #of} to decide which players get the
  * animated flight pose (players whose hero has no presentation keep the
  * pre-existing static leg pose).

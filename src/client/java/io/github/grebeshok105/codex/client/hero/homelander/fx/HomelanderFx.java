@@ -1,12 +1,13 @@
 package io.github.grebeshok105.codex.client.hero.homelander.fx;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.client.core.anim.PlayerAnimator;
 import io.github.grebeshok105.codex.client.core.flight.FlightPresentation;
 import io.github.grebeshok105.codex.client.core.module.HeroClientContext;
 import io.github.grebeshok105.codex.client.core.vfx.VfxEffect;
 import io.github.grebeshok105.codex.client.core.vfx.VfxRenderContext;
 import io.github.grebeshok105.codex.client.core.vfx.VfxSpawn;
+import io.github.grebeshok105.codex.client.hero.homelander.emf.HomelanderActionClipWatch;
+import io.github.grebeshok105.codex.client.hero.homelander.flight.HomelanderPoseApi;
 import io.github.grebeshok105.codex.hero.homelander.vfx.HomelanderVfxIds;
 import io.github.grebeshok105.codex.sound.HomelanderSounds;
 import net.minecraft.client.Minecraft;
@@ -27,7 +28,7 @@ import net.minecraft.world.phys.Vec3;
  */
 public final class HomelanderFx {
 	private static final ResourceLocation CLIP_MILK_DRINK = ModId.of("homelander/milk_drink");
-	private static final int CLIP_FADE_TICKS = 4;
+	private static final ResourceLocation CLIP_HAND_CLAP = ModId.of("homelander/hand_clap");
 
 	private HomelanderFx() {
 	}
@@ -36,6 +37,7 @@ public final class HomelanderFx {
 		ctx.vfx(HomelanderVfxIds.LANDING, FlightFx::landing);
 		ctx.vfx(FlightFx.TRAIL, FlightFx::trail);
 		ctx.vfx(FlightFx.BOOST, FlightFx::boost);
+		ctx.vfx(FlightFx.SPEED_RING, FlightFx::speedRing);
 		ctx.vfxChannel(HomelanderVfxIds.LASER, EyeLaserChannel::new);
 		ctx.vfx(HomelanderVfxIds.SUN_CHARGE, SunChargeFx::create);
 		ctx.vfx(HomelanderVfxIds.SUN_DETONATION, SunDetonationFx::create);
@@ -44,16 +46,16 @@ public final class HomelanderFx {
 		ctx.vfx(HomelanderVfxIds.IRON_FISTS_ON, IronFistsFx::activate);
 		ctx.vfx(HomelanderVfxIds.IRON_FISTS_OFF, IronFistsFx::deactivate);
 		ctx.vfx(HomelanderVfxIds.IRON_FISTS_HIT, IronFistsFx::hit);
+		ctx.vfx(HomelanderVfxIds.CLAP_WINDUP, HomelanderFx::clapWindup);
 		ctx.vfx(HomelanderVfxIds.CLAP, ClapFx::create);
 		ctx.vfx(HomelanderVfxIds.ROAR, RoarFx::create);
+		// Clips are no longer registered here — the EMF runtime owns
+		// takeoff/hover/boost by name; the presentation carries only the
+		// audio + trail/boost effect config the driver consumes.
 		ctx.flightPresentation(new FlightPresentation(
-				clip("flight_takeoff"),
-				clip("flight_hover"),
-				clip("flight_cruise"),
-				clip("flight_boost"),
-				clip("flight_land"),
 				FlightFx.TRAIL,
 				FlightFx.BOOST,
+				FlightFx.SPEED_RING,
 				HomelanderSounds.FLIGHT_LOOP,
 				HomelanderSounds.FLIGHT_TAKEOFF,
 				HomelanderSounds.FLIGHT_BOOST,
@@ -61,15 +63,34 @@ public final class HomelanderFx {
 	}
 
 	/**
+	 * CLAP_WINDUP one-shot — the ACTION {@code hand_clap} clip on the caster.
+	 * The impact burst + sound ride the separate {@code homelander/clap} event
+	 * the server sends at the clip's contact frame; the watch fades the clip
+	 * back out once it plays through (one-shots never auto-fade).
+	 */
+	private static VfxEffect clapWindup(VfxSpawn spawn) {
+		Entity source = spawn.source();
+		if (source != null) {
+			HomelanderPoseApi.playClip(source.getId(), CLIP_HAND_CLAP);
+			HomelanderActionClipWatch.watchEndFade(source.getId(), CLIP_HAND_CLAP);
+		}
+		return new DoneFx();
+	}
+
+	/**
 	 * MILK_DRINK one-shot — the ACTION {@code milk_drink} clip plus the bound
 	 * {@code homelander.milk.drink} sound on the drinking player. Hosted here
-	 * in the hub rather than as its own class: no patterns, no state.
+	 * in the hub rather than as its own class: no patterns, no state. The
+	 * watch fades the clip at the end AND on a pre-sip release so the
+	 * bottle/cap/mouth props never stay visible.
 	 */
 	private static VfxEffect milkDrink(VfxSpawn spawn) {
 		Entity source = spawn.source();
 		if (source != null) {
-			PlayerAnimator.play(source.getId(), CLIP_MILK_DRINK,
-					PlayerAnimator.Layer.ACTION, CLIP_FADE_TICKS);
+			// EMF action-lane clip — weight fades in, milk_bottle/milk_cap prop
+			// bones un-hide while it plays.
+			HomelanderPoseApi.playClip(source.getId(), CLIP_MILK_DRINK);
+			HomelanderActionClipWatch.watchMilkDrink(source.getId(), CLIP_MILK_DRINK);
 			Minecraft.getInstance().getSoundManager().play(new EntityBoundSoundInstance(
 					HomelanderSounds.MILK_DRINK, SoundSource.PLAYERS, 1f, 1f,
 					source, source.getRandom().nextLong()));
@@ -80,10 +101,6 @@ public final class HomelanderFx {
 					RandomSource.create(), pos.x, pos.y, pos.z));
 		}
 		return new DoneFx();
-	}
-
-	private static ResourceLocation clip(String name) {
-		return ModId.of("homelander/" + name);
 	}
 
 	/** Ends after one tick — the effect's real work happened in the factory. */

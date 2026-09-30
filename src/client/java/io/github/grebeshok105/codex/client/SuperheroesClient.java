@@ -3,8 +3,6 @@ package io.github.grebeshok105.codex.client;
 import io.github.grebeshok105.codex.client.bootstrap.ContentClientModules;
 import io.github.grebeshok105.codex.client.bootstrap.HeroClientModules;
 import io.github.grebeshok105.codex.client.config.SuperheroesClientConfig;
-import io.github.grebeshok105.codex.client.core.anim.AnimationLibrary;
-import io.github.grebeshok105.codex.client.core.flight.FlightPoseTracker;
 import io.github.grebeshok105.codex.client.core.hud.HudLayers;
 import io.github.grebeshok105.codex.client.core.input.InputSenders;
 import io.github.grebeshok105.codex.client.core.input.MeleeChargeSender;
@@ -27,8 +25,6 @@ public class SuperheroesClient implements ClientModInitializer {
 		CoreClientReceivers.init();
 		VfxRuntime.init();
 		VfxDebugHud.init();
-		AnimationLibrary.init();
-		FlightPoseTracker.init();
 		HeroClientModules.bootstrap();
 		ContentClientModules.bootstrap();
 		ClientHeroDimsWatcher.init();

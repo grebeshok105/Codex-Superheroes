@@ -1,8 +1,8 @@
 {
-  "max_lifetime": 6,
+  "max_lifetime": 5,
   "loop": false,
   "rate": 1,
-  "count": 14,
+  "count": 8,
   "emitter_settings": {
     "shape": "superheroes:homelander_laser_impact",
     "particle_settings": "superheroes:homelander_laser_impact"

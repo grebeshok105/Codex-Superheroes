@@ -28,7 +28,15 @@ import java.util.List;
 public class MilkBottleItem extends Item {
 	private static final net.minecraft.resources.ResourceLocation HOMELANDER_ID = ModId.of("homelander");
 
-	private static final int DRINK_TICKS = 32;
+	/**
+	 * Use duration = the sip moment in the EMF {@code milk_drink} clip: bottle
+	 * raised, mouth fully open — the midpoint of that plateau is clip frame 238
+	 * of 60-fps playback (3 frames/tick ≈ 3.97 s). Pinned by
+	 * {@code HomelanderClipTimingTest}; {@code finishUsingItem} lands the milk
+	 * effect at that beat. Releasing early releases the vanilla use too —
+	 * no sip, no effect.
+	 */
+	public static final int DRINK_TICKS = 79;
 	private static final int MADNESS_DURATION_TICKS = 15 * 20;
 
 	public MilkBottleItem(Properties properties) {
@@ -47,7 +55,9 @@ public class MilkBottleItem extends Item {
 
 	@Override
 	public UseAnim getUseAnimation(ItemStack stack) {
-		return UseAnim.DRINK;
+		// The EMF milk_drink clip carries the whole drink presentation (bottle
+		// prop, cap, mouth) — the vanilla raise-to-mouth pose would fight it.
+		return UseAnim.NONE;
 	}
 
 	@Override

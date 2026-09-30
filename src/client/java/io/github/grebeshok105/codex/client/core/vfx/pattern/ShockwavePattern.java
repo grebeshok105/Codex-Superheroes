@@ -11,12 +11,13 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 
 /**
- * Expanding ring around an origin (explosions, landings, claps, sonic
- * barrier pops). Radius grows 0 → {@code radius} over {@code durationTicks}
+ * Expanding ring around an origin (explosions, landings, claps, speed
+ * shockwaves). Radius grows 0 → {@code radius} over {@code durationTicks}
  * while the alpha fades out. The ring lies in the plane perpendicular to
- * {@code normal} — horizontal for the default UP normal. Tuning keys:
- * {@code radius}, {@code durationTicks}, {@code color} ({@code #AARRGGBB}),
- * {@code band} (ring thickness fraction, default 0.15).
+ * {@code axis} — the default is UP (flat on the ground); a speed ring passes
+ * the flight direction. Tuning keys: {@code radius}, {@code durationTicks},
+ * {@code color} ({@code #AARRGGBB}), {@code band} (ring thickness fraction,
+ * default 0.15).
  */
 public final class ShockwavePattern implements VfxEffect {
 	private static final int SEGMENTS = 40;
@@ -27,31 +28,32 @@ public final class ShockwavePattern implements VfxEffect {
 	private final int durationTicks;
 	private final int argb;
 	private final float band;
-	private final Vec3 basisU;
-	private final Vec3 basisV;
-	private final double lift;
+	private final Vec3 axisN;
+	private final Vec3 axisU;
+	private final Vec3 axisV;
 
 	private int age;
 
+	/** Horizontal ring (axis = UP). */
 	public ShockwavePattern(Vec3 center, float radius, int durationTicks, int argb, float band) {
 		this(center, radius, durationTicks, argb, band, UP);
 	}
 
-	/** Ring plane perpendicular to {@code normal} (normalized here; degenerate falls back to UP). */
-	public ShockwavePattern(Vec3 center, float radius, int durationTicks, int argb, float band, Vec3 normal) {
+	/** Ring in the plane perpendicular to {@code axis} (need not be normalized). */
+	public ShockwavePattern(Vec3 center, float radius, int durationTicks, int argb, float band,
+			Vec3 axis) {
 		this.center = center;
 		this.radius = radius;
 		this.durationTicks = Math.max(1, durationTicks);
 		this.argb = argb;
 		this.band = band;
-		Vec3 n = normal.lengthSqr() < 1e-6 ? UP : normal.normalize();
-		Vec3 u = n.cross(UP);
-		if (u.lengthSqr() < 1e-6) {
-			u = n.cross(new Vec3(1, 0, 0));
+		this.axisN = axis.lengthSqr() < 1e-8 ? UP : axis.normalize();
+		Vec3 u = axisN.cross(UP);
+		if (u.lengthSqr() < 1e-8) {
+			u = axisN.cross(new Vec3(1, 0, 0));
 		}
-		this.basisU = u.normalize();
-		this.basisV = n.cross(basisU).normalize();
-		this.lift = 0.02;
+		this.axisU = u.normalize();
+		this.axisV = axisN.cross(axisU).normalize();
 	}
 
 	/** Factory reading tuning from the spawn's {@link VfxParams}; {@code scale} multiplies the radius. */
@@ -111,9 +113,9 @@ public final class ShockwavePattern implements VfxEffect {
 
 	private Vec3 offset(double angle, double ringRadius) {
 		return center
-				.add(basisU.scale(Math.cos(angle) * ringRadius))
-				.add(basisV.scale(Math.sin(angle) * ringRadius))
-				.add(0, lift, 0);
+				.add(axisU.scale(Math.cos(angle) * ringRadius))
+				.add(axisV.scale(Math.sin(angle) * ringRadius))
+				.add(axisN.scale(0.02));
 	}
 
 	private static void quad(VertexConsumer buf, Matrix4f m, Vec3 a, Vec3 b, Vec3 c, Vec3 d,

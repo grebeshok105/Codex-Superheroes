@@ -99,7 +99,7 @@ public final class HumanoidAnchors {
 		Vec3 headRight = rightOf(headForward, bodyRight);
 		Vec3 headUp = headRight.cross(headForward).normalize();
 		if (headRollDeg != 0f) {
-			headRight = rotate(headRight, headForward, headRollDeg);
+			headRight = FlightBodyTransform.rotate(headRight, headForward, headRollDeg);
 			headUp = headRight.cross(headForward).normalize();
 		}
 		Vec3 eyeCenter = new Vec3(0, HEAD_PIVOT, 0)
@@ -121,25 +121,10 @@ public final class HumanoidAnchors {
 	}
 
 	private static Vec3 applyTilt(Vec3 offset, Vec3 bodyRight, Vec3 bodyForward, FlightBodyTransform tilt) {
-		// Positive pitch leans head-first toward body forward; positive roll
-		// banks toward the player's right. Roll runs first — the renderer's
-		// mulPose(XP·(-pitch))·mulPose(ZP·(-roll)) applies roll to the vector
-		// before pitch, so the same order keeps anchors glued to the render.
-		if (tilt.rollDeg() != 0f) {
-			offset = rotate(offset, bodyForward, tilt.rollDeg());
-		}
-		if (tilt.pitchDeg() != 0f) {
-			offset = rotate(offset, bodyRight, -tilt.pitchDeg());
-		}
-		return offset;
-	}
+		// EMF lean rotates the model root via ModelPart rotationZYX — pitch about
+		// bodyRight first, then roll about bodyForward; anchors must compose in
+		// the same order to stay glued to the tilted body.
+		return tilt.applyTo(offset, bodyRight, bodyForward);
 
-	/** Rodrigues rotation of {@code v} around a unit {@code axis} by {@code deg} degrees. */
-	private static Vec3 rotate(Vec3 v, Vec3 axis, float deg) {
-		double rad = Math.toRadians(deg);
-		double cos = Math.cos(rad);
-		double sin = Math.sin(rad);
-		double along = axis.dot(v) * (1.0 - cos);
-		return v.scale(cos).add(axis.cross(v).scale(sin)).add(axis.scale(along));
 	}
 }

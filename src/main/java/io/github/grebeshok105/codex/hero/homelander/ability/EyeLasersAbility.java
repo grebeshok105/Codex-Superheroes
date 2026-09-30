@@ -7,6 +7,7 @@ import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.hero.homelander.registry.HomelanderDamageTypes;
+import io.github.grebeshok105.codex.hero.homelander.runtime.LaserBurnMarks;
 import io.github.grebeshok105.codex.hero.homelander.runtime.UraniumDefenseController;
 import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.hero.Heroes;
@@ -43,8 +44,6 @@ import org.jetbrains.annotations.Nullable;
 public final class EyeLasersAbility implements Ability {
 	public static final ResourceLocation ID = ModId.of("eye_lasers");
 	private static final double RANGE = 64.0;
-	private static final float MIN_DPS = 56.0f;
-	private static final float MAX_DPS = 120.0f;
 	private static final float MADNESS_DAMAGE_MUL = 3.0f;
 	private static final double CHEST_FRACTION = 0.7;
 
@@ -94,7 +93,7 @@ public final class EyeLasersAbility implements Ability {
 	public boolean tryActivate(ServerPlayer player) {
 		PULSE_TICK.put(player.getUUID(), player.getUUID(), 0);
 		ACTIVE_TICK.put(player.getUUID(), player.getUUID(), 0);
-		Vec3 end = fireBeam(player);
+		Vec3 end = fireBeam(player, false);
 		VfxFx.channel(player, HomelanderVfxIds.LASER, VfxChannelS2CPayload.START, end);
 		return true;
 	}
@@ -140,7 +139,7 @@ public final class EyeLasersAbility implements Ability {
 			PULSE_TICK.put(player.getUUID(), player.getUUID(), phase);
 		}
 		if (fire) {
-			fireBeam(player);
+			fireBeam(player, EyeLaserDamage.isDamageTick(activeTicks));
 		}
 	}
 
@@ -168,13 +167,14 @@ public final class EyeLasersAbility implements Ability {
 		return new BeamRaycast(hit, blockHit, actualEnd);
 	}
 
-	private static Vec3 fireBeam(ServerPlayer player) {
+	private static Vec3 fireBeam(ServerPlayer player, boolean damageWindow) {
 		ServerLevel level = player.serverLevel();
 		boolean madness = HomelanderEffects.isMadness(player);
 		BeamRaycast ray = raycastBeam(player);
 		EntityHitResult hit = ray.hit();
 		Vec3 actualEnd = ray.actualEnd();
-		float damage = damagePerTick(player) * (madness ? MADNESS_DAMAGE_MUL : 1f);
+		float damage = EyeLaserDamage.damagePerHit(manaFraction(player))
+				* (madness ? MADNESS_DAMAGE_MUL : 1f);
 		boolean choppy = false;
 		if (hit != null && hit.getEntity() instanceof net.minecraft.world.entity.player.Player victim
 				&& UraniumDefenseController.hasUraniumDagger(victim)) {
@@ -185,7 +185,9 @@ public final class EyeLasersAbility implements Ability {
 		}
 		if (hit != null) {
 			LivingEntity target = (LivingEntity) hit.getEntity();
-			if (damage > 0f) target.hurt(HomelanderDamageTypes.eyeLaser(level, player), damage);
+			if (damageWindow && damage > 0f) {
+				target.hurt(HomelanderDamageTypes.eyeLaser(level, player), damage);
+			}
 			if (madness) {
 				if (player.tickCount % 2 == 0) {
 					level.explode(player, null, null, actualEnd.x, actualEnd.y, actualEnd.z,
@@ -204,6 +206,9 @@ public final class EyeLasersAbility implements Ability {
 						BuiltInRegistries.SOUND_EVENT.wrapAsHolder(ModSounds.SILENT));
 			}
 			placeFireRing(level, player, actualEnd, 3);
+		}
+		if (hit == null && ray.blockHit().getType() == HitResult.Type.BLOCK) {
+			LaserBurnMarks.tryMark(level, ray.blockHit(), player);
 		}
 		return actualEnd;
 	}
@@ -230,16 +235,14 @@ public final class EyeLasersAbility implements Ability {
 		}
 	}
 
-	private static float damagePerTick(ServerPlayer player) {
+	private static float manaFraction(ServerPlayer player) {
 		HeroData data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
-		float frac = 0f;
 		if (data.hasHero()) {
 			Hero hero = Heroes.get(data.heroId());
 			if (hero != null && hero.getManaMax() > 0f) {
-				frac = Math.max(0f, Math.min(1f, data.mana() / hero.getManaMax()));
+				return Math.max(0f, Math.min(1f, data.mana() / hero.getManaMax()));
 			}
 		}
-		float dps = MIN_DPS + (MAX_DPS - MIN_DPS) * frac;
-		return dps / 20f;
+		return 0f;
 	}
 }

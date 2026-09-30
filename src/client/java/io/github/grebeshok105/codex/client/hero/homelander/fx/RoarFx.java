@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.client.core.anim.PlayerAnimator;
 import io.github.grebeshok105.codex.client.core.vfx.VfxEffect;
 import io.github.grebeshok105.codex.client.core.vfx.VfxRenderContext;
 import io.github.grebeshok105.codex.client.core.vfx.VfxSpawn;
@@ -14,6 +13,7 @@ import io.github.grebeshok105.codex.client.core.vfx.params.VfxParams;
 import io.github.grebeshok105.codex.client.core.vfx.params.VfxParamsLoader;
 import io.github.grebeshok105.codex.client.core.vfx.pattern.CameraImpulse;
 import io.github.grebeshok105.codex.client.core.vfx.pattern.ShockwavePattern;
+import io.github.grebeshok105.codex.client.hero.homelander.flight.HomelanderPoseApi;
 import io.github.grebeshok105.codex.sound.HomelanderSounds;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -44,7 +44,6 @@ public final class RoarFx {
 	private static final ResourceLocation WAVE_EMITTER = ModId.of("homelander_roar_wave");
 	private static final ResourceLocation DUST_EMITTER = ModId.of("homelander_roar_dust");
 	private static final ResourceLocation CLIP = ModId.of("homelander/roar");
-	private static final int CLIP_FADE_TICKS = 4;
 
 	private RoarFx() {
 	}
@@ -101,7 +100,7 @@ public final class RoarFx {
 			this.dustIntervalTicks = Math.max(1, (int) p.number("dustIntervalTicks", 5f));
 
 			if (source != null) {
-				PlayerAnimator.play(source.getId(), CLIP, PlayerAnimator.Layer.ACTION, CLIP_FADE_TICKS);
+				HomelanderPoseApi.playClip(source.getId(), CLIP);
 			}
 			playSound(spawn, HomelanderSounds.ROAR,
 					p.number("roarVolume", 1.6f), p.number("roarPitch", 1f));

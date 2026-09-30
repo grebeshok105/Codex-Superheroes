@@ -1,13 +1,8 @@
 package io.github.grebeshok105.codex.client.core.vfx.anchor;
 
-import io.github.grebeshok105.codex.client.core.anim.PlayerPoseApplier;
-import io.github.grebeshok105.codex.client.core.anim.PoseSample;
 import io.github.grebeshok105.codex.client.core.flight.FlightBodyTransform;
 import net.minecraft.world.phys.Vec3;
-import org.joml.Vector3f;
 import org.junit.jupiter.api.Test;
-
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -55,14 +50,13 @@ class HumanoidAnchorsTest {
 
 	@Test
 	void eyesTrackRenderedHeadPitchUnderFlightTilt() {
-		// flight_cruise bends the rendered head ~65° down: Bedrock head.x is
-		// -65, which the renderer applies as +65 entity pitch. Under an 80°
-		// body tilt the eyes must ride that head — low and ahead of the feet —
-		// instead of floating high at the untilted eye line.
-		PoseSample cruise = new PoseSample(
-				Map.of("head", new Vector3f(-65f, 0f, 0f)), Map.of(), 1f);
-		Vector3f delta = PlayerPoseApplier.renderedRotationDeg(cruise, "head");
-		Vec3 mid = midpoint(HumanoidAnchors.eyesFrom(FEET, 0f, 0f, delta.x,
+		// The rendered head pitches ~65° down under the flight clips (the EMF
+		// runtime reports the same angle through HomelanderPoseApi's head
+		// angles). Under an 80° body tilt the eyes must ride that head — low
+		// and ahead of the feet — instead of floating high at the untilted
+		// eye line.
+		float renderedHeadPitch = 65f;
+		Vec3 mid = midpoint(HumanoidAnchors.eyesFrom(FEET, 0f, 0f, renderedHeadPitch,
 				new FlightBodyTransform(80f, 0f), 1f));
 		assertTrue(mid.y < 0.2,
 				"pitched-down head drops the eyes near the ground, got y=" + mid.y);

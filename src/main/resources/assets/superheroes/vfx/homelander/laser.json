@@ -7,15 +7,11 @@
   "madnessWidthMul": 2.4,
   "madnessIntensity": 1.3,
   "surfaceOffset": 0.05,
-  "distortionRadius": 0.8,
-  "distortionStrength": 0.35,
+  "distortionRadius": 0.45,
+  "distortionStrength": 0.25,
   "lightColor": "#FF2200",
-  "lightRadius": 7.0,
-  "lightBrightness": 0.85,
-  "chargeVolume": 0.9,
-  "chargePitch": 1.0,
+  "lightRadius": 5.0,
+  "lightBrightness": 0.55,
   "loopVolume": 0.7,
-  "loopPitch": 1.0,
-  "releaseVolume": 0.9,
-  "releasePitch": 1.0
+  "loopPitch": 1.0
 }
