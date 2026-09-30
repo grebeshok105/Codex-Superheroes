@@ -169,25 +169,40 @@ class HomelanderPoseMathTest {
 	@Test
 	void takeoffStartsAtZeroWhenActivatedOnGround() {
 		HomelanderPoseState.Entry entry = new HomelanderPoseState.Entry();
-		entry.advance(true, true);
+		entry.advance(false, true); // standing on the ground the tick before activation
+		// on the activation tick the client-side TAKEOFF lift has already run, so
+		// the current onGround reads airborne — the previous tick's flag decides
+		entry.advance(true, false);
 		assertEquals(0.05f, entry.takeoff.time(), 1e-6,
 				"grounded activation resets the clip to 0, then one tick advances it");
-		entry.advance(true, true);
+		entry.advance(true, false);
 		assertEquals(0.10f, entry.takeoff.time(), 1e-6);
 	}
 
 	@Test
 	void takeoffSkipsCrouchDipWhenActivatedAirborne() {
 		HomelanderPoseState.Entry entry = new HomelanderPoseState.Entry();
+		entry.advance(false, false); // airborne the tick before activation
 		entry.advance(true, false);
 		assertEquals(0.28f + 0.05f, entry.takeoff.time(), 1e-6,
 				"airborne activation starts past the 0.28 s crouch dip");
 	}
 
 	@Test
+	void firstObservedTickFlyingDefaultsToAirborneStart() {
+		// entry created while the player is already flying (observer joined or
+		// the player entered render distance mid-flight): there is no prior
+		// ground reading, so the edge resolves airborne instead of crouching
+		HomelanderPoseState.Entry entry = new HomelanderPoseState.Entry();
+		entry.advance(true, false);
+		assertEquals(0.28f + 0.05f, entry.takeoff.time(), 1e-6);
+	}
+
+	@Test
 	void groundedFlagOnlyCountsOnTheActivationEdge() {
 		HomelanderPoseState.Entry entry = new HomelanderPoseState.Entry();
-		entry.advance(true, true);
+		entry.advance(false, true);
+		entry.advance(true, false);
 		entry.advance(true, false);
 		assertEquals(0.10f, entry.takeoff.time(), 1e-6,
 				"already-flying ticks never re-open the takeoff");
@@ -196,12 +211,13 @@ class HomelanderPoseMathTest {
 	@Test
 	void flightOffDuringTakeoffFadesWeightsWithoutResettingHoverClock() {
 		HomelanderPoseState.Entry entry = new HomelanderPoseState.Entry();
+		entry.advance(false, true);
 		for (int i = 0; i < 8; i++) {
-			entry.advance(true, true); // 0.4 s into the takeoff
+			entry.advance(true, false); // 0.4 s into the takeoff
 		}
 		float hoverBefore = entry.hover.time();
 		float takeoffBefore = entry.takeoffWeight;
-		assertTrue(takeoffBefore > 0.5f, "takeoff nearly full mid-clip");
+		assertEquals(1f, takeoffBefore, 1e-6, "takeoff weight pinned through the hold");
 		entry.advance(false, false);
 		assertTrue(entry.takeoffWeight < takeoffBefore, "takeoff weight decays on flight-off");
 		assertTrue(entry.takeoffWeight > 0f, "decay is continuous, not a snap");
@@ -218,34 +234,36 @@ class HomelanderPoseMathTest {
 	@Test
 	void reactivationWithinClipRestartsTakeoffOnce() {
 		HomelanderPoseState.Entry entry = new HomelanderPoseState.Entry();
+		entry.advance(false, true);
 		for (int i = 0; i < 10; i++) {
-			entry.advance(true, true); // t = 0.5 s
+			entry.advance(true, false); // t = 0.5 s
 		}
 		for (int i = 0; i < 3; i++) {
-			entry.advance(false, false);
+			entry.advance(false, true); // landed between activations
 		}
-		entry.advance(true, true);
+		entry.advance(true, false);
 		assertEquals(0.05f, entry.takeoff.time(), 1e-6,
 				"re-activation restarts the single takeoff clock — no second takeoff");
-		float faded = entry.takeoffWeight;
 		for (int i = 0; i < 5; i++) {
-			entry.advance(true, true);
+			entry.advance(true, false);
 		}
-		assertTrue(entry.takeoffWeight > faded, "weight ramps back toward 1 after restart");
+		assertEquals(1f, entry.takeoffWeight, 1e-6,
+				"weight pinned back to 1 through the restarted hold");
 	}
 
 	@Test
 	void takeoffWeightHoldsDuringClipAndPinsZeroAtClipEnd() {
 		HomelanderPoseState.Entry entry = new HomelanderPoseState.Entry();
+		entry.advance(false, true);
 		for (int i = 0; i < 12; i++) {
-			entry.advance(true, true); // t = 0.60 s, inside the 0.65 s hold
+			entry.advance(true, false); // t = 0.60 s, inside the 0.65 s hold
 		}
-		assertTrue(entry.takeoffWeight > 0.9f, "weight ~1 through the hold window");
+		assertEquals(1f, entry.takeoffWeight, 1e-6, "weight pinned at 1 through the hold window");
 		for (int i = 0; i < 3; i++) {
-			entry.advance(true, true); // t = 0.75 s, inside the ease-out
+			entry.advance(true, false); // t = 0.75 s, inside the ease-out
 		}
 		assertTrue(entry.takeoffWeight < 0.5f, "weight eases out with 2-tick half-life");
-		entry.advance(true, true); // t = 0.80 s, clip end
+		entry.advance(true, false); // t = 0.80 s, clip end
 		assertEquals(0f, entry.takeoffWeight, 1e-6,
 				"pinned to 0 at 0.8 s — hover owns the pose from here");
 	}
@@ -253,18 +271,20 @@ class HomelanderPoseMathTest {
 	@Test
 	void takeoffWeightReadInterpolatesBetweenTicks() {
 		HomelanderPoseState.Entry entry = new HomelanderPoseState.Entry();
-		entry.advance(true, true);
+		entry.advance(false, true);
+		entry.advance(true, false);
 		float boundary = entry.takeoffWeight(1f);
-		entry.advance(true, true);
+		entry.advance(true, false);
 		assertEquals(boundary, entry.takeoffWeight(0f), 1e-6,
 				"no step at the tick boundary during the ramp");
 	}
 
 	@Test
-	void takeoffWeightApproachesOneDuringHoldAndDecaysAfter() {
-		assertEquals(1f - (float) Math.pow(0.5, 0.5),
-				HomelanderPoseMath.takeoffWeight(0f, true, 0.30f, 1f), 1e-4,
-				"hold target 1, half-life 2 ticks");
+	void takeoffWeightPinsOneDuringHoldAndDecaysAfter() {
+		assertEquals(1f, HomelanderPoseMath.takeoffWeight(0f, true, 0.30f, 1f), 1e-6,
+				"weight is literally 1 through the hold — no ramp, plan §7 stage 3");
+		assertEquals(1f, HomelanderPoseMath.takeoffWeight(0.4f, true, 0.20f, 1f), 1e-6,
+				"a partially-faded weight snaps back to 1 inside the hold");
 		assertEquals(0.5f, HomelanderPoseMath.takeoffWeight(1f, true, 0.70f, 2f), 1e-4,
 				"after the hold the target is 0: two ticks = one half-life");
 		assertEquals(0f, HomelanderPoseMath.takeoffWeight(0.9f, true, 0.8f, 1f),

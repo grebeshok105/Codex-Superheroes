@@ -24,16 +24,15 @@ import java.util.UUID;
  * of frame rate (§4.5 of the plan). The hover clock is free-running and never
  * resets — HOVER loops, so blending it in mid-phase is continuous, and flight
  * on/off flips cannot snap the pose. The takeoff clock restarts on every
- * flight-activation edge: from 0 when the player was on the ground, or past
- * the crouch dip ({@link HomelanderPoseMath#TAKEOFF_AIRBORNE_START_SECONDS})
- * when flight activated airborne (§7 stage 3).
+ * flight-activation edge: from 0 when the player was on the ground the tick
+ * before activation, or past the crouch dip
+ * ({@link HomelanderPoseMath#TAKEOFF_AIRBORNE_START_SECONDS}) when flight
+ * activated airborne (§7 stage 3).
  */
 final class HomelanderPoseState {
 
 	private static final int MAX_ENTITIES = 64;
 	private static final float TICK_SECONDS = 1f / 20f;
-	/** Depth below the feet probed for support when {@code onGround} is untrusted. */
-	private static final float SUPPORT_PROBE_BLOCKS = 0.05f;
 
 	private static final Map<UUID, Entry> STATES = new LinkedHashMap<>(16, 0.75f, true) {
 		@Override
@@ -66,6 +65,8 @@ final class HomelanderPoseState {
 		final HomelanderPoseMath.ClipClock clap = new HomelanderPoseMath.ClipClock();
 		final HomelanderPoseMath.ClipClock milk = new HomelanderPoseMath.ClipClock();
 		boolean flying;
+		/** Synced {@code onGround} read on the previous tick — see {@link #advance}. */
+		boolean grounded;
 		float active;
 		float activePrev;
 		float boostWeight;
@@ -79,12 +80,19 @@ final class HomelanderPoseState {
 		float bankDeg;
 
 		/**
-		 * One client tick of state. The hover clock is never reset (§7 stage 2);
-		 * {@code grounded} is the support probe evaluated by {@link #tick} and is
-		 * only consulted on the flight-activation edge (flying on the previous
-		 * tick means there is no new takeoff to start).
+		 * One client tick of state. The hover clock is never reset (§7 stage 2).
+		 * {@code groundedNow} is this tick's synced {@code onGround}; the
+		 * activation edge consumes the flag stored from the previous tick, not the
+		 * current one: by the time {@link #tick} sees the flight state (end of the
+		 * client tick) the client-side TAKEOFF lift has already flipped
+		 * {@code onGround} for the local player
+		 * ({@code LocalPlayerFlightMixin} applies the min-lift inside
+		 * {@code travel} during the entity tick), so the current tick cannot tell
+		 * a ground takeoff from an airborne one. Remote entities get
+		 * {@code onGround} synced by the move/teleport packets, so the
+		 * previous-tick flag is the correct activation-time value on both paths.
 		 */
-		void advance(boolean flying, boolean grounded) {
+		void advance(boolean flying, boolean groundedNow) {
 			boolean activation = flying && !this.flying;
 			this.flying = flying;
 			activePrev = active;
@@ -93,8 +101,11 @@ final class HomelanderPoseState {
 			if (activation) {
 				takeoff.reset(grounded ? 0f : HomelanderPoseMath.TAKEOFF_AIRBORNE_START_SECONDS);
 			}
+			this.grounded = groundedNow;
 			hover.advance(TICK_SECONDS);
-			takeoff.advance(TICK_SECONDS);
+			if (!takeoff.finished(HomelanderPoseMath.TAKEOFF_LENGTH_SECONDS)) {
+				takeoff.advance(TICK_SECONDS);
+			}
 			boost.advance(TICK_SECONDS);
 			clap.advance(TICK_SECONDS);
 			milk.advance(TICK_SECONDS);
@@ -132,30 +143,19 @@ final class HomelanderPoseState {
 			if (!EmfPresentationOwnership.isOwned(player)) {
 				continue;
 			}
-			Entry entry = STATES.computeIfAbsent(player.getUUID(), uuid -> new Entry());
-			boolean flying = ClientFlightState.get(player.getId()) != null;
-			// the support probe only fires on the activation edge — once per
-			// takeoff, never per frame
-			boolean grounded = flying && !entry.flying && isSupportedNow(player);
-			entry.advance(flying, grounded);
+			Entry entry = STATES.get(player.getUUID());
+			if (entry == null) {
+				entry = new Entry();
+				// seed the support flag so a takeoff already active on the first
+				// observed tick still resolves the pre-activation ground state
+				entry.grounded = player.onGround();
+				STATES.put(player.getUUID(), entry);
+			}
+			// onGround is authoritative for the local player and synced for remote
+			// ones (ClientboundMoveEntityPacket/ClientboundTeleportEntityPacket
+			// carry it); the entry keeps the previous tick's reading for the edge
+			entry.advance(ClientFlightState.get(player.getId()) != null, player.onGround());
 		}
-	}
-
-	/**
-	 * Whether the player reads as standing on ground right now.
-	 * {@code ClientFlightState} carries no {@code onGround} bit, and vanilla
-	 * never updates {@code Entity.onGround} for remote players on the client
-	 * (remote entities lerp their position without running collision
-	 * {@code move()}, and the flag is not synced entity data — it stays
-	 * {@code false} for them forever). The local player's flag is authoritative;
-	 * for remote players we fall back to a collision probe just below the feet.
-	 */
-	private static boolean isSupportedNow(AbstractClientPlayer player) {
-		if (player.onGround()) {
-			return true;
-		}
-		return !player.level().noCollision(
-				player, player.getBoundingBox().expandTowards(0.0, -SUPPORT_PROBE_BLOCKS, 0.0));
 	}
 
 	private static Entry entryOf(UUID uuid) {

@@ -30,15 +30,22 @@ final class HomelanderPoseMath {
 	}
 
 	/**
-	 * TAKEOFF one-shot weight: target 1 while the clip is inside the 0.65 s hold,
-	 * target 0 past it or once flight stops; half-life 2 ticks. The clip's last
-	 * frame is the HOVER start height, so the residual tail is pinned to 0 at
-	 * clip end — the crossfade is continuous either way.
+	 * TAKEOFF one-shot weight: pinned to 1 while the clip is inside the 0.65 s
+	 * hold — the plan's literal "weight = 1 for 0 to 0.65 s" — then eases to 0
+	 * with a 2-tick half-life, and to 0 immediately once flight stops. The
+	 * vanilla→authored blend is already carried by the master weight's ramp, so
+	 * ramping this weight too would only mix HOVER into the crouch dip and mask
+	 * it. The clip's last frame is the HOVER start height, so the residual tail
+	 * is pinned to 0 at clip end — the crossfade is continuous either way.
 	 */
 	static float takeoffWeight(float current, boolean flying, float clipTimeSeconds, float dtTicks) {
-		boolean holding = flying && clipTimeSeconds < TAKEOFF_HOLD_SECONDS;
-		float weight = approach(current, holding ? 1f : 0f, TAKEOFF_HALF_LIFE_TICKS, dtTicks);
-		return clipTimeSeconds >= TAKEOFF_LENGTH_SECONDS ? 0f : weight;
+		if (clipTimeSeconds >= TAKEOFF_LENGTH_SECONDS) {
+			return 0f;
+		}
+		if (flying && clipTimeSeconds < TAKEOFF_HOLD_SECONDS) {
+			return 1f;
+		}
+		return approach(current, 0f, TAKEOFF_HALF_LIFE_TICKS, dtTicks);
 	}
 
 	/** Frame-rate-independent exponential approach. */
