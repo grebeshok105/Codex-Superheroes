@@ -2,6 +2,10 @@
 
 ## Active work
 
+
+## Active design (не реализовано)
+
+- `docs/design/2026-09-30-regulus-rework-design.md` — реворк Regulus: сердца в ванильных мобах, lion heart «пустота» + перегрев, дробь вместо roar, стазис-купол вместо embrace, counter только от реального обидчика, евангелие = прерываемый 60t ритуал + 45с безумие с дрейном хп, MP-баг лечится synced attachment, Veil-VFX по таблице. Тайминги привязаны к EMF-паку `Regulus_All_Animations.bbmodel` (параллельная сессия делает EMF-рантайм; пакет: `D:/WorkFlow/BlockBench 3d models/workbench/regulus_emf_animation_pack/`).
 - Goal: the bugfix backlog (`docs/audits/2026-09-25-opus-architecture-audit.md`) is integrated on `main`; active work is the architecture-migration program in `docs/design/architecture-migration/` — `00-overview.md` is the map (stage graph §2.1, orchestration §11), plans `01`–`06` are executed stage by stage.
 - Delivery: a stack of PRs, one per migration stage. Orchestrator (main session) assigns file ownership, integrates worker branches, runs every `Run:` command and `qualityGate`, owns `archunit_store/**`, `package-cycles-baseline.txt`, golden files, status tables and this file.
 - The «Статус стадий» table inside each plan is the live tracker; update it with every stage.
