@@ -42,7 +42,9 @@ public final class HomelanderFx {
 		ctx.vfx(HomelanderVfxIds.CLAP, ClapFx::create);
 		ctx.vfx(HomelanderVfxIds.ROAR, RoarFx::create);
 		// No player clips: the EMF jem presents Homelander's model. The
-		// presentation stays registered for trail/boost effects and sounds.
+		// presentation stays registered for trail/boost effects and sounds;
+		// poseParams layers the authored emfBoost* keys over flight/pose for
+		// EMF-owned players (§7 stage 4).
 		ctx.flightPresentation(new FlightPresentation(
 				null, null, null, null, null,
 				FlightFx.TRAIL,
@@ -50,7 +52,8 @@ public final class HomelanderFx {
 				HomelanderSounds.FLIGHT_LOOP,
 				HomelanderSounds.FLIGHT_TAKEOFF,
 				HomelanderSounds.FLIGHT_BOOST,
-				HomelanderSounds.FLIGHT_LAND));
+				HomelanderSounds.FLIGHT_LAND,
+				FlightFx.PARAMS));
 	}
 
 	/**

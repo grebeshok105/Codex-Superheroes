@@ -29,7 +29,7 @@ final class HomelanderEmfVariables {
 		registerClock("superheroes_hl_boost_t", "homelander BOOST clip time", HomelanderPoseState::boostTime);
 		registerClock("superheroes_hl_clap_t", "homelander HAND CLAP clip time", HomelanderPoseState::clapTime);
 		registerClock("superheroes_hl_milk_t", "homelander MILK DRINK clip time", HomelanderPoseState::milkTime);
-		registerWeight("superheroes_hl_boost_w", "homelander BOOST clip weight", HomelanderPoseState::boostWeight);
+		registerClock("superheroes_hl_boost_w", "homelander BOOST clip weight", HomelanderPoseState::boostWeight);
 		registerWeight("superheroes_hl_takeoff_w", "homelander TAKEOFF clip weight", HomelanderPoseState::takeoffWeight);
 		registerWeight("superheroes_hl_clap_w", "homelander HAND CLAP clip weight", HomelanderPoseState::clapWeight);
 		registerWeight("superheroes_hl_milk_w", "homelander MILK DRINK clip weight", HomelanderPoseState::milkWeight);

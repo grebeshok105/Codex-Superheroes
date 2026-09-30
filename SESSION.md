@@ -1,5 +1,14 @@
 # SESSION.md
 
+## Completed this session (Homelander EMF — Stage 4)
+
+- Stage 4 of `docs/superpowers/plans/2026-09-30-homelander-emf-presentation.md` («BOOST») implemented on `devin/1790800950-homelander-boost-s4` (base Stage-2 head `309c816b`), `mod_version` 4.3.0 → 4.4.0.
+- `HomelanderPoseState.Entry` now tracks the smoothed render velocity (per-component `approach`, half-life 3 ticks, from per-tick position deltas — local + remote players alike, §11) and projects it onto body yaw: `forward = v·bodyForward`, `strafe = v·bodyRight`. The BOOST latch (`boostEngaged`, `HomelanderPoseMath.boostEngaged`) enters at `forward ≥ emfBoostEnter` (0.9 b/t) or `SUPERSONIC && forward > 0.3`, exits below `emfBoostExit` (0.6 b/t), holds inside the band; backward/side speed never engages. `superheroes_hl_boost_w` moved to a partial-tick reader on the smoothed weight (half-life 4 ticks).
+- Owner BOOST pitch target now reads `emfBoostRootPitch` (86°, bake-measured `boost` root mean pitch 85.997) via `FlightPresentation.poseParams` (`homelander/flight`, additive component — `FlightPoseTracker` memoizes `pose.withOverrides(loader)` per tracked player for EMF-owned players only; non-owners and non-EMF entities take the unchanged `flight/pose` path). `emfBoostEnter/Exit/RootPitch/RootRoll` added to `flight.json`; `VfxParams.withOverrides` layers overlay keys.
+- NOT touched (reverted `5c3be771` class of mistake, §7 stage 4): `ClientFlightState`, `FlightPhaseResolver`, trail gating, loop volume — directional values drive pose weights only; HOVER weight is the untouched base layer under BOOST.
+- Tests added: 13 in `HomelanderPoseMathTest` (enter/exit hysteresis + band hold, backward/side never engage, SUPERSONIC low-threshold engage, weight continuity across 1-tick flicker, forward/strafe projection, velocity smoothing, `boostWeight` interpolation); 2 in `FlightPoseMathTest` (`emfBoostRootPitch` preference + `boostPitch` fallback); 2 in `VfxParamsTest` (`withOverrides` overlay/empty cases).
+- Verification: `python3 -m unittest art-source/homelander/emf/test_bake_jem.py` — 15/15; `./gradlew test --no-daemon` green; `./gradlew qualityGate --no-daemon` green (sanity, jar isolation, 364 gametests, datagen check). No in-game verification per the standing rule — Stage 4 checklist marked unverified in the PR.
+
 ## Completed this session (Homelander EMF — Stage 2)
 
 - Stage 2 of `docs/superpowers/plans/2026-09-30-homelander-emf-presentation.md` («HOVER») implemented on `devin/1790798101-homelander-emf-hover-s2` (base Stage-1 head `337327e3`), `mod_version` 4.2.0 → 4.3.0.
@@ -23,7 +32,7 @@
 
 ## Active work
 
-- Homelander EMF staged plan continues — Stage 1 PR open for review. Stages 2+ (authored-motion wiring: drive `superheroes_hl_*` weights/clocks from flight phase + ability events) remain in `docs/superpowers/plans/2026-09-30-homelander-emf-presentation.md` §7.
+- Homelander EMF staged plan continues — Stage 4 (BOOST) PR open; Stages 5+ (procedural directional transforms, camera, remaining ability clips) remain in `docs/superpowers/plans/2026-09-30-homelander-emf-presentation.md` §7.
 - PR #137 `devin/1790691597-homelander-sounds`: real flight/laser sfx replacing placeholder oggs — open, CI green, in the combined jar.
 - PR #138 `devin/1790691307-homelander-vfx-fix`: flight pose/limbs/eye-anchor/trail fixes with the presentation-phase commit reverted — open, CI green.
 - Standing rule: the user verifies all in-game behavior themselves — never claim visual verification for them.

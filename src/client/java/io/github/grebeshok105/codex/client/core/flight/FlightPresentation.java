@@ -15,6 +15,10 @@ import org.jetbrains.annotations.Nullable;
  *
  * <p>Clip ids may be {@code null} individually: a hero whose model pose is
  * driven elsewhere (EMF) still gets sounds and effects with no clip plays.
+ * {@code poseParams} is an optional {@code vfx/<path>} params id layered over
+ * {@code flight/pose} when computing the pose target for players EMF owns —
+ * it carries authored extras such as {@code emfBoostRootPitch}. It is
+ * ignored for players EMF does not own.
  */
 public record FlightPresentation(
 		@Nullable ResourceLocation takeoffClip,
@@ -27,5 +31,6 @@ public record FlightPresentation(
 		SoundEvent loopSound,
 		SoundEvent takeoffSound,
 		SoundEvent boostSound,
-		SoundEvent landSound) {
+		SoundEvent landSound,
+		@Nullable ResourceLocation poseParams) {
 }

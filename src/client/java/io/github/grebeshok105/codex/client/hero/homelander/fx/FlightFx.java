@@ -48,7 +48,7 @@ public final class FlightFx {
 	static final ResourceLocation TRAIL = ModId.of("homelander/flight_trail");
 	static final ResourceLocation BOOST = ModId.of("homelander/flight_boost");
 
-	private static final ResourceLocation PARAMS = ModId.of("homelander/flight");
+	static final ResourceLocation PARAMS = ModId.of("homelander/flight");
 	private static final ResourceLocation BOOST_EMITTER = ModId.of("homelander_flight_boost");
 	private static final ResourceLocation LANDING_EMITTER = ModId.of("homelander_flight_landing");
 	private static final Vec3 UP = new Vec3(0, 1, 0);

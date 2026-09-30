@@ -42,4 +42,29 @@ class VfxParamsTest {
 		assertEquals(4, params.color("shape", 4));
 		assertEquals(2.5f, params.number("other", 0f));
 	}
+
+	@Test
+	void withOverridesLayersOverlayValues() {
+		VfxParams base = VfxParams.parse(JsonParser.parseString(
+				"{\"boostPitch\":80,\"rollMax\":25,\"tint\":\"#102030\"}").getAsJsonObject());
+		VfxParams overlay = VfxParams.parse(JsonParser.parseString(
+				"{\"emfBoostRootPitch\":86,\"tint\":\"#A0B0C0\"}").getAsJsonObject());
+
+		VfxParams merged = base.withOverrides(overlay);
+
+		assertEquals(86f, merged.number("emfBoostRootPitch", 0f), "overlay adds new keys");
+		assertEquals(80f, merged.number("boostPitch", 0f), "base keys survive");
+		assertEquals(25f, merged.number("rollMax", 0f), "untouched base keys survive");
+		assertEquals(0xA0B0C0, merged.color("tint", 0), "overlay wins on shared keys");
+		// the inputs are records — unchanged by the merge
+		assertEquals(0x102030, base.color("tint", 0));
+	}
+
+	@Test
+	void withOverridesOnEmptyOverlayReturnsBase() {
+		VfxParams base = VfxParams.parse(JsonParser.parseString("{\"a\":1}").getAsJsonObject());
+
+		assertEquals(1f, base.withOverrides(VfxParams.EMPTY).number("a", 0f));
+		assertEquals(1f, base.withOverrides(null).number("a", 0f), "null overlay is a no-op");
+	}
 }

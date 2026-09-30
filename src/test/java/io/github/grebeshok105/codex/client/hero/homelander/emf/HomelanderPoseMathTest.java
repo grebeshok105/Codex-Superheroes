@@ -165,4 +165,182 @@ class HomelanderPoseMathTest {
 		// a one-shot time past its length stays put (clamps, not wraps)
 		assertEquals(1.9f, HomelanderPoseMath.loopTime(1.9f, 0f), 1e-6);
 	}
+
+	// --- Stage 4: BOOST hysteresis latch (§7 stage 4) ---
+
+	@Test
+	void boostEngagesAtEnterThreshold() {
+		assertTrue(HomelanderPoseMath.boostEngaged(false, 0.9f, false, 0.9f, 0.6f),
+				"forward == emfBoostEnter engages");
+		assertFalse(HomelanderPoseMath.boostEngaged(false, 0.8999f, false, 0.9f, 0.6f),
+				"a hair under enter does not");
+	}
+
+	@Test
+	void boostHoldsInsideTheHysteresisBand() {
+		assertTrue(HomelanderPoseMath.boostEngaged(true, 0.75f, false, 0.9f, 0.6f),
+				"engaged boost keeps boosting between exit and enter");
+		assertTrue(HomelanderPoseMath.boostEngaged(true, 0.6f, false, 0.9f, 0.6f),
+				"exit boundary itself still holds");
+	}
+
+	@Test
+	void boostDisengagesOnlyBelowExit() {
+		assertFalse(HomelanderPoseMath.boostEngaged(true, 0.5999f, false, 0.9f, 0.6f),
+				"under emfBoostExit the latch releases");
+	}
+
+	@Test
+	void boostDoesNotReengageInsideTheBand() {
+		assertFalse(HomelanderPoseMath.boostEngaged(false, 0.75f, false, 0.9f, 0.6f),
+				"rising into the band without crossing enter stays disengaged — no flapping");
+	}
+
+	@Test
+	void supersonicModeEngagesAboveLowForwardThreshold() {
+		assertTrue(HomelanderPoseMath.boostEngaged(false, 0.31f, true, 0.9f, 0.6f),
+				"SUPERSONIC + forward > 0.3 boosts");
+		assertFalse(HomelanderPoseMath.boostEngaged(false, 0.3f, true, 0.9f, 0.6f),
+				"the supersonic threshold is strict");
+	}
+
+	@Test
+	void backwardSpeedNeverEngagesBoost() {
+		assertFalse(HomelanderPoseMath.boostEngaged(false, -5f, false, 0.9f, 0.6f),
+				"fast backward never enters boost");
+		assertFalse(HomelanderPoseMath.boostEngaged(false, -5f, true, 0.9f, 0.6f),
+				"fast backward never enters boost, even supersonic");
+	}
+
+	// --- Stage 4: forward/strafe projection on body yaw ---
+
+	@Test
+	void forwardComponentProjectsOntoBodyYaw() {
+		// yaw 0 faces +Z (south): +Z motion is forward, -Z is backward.
+		assertEquals(1f, HomelanderPoseMath.forwardComponent(0f, 1f, 0f), 1e-6);
+		assertEquals(-1f, HomelanderPoseMath.forwardComponent(0f, -1f, 0f), 1e-6);
+		// yaw 180 faces -Z: -Z motion is forward.
+		assertEquals(1f, HomelanderPoseMath.forwardComponent(0f, -1f, 180f), 1e-4);
+		// yaw 90 faces -X (west): -X motion is forward.
+		assertEquals(1f, HomelanderPoseMath.forwardComponent(-1f, 0f, 90f), 1e-4);
+		// pure sideways motion carries no forward component.
+		assertEquals(0f, HomelanderPoseMath.forwardComponent(1f, 0f, 0f), 1e-6);
+		// diagonal: projection, not raw speed — 0.5 forward + 0.5 strafe at
+		// yaw 0 projects to 0.5, and yaw 45 faces (−0.707, 0.707) where the
+		// same (0.5, 0.5) motion is purely sideways.
+		assertEquals(0.5f, HomelanderPoseMath.forwardComponent(0.5f, 0.5f, 0f), 1e-6);
+		assertEquals(0f, HomelanderPoseMath.forwardComponent(0.5f, 0.5f, 45f), 1e-4);
+	}
+
+	@Test
+	void strafeComponentProjectsOntoBodyRight() {
+		// facing +Z the body-right axis is -X: -X motion is positive strafe.
+		assertEquals(1f, HomelanderPoseMath.strafeComponent(-1f, 0f, 0f), 1e-4);
+		assertEquals(-1f, HomelanderPoseMath.strafeComponent(1f, 0f, 0f), 1e-4);
+		// pure forward motion carries no strafe component.
+		assertEquals(0f, HomelanderPoseMath.strafeComponent(0f, 1f, 0f), 1e-6);
+	}
+
+	// --- Stage 4: boost weight smoothing ---
+
+	@Test
+	void boostWeightHalvesTheGapAfterOneHalfLife() {
+		assertEquals(0.5f, HomelanderPoseMath.boostWeight(0f, true, 4f), 1e-4,
+				"boost weight half-life is 4 ticks");
+	}
+
+	@Test
+	void boostWeightRisesOnForwardSpeedAndHoldsThroughTheBand() {
+		HomelanderPoseState.Entry entry = new HomelanderPoseState.Entry();
+		double z = 0;
+		// 1.2 b/t forward facing +Z — smoothed velocity crosses emfBoostEnter.
+		for (int i = 0; i < 30; i++) {
+			z += 1.2;
+			entry.advance(true, 0, 0, z, 0f, false, 0.9f, 0.6f);
+		}
+		assertTrue(entry.boostWeight > 0.9f, "boost converged near 1 at 1.2 b/t: " + entry.boostWeight);
+		// slow into the hysteresis band (0.7 b/t): the latch holds, weight stays.
+		for (int i = 0; i < 30; i++) {
+			z += 0.7;
+			entry.advance(true, 0, 0, z, 0f, false, 0.9f, 0.6f);
+		}
+		assertTrue(entry.forward > 0.6f && entry.forward < 0.9f,
+				"smoothed forward sits in the band: " + entry.forward);
+		assertTrue(entry.boostWeight > 0.9f,
+				"hysteresis keeps boost inside the band: " + entry.boostWeight);
+		// under the exit threshold the weight decays to 0.
+		for (int i = 0; i < 60; i++) {
+			z += 0.4;
+			entry.advance(true, 0, 0, z, 0f, false, 0.9f, 0.6f);
+		}
+		assertEquals(0f, entry.boostWeight, 0.02f, "below exit the weight releases");
+	}
+
+	@Test
+	void backwardSpeedKeepsBoostWeightAtZero() {
+		HomelanderPoseState.Entry entry = new HomelanderPoseState.Entry();
+		for (int i = 0; i < 40; i++) {
+			entry.advance(true, 0, 0, -(i + 1) * 2.0, 0f, false, 0.9f, 0.6f);
+		}
+		assertTrue(entry.forward < -1.9f, "moving backward fast: " + entry.forward);
+		assertEquals(0f, entry.boostWeight, 1e-6, "backward flight stays upright — no boost");
+	}
+
+	@Test
+	void sidewaysSpeedKeepsBoostWeightAtZero() {
+		HomelanderPoseState.Entry entry = new HomelanderPoseState.Entry();
+		for (int i = 0; i < 40; i++) {
+			entry.advance(true, (i + 1) * 2.0, 0, 0, 0f, false, 0.9f, 0.6f);
+		}
+		assertTrue(Math.abs(entry.strafe) > 1.9f, "pure strafe at speed: " + entry.strafe);
+		assertEquals(0f, entry.boostWeight, 1e-6, "sideways speed never enters boost");
+	}
+
+	@Test
+	void supersonicModeBoostsAtLowForwardSpeed() {
+		HomelanderPoseState.Entry entry = new HomelanderPoseState.Entry();
+		for (int i = 0; i < 40; i++) {
+			entry.advance(true, 0, 0, (i + 1) * 0.4, 0f, true, 0.9f, 0.6f);
+		}
+		assertTrue(entry.forward > 0.3f, "supersonic forward: " + entry.forward);
+		assertTrue(entry.boostWeight > 0.9f,
+				"SUPERSONIC + forward > 0.3 converges to boost: " + entry.boostWeight);
+	}
+
+	@Test
+	void boostWeightSurvivesOneTickFlightFlicker() {
+		HomelanderPoseState.Entry entry = new HomelanderPoseState.Entry();
+		double z = 0;
+		for (int i = 0; i < 40; i++) {
+			z += 1.5;
+			entry.advance(true, 0, 0, z, 0f, false, 0.9f, 0.6f);
+		}
+		assertTrue(entry.boostWeight > 0.95f, "fully boosted: " + entry.boostWeight);
+		// one tick where the synced flight state drops out — still moving.
+		z += 1.5;
+		entry.advance(false, 0, 0, z, 0f, false, 0.9f, 0.6f);
+		assertTrue(entry.boostWeight > 0.8f,
+				"a single-tick drop does not reset the smoothed weight: " + entry.boostWeight);
+		for (int i = 0; i < 20; i++) {
+			z += 1.5;
+			entry.advance(true, 0, 0, z, 0f, false, 0.9f, 0.6f);
+		}
+		assertTrue(entry.boostWeight > 0.95f, "recovers once flying again: " + entry.boostWeight);
+	}
+
+	@Test
+	void boostWeightReadInterpolatesBetweenTickValues() {
+		HomelanderPoseState.Entry entry = new HomelanderPoseState.Entry();
+		double z = 0;
+		for (int i = 0; i < 40; i++) {
+			z += 1.5;
+			entry.advance(true, 0, 0, z, 0f, false, 0.9f, 0.6f);
+		}
+		float boundary = entry.boostWeight(1f);
+		z += 1.5;
+		entry.advance(true, 0, 0, z, 0f, false, 0.9f, 0.6f);
+		assertEquals(boundary, entry.boostWeight(0f), 1e-6,
+				"read opens at the previous tick value — no step at the boundary");
+		assertEquals(entry.boostWeight, entry.boostWeight(1f), 1e-6);
+	}
 }
