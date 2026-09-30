@@ -496,13 +496,14 @@ public final class HomelanderGameTests implements FabricGameTest {
 		});
 	}
 
-	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 340)
+	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 370)
 	public void uraniumOffhandRadiationStacksToHunger(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		player.getInventory().offhand.set(0, new ItemStack(HomelanderItems.URANIUM_ISOTOPE));
-		// ~15 ticks of slack: tickPlayer starts only after join is processed, and
-		// the 300-tick radiation threshold otherwise sits at the assert's edge.
-		helper.runAfterDelay(315, () -> {
+		// ~30 ticks of slack: tickPlayer starts only after join is processed, and
+		// the 300-tick radiation threshold otherwise sits at the assert's edge —
+		// CI runners have taken over 15 ticks to finish join.
+		helper.runAfterDelay(330, () -> {
 			helper.assertTrue(player.hasEffect(MobEffects.HUNGER),
 					"300 ticks of offhand radiation stack to hunger");
 			TestPlayers.leave(player);

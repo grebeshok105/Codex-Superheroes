@@ -12,13 +12,16 @@ import org.jetbrains.annotations.Nullable;
  * finishes itself when the phase leaves; {@code boostEffect} fires once on
  * BOOST entry. Both are {@code VfxRuntime} effect ids and may be
  * {@code null} when the hero wants no effect there.
+ *
+ * <p>Clip ids may be {@code null} individually: a hero whose model pose is
+ * driven elsewhere (EMF) still gets sounds and effects with no clip plays.
  */
 public record FlightPresentation(
-		ResourceLocation takeoffClip,
-		ResourceLocation hoverClip,
-		ResourceLocation cruiseClip,
-		ResourceLocation boostClip,
-		ResourceLocation landClip,
+		@Nullable ResourceLocation takeoffClip,
+		@Nullable ResourceLocation hoverClip,
+		@Nullable ResourceLocation cruiseClip,
+		@Nullable ResourceLocation boostClip,
+		@Nullable ResourceLocation landClip,
 		@Nullable ResourceLocation trailEffect,
 		@Nullable ResourceLocation boostEffect,
 		SoundEvent loopSound,

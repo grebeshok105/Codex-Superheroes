@@ -225,6 +225,16 @@ dependencies {
 	// NOT bundled, NOT required at runtime; guarded by FabricLoader.isModLoaded("iris").
 	modCompileOnly "maven.modrinth:iris:1.8.8+1.21.1-fabric"
 
+	// EMF + ETF — custom player model + animation for Homelander's EMF presentation.
+	// Bundled (jar-in-jar, same mechanism as GeckoLib): fabric.mod.json hard-depends on
+	// entity_model_features on the client; on the dedicated server the nested client-only
+	// mods land in envDisabledMods and the dep softens to suggests (verified vs
+	// fabric-loader ModResolver/ModSolver). ETF is pulled by EMF's own depends.
+	modImplementation "maven.modrinth:entity-model-features:3.3.9-fabric-1.21"
+	include "maven.modrinth:entity-model-features:3.3.9-fabric-1.21"
+	modImplementation "maven.modrinth:entitytexturefeatures:7.2.4-fabric-1.21"
+	include "maven.modrinth:entitytexturefeatures:7.2.4-fabric-1.21"
+
 	testImplementation platform("org.junit:junit-bom:5.10.2")
 	testImplementation "org.junit.jupiter:junit-jupiter"
 	testRuntimeOnly "org.junit.platform:junit-platform-launcher"

@@ -173,8 +173,10 @@ public final class FlightPoseTracker {
 		int entityId = player.getId();
 		switch (phase) {
 			case TAKEOFF -> {
-				PlayerAnimator.play(entityId, presentation.takeoffClip(),
-						PlayerAnimator.Layer.ACTION, ACTION_FADE_TICKS);
+				if (presentation.takeoffClip() != null) {
+					PlayerAnimator.play(entityId, presentation.takeoffClip(),
+							PlayerAnimator.Layer.ACTION, ACTION_FADE_TICKS);
+				}
 				playOneShot(client, player, presentation.takeoffSound());
 			}
 			case BOOST -> {
@@ -184,8 +186,10 @@ public final class FlightPoseTracker {
 				}
 			}
 			case LANDING -> {
-				PlayerAnimator.play(entityId, presentation.landClip(),
-						PlayerAnimator.Layer.ACTION, ACTION_FADE_TICKS);
+				if (presentation.landClip() != null) {
+					PlayerAnimator.play(entityId, presentation.landClip(),
+							PlayerAnimator.Layer.ACTION, ACTION_FADE_TICKS);
+				}
 				playOneShot(client, player, presentation.landSound());
 			}
 			default -> {

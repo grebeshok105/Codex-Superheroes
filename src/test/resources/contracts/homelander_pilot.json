@@ -1,47 +1,126 @@
 {
-  "sounds": [
-    { "event": "homelander.flight.takeoff", "file": "flight_takeoff.ogg", "durationMs": 600, "loop": false },
-    { "event": "homelander.flight.loop", "file": "flight_loop.ogg", "durationMs": 1000, "loop": true },
-    { "event": "homelander.flight.boost", "file": "flight_boost.ogg", "durationMs": 1200, "loop": false },
-    { "event": "homelander.flight.land", "file": "flight_land.ogg", "durationMs": 500, "loop": false },
-    { "event": "homelander.laser.charge", "file": "laser_charge.ogg", "durationMs": 300, "loop": false },
-    { "event": "homelander.laser.loop", "file": "laser_loop.ogg", "durationMs": 1000, "loop": true },
-    { "event": "homelander.laser.release", "file": "laser_release.ogg", "durationMs": 400, "loop": false },
-    { "event": "homelander.milk.drink", "file": "milk_drink.ogg", "durationMs": 1600, "loop": false },
-    { "event": "homelander.sun.charge", "file": "sun_charge.ogg", "durationMs": 10000, "loop": false },
-    { "event": "homelander.sun.detonate", "file": "sun_detonate.ogg", "durationMs": 4000, "loop": false },
-    { "event": "homelander.iron_fists.activate", "file": "iron_fists_activate.ogg", "durationMs": 1000, "loop": false },
-    { "event": "homelander.iron_fists.charge", "file": "iron_fists_charge.ogg", "durationMs": 5112, "loop": true },
-    { "event": "homelander.iron_fists.impact", "file": "iron_fists_impact.ogg", "durationMs": 1440, "loop": false },
-    { "event": "homelander.hand_clap", "file": "hand_clap.ogg", "durationMs": 4568, "loop": false },
-    { "event": "homelander.roar", "file": "roar.ogg", "durationMs": 3448, "loop": false },
-    { "event": "homelander.roar.deep", "file": "roar_deep.ogg", "durationMs": 6478, "loop": false }
-  ],
-  "animations": [
-    { "clip": "flight_takeoff", "file": "flight_takeoff.animation.json", "lengthMs": 400, "loop": false },
-    { "clip": "flight_hover", "file": "flight_hover.animation.json", "lengthMs": 2500, "loop": true },
-    { "clip": "flight_cruise", "file": "flight_cruise.animation.json", "lengthMs": 2083, "loop": true },
-    { "clip": "flight_boost", "file": "flight_boost.animation.json", "lengthMs": 1667, "loop": true },
-    { "clip": "flight_land", "file": "flight_land.animation.json", "lengthMs": 500, "loop": false },
-    { "clip": "laser_charge", "file": "laser_charge.animation.json", "lengthMs": 300, "loop": false },
-    { "clip": "laser_hold", "file": "laser_hold.animation.json", "lengthMs": 833, "loop": true },
-    { "clip": "laser_release", "file": "laser_release.animation.json", "lengthMs": 400, "loop": false },
-    { "clip": "milk_drink", "file": "milk_drink.animation.json", "lengthMs": 1600, "loop": false },
-    { "clip": "sun_charge", "file": "sun_charge.animation.json", "lengthMs": 1000, "loop": true },
-    { "clip": "iron_fists_activate", "file": "iron_fists_activate.animation.json", "lengthMs": 1000, "loop": false },
-    { "clip": "iron_fists_strike", "file": "iron_fists_strike.animation.json", "lengthMs": 400, "loop": false, "events": { "contact": 120 } },
-    { "clip": "clap", "file": "clap.animation.json", "lengthMs": 600, "loop": false, "events": { "contact": 120 } },
-    { "clip": "roar", "file": "roar.animation.json", "lengthMs": 1500, "loop": false }
-  ],
-  "models": [
-    { "path": "models/item/milk_bottle.json" }
-  ],
-  "textures": [
-    { "path": "textures/vfx/homelander/laser_core.png" },
-    { "path": "textures/vfx/homelander/laser_glow.png" },
-    { "path": "textures/vfx/homelander/sun_flash.png" },
-    { "path": "textures/vfx/homelander/sun_ring.png" },
-    { "path": "textures/vfx/homelander/ember.png" },
-    { "path": "textures/vfx/homelander/shock_ring.png" }
-  ]
+	"sounds": [
+		{
+			"event": "homelander.flight.takeoff",
+			"file": "flight_takeoff.ogg",
+			"durationMs": 600,
+			"loop": false
+		},
+		{
+			"event": "homelander.flight.loop",
+			"file": "flight_loop.ogg",
+			"durationMs": 1000,
+			"loop": true
+		},
+		{
+			"event": "homelander.flight.boost",
+			"file": "flight_boost.ogg",
+			"durationMs": 1200,
+			"loop": false
+		},
+		{
+			"event": "homelander.flight.land",
+			"file": "flight_land.ogg",
+			"durationMs": 500,
+			"loop": false
+		},
+		{
+			"event": "homelander.laser.charge",
+			"file": "laser_charge.ogg",
+			"durationMs": 300,
+			"loop": false
+		},
+		{
+			"event": "homelander.laser.loop",
+			"file": "laser_loop.ogg",
+			"durationMs": 1000,
+			"loop": true
+		},
+		{
+			"event": "homelander.laser.release",
+			"file": "laser_release.ogg",
+			"durationMs": 400,
+			"loop": false
+		},
+		{
+			"event": "homelander.milk.drink",
+			"file": "milk_drink.ogg",
+			"durationMs": 1600,
+			"loop": false
+		},
+		{
+			"event": "homelander.sun.charge",
+			"file": "sun_charge.ogg",
+			"durationMs": 10000,
+			"loop": false
+		},
+		{
+			"event": "homelander.sun.detonate",
+			"file": "sun_detonate.ogg",
+			"durationMs": 4000,
+			"loop": false
+		},
+		{
+			"event": "homelander.iron_fists.activate",
+			"file": "iron_fists_activate.ogg",
+			"durationMs": 1000,
+			"loop": false
+		},
+		{
+			"event": "homelander.iron_fists.charge",
+			"file": "iron_fists_charge.ogg",
+			"durationMs": 5112,
+			"loop": true
+		},
+		{
+			"event": "homelander.iron_fists.impact",
+			"file": "iron_fists_impact.ogg",
+			"durationMs": 1440,
+			"loop": false
+		},
+		{
+			"event": "homelander.hand_clap",
+			"file": "hand_clap.ogg",
+			"durationMs": 4568,
+			"loop": false
+		},
+		{
+			"event": "homelander.roar",
+			"file": "roar.ogg",
+			"durationMs": 3448,
+			"loop": false
+		},
+		{
+			"event": "homelander.roar.deep",
+			"file": "roar_deep.ogg",
+			"durationMs": 6478,
+			"loop": false
+		}
+	],
+	"animations": [],
+	"models": [
+		{
+			"path": "models/item/milk_bottle.json"
+		}
+	],
+	"textures": [
+		{
+			"path": "textures/vfx/homelander/laser_core.png"
+		},
+		{
+			"path": "textures/vfx/homelander/laser_glow.png"
+		},
+		{
+			"path": "textures/vfx/homelander/sun_flash.png"
+		},
+		{
+			"path": "textures/vfx/homelander/sun_ring.png"
+		},
+		{
+			"path": "textures/vfx/homelander/ember.png"
+		},
+		{
+			"path": "textures/vfx/homelander/shock_ring.png"
+		}
+	]
 }

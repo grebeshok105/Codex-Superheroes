@@ -1,11 +1,14 @@
 package io.github.grebeshok105.codex.client.core.vfx.anchor;
 
+import io.github.grebeshok105.codex.client.core.emf.EmfPresentationOwnership;
+import io.github.grebeshok105.codex.client.core.emf.RenderedPoseCache;
 import io.github.grebeshok105.codex.client.core.flight.FlightBodyTransform;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 /**
@@ -34,6 +37,12 @@ public final class HumanoidAnchors {
 	private static final double FIRST_PERSON_FORWARD = 0.35;
 	private static final double FIRST_PERSON_LATERAL = 0.11;
 	private static final double FIRST_PERSON_DOWN = 0.08;
+
+	/** Model-space eye centers (pixels): +x is the left eye, -z the face front. */
+	private static final Vector3f EYE_LEFT_PX = new Vector3f(2f, -1f, -4f);
+	private static final Vector3f EYE_RIGHT_PX = new Vector3f(-2f, -1f, -4f);
+	/** Render-thread scratch for {@link RenderedPoseCache#headPose}. */
+	private static final float[] HEAD_SCRATCH = new float[6];
 
 	private HumanoidAnchors() {
 	}
@@ -72,6 +81,10 @@ public final class HumanoidAnchors {
 		}
 		Vec3 feet = player.getPosition(partial);
 		float bodyYaw = Mth.rotLerp(partial, player.yBodyRotO, player.yBodyRot);
+		if (EmfPresentationOwnership.isOwned(player)
+				&& RenderedPoseCache.headPose(player.getId(), HEAD_SCRATCH)) {
+			return ownedEyes(feet, bodyYaw, tilt, player.getScale());
+		}
 		float headYaw = Mth.rotLerp(partial, player.yHeadRotO, player.yHeadRot) + headAnimDeg.y;
 		float headPitch = Mth.lerp(partial, player.xRotO, player.getXRot()) + headAnimDeg.x;
 		return computeEyes(feet, bodyYaw, headYaw, headPitch, headAnimDeg.z, tilt, player.getScale());
@@ -109,6 +122,33 @@ public final class HumanoidAnchors {
 		return new EyePair(
 				feet.add(applyTilt(eyeCenter.subtract(lateral), bodyRight, bodyForward, tilt)),
 				feet.add(applyTilt(eyeCenter.add(lateral), bodyRight, bodyForward, tilt)));
+	}
+
+	/**
+	 * Eye anchors from the cached EMF-posed head transform (HEAD_SCRATCH =
+	 * x,y,z px + xRot,yRot,zRot rad). Model-space eye = pivot + Rz·Ry·Rx·local,
+	 * mapped to entity space ({@code -x/16, 1.5-y/16, z/16}), then the
+	 * renderer's body yaw and flight tilt — identical to the vanilla path when
+	 * the cached pose equals the vanilla pose.
+	 */
+	private static EyePair ownedEyes(Vec3 feet, float bodyYawDeg, FlightBodyTransform tilt, float scale) {
+		Vec3 bodyForward = Vec3.directionFromRotation(0f, bodyYawDeg);
+		Vec3 bodyRight = rightOf(bodyForward, new Vec3(1, 0, 0));
+		Quaternionf headRot = new Quaternionf()
+				.rotationZYX(HEAD_SCRATCH[5], HEAD_SCRATCH[4], HEAD_SCRATCH[3]);
+		Vector3f pivot = new Vector3f(HEAD_SCRATCH[0], HEAD_SCRATCH[1], HEAD_SCRATCH[2]);
+		return new EyePair(
+				ownedEye(feet, bodyYawDeg, bodyRight, bodyForward, tilt, scale, pivot, headRot, EYE_LEFT_PX),
+				ownedEye(feet, bodyYawDeg, bodyRight, bodyForward, tilt, scale, pivot, headRot, EYE_RIGHT_PX));
+	}
+
+	private static Vec3 ownedEye(Vec3 feet, float bodyYawDeg, Vec3 bodyRight, Vec3 bodyForward,
+			FlightBodyTransform tilt, float scale, Vector3f pivotPx, Quaternionf headRot, Vector3f eyePx) {
+		// Only the eye offset scales — the head pivot stays unscaled (computeEyes parity).
+		Vector3f model = new Vector3f(eyePx).mul(scale).rotate(headRot).add(pivotPx);
+		Vec3 offset = new Vec3(-model.x / 16.0, HEAD_PIVOT - model.y / 16.0, model.z / 16.0)
+				.yRot((float) Math.toRadians(180.0 - bodyYawDeg));
+		return feet.add(applyTilt(offset, bodyRight, bodyForward, tilt));
 	}
 
 	/** Minecraft's right-hand axis: {@code forward × up} (matches the beam overlays). */

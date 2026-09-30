@@ -7,7 +7,6 @@ import org.jetbrains.annotations.Nullable;
 
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.client.ClientSessionState;
-import io.github.grebeshok105.codex.client.core.anim.PlayerAnimator;
 import io.github.grebeshok105.codex.client.core.flight.FlightBodyTransform;
 import io.github.grebeshok105.codex.client.core.flight.FlightPoseTracker;
 import io.github.grebeshok105.codex.client.core.vfx.VfxEffect;
@@ -46,23 +45,20 @@ import net.minecraft.world.phys.Vec3;
  * resends into one running aura per source, even while the entity has not
  * reached the client level yet (an ON arriving first waits, binds on resolve,
  * and still cancels on OFF). ON: a 200-tick aura emitting the hand emitter at both arm anchors (arm
- * pivots rotated ~10px down), the ACTION {@code iron_fists_activate} clip, a
+ * pivots rotated ~10px down), a
  * one-shot {@code homelander.iron_fists.activate} and an entity-bound {@code
  * homelander.iron_fists.charge} loop. OFF: ends the aura early. HIT: a
  * {@link ShockwavePattern} ring whose radius is the event's {@code scale}
  * (the server sends {@code IronFistsController.SHOCKWAVE_RADIUS}), an {@link
- * ImpactPattern} burst, a proximity-scaled {@link CameraImpulse}, the ACTION
- * {@code iron_fists_strike} clip and {@code homelander.iron_fists.impact}.
+ * ImpactPattern} burst, a proximity-scaled {@link CameraImpulse} and
+ * {@code homelander.iron_fists.impact}.
  * Tuning: {@code vfx/homelander/iron_fists.json}.
  */
 public final class IronFistsFx {
 	private static final ResourceLocation PARAMS = ModId.of("homelander/iron_fists");
 	private static final ResourceLocation HAND_EMITTER = ModId.of("homelander_iron_fists_hand");
 	private static final ResourceLocation IMPACT_EMITTER = ModId.of("homelander_iron_fists_impact");
-	private static final ResourceLocation CLIP_ACTIVATE = ModId.of("homelander/iron_fists_activate");
-	private static final ResourceLocation CLIP_STRIKE = ModId.of("homelander/iron_fists_strike");
 	private static final Vec3 UP = new Vec3(0, 1, 0);
-	private static final int CLIP_FADE_TICKS = 4;
 
 	/** Running auras by source entity id — dedupes ON resends; OFF cancels. */
 	private static final Map<Integer, HandAuraFx> ACTIVE_AURAS = new ConcurrentHashMap<>();
@@ -157,14 +153,12 @@ public final class IronFistsFx {
 			}
 		}
 
-		/** Clip + activate sting + charge loop — once the source entity exists. */
+		/** Activate sting + charge loop — once the source entity exists. */
 		private void bindPresentation() {
 			Entity e = entity;
 			if (e == null) {
 				return;
 			}
-			PlayerAnimator.play(entityId, CLIP_ACTIVATE,
-					PlayerAnimator.Layer.ACTION, CLIP_FADE_TICKS);
 			Minecraft.getInstance().getSoundManager().play(new EntityBoundSoundInstance(
 					HomelanderSounds.IRON_FISTS_ACTIVATE, SoundSource.PLAYERS,
 					activateVolume, activatePitch, e, e.getRandom().nextLong()));
@@ -280,10 +274,6 @@ public final class IronFistsFx {
 			}
 
 			Entity source = spawn.source();
-			if (source != null) {
-				PlayerAnimator.play(source.getId(), CLIP_STRIKE,
-						PlayerAnimator.Layer.ACTION, CLIP_FADE_TICKS);
-			}
 			Minecraft.getInstance().getSoundManager().play(new SimpleSoundInstance(
 					HomelanderSounds.IRON_FISTS_IMPACT, SoundSource.PLAYERS,
 					p.number("impactVolume", 1f), p.number("impactPitch", 1f),

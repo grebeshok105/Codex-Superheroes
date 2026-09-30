@@ -1,7 +1,5 @@
 package io.github.grebeshok105.codex.client.hero.homelander.fx;
 
-import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.client.core.anim.PlayerAnimator;
 import io.github.grebeshok105.codex.client.core.flight.FlightPresentation;
 import io.github.grebeshok105.codex.client.core.module.HeroClientContext;
 import io.github.grebeshok105.codex.client.core.vfx.VfxEffect;
@@ -26,9 +24,6 @@ import net.minecraft.world.phys.Vec3;
  * ids (laser channel, sun, iron fists, clap, roar, milk).
  */
 public final class HomelanderFx {
-	private static final ResourceLocation CLIP_MILK_DRINK = ModId.of("homelander/milk_drink");
-	private static final int CLIP_FADE_TICKS = 4;
-
 	private HomelanderFx() {
 	}
 
@@ -46,12 +41,10 @@ public final class HomelanderFx {
 		ctx.vfx(HomelanderVfxIds.IRON_FISTS_HIT, IronFistsFx::hit);
 		ctx.vfx(HomelanderVfxIds.CLAP, ClapFx::create);
 		ctx.vfx(HomelanderVfxIds.ROAR, RoarFx::create);
+		// No player clips: the EMF jem presents Homelander's model. The
+		// presentation stays registered for trail/boost effects and sounds.
 		ctx.flightPresentation(new FlightPresentation(
-				clip("flight_takeoff"),
-				clip("flight_hover"),
-				clip("flight_cruise"),
-				clip("flight_boost"),
-				clip("flight_land"),
+				null, null, null, null, null,
 				FlightFx.TRAIL,
 				FlightFx.BOOST,
 				HomelanderSounds.FLIGHT_LOOP,
@@ -61,15 +54,13 @@ public final class HomelanderFx {
 	}
 
 	/**
-	 * MILK_DRINK one-shot — the ACTION {@code milk_drink} clip plus the bound
-	 * {@code homelander.milk.drink} sound on the drinking player. Hosted here
-	 * in the hub rather than as its own class: no patterns, no state.
+	 * MILK_DRINK one-shot — the bound {@code homelander.milk.drink} sound on
+	 * the drinking player. Hosted here in the hub rather than as its own
+	 * class: no patterns, no state.
 	 */
 	private static VfxEffect milkDrink(VfxSpawn spawn) {
 		Entity source = spawn.source();
 		if (source != null) {
-			PlayerAnimator.play(source.getId(), CLIP_MILK_DRINK,
-					PlayerAnimator.Layer.ACTION, CLIP_FADE_TICKS);
 			Minecraft.getInstance().getSoundManager().play(new EntityBoundSoundInstance(
 					HomelanderSounds.MILK_DRINK, SoundSource.PLAYERS, 1f, 1f,
 					source, source.getRandom().nextLong()));
@@ -80,10 +71,6 @@ public final class HomelanderFx {
 					RandomSource.create(), pos.x, pos.y, pos.z));
 		}
 		return new DoneFx();
-	}
-
-	private static ResourceLocation clip(String name) {
-		return ModId.of("homelander/" + name);
 	}
 
 	/** Ends after one tick — the effect's real work happened in the factory. */
