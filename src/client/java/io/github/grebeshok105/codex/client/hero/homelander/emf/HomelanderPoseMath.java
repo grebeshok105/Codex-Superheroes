@@ -13,9 +13,9 @@ final class HomelanderPoseMath {
 	private HomelanderPoseMath() {
 	}
 
-	/** Exponential approach of {@code current} toward the flight target, half-life 3 ticks. */
-	static float activeWeight(float current, boolean flying, float dtTicks) {
-		return approach(current, flying ? 1f : 0f, ACTIVE_HALF_LIFE_TICKS, dtTicks);
+	/** Exponential approach of {@code current} toward the authored-presentation target, half-life 3 ticks. */
+	static float activeWeight(float current, boolean presenting, float dtTicks) {
+		return approach(current, presenting ? 1f : 0f, ACTIVE_HALF_LIFE_TICKS, dtTicks);
 	}
 
 	/** Frame-rate-independent exponential approach. */

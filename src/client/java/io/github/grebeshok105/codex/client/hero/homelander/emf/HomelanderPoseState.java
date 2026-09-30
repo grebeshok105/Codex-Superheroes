@@ -17,14 +17,20 @@ import java.util.UUID;
  * zero-allocation on the read path — suppliers look the entity up by uuid and
  * copy floats out.
  *
- * <p>Stage 1 registers the variables but never drives the weights, so every
- * weight reads 0 and owned players render the vanilla pose. Clip clocks
- * advance freely so they hold real values once Stage 2 starts animating.
+ * <p>Stage 7 drives the clap: a {@code CLAP} event resets the clip clock and
+ * plays it once over 1.92 s while {@code clap_w} and the master {@code hl_w}
+ * ease in/out (the jem blends it over the hover/boost group, so it works in
+ * flight too); {@code CLAP_CANCEL} releases the weights early. The other clips'
+ * weights still read 0 until their stages drive them; their clocks free-run.
  */
 final class HomelanderPoseState {
 
 	private static final int MAX_ENTITIES = 64;
 	private static final float TICK_SECONDS = 1f / 20f;
+	/** Authored HAND CLAP length (windup + hold). */
+	private static final float CLAP_SECONDS = 1.92f;
+	/** Same ease-in/out as the master weight, so ramp-in and release look symmetric. */
+	private static final float CLAP_HALF_LIFE_TICKS = 3f;
 
 	private static final Map<UUID, Entry> STATES = new LinkedHashMap<>(16, 0.75f, true) {
 		@Override
@@ -51,6 +57,7 @@ final class HomelanderPoseState {
 		float takeoffWeight;
 		float clapWeight;
 		float milkWeight;
+		boolean clapPlaying;
 		float forward;
 		float strafe;
 		float pitchDeg;
@@ -75,8 +82,31 @@ final class HomelanderPoseState {
 			entry.hover.advance(TICK_SECONDS);
 			entry.takeoff.advance(TICK_SECONDS);
 			entry.boost.advance(TICK_SECONDS);
-			entry.clap.advance(TICK_SECONDS);
+			if (entry.clapPlaying) {
+				entry.clap.advance(TICK_SECONDS);
+				if (entry.clap.finished(CLAP_SECONDS)) {
+					entry.clapPlaying = false;
+				}
+			}
 			entry.milk.advance(TICK_SECONDS);
+			entry.clapWeight = HomelanderPoseMath.approach(entry.clapWeight,
+					entry.clapPlaying ? 1f : 0f, CLAP_HALF_LIFE_TICKS, 1f);
+			entry.active = HomelanderPoseMath.activeWeight(entry.active, entry.clapPlaying, 1f);
+		}
+	}
+
+	/** {@code CLAP}: restart the authored clip. Not gated on ownership — a late skin resolve still lands. */
+	static void startClap(UUID uuid) {
+		Entry entry = STATES.computeIfAbsent(uuid, key -> new Entry());
+		entry.clap.reset();
+		entry.clapPlaying = true;
+	}
+
+	/** {@code CLAP_CANCEL}: the hit was dropped server-side; release the weights early. */
+	static void cancelClap(UUID uuid) {
+		Entry entry = STATES.get(uuid);
+		if (entry != null) {
+			entry.clapPlaying = false;
 		}
 	}
 
