@@ -22,8 +22,8 @@ final class HomelanderEmfVariables {
 		if (!EmfBridge.isAvailable()) {
 			return;
 		}
-		EmfBridge.registerFloatVariable("superheroes_hl_w",
-				"homelander authored-presentation master weight", HomelanderEmfVariables::weight);
+		registerClock("superheroes_hl_w",
+				"homelander authored-presentation master weight", HomelanderPoseState::weight);
 		registerClock("superheroes_hl_hover_t", "homelander HOVER clip time", HomelanderPoseState::hoverTime);
 		registerClock("superheroes_hl_takeoff_t", "homelander TAKEOFF clip time", HomelanderPoseState::takeoffTime);
 		registerClock("superheroes_hl_boost_t", "homelander BOOST clip time", HomelanderPoseState::boostTime);
@@ -54,15 +54,14 @@ final class HomelanderEmfVariables {
 		EmfBridge.registerFloatVariable(name, explanation, () -> reader.weight(currentUuid()));
 	}
 
-	private static float weight() {
-		return HomelanderPoseState.weight(currentUuid());
-	}
-
 	private static UUID currentUuid() {
 		return EmfBridge.currentEntityUuid();
 	}
 
 	private static float partialTick() {
-		return Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false);
+		// World-space render sampling convention (PlayerModelPoseMixin, VfxRuntime): under
+		// /tick freeze client ticks stop, so clocks genuinely pause; passing true keeps the
+		// frozen residual continuous instead of snapping to 1.0 (which (false) would do).
+		return Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(true);
 	}
 }

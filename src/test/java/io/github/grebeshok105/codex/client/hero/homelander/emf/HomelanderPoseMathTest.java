@@ -44,6 +44,109 @@ class HomelanderPoseMathTest {
 	}
 
 	@Test
+	void advanceRisesActiveWeightWhileFlyingAndFallsAfterLanding() {
+		HomelanderPoseState.Entry entry = new HomelanderPoseState.Entry();
+		for (int i = 0; i < 3; i++) {
+			entry.advance(true);
+		}
+		assertEquals(0.5f, entry.active, 1e-4, "half-life 3 ticks while flying");
+		for (int i = 3; i < 21; i++) {
+			entry.advance(true);
+		}
+		assertEquals(1f, entry.active, 0.01f, "rises to full weight");
+		for (int i = 0; i < 24; i++) {
+			entry.advance(false);
+		}
+		assertEquals(0f, entry.active, 0.01f, "returns to vanilla after landing");
+	}
+
+	@Test
+	void weightReadInterpolatesBetweenTickValues() {
+		HomelanderPoseState.Entry entry = new HomelanderPoseState.Entry();
+		entry.advance(true);
+		assertEquals(0f, entry.weight(0f), 1e-6, "read opens at the previous tick value");
+		assertEquals(entry.active, entry.weight(1f), 1e-6);
+		float boundary = entry.weight(1f);
+		entry.advance(true);
+		assertEquals(boundary, entry.weight(0f), 1e-6,
+				"no step at the tick boundary during the ramp");
+	}
+
+	@Test
+	void hoverTimeWrapsAtLoopLength() {
+		HomelanderPoseState.Entry entry = new HomelanderPoseState.Entry();
+		for (int i = 0; i < 63; i++) {
+			entry.advance(false);
+		}
+		assertEquals(3.15f, entry.hoverTime(0f), 5e-4, "3.15 s of 60 client ticks");
+		entry.advance(false);
+		float wrapped = entry.hoverTime(0f);
+		assertTrue(wrapped < 5e-4
+						|| Math.abs(wrapped - HomelanderPoseMath.HOVER_LENGTH_SECONDS) < 5e-4,
+				"3.2 s sits on the loop boundary (float accumulation may land a hair under)");
+		entry.advance(false);
+		assertEquals(0.05f, entry.hoverTime(0f), 5e-4);
+		assertEquals(0.07f, entry.hoverTime(0.4f), 5e-4, "wraps mid-interpolation too");
+	}
+
+	@Test
+	void hoverClockNeverResetsAcrossFlightPhaseFlips() {
+		HomelanderPoseState.Entry entry = new HomelanderPoseState.Entry();
+		for (int i = 0; i < 10; i++) {
+			entry.advance(true);
+		}
+		float before = entry.hover.time();
+		for (int i = 0; i < 20; i++) {
+			entry.advance(false); // landed
+		}
+		for (int i = 0; i < 10; i++) {
+			entry.advance(true); // flying again
+		}
+		assertEquals(before + 30f * 0.05f, entry.hover.time(), 1e-4,
+				"the loop clock keeps running through land/re-fly flips — no snap");
+	}
+
+	@Test
+	void clipClockAccumulatesRealDeltasAtAnyFrameRate() {
+		// advance(dt) is fed real frame deltas: 2 s of 60 fps frames and
+		// 2 s of 144 fps frames must land on the same clock value.
+		HomelanderPoseMath.ClipClock c60 = new HomelanderPoseMath.ClipClock();
+		HomelanderPoseMath.ClipClock c144 = new HomelanderPoseMath.ClipClock();
+		for (int i = 0; i < 120; i++) {
+			c60.advance(1f / 60f);
+		}
+		for (int i = 0; i < 288; i++) {
+			c144.advance(1f / 144f);
+		}
+		assertEquals(c60.time(), c144.time(), 1e-4, "2 s wall at 60 vs 144 fps");
+	}
+
+	@Test
+	void hoverTimeIsFrameRateIndependent() {
+		// The read is tick-clock + partial-tick interpolation, so at any wall
+		// instant it reproduces wall time regardless of render rate.
+		for (double fps : new double[]{60.0, 144.0}) {
+			HomelanderPoseState.Entry entry = new HomelanderPoseState.Entry();
+			int ticks = 0;
+			for (int f = 1; f <= 4 * fps; f++) {
+				double wall = f / fps;
+				int due = (int) Math.floor(wall * 20.0 + 1e-9);
+				for (; ticks < due; ticks++) {
+					entry.advance(true);
+				}
+				float partial = (float) (wall * 20.0 - due);
+				float expected = (float) (wall % HomelanderPoseMath.HOVER_LENGTH_SECONDS);
+				// compare in loop space: a hair under 3.2 is identical to a hair over 0
+				float diff = Math.abs(expected - entry.hoverTime(partial));
+				float loopDist = Math.min(diff, HomelanderPoseMath.HOVER_LENGTH_SECONDS - diff);
+				assertTrue(loopDist < 1e-3,
+						fps + " fps, wall=" + wall + " expected=" + expected
+								+ " actual=" + entry.hoverTime(partial));
+			}
+		}
+	}
+
+	@Test
 	void clipClockAccumulatesAndResets() {
 		HomelanderPoseMath.ClipClock clock = new HomelanderPoseMath.ClipClock();
 		assertEquals(0.25f, clock.advance(0.25f), 1e-6);

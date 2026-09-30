@@ -1,6 +1,16 @@
 # SESSION.md
 
-## Completed this session (Homelander EMF — Stage 1)
+## Completed this session (Homelander EMF — Stage 2)
+
+- Stage 2 of `docs/superpowers/plans/2026-09-30-homelander-emf-presentation.md` («HOVER») implemented on `devin/1790798101-homelander-emf-hover-s2` (base Stage-1 head `337327e3`), `mod_version` 4.2.0 → 4.3.0.
+- `HomelanderPoseState.Entry.advance(flying)` now drives the master weight via `HomelanderPoseMath.activeWeight` (half-life 3 ticks, `flying = ClientFlightState.get(entityId) != null`) and advances all five clip clocks per client tick. `superheroes_hl_w` moved to a partial-tick reader (`weight(uuid, partial)` interpolates `activePrev→active`); `hoverTime` wraps to loop-local time via `loopTime(t, HOVER_LENGTH_SECONDS=3.2f)` so `keyframeloop` never overshoots. The hover clock is free-running — never reset on flight on/off flips, so blending in mid-loop is continuous (§7 stage 2 constraint).
+- Reads stay allocation-free + O(1): last-resolved (uuid → entry) cached, invalidated on LRU eviction/`clearAll`.
+- Tick-freeze adjudication (Stage-1 review note): `partialTick()` switched `getGameTimeDeltaPartialTick(false→true)` — the world-space render convention (`PlayerModelPoseMixin`, `VfxRuntime`). Under `/tick freeze` client ticks stop, so clocks genuinely pause; `(true)` returns the frozen residual instead of snapping to 1.0.
+- Bake contract: `test_bake_jem.py::test_hover_loop_closes` asserts every emitted HOVER channel matches at t=0 vs t=3.2 within 0.5°/0.05/0.005 (rotation/translation/scale) — guards the loop against `keyframeloop` pops.
+- Tests added: 6 in `HomelanderPoseMathTest` (weight ramp 0→1→0, partial-tick interpolation continuity at tick boundary, wrap at 3.2 s incl. mid-interpolation wrap, clock never resets across flips, 60 vs 144 fps clock equivalence, full frame-stream fps independence in loop space).
+- Verification: `python3 -m unittest art-source/homelander/emf/test_bake_jem.py` — 15/15; `./gradlew test --no-daemon` green; `./gradlew qualityGate --no-daemon` green (sanity, jar isolation, 364 gametests, datagen check). No in-game verification per the standing rule — Stage 2 visual checklist marked unverified in the PR.
+
+## Earlier (Homelander EMF — Stage 1)
 
 - Stage 1 of `docs/superpowers/plans/2026-09-30-homelander-emf-presentation.md` («EMF foundation and Homelander model integration») implemented on `devin/1790789702-homelander-emf-stage1` (base `devin/1790782256-homelander-emf-plan`) and shipped as its own PR, `mod_version` 4.1.3 → 4.2.0.
 - EMF 3.3.9 + ETF 7.2.4 ship jar-in-jar (`modImplementation` + `include`); `fabric.mod.json` gains `depends: entity_model_features >=3.3` only. Gametest log proves the env-skip: dedicated classpath loads 45 mods with EMF/ETF env-disabled (both declare `"environment": "client"`), no `traben.*` loading, no crash, `depends` tolerates the env-disabled bundle. Both jems + `milk.png` verified inside the release jar (`auditReleaseJarIsolation` green).

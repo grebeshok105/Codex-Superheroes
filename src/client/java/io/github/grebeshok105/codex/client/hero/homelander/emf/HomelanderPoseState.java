@@ -1,5 +1,6 @@
 package io.github.grebeshok105.codex.client.hero.homelander.emf;
 
+import io.github.grebeshok105.codex.client.ClientFlightState;
 import io.github.grebeshok105.codex.client.ClientSessionState;
 import io.github.grebeshok105.codex.client.core.emf.EmfPresentationOwnership;
 import net.minecraft.client.Minecraft;
@@ -15,11 +16,14 @@ import java.util.UUID;
  * Per-player state feeding the {@code superheroes_hl_*} EMF variables: five
  * clip clocks plus the authored-motion weights. Bounded (64 entries, LRU) and
  * zero-allocation on the read path — suppliers look the entity up by uuid and
- * copy floats out.
+ * copy floats out, with the last-resolved (uuid → entry) pair cached because
+ * EMF evaluates every variable of one entity in a row.
  *
- * <p>Stage 1 registers the variables but never drives the weights, so every
- * weight reads 0 and owned players render the vanilla pose. Clip clocks
- * advance freely so they hold real values once Stage 2 starts animating.
+ * <p>State advances once per client tick ({@link #tick}); reads interpolate by
+ * the render partial tick, so the sampled values track wall time independent
+ * of frame rate (§4.5 of the plan). The hover clock is free-running and never
+ * resets — HOVER loops, so blending it in mid-phase is continuous, and flight
+ * on/off flips cannot snap the pose.
  */
 final class HomelanderPoseState {
 
@@ -29,9 +33,19 @@ final class HomelanderPoseState {
 	private static final Map<UUID, Entry> STATES = new LinkedHashMap<>(16, 0.75f, true) {
 		@Override
 		protected boolean removeEldestEntry(Map.Entry<UUID, Entry> eldest) {
-			return size() > MAX_ENTITIES;
+			if (size() > MAX_ENTITIES) {
+				if (eldest.getKey().equals(lastUuid)) {
+					lastUuid = null;
+					lastEntry = null;
+				}
+				return true;
+			}
+			return false;
 		}
 	};
+
+	private static UUID lastUuid;
+	private static Entry lastEntry;
 
 	static {
 		ClientSessionState.register(HomelanderPoseState::clearAll);
@@ -47,6 +61,7 @@ final class HomelanderPoseState {
 		final HomelanderPoseMath.ClipClock clap = new HomelanderPoseMath.ClipClock();
 		final HomelanderPoseMath.ClipClock milk = new HomelanderPoseMath.ClipClock();
 		float active;
+		float activePrev;
 		float boostWeight;
 		float takeoffWeight;
 		float clapWeight;
@@ -55,13 +70,35 @@ final class HomelanderPoseState {
 		float strafe;
 		float pitchDeg;
 		float bankDeg;
+
+		/** One client tick of state. The hover clock is never reset (§7 stage 2). */
+		void advance(boolean flying) {
+			activePrev = active;
+			active = HomelanderPoseMath.activeWeight(active, flying, 1f);
+			hover.advance(TICK_SECONDS);
+			takeoff.advance(TICK_SECONDS);
+			boost.advance(TICK_SECONDS);
+			clap.advance(TICK_SECONDS);
+			milk.advance(TICK_SECONDS);
+		}
+
+		/** Master weight interpolated to the render partial tick. */
+		float weight(float partial) {
+			return activePrev + (active - activePrev) * partial;
+		}
+
+		/** HOVER loop-local time, interpolated forward by the partial tick. */
+		float hoverTime(float partial) {
+			return HomelanderPoseMath.loopTime(
+					hover.time() + partial * TICK_SECONDS, HomelanderPoseMath.HOVER_LENGTH_SECONDS);
+		}
 	}
 
 	static void tick(Minecraft client) {
 		ClientLevel level = client.level;
 		if (level == null) {
 			if (!STATES.isEmpty()) {
-				STATES.clear();
+				clearAll();
 			}
 			return;
 		}
@@ -72,67 +109,77 @@ final class HomelanderPoseState {
 				continue;
 			}
 			Entry entry = STATES.computeIfAbsent(player.getUUID(), uuid -> new Entry());
-			entry.hover.advance(TICK_SECONDS);
-			entry.takeoff.advance(TICK_SECONDS);
-			entry.boost.advance(TICK_SECONDS);
-			entry.clap.advance(TICK_SECONDS);
-			entry.milk.advance(TICK_SECONDS);
+			entry.advance(ClientFlightState.get(player.getId()) != null);
 		}
 	}
 
-	/** Master presentation weight (0 = vanilla pose). */
-	static float weight(UUID uuid) {
+	private static Entry entryOf(UUID uuid) {
+		if (uuid != null && uuid.equals(lastUuid)) {
+			return lastEntry;
+		}
 		Entry entry = STATES.get(uuid);
-		return entry == null ? 0f : entry.active;
+		if (entry != null) {
+			lastUuid = uuid;
+			lastEntry = entry;
+		}
+		return entry;
+	}
+
+	/** Master presentation weight (0 = vanilla pose). */
+	static float weight(UUID uuid, float partial) {
+		Entry entry = entryOf(uuid);
+		return entry == null ? 0f : entry.weight(partial);
 	}
 
 	/** Clip-local times, interpolated forward by the render partial tick. */
 	static float hoverTime(UUID uuid, float partial) {
-		Entry entry = STATES.get(uuid);
-		return entry == null ? 0f : entry.hover.time() + partial * TICK_SECONDS;
+		Entry entry = entryOf(uuid);
+		return entry == null ? 0f : entry.hoverTime(partial);
 	}
 
 	static float takeoffTime(UUID uuid, float partial) {
-		Entry entry = STATES.get(uuid);
+		Entry entry = entryOf(uuid);
 		return entry == null ? 0f : entry.takeoff.time() + partial * TICK_SECONDS;
 	}
 
 	static float boostTime(UUID uuid, float partial) {
-		Entry entry = STATES.get(uuid);
+		Entry entry = entryOf(uuid);
 		return entry == null ? 0f : entry.boost.time() + partial * TICK_SECONDS;
 	}
 
 	static float clapTime(UUID uuid, float partial) {
-		Entry entry = STATES.get(uuid);
+		Entry entry = entryOf(uuid);
 		return entry == null ? 0f : entry.clap.time() + partial * TICK_SECONDS;
 	}
 
 	static float milkTime(UUID uuid, float partial) {
-		Entry entry = STATES.get(uuid);
+		Entry entry = entryOf(uuid);
 		return entry == null ? 0f : entry.milk.time() + partial * TICK_SECONDS;
 	}
 
 	static float boostWeight(UUID uuid) {
-		Entry entry = STATES.get(uuid);
+		Entry entry = entryOf(uuid);
 		return entry == null ? 0f : entry.boostWeight;
 	}
 
 	static float takeoffWeight(UUID uuid) {
-		Entry entry = STATES.get(uuid);
+		Entry entry = entryOf(uuid);
 		return entry == null ? 0f : entry.takeoffWeight;
 	}
 
 	static float clapWeight(UUID uuid) {
-		Entry entry = STATES.get(uuid);
+		Entry entry = entryOf(uuid);
 		return entry == null ? 0f : entry.clapWeight;
 	}
 
 	static float milkWeight(UUID uuid) {
-		Entry entry = STATES.get(uuid);
+		Entry entry = entryOf(uuid);
 		return entry == null ? 0f : entry.milkWeight;
 	}
 
 	static void clearAll() {
 		STATES.clear();
+		lastUuid = null;
+		lastEntry = null;
 	}
 }
