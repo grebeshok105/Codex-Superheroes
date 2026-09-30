@@ -18,23 +18,24 @@
     { "event": "homelander.roar.deep", "file": "roar_deep.ogg", "durationMs": 6478, "loop": false }
   ],
   "animations": [
-    { "clip": "flight_takeoff", "file": "flight_takeoff.animation.json", "lengthMs": 400, "loop": false },
-    { "clip": "flight_hover", "file": "flight_hover.animation.json", "lengthMs": 2500, "loop": true },
-    { "clip": "flight_cruise", "file": "flight_cruise.animation.json", "lengthMs": 2083, "loop": true },
-    { "clip": "flight_boost", "file": "flight_boost.animation.json", "lengthMs": 1667, "loop": true },
-    { "clip": "flight_land", "file": "flight_land.animation.json", "lengthMs": 500, "loop": false },
     { "clip": "laser_charge", "file": "laser_charge.animation.json", "lengthMs": 300, "loop": false },
     { "clip": "laser_hold", "file": "laser_hold.animation.json", "lengthMs": 833, "loop": true },
     { "clip": "laser_release", "file": "laser_release.animation.json", "lengthMs": 400, "loop": false },
-    { "clip": "milk_drink", "file": "milk_drink.animation.json", "lengthMs": 1600, "loop": false },
     { "clip": "sun_charge", "file": "sun_charge.animation.json", "lengthMs": 1000, "loop": true },
     { "clip": "iron_fists_activate", "file": "iron_fists_activate.animation.json", "lengthMs": 1000, "loop": false },
     { "clip": "iron_fists_strike", "file": "iron_fists_strike.animation.json", "lengthMs": 400, "loop": false, "events": { "contact": 120 } },
-    { "clip": "clap", "file": "clap.animation.json", "lengthMs": 600, "loop": false, "events": { "contact": 120 } },
     { "clip": "roar", "file": "roar.animation.json", "lengthMs": 1500, "loop": false }
   ],
+  "emf_clips": [
+    { "clip": "takeoff", "file": "takeoff.json", "frames": 48, "loop": false },
+    { "clip": "hover", "file": "hover.json", "frames": 192, "loop": true },
+    { "clip": "boost", "file": "boost.json", "frames": 156, "loop": true },
+    { "clip": "hand_clap", "file": "hand_clap.json", "frames": 115, "loop": false },
+    { "clip": "milk_drink", "file": "milk_drink.json", "frames": 378, "loop": false }
+  ],
   "models": [
-    { "path": "models/item/milk_bottle.json" }
+    { "path": "models/item/milk_bottle.json" },
+    { "path": "emf/homelander/model.json" }
   ],
   "textures": [
     { "path": "textures/vfx/homelander/laser_core.png" },
@@ -42,6 +43,8 @@
     { "path": "textures/vfx/homelander/sun_flash.png" },
     { "path": "textures/vfx/homelander/sun_ring.png" },
     { "path": "textures/vfx/homelander/ember.png" },
-    { "path": "textures/vfx/homelander/shock_ring.png" }
+    { "path": "textures/vfx/homelander/shock_ring.png" },
+    { "path": "textures/entity/hero/homelander.png" },
+    { "path": "textures/entity/hero/homelander_milk.png" }
   ]
 }
