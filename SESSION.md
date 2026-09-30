@@ -11,4 +11,5 @@
 
 - PR #137 `devin/1790691597-homelander-sounds`: real flight/laser sfx replacing placeholder oggs — open, CI green, in the combined jar.
 - PR #138 `devin/1790691307-homelander-vfx-fix`: flight pose/limbs/eye-anchor/trail fixes with the presentation-phase commit reverted — open, CI green.
+- EMF plan Stage 9 on `devin/1790790883-homelander-laser-sound-s9` (base PR #138): continuous laser loop sound — `EyeLaserChannel` starts `LaserLoopSound` at channel open (silent → `loopVolume` ramp over `CHARGE_TICKS`), `release()` fades it over `RELEASE_TICKS` (self-stops at 0), `cancel()` still hard-stops; `LASER_CHARGE`/`LASER_RELEASE` playback removed (SoundEvent registrations + `sounds.json` kept for resource packs); per-source `LIVE` registry makes a re-START during the old tail adopt+revive it instead of stacking. New pure `LaserLoopVolume` envelope + `LaserLoopVolumeTest`. `mod_version` → 4.2.0. `qualityGate` green; in-game unverified — user will check.
 - Standing rule: the user verifies all in-game behavior themselves — never claim visual verification for them.
