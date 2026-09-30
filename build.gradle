@@ -35,6 +35,21 @@ repositories {
 		url = 'https://maven.blamejared.com'
 	}
 
+	// Local build: Sable Player Ragdoll Fabric port (sable_player_ragdoll)
+	mavenLocal()
+
+	// Sable (ryan hcode) — transitive dep of sable_player_ragdoll's POM
+	maven {
+		name = 'RyanHCode'
+		url = 'https://maven.ryanhcode.dev/releases'
+	}
+
+	// Fuzs mod resources — forgeconfigapiport, transitive dep of sable-fabric
+	maven {
+		name = 'FuzsModResources'
+		url = 'https://raw.githubusercontent.com/Fuzss/modresources/main/maven/'
+	}
+
 	exclusiveContent {
 		forRepository {
 			maven {
@@ -57,15 +72,16 @@ sourceSets {
 		}
 	}
 	// Server GameTests run against the real mod; never packaged (auditReleaseJarIsolation enforces it).
+	// 'sable' filter also drops sable_player_ragdoll + its transitive sable-fabric/companion jars —
+	// those runs must prove the mod works without Veil, and sable hard-requires Veil.
 	gametest {
 		compileClasspath += main.compileClasspath + main.output
-		// Veil hard-depends on client-only Fabric modules, so it cannot load on a dedicated server.
-		runtimeClasspath += main.runtimeClasspath.filter { !it.path.contains('veil') } + main.output
+		runtimeClasspath += main.runtimeClasspath.filter { !it.path.contains('veil') && !it.path.contains('sable') } + main.output
 	}
 	// Datagen runs a server environment: same Veil exclusion as the GameTest classpath.
 	datagen {
 		compileClasspath += main.compileClasspath + main.output
-		runtimeClasspath += main.runtimeClasspath.filter { !it.path.contains('veil') } + main.output
+		runtimeClasspath += main.runtimeClasspath.filter { !it.path.contains('veil') && !it.path.contains('sable') } + main.output
 	}
 	// Veil-free client run: Veil FX code paths are guarded by isModLoaded("veil"),
 	// so runtime checks without Veil need a classpath that simply lacks the jar.
@@ -79,10 +95,10 @@ sourceSets {
 
 afterEvaluate {
 	sourceSets.clientnoveil.compileClasspath += sourceSets.client.compileClasspath + sourceSets.client.output + sourceSets.main.output
-	sourceSets.clientnoveil.runtimeClasspath += sourceSets.client.runtimeClasspath.filter { !it.path.contains('veil') } + sourceSets.client.output + sourceSets.main.output
+	sourceSets.clientnoveil.runtimeClasspath += sourceSets.client.runtimeClasspath.filter { !it.path.contains('veil') && !it.path.contains('sable') } + sourceSets.client.output + sourceSets.main.output
 	// servernoveil has no sources of its own; it exists purely as a filtered classpath.
 	sourceSets.servernoveil.compileClasspath += sourceSets.main.compileClasspath
-	sourceSets.servernoveil.runtimeClasspath += sourceSets.main.runtimeClasspath.filter { !it.path.contains('veil') } + sourceSets.main.output
+	sourceSets.servernoveil.runtimeClasspath += sourceSets.main.runtimeClasspath.filter { !it.path.contains('veil') && !it.path.contains('sable') } + sourceSets.main.output
 }
 
 // JUnit covers pure client-side state too (Client*State session resets, cooldown clocks —
@@ -220,6 +236,14 @@ dependencies {
 	// Veil — render framework powering Scorpion's shader FX (Quasar particles, bloom, dynamic light).
 	// Optional at runtime: code is guarded by FabricLoader.isModLoaded("veil").
 	modImplementation "foundry.veil:veil-fabric-1.21.1:${project.veil_version}"
+
+	// Sable Player Ragdoll — Fabric 1.21.1 port built locally (mavenLocal).
+	// Ships sable-fabric (+ its JIJ veil/companion) inside its own jar; kept
+	// compileOnly so hero code can't accidentally couple to ragdoll internals.
+	// NOTE: excluded from the *noveil/gametest run classpaths below — those
+	// runs exist to prove the mod works WITHOUT Veil, and the ragdoll jar
+	// would smuggle Veil back in via its nested sable-fabric.
+	modRuntimeOnly "dev.leo.sableplayerragdoll:sable_player_ragdoll-1.21.1:${project.sable_player_ragdoll_version}"
 
 	// Iris — compile-only: Mirror Dimension toggles the victim's Acid shaderpack.
 	// NOT bundled, NOT required at runtime; guarded by FabricLoader.isModLoaded("iris").
