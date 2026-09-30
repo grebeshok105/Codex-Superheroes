@@ -9,6 +9,8 @@
 
 ## Active work
 
+- Plan-only PR `devin/1790782256-homelander-emf-plan`: `docs/superpowers/plans/2026-09-30-homelander-emf-presentation.md` (audit + 15-stage EMF migration plan for Homelander, baseline PR #138 head `2dc02edc`, PR #140 excluded). No code. Stages 7, 8 and 10 need user decisions (clap hit delay, milk duration, laser DPS).
+
 - PR #137 `devin/1790691597-homelander-sounds`: real flight/laser sfx replacing placeholder oggs — open, CI green, in the combined jar.
 - PR #138 `devin/1790691307-homelander-vfx-fix`: flight pose/limbs/eye-anchor/trail fixes with the presentation-phase commit reverted — open, CI green.
 - Standing rule: the user verifies all in-game behavior themselves — never claim visual verification for them.
