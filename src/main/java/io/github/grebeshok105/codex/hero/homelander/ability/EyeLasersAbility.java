@@ -8,6 +8,9 @@ import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.hero.homelander.registry.HomelanderDamageTypes;
 import io.github.grebeshok105.codex.hero.homelander.runtime.UraniumDefenseController;
+import io.github.grebeshok105.codex.hero.homelander.scorch.LaserScorchData;
+import io.github.grebeshok105.codex.hero.homelander.scorch.LaserScorchSync;
+import io.github.grebeshok105.codex.core.net.ScorchMark;
 import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.core.hero.Heroes;
 import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
@@ -215,14 +218,20 @@ public final class EyeLasersAbility implements Ability {
 				}
 				placeFireRing(level, player, actualEnd, 3);
 			}
-		} else if (madness && ray.blockHit().getType() == HitResult.Type.BLOCK) {
-			if (player.tickCount % 2 == 0) {
-				level.explode(player, null, null, actualEnd.x, actualEnd.y, actualEnd.z,
-						2.0f, true, Level.ExplosionInteraction.MOB,
-						SilentParticles.SILENT, SilentParticles.SILENT,
-						BuiltInRegistries.SOUND_EVENT.wrapAsHolder(ModSounds.SILENT));
+		} else if (ray.blockHit().getType() == HitResult.Type.BLOCK) {
+			ScorchMark mark = LaserScorchData.get(level).tryAdd(level, player.getUUID(), ray.blockHit());
+			if (mark != null) {
+				LaserScorchSync.broadcastNew(level, mark);
 			}
-			placeFireRing(level, player, actualEnd, 3);
+			if (madness) {
+				if (player.tickCount % 2 == 0) {
+					level.explode(player, null, null, actualEnd.x, actualEnd.y, actualEnd.z,
+							2.0f, true, Level.ExplosionInteraction.MOB,
+							SilentParticles.SILENT, SilentParticles.SILENT,
+							BuiltInRegistries.SOUND_EVENT.wrapAsHolder(ModSounds.SILENT));
+				}
+				placeFireRing(level, player, actualEnd, 3);
+			}
 		}
 		return actualEnd;
 	}

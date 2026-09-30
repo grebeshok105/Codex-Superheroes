@@ -5,6 +5,7 @@ import io.github.grebeshok105.codex.client.core.module.HeroClientContext;
 import io.github.grebeshok105.codex.client.core.module.HeroClientModule;
 import io.github.grebeshok105.codex.client.hero.homelander.emf.HomelanderEmf;
 import io.github.grebeshok105.codex.client.hero.homelander.fx.HomelanderFx;
+import io.github.grebeshok105.codex.client.hero.homelander.fx.ScorchMarkRenderer;
 import io.github.grebeshok105.codex.client.hero.homelander.hud.SunWindupHud;
 import io.github.grebeshok105.codex.client.hero.homelander.hud.UraniumThreatHud;
 
@@ -40,5 +41,8 @@ public record HomelanderClientModule() implements HeroClientModule {
 				context.client().execute(() -> ClientUraniumPressureState.update(payload.pressuredHomelanders())));
 		ctx.receive(UraniumThreatS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> ClientUraniumThreatState.update(payload.self(), payload.sourceCount())));
+		// ScorchMarksS2CPayload lives in core.net, so its receiver registers in
+		// CoreClientReceivers; the renderer itself hooks AFTER_TRANSLUCENT here.
+		ScorchMarkRenderer.register();
 	}
 }

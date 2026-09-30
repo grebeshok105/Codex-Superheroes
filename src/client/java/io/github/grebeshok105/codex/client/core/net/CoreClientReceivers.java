@@ -14,6 +14,7 @@ import io.github.grebeshok105.codex.core.net.AbilityCooldownS2CPayload;
 import io.github.grebeshok105.codex.core.net.BeamFxS2CPayload;
 import io.github.grebeshok105.codex.core.net.HeroDataSyncS2CPayload;
 import io.github.grebeshok105.codex.core.net.ResourceUpdateS2CPayload;
+import io.github.grebeshok105.codex.core.net.ScorchMarksS2CPayload;
 import io.github.grebeshok105.codex.core.net.ScreenShakeS2CPayload;
 import io.github.grebeshok105.codex.core.net.VfxChannelS2CPayload;
 import io.github.grebeshok105.codex.core.net.VfxEventS2CPayload;
@@ -107,5 +108,8 @@ public final class CoreClientReceivers {
 					}
 					VfxRuntime.channel(payload.entityId(), payload.channel(), payload.state(), payload.target());
 				}));
+
+		ClientPlayNetworking.registerGlobalReceiver(ScorchMarksS2CPayload.TYPE, (payload, context) ->
+				context.client().execute(() -> ScorchMarkStore.receive(payload.marks(), payload.reset())));
 	}
 }

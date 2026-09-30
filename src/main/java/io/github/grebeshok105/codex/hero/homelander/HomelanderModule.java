@@ -24,6 +24,7 @@ import io.github.grebeshok105.codex.hero.homelander.runtime.HomelanderMadnessFli
 import io.github.grebeshok105.codex.hero.homelander.item.MilkDrinkTracker;
 import io.github.grebeshok105.codex.hero.homelander.runtime.UraniumDefenseController;
 import io.github.grebeshok105.codex.hero.homelander.runtime.UraniumOffhandController;
+import io.github.grebeshok105.codex.hero.homelander.scorch.LaserScorchSync;
 import io.github.grebeshok105.codex.sound.HomelanderSounds;
 import io.github.grebeshok105.codex.core.hero.Hero;
 import io.github.grebeshok105.codex.mechanic.flight.FlightProfiles;
@@ -67,6 +68,7 @@ public final class HomelanderModule implements HeroModule {
 		ctx.ticks().player(UraniumOffhandController::tickPlayer);
 		ctx.ticks().hero(HomelanderHero.ID, MilkDrinkTracker::tickPlayer);
 		ctx.lifecycle().onHeroTransformed(HomelanderReactionRule::onTransformed);
+		LaserScorchSync.register(ctx);
 		FlightProfiles.registerModifier(HomelanderHero.ID, new HomelanderFlightModifier());
 		HomelanderShowcases.register();
 		// Homelander's own ability rules: his MADNESS_AFTERMATH blocks casting silently;
