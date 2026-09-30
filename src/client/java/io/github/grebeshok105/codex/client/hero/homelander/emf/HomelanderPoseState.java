@@ -12,6 +12,7 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -31,7 +32,7 @@ import java.util.UUID;
  * resets — HOVER loops, so blending it in mid-phase is continuous, and flight
  * on/off flips cannot snap the pose.
  */
-final class HomelanderPoseState {
+public final class HomelanderPoseState {
 
 	private static final int MAX_ENTITIES = 64;
 	private static final float TICK_SECONDS = 1f / 20f;
@@ -237,6 +238,17 @@ final class HomelanderPoseState {
 	static float milkWeight(UUID uuid) {
 		Entry entry = entryOf(uuid);
 		return entry == null ? 0f : entry.milkWeight;
+	}
+
+	/**
+	 * Smoothed render velocity (blocks/tick) of an owned player — the same
+	 * vector the pose projections consume (§7 stage 13 rings read it). Allocates
+	 * once per call — tick-path use only. {@code null} when the player is not
+	 * tracked (not EMF-owned or EMF absent).
+	 */
+	public static @Nullable Vec3 smoothedVelocity(UUID uuid) {
+		Entry entry = entryOf(uuid);
+		return entry == null ? null : new Vec3(entry.velX, entry.velY, entry.velZ);
 	}
 
 	static void clearAll() {

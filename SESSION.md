@@ -1,5 +1,15 @@
 # SESSION.md
 
+## Completed this session (Homelander EMF — Stage 13)
+
+- Stage 13 of `docs/superpowers/plans/2026-09-30-homelander-emf-presentation.md` («trail and sonic rings») implemented on `devin/1790803301-homelander-trail-s13` (base Stage-4 head `4adfb99d`), `mod_version` 4.4.0 → 4.5.0.
+- `TrailPattern` gained an opt-in soft profile (`TrailPattern.soft(...)` — default ctor keeps the flat triangle ribbon byte-identical): the stored spine is Catmull-Rom resampled ×3 through the pure helper `TrailGeometry.subdivide`, width tapers head→tail (`widthScale = 1−t²`), alpha eases out by age (`fadeAlpha = 1−t³`), and each sub-segment draws two crossed textured quads through `RenderType.eyes(soft_trail.png)` (additive). All scratch (spine array + tangent/camera/side vectors) is preallocated in `SoftProfile` bounded by `subdividedCapacity(capacity)` — zero per-frame allocation, fixed capacity unchanged.
+- `soft_trail.png` (64×64 RGBA, white × gaussian alpha σ=0.2 across V, U-uniform) is baked by `art-source/homelander/emf/bake_soft_trail.py` (stdlib zlib PNG, deterministic); script + texture both committed.
+- Rings now gate on the pose's own smoothed render velocity: new read-only `HomelanderPoseState.smoothedVelocity(UUID)` (widened the class to `public` — the only touch of Stage-4-owned code, additive accessor). A `ShockwavePattern` emits only when `smoothed ≥ ringSpeed` has held for `RING_SUSTAIN_TICKS=5` consecutive ticks and at most every `ringIntervalTicks` (default 12, json now 14), oriented by that smoothed vector — falls back to raw delta movement when the player isn't pose-tracked.
+- `flight.json`: `ringIntervalTicks` 4 → 14, `ringSpeed` 1.0 added (≈ supersonic threshold).
+- Tests: `TrailGeometryTest` — subdivision count/endpoints/interpolation, interior even spacing on collinear input (clamped ends intentionally non-uniform), hull containment on a bend, 0/1-point passthrough, taper & ease-out monotonicity + clamping.
+- Verification: `./gradlew test --no-daemon` green; `verifyAssertionsEnabled`/`auditReleaseJarIsolation`/`verifyArchitectureBaseline`/`verifyGeneratedSources` green. `runGametest` is flaky on this VM — three runs failed on three different unrelated timing tests (`uraniumOffhandRadiationStacksToHunger`, `shieldThrowRestoresTheShield...`, `doomGripLocksTarget...`), including a run on the pristine base `4adfb99d`; the failures are unrelated to this client-only diff. No in-game verification per the standing rule — Stage 13 checklist (smooth contrail, gradual fade, supersonic-only rings, no triangle artefacts, FPS) marked unverified in the PR.
+
 ## Completed this session (Homelander EMF — Stage 4)
 
 - Stage 4 of `docs/superpowers/plans/2026-09-30-homelander-emf-presentation.md` («BOOST») implemented on `devin/1790800950-homelander-boost-s4` (base Stage-2 head `309c816b`), `mod_version` 4.3.0 → 4.4.0.
