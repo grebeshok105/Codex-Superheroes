@@ -47,16 +47,20 @@
 
 ### 1.2 Homelander presentation paths that touch the model today
 
-| File (`client/hero/homelander/fx/`) | Legacy call | Stage that changes it |
+| File (`client/hero/homelander/fx/`) | Current baseline behaviour | Stage 1 fate |
 |---|---|---|
-| `HomelanderFx.register` | registers `FlightPresentation(clip("flight_takeoff"), clip("flight_hover"), clip("flight_cruise"), clip("flight_boost"), clip("flight_land"), ...)` | Stage 1 (clips no longer played for EMF owner) |
-| `HomelanderFx.milkDrink` | `PlayerAnimator.play(id, homelander/milk_drink, ACTION, 4)` + milk sound | Stage 8 |
-| `ClapFx.create` | plays legacy `homelander/clap`, reads contact time from `AnimationLibrary` | Stage 7 |
-| `EyeLaserChannel` | plays `laser_charge → laser_hold → laser_release`; sounds `LASER_CHARGE`, `LASER_LOOP` (`LaserLoopSound`), `LASER_RELEASE`; head anim from `PlayerAnimator.sample` for eye anchors | Stage 1 (anchors), Stage 9 (sound), Stage 11 (impact) |
-| `IronFistsFx`, `RoarFx`, `SunChargeFx` | legacy clips `iron_fists_*`, `roar`, `sun_charge` | not migrated; routed into the jem through legacy-pose variables (Stage 1) |
-| `FlightFx` (`TrailFx`, `boost`, `landing`) | chest/fist anchors via `HumanoidAnchors.tiltedPoint`, tilt via `FlightPoseTracker.transform` | Stage 13 (trail), Stage 14 (landing) |
+| `HomelanderFx.register` | registers legacy flight clips `flight_takeoff`, `flight_hover`, `flight_cruise`, `flight_boost`, `flight_land` through `FlightPresentation` | remove Homelander legacy flight clip playback/reference path; keep only the non-animation presentation pieces that are still needed |
+| `HomelanderFx.milkDrink` | plays legacy `homelander/milk_drink` | remove legacy animation call; new MILK animation arrives in Stage 8 |
+| `ClapFx.create` | plays legacy `homelander/clap` and reads its contact time | remove legacy animation dependency; new authored clap arrives in Stage 7 |
+| `EyeLaserChannel` | plays `laser_charge → laser_hold → laser_release` and samples `PlayerAnimator` for eye-anchor compensation | remove all laser player-animation play/stop/sample usage; keep laser gameplay/VFX/audio channel; anchors must use the EMF-rendered pose |
+| `IronFistsFx` | plays `iron_fists_activate` and `iron_fists_strike` | remove player-animation calls; gameplay/VFX/sounds remain with no player animation until a new EMF clip is authored |
+| `RoarFx` | plays legacy `roar` | remove player-animation call; gameplay/VFX/sounds remain with no player animation until a new EMF clip is authored |
+| `SunChargeFx` | plays legacy `sun_charge` | remove player-animation call; gameplay/VFX/sounds remain with no player animation until a new EMF clip is authored |
+| `FlightFx` | flight VFX and landing presentation use current anchors/tilt | keep VFX functionality; landing has no player animation after Stage 1 until a new EMF landing clip is authored |
 
-Legacy resources under `src/main/resources/assets/superheroes/player_animations/homelander/`: `clap`, `flight_boost`, `flight_cruise`, `flight_hover`, `flight_land`, `flight_takeoff`, `iron_fists_activate`, `iron_fists_strike`, `laser_charge`, `laser_hold`, `laser_release`, `milk_drink`, `roar`, `sun_charge` (`.animation.json`). None is deleted by this plan: they remain the non-EMF fallback (EMF missing on a client) and `sun_charge`/`roar`/`iron_fists_*`/`laser_*` remain active sources. Deleting flight/clap/milk files is out of scope until the user decides the fallback is unwanted.
+Legacy resources currently present under `src/main/resources/assets/superheroes/player_animations/homelander/`: `clap.animation.json`, `flight_boost.animation.json`, `flight_cruise.animation.json`, `flight_hover.animation.json`, `flight_land.animation.json`, `flight_takeoff.animation.json`, `iron_fists_activate.animation.json`, `iron_fists_strike.animation.json`, `laser_charge.animation.json`, `laser_hold.animation.json`, `laser_release.animation.json`, `milk_drink.animation.json`, `roar.animation.json`, `sun_charge.animation.json`. **Stage 1 deletes every one of them and removes every Homelander code reference to them.** There is no legacy Homelander animation fallback and no old-animation-to-EMF bridge.
+
+New authored replacements in this plan exist only for HOVER, TAKEOFF, BOOST, HAND CLAP and MILK DRINK. Laser, iron fists, roar, sun charge and landing intentionally remain without player animation until new EMF-authored source animations are created later.
 
 ### 1.3 Server gameplay seams (keep)
 
