@@ -1,9 +1,12 @@
 package io.github.grebeshok105.codex.client.mixin;
 
-import io.github.grebeshok105.codex.client.core.flight.HomelanderPoseApi;
 import io.github.grebeshok105.codex.client.fx.ScreenShakeManager;
+import io.github.grebeshok105.codex.client.hero.homelander.flight.HomelanderBodyTransform;
+import io.github.grebeshok105.codex.client.hero.homelander.flight.HomelanderPoseApi;
 import net.minecraft.client.Camera;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
@@ -49,13 +52,15 @@ public abstract class CameraMixin {
 	@Inject(method = "setup", at = @At("TAIL"))
 	private void superheroes$centerFlightBody(BlockGetter area, Entity focused, boolean thirdPerson,
 			boolean inverseView, float tickDelta, CallbackInfo ci) {
-		if (!thirdPerson || focused == null) {
+		if (!thirdPerson || !(focused instanceof LivingEntity living)) {
 			return;
 		}
-		HomelanderPoseApi.BodyTransform body =
+		HomelanderBodyTransform body =
 				HomelanderPoseApi.currentBodyTransform(focused.getId(), tickDelta);
-		if (body != null) {
-			this.setPosition(this.getPosition().add(body.centerOffsetPx().scale(1.0 / 16.0)));
+		if (body.equals(HomelanderBodyTransform.IDENTITY)) {
+			return;
 		}
+		float bodyYaw = Mth.rotLerp(tickDelta, living.yBodyRotO, living.yBodyRot);
+		this.setPosition(this.getPosition().add(body.cameraCenterOffsetBlocks(bodyYaw)));
 	}
 }

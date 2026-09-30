@@ -3,7 +3,6 @@ package io.github.grebeshok105.codex.client.hero.homelander.fx;
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.client.ClientFlightState;
 import io.github.grebeshok105.codex.client.core.flight.FlightBodyTransform;
-import io.github.grebeshok105.codex.client.core.flight.FlightPoseTracker;
 import io.github.grebeshok105.codex.client.core.flight.LandingSoundScale;
 import io.github.grebeshok105.codex.client.core.vfx.VfxEffect;
 import io.github.grebeshok105.codex.client.core.vfx.VfxRenderContext;
@@ -15,6 +14,7 @@ import io.github.grebeshok105.codex.client.core.vfx.params.VfxParamsLoader;
 import io.github.grebeshok105.codex.client.core.vfx.pattern.ImpactPattern;
 import io.github.grebeshok105.codex.client.core.vfx.pattern.ShockwavePattern;
 import io.github.grebeshok105.codex.client.core.vfx.pattern.TrailPattern;
+import io.github.grebeshok105.codex.client.hero.homelander.flight.HomelanderPoseApi;
 import io.github.grebeshok105.codex.sound.HomelanderSounds;
 import io.github.grebeshok105.codex.mechanic.flight.FlightPhase;
 import net.minecraft.client.Minecraft;
@@ -36,7 +36,7 @@ import java.util.List;
  *   <li>{@link #boost} — emitter burst + shock ring on BOOST entry, aligned
  *       to the flight axis;</li>
  *   <li>{@link #speedRing} — axis-aligned shock ring for hard accel events
- *       (triggered/rate-limited by {@code FlightPoseTracker}'s gate);</li>
+ *       (triggered/rate-limited by {@code HomelanderFlightDriver}'s gate);</li>
  *   <li>{@link #landing} — impact composite for the {@code LANDING} event:
  *       dust emitter + distortion through {@link ImpactPattern}, an expanding
  *       {@link ShockwavePattern}, and {@code homelander.flight.land} — the
@@ -125,7 +125,7 @@ public final class FlightFx {
 				finishing = true;
 				ribbons.forEach(TrailPattern::finish);
 			} else {
-				FlightBodyTransform tilt = FlightPoseTracker.transform(source.getId(), 1f);
+				FlightBodyTransform tilt = HomelanderPoseApi.currentBodyTransform(source.getId(), 1f).tilt();
 				Vec3 feet = source.position();
 				float bodyYaw = source instanceof net.minecraft.world.entity.LivingEntity living
 						? living.yBodyRot : source.getYRot();

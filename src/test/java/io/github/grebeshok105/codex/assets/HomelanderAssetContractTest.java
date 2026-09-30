@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -27,15 +28,18 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * (docs/design/visual-core-homelander/shared-contract.md, enforced rows in
  * src/test/resources/contracts/homelander_pilot.json). Every sound event the runtime
  * references must be registered in sounds.json and backed by a real OGG Vorbis file of
- * roughly the declared duration; every clip must exist under player_animations/homelander/
- * with the declared length, loop mode and the six allowed player bones; models and
- * textures must exist at their contract paths.
+ * roughly the declared duration; every bedrock clip must exist under
+ * player_animations/homelander/ with the declared length, loop mode and the six
+ * allowed player bones; every EMF clip under emf/homelander/ with the declared
+ * frame count and loop mode against model.json's bone set; models and textures
+ * must exist at their contract paths.
  */
 class HomelanderAssetContractTest {
 	private static final Path ROOT = Path.of("").toAbsolutePath();
 	private static final Path ASSETS = ROOT.resolve("src/main/resources/assets/superheroes");
 	private static final Path SOUNDS_DIR = ASSETS.resolve("sounds/homelander");
 	private static final Path CLIPS_DIR = ASSETS.resolve("player_animations/homelander");
+	private static final Path EMF_DIR = ASSETS.resolve("emf/homelander");
 	private static final Path SOUNDS_JSON = ASSETS.resolve("sounds.json");
 	private static final Path CONTRACT = ROOT.resolve("src/test/resources/contracts/homelander_pilot.json");
 	private static final String CLIP_KEY_PREFIX = "animation.superheroes.homelander.";
@@ -51,9 +55,11 @@ class HomelanderAssetContractTest {
 
 	private record SoundRow(String event, String file, long durationMs, boolean loop) {}
 	private record ClipRow(String clip, String file, long lengthMs, boolean loop, Map<String, Double> events) {}
+	private record EmfClipRow(String clip, String file, int frames, boolean loop) {}
 
 	private static List<SoundRow> sounds;
 	private static List<ClipRow> clips;
+	private static List<EmfClipRow> emfClips;
 	private static List<String> models;
 	private static List<String> textures;
 	private static JsonObject soundsJson;
@@ -88,6 +94,15 @@ class HomelanderAssetContractTest {
 					row.get("lengthMs").getAsLong(),
 					row.get("loop").getAsBoolean(),
 					events));
+		}
+		emfClips = new ArrayList<>();
+		for (JsonElement element : contract.getAsJsonArray("emf_clips")) {
+			JsonObject row = element.getAsJsonObject();
+			emfClips.add(new EmfClipRow(
+					row.get("clip").getAsString(),
+					row.get("file").getAsString(),
+					row.get("frames").getAsInt(),
+					row.get("loop").getAsBoolean()));
 		}
 		models = new ArrayList<>();
 		for (JsonElement element : contract.getAsJsonArray("models")) {
@@ -227,6 +242,64 @@ class HomelanderAssetContractTest {
 			assertTrue(parsed.stream().anyMatch(c -> c.id().toString()
 							.equals(CLIP_ID_PREFIX + row.clip())),
 					row.file() + " produced no clip " + CLIP_ID_PREFIX + row.clip());
+		}
+	}
+
+	/**
+	 * EMF clip rows ({@code emf/homelander/*.json}, format
+	 * {@code emf-keyframe-clip/1}): file exists, frame_count and loop match
+	 * the contract, and every animated bone exists in the EMF model.
+	 */
+	@Test
+	void everyEmfClipExistsWithFrameCount() throws IOException {
+		Set<String> modelBones = emfModelBoneNames();
+		for (EmfClipRow row : emfClips) {
+			Path file = EMF_DIR.resolve(row.file());
+			assertTrue(Files.exists(file), "missing EMF clip " + file);
+			JsonObject clip;
+			try (Reader reader = Files.newBufferedReader(file)) {
+				clip = JsonParser.parseReader(reader).getAsJsonObject();
+			}
+			assertEquals("emf-keyframe-clip/1", clip.get("format").getAsString(),
+					row.file() + " has the wrong format tag");
+			assertEquals(row.frames(), clip.get("frame_count").getAsInt(),
+					row.clip() + " frame_count vs contract");
+			assertEquals(row.loop(), clip.get("loop").getAsBoolean(),
+					row.clip() + " loop vs contract");
+			JsonObject bones = clip.getAsJsonObject("bones");
+			assertNotNull(bones, row.file() + " has no bones map");
+			for (String bone : bones.keySet()) {
+				assertTrue(modelBones.contains(bone),
+						row.clip() + " animates unknown model bone " + bone);
+			}
+		}
+	}
+
+	/** showcase.json is a reference-only workbench — never a runtime clip. */
+	@Test
+	void showcaseClipIsReferenceOnly() throws IOException {
+		try (Reader reader = Files.newBufferedReader(EMF_DIR.resolve("showcase.json"))) {
+			JsonObject clip = JsonParser.parseReader(reader).getAsJsonObject();
+			JsonElement referenceOnly = clip.get("reference_only");
+			assertTrue(referenceOnly != null && referenceOnly.getAsBoolean(),
+					"showcase.json must stay reference_only:true (never registered)");
+		}
+		for (EmfClipRow row : emfClips) {
+			assertFalse(row.file().equals("showcase.json"),
+					"showcase must not appear in the contract's runtime clips");
+		}
+	}
+
+	private static Set<String> emfModelBoneNames() throws IOException {
+		try (Reader reader = Files.newBufferedReader(EMF_DIR.resolve("model.json"))) {
+			JsonObject model = JsonParser.parseReader(reader).getAsJsonObject();
+			assertEquals("codex-emf-model/1", model.get("format").getAsString(),
+					"model.json has the wrong format tag");
+			Set<String> names = new HashSet<>();
+			for (JsonElement bone : model.getAsJsonArray("bones")) {
+				names.add(bone.getAsJsonObject().get("name").getAsString());
+			}
+			return names;
 		}
 	}
 

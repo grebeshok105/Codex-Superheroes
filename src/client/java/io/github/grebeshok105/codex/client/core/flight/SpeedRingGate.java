@@ -10,11 +10,11 @@ import net.minecraft.world.phys.Vec3;
  * moving faster than {@code ringMinSpeed} (blocks/tick, keeps landing spikes
  * and hover twitches quiet), at most once per {@code ringCooldownTicks}.
  */
-final class SpeedRingGate {
+public final class SpeedRingGate {
 	private SpeedRingGate() {
 	}
 
-	static boolean shouldFire(Vec3 prevVelocity, Vec3 velocity, VfxParams pose,
+	public static boolean shouldFire(Vec3 prevVelocity, Vec3 velocity, VfxParams pose,
 			long lastFiredTick, long nowTick) {
 		double accel = velocity.subtract(prevVelocity).length();
 		if (accel < pose.number("ringAccelDelta", 0.08f)) {

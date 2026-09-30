@@ -6,8 +6,6 @@ import java.util.List;
 import org.jetbrains.annotations.Nullable;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.client.core.anim.AnimationLibrary;
-import io.github.grebeshok105.codex.client.core.anim.PlayerAnimator;
 import io.github.grebeshok105.codex.client.core.vfx.VfxEffect;
 import io.github.grebeshok105.codex.client.core.vfx.VfxRenderContext;
 import io.github.grebeshok105.codex.client.core.vfx.VfxSpawn;
@@ -19,6 +17,7 @@ import io.github.grebeshok105.codex.client.core.vfx.params.VfxParamsLoader;
 import io.github.grebeshok105.codex.client.core.vfx.pattern.CameraImpulse;
 import io.github.grebeshok105.codex.client.core.vfx.pattern.ImpactPattern;
 import io.github.grebeshok105.codex.client.core.vfx.pattern.ShockwavePattern;
+import io.github.grebeshok105.codex.client.hero.homelander.flight.HomelanderPoseApi;
 import io.github.grebeshok105.codex.sound.HomelanderSounds;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -31,26 +30,25 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * Homelander's hand clap ({@code superheroes:homelander/clap}): the ACTION
- * {@code clap} clip on the source, the {@code homelander.hand_clap} contract
- * sound, then — timed to the clip's {@code contact} event — a light flash
- * between the hands, an {@link ImpactPattern} burst with a distortion pulse,
- * a {@link ShockwavePattern} ring and a dust cone marching along the event's
- * origin → target axis (the server sends the eye position and the eye +
- * forward · RANGE point), plus a proximity-scaled {@link CameraImpulse}.
- * The clip declares {@code contact} at 83 ms (its arm-cross keyframe,
- * inside the contract's ≤ 120 ms window); {@code contactSeconds} is the
- * fallback when a clip carries no event. Tuning lives in
+ * Homelander's hand clap ({@code superheroes:homelander/clap}): the EMF
+ * {@code hand_clap} clip on the source (played through
+ * {@link HomelanderPoseApi}), the {@code homelander.hand_clap} contract
+ * sound, then — timed to the {@code contactSeconds} param (0.083 s, the
+ * clip's arm-cross keyframe, inside the contract's ≤ 120 ms window) — a
+ * light flash between the hands, an {@link ImpactPattern} burst with a
+ * distortion pulse, a {@link ShockwavePattern} ring and a dust cone
+ * marching along the event's origin → target axis (the server sends the
+ * eye position and the eye + forward · RANGE point), plus a
+ * proximity-scaled {@link CameraImpulse}. Tuning lives in
  * {@code vfx/homelander/clap.json}.
  */
 public final class ClapFx {
 	private static final ResourceLocation PARAMS = ModId.of("homelander/clap");
 	private static final ResourceLocation FLASH_EMITTER = ModId.of("homelander_clap_flash");
 	private static final ResourceLocation DUST_EMITTER = ModId.of("homelander_clap_dust");
-	private static final ResourceLocation CLIP = ModId.of("homelander/clap");
+	private static final ResourceLocation CLIP = ModId.of("homelander/hand_clap");
 	private static final Vec3 UP = new Vec3(0, 1, 0);
 	private static final float TICKS_PER_SECOND = 20f;
-	private static final int CLIP_FADE_TICKS = 4;
 
 	private ClapFx() {
 	}
@@ -94,7 +92,7 @@ public final class ClapFx {
 
 			Entity source = spawn.source();
 			if (source != null) {
-				PlayerAnimator.play(source.getId(), CLIP, PlayerAnimator.Layer.ACTION, CLIP_FADE_TICKS);
+				HomelanderPoseApi.playClip(source.getId(), CLIP);
 			}
 
 			Vec3 axis = spawn.target().subtract(spawn.origin());
@@ -103,14 +101,11 @@ public final class ClapFx {
 					.add(0, -p.number("handDrop", 0.25f), 0);
 			this.ground = spawn.origin().add(0, -1.4, 0);
 
-			// Contact event from the clip when it declares one (the shipped
-			// clap clip declares 83 ms); the param is the fallback (≤ 120 ms).
-			Float clipContact = AnimationLibrary.get(CLIP)
-					.map(clip -> clip.eventTimes().get("contact"))
-					.orElse(null);
-			float contactSeconds = clipContact != null
-					? clipContact : p.number("contactSeconds", 0.083f);
-			this.contactTicks = Math.max(0, Math.round(contactSeconds * TICKS_PER_SECOND));
+			// The EMF hand_clap clip carries no named events — the contact beat
+			// comes from the param (0.083 s default, matching the clip's
+			// arm-cross keyframe and the contract's ≤ 120 ms window).
+			this.contactTicks = Math.max(0,
+					Math.round(p.number("contactSeconds", 0.083f) * TICKS_PER_SECOND));
 
 			this.coneSteps = Math.max(0, (int) p.number("coneSteps", 10f));
 			this.coneStep = p.number("coneStep", 1.5f);

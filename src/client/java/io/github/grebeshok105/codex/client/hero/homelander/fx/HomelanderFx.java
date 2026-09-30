@@ -1,12 +1,12 @@
 package io.github.grebeshok105.codex.client.hero.homelander.fx;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.client.core.anim.PlayerAnimator;
 import io.github.grebeshok105.codex.client.core.flight.FlightPresentation;
 import io.github.grebeshok105.codex.client.core.module.HeroClientContext;
 import io.github.grebeshok105.codex.client.core.vfx.VfxEffect;
 import io.github.grebeshok105.codex.client.core.vfx.VfxRenderContext;
 import io.github.grebeshok105.codex.client.core.vfx.VfxSpawn;
+import io.github.grebeshok105.codex.client.hero.homelander.flight.HomelanderPoseApi;
 import io.github.grebeshok105.codex.hero.homelander.vfx.HomelanderVfxIds;
 import io.github.grebeshok105.codex.sound.HomelanderSounds;
 import net.minecraft.client.Minecraft;
@@ -27,7 +27,6 @@ import net.minecraft.world.phys.Vec3;
  */
 public final class HomelanderFx {
 	private static final ResourceLocation CLIP_MILK_DRINK = ModId.of("homelander/milk_drink");
-	private static final int CLIP_FADE_TICKS = 4;
 
 	private HomelanderFx() {
 	}
@@ -47,12 +46,10 @@ public final class HomelanderFx {
 		ctx.vfx(HomelanderVfxIds.IRON_FISTS_HIT, IronFistsFx::hit);
 		ctx.vfx(HomelanderVfxIds.CLAP, ClapFx::create);
 		ctx.vfx(HomelanderVfxIds.ROAR, RoarFx::create);
+		// Clips are no longer registered here — the EMF runtime owns
+		// takeoff/hover/boost by name; the presentation carries only the
+		// audio + trail/boost effect config the driver consumes.
 		ctx.flightPresentation(new FlightPresentation(
-				clip("flight_takeoff"),
-				clip("flight_hover"),
-				clip("flight_cruise"),
-				clip("flight_boost"),
-				clip("flight_land"),
 				FlightFx.TRAIL,
 				FlightFx.BOOST,
 				FlightFx.SPEED_RING,
@@ -70,8 +67,9 @@ public final class HomelanderFx {
 	private static VfxEffect milkDrink(VfxSpawn spawn) {
 		Entity source = spawn.source();
 		if (source != null) {
-			PlayerAnimator.play(source.getId(), CLIP_MILK_DRINK,
-					PlayerAnimator.Layer.ACTION, CLIP_FADE_TICKS);
+			// EMF action-lane clip — weight fades in, milk_bottle/milk_cap prop
+			// bones un-hide while it plays. Agent B re-authors timing on this API.
+			HomelanderPoseApi.playClip(source.getId(), CLIP_MILK_DRINK);
 			Minecraft.getInstance().getSoundManager().play(new EntityBoundSoundInstance(
 					HomelanderSounds.MILK_DRINK, SoundSource.PLAYERS, 1f, 1f,
 					source, source.getRandom().nextLong()));
@@ -82,10 +80,6 @@ public final class HomelanderFx {
 					RandomSource.create(), pos.x, pos.y, pos.z));
 		}
 		return new DoneFx();
-	}
-
-	private static ResourceLocation clip(String name) {
-		return ModId.of("homelander/" + name);
 	}
 
 	/** Ends after one tick — the effect's real work happened in the factory. */

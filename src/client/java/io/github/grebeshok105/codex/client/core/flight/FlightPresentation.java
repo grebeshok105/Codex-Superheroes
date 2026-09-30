@@ -5,21 +5,20 @@ import net.minecraft.sounds.SoundEvent;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * One hero's opt-in to continuous flight presentation: the clips the pose
- * tracker crossfades on {@code PlayerAnimator.Layer.BASE} (takeoff/land ride
- * ACTION as one-shots), the one-shot effects spawned while flying, and the
- * entity-bound sounds. {@code trailEffect} runs while CRUISE/BOOST and
- * finishes itself when the phase leaves; {@code boostEffect} fires once on
- * BOOST entry; {@code speedRingEffect} fires on hard acceleration events
- * (cooldown-gated in the tracker). All are {@code VfxRuntime} effect ids and
- * may be {@code null} when the hero wants no effect there.
+ * One hero's opt-in to continuous flight presentation — the EMF-era shape:
+ * only the audio/effect config survives, because clip playback moved into
+ * the hero's own animation runtime (Homelander drives the
+ * {@code takeoff}/{@code hover}/{@code boost} EMF clips through
+ * {@code HomelanderFlightDriver}; the state machine used to live in the
+ * deleted {@code FlightPoseTracker}).
+ *
+ * <p>{@code trailEffect} runs while CRUISE/BOOST and finishes itself when
+ * the phase leaves; {@code boostEffect} fires once on BOOST entry;
+ * {@code speedRingEffect} fires on hard acceleration events (cooldown-gated
+ * in the driver). All are {@code VfxRuntime} effect ids and may be
+ * {@code null} when the hero wants no effect there.
  */
 public record FlightPresentation(
-		ResourceLocation takeoffClip,
-		ResourceLocation hoverClip,
-		ResourceLocation cruiseClip,
-		ResourceLocation boostClip,
-		ResourceLocation landClip,
 		@Nullable ResourceLocation trailEffect,
 		@Nullable ResourceLocation boostEffect,
 		@Nullable ResourceLocation speedRingEffect,

@@ -45,6 +45,8 @@
 		"geckolib": ">=4.5.0"
 	},
 	"recommends": {
-		"veil": ">=4.1.2"
+		"veil": ">=4.1.2",
+		"entity_model_features": ">=3.2.4",
+		"entity_texture_features": ">=7.1"
 	}
 }

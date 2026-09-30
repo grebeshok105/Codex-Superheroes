@@ -1,16 +1,23 @@
-package io.github.grebeshok105.codex.client.core.flight;
+package io.github.grebeshok105.codex.client.hero.homelander.flight;
 
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.client.ClientFlightState;
 import io.github.grebeshok105.codex.client.ClientSessionState;
-import io.github.grebeshok105.codex.client.core.anim.PlayerAnimator;
+import io.github.grebeshok105.codex.client.core.flight.FlightPresentation;
+import io.github.grebeshok105.codex.client.core.flight.FlightPresentations;
+import io.github.grebeshok105.codex.client.core.flight.LandingSoundScale;
+import io.github.grebeshok105.codex.client.core.flight.SpeedRingGate;
 import io.github.grebeshok105.codex.client.core.render.SkinResolver;
 import io.github.grebeshok105.codex.client.core.vfx.VfxRuntime;
 import io.github.grebeshok105.codex.client.core.vfx.VfxSpawn;
 import io.github.grebeshok105.codex.client.core.vfx.params.VfxParams;
 import io.github.grebeshok105.codex.client.core.vfx.params.VfxParamsLoader;
+import io.github.grebeshok105.codex.client.hero.homelander.emf.EmfPlaybackState;
+import io.github.grebeshok105.codex.client.hero.homelander.emf.HomelanderEmfRuntime;
+import io.github.grebeshok105.codex.client.hero.homelander.flight.HomelanderFlightMachine.Input;
+import io.github.grebeshok105.codex.client.hero.homelander.flight.HomelanderFlightMachine.Phase;
+import io.github.grebeshok105.codex.client.hero.homelander.flight.HomelanderFlightMachine.ServerPhase;
 import io.github.grebeshok105.codex.mechanic.flight.FlightPhase;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.AbstractClientPlayer;
@@ -21,7 +28,6 @@ import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
@@ -29,71 +35,46 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Per-tick driver for continuous flight presentation. For every rendered
- * player whose hero opted in via {@code HeroClientContext.flightPresentation}
- * it (a) steps a smoothed {@link FlightBodyTransform} toward the phase target
- * — {@link #transform} feeds the renderer mixin and the body anchors; (b)
- * crossfades phase clips on {@code PlayerAnimator.Layer.BASE} and fires
- * takeoff/land one-shots on ACTION; (c) runs the looping flight sound whose
- * volume follows {@code horizontalSpeed}; (d) spawns the presentation's
- * trail/boost effects. Velocity comes from the position delta between ticks,
- * which works for remote players too (their positions are server-lerped).
+ * Per-tick driver for Homelander's EMF flight presentation — the EMF-era
+ * replacement for {@code core.flight.FlightPoseTracker}. For every rendered
+ * Homelander player with a synced {@link ClientFlightState} it feeds the
+ * {@link HomelanderFlightMachine} the server phase + forward speed, writes
+ * clip weight targets into the entity's {@link HomelanderEmfRuntime} (the
+ * expressions then blend {@code takeoff}/{@code hover}/{@code boost}), layers
+ * the procedural lean, and runs the loop/one-shot sounds + trail/boost
+ * effects from the registered {@link FlightPresentation}.
  *
- * <p>Tuning comes from {@code vfx/flight/pose.json} through
- * {@link VfxParamsLoader} — see {@link FlightPoseMath} for the keys plus
- * {@code halfLifeTicks}, {@code loopRefSpeed}, {@code loopVolumeMax}.
- * Entries are dropped — BASE clip faded out, loop sound stopped — when the
- * entity leaves flight, renderable range, or its presentation, so departed
- * players never leave a stale WRAP lane in {@code PlayerAnimator}.
+ * <p>Velocity comes from the position delta between ticks (works for remote
+ * players — positions are server-lerped). A clip set through
+ * {@link HomelanderPoseApi#playClip} suppresses flight-loop weights so the
+ * per-channel sum stays ≤ 1.
  */
-public final class FlightPoseTracker {
+public final class HomelanderFlightDriver {
 	private static final ResourceLocation POSE_PARAMS = ModId.of("flight/pose");
-	/** BASE lane crossfade length, per the pilot contract. */
-	private static final int CROSSFADE_TICKS = 4;
-	/** Fade-in for the ACTION-layer takeoff/land one-shots. */
-	private static final int ACTION_FADE_TICKS = 2;
+	private static final String CLIP_TAKEOFF = "takeoff";
+	private static final String CLIP_HOVER = "hover";
+	private static final String CLIP_BOOST = "boost";
 
 	private static final Map<Integer, Tracked> TRACKED = new ConcurrentHashMap<>();
 
 	static {
-		ClientSessionState.register(FlightPoseTracker::reset);
+		ClientSessionState.register(HomelanderFlightDriver::reset);
 	}
 
-	private FlightPoseTracker() {
+	private HomelanderFlightDriver() {
 	}
 
-	/** Wires the per-tick update; called once from the client bootstrap. */
-	public static void init() {
-		ClientTickEvents.END_CLIENT_TICK.register(client -> tick());
-	}
-
-	/**
-	 * Interpolated pose for {@code entityId} at {@code partial} ticks —
-	 * {@link FlightBodyTransform#IDENTITY} for untracked entities.
-	 */
-	public static FlightBodyTransform transform(int entityId, float partial) {
-		Tracked tracked = TRACKED.get(entityId);
-		if (tracked == null) {
-			return FlightBodyTransform.IDENTITY;
-		}
-		return new FlightBodyTransform(
-				Mth.lerp(partial, tracked.previous.pitchDeg(), tracked.current.pitchDeg()),
-				Mth.lerp(partial, tracked.previous.rollDeg(), tracked.current.rollDeg()));
-	}
-
-	public static void tick() {
-		Minecraft client = Minecraft.getInstance();
+	/** END_CLIENT_TICK hook — registered by {@code HomelanderClientModule}. */
+	public static void tick(Minecraft client) {
 		ClientLevel level = client.level;
 		if (level == null) {
 			return;
 		}
 		VfxParams pose = VfxParamsLoader.get(POSE_PARAMS);
-		float halfLife = pose.number("halfLifeTicks", FlightPoseMath.DEFAULT_HALF_LIFE_TICKS);
 		Set<Integer> alive = new HashSet<>();
 		for (Entity entity : level.entitiesForRendering()) {
 			if (!(entity instanceof AbstractClientPlayer player)) {
@@ -105,12 +86,12 @@ public final class FlightPoseTracker {
 			}
 			FlightPresentation presentation =
 					FlightPresentations.of(SkinResolver.heroIdFor(player)).orElse(null);
-			if (presentation == null) {
+			if (presentation == null || !HomelanderEmfRuntime.available()) {
 				continue;
 			}
 			alive.add(entity.getId());
 			ClientFlightState.markPresentationOwned(entity.getId());
-			track(client, player, state, presentation, pose, halfLife);
+			track(client, player, state, presentation, pose);
 		}
 		for (Iterator<Map.Entry<Integer, Tracked>> it = TRACKED.entrySet().iterator(); it.hasNext();) {
 			Map.Entry<Integer, Tracked> entry = it.next();
@@ -122,36 +103,54 @@ public final class FlightPoseTracker {
 	}
 
 	private static void track(Minecraft client, AbstractClientPlayer player,
-			ClientFlightState.State state, FlightPresentation presentation,
-			VfxParams pose, float halfLife) {
+			ClientFlightState.State state, FlightPresentation presentation, VfxParams pose) {
 		Tracked tracked = TRACKED.computeIfAbsent(player.getId(), id -> new Tracked());
+		HomelanderEmfRuntime runtime = HomelanderEmfRuntime.of(player);
+
 		Vec3 pos = player.position();
 		Vec3 velocity = tracked.lastPos != null ? pos.subtract(tracked.lastPos) : Vec3.ZERO;
-		float yawRate = tracked.lastPos != null
-				? Mth.wrapDegrees(player.getYRot() - tracked.lastYaw) : 0f;
 		tracked.lastPos = pos;
-		tracked.lastYaw = player.getYRot();
+		double yawRad = Math.toRadians(player.getYRot());
+		double forwardSpeed = -velocity.x * Math.sin(yawRad) + velocity.z * Math.cos(yawRad);
+		double strafeSpeed = -velocity.x * Math.cos(yawRad) - velocity.z * Math.sin(yawRad);
+		double verticalSpeed = velocity.y;
 
-		FlightPhase phase = state.phase();
-		if (phase != tracked.phase) {
-			onPhaseChange(client, player, tracked, phase, presentation, pose, velocity);
-			tracked.phase = phase;
+		FlightPhase serverPhase = state.phase();
+		if (serverPhase != tracked.serverPhase) {
+			onPhaseChange(client, player, tracked, serverPhase, presentation, pose, velocity);
+			tracked.serverPhase = serverPhase;
 			tracked.trailSpawned = false;
 		}
+		Phase phase = tracked.machine.update(
+				new Input(toServerPhase(serverPhase), forwardSpeed),
+				runtime.playback().oneShotFinished(CLIP_TAKEOFF));
+		if (phase == Phase.TAKEOFF && tracked.visualPhase != Phase.TAKEOFF) {
+			runtime.playback().restart(CLIP_TAKEOFF);
+		}
+		tracked.visualPhase = phase;
 
-		tracked.previous = tracked.current;
-		tracked.current = FlightPoseMath.step(tracked.current,
-				FlightPoseMath.target(phase, velocity, yawRate, pose), 1f, halfLife);
+		// Action clips played through HomelanderPoseApi suppress flight loops
+		// so per-channel weights stay ≤ 1.
+		EmfPlaybackState playback = runtime.playback();
+		float suppress = 1f - maxActionWeight(playback);
+		playback.setTargetWeight(CLIP_TAKEOFF, phase == Phase.TAKEOFF ? suppress : 0f);
+		playback.setTargetWeight(CLIP_HOVER, phase == Phase.HOVER ? suppress : 0f);
+		playback.setTargetWeight(CLIP_BOOST, phase == Phase.BOOST ? suppress : 0f);
 
-		updateLoopSound(client, player, tracked, state, phase, presentation, pose);
+		// Procedural lean: forward pitch, strafe bank, small vertical pitch.
+		HomelanderFlightLean.Targets lean = tracked.lean.target(
+				forwardSpeed, strafeSpeed, verticalSpeed, playback.weight(CLIP_BOOST));
+		runtime.setLeanTargets(lean.pitchRad(), lean.rollRad(), lean.yPx());
 
-		if ((phase == FlightPhase.CRUISE || phase == FlightPhase.BOOST)
+		updateLoopSound(client, player, tracked, state, serverPhase, presentation, pose);
+
+		if ((serverPhase == FlightPhase.CRUISE || serverPhase == FlightPhase.BOOST)
 				&& presentation.trailEffect() != null && !tracked.trailSpawned) {
 			tracked.trailSpawned = true;
 			spawnEffect(player, presentation.trailEffect());
 		}
 
-		if ((phase == FlightPhase.CRUISE || phase == FlightPhase.BOOST)
+		if ((serverPhase == FlightPhase.CRUISE || serverPhase == FlightPhase.BOOST)
 				&& presentation.speedRingEffect() != null
 				&& SpeedRingGate.shouldFire(tracked.prevVelocity, velocity, pose,
 						tracked.lastSpeedRingTick, client.level.getGameTime())) {
@@ -161,44 +160,39 @@ public final class FlightPoseTracker {
 		tracked.prevVelocity = velocity;
 	}
 
+	private static float maxActionWeight(EmfPlaybackState playback) {
+		float max = 0f;
+		for (String clip : HomelanderEmfRuntime.clipNames()) {
+			if (!HomelanderPoseApi.FLIGHT_CLIPS.contains(clip)) {
+				max = Math.max(max, playback.weight(clip));
+			}
+		}
+		return max;
+	}
+
+	private static ServerPhase toServerPhase(FlightPhase phase) {
+		return switch (phase) {
+			case TAKEOFF -> ServerPhase.TAKEOFF;
+			case HOVER, CRUISE -> ServerPhase.AIRBORNE;
+			case BOOST -> ServerPhase.BOOST;
+			case LANDING -> ServerPhase.LANDING;
+			default -> ServerPhase.NONE;
+		};
+	}
+
 	private static void onPhaseChange(Minecraft client, AbstractClientPlayer player,
 			Tracked tracked, FlightPhase phase, FlightPresentation presentation,
 			VfxParams pose, Vec3 velocity) {
-		ResourceLocation baseClip = switch (phase) {
-			case TAKEOFF, HOVER -> presentation.hoverClip();
-			case CRUISE -> presentation.cruiseClip();
-			case BOOST -> presentation.boostClip();
-			default -> null;
-		};
-		if (!Objects.equals(baseClip, tracked.baseClip)) {
-			if (tracked.baseClip != null) {
-				PlayerAnimator.stop(player.getId(), PlayerAnimator.Layer.BASE,
-						CROSSFADE_TICKS, tracked.baseClip);
-			}
-			if (baseClip != null) {
-				PlayerAnimator.play(player.getId(), baseClip, PlayerAnimator.Layer.BASE, CROSSFADE_TICKS);
-			}
-			tracked.baseClip = baseClip;
-		}
-		int entityId = player.getId();
 		switch (phase) {
-			case TAKEOFF -> {
-				PlayerAnimator.play(entityId, presentation.takeoffClip(),
-						PlayerAnimator.Layer.ACTION, ACTION_FADE_TICKS);
-				playOneShot(client, player, presentation.takeoffSound());
-			}
+			case TAKEOFF -> playOneShot(client, player, presentation.takeoffSound());
 			case BOOST -> {
 				playOneShot(client, player, presentation.boostSound());
 				if (presentation.boostEffect() != null) {
 					spawnEffect(player, presentation.boostEffect(), velocity, 1f);
 				}
 			}
-			case LANDING -> {
-				PlayerAnimator.play(entityId, presentation.landClip(),
-						PlayerAnimator.Layer.ACTION, ACTION_FADE_TICKS);
-				playLandingSound(client, player, presentation.landSound(),
-						tracked.prevVelocity, pose);
-			}
+			case LANDING -> playLandingSound(client, player, presentation.landSound(),
+					tracked.prevVelocity, pose);
 			default -> {
 			}
 		}
@@ -260,9 +254,13 @@ public final class FlightPoseTracker {
 
 	private static void release(Minecraft client, int entityId, Tracked tracked) {
 		ClientFlightState.unmarkPresentationOwned(entityId);
-		if (tracked.baseClip != null) {
-			PlayerAnimator.stop(entityId, PlayerAnimator.Layer.BASE,
-					CROSSFADE_TICKS, tracked.baseClip);
+		HomelanderEmfRuntime runtime = HomelanderEmfRuntime.peek(entityId);
+		if (runtime != null) {
+			for (String clip : HomelanderEmfRuntime.clipNames()) {
+				runtime.playback().setTargetWeight(clip, 0f);
+			}
+			runtime.setLeanTargets(0, 0, 0);
+			HomelanderEmfRuntime.release(entityId);
 		}
 		stopLoop(client, tracked);
 	}
@@ -274,19 +272,20 @@ public final class FlightPoseTracker {
 		}
 	}
 
-	/** Session reset (disconnect / world leave): drops every tracked pose. */
+	/** Session reset (disconnect / world leave): drops every tracked player. */
 	public static void reset() {
 		TRACKED.clear();
+		HomelanderEmfRuntime.clearAll();
 	}
 
 	private static final class Tracked {
 		private Vec3 lastPos;
 		private Vec3 prevVelocity = Vec3.ZERO;
-		private float lastYaw;
-		private FlightPhase phase;
-		private FlightBodyTransform current = FlightBodyTransform.IDENTITY;
-		private FlightBodyTransform previous = FlightBodyTransform.IDENTITY;
-		private ResourceLocation baseClip;
+		private FlightPhase serverPhase;
+		private Phase visualPhase = Phase.IDLE;
+		private final HomelanderFlightMachine machine = new HomelanderFlightMachine();
+		private final HomelanderFlightLean lean = new HomelanderFlightLean(
+				HomelanderFlightLean.Params.defaults());
 		private boolean trailSpawned;
 		private long lastSpeedRingTick = -1;
 		private FlightLoopSound loop;
@@ -294,7 +293,7 @@ public final class FlightPoseTracker {
 
 	/**
 	 * Entity-bound looping flight sound: follows the player and exposes a
-	 * mutable {@link #setVolume} so the tracker can tie loudness to
+	 * mutable {@link #setVolume} so the driver can tie loudness to
 	 * {@code horizontalSpeed} every tick.
 	 */
 	private static final class FlightLoopSound extends AbstractTickableSoundInstance {

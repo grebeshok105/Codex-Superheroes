@@ -3,6 +3,10 @@ package io.github.grebeshok105.codex.client.hero.homelander;
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.client.core.module.HeroClientContext;
 import io.github.grebeshok105.codex.client.core.module.HeroClientModule;
+import io.github.grebeshok105.codex.client.hero.homelander.emf.EmfAssets;
+import io.github.grebeshok105.codex.client.hero.homelander.flight.HomelanderEmfLayer;
+import io.github.grebeshok105.codex.client.hero.homelander.flight.HomelanderFlightDriver;
+import io.github.grebeshok105.codex.client.hero.homelander.flight.HomelanderPoseApi;
 import io.github.grebeshok105.codex.client.hero.homelander.fx.HomelanderFx;
 import io.github.grebeshok105.codex.client.hero.homelander.hud.SunWindupHud;
 import io.github.grebeshok105.codex.client.hero.homelander.hud.UraniumThreatHud;
@@ -36,6 +40,13 @@ public record HomelanderClientModule() implements HeroClientModule {
 		// render through the homelander/laser VFX channel instead.
 		ctx.beamStyle(new BeamStyle(BeamFxS2CPayload.STYLE_LASER,
 				BeamDraws.LASER_LIFETIME_MS, BeamDraws::laserPair));
+		// EMF presentation: segmented model + clip runtime + flight driver.
+		// The suppression hides the vanilla PlayerModel while the runtime has
+		// any weight on; the layer renders the EMF bone tree in its place.
+		EmfAssets.init();
+		ctx.playerLayer(HomelanderEmfLayer::new);
+		ctx.playerModelSuppression(HomelanderPoseApi::suppressesVanillaModel);
+		ctx.clientTick(HomelanderFlightDriver::tick);
 		HomelanderFx.register(ctx);
 		ctx.receive(UraniumPressureS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> ClientUraniumPressureState.update(payload.pressuredHomelanders())));

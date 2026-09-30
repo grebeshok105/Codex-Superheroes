@@ -1,11 +1,7 @@
 package io.github.grebeshok105.codex.client.hero.homelander.fx;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.client.core.anim.PlayerAnimator;
-import io.github.grebeshok105.codex.client.core.anim.PlayerPoseApplier;
-import io.github.grebeshok105.codex.client.core.anim.PoseSample;
 import io.github.grebeshok105.codex.client.core.flight.FlightBodyTransform;
-import io.github.grebeshok105.codex.client.core.flight.FlightPoseTracker;
 import io.github.grebeshok105.codex.client.core.render.BeamLook;
 import io.github.grebeshok105.codex.client.core.vfx.VfxChannelEffect;
 import io.github.grebeshok105.codex.client.core.vfx.VfxRenderContext;
@@ -18,6 +14,7 @@ import io.github.grebeshok105.codex.client.core.vfx.params.VfxParams;
 import io.github.grebeshok105.codex.client.core.vfx.pattern.BeamPattern;
 import io.github.grebeshok105.codex.client.core.vfx.pattern.ImpactPattern;
 import io.github.grebeshok105.codex.client.core.vfx.pattern.PhaseTimeline;
+import io.github.grebeshok105.codex.client.hero.homelander.flight.HomelanderPoseApi;
 import io.github.grebeshok105.codex.hero.homelander.ability.EyeLaserPhases;
 import io.github.grebeshok105.codex.hero.homelander.effect.HomelanderEffects;
 import io.github.grebeshok105.codex.sound.HomelanderSounds;
@@ -50,7 +47,7 @@ import java.util.Map;
  * the local player the end is their own per-frame raycast (instant aim
  * response), for remote casters the server-sent end lerped over the UPDATE
  * cadence. A {@link PhaseTimeline} (6-tick charge → hold → 8-tick release)
- * scales the draw, and the ACTION lane runs
+ * scales the draw, and the EMF action lane runs
  * {@code laser_charge → laser_hold → laser_release}.
  *
  * <p>Audio is a single entity-bound loop running for the whole channel —
@@ -123,7 +120,7 @@ public final class EyeLaserChannel implements VfxChannelEffect {
 		this.lightColor = params.color("lightColor", 0xFF6A3C) & 0xFFFFFF;
 		this.lightRadius = params.number("lightRadius", 7f);
 		this.lightBrightness = params.number("lightBrightness", 0.85f);
-		PlayerAnimator.play(source.getId(), CLIP_CHARGE, PlayerAnimator.Layer.ACTION, CLIP_FADE_TICKS);
+		HomelanderPoseApi.playClip(source.getId(), CLIP_CHARGE);
 		openLoop();
 	}
 
@@ -135,13 +132,12 @@ public final class EyeLaserChannel implements VfxChannelEffect {
 		if (phase == PhaseTimeline.Phase.DONE) {
 			stopLoop();
 			removeLight();
-			PlayerAnimator.stop(source.getId(), PlayerAnimator.Layer.ACTION,
-					0, CLIP_CHARGE, CLIP_HOLD);
+			HomelanderPoseApi.stopClips(source.getId(), CLIP_CHARGE, CLIP_HOLD);
 			return;
 		}
 		if (phase == PhaseTimeline.Phase.HOLD && !holdStarted) {
 			holdStarted = true;
-			PlayerAnimator.play(source.getId(), CLIP_HOLD, PlayerAnimator.Layer.ACTION, CLIP_FADE_TICKS);
+			HomelanderPoseApi.playClip(source.getId(), CLIP_HOLD);
 		}
 		float intensity = timeline.intensity(age, releasedAtAge, 0f);
 		if (age % IMPACT_INTERVAL_TICKS == 0 && intensity > 0.05f) {
@@ -169,9 +165,9 @@ public final class EyeLaserChannel implements VfxChannelEffect {
 			return;
 		}
 		releasedAtAge = age;
-		PlayerAnimator.stop(source.getId(), PlayerAnimator.Layer.ACTION,
-				CLIP_FADE_TICKS, CLIP_HOLD);
-		PlayerAnimator.play(source.getId(), CLIP_RELEASE, PlayerAnimator.Layer.ACTION, CLIP_FADE_TICKS);
+		// The WRAP hold clip must be stopped or it keeps looping beside RELEASE.
+		HomelanderPoseApi.stopClip(source.getId(), CLIP_HOLD);
+		HomelanderPoseApi.playClip(source.getId(), CLIP_RELEASE);
 		// The loop fades out across the release window and stops itself; it
 		// stays registered in LOOPS until then, so a quick re-activation adopts
 		// it instead of starting a second one.
@@ -193,7 +189,8 @@ public final class EyeLaserChannel implements VfxChannelEffect {
 		float scaled = intensity * (madness ? params.number("madnessIntensity", 1.3f) : 1f);
 		Vec3 end = endAt(partial);
 		if (player != null) {
-			FlightBodyTransform tilt = FlightPoseTracker.transform(source.getId(), partial);
+			FlightBodyTransform tilt = HomelanderPoseApi.currentBodyTransform(
+					source.getId(), partial).tilt();
 			EyePair eyes = HumanoidAnchors.eyes(player, partial, tilt, headAnim(source.getId(), partial));
 			BeamPattern.draw(ctx, eyes.left(), end, activeLook, scaled);
 			BeamPattern.draw(ctx, eyes.right(), end, activeLook, scaled);
@@ -211,8 +208,7 @@ public final class EyeLaserChannel implements VfxChannelEffect {
 	public void cancel() {
 		stopLoop();
 		removeLight();
-		PlayerAnimator.stop(source.getId(), PlayerAnimator.Layer.ACTION,
-				0, CLIP_CHARGE, CLIP_HOLD, CLIP_RELEASE);
+		HomelanderPoseApi.stopClips(source.getId(), CLIP_CHARGE, CLIP_HOLD, CLIP_RELEASE);
 	}
 
 	private Vec3 endAt(float partial) {
@@ -255,8 +251,7 @@ public final class EyeLaserChannel implements VfxChannelEffect {
 	}
 
 	private static Vector3f headAnim(int entityId, float partial) {
-		PoseSample sample = PlayerAnimator.sample(entityId, partial);
-		return PlayerPoseApplier.renderedRotationDeg(sample, "head");
+		return HomelanderPoseApi.currentHeadAnglesDeg(entityId);
 	}
 
 	/**

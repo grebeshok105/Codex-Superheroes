@@ -107,6 +107,14 @@ public interface HeroClientContext {
 	void skinSuppression(Predicate<UUID> suppression);
 
 	/**
+	 * Registers a predicate that hides the vanilla {@code PlayerModel} for a
+	 * player while it returns {@code true} — the hero's own render layer
+	 * (registered via {@link #playerLayer}) draws the substitute model.
+	 * Homelander's EMF presentation uses this seam.
+	 */
+	void playerModelSuppression(Predicate<AbstractClientPlayer> suppression);
+
+	/**
 	 * Registers a supplier that vetoes the vanilla crosshair while it returns
 	 * {@code true}. Self-gate on this module's hero being active.
 	 */
