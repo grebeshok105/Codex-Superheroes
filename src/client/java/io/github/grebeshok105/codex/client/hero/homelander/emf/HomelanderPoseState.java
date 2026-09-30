@@ -3,6 +3,7 @@ package io.github.grebeshok105.codex.client.hero.homelander.emf;
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.client.ClientFlightState;
 import io.github.grebeshok105.codex.client.ClientSessionState;
+import io.github.grebeshok105.codex.client.core.camera.ThirdPersonFraming;
 import io.github.grebeshok105.codex.client.core.emf.EmfPresentationOwnership;
 import io.github.grebeshok105.codex.client.core.flight.DirectionalPoseSource;
 import io.github.grebeshok105.codex.client.core.vfx.params.VfxParams;
@@ -12,7 +13,9 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -303,6 +306,36 @@ final class HomelanderPoseState {
 	static float milkWeight(UUID uuid, float partial) {
 		Entry entry = entryOf(uuid);
 		return entry == null ? 0f : entry.milkWeight;
+	}
+
+	/**
+	 * Third-person framing provider for {@link ThirdPersonFraming} (§7
+	 * stage 6): the world-space offset {@code weight * (bodyCentre -
+	 * eyePos)} that shifts the detached camera base from the eye toward
+	 * the body centre while the presentation is engaged — equivalent to
+	 * {@code lerp(weight, eyePos, bodyCentre)}. {@code null} while the
+	 * entity is not an owned player, has no entry, or the master weight
+	 * is 0, so standing third-person keeps the vanilla framing exactly.
+	 */
+	@Nullable
+	static Vec3 cameraOffset(Entity entity) {
+		if (!(entity instanceof AbstractClientPlayer player)
+				|| !EmfPresentationOwnership.isOwned(player)) {
+			return null;
+		}
+		Entry entry = entryOf(player.getUUID());
+		if (entry == null) {
+			return null;
+		}
+		float weight = entry.weight(1f);
+		if (weight <= 0f) {
+			return null;
+		}
+		float rootTy = VfxParamsLoader.get(FLIGHT_PARAMS)
+				.number("hoverRootTy", HomelanderPoseMath.DEFAULT_HOVER_ROOT_TY);
+		Vec3 bodyCentre = player.position()
+				.add(0.0, HomelanderPoseMath.bodyCentreHeight(rootTy), 0.0);
+		return bodyCentre.subtract(player.getEyePosition(1f)).scale(weight);
 	}
 
 	static void clearAll() {

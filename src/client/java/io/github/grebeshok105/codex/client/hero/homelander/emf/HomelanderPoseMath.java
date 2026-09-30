@@ -27,6 +27,12 @@ final class HomelanderPoseMath {
 	static final float DEFAULT_BOOST_EXIT = 0.6f;
 	/** SUPERSONIC flight boosts at any forward speed above this (plan §7 stage 4). */
 	static final float SUPERSONIC_BOOST_FORWARD = 0.3f;
+	/**
+	 * Fallback {@code hoverRootTy} (model pixels) when the vfx params omit it:
+	 * the baked mean of the HOVER jem's {@code body.ty} keyframe loop
+	 * ({@code 6.6 + var.breath} → ≈6.62 px, plan §7 stage 6).
+	 */
+	static final float DEFAULT_HOVER_ROOT_TY = 6.619f;
 	private static final float BOOST_HALF_LIFE_TICKS = 4f;
 	private static final float VELOCITY_HALF_LIFE_TICKS = 3f;
 
@@ -84,8 +90,6 @@ final class HomelanderPoseMath {
 		return approach(current, flying ? 1f : 0f, ACTIVE_HALF_LIFE_TICKS, dtTicks);
 	}
 
-	/**
-	 * TAKEOFF one-shot weight: pinned to 1 while the clip is inside the 0.65 s
 	 * hold — the plan's literal "weight = 1 for 0 to 0.65 s" — then eases to 0
 	 * with a 2-tick half-life, and to 0 immediately once flight stops. The
 	 * vanilla→authored blend is already carried by the master weight's ramp, so
@@ -101,6 +105,16 @@ final class HomelanderPoseMath {
 			return 1f;
 		}
 		return approach(current, 0f, TAKEOFF_HALF_LIFE_TICKS, dtTicks);
+	}
+
+	/**
+	 * Third-person framing target height above the feet, in blocks (§7
+	 * stage 6): the body centre while hovering is the standing chest
+	 * height {@code 1.1} plus the HOVER clip's baked {@code root.ty} lift
+	 * converted from model pixels to blocks ({@code px / 16}).
+	 */
+	static float bodyCentreHeight(float rootTyPx) {
+		return 1.1f + rootTyPx / 16f;
 	}
 
 	/** Frame-rate-independent exponential approach. */

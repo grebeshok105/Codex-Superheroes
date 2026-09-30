@@ -1,5 +1,14 @@
 # SESSION.md
 
+## Completed this session (Homelander EMF — Stage 6)
+
+- Stage 6 of `docs/superpowers/plans/2026-09-30-homelander-emf-presentation.md` («F5 camera») implemented on `devin/1790804823-homelander-camera-s6` (base Stage-5 head `4249c86f`), `mod_version` 4.5.0 → 4.6.0.
+- New seam `client/core/camera/ThirdPersonFraming`: hero-agnostic provider registry (`Function<Entity, Vec3>` → world-space offset, first non-null wins), same shape as `EmfPresentationOwnership`/`DirectionalPoseSource`. The smoothed offset keys on the camera entity's uuid; one exponential step per client tick (half-life 3 ticks, world space, frame-rate independent) then interpolated by the render partial tick. First engage seeds straight to target (no in-from-origin lag); null target/entity switch/session reset drop the state → identity.
+- `CameraMixin` gains a `setup` inject at `INVOKE Camera.getMaxZoom(F)F` — inside the `if (detached)` branch (bytecode-confirmed in the 1.21.1 client jar: `getMaxZoom` is invoked exactly once there), so first-person never reaches it and the zoom collision sweep still traces from the shifted base. The mixin adds `setPosition(getPosition().add(offset))` — equivalent to the plan's `lerp(weight, eyePos, bodyCentre)` — and never touches rotation. `getPosition`/`setPosition(Vec3)` added as shadows.
+- Homelander registers `HomelanderPoseState.cameraOffset` from `HomelanderEmf.register`: null unless the camera entity is an `EmfPresentationOwnership`-owned player whose master `weight(1f) > 0`; else `weight * (bodyCentre - eyePos)` where `bodyCentre = feet + (0, 1.1 + hoverRootTy/16, 0)`. `hoverRootTy` = 6.619 (baked mean of the HOVER jem `body.ty` keyframe loop, `6.6 + var.breath`) shipped as a new `vfx/homelander/flight.json` key with `HomelanderPoseMath.DEFAULT_HOVER_ROOT_TY` fallback; `HomelanderPoseMath.bodyCentreHeight(rootTyPx)` is the pure scalar.
+- Tests added: 8 in `ThirdPersonFramingTest` (weight-0/null-provider identity, first-target seeding, half-life-3 convergence, partial-tick interpolation, null-target reset, entity-switch reseed, null-entity clear, `reset()`); 1 in `HomelanderPoseMathTest` (`bodyCentreHeight` formula).
+- Verification: `./gradlew test --no-daemon` green; `./gradlew qualityGate --no-daemon` green (sanity, jar isolation, gametests, ArchUnit baseline, datagen check). No in-game verification per the standing rule — Stage 6 checklist marked unverified in the PR (F5 back/front while hovering and boosting keep the body centred; no jump on flight start/end; walls still block the camera).
+
 ## Completed this session (Homelander EMF — Stage 5)
 
 - Stage 5 of `docs/superpowers/plans/2026-09-30-homelander-emf-presentation.md` («procedural flight transforms and backward flight») implemented on `devin/1790803277-homelander-transforms-s5` (base Stage-4 head `4adfb99d`), `mod_version` 4.4.0 → 4.5.0.

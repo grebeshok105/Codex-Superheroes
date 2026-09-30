@@ -1,5 +1,6 @@
 package io.github.grebeshok105.codex.client.hero.homelander.emf;
 
+import io.github.grebeshok105.codex.client.core.camera.ThirdPersonFraming;
 import io.github.grebeshok105.codex.client.core.emf.EmfBridge;
 import io.github.grebeshok105.codex.client.core.emf.EmfPresentationOwnership;
 import io.github.grebeshok105.codex.client.core.flight.DirectionalPoseSource;
@@ -31,6 +32,9 @@ public final class HomelanderEmf {
 		// the same smoothed render velocity the boost latch consumes.
 		DirectionalPoseSource.register((player, out) ->
 				HomelanderPoseState.fillDirectional(player.getUUID(), out));
+		// Third-person framing (§7 stage 6): centre the detached camera on
+		// the body while the EMF presentation is engaged.
+		ThirdPersonFraming.register(HomelanderPoseState::cameraOffset);
 		HomelanderEmfVariables.register();
 		// EMF must fall back to the vanilla model for everyone we do not own —
 		// otherwise every player on the server would render through our jem.
