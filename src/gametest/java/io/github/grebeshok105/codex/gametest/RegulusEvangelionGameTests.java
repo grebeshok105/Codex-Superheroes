@@ -1,6 +1,7 @@
 package io.github.grebeshok105.codex.gametest;
 
 import io.github.grebeshok105.codex.ModId;
+import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.hero.regulus.RegulusAttachments;
 import io.github.grebeshok105.codex.hero.regulus.RegulusHero;
 import io.github.grebeshok105.codex.hero.regulus.RegulusItems;
@@ -8,9 +9,11 @@ import io.github.grebeshok105.codex.hero.regulus.registry.RegulusDamageTypes;
 import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusMadnessController;
 import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusMadnessState;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
+import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.effect.MobEffects;
@@ -28,11 +31,43 @@ import net.minecraft.world.item.ItemStack;
 public class RegulusEvangelionGameTests implements FabricGameTest {
 
 	private static ServerPlayer regulusReader(GameTestHelper helper) {
+		return regulusReader(helper, false);
+	}
+
+	private static ServerPlayer regulusReader(GameTestHelper helper, boolean vulnerable) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, RegulusHero.ID);
-		TestPlayers.clearSpawnInvulnerability(player);
+		// Keep spawn invulnerability when the test doesn't need real damage — the
+		// shared gametest world lets other tests' entities wander in and hit the reader,
+		// which would trip the >=4hp interrupt nondeterministically.
+		if (vulnerable) {
+			TestPlayers.clearSpawnInvulnerability(player);
+		}
+		// getItemInHand reads items[selected] and returns EMPTY for a non-hotbar
+		// selected — pin it before equipping the book.
+		player.getInventory().selected = 0;
 		player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(RegulusItems.EVANGELION));
+		// Gametest world is void outside structures — a drifting/falling reader
+		// trips the >0.5b movement abort. Pin it on a stone pad.
+		BlockPos feet = BlockPos.containing(player.position());
+		placeFloor(helper, player.getX(), feet.getY(), player.getZ());
+		player.moveTo(player.getX(), feet.getY(), player.getZ());
+		player.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
 		return player;
+	}
+
+	/** The three early-return gates inside {@code use()}, asserted explicitly so a
+	 * silent gate rejection can't masquerade as a dropped channel. */
+	private static void assertUseGatesOpen(GameTestHelper helper, ServerPlayer player) {
+		var data = player.getAttachedOrCreate(CoreAttachments.HERO_DATA);
+		helper.assertTrue(data.hasHero() && ModId.of("regulus").equals(data.heroId()),
+				"use() gate: player is regulus");
+		helper.assertFalse(player.getCooldowns().isOnCooldown(RegulusItems.EVANGELION),
+				"use() gate: evangelion not on cooldown");
+		RegulusMadnessState state = madness(player);
+		helper.assertFalse(state.madness() || state.isReading(helper.getLevel().getGameTime()),
+				"use() gate: not mad and not already reading (state=" + state
+						+ ", now=" + helper.getLevel().getGameTime() + ")");
 	}
 
 	private static RegulusMadnessState madness(ServerPlayer player) {
@@ -44,7 +79,12 @@ public class RegulusEvangelionGameTests implements FabricGameTest {
 		ServerPlayer player = regulusReader(helper);
 		long start = helper.getLevel().getGameTime();
 
-		RegulusItems.EVANGELION.use(helper.getLevel(), player, InteractionHand.MAIN_HAND);
+		assertUseGatesOpen(helper, player);
+		helper.assertValueEqual(player.getItemInHand(InteractionHand.MAIN_HAND).getItem(),
+				RegulusItems.EVANGELION, "evangelion is in the main hand");
+		var res = RegulusItems.EVANGELION.use(helper.getLevel(), player, InteractionHand.MAIN_HAND);
+		helper.assertValueEqual(res.getResult(), net.minecraft.world.InteractionResult.CONSUME,
+				"use() consumed");
 		helper.assertTrue(player.isUsingItem(), "use() starts the item-use channel");
 		helper.assertValueEqual(madness(player).ritualUntilTick(), start + 60,
 				"ritual deadline is now+60");
@@ -96,7 +136,7 @@ public class RegulusEvangelionGameTests implements FabricGameTest {
 
 	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 60)
 	public void ritualInterruptedByDamage(GameTestHelper helper) {
-		ServerPlayer player = regulusReader(helper);
+		ServerPlayer player = regulusReader(helper, true);
 		RegulusItems.EVANGELION.use(helper.getLevel(), player, InteractionHand.MAIN_HAND);
 		helper.assertTrue(player.isUsingItem(), "channel running");
 
@@ -152,7 +192,7 @@ public class RegulusEvangelionGameTests implements FabricGameTest {
 
 	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 140)
 	public void bloodPriceIsPointSixHpPerSecond(GameTestHelper helper) {
-		ServerPlayer player = regulusReader(helper);
+		ServerPlayer player = regulusReader(helper, true);
 		long now = helper.getLevel().getGameTime();
 		player.setAttached(RegulusAttachments.REGULUS_MADNESS,
 				madness(player).withMadness(true).withMadnessUntil(now + 900));
@@ -238,11 +278,18 @@ public class RegulusEvangelionGameTests implements FabricGameTest {
 	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 60)
 	public void madnessStaysOffBefore60t(GameTestHelper helper) {
 		ServerPlayer player = regulusReader(helper);
+		assertUseGatesOpen(helper, player);
 		RegulusItems.EVANGELION.use(helper.getLevel(), player, InteractionHand.MAIN_HAND);
 
+		helper.assertTrue(player.isUsingItem(), "use() starts the channel");
+		long start = helper.getLevel().getGameTime();
 		helper.runAfterDelay(50, () -> {
-			helper.assertTrue(player.isUsingItem(), "still channeling at tick 50");
+			// Order matters: madness first distinguishes a vanilla channel completion
+			// (useItemRemaining decayed to 0) from an abort (deadline cleared, no
+			// madness) and from an external channel stop (deadline still armed).
 			helper.assertFalse(madness(player).madness(), "madness stays off before the 60t mark");
+			helper.assertValueEqual(madness(player).ritualUntilTick(), start + 60,
+					"ritual deadline still armed at tick 50");
 			helper.assertTrue(player.getEffect(MobEffects.MOVEMENT_SLOWDOWN) != null,
 					"Slowness II holds while channeling");
 			TestPlayers.leave(player);
@@ -264,6 +311,16 @@ public class RegulusEvangelionGameTests implements FabricGameTest {
 			TestPlayers.leave(player);
 			helper.succeed();
 		});
+	}
+
+	/** A 3x3 stone pad at feet level — the gametest world is void outside structures. */
+	private static void placeFloor(GameTestHelper helper, double x, double y, double z) {
+		BlockPos center = BlockPos.containing(x, y - 1.0, z);
+		for (int dx = -1; dx <= 1; dx++) {
+			for (int dz = -1; dz <= 1; dz++) {
+				helper.getLevel().setBlock(center.offset(dx, 0, dz), Blocks.STONE.defaultBlockState(), 3);
+			}
+		}
 	}
 
 	private static void assertModifierAmount(GameTestHelper helper, ServerPlayer player,
