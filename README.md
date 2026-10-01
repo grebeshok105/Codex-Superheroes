@@ -65,6 +65,8 @@ Datagen:
 
 **Граница Veil:** Veil — client-only зависимость. `veil.*` референсится только из `src/client` (`client/hero/<id>/fx/`, `client/core/**`), всегда за `FabricLoader.isModLoaded("veil")`. Shared/server код никогда не импортит Veil: выделенный сервер его не несёт (Veil требует client-only модули Fabric), поэтому в `fabric.mod.json` он остаётся `recommends` даже после полного порта VFX на Veil, а source set `servernoveil` + run `runServer` и classpath'ы gametest/datagen фильтруют jar из classpath. Серверный код достаёт Veil-эффекты только через payload'ы `core/net`/`FxBroadcast`.
 
+**Зависимость EMF/ETF:** Entity Model Features + Entity Texture Features поставляются встроенными внутрь jar мода (jar-in-jar, тот же механизм, что у GeckoLib) — ставить их отдельно не нужно. На клиенте они обязательны (`fabric.mod.json` hard-depends `entity_model_features >=3.3`, ETF подтягивается depends'ом EMF): Homelander-презентация рендерится через EMF-модель. На выделенном сервере вложенные client-only моды попадают в `envDisabledMods` загрузчика, поэтому зависимость смягчается до `suggests` и сервер стартует без них. Весь прямой `traben.*`-код живёт только в `client/core/emf` + `client/hero/homelander/emf` за проверкой `EmfBridge.isAvailable()`; shared/server код EMF/ETF не импортит.
+
 Новые изменения должны сопровождаться тестами там, где поведение можно проверить автоматически. Финальный gate перед PR — `./gradlew qualityGate --no-daemon`. Runtime-изменения дополнительно проверяются в игре.
 
 ## Структура репозитория

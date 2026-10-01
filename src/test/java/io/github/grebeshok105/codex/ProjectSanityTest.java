@@ -274,7 +274,13 @@ public final class ProjectSanityTest {
 		List<String> namedSingletons = List.of(
 				"ClientAbilityCooldowns.java",
 				"JarvisDetectionHud.java", "MirrorWarpFlashHud.java", "RadialMenuHud.java",
-				"VfxRuntime.java");
+				"VfxRuntime.java",
+				// Session-state holders outside the Client*State naming — pinned by name so
+				// a dropped register(...) call fails here (§7 stage 15 audit).
+				"ClientHeroDimsWatcher.java", "EyeLaserChannel.java", "FlightPoseTracker.java",
+				"HomelanderPoseState.java", "IronFistsFx.java", "MeleeChargeSender.java",
+				"PlayerAnimator.java", "RenderedPoseCache.java", "ScorchMarkStore.java",
+				"ScreenFlash.java", "ThirdPersonFraming.java");
 		forEachJavaFile(CLIENT_JAVA, file -> {
 			String name = file.getFileName().toString();
 			boolean covered = clientStateFile.matcher(name).matches() && !name.equals("ClientSessionState.java");
@@ -286,6 +292,13 @@ public final class ProjectSanityTest {
 					: file + " holds session state but never calls ClientSessionState.register(...) — "
 							+ "its state survives disconnects (audit B15)";
 		});
+		// §7 stage 15: per-entity-id pose snapshots are only valid inside the
+		// ClientLevel they were captured in — the level-swap reset is required.
+		Path poseCache = CLIENT_JAVA.resolve(
+				"io/github/grebeshok105/codex/client/core/emf/RenderedPoseCache.java");
+		assert Files.readString(poseCache).contains("ClientSessionState.registerLevelReset(")
+				: poseCache + " must opt into the level-swap reset — its entity-id-keyed "
+						+ "snapshots leak across dimension change otherwise";
 	}
 
 	// Audit B15: client cooldown deadlines come from the level's game time, never

@@ -19,6 +19,12 @@ import java.util.Map;
  * <p>Opened channels live in the shared {@link VfxInstanceTable} so the budget
  * cap, ticking and rendering cover them like any other effect; this map is
  * only the address book plus its ages.
+ *
+ * <p>Late tracking (§7 stage 15) comes free from the open-or-retarget policy:
+ * the periodic UPDATE stream that keeps a channel alive also opens it for an
+ * observer that missed its START — a tracker entering range mid-laser sees
+ * the beam from the next UPDATE tick. One-shot event effects (CLAP,
+ * MILK_DRINK) carry no such stream and are simply missed, by design.
  */
 final class VfxChannelTable {
 	/**

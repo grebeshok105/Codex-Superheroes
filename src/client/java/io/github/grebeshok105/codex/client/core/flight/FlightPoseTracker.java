@@ -4,6 +4,7 @@ import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.client.ClientFlightState;
 import io.github.grebeshok105.codex.client.ClientSessionState;
 import io.github.grebeshok105.codex.client.core.anim.PlayerAnimator;
+import io.github.grebeshok105.codex.client.core.emf.EmfPresentationOwnership;
 import io.github.grebeshok105.codex.client.core.render.SkinResolver;
 import io.github.grebeshok105.codex.client.core.vfx.VfxRuntime;
 import io.github.grebeshok105.codex.client.core.vfx.VfxSpawn;
@@ -129,6 +130,12 @@ public final class FlightPoseTracker {
 		Vec3 velocity = tracked.lastPos != null ? pos.subtract(tracked.lastPos) : Vec3.ZERO;
 		float yawRate = tracked.lastPos != null
 				? Mth.wrapDegrees(player.getYRot() - tracked.lastYaw) : 0f;
+		if (velocity.lengthSqr() > FlightPoseMath.TELEPORT_MIN_DELTA_SQ) {
+			// Dimension change / teleport: the delta is relocation, not motion —
+			// keep it out of the pose target and the yaw-rate roll.
+			velocity = Vec3.ZERO;
+			yawRate = 0f;
+		}
 		tracked.lastPos = pos;
 		tracked.lastYaw = player.getYRot();
 
@@ -139,9 +146,15 @@ public final class FlightPoseTracker {
 			tracked.trailSpawned = false;
 		}
 
+		boolean owned = EmfPresentationOwnership.isOwned(player);
+		VfxParams targetParams = pose;
+		if (presentation.poseParams() != null && owned) {
+			targetParams = mergedPoseParams(tracked, pose, presentation.poseParams());
+		}
 		tracked.previous = tracked.current;
 		tracked.current = FlightPoseMath.step(tracked.current,
-				FlightPoseMath.target(phase, velocity, yawRate, pose), 1f, halfLife);
+				poseTarget(player, phase, velocity, yawRate, targetParams, owned, tracked),
+				1f, halfLife);
 
 		updateLoopSound(client, player, tracked, state, phase, presentation, pose);
 
@@ -150,6 +163,45 @@ public final class FlightPoseTracker {
 			tracked.trailSpawned = true;
 			spawnEffect(player, presentation.trailEffect());
 		}
+	}
+
+	/**
+	 * {@code pose.json} overlaid with the presentation's {@code poseParams}
+	 * (e.g. authored {@code emfBoost*} keys) for EMF-owned players. Memoized
+	 * on the tracked entry: both inputs are loader-stable instances between
+	 * resource reloads, so the merge allocates only when tuning reloads.
+	 */
+	private static VfxParams mergedPoseParams(Tracked tracked, VfxParams pose,
+			ResourceLocation overlayId) {
+		VfxParams overlay = VfxParamsLoader.get(overlayId);
+		if (tracked.poseMergeResult == null || tracked.poseMergeBase != pose
+				|| tracked.poseMergeOverlay != overlay) {
+			tracked.poseMergeResult = pose.withOverrides(overlay);
+			tracked.poseMergeBase = pose;
+			tracked.poseMergeOverlay = overlay;
+		}
+		return tracked.poseMergeResult;
+	}
+
+	/**
+	 * Pose target for the tick (plan §7 stage 5): EMF-owned players whose
+	 * presentation exposes live directional inputs through
+	 * {@link DirectionalPoseSource} — its own smoothed render velocity plus
+	 * boost weight — take the continuous {@link FlightPoseMath#directional}
+	 * path, which handles forward/backward/strafe/vertical flight without a
+	 * phase switch. Everybody else, and owned players before their first
+	 * pose-state tick, keeps the phase-switched {@link FlightPoseMath#target}
+	 * unchanged.
+	 */
+	private static FlightBodyTransform poseTarget(AbstractClientPlayer player,
+			FlightPhase phase, Vec3 velocity, float yawRate, VfxParams params,
+			boolean owned, Tracked tracked) {
+		if (owned && DirectionalPoseSource.fill(player, tracked.directional)) {
+			DirectionalPoseSource.Input in = tracked.directional;
+			return FlightPoseMath.directional(in.forward, in.strafe, in.vertical,
+					yawRate, in.boostWeight, params);
+		}
+		return FlightPoseMath.target(phase, velocity, yawRate, params);
 	}
 
 	private static void onPhaseChange(Minecraft client, AbstractClientPlayer player,
@@ -173,8 +225,10 @@ public final class FlightPoseTracker {
 		int entityId = player.getId();
 		switch (phase) {
 			case TAKEOFF -> {
-				PlayerAnimator.play(entityId, presentation.takeoffClip(),
-						PlayerAnimator.Layer.ACTION, ACTION_FADE_TICKS);
+				if (presentation.takeoffClip() != null) {
+					PlayerAnimator.play(entityId, presentation.takeoffClip(),
+							PlayerAnimator.Layer.ACTION, ACTION_FADE_TICKS);
+				}
 				playOneShot(client, player, presentation.takeoffSound());
 			}
 			case BOOST -> {
@@ -184,8 +238,10 @@ public final class FlightPoseTracker {
 				}
 			}
 			case LANDING -> {
-				PlayerAnimator.play(entityId, presentation.landClip(),
-						PlayerAnimator.Layer.ACTION, ACTION_FADE_TICKS);
+				if (presentation.landClip() != null) {
+					PlayerAnimator.play(entityId, presentation.landClip(),
+							PlayerAnimator.Layer.ACTION, ACTION_FADE_TICKS);
+				}
 				playOneShot(client, player, presentation.landSound());
 			}
 			default -> {
@@ -254,6 +310,10 @@ public final class FlightPoseTracker {
 		private ResourceLocation baseClip;
 		private boolean trailSpawned;
 		private FlightLoopSound loop;
+		private VfxParams poseMergeBase;
+		private VfxParams poseMergeOverlay;
+		private VfxParams poseMergeResult;
+		private final DirectionalPoseSource.Input directional = new DirectionalPoseSource.Input();
 	}
 
 	/**

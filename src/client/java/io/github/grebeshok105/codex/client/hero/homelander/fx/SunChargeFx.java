@@ -1,7 +1,6 @@
 package io.github.grebeshok105.codex.client.hero.homelander.fx;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.client.core.anim.PlayerAnimator;
 import io.github.grebeshok105.codex.client.core.vfx.VfxEffect;
 import io.github.grebeshok105.codex.client.core.vfx.VfxRenderContext;
 import io.github.grebeshok105.codex.client.core.vfx.VfxSpawn;
@@ -29,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Homelander's madness-aftermath sun build-up ({@code superheroes:homelander/
  * sun_charge}): a ~200-tick aura around the player — a growing light, rising
- * embers, heat distortion, the BASE {@code sun_charge} animation clip and an
+ * embers, heat distortion and an
  * entity-bound {@code homelander.sun.charge} sound whose volume and pitch ramp
  * up toward the detonation. Local players inside {@code trembleRadius} get a
  * subtle camera tremble that intensifies with the charge. The event is sent
@@ -41,9 +40,7 @@ import org.jetbrains.annotations.Nullable;
 public final class SunChargeFx {
 	private static final ResourceLocation PARAMS = ModId.of("homelander/sun_charge");
 	private static final ResourceLocation EMBER_EMITTER = ModId.of("homelander_sun_ember");
-	private static final ResourceLocation CLIP_SUN_CHARGE = ModId.of("homelander/sun_charge");
 	private static final double BIND_RADIUS = 3.0;
-	private static final int CLIP_FADE_TICKS = 4;
 
 	private SunChargeFx() {
 	}
@@ -109,10 +106,6 @@ public final class SunChargeFx {
 			this.trembleRadius = p.number("trembleRadius", 32f);
 			this.trembleMaxIntensity = p.number("trembleMaxIntensity", 0.25f);
 			this.trembleIntervalTicks = Math.max(1, (int) p.number("trembleIntervalTicks", 4f));
-			if (entity != null) {
-				PlayerAnimator.play(entity.getId(), CLIP_SUN_CHARGE,
-						PlayerAnimator.Layer.BASE, CLIP_FADE_TICKS);
-			}
 			this.sound = new ChargeSound(entity, fallback, durationTicks,
 					p.number("chargeVolume", 0.9f),
 					p.number("chargePitch", 0.9f),
@@ -193,10 +186,6 @@ public final class SunChargeFx {
 			if (sound != null) {
 				Minecraft.getInstance().getSoundManager().stop(sound);
 				sound = null;
-			}
-			if (entity != null) {
-				PlayerAnimator.stop(entity.getId(), PlayerAnimator.Layer.BASE,
-						CLIP_FADE_TICKS, CLIP_SUN_CHARGE);
 			}
 		}
 	}

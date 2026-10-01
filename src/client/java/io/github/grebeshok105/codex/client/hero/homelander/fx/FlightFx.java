@@ -11,47 +11,59 @@ import io.github.grebeshok105.codex.client.core.vfx.anchor.HumanoidAnchors;
 import io.github.grebeshok105.codex.client.core.vfx.backend.VfxBackends;
 import io.github.grebeshok105.codex.client.core.vfx.params.VfxParams;
 import io.github.grebeshok105.codex.client.core.vfx.params.VfxParamsLoader;
+import io.github.grebeshok105.codex.client.core.vfx.pattern.CameraImpulse;
 import io.github.grebeshok105.codex.client.core.vfx.pattern.ImpactPattern;
 import io.github.grebeshok105.codex.client.core.vfx.pattern.ShockwavePattern;
 import io.github.grebeshok105.codex.client.core.vfx.pattern.TrailPattern;
+import io.github.grebeshok105.codex.client.hero.homelander.emf.HomelanderPoseState;
 import io.github.grebeshok105.codex.sound.HomelanderSounds;
 import io.github.grebeshok105.codex.mechanic.flight.FlightPhase;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Homelander's flight effects, tuned by {@code vfx/homelander/flight.json}:
  * <ul>
- *   <li>{@link #trail} — golden ribbons leaving each hand and foot while the
- *       tracked player is CRUISE/BOOST (self-terminates otherwise);</li>
+ *   <li>{@link #trail} — supersonic signature while the tracked player is
+ *       CRUISE/BOOST: a soft vapor contrail trailing the body (core +
+ *       wide faint sheath), thin speed streaks off the fists, and pressure
+ *       rings popping perpendicular to the smoothed flight direction once
+ *       the speed stays supersonic — the look of punching through the air
+ *       barrier (self-terminates otherwise);</li>
  *   <li>{@link #boost} — emitter burst + shock ring on BOOST entry;</li>
  *   <li>{@link #landing} — impact composite for the {@code LANDING} event:
  *       dust emitter + distortion through {@link ImpactPattern}, an expanding
- *       {@link ShockwavePattern}, and {@code homelander.flight.land} — the
- *       single landing sound.</li>
+ *       {@link ShockwavePattern}, proximity-scaled camera shake, and
+ *       {@code homelander.flight.land} — volume/pitch recovered from the wire
+ *       scale via {@link LandingSoundMapping}.</li>
  * </ul>
  */
 public final class FlightFx {
 	static final ResourceLocation TRAIL = ModId.of("homelander/flight_trail");
 	static final ResourceLocation BOOST = ModId.of("homelander/flight_boost");
 
-	private static final ResourceLocation PARAMS = ModId.of("homelander/flight");
+	static final ResourceLocation PARAMS = ModId.of("homelander/flight");
 	private static final ResourceLocation BOOST_EMITTER = ModId.of("homelander_flight_boost");
 	private static final ResourceLocation LANDING_EMITTER = ModId.of("homelander_flight_landing");
 	private static final Vec3 UP = new Vec3(0, 1, 0);
+	private static final ResourceLocation SOFT_TRAIL_TEXTURE =
+			ModId.of("textures/effect/soft_trail.png");
 
-	/** Limb anchors in body space: (lateral, up, forward) per hand and foot. */
-	private static final double[][] LIMB_OFFSETS = {
-			{0.34, 1.35, 0.12}, {-0.34, 1.35, 0.12}, {0.12, 0.08, -0.05}, {-0.12, 0.08, -0.05}};
+	/** Fist anchors in body space: (lateral, up, forward). */
+	private static final double[][] FIST_OFFSETS = {
+			{0.34, 1.35, 0.12}, {-0.34, 1.35, 0.12}};
+	/** Chest anchor where the vapor cone and pressure rings attach. */
+	private static final double[] CHEST_OFFSET = {0.0, 1.35, 0.0};
 
 	private FlightFx() {
 	}
@@ -75,26 +87,48 @@ public final class FlightFx {
 		return p == VfxParams.EMPTY ? spawn.params() : p;
 	}
 
-	/** Golden ribbons tracking the four limb anchors while CRUISE/BOOST. */
+	/**
+	 * Supersonic signature: a soft vapor contrail off the chest (dense core +
+	 * wide translucent sheath), hairline speed streaks off the fists, and a
+	 * pressure ring popped every {@code ringIntervalTicks} perpendicular to
+	 * the smoothed flight direction once the speed has held at or above
+	 * {@code ringSpeed} for {@link #RING_SUSTAIN_TICKS} consecutive ticks —
+	 * the air-barrier break left hanging behind.
+	 */
 	private static final class TrailFx implements VfxEffect {
+		private static final int CONE_CORE = 0;
+		private static final int CONE_SHEATH = 1;
+		private static final int STREAK_L = 2;
+		private static final int STREAK_R = 3;
+		/** Ticks the smoothed speed must stay at {@code ringSpeed} before rings emit. */
+		private static final int RING_SUSTAIN_TICKS = 5;
+
 		private final @Nullable Entity entity;
-		private final Vec3 fallback;
+		private final VfxParams params;
 		private final List<TrailPattern> ribbons;
+		private final List<ShockwavePattern> rings = new ArrayList<>();
+		private final int ringInterval;
+		private final float ringSpeed;
+		private int ringClock;
+		private int fastTicks;
 		private boolean finishing;
 
 		private TrailFx(VfxSpawn spawn) {
 			this.entity = spawn.source();
-			this.fallback = spawn.origin();
-			VfxParams p = params(spawn);
-			int capacity = Math.max(4, (int) p.number("trailCapacity", 32f));
-			float width = p.number("trailWidth", 0.05f);
-			int color = p.color("trailColor", 0x90FFC538);
-			int fade = Math.max(1, (int) p.number("trailFadeTicks", 8f));
+			this.params = params(spawn);
+			int capacity = Math.max(4, (int) params.number("trailCapacity", 48f));
+			int fade = Math.max(1, (int) params.number("trailFadeTicks", 10f));
 			this.ribbons = List.of(
-					new TrailPattern(capacity, width, color, fade),
-					new TrailPattern(capacity, width, color, fade),
-					new TrailPattern(capacity, width, color, fade),
-					new TrailPattern(capacity, width, color, fade));
+					TrailPattern.soft(capacity, params.number("coneCoreWidth", 0.16f),
+							params.color("coneCoreColor", 0x5AF4FAFF), fade, SOFT_TRAIL_TEXTURE),
+					TrailPattern.soft(capacity, params.number("coneSheathWidth", 0.5f),
+							params.color("coneSheathColor", 0x28D9F2FF), fade, SOFT_TRAIL_TEXTURE),
+					TrailPattern.soft(capacity, params.number("streakWidth", 0.03f),
+							params.color("streakColor", 0x4DFFFFFF), fade, SOFT_TRAIL_TEXTURE),
+					TrailPattern.soft(capacity, params.number("streakWidth", 0.03f),
+							params.color("streakColor", 0x4DFFFFFF), fade, SOFT_TRAIL_TEXTURE));
+			this.ringInterval = Math.max(1, (int) params.number("ringIntervalTicks", 12f));
+			this.ringSpeed = params.number("ringSpeed", 1.0f);
 		}
 
 		@Override
@@ -112,28 +146,68 @@ public final class FlightFx {
 				Vec3 feet = source.position();
 				float bodyYaw = source instanceof net.minecraft.world.entity.LivingEntity living
 						? living.yBodyRot : source.getYRot();
-				for (int i = 0; i < LIMB_OFFSETS.length; i++) {
-					double[] o = LIMB_OFFSETS[i];
-					ribbons.get(i).push(HumanoidAnchors.tiltedPoint(
+				Vec3 chest = HumanoidAnchors.tiltedPoint(
+						feet, bodyYaw, CHEST_OFFSET[0], CHEST_OFFSET[1], CHEST_OFFSET[2], tilt);
+				ribbons.get(CONE_CORE).push(chest);
+				ribbons.get(CONE_SHEATH).push(chest);
+				for (int i = 0; i < FIST_OFFSETS.length; i++) {
+					double[] o = FIST_OFFSETS[i];
+					ribbons.get(STREAK_L + i).push(HumanoidAnchors.tiltedPoint(
 							feet, bodyYaw, o[0], o[1], o[2], tilt));
+				}
+				Vec3 velocity = flightVelocity(source);
+				if (velocity.length() >= ringSpeed) {
+					fastTicks++;
+				} else {
+					fastTicks = 0;
+				}
+				if (++ringClock % ringInterval == 0 && fastTicks >= RING_SUSTAIN_TICKS) {
+					rings.add(new ShockwavePattern(chest,
+							params.number("ringRadius", 1.4f),
+							Math.max(1, (int) params.number("ringTicks", 9f)),
+							params.color("ringColor", 0x40E8FAFF),
+							params.number("ringBand", 0.22f),
+							velocity));
 				}
 			}
 			ribbons.forEach(TrailPattern::tick);
+			rings.removeIf(ring -> {
+				ring.tick();
+				return ring.done();
+			});
+		}
+
+		/**
+		 * Velocity driving the ring gate and ring plane: the pose state's
+		 * smoothed render velocity (the same source the EMF pose consumes —
+		 * tracked for remote players too) when available; otherwise the
+		 * entity's raw delta movement. A ring only emits above
+		 * {@code ringSpeed}, so this vector is never degenerate at emission.
+		 */
+		private static Vec3 flightVelocity(Entity source) {
+			Vec3 smoothed = HomelanderPoseState.smoothedVelocity(source.getUUID());
+			if (smoothed != null) {
+				return smoothed;
+			}
+			Vec3 motion = source.getDeltaMovement();
+			return motion.lengthSqr() > 1e-4 ? motion : Vec3.ZERO;
 		}
 
 		@Override
 		public void render(VfxRenderContext ctx) {
 			ribbons.forEach(ribbon -> ribbon.render(ctx));
+			rings.forEach(ring -> ring.render(ctx));
 		}
 
 		@Override
 		public boolean done() {
-			return finishing && ribbons.stream().allMatch(TrailPattern::done);
+			return finishing && ribbons.stream().allMatch(TrailPattern::done) && rings.isEmpty();
 		}
 
 		@Override
 		public void cancel() {
 			ribbons.forEach(TrailPattern::cancel);
+			rings.clear();
 		}
 	}
 
@@ -174,7 +248,7 @@ public final class FlightFx {
 		}
 	}
 
-	/** LANDING event composite: emitter + distortion + shock ring + land sound. */
+	/** LANDING event composite: emitter + distortion + shock ring + shake + land sound. */
 	private static final class LandingFx implements VfxEffect {
 		private final ShockwavePattern ring;
 
@@ -186,14 +260,30 @@ public final class FlightFx {
 					p.number("landingRingRadius", 5f) * scale,
 					Math.max(1, (int) p.number("landingRingTicks", 14f)),
 					p.color("landingRingColor", 0x70FFE07A), p.number("landingBand", 0.18f));
-			ImpactPattern.spawn(VfxBackends.current(), center, UP, LANDING_EMITTER, p);
-			float volume = Mth.clamp(
-					p.number("landBaseVolume", 0.8f) + scale * p.number("landVolumeScale", 0.5f),
-					0f, 4f);
+			LandingSoundMapping.Mapped sound = LandingSoundMapping.fromScale(scale);
+			float s = sound.intensity();
+			int extraBursts = Math.round(s * p.number("landingExtraBursts", 2f));
+			ImpactPattern.spawn(VfxBackends.current(), center, UP, LANDING_EMITTER, p, extraBursts);
+			shake(center, p, s);
 			Minecraft.getInstance().getSoundManager().play(new SimpleSoundInstance(
-					HomelanderSounds.FLIGHT_LAND, SoundSource.PLAYERS, volume,
-					p.number("landPitch", 1f), RandomSource.create(),
+					HomelanderSounds.FLIGHT_LAND, SoundSource.PLAYERS, sound.volume(),
+					sound.pitch(), RandomSource.create(),
 					center.x, center.y, center.z));
+		}
+
+		/** Impact-scaled camera shake for nearby observers (same proximity falloff as clap). */
+		private static void shake(Vec3 center, VfxParams p, float s) {
+			float shakeRadius = p.number("landShakeRadius", 10f);
+			LocalPlayer self = Minecraft.getInstance().player;
+			if (s <= 0f || self == null || shakeRadius <= 0f) {
+				return;
+			}
+			double dist = self.position().distanceTo(center);
+			if (dist < shakeRadius) {
+				float proximity = 1f - (float) (dist / shakeRadius);
+				CameraImpulse.shake(p.number("landShakeIntensity", 0.7f) * s * proximity,
+						Math.max(1, (int) p.number("landShakeTicks", 10f)));
+			}
 		}
 
 		@Override

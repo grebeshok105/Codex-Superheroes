@@ -3,7 +3,9 @@ package io.github.grebeshok105.codex.client.hero.homelander;
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.client.core.module.HeroClientContext;
 import io.github.grebeshok105.codex.client.core.module.HeroClientModule;
+import io.github.grebeshok105.codex.client.hero.homelander.emf.HomelanderEmf;
 import io.github.grebeshok105.codex.client.hero.homelander.fx.HomelanderFx;
+import io.github.grebeshok105.codex.client.hero.homelander.fx.ScorchMarkRenderer;
 import io.github.grebeshok105.codex.client.hero.homelander.hud.SunWindupHud;
 import io.github.grebeshok105.codex.client.hero.homelander.hud.UraniumThreatHud;
 
@@ -33,10 +35,14 @@ public record HomelanderClientModule() implements HeroClientModule {
 		// render through the homelander/laser VFX channel instead.
 		ctx.beamStyle(new BeamStyle(BeamFxS2CPayload.STYLE_LASER,
 				BeamDraws.LASER_LIFETIME_MS, BeamDraws::laserPair));
+		HomelanderEmf.register(ctx);
 		HomelanderFx.register(ctx);
 		ctx.receive(UraniumPressureS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> ClientUraniumPressureState.update(payload.pressuredHomelanders())));
 		ctx.receive(UraniumThreatS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> ClientUraniumThreatState.update(payload.self(), payload.sourceCount())));
+		// ScorchMarksS2CPayload lives in core.net, so its receiver registers in
+		// CoreClientReceivers; the renderer itself hooks AFTER_TRANSLUCENT here.
+		ScorchMarkRenderer.register();
 	}
 }

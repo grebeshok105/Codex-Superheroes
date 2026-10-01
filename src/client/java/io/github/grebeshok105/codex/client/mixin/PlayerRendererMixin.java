@@ -1,5 +1,7 @@
 package io.github.grebeshok105.codex.client.mixin;
 
+import io.github.grebeshok105.codex.client.core.emf.EmfPresentationOwnership;
+import io.github.grebeshok105.codex.client.core.emf.RenderedPoseCache;
 import io.github.grebeshok105.codex.client.core.flight.FlightBodyTransform;
 import io.github.grebeshok105.codex.client.core.flight.FlightPoseTracker;
 import io.github.grebeshok105.codex.client.core.render.SkinResolver;
@@ -50,6 +52,24 @@ public abstract class PlayerRendererMixin {
 		}
 		poseStack.mulPose(Axis.XP.rotationDegrees(-tilt.pitchDeg()));
 		poseStack.mulPose(Axis.ZP.rotationDegrees(-tilt.rollDeg()));
+	}
+
+	/**
+	 * Post-render pose capture: at the TAIL of {@code render} EMF has already run
+	 * {@code animate()} inside {@code renderToBuffer}, so the model parts hold the
+	 * EMF-posed transforms. Consumers outside the model pipeline (eye-laser
+	 * anchors) read them back via {@link RenderedPoseCache} for owned players.
+	 */
+	@Inject(
+			method = "render(Lnet/minecraft/client/player/AbstractClientPlayer;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V",
+			at = @At("TAIL")
+	)
+	private void superheroes$captureRenderedPose(AbstractClientPlayer entity, float entityYaw, float partialTicks,
+			PoseStack poseStack, MultiBufferSource buffer, int packedLight, CallbackInfo ci) {
+		if (!EmfPresentationOwnership.isOwned(entity)) {
+			return;
+		}
+		RenderedPoseCache.capture(entity.getId(), ((PlayerRenderer) (Object) this).getModel());
 	}
 
 	@Unique

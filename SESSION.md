@@ -1,1158 +1,148 @@
 # SESSION.md
 
+## Completed this session (Homelander EMF plan — Stage 15, integration pass)
+
+- Final stage of `docs/superpowers/plans/2026-09-30-homelander-emf-presentation.md` on `devin/1790808750-homelander-integration-s15` (union base `abbbb98b`): multiplayer/perf/integration pass over stages 1–14, `mod_version` 4.6.0 → 4.7.0.
+- **Late tracking (§7 stage 15):** `HomelanderPoseState.Entry` gained a `primed` flag + the takeoff `ClipClock` is parked at clip end at construction — an entry born mid-flight (observer entering range) lands in HOVER; the activation edge can only fire after the entry has observed a tick, so TAKEOFF/CLAP/MILK one-shots are simply skipped when their start event was missed (documented in the class javadoc and `VfxChannelTable`). Laser late-tracking already worked: `VfxChannelTable` open-or-retargets on UPDATE; `VfxChannelTableTest.updateWithoutStartOpensChannel` pins it. `firstObservedTickFlyingDefaultsToAirborneStart` became `firstObservedTickFlyingStaysInHover` — the stage-3 replay decision was superseded by the stage-15 spec.
+- **Session reset audit:** all stage caches were already registered (`HomelanderPoseState`, `RenderedPoseCache`, `ThirdPersonFraming`, `ScorchMarkStore`, `EyeLaserChannel`, `ClientFlightState`, `FlightPoseTracker`, `VfxRuntime`); stateless registries (`DirectionalPoseSource`, `EmfHeldItemSuppression`, `EmfPresentationOwnership`, `EmfBridge`) need none. NEW: `ClientSessionState.registerLevelReset` + a per-tick `client.level` identity watcher (Fabric `JOIN` doesn't fire on dimension change) — `RenderedPoseCache` opts in since its entity-id snapshots are level-keyed. `ProjectSanityTest` now pins every non-`Client*State` holder by name + the `registerLevelReset` call; `ClientSessionStateResetTest` also dirties `ScorchMarkStore` and asserts `resetLevel()` drops the pose cache but keeps `ClientFlightState`.
+- **Profiling hooks:** `EmfProfiler` (`client/core/emf`) counts variable-supplier calls per frame behind the existing `/superheroes vfx hud on` flag — `EmfBridge.registerFloatVariable` wraps suppliers (one boolean read when off, `int[1]`-per-name when on, no hot-path allocation); `VfxDebugHud.render` is the frame boundary and shows `emf vars: N/frame  top: <name> N`. `HomelanderPoseState` reads were already O(1) (`lastUuid`/`lastEntry` cache).
+- **Merge/integration fixes:** teleport/dimension-change position deltas (>8 b/t, `FlightPoseMath.TELEPORT_MIN_DELTA_SQ`) now inject a zero delta in `HomelanderPoseState` AND `FlightPoseTracker` — previously one tick of huge velocity could latch BOOST / pitch the pose. Removed the now-dead `entry.grounded` creation seed in `HomelanderPoseState.tick` (first-advance activation is impossible under `primed`).
+- Tests: `HomelanderPoseStateTest` (hover-first late tracking, grounded/airborne activation, teleport guard, session reset) + `EmfProfilerTest` + `ClientSessionStateResetTest`/`ThirdPersonFramingTest`/`ProjectSanityTest` extensions. `./gradlew test --no-daemon` (249) and `./gradlew qualityGate --no-daemon` (374 gametests, first run — no flakes) green under `JAVA_HOME=/opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/21.0.12-101.0.LTS/x64`.
+- README gained the EMF/ETF dependency note (jar-in-jar, required on client, `envDisabledMods`-skipped on dedicated server).
+- In-game verification: none (repo rule — the user checks): late-tracker sees hover (no takeoff replay), mid-laser beam appears, dimension change mid-flight has no pose spike, `/superheroes vfx hud on` shows the emf vars line.
+- **Review-round fixes (same branch):** (1) the `primed` flag alone still replayed TAKEOFF for an observer tracking the entity before the periodic flight sync landed — the entry primed with `flying=false`, then the resync flipped `flying` true and the edge fired. The activation edge now also requires the synced phase to be inside the server's TAKEOFF window (`state.phase() == FlightPhase.TAKEOFF` passed through `advance` as `takeoffWindow`), so a mid-presentation resync (HOVER/CRUISE/BOOST) never re-arms the clip while a witnessed activation inside the 8-tick window still plays. (2) `TELEPORT_MIN_DELTA_SQ` 64→256 (8→16 b/t): supersonic+madness at full energy reaches ~10.4 b/t legit (`FlightProfiles` multipliers), which would have zeroed live velocity every tick and released the BOOST latch at max speed. New tests: `primedEntryLateSyncOutsideTakeoffWindowStaysInHover`, `primedEntrySyncInsideTakeoffWindowReplaysTakeoff`.
+
+## Completed this session (Homelander EMF plan — Stage 14 landing audio)
+
+- Stage 14 of `docs/superpowers/plans/2026-09-30-homelander-emf-presentation.md` (branch `devin/1790792031-homelander-landing-audio-s14`, base `devin/1790691307-homelander-vfx-fix`): impact-scaled landing audio/presentation.
+  - `FlightFx.LandingFx`: `LandingSoundMapping.fromScale(scale)` inverts the server `scale = 0.30 + intensity*1.20` mapping → `s`; sound volume `0.4 + 0.8*s`, pitch `1.15 - 0.3*s`; `ImpactPattern.spawn` gained an additive `extraBursts` overload so the dust particle count scales by `s`; new proximity-scaled `CameraImpulse` screen shake (`landShake*` keys in `homelander/flight.json`, same falloff pattern as ClapFx/IronFistsFx).
+  - `flight_land.ogg` replaced with real OGG Vorbis from `art-source/sounds/homelander/cUsersstravvberyDownloadsuniversfield-ground-impact-352053.mp3` (`ffmpeg -c:a libvorbis -qscale:a 5`); its line in `homelander_placeholders.txt` marked `# replaced`. **Asset choice flagged to user for confirmation in the PR.**
+  - `LandingSoundMappingTest` pins the mapping endpoints/midpoint/clamp; `mod_version` 4.1.3 → 4.2.0 (normal update).
+- No in-game verification (repo rule) — the Stage 14 user checklist is marked "unverified: user will check" in the PR.
+
+## Completed this session (Homelander EMF — Stage 13)
+
+- Stage 13 of `docs/superpowers/plans/2026-09-30-homelander-emf-presentation.md` («trail and sonic rings») implemented on `devin/1790803301-homelander-trail-s13` (base Stage-4 head `4adfb99d`), `mod_version` 4.4.0 → 4.5.0.
+- `TrailPattern` gained an opt-in soft profile (`TrailPattern.soft(...)` — default ctor keeps the flat triangle ribbon byte-identical): the stored spine is Catmull-Rom resampled ×3 through the pure helper `TrailGeometry.subdivide`, width tapers head→tail (`widthScale = 1−t²`), alpha eases out by age (`fadeAlpha = 1−t³`), and each sub-segment draws two crossed textured quads through `RenderType.eyes(soft_trail.png)` (additive). All scratch (spine array + tangent/camera/side vectors) is preallocated in `SoftProfile` bounded by `subdividedCapacity(capacity)` — zero per-frame allocation, fixed capacity unchanged.
+- `soft_trail.png` (64×64 RGBA, white × gaussian alpha σ=0.2 across V, U-uniform) is baked by `art-source/homelander/emf/bake_soft_trail.py` (stdlib zlib PNG, deterministic); script + texture both committed.
+- Rings now gate on the pose's own smoothed render velocity: new read-only `HomelanderPoseState.smoothedVelocity(UUID)` (widened the class to `public` — the only touch of Stage-4-owned code, additive accessor). A `ShockwavePattern` emits only when `smoothed ≥ ringSpeed` has held for `RING_SUSTAIN_TICKS=5` consecutive ticks and at most every `ringIntervalTicks` (default 12, json now 14), oriented by that smoothed vector — falls back to raw delta movement when the player isn't pose-tracked.
+- `flight.json`: `ringIntervalTicks` 4 → 14, `ringSpeed` 1.0 added (≈ supersonic threshold).
+- Tests: `TrailGeometryTest` — subdivision count/endpoints/interpolation, interior even spacing on collinear input (clamped ends intentionally non-uniform), hull containment on a bend, 0/1-point passthrough, taper & ease-out monotonicity + clamping.
+- Verification: `./gradlew test --no-daemon` green; `verifyAssertionsEnabled`/`auditReleaseJarIsolation`/`verifyArchitectureBaseline`/`verifyGeneratedSources` green. `runGametest` is flaky on this VM — three runs failed on three different unrelated timing tests (`uraniumOffhandRadiationStacksToHunger`, `shieldThrowRestoresTheShield...`, `doomGripLocksTarget...`), including a run on the pristine base `4adfb99d`; the failures are unrelated to this client-only diff. No in-game verification per the standing rule — Stage 13 checklist (smooth contrail, gradual fade, supersonic-only rings, no triangle artefacts, FPS) marked unverified in the PR.
+
+## Completed this session (Homelander EMF plan — Stage 12, persistent scorch marks)
+
+- `devin/1790798102-homelander-scorch-s12` off the reviewed Stage 10 head (`0d2a2e15`): the eye-laser beam now stamps permanent burn decals on block faces — server-authoritative cosmetic world state, persisted per dimension and seen by everyone.
+- `ScorchMark` (`core/net`): `(pos long, face byte, u/v/size quantized bytes, rot int)` — exactly 16 B on the wire; the record normalizes u/v/size onto the byte grid so server state, NBT and wire agree bit-for-bit.
+- `LaserScorchData extends SavedData` (per-dimension `superheroes_laser_scorch`): ring of `MAX_MARKS = 2048`, admission per caster — ≥0.35 blocks from that caster's previous mark, ≤6 marks/s (sliding tick window, rejected hits don't consume budget), non-sturdy faces rejected, lazy prune sweeps 64 slots per accept and skips unloaded chunks. `tryAdd` runs on ANY non-entity block hit (madness explosions unchanged); a stamped mark broadcasts via `FxBroadcast.around(..., 128)`.
+- `ScorchMarksS2CPayload(List<ScorchMark>, boolean reset)` in `core/net` (registered in `CoreNetworking`): new marks ride `reset=false`; join/respawn/`AFTER_PLAYER_CHANGE_WORLD` (`LaserScorchSync`, hooked from `HomelanderModule`) streams the whole dimension in `SYNC_CHUNK = 256` packets with `reset=true` on the first — an empty dimension still gets one reset packet so dimension switches clear the client.
+- Client: `ScorchMarkStore` (`client/core/net`, fixed column arrays, ClientSessionState reset — client.core can't reference hero classes) + `ScorchMarkRenderer` (`client/hero/homelander/fx`, `AFTER_TRANSLUCENT` from `HomelanderClientModule`): one NEW_ENTITY quad buffer per frame, `getRendertypeEntityTranslucentShader` + manual blend/cull state, face offset 0.002 + `polygonOffset(-1,-10)`, block light via `LevelRenderer.getLightColor`, skips marks past render distance or on no-longer-sturdy faces. `RenderType.entityDecal` was rejected — its EQUAL depth test fails for a floating decal; `RenderType.create` is private.
+- Texture `assets/superheroes/textures/effect/homelander/laser_scorch.png` (32×32 dark radial falloff + faint ember rim) generated by `art-source/homelander/emf/gen_laser_scorch.py` (stdlib-only).
+- Tests: `LaserScorchDataTest` (ring wrap/eviction, spacing, 6/s cap, per-caster isolation, save→load round-trip) + `ScorchMarksCodecTest` (round-trip, 16-byte wire size, list bound) + `HomelanderScorchGameTests` (sturdy-only admission, SavedData round-trip, chunked reset-flagged sync, append broadcast — joined mock players on `EmbeddedChannel`).
+- Deviations from the plan: (a) the sync packet carries a `reset` flag — required for the client to drop the previous dimension's marks without a second packet type; (b) the receiver lives in `CoreClientReceivers`, not `ctx.receive` — repo ArchUnit pins core.net payloads to `CoreClientReceivers`, and client.core may not import client.hero classes, so the render-facing storage sits in `client/core/net/ScorchMarkStore` while the hero renderer only reads it.
+- `./gradlew test` (142 tests) + `./gradlew qualityGate` (369 gametests) green under `JAVA_HOME=$JAVA_HOME_21_X64`; `mod_version` 4.2.0 → 4.3.0.
+- Review pass: `ScorchMarkRenderer` no longer allocates corner/uv arrays per mark (unit tables hoisted to statics) and distance-culls before the block lookup — plan §0's no-per-frame-allocation budget.
+- In-game verification: none (repo rule — the user checks): marks stay after 10 min / relog / server restart; observer sees them; no z-fighting; breaking the block removes the mark.
+
+## Completed this session (Homelander EMF plan — Stage 10, laser damage cadence)
+
+- `devin/1790790873-homelander-laser-damage-s10` off PR #138's head (`2dc02edc`): eye-laser damage now lands on an explicit 10-tick cadence instead of every firing tick. `EyeLaserPhases.shouldDamage(firingTick)` (`DAMAGE_INTERVAL_TICKS = 10`) gates the `hurt` call; the gate runs on a new `DAMAGE_TICK` clock that counts *firing* ticks only — unlike `ACTIVE_TICK` it freezes through the uranium-pulse `fire=false` pauses, so pauses cannot shift the hit grid. Per-hit damage is `dps * 10 / 20` with the user-approved `MIN_DPS = 8`, `MAX_DPS = 16` (was 56–120 — an intended ~7–15× nerf); hurt feedback becomes pulsed at 2 hits/s. Madness ×3 and its every-2-tick explosions, uranium pulses, beam VFX and UPDATE cadence are all unchanged.
+- Tests: `EyeLaserDamageCadenceTest` (pure helper) + `eyeLasersDamageLandsEveryTenTicks` gametest asserting total damage over the window inside the 4–5 hit band.
+- `./gradlew test` and `./gradlew qualityGate` run under `JAVA_HOME=$JAVA_HOME_21_X64` (system java is 17 — loom needs 21).
+- In-game verification: none (repo rule — the user checks). PR body lists the Stage 10 checklist as unverified.
+
+## Completed this session (Homelander EMF — Stage 8)
+
+- Stage 8 of `docs/superpowers/plans/2026-09-30-homelander-emf-presentation.md` («milk and props») implemented on `devin/1790798102-homelander-milk-s8` (base Stage 1 head `337327e3`), `mod_version` 4.2.0 → 4.3.0.
+- `MilkBottleItem` `getUseDuration` 32 → **126 ticks** (approved 6.3 s authored sequence); `finishUsingItem` MADNESS semantics unchanged. Cancels are owned by new `item/MilkDrinkTracker` (`ctx.ticks().hero` falling-edge detector; lives beside the item because `runtime/` can't reference `hero.homelander`/`item` without a package 2-cycle): `use()` arms the mark, `finishUsingItem` disarms it, and any armed use that ends unfinished broadcasts `HomelanderVfxIds.MILK_CANCEL` to tracking + self — covers the release-use packet AND the swap paths (`handleSetCarriedItem`, `SWAP_ITEM_WITH_OFFHAND` call `stopUsingItem`, which never fires `Item.releaseUsing` — verified in bytecode; review found the original `releaseUsing` override missed those). Death/disconnect/hero-clear drop the mark silently.
+- `HomelanderPoseState`: `startMilk`/`cancelMilk` arm/disarm the milk clip clock; `milkWeight` = `oneShotWeight(playing, clock, 6.3 s)` → clean 0 on finish or cancel; master `weight` = max(active, takeoff, clap, milk) so `superheroes_hl_w` = 1 while milk plays.
+- `HomelanderFx.milkDrink` calls `HomelanderEmf.milkStarted(source)` (sound path unchanged); new `milkCancel` factory wired to `MILK_CANCEL` → `milkCancelled`.
+- Held-item hiding: hero-agnostic `client/core/emf/EmfHeldItemSuppression` predicate registry (keeps `client/mixin` out of the hero package for ArchUnit); `HomelanderEmf` registers `owned && milkWeight>0`; new `client/mixin/ItemInHandLayerMixin` cancels `ItemInHandLayer.render` at HEAD. Non-owned entities and first-person hands untouched.
+- Tests: gametests `milkBottleUseDurationMatchesAuthoredSequence` (126), `milkEarlyReleaseBroadcastsCancelAndGrantsNothing` (`releaseUsingItem` = the real release-use path), `milkStopUsingItemBroadcastsCancel` (swap path — `stopUsingItem` does NOT fire `Item.releaseUsing` — verified in bytecode), `milkFinishedDrinkBroadcastsNoCancel` (finish disarms the tracker), JUnit `oneShotWeight` boundary.
+- Verification: `./gradlew test --no-daemon` green; `./gradlew qualityGate --no-daemon` green (368 gametests incl. the four new). Unverified in-game per rule — user checks: bottle appears, cap unscrews, mouth opens, bottle lowers; no vanilla bottle doubling; cancel stops cleanly; observer sees it; first person unchanged.
+
+
+## Completed this session (Homelander EMF — Stage 7)
+
+- Stage 7 («hand clap») implemented on `devin/1790798096-homelander-clap-s7` (base `devin/1790789702-homelander-emf-stage1` @ `337327e3`), shipped as its own PR, `mod_version` 4.2.0 → 4.3.0.
+- Approved timing: `HandClapAbility.IMPACT_TICKS = 30` — activation sends `CLAP` (starts the authored clip for everyone) and schedules the hit in a `PENDING` `OwnedSessionMap<UUID, Long>` (`ClearOn.LEAVE` only; death/hero-clear go through explicit `cancelPending` hooks so `CLAP_CANCEL` can broadcast first); `ctx.ticks().global` `serverTick` fires `impact()` at the deadline — same `OwnedSessionMap` + global-tick pattern as `ThanosSnapWindupController`. Range/cone/damage/knockback/cooldown untouched; the hit recomputes eye position + view vector at impact (follows the player's facing at hand-contact, not at cast).
+- Cancel paths: `ctx.lifecycle().onDeath`/`onHeroClear` → `cancelPending`; in-tick `isDeadOrDying() || isCastBlocked()` (blocked = `AbilityRules.firstBlock(player, ID)` — the same gate the router checks first, so it covers Snap `DISABLED_ABILITIES`, Homelander aftermath AND Pandora `VANITY_STRIPPED`, plus any future blocker; review fix — the first pass checked only the first two effects directly) → drop + `CLAP_CANCEL`. Cooldown still applies from activation.
+- New `HomelanderVfxIds.CLAP_IMPACT`/`CLAP_CANCEL`; `HomelanderFx` wires `CLAP` → `HomelanderEmf.clapStarted`, `CLAP_IMPACT` → existing `ClapFx` (sound + burst; `contactSeconds` now 0 in `clap.json` since the event lands on the authored frame), `CLAP_CANCEL` → `HomelanderEmf.clapCancelled`.
+- `HomelanderPoseState`: `clapPlaying` gates the clap clock (resets on `CLAP`, holds at 1.92 s); `clap_w` and master `hl_w` ease in/out with the same 3-tick half-life — the jem blends clap over the hover/boost group, so it works in flight. `startClap`/`cancelClap` are not ownership-gated so late skin resolution still lands.
+- Gametests: `handClapKnocksBackAHeadCone` joins a `joinAudible` Wire and asserts the `CLAP` payload at activation, no `CLAP_IMPACT` at activation nor through a `IMPACT_TICKS - 3` drain, then `CLAP_IMPACT` + zombie damage at `IMPACT_TICKS + 2`; `handClapImpactCancelsOnDeath` kills the caster at tick 10 and asserts `CLAP_CANCEL` arrives and `CLAP_IMPACT` never does. Timing is asserted on the S2C payload stream because gametest structures pack ~13 blocks apart — inside the 18-block cone — so neighbouring tests' claps legitimately hit each other's zombies and any damage-source/health assertion is racy both ways; the packet assertions themselves filter on `VfxEventS2CPayload.sourceEntityId` so a neighbour's broadcast can neither false-pass a presence check nor false-fail an absence check (review fix — the first pass matched `effect()` only). (`zombie.hurtMarked` also can't be asserted post-hit: it is consumed by the entity's own next tick.)
+- Verification: `./gradlew test --no-daemon` green; `./gradlew qualityGate --no-daemon` green (ProjectSanityTest, jar isolation, 365 gametests, ArchUnit baseline, datagen verify). No in-game verification per the standing rule — Stage 7 user checklist stays unverified (windup visible, shockwave on the hand-contact frame, observer parity, cooldown retrigger block, clap-over-hover in flight).
+
+## Completed this session (Homelander EMF — Stage 6)
+
+- Stage 6 of `docs/superpowers/plans/2026-09-30-homelander-emf-presentation.md` («F5 camera») implemented on `devin/1790804823-homelander-camera-s6` (base Stage-5 head `4249c86f`), `mod_version` 4.5.0 → 4.6.0.
+- New seam `client/core/camera/ThirdPersonFraming`: hero-agnostic provider registry (`Function<Entity, Vec3>` → world-space offset, first non-null wins), same shape as `EmfPresentationOwnership`/`DirectionalPoseSource`. The smoothed offset keys on the camera entity's uuid; one exponential step per client tick (half-life 3 ticks, world space, frame-rate independent) then interpolated by the render partial tick. First engage seeds straight to target (no in-from-origin lag); null target/entity switch/session reset drop the state → identity.
+- `CameraMixin` gains a `setup` inject at `INVOKE Camera.getMaxZoom(F)F` — inside the `if (detached)` branch (bytecode-confirmed in the 1.21.1 client jar: `getMaxZoom` is invoked exactly once there), so first-person never reaches it and the zoom collision sweep still traces from the shifted base. The mixin adds `setPosition(getPosition().add(offset))` — equivalent to the plan's `lerp(weight, eyePos, bodyCentre)` — and never touches rotation. `getPosition`/`setPosition(Vec3)` added as shadows.
+- Homelander registers `HomelanderPoseState.cameraOffset` from `HomelanderEmf.register`: null unless the camera entity is an `EmfPresentationOwnership`-owned player whose master `weight(1f) > 0`; else `weight * (bodyCentre - eyePos)` where `bodyCentre = feet + (0, 1.1 + hoverRootTy/16, 0)`. `hoverRootTy` = 6.619 (baked mean of the HOVER jem `body.ty` keyframe loop, `6.6 + var.breath`) shipped as a new `vfx/homelander/flight.json` key with `HomelanderPoseMath.DEFAULT_HOVER_ROOT_TY` fallback; `HomelanderPoseMath.bodyCentreHeight(rootTyPx)` is the pure scalar.
+- Tests added: 8 in `ThirdPersonFramingTest` (weight-0/null-provider identity, first-target seeding, half-life-3 convergence, partial-tick interpolation, null-target reset, entity-switch reseed, null-entity clear, `reset()`); 1 in `HomelanderPoseMathTest` (`bodyCentreHeight` formula).
+- Verification: `./gradlew test --no-daemon` green; `./gradlew qualityGate --no-daemon` green (sanity, jar isolation, gametests, ArchUnit baseline, datagen check). No in-game verification per the standing rule — Stage 6 checklist marked unverified in the PR (F5 back/front while hovering and boosting keep the body centred; no jump on flight start/end; walls still block the camera).
+
+## Completed this session (Homelander EMF — Stage 5)
+
+- Stage 5 of `docs/superpowers/plans/2026-09-30-homelander-emf-presentation.md` («procedural flight transforms and backward flight») implemented on `devin/1790803277-homelander-transforms-s5` (base Stage-4 head `4adfb99d`), `mod_version` 4.4.0 → 4.5.0.
+- `FlightPoseMath.directional(forward, strafe, vertical, yawRateDegPerTick, boostWeight, p)`: continuous signed-speed pose target for EMF owners — pitch `lerp(boostWeight, clamp(forward/hoverRefSpeed,±1) × (forward ≥ 0 ? hoverForwardPitch 12 : hoverBackwardPitch 8), emfBoostRootPitch)`, a bounded `verticalPitch 6` term gated at `boostWeight < 0.5` and clamped inside the ±86° upright cone (PR #138 descent rule kept), roll `clamp(−strafe/strafeRef 0.5 × strafeRoll 14 − yawRate × rollFactor, ±rollMax)`. Smoothing stays in `step` (halfLifeTicks) — frame-rate independent by construction.
+- New seam `client/core/flight/DirectionalPoseSource`: hero-agnostic provider registry (same shape as `EmfPresentationOwnership`). `FlightPoseTracker` calls `directional` only when `EmfPresentationOwnership.isOwned` **and** a provider fills the tracked entry's reusable `Input` — per-tick `Input` holder, zero per-frame allocation; non-owned players and owners before their first pose-state tick take the byte-identical `target(...)` path. Homelander registers `HomelanderPoseState.fillDirectional` from `HomelanderEmf.register`: forward/strafe/vertical come from the already-smoothed render velocity (half-life 3 ticks, Stage 4), yawRate from the tracker's existing per-tick yaw delta — no second smoothing path. Dead `Entry.pitchDeg/bankDeg` stubs removed (body tilt lives in the tracker → `PlayerRendererMixin`, not the pose state).
+- Tuning added to `vfx/homelander/flight.json` (the `poseParams` overlay): `hoverForwardPitch 12`, `hoverBackwardPitch 8`, `verticalRef 0.6`, `verticalPitch 6`, `strafeRef 0.5`, `strafeRoll 14`. `emfBoostRootRoll` (2.985) stays unused — the Stage 5 roll formula is verbatim dynamic, noted for a later stage.
+- NOT touched: `ClientFlightState`, `FlightPhaseResolver`, trail/sound gating, camera (Stage 6), clip clocks.
+- Tests added: 9 in `FlightPoseMathTest` (backward pitch ∈ [−8, 0] sweep, strafe roll opposite signs, roll clamp, boost blend to 86/midpoint/boostPitch fallback, vertical gating at w=0.5, full-speed descent never >86/no sign flip, step convergence 30 vs 240 fps within 0.1° after 1 s, alternating forward/backward boundedness).
+- Verification: `./gradlew test --no-daemon` green; `./gradlew qualityGate --no-daemon` green (sanity, jar isolation, 364 gametests, ArchUnit baseline, datagen check). No in-game verification per the standing rule — Stage 5 checklist marked unverified in the PR.
+
+## Completed this session (Homelander EMF — Stage 4)
+
+- Stage 4 of `docs/superpowers/plans/2026-09-30-homelander-emf-presentation.md` («BOOST») implemented on `devin/1790800950-homelander-boost-s4` (base Stage-2 head `309c816b`), `mod_version` 4.3.0 → 4.4.0.
+- `HomelanderPoseState.Entry` now tracks the smoothed render velocity (per-component `approach`, half-life 3 ticks, from per-tick position deltas — local + remote players alike, §11) and projects it onto body yaw: `forward = v·bodyForward`, `strafe = v·bodyRight`. The BOOST latch (`boostEngaged`, `HomelanderPoseMath.boostEngaged`) enters at `forward ≥ emfBoostEnter` (0.9 b/t) or `SUPERSONIC && forward > 0.3`, exits below `emfBoostExit` (0.6 b/t), holds inside the band; backward/side speed never engages. `superheroes_hl_boost_w` moved to a partial-tick reader on the smoothed weight (half-life 4 ticks).
+- Owner BOOST pitch target now reads `emfBoostRootPitch` (86°, bake-measured `boost` root mean pitch 85.997) via `FlightPresentation.poseParams` (`homelander/flight`, additive component — `FlightPoseTracker` memoizes `pose.withOverrides(loader)` per tracked player for EMF-owned players only; non-owners and non-EMF entities take the unchanged `flight/pose` path). `emfBoostEnter/Exit/RootPitch/RootRoll` added to `flight.json`; `VfxParams.withOverrides` layers overlay keys.
+- NOT touched (reverted `5c3be771` class of mistake, §7 stage 4): `ClientFlightState`, `FlightPhaseResolver`, trail gating, loop volume — directional values drive pose weights only; HOVER weight is the untouched base layer under BOOST.
+- Tests added: 13 in `HomelanderPoseMathTest` (enter/exit hysteresis + band hold, backward/side never engage, SUPERSONIC low-threshold engage, weight continuity across 1-tick flicker, forward/strafe projection, velocity smoothing, `boostWeight` interpolation); 2 in `FlightPoseMathTest` (`emfBoostRootPitch` preference + `boostPitch` fallback); 2 in `VfxParamsTest` (`withOverrides` overlay/empty cases).
+- Verification: `python3 -m unittest art-source/homelander/emf/test_bake_jem.py` — 15/15; `./gradlew test --no-daemon` green; `./gradlew qualityGate --no-daemon` green (sanity, jar isolation, 364 gametests, datagen check). No in-game verification per the standing rule — Stage 4 checklist marked unverified in the PR.
+
+## Completed this session (Homelander EMF — Stage 3)
+
+- Stage 3 of `docs/superpowers/plans/2026-09-30-homelander-emf-presentation.md` («TAKEOFF») implemented on `devin/1790801246-homelander-takeoff-s3` (base Stage-2 head `309c816b`), `mod_version` 4.3.0 → 4.4.0.
+- `HomelanderPoseState.Entry.advance(flying, groundedNow)`: the activation edge (`flying && !wasFlying`) resets the takeoff clock to `0` when the player was on the ground the tick BEFORE activation, or `TAKEOFF_AIRBORNE_START_SECONDS = 0.28` airborne (skips the crouch dip, root ty bottoms at 0.20 s). The edge must read the stored previous-tick flag, not the current tick's: `LocalPlayerFlightMixin` applies the TAKEOFF min-lift (0.28 b/t) inside `travel` during the same client tick the flight state arrives, so by `END_CLIENT_TICK` the local player's `onGround` is already false — a current-tick read misdetects every local ground takeoff as airborne. `onGround` is the right signal on both paths: authoritative for `LocalPlayer`, and synced for remote entities (`ClientboundMoveEntityPacket`/`ClientboundTeleportEntityPacket` carry it; `ServerEntity` writes `entity.onGround()` — verified in mapped 1.21.1 bytecode). New entries seed `grounded` from the player's current flag so a first-observed-tick activation still resolves.
+- `HomelanderPoseMath.takeoffWeight` is pinned to exactly 1 while `flying && takeoff_t < 0.65 s` (the plan's literal "weight = 1 for 0 to 0.65 s" — a ramp here would only mix HOVER into the crouch dip and mask it; the vanilla→authored blend is already carried by the master `hl_w` ramp), eases out with 2-tick half-life, and pins to exactly 0 at `takeoff_t >= 0.8` — the clip's last frame equals the HOVER start height (6.6 px) so the crossfade is continuous with hover already at weight ~1 underneath. The takeoff clock stops advancing at clip end (`finished(0.8)` guard — bounded value, no per-frame allocation). `takeoffWeight` gained `takeoffWeightPrev` interpolation like the master weight; `WeightReader`/`registerWeight` now take the partial tick (boost/clap/milk stubs keep the same signature).
+- Re-activation within the clip restarts the same clock (one takeoff ever runs); flight-off mid-takeoff fades takeoff + active weights out while the hover clock free-runs.
+- Tests added: 9 in `HomelanderPoseMathTest` (grounded/airborne start offsets incl. the pre-activation-flag edge case, first-observed-tick flying default, edge-only grounded flag, flight-off fade without hover reset, re-activation restart, hold→ease→pin-0 weight curve, partial-tick weight interpolation, pure `takeoffWeight` math). Existing `advance(...)` call sites updated to the two-arg form.
+- Verification: `python3 -m unittest art-source/homelander/emf/test_bake_jem.py` — 15/15; `./gradlew test --no-daemon` green; `./gradlew qualityGate --no-daemon` green (sanity, jar isolation, 364 gametests, datagen check). No in-game verification per the standing rule — Stage 3 visual checklist marked unverified in the PR.
+
+## Completed this session (Homelander EMF — Stage 2)
+
+- Stage 2 of `docs/superpowers/plans/2026-09-30-homelander-emf-presentation.md` («HOVER») implemented on `devin/1790798101-homelander-emf-hover-s2` (base Stage-1 head `337327e3`), `mod_version` 4.2.0 → 4.3.0.
+- `HomelanderPoseState.Entry.advance(flying)` now drives the master weight via `HomelanderPoseMath.activeWeight` (half-life 3 ticks, `flying = ClientFlightState.get(entityId) != null`) and advances all five clip clocks per client tick. `superheroes_hl_w` moved to a partial-tick reader (`weight(uuid, partial)` interpolates `activePrev→active`); `hoverTime` wraps to loop-local time via `loopTime(t, HOVER_LENGTH_SECONDS=3.2f)` so `keyframeloop` never overshoots. The hover clock is free-running — never reset on flight on/off flips, so blending in mid-loop is continuous (§7 stage 2 constraint).
+- Reads stay allocation-free + O(1): last-resolved (uuid → entry) cached, invalidated on LRU eviction/`clearAll`.
+- Tick-freeze adjudication (Stage-1 review note): `partialTick()` switched `getGameTimeDeltaPartialTick(false→true)` — the world-space render convention (`PlayerModelPoseMixin`, `VfxRuntime`). Under `/tick freeze` client ticks stop, so clocks genuinely pause; `(true)` returns the frozen residual instead of snapping to 1.0.
+- Bake contract: `test_bake_jem.py::test_hover_loop_closes` asserts every emitted HOVER channel matches at t=0 vs t=3.2 within 0.5°/0.05/0.005 (rotation/translation/scale) — guards the loop against `keyframeloop` pops.
+- Tests added: 6 in `HomelanderPoseMathTest` (weight ramp 0→1→0, partial-tick interpolation continuity at tick boundary, wrap at 3.2 s incl. mid-interpolation wrap, clock never resets across flips, 60 vs 144 fps clock equivalence, full frame-stream fps independence in loop space).
+- Verification: `python3 -m unittest art-source/homelander/emf/test_bake_jem.py` — 15/15; `./gradlew test --no-daemon` green; `./gradlew qualityGate --no-daemon` green (sanity, jar isolation, 364 gametests, datagen check). No in-game verification per the standing rule — Stage 2 visual checklist marked unverified in the PR.
+
+## Earlier (Homelander EMF — Stage 1)
+
+- Stage 1 of `docs/superpowers/plans/2026-09-30-homelander-emf-presentation.md` («EMF foundation and Homelander model integration») implemented on `devin/1790789702-homelander-emf-stage1` (base `devin/1790782256-homelander-emf-plan`) and shipped as its own PR, `mod_version` 4.1.3 → 4.2.0.
+- EMF 3.3.9 + ETF 7.2.4 ship jar-in-jar (`modImplementation` + `include`); `fabric.mod.json` gains `depends: entity_model_features >=3.3` only. Gametest log proves the env-skip: dedicated classpath loads 45 mods with EMF/ETF env-disabled (both declare `"environment": "client"`), no `traben.*` loading, no crash, `depends` tolerates the env-disabled bundle. Both jems + `milk.png` verified inside the release jar (`auditReleaseJarIsolation` green).
+- `art-source/homelander/emf/bake_jem.py` regenerates `assets/minecraft/emf/cem/player.jem` + `player_slim.jem` from `Homelander_All_Animations.bbmodel` — own linear/step/catmullrom/bezier evaluators, hard-fails on Molang, adaptive 20–400 Hz resampling (worst authored channel ≈0.47° error; a literal 20 Hz grid put takeoff's root snap at ~0.8° so the plan's fixed rate was raised). 14 unittest assertions green.
+- All `traben.*` access is behind `client/core/emf/EmfBridge` (availability-gated); ownership = `SkinResolver.heroIdFor(player) == homelander` via `EmfPresentationOwnership`; `registerVanillaModelCondition` keeps vanilla for non-owned players; `RenderedPoseCache` (64-slot LRU flat arrays) captures head/body/arms transforms at `PlayerRenderer.render` TAIL for owned players; eye anchors use the cached absolute head transform for owned entities (byte-exact vanilla parity at w=0 verified in derivation; the jem's vanilla-blend terms make the cached pose equal the vanilla pose when `superheroes_hl_w = 0`).
+- `HomelanderPoseState`/`HomelanderPoseMath` tick five clip clocks + weights; all 10 `superheroes_hl_*` variables registered (weights always 0 in Stage 1 → owned players render vanilla, by design). Both state holders self-register `ClientSessionState` resets.
+- Full legacy cutover: 14 `player_animations/homelander/*.animation.json` deleted, contract `homelander_pilot.json` `animations` array emptied (sounds/models/textures rows stay), every Homelander `PlayerAnimator` play/stop/sample call removed (`HomelanderFx`, `ClapFx`, `EyeLaserChannel`, `IronFistsFx`, `RoarFx`, `SunChargeFx`). `FlightPoseTracker` now null-guards clip plays — Homelander registers an all-null-clip `FlightPresentation` (sounds/trail intact); other heroes unaffected. Laser/fists/roar/sun/clap/milk have no player animation until Stage 2+ wires authored clips — VFX/sounds/gameplay untouched.
+- Tests added: `HomelanderPoseMathTest`, `RenderedPoseCacheTest`, `HomelanderJemContractTest` (required parts + every bbmodel custom id, all five clips, boolean-only `visible`, no `emf_lab`/`cloak`/`nan`, both jems present); ArchUnit rule confines `traben..` to the two EMF packages; `ClientSessionStateResetTest` also covers `RenderedPoseCache`.
+- Verification: `./gradlew test --no-daemon` green; `./gradlew qualityGate --no-daemon` green (ProjectSanityTest, jar isolation, 364 gametests, ArchUnit baseline); `python3 -m unittest art-source/homelander/emf/test_bake_jem.py` — 14/14. No in-game verification per the standing rule — the user checks in-game themselves.
+
+## Previous session (Homelander UX fix round — presentation-phase REVERTED)
+
+- The presentation-phase change (`5c3be77` — deriving CRUISE/BOOST/HOVER from real client pos-delta instead of the synced server phase) made gameplay noticeably worse and was **reverted** (`a4cbe8c`). Delivered jar is `superheroes-4.1.3` (4.1.1 state minus that fix, re-bumped per the new versioning rule).
+- Lesson: do not reintroduce the raw pos-delta presentation phase without a fresh root-cause analysis of what the user saw.
+- Versioning rule (`AGENTS.md` §13): every jar built for the user bumps `mod_version` — fix → patch +0.0.1, normal update → minor +0.1.
+
 ## Active work
 
-- Goal: the bugfix backlog (`docs/audits/2026-09-25-opus-architecture-audit.md`) is integrated on `main`; active work is the architecture-migration program in `docs/design/architecture-migration/` — `00-overview.md` is the map (stage graph §2.1, orchestration §11), plans `01`–`06` are executed stage by stage.
-- Delivery: a stack of PRs, one per migration stage. Orchestrator (main session) assigns file ownership, integrates worker branches, runs every `Run:` command and `qualityGate`, owns `archunit_store/**`, `package-cycles-baseline.txt`, golden files, status tables and this file.
-- The «Статус стадий» table inside each plan is the live tracker; update it with every stage.
-
-## Stage roadmap (audit §5)
-
-| Stage | Scope | Branch | State |
-| :-- | :-- | :-- | :-- |
-| 1 | B1 no-drop recursion crash, B7 bound-weapon dup, GameTest lane | `hoplite/kroton-d9205130` | PR open |
-| 2 | B2 stale `HeroData` write-back; single `HeroData` writer (debt 2) | `hoplite/kroton-d9205130--herodata-writer` | PR open (stacked on 1) |
-| 3 | Lifecycle: B3, B4, B8, B17, B23, N1 (main-thread leave hook) | `hoplite/kroton-d9205130--lifecycle` | PR open (stacked on 2) |
-| 4 | B5 cooldown/heal reset on hero swap, B6 Snap stones | `hoplite/kroton-d9205130--cooldowns-snap` | PR open (stacked on 3) |
-| 5 | Damage pipeline B9, B20, B21; B11 global tick rate | `hoplite/kroton-d9205130--damage-pipeline` | PR open (stacked on 4) |
-| 6 | B10 `WorldDestructionPolicy` | `hoplite/kroton-d9205130--destruction-policy` | PR open (stacked on 5) |
-| 7 | B15 client state/session | `hoplite/kroton-d9205130--client-state-reset` | PR open (stacked on 6) |
-| 8 | B13 House of Vanity server authority | `hoplite/kroton-d9205130--vanity-authority` | PR open (stacked on 7) |
-| 9 | B12 passive reconciler, B16 fall immunity | `hoplite/kroton-d9205130--passives-fall` | PR open (stacked on 8) |
-| 10 | B14 synced public hero attachment | `hoplite/kroton-d9205130--public-hero-sync` | PR open (stacked on 9) |
-| 11 | Hero hooks / lifecycle events / tick dispatcher (debt 1–4) | `hoplite/kroton-d9205130--hero-modularity` | PR open (stacked on 10) |
-| 11b | Migrate ~50 self-registered `ServerTickEvents` onto the dispatcher | child session | in flight |
-| 12 | Hygiene: deps, docs, missing model/lang | `hoplite/kroton-d9205130--hygiene` | PR open (stacked on 11) |
-| 13 | B18 Sung shadows survive restart; B22 teleport collision checks | `hoplite/kroton-d9205130--shadows-teleports` | PR open (stacked on 12) |
-| 14 | B19 shared target predicate honoring PvP/teams | `hoplite/kroton-d9205130--target-predicate` | PR open (stacked on 13) |
-| 15 | Potential findings (4) + §3 network improvements | `hoplite/kroton-d9205130--potential-net` | PR open (stacked on 14) |
-## Completed this session (stage 1)
-
-- Replaced three copy-pasted no-drop mixins with `PlayerBoundWeaponDropMixin` + `item/bound/BoundWeapons`. The old code re-entered `Player.drop` via `Inventory.placeItemBackInInventory` on a full inventory (verified in vanilla sources) → `StackOverflowError`.
-- Bound weapons (Yamato, Royal Icicle, Rem's morning star) now carry a `superheroes:bound_weapon {owner, issue}` data component; the current issue lives in the non-persistent `BOUND_WEAPON_ISSUES` attachment. Stale copies (stashed in a chest then reissued, held by another player, left over from before a relog, `/give`) disappear on their first inventory tick. The three weapons extend `BoundWeaponItem`.
-- Issuing into a full inventory now fails cleanly: Raiden's Sword Draw does not start and shows `ability.superheroes.bound_weapon.no_room`; Reinhard's ceremony completes but warns; Rem retries each tick as before.
-- Added the GameTest lane: `src/gametest` source set, `superheroes-gametest` dev mod, Loom `gametest` run (`runGametest`), wired into `qualityGate`. Veil is excluded from the GameTest server classpath (it hard-depends on client-only Fabric modules).
-
-## Completed this session (stage 2)
-
-- `transform/HeroDataStore` is the only writer of `HERO_DATA`: `update(player, fn)` does read-modify-write; full syncs go out immediately, energy/mana-only changes are coalesced into one `ResourceUpdateS2CPayload` per player at the `hero_data_flush` END_SERVER_TICK phase (ordered after the default phase).
-- `ResourceController` re-reads `HeroData` before each active ability, pays with the pure `ResourcePayment` (JUnit-tested), and deactivates through `AbilityRouter.deactivate`. `AbilityRouter.deactivate` clears the flag before `onDeactivate`; failed activations refund the exact charge (`ResourceController.charge/refund`).
-- Removed the dead `DeactivateAbilityC2SPayload` endpoint and redundant `server().execute` hops in C2S handlers.
-- `ProjectSanityTest.assertHeroDataHasSingleWriter` guards the single-writer rule.
-
-## Completed this session (stage 3)
-
-- New `lifecycle/` package: `PlayerLifecycle` is the single dispatch hub — hooks for join/leave/death/respawn/server-stopped wired to server-thread events (`ServerPlayerEvents.LEAVE` fires from `PlayerList.remove`, before save; `DISCONNECT` can run on the Netty thread — no longer used for game state). Every controller cleanup in the mod routes through it via `SuperheroesMod.registerPlayerLifecycle`.
-- `lifecycle/EntityControlLock` — refcounted locks over the four NBT-persisted entity flags (NoAI, NoGravity, noPhysics, invulnerable). First owner records the previous flag value into a persistent `CONTROL_LOCK_SHADOW`; last release restores it. If a locked entity unloads while the live (non-persistent) lock map is gone, `reconcile` on `ENTITY_LOAD` restores flags from the shadow. DoomGrip, Think Mark, Regulus freeze/counter, and Reinhard's ceremony all hold locks instead of writing flags directly — stale NoAI/NoGravity after relog can no longer happen (B4).
-- Ability-scoped attribute buffs (Kratos rage, Regulus madness, Reinhard draw, Raiden burst, Naruto/Goku/Rem stances, BattleBeast curse, Doomsday berserk, Thanos stone deltas) now apply as **transient** modifiers via `AttributeModifierSet.Builder.abilityScoped()` — they never serialize, so relog cannot leave zombie buffs (B3). Hero passives stay permanent on purpose (transient max-health clamps health on load). Controllers that re-derive session state on join re-apply: `BattleBeastCurseController.reapplyOnJoin`, `ThanosGauntletStateController.onPlayerReset`, `ReinhardController.onPlayerJoin`, `PandoraDeathController.reapplyState`.
-- `HeroTransformService.clearHeroRuntimeState(player)` is the symmetric cleanup used by both `transform` and `doUntransform` — previously clearAdaptations/clearOnUntransform/Unibeam ran only on untransform (B23). `onPlayerLeave` clears runtime + active flags without running gameplay deactivate side-effects.
-- Dead players are skipped in the per-player END_SERVER_TICK loop and `ThanosSnapWindupController` removes pending snaps for dead/absent casters; `ReinhardSwordDeathMarkController.cancelVictim` flushes marks on victim death/leave (B17).
-- Transform cooldown moved from a `WeakHashMap` to the `TRANSFORM_TICK` attachment; ~20 controllers got `resetAll()`/`onPlayerGone`/`cancel` hooks wired into `SERVER_STOPPED` — static maps no longer leak into a reopened world on the same JVM (B8).
-- Pandora revival state is now the persistent `PANDORA_REVIVED` attachment + an invulnerable control lock (was an NBT flag + in-memory set).
-
-## Completed this session (stage 4)
-
-- `ABILITY_COOLDOWNS` persistent attachment (`Map<ResourceLocation, Long>` of game-time deadlines) replaces the static `AbilityCooldowns` map — relog and hero swaps no longer reset cooldowns (B5). Not `copyOnDeath`: death still resets, matching the old semantics. `syncAll` on join resends live deadlines to the client; `clearAndSync` moved to the death hook.
-- `transform()` no longer heals (`setHealth(min(health, maxHealth))`) and no longer refills energy — energy carries over like mana when swapping from a live hero (`d.hasHero() ? min(energy, max) : max`), first-time transforms still start full.
-- Snap now burns the stones it actually checked: `InfinityGauntletData.clearStones` empties `InsertedStones` on the gauntlet and loose `InfinityStoneItem`s are removed — the snap is no longer infinite (B6).
-- 3 new GameTests (`HeroSwapGameTests`): swap keeps cooldowns, no free heal/energy refill, snap consumes gauntlet + loose stones.
-
-## Completed this session (stage 5)
-
-- Damage accounting moved off `ALLOW_DAMAGE` onto `AFTER_DAMAGE` (`damageTaken`, post-armor/shield): RegulusMadness LAST_DAMAGER, DoomsdayAdaptation/EffectAdaptation accumulation, DoomsdayKryptonite, KratosRage, RemDemonism, GokuKiStack, KratosHandStrikeFx. `ALLOW_DAMAGE` remains only where `return false` is load-bearing (RegulusGreed queue, Reinhard adapted-immunity/riposte, SwordDeathMark suspension, Pandora gate, RegulusMadness reading block, DoomsdayAdaptation immunity). Saves moved to `ALLOW_DEATH`: Kawarimi now only fires on truly lethal hits (no more wasted substitution on non-lethal procs) (B9).
-- `SungJinwooController` divert skips `#bypasses_invulnerability` sources — /kill and void damage can no longer be dumped onto a random shadow (audit's explicit check).
-- 33 of 35 mod damage types added to `#minecraft:bypasses_cooldown` via generated tag (B20): ability damage no longer collides with the 10-tick i-frame window, so multi-hit abilities and rapid re-casts actually land. `SHADOW_ATTACK` and `HOMELANDER_MELEE` stay out — they are mob melee and keep vanilla i-frame rules.
-- `ReinhardTimeSlowController` rewritten without `TickRateManager` (B11): the old code slowed the whole server's tick rate (breaking combat physics, cooldown pacing and redstone for everyone). Now `triggerAbilitySlow` freezes entities within 80 blocks — mobs via `EntityControlLock` (NO_AI + NO_GRAVITY + zeroed velocity), players via transient `MOVEMENT_SPEED`/`JUMP_STRENGTH` zero-modifiers plus attack/use-item/place block callback cancels — 170 ticks, released on expiry, owner death/leave or server stop. The owner walks at full speed inside the freeze, which preserves the power fantasy without corrupting the server clock.
-- All `System.currentTimeMillis` timers in gameplay code replaced with level `gameTime` deadlines (B21): RegulusMadness reading/mana-lock (record fields renamed to `*_until_tick`, codec keys `mana_lock_until_tick`/`reading_until_tick`), DoomsdayAdaptation/EffectAdaptation first-hit/idle windows, `HeroLandingTracker`, `ReinhardSpeedJudgment` pending strikes. Single-player pause and TPS lag can no longer silently shorten or stretch these durations. Wire compatibility kept: `MadnessSyncS2CPayload` still carries remaining-milliseconds (converted from tick deadlines) so the client's wall-clock HUD math is unchanged.
-- 3 new GameTests (`DamagePipelineGameTests`): ability damage bypasses the i-frame cooldown (control: mob attack does not), time slow freezes a nearby mob without touching the server tick rate and releases on owner leave, kawarimi saves from a lethal hit and goes on cooldown.
-
-## Completed this session (stage 6)
-- `world/WorldDestructionPolicy` (B10): единая точка прохода для всех способностей, меняющих мир — `tryBreak` (ванильная семантика `destroyBlock` + опциональные дропы), `tryCarve` (тихий вырез в AIR для путей с намеренным подавлением дропа), `tryPlace` (постановки без слома, например огонь). Гейты: `destroySpeed < 0` + тег `superheroes:ability_immune` (новый `src/main/generated/data/superheroes/tags/block/ability_immune.json`, написан руками + `ModBlockTagProvider` на будущее для runDatagen); для игроков — `Level.mayInteract` (защита спавна, граница мира) и `PlayerBlockBreakEvents` BEFORE/CANCELED/AFTER — claim-моды теперь видят все сломы; для мобов и без причины — `RULE_MOBGRIEFING`.
-- Мигрированы все ability-точки: `RegulusMadnessController.carveCrater` (вынесен из `CounterState` на контроллер и получает игрока — раньше съедал бедрок конусом), `RemDemonismController`, `UnibeamController` (луч + кратер + огненное кольцо), `MadnessAftermathController`, `MadnessFlightController`, `RaidenMusouIsshinController.carveSlash` (игрок раньше не передавался), `HeavensStrikeController.carveCrater` (то же), `GuardiansBreakerAbility`, `RushTerrainBreaker`, `BallisticBodyTracker`, `ShockwaveUtil` (моб- и игрок-детонации), `HomelanderBlockThrowGoal` (подбор блока и сам бросок гейтятся — при отказе снаряд не спавнится), `EyeLasersAbility` (огненное кольцо).
-- Дропы: `RushTerrainBreaker`, `BallisticBodyTracker` и `GuardiansBreakerAbility` теперь ломают с дропом — shulker box выскакивает с содержимым вместо исчезновения (регрессия из аудита). `RaidenMusouIsshin`/`HeavensStrike` сохранили свои списки «непробиваемого» в урезанном виде — только ценные блоки, которых нет в теге (обсидиан, crying obsidian, нетерит/железо/древние обломки/маяк/respawn anchor соответственно).
-- `physics/BlockBreakPolicy` удалён — его роль выполняет новая политика. `ProjectSanityTest` запрещает прямые `destroyBlock`/`removeBlock`/`setBlock`/`setBlockAndUpdate` вне `WorldDestructionPolicy`.
-- 7 новых GameTests (`DestructionPolicyGameTests`): кратер пропускает бедрок и тегированные блоки, вето claim-события отменяет слом и шлёт CANCELED, AFTER стреляет при реальном сломе, mobGriefing гейтит мобов и «без причины» для слома и постановки, shulker box дропается с содержимым, carve намеренно без дропа, контактный слом рывка дропает землю.
-## Completed this session (stage 7)
-- `ClientSessionState` — единый реестр сброса клиентской сессии (B15): каждый `Client*State`-холдер и сессионный синглтон (`ClientAbilityCooldowns`, `RemoteHeroSkins`, `JarvisDetectionHud`, `MirrorWarpFlashHud`, `RadialMenuHud`) регистрирует свой reset в static-блоке; `ClientPlayConnectionEvents.DISCONNECT` зовёт `resetAll()` вместо ручного списка — до этого сбрасывались только 10 из ~30 холдеров, и уход из мира во время time-slow навсегда глушил звуки мира в следующих мирах. `ProjectSanityTest.assertClientStatesRegisterReset` валится, если `Client*State`-класс не содержит `ClientSessionState.register(`.
-- `ClientAbilityCooldowns` переведён с `LocalPlayer.tickCount` (обнуляется при респавне → HUD рисовал кулдауны в часы) на `ClientLevel#getGameTime()` — монотонные тики уровня; дедлайны в `long`, wire-формат пакета не тронут. Для JUnit — инжектируемый `clock` (`setClockForTesting`/`clearClockForTesting`, package-private).
-- Миксины ролика Pandora (`PandoraCinematicKeyboardMixin`, `PandoraCinematicMousePressMixin`) больше не глотают `GLFW_RELEASE`: `KeyMapping.set(key,false)` приходит только с release, поэтому отпущенная во время ролика клавиша оставалась нажатой — игрок сам шёл/бил после катсцены. `InputFreeze`/`MouseTurn` миксины не тронуты — они не ломают трекинг кнопок.
-- `IrisShaderBridge` стал resilient: `restore()` сбрасывает `activeSnapshot` и удаляет `MirrorRestoreFile` только после успешного restore (раньше снапшот терялся при первой неудаче); `restoreAfterCrashIfNeeded` больше не пытается ресторить в `onInitializeClient` (Iris ещё не готов → всегда фейл → файл удалялся без восстановления) — вместо этого `tickCrashRestore()` ретраит из клиент-тика до 200 тиков, файл удаляется только при успехе.
-- `ChatComponentMixin`: хит-тест чата переведён на тот же сдвиг, что и рендер — `@ModifyVariable` на `screenToChatX`/`screenToChatY` вычитает `HudLayoutManager.offset(CHAT) + autoLift`, так что клики по ссылкам, ховер-теги и подсветка строки работают по реальному положению чата.
-- JUnit: `ClientSessionStateResetTest` дёргает публичные сеттеры ~25 холдеров и проверяет, что `resetAll()` возвращает дефолты; `ClientAbilityCooldownsTest` гоняет дедлайны на инжектированных часах (респавн как скачок времени). `test` sourceSet получил `client.output + client.compileClasspath` (через `afterEvaluate`, т.к. `client` создаётся `splitEnvironmentSourceSets()`).
-## Completed this session (stage 8)
-- House of Vanity trap is now server-authoritative (B13): `MirrorDimensionController.enforceZone` runs unconditionally — the yank and `VanityAuthority` debuffs no longer wait for a client ACK (`VictimState.applied` removed). A modified or silent client stays inside the zone exactly like a confirmed one.
-- `absorbNearby` lost its `canSend` gate: victims without the mod (or with networking filtered) are still trapped — the S2C payloads are now purely a cosmetic hint sent via `sendToVictim` (shader warp + cipher flag), so a missing reply no longer weakens containment.
-- `handleStatus` is reduced to caster feedback (it relays the localized status message to Pandora only); `NO_IRIS`/`NO_PACK`/`IRIS_API_FAIL` no longer release the victim — previously a failed or absent warp silently dropped the victim while leaving her client ciphered forever (the deadman only watched `active`).
-- Client cipher scope fixed in `ClientMirrorDimensionState.tick`: the deadman now tracks `trapped` (the cipher) rather than only `active` (the shader), so a victim whose warp never applied still releases the font cipher ~5s after keepalives stop instead of holding it until disconnect.
-- Lifecycle wiring: `MirrorDimensionController.onPlayerGone` and `SpatialBindController.onPlayerGone` release victims/ropes on leave via `PlayerLifecycle.onLeave`; both controllers' `resetAll()` run from `onServerStopped` so no trap state leaks across world restarts.
-- 4 new GameTests (`HouseOfVanityGameTests`): victim trapped without any client confirmation and yanked back when walking out, NO_IRIS status keeps full containment, debuffs applied without confirmation, caster leave closes the House and frees victims (effects cleared via `PlayerLifecycle` hook). Mock players double as the "no client ACK" regression case since `canSend` is false for them.
-## Completed this session (stage 9)
-
-- Hero passives no longer die to effect wipes (B12). New `lifecycle/PassiveReconciler`: `capture()` arms a ThreadLocal around `hero.applyPassives` while `LivingEntityPassiveEffectsMixin` records every *infinite* `MobEffectInstance` added in that scope — that's the hero's declared passive set, stored per player (with the heroId). `onEffectRemoved` (fired by milk `removeAllEffects`, death-save wipes, `LionHeart`, `ThanosTimeRewind`, `RegulusGreedController.removeEffect(JUMP)`, targeted removes and natural expiry alike) only marks the player dirty; the actual re-assert runs deferred on `END_SERVER_TICK`, skipping effects the player still has — so vanilla `MobEffectInstance.update` nesting (a temporary stronger instance hiding a nested passive) is preserved. A `heroId` guard drops stale records on swap/untransform, `PassiveReconciler.clear` on `doUntransform`.
-- Capture wired at every real `applyPassives` site: `HeroTransformService.transform` and `reapplyLifecyclePassives` (join/respawn), `DoomsdayTierController.applyProgress` (tier-dependent re-derive). Doomsday's `reapplyLifecyclePassives` keeps its no-removePassives quirk.
-- `RegulusMadnessController.clearMadness` is scoped to madness-owned instances (B12): it used to `removeEffect` SPEED/STRENGTH/JUMP/RESISTANCE unconditionally on every join/leave/death/respawn for ANY player — deleting potion, beacon, and hero passive effects server-wide. Now `removeMadnessEffect` removes an instance only if it matches the madness signature (duration ≤ 60, matching amplifier, ambient, not visible, showIcon); `applyMadnessEffects` builds via `madnessEffect()` so the signature can't drift. A madness instance merged over an infinite passive is still removed whole — the reconciler re-asserts the passive next tick.
-- Fall immunity is per-participant again (B16): `LivingEntityFallDamageMixin` asked global `isAnyCounterActive()`, so one Regulus counter anywhere stripped `SuperJumpController`/hero `cancelsFallDamage` immunity from every hero. Now `RegulusMadnessController.isCounterInvolved(entity)` (matches the counter's `playerId`/`attackerId`); `isAnyCounterActive` deleted.
-- 4 new GameTests (`PassivesFallGameTests`): milk-style `removeAllEffects` restores all five Regulus infinites; hero swap replaces the declared set (regulus→kratos restores RESISTANCE, not REGENERATION); `clearMadness` keeps a visible potion, a beacon-style ambient+visible effect and an untouched infinite passive while dropping madness-signed SPEED/JUMP even with a passive nested under them; counter strips fall immunity for owner/victim but not for an uninvolved hero.
-
-## Completed this session (stage 10)
-
-- New synced attachment `PUBLIC_HERO` (B14): `persistent(ResourceLocation.CODEC)` + `copyOnDeath()` + `syncWith(ResourceLocation.STREAM_CODEC, AttachmentSyncPredicate.all())` — a narrow public projection carrying only the hero id; energy/mana and everything else in `HERO_DATA` stays owner-only. Written once inside `HeroDataStore.update` (the single writer, so it cannot drift), plus `syncPublicHero(ServerPlayer)` back-fill on JOIN for pre-existing saves.
-- `PlayerDimensionsMixin` now reads `PUBLIC_HERO` instead of `HERO_DATA` — remote players on clients get the real hero hitbox (Battle Beast etc.) instead of the vanilla one; the local player still refreshes dims via the `HeroDataSyncS2CPayload` receiver.
-- All remote-hero plumbing deleted: `RemoteHeroSkinS2CPayload` + registration + client receiver, `RemoteHeroSkins` map, `broadcastRemoteHeroSkin`, `sendRemoteHeroSkinTo`, and the `EntityTrackingEvents.START_TRACKING` block. Attachment sync covers tracking start, dimension change and respawn for free — `sendRemoteHeroSkinTo`'s early `hero == null` return (the stale-skin-after-relog bug) is gone with it.
-- Client consumers migrated to `player.getAttached(PUBLIC_HERO)`: `AbstractClientPlayerSkinMixin` (hero skins for other players), `IronManEspRenderer` (hero detection + id), `ReinhardScabbardLayer`, `ClientNanoSuitUpState`.
-- New `ClientHeroDimsWatcher`: attachment sync has no client-side change callback, so an END_CLIENT_TICK watcher diffs each tracked player's synced hero id and calls `refreshDimensions()` on change (clears its map when `client.level == null`).
-- 2 new GameTests (`PublicHeroSyncGameTests`): transform writes / untransform clears `PUBLIC_HERO`; join back-fill derives the projection from a legacy directly-written `HERO_DATA`.
-
-## Completed this session (stage 11)
-
-- `lifecycle/HeroTickDispatcher` (debt 3): the only `END_SERVER_TICK` consumer for gameplay ticks — ordered phases GLOBAL → LEVELS → PLAYERS → ABILITY_ACTIVE, the dead-player skip happens once centrally (B17), and `HERO_DATA` is fetched once per player. `SuperheroesMod`'s 100-line inline lambda became `registerTickHandlers()`, a flat table keeping the exact prior order. The ~50 controllers that self-register `ServerTickEvents` stay as they are — migrating them onto the dispatcher is the follow-up hygiene stage.
-- `lifecycle/HeroLifecycle` (debt 1): `onClear`/`onTransformed` listener events fired from `HeroTransformService.clearHeroRuntimeState`/`transform` — the hard-coded cleanup call list (Unibeam, Regulus totem/madness, Reinhard adaptations, Raiden, Rem, Pandora, DoomGrip, Omniman think mark, control locks) is now a registration table in `registerPlayerLifecycle()`.
-- `Hero` default hooks (debt 4): `getImpactStyle`/`getImpactPower`, `getThreatClass`, `canUseAbility`/`onAbilityDenied`, `isAbilitySuppressedBy`, `getEnergyReserveFor`, `isUraniumWeak`. `CombatImpactEngine` deleted its 20-hero import table (style/power now come from the hero); `JarvisThreatClass` moved `jarvis/` → `hero/` and `forHero` reads `getThreatClass()` — `HERO_THREATS` gone, jarvis↔hero package cycle broken; `AbilityRouter`'s three `instanceof` branches + the IRON_FISTS check + the UNIBEAM reserve are hook calls; `FlightController` reads `isUraniumWeak()` instead of `HomelanderHero.ID`.
-- `ClientAbilityFilter` reuses the server tables `DoomsdayHero.isUnlockedAtTier` and `RemHero.isVisibleIn` — the client-side duplicate lists are deleted, so HUD and router can no longer drift apart.
-- `ProjectSanityTest.assertNoHeroTypeDispatch` forbids `instanceof *Hero` outside the hero package; 3 new GameTests (`HeroTickDispatcherGameTests`): dead skip, isActive gating, phase order.
-
-## Completed this session (stage 11b)
-
-
-- Migrated all 47 self-registering `ServerTickEvents.END_SERVER_TICK` controllers onto `HeroTickDispatcher` — 25 `onGlobalTick` + 33 `onPlayerTick` registrations appended to `registerTickHandlers()` in `init()` order. Per-player loops became `PlayerTask`s (central dead-skip, prefetched `HeroData`); offline-player prunes and entity-map sweeps split into `GLOBAL` methods (`pruneGonePlayers`, `tickFreezes`, `tickCounters`, `serverTick`); verbatim global bodies kept where the loop wasn't per-player work (Jarvis scans, Kratos drain, DoomsdayKryptonite interval pass, Raiden/Heavens/ThanosSnap windups).
-- Controllers whose `init()` only held the tick lost it (call removed from `onInitialize`); `init()`s with other registrations (`AttackEntityCallback`, `ALLOW_DAMAGE`, `DISCONNECT`, `START_SERVER_TICK`) kept — only the END registration moved.
-- Deliberately left self-registered: `HeroDataStore` (two `hero_data_flush` phase-boundary registrations by design), `MirrorDimensionController` (owned by stage 8), `MadnessFlightController`/`KratosRageController`/`ThanosGauntletStateController` START_SERVER_TICK registrations (the dispatcher is END-only), `src/client`, `transform/`, `lifecycle/`, `WorldDestructionPolicy` files (stages 6/7/9).
-- Ordering notes: phase split means GLOBAL tasks now run before all per-player work; verified each split pair is data-independent (offline prunes commute; `RegulusMadness` COUNTERS vs `tickPlayer` don't touch shared state; `RegulusGreed` freezes/casters independent). One acknowledged delta: `KratosRageController` rage drain now runs before player tasks — same-tick deactivation timing shifts within the tick, not across ticks.
-
-
-## Completed this session (stage 12)
-
-- `fabric.mod.json` deps tightened to what the build actually targets: `minecraft ~1.21.1`, `fabric-api >=0.116.12`.
-- `horde_crystal` got a model (`item/generated` + vanilla `echo_shard` texture — no new art needed for a command-issued item).
-- 5 missing entity display names added to en+ru: `horde_acid_bomb`, `horde_fire_bomb`, `kage_bunshin`, `shield_projectile`, `smart_missile`.
-- 21 cyrillic `Component.literal` sites converted to `Component.translatable` (+22 new lang keys in both files): commands (horde/admin-build/state), horde crystal + boss bar + Infected Homelander lines, Omniman hint, abilities HUD seconds.
-- `ModAttachments` rewritten from deprecated `AttachmentRegistry.builder()...buildAndRegister` to `AttachmentRegistry.create(id, b -> ...)` (13 attachments, same semantics).
-- `ProjectSanityTest` gained `assertNoCyrillicLiterals` (no `Component.literal` with cyrillic in main/client) and `assertEntityLangNames` (every entity id registered in `ModEntities`/`HordeEntities` has an `entity.superheroes.*` key in en_us.json).
-
-## Completed this session (stage 13)
-
-- B18: армия Sung вынесена из статических `ARMY`/`SUMMONED`/`PHASE2` в persistent-attachment `SUNG_SHADOW_ARMY` (record `attachment/SungShadowArmy`: `List<UUID> shadowIds`, `summoned`, `phase2`). После рестарта UUID сохранённых теней перелинковываются — повторный призыв не случается, т.к. `summoned` переживает рестарт. В тике снимаются только «разрешившиеся и мёртвые» UUID; невыгруженные остаются в списке и подхватываются при загрузке чанка. `ShadowSoldierEntity.aiStep` сам решает свою судьбу: владелец офлайн → сон (цель и месть очищены, не атакует); владелец онлайн, но не Sung или тени нет в армии → `discard()` — так закрываются и снятие героя, и сироты, загрузившиеся после disband.
-- B22: `util/SafeTeleport.clamp(level, entity, dest)` шагает по отрезку (шаг ≈ половина меньшего размера хитбокса, мин. 0.2) и возвращает последнюю точку, где хитбокс свободен от блоков; невыгруженный чанк = препятствие; проверка только по блокам, чтобы «за спину» не упиралось в самого моба. Переведены Goku IT, Loki Tesseract, Scorpion, Kratos God Slayer, Reinhard Speed Judgment, Kawarimi, Shadow Exchange (оба направления), Doom Grip lunge, Thanos Space Portal. Не тронуты (by design): hold/anchor/lockPos/return-телепорты (DoomGrip hold, SpatialBind, RegulusGreed, Unibeam, IronManReactor, Pandora, MirrorDimension, lockPos у HeavensStrike/RaidenMusou/Regulus counter-катсцена) и `DoomsdayTierController.tryRelocate` (точка уже проверяется на свободу).
-- Новый `ShadowsTeleportsGameTests` (4 теста): disband при forceUntransform (нет ни записей, ни сущностей), тень-сирота удаляет себя, телепорт клэмпится у каменной стены, свободный телепорт доходит до точки.
-
-## Completed this session (stage 14)
-
-- `combat/TargetFilters` — единый предикат враждебного выбора целей (B19): `harmableBy(target, attacker)` (alive, не сам атакующий, не spectator, плюс `victim.canHarmPlayer(attacker)` когда обе стороны игроки) и `hostileTo(attacker)` — то же плюс пропуск creative-игроков (наиболее частое условие копий). Ванильная семантика проверена по байткоду: `ServerPlayer.canHarmPlayer` = `isPvpAllowed() && super.canHarmPlayer`, где super покрывает команды и friendly-fire, а `ServerPlayer.hurt` применяет эту же проверку когда источник урона несёт Player-атакующего.
-- Заменено ~25 приватных `isValidTarget`/`validTarget`-хелперов и ~60 инлайн-лямбд в ability/effect/item/entity/physics на `TargetFilters`; лишние условия сохранены через `.and(...)` (дистанция, `!= primary`, исключение ShadowSoldier). Френдли-селекторы (shadows, призывы, владельцы, кинематик-фризы) оставлены как были.
-- `magic()` без атакующего теперь атрибутирован (`indirectMagic(attacker, attacker)`), так что `pvp=false`/команды работают и на источнике урона: ScaramoucheWindPrisonAbility, ThanosSoulPulseAbility, MonarchsDomainController, UraniumDaggerItem. DoT-эффекты (Bleeding/Snapped) и fallback-без-владельца (ShieldProjectile generic, SungJinwoo divert) намеренно оставлены unattributed.
-- Побочные правки поведения по сути фикса: creative-игроки и зрители теперь единообразно пропускаются всеми враждебными сканами; DoomGrip вместо фейкового `isAlly` (uuid==uuid) использует настоящие team-правила; кинематик-фризы SwordDrawCeremony (`e -> true`) и TimeSlow-цикл игроков оставлены/переведены осознанно (TimeSlow больше не замораживает тиммейтов без friendly fire).
-
-## Completed this session (stage 15)
-
-- All 4 "потенциальные" findings verified real against current code and fixed:- Architecture audit 2 is preserved as two complementary files: `docs/audits/2026-09-25-hero-modularity-audit.md` (hero locality, `HeroModule`/`HeroProfile`, Scorpion pilot, Reinhard stress-test) and `docs/audits/2026-09-25-hoplite-structural-audit.md` (package cycles, registries, router contract, services, payloads).
-- The migration that synthesizes both audits is split into six executable plans in `docs/design/architecture-migration/` (`00-overview.md` is the map; `01`–`06` are the plans). They were revised after an external review and rebased on the bugfix stages 4–12 (#40, #42–#49): plans extend the BF11 seams (`HeroTickDispatcher`, `HeroLifecycle`, `Hero` hooks), BF7 `ClientSessionState` and BF10 `PUBLIC_HERO` instead of adding parallel ones. The monolithic `docs/design/2026-09-25-architecture-migration-plan.md` is an unchanged archive of the pre-review version and is not executed or updated.
-
-## Architecture migration — stages E1 + E2 (plan 05)
-
-- **E1 (#81):** root package `com.example.superheroes` → `io.github.grebeshok105.codex` (R14, owner-approved). Pure rename: 681/683 files byte-identical modulo substitution; only build.gradle/gradle.properties differ. Acceptance: zero `com.example` refs; barrier held (no open src/ PRs at merge).
-- **E2 (#83):** `core/` + `mechanic/` skeleton — 52 moves + 3 new (`CoreAttachments` 9 shared ids byte-identical, `CoreNetworking` — `ModNetworking.init()` calls it first, `PayloadRegistrar` per F.1). `item/bound`→`mechanic/boundweapon`, `world/`→`mechanic/world`; emptied legacy packages deleted.
-- Deviations logged: `BOUND_WEAPON_ISSUES` stayed in `ModAttachments` (type in mechanic; core→mechanic forbidden — plan internally inconsistent); `PlayerLifecycle` logger → `LoggerFactory.getLogger(MOD_ID)` (R16); cycle baseline 28→31 (old top-level ring dismantled, contracts re-expressed as thin intra-core pairs — waves break them by ownership per R6); residual core→legacy edges (`HeroTransformService→particle`, `TooltipFrame→item.infinity`) noted for wave work.
-- Gate: compile all source-sets, junit 48/48, gametest 97/97; strict rules verified non-empty (`allowEmptyShould` flipped+restored); store+baseline refrozen post-integration.
-
-## Architecture migration — stage CL2 (plan 04)
-
-- New `client/core/hud/` registry: `HudLayer` (functional iface), `HudBounds`, `MovableHud` (`layoutId()` + `bounds(w,h)`), `HudLayers` — the mod's single `HudRenderCallback` (spectator gate lives inside it), `register`/`registerMovable`, `movables()`. All 24 HUD renders in `SuperheroesClient` are now `HudLayers.register(order, id, X::render)` with `order` = former position × 100.
-- The 7 draggable elements implement `MovableHud` — each `bounds()` holds the exact math deleted from `HudEditScreen`'s switch. `chat`/`effects` (mixin-shifted vanilla, no HUD class) got movable-only adapters (`ChatHudMovable`/`EffectsHudMovable`) registered with no-op layers so the editor still shows all 7 cards.
-- `HudEditScreen` iterates `HudLayers.movables()` re-sorted by its retained `ELEMENTS` order (`orderedMovables()`) — card paint order and reversed topmost-first hit-test unchanged; `HudLayoutManager.ALL` deleted.
-- Runtime checklist PASSED: hero HUDs (homelander/iron_man/reinhard/regulus) identical pre/post on the same run dir; editor shows the same 7 cards in the same frames (≈pixel-identical at GUI scale 1); dragged `ability_bar` offset survives a full client restart. Evidence in `~/cl2-runtime/`.
-- Reviewer nits logged (not fixed — latent design traps, not regressions): `orderedMovables()` silently drops movables lacking an `ELEMENTS` row (future CL3b HUDs must add ELEMENTS rows), `HudLayers.init()` has no idempotence guard, `orderedMovables()` allocates per frame.
-
-## Architecture migration — stage A1 (plan 01)
-
-- ArchUnit guardrails landed: `src/test/java/.../architecture/` — `CodexClasses` imports main/client class dirs from Gradle sysprops; `ArchitectureRulesTest` holds 5 frozen rules (shared→concrete-hero deps, main→client, ServerTickEvents outside the dispatcher, lifecycle hooks outside registrars, depends-on-composition-roots) and 6 strict rules for the future layered packages (core/mechanic/hero-module rules + module-list construction/reference rules); `ClientArchitectureRulesTest` mirrors it for `src/client`; `PackageCycleRatchetTest` ratchets bidirectional package pairs against `src/test/resources/architecture/package-cycles-baseline.txt` (`-Dcodex.writeCycleBaseline=true` regenerates).
-- Freeze store lives in `src/test/resources/archunit_store/` (`archunit.properties`: `allowStoreCreation=false`, `allowStoreUpdate=true` — new violations fail, shrinking violations update the store). Committed baseline: 32 cycle pairs, 134 shared→concrete-hero deps, 33 client→hero, 74 lifecycle-hook call sites, 4 composition-root deps, 5 remaining tick-field accesses (most were already migrated in stage 11b), 0 main→client.
-- `qualityGate` now depends on `verifyArchitectureBaseline` — a PR fails if the store/baseline drift uncommitted.
-- Negative probes (temporary `core/module`/`hero/scorpion` stubs + a synthetic cycle) failed in exactly the expected rules, confirming the strict rules really fire.
-- `TestHeroes.transform(ServerPlayer, ResourceLocation)` replaced 17 copy-pasted transform calls in 10 GameTest files.
-- `build.gradle` gained a backup Central mirror (`CentralAliyunMirror`) — the local repo1 redirect mirror does not carry `com.tngtech.archunit` and shared CI egress IPs get 429s; the extra repo keeps the new dependency resolvable everywhere.
-
-## Architecture migration — stage C2 (plan 02)
-
-- New `core/ability/` trio verbatim per plan: `AbilityDenial` (record, `SILENT` + `notify`), `AbilityBlocker` (functional interface), `AbilityRules` (`blocker`/`freeCost` registries, `firstBlock`, `isFree` — registration order = evaluation order).
-- `AbilityRouter.activate` — the first three `ModEffects` checks replaced by `AbilityRules.firstBlock(...)` + `blocked.notify(player)`; `canPayActivationCost` uses `AbilityRules.isFree`. `ResourceController` — both `isMadness` sites → `isFree` (tick local still named `madness`, semantically "free cost" now). Acceptance grep `ModEffects` in both files → empty.
-- `SuperheroesMod` registers the 4 rules right after `ModEffects.init()` (aftermath → Snap → Vanity → `freeCost(ModEffects::isMadness)`) with the plan's D2b note; two imports added (`Component`, `ChatFormatting`) since the moved code is spelled unqualified there.
-- Characterize-first: 8 `AbilityGateGameTests` PASSED on old code and again post-migration (65/65 gametests in gate). Cycle baseline shrank 31→30 (`effect <-> resource` pair dropped — `ResourceController` no longer imports `ModEffects`; orchestrator regenerated).
-
-## Architecture migration — stage C1 (plan 02)
-
-- 81 duplicate `AbilityCooldowns.isOnCooldown(player, getId())` calls removed from `Ability.canActivate` implementations (plan said 85; actual inventory was 82 sites in `ability/` = 81 own-id + 1 router check). Deletion shapes: `return !cd` → `return true` (64), conjunct removal preserving the rest (13), whole `if (cd)` statement removal (4 — the two Raiden ones dropped a cooldown message that was already unreachable: the router rejects before `canActivate` runs). Cooldown SET sites (`setCooldownTicks`) untouched per «Нельзя менять».
-- New frozen ArchUnit rule `abilitiesDoNotCheckTheirOwnCooldown` in `ArchitectureRulesTest` — store generated post-cleanup, empty (no `Ability` implementor calls it).
-- Characterize-first per §11.1.6: `CooldownGateGameTests.routerRejectsAbilityOnCooldown` (Scaramouche Electro Swirl — plain cast, no toggle/preconditions; Wind Prison deliberately avoided since its toggle-off branch precedes the cooldown check) PASSED before and after the deletions.
-- SESSION.md merge-conflict markers from the N3 union merge cleaned up in this branch.
-
-## Architecture migration — stage N3 (plan 01)
-
-- Deleted the fake `api/` package entirely (`HeroApi`, `AbilityApi`, `CreativeTabIds`, `package-info`; −240 lines). The only consumer was `RepulsorChargeController`: `HeroApi.getCurrentHeroId(player).orElse(null)` → `HeroDataStore.get(player).heroId()` (identical semantics — `heroId()` is `currentHero.orElse(null)`).
-- `CreativeTabIds`'s id `superheroes:superheroes` already lived in `ModItemGroups.SUPERHEROES_TAB_KEY` — no move needed; new GameTest `superheroesTabIdIsStable` pins it.
-- External-consumer check via `gh search code` returned zero before deletion.
-- `package-cycles-baseline.txt` shrank 32→31 pairs (the `ability <-> api` bidirectional pair dropped out — orchestrator regenerated).
-
-## Architecture migration — stage N2 (plan 01)
-
-- Java-only rename of Doctor Strange leftovers: `ModItems.DOCTOR_STRANGE_SUIT` → `PANDORA_SUIT` (registered id stays `doctor_strange_suit` — persisted), `HeroAttributes.STRANGE_HP` → `PANDORA_HP` (value `modifiers/pandora/max_health` unchanged — persisted modifier id), misleading comments fixed in `AbilityIds`/`MirrorModeCycleAbility`/`MirrorDimensionS2CPayload`/`PandoraHero`. `DoctorStrangeSuitItem` class NOT renamed — B3 deletes it.
-- `textures/entity/hero/doctor_strange.png` deleted (grep-verified unreferenced); the item model/texture/lang keys stay.
-- New GameTest `pandoraSuitIdIsStable` (in `HeroCompletenessGameTests`) pins the persisted registry id so a future rename can never drift it.
-- `Madness*`/`RegulusMadness*` renames deliberately skipped — waves I5/I6.
-
-## Architecture migration — stage N1 (plan 01)
-
-- Removed dead code: `ViltrumiteThunderClapAbility` (never registered), `MeteorSlamAbility` + `ShockwavePulseAbility` (registered but listed by no hero — unreachable through the AbilityRouter hero-list gate), 2 never-registered HUDs (`LowResourceVignetteHud`, `ResourceBarHud`), `HordeGeoRenderer`+`HordeGeoModel` (unregistered geo renderer; `HordeGeoAssets` stays — still used by `BaseHordeEntity`), 7 `AbilityIds` constants, and the 4 `MeteorSlamAbility` call sites in `SuperheroesMod` (onLeave/onDeath/resetAll/playerTick).
-- `archunit_store` shrank 74→73 lifecycle-hook rows (orchestrator regenerated — the deletions removed entries in file `6ab35c1a`).
-- New GameTests guard the contract the deletions relied on: `decodesUnknownAbilityIds` (CODEC tolerates persisted ids the registry no longer knows) and `activatingAnUnlistedAbilityIdIsANoOp` (hero-list gate rejects unlisted-but-registered ids without charging resources).
-- Orphan left deliberately (outside the stage's listed scope): `textures/gui/vignette.png` — its only consumer was `LowResourceVignetteHud`.
-
-## Architecture migration — stage A2 (plan 01)
-
-- `HeroCompletenessGameTests` (entrypoint #14): `everyListedAbilityIsRegistered` fails on any ability id a hero lists that `AbilityRegistry.get` can't resolve; `everyHeroAndAbilityHasLangInBothLanguages` requires `hero.<ns>.<id>`, `ability.<ns>.<ability>`, `ability.<ns>.<ability>.desc` in both lang files — the exact three key shapes the HUD reads (verified against `AbilityDescriptions.nameKey/descKey`). `lang(String)` is package-accessible for B1 reuse.
-- `assertControllersAreWired` now builds its wiring source from `SuperheroesMod` + every `*Module.java` — a controller may be wired by a hero/shared module instead of the composition root; the check is removed in D2b when static `init()`s disappear.
-- Negative probe confirmed: unregistering `SCORPION_SPEAR` fails `everyListedAbilityIsRegistered` with `superheroes:scorpion lists unregistered superheroes:scorpion_spear`. All 22 heroes pass — no missing lang keys.
-
-## Important decisions
-- Bound weapons are identified by type (`BoundWeaponItem`) and validated by token; untokened copies are treated as stale on purpose (none are obtainable legitimately; old saves could hold leaked copies).
-- Bound weapons never become item entities: returned to the owner when valid and there is room, otherwise deleted (the ability can reissue).
-- `HeroData` sync: writes are immediate; full syncs stay immediate to preserve packet ordering with other payloads; resource-only syncs are coalesced per tick.
-- `AbilityRouter.deactivate` order is flag-off → `onDeactivate` (verified no `onDeactivate` callee reads the active set).
-- Stage 3 lock design: `EntityControlLock` owns the flag transitions; controllers never touch the flags. Locks are re-established, not restored — join hooks re-apply what should still hold (Pandora revival), everything else is released. `RemDemonismController.onRespawn`/`ReinhardController.onDeath` exist but are dead code — intentionally unwired (death → forceUntransform → clear covers them).
-- Lifecycle cleanup (stage 3) must not rely on `ServerPlayConnectionEvents.DISCONNECT` for game state: Fabric can fire it from the Netty thread (`Connection.channelInactive`). Use a main-thread hook before the player is saved (`PlayerList.remove`).
-- Stage 10 projection design: `PUBLIC_HERO` mirrors the hero id only — widening it to resources/passives would re-create the privacy surface of `HERO_DATA` broadcast; anything client-side needing more can read other synced attachments or payloads. `copyOnDeath` mirrors `HERO_DATA` lifecycle (hero persists across death), persistent mirrors save data so no respawn hooks are needed.
-- Ability-scoped attribute buffs should become transient; hero base passives stay permanent (transient max-health modifiers would clamp health on load because `LivingEntity.readAdditionalSaveData` calls `setHealth` after loading attributes).
-
-## Verification
-
-- Migration A1: `qualityGate` green (ArchUnit tests + `verifyArchitectureBaseline` included); negative probes trip exactly the five expected rules; baseline files committed. `runClient` launches to the title screen under xvfb on the orchestration VM.
-- Stage 15: `qualityGate` green, 24/24 GameTests (2 new: horde audience pause/resume, ram adopt/dedupe).
-- Stage 14: `qualityGate` green, 24/24 GameTests (2 новых `TargetPredicateGameTests`: AoE бьёт врага и пропускает тиммейта без friendly fire — через `DoomsdayRoar` end-to-end; `pvp=false` убирает игроков из сканов). Готча: `makeMockServerPlayerInLevel` хардкодит `isCreative()=true` и общее имя `test-mock-player` — для pvp/team-тестов нужен `TestPlayers.join(helper, name)` с реальным ServerPlayer.
-- Stage 11: `qualityGate` green, 27/27 GameTests (3 new dispatcher tests). Intentionally kept: `CombatImpactEngine`'s nano-hammer branch (reads the `NANO_FORM` attachment — an ability-state rule, not a lookup table) and client-side statics (`ThanosHero`, `PandoraHero` tables used by HUD filters).
-- Stage 10: `qualityGate` green, 24/24 GameTests (2 new public-hero-sync tests). First run caught a test bug: `untransform` is cooldown-gated right after `transform` — the test uses `forceUntransform`.
-- Stage 8: `qualityGate` green, 26/26 GameTests (4 new House of Vanity tests). Test-only notes: victims must be joined+teleported inside `PULL_RADIUS` BEFORE `AbilityRouter.activate` — latecomer absorb only runs on keepalive ticks (every 20), so post-activation joins race the assert delays; mock players hardcode `isCreative()==true` (bytecode-verified `GameTestHelper$2`), so `VanityAuthority` `mayfly` grant/clear is unreachable in gametest — assert `hasEffect` probes instead.- Stage 5: `qualityGate` green, 22/22 GameTests (3 new damage-pipeline tests). Test-only notes: mock players join with private `spawnInvulnerableTime` that blocks `hurt()` — cleared via reflection in the kawarimi test; the test structure spawns ~6M blocks from the mock-player spawn point, so proximity-sensitive asserts must teleport the player first.- Stage 4: `qualityGate` green, 19/19 GameTests. Negative check — without the `hasHero()` guard, first-time transforms start with 0 energy and `windPrisonEndsWhenItsZoneExpires` fails.
-- Stage 3: `qualityGate` green, 16/16 GameTests (7 new lifecycle regressions: owner-leave lock release, refcount, shadow reconcile, transient-vs-permanent NBT, attachment-backed transform cooldown, forceUntransform clears locks+cooldowns, dead-caster snap).
-- Stage 2: `qualityGate` green, 9/9 GameTests; negative check — old tick write-back makes `windPrisonEndsWhenItsZoneExpires` fail.
-- `./gradlew qualityGate --no-daemon` green on stage 1: JUnit, 8 `ProjectSanityTest` checks, assertion audit, jar isolation audit, 7/7 GameTests.
-- Negative check: re-inserting the old mixin logic makes `droppingWithFullInventoryDoesNotRecurse` fail with `StackOverflowError`.
-- `runClient` reaches the title screen on the orchestration VM (DISPLAY=:0 + xvfb-run); runtime checklists are feasible for client-facing stages. Server behavior is covered by GameTests with real joined players.
-
-## Known issues / follow-ups
-
-- ~~`runServer` in dev fails mod resolution while Veil is on the runtime classpath~~ — fixed: `server` run config now uses a `servernoveil` source set with Veil filtered out (same exclusion as gametest/datagen). Veil is client-only by design and can never load on a dedicated server; `recommends` (not `depends`) in fabric.mod.json stays correct even if the mod ports fully onto Veil — server installs simply omit it.
-- `auto-approve-pr.yml` still auto-approves green PRs (audit §3); left as a repository-owner decision, not changed by this work.
-- Execute the plans in `docs/design/architecture-migration/` stage by stage; the canonical stage graph is `00-overview.md` §2.1 and each plan's «Статус стадий» table is its tracker. First stage: plan 1 `A1` once every bugfix PR (#37–#40, #42–#49) and #41 are on `main`.
-- The bugfix stack merged as a single linear history (`integrate/main` → `main`): the hazards called out here were real (`fabric.mod.json` GameTest unions, `RemoteHeroSkins` deletion vs stage-7 references, `ServerTickEvents` removal vs later imports) and were resolved during the restack — `RemoteHeroSkins` references dropped, GameTest entrypoints unioned to 13, `TargetFilters`/`SafeTeleport`/`WorldDestructionPolicy` imports kept where still used.
-- Owner decision needed before plan 5 stage `E1`: new root package name (proposed `io.github.grebeshok105.codex`, decision R14).
-- Rebuild only the project skills that prove useful for the new workflow.
-- Design a new release/versioning workflow after the verification baseline is stable.
-- Use the VFX research to decide the Codex 5.0 rendering foundation.
-
-## Next session
-
-1. Read this file, `AGENTS.md`, and the plan's «Статус стадий» tables — migration stage `A1` is done on `main`; the next legal stages per `00-overview.md` §2.1 are `A2`, `N1`/`N2`/`N3`, `CL2` (three tracks in parallel).
-2. For architecture work: `docs/design/architecture-migration/00-overview.md` plus the one plan whose stage you execute (stage graph §2.1).
-3. Re-verify findings while implementing; do not assume subagent-only findings are proven until checked.
-4. Keep `qualityGate` green; add GameTests for server behavior; update the audit tracker and this file per stage.
-
-
-## Architecture migration — stage B1 (plan 02)
-
-- Remaining hero-owned data moved onto the hero: `Hero` gained `getPassiveGlyphs()` / `canSuperJump()` / `getMeleeBleed(ServerPlayer)` defaults; all 22 heroes declare their `THEME`/`HUD` literals and values (Pandora THEME = Regulus-palette copy with the mandated comment; Doomsday bleed gates on `getTier(attacker) >= 3` — clamp-equivalent to the old controller read).
-- New types: `hero/BleedProfile` record, `hero/PassiveGlyph` enum (19 constants, `HudIcons.PassiveGlyph` moved verbatim); `AbilityDescriptions.passiveCount` reads the hero; `SuperJumpController`/`HeroBleedingController`/`HeroMeleeImpactController` consume hooks only.
-- Legacy tables deleted: `HeroTheme.<HERO>`×11 + `HeroHudConfig.<HERO>`×21 constants (DEFAULT kept), `PassiveIcons`, `HERO_PASSIVE_COUNT`, `ALLOWED_HEROES`/`isAllowed`/`bleedFor`/`getDoomsdayTier` temp lookups.
-- Characterize-first: goldens `hero_presentation.txt` + `passive_glyphs.txt` captured on old code; `presentationMatchesGolden`/`passiveGlyphsMatchGolden` green post-migration. qualityGate green (59/59 gametests on branch); freeze store shrank by the expected SuperJumpController/getDoomsdayTier/Pandora→Regulus entries.
-- Runtime checklist (§11.1.11): hero panel + radial + energy HUD pixel-identical old-vs-new for homelander/iron_man/pandora/scorpion on a shared run dir; super jump launches on Regulus (F3 Y −62→−45.8) and stays denied on Scorpion. Evidence under `/home/ubuntu/b1-runtime/`.
-
-
-## Architecture migration — stage D1 (plan 03)
-
-- `HeroTickDispatcher` gained `Phase.START` (START_SERVER_TICK) and `Phase.EARLY` (END tick, before GLOBAL — empty until D2b) plus `onServerTickStart`/`onEarlyTick`/`onHeroTick` and `init()` (registers START+END listeners at the former `END_SERVER_TICK` call site in `SuperheroesMod`). `registrar()` exposes a private `enum Registrar implements TickRegistrar` for module-facing registration.
-- New `lifecycle/` types verbatim per plan: `LifecycleRegistrar` (7 hooks + `global()`), `GlobalLifecycleRegistrar` delegating to `PlayerLifecycle` (BF3) + `HeroLifecycle` (BF11), `OwnedSessionMap` (`create(lifecycle, Set<ClearOn>)`, `ClearOn{LEAVE,DEATH,HERO_CLEAR}`, null-rejecting `put`) + `OwnedSessionMapTest` (3 JUnit tests).
-- First consumer migrated: `CapShieldSlamAbility` `WeakHashMap` → `OwnedSessionMap` (LEAVE+DEATH + always server-stop clear; its `clear`'s "untransform" javadoc was stale — no `onClear` registration ever existed, behavior preserved exactly). The three registrations dropped from `SuperheroesMod`.
-- Integration fix: `startRunsBeforeEndPhasesAndEarlyBeforeGlobal` asserted absolute index order — made robust to mid-tick hook registration (search relative to first "start"). qualityGate green: 67/67 gametests; worker's hand-shrunk freeze-store entries verified = canonical `allowStoreUpdate` output.
-
-## Architecture migration — stage B3 (plan 02)
-
-- `TransformationLore` record (`transform/`) + `TransformationItem(heroId, props, lore)` ctor; new `appendHoverText` emits openDivider→flavor→empty→bullets→closeDivider via `TooltipFrame`, null-guarded so the 7 remaining subclasses keep working.
-- 15 lore-only subclasses deleted; `ModItems` now constructs them inline with identical keys/colors/order/props. Hero ids passed as `ModId.of("…")` literals — `<Hero>.ID` class reads would have added 15 new frozen-rule violations (`sharedCodeDoesNotDependOnConcreteHeroes` can't grow); convention confirmed by plan 06 I5a («id героев строками»). Pandora keeps `doctor_strange_suit` id + comment.
-- Integration fixes: `item.TooltipFrame` moved to `transform/` (TransformationItem's tooltip dep created a new `item <-> transform` package cycle — ratchet caught it; move is acyclic since `item.infinity` never imports `transform`). Freeze store −16 (all removed entries = deleted subclasses' hero-id reads, zero additions).
-- Golden `transformation_lore.txt` (22 items) captured pre-migration; `transformationItemLoreIsStable` now compares against it — green post-migration. qualityGate: 70/70 gametests.
-- Runtime cross-build verification (old subclasses vs new, same world/GUI scale, fixed hover coords): `goku_gi`/`scorpion_kunai` tooltips pixel-perfect; `doctor_strange_suit` content identical (≤0.78% px residual = tooltip-fill bleed); `blade_of_chaos` stone hint identical; kunai right-click → scorpion transform + hellfire HUD PASS. Post-merge qualityGate 71/71.
-
-## Architecture migration — stage B2 (plan 02)
-
-- `Hero.passiveAttributes()` returns the hero's `AttributeModifierSet`; default `applyPassives`/`removePassives` route through it. 6 fully-reducible heroes dropped both overrides (captain_america, goku, loki, naruto, scorpion, kazuha); 5 partially (atrain, rem, pandora, raiden, reinhard keep the override with extra side effects); 11 custom keep overrides but route the passive set through `PASSIVES`.
-- `HeroAttributes.java` deleted: per-hero passive sets → `PASSIVES` fields on heroes; the ability-scoped/transient members (KRATOS_RAGE, NANO_*, RAIDEN_BURST, REINHARD_*, REGULUS_MADNESS, DOOMSDAY_*, thanosClearStoneModifiers, buildReinhardPhaseSet, buildDoomsdayTierSet) moved verbatim to `hero/AbilityScopedModifiers.java` — same package, so zero new package edges and zero new frozen violations (not a concrete-hero class). `ability/` host rejected: hero files read those members → would create new `ability<->hero` cycle pair.
-- `DoomsdayHero.PASSIVES` = `AbilityScopedModifiers.DOOMSDAY` (one definition); id/value tuples diff-verified identical old-vs-new.
-- Golden `passive_modifiers.txt` (171 applied-modifier records) captured pre-migration; `passiveModifiersAreStable` compares — green. qualityGate 70/70; baseline/store delta zero.
-
-## Architecture migration — stage D2a-1 (plan 03)
-
-- Scorpion migrated to the module pipeline: `HeroModules.bootstrap(CoreModuleContext.INSTANCE)` runs a two-pass ctor over `HeroModules.ALL` = [ScorpionModule]; `Heroes.SCORPION` + 4 `SCORPION_*` ability constants deleted — `AbilityIds` referenced instead; SuperheroesMod line 56 identical callsite preserved.
-- Contracts: `HeroModule` (id + ctor taking `HeroModuleContext`), `AbilitySink` (register(cb)), `CoreModuleContext` singleton. Strict ArchUnit rules verified non-empty via temporary `allowEmptyShould(false)` flip (13 rules pass).
-- Store shrank exactly 2 lines (Heroes.SCORPION field + clinit call); cycle baseline unchanged.
-- Gametest `scorpionIsRegisteredThroughItsModule` asserts registry↔module list identity + all 4 ability ids. qualityGate 70/70.
-- Runtime (PR head @742ecda): kunai transform, all 4 scorpion abilities (spear/eruption/breath/hellport), suggestion list, regulus sanity — PASS. Pre-existing bug found (NOT regression): Hellport never displaces — `SafeTeleport.clamp` self-collides on the caster's bounding box; files byte-identical to main. Logged for a separate fix ticket.
-
-## Architecture migration — stage D2a-2 (plan 03)
-
-- All 22 heroes registered through modules: 21 new `hero/<id>/<Id>Module.java` (package = hero id w/o underscores; `final class`, own hero field, `register(ctx)` = hero's abilities in `getAbilities()` order). `HeroModules.ALL` = 22 in original `Heroes.init()` order; `bootstrap` = heroes → `SharedAbilities` → module register (two-pass preserved). `bootstrap/SharedAbilities` owns FLIGHT + VILTRUMITE_RECOVERY (≥2-hero abilities) in old init order.
-- `Heroes`/`AbilityRegistry` fields + `init()` deleted; `register`/`get`/`all` kept. `SuperheroesMod`: `HeroModules.bootstrap(CoreModuleContext.INSTANCE)` at the old init site. 114 module abilities + 2 shared = 116 ids — id set identical to old init; each old ability owned by exactly one module/shared.
-- Gametest `modulesCoverEveryHeroInRegistryOrder` (verbatim from plan) + index-independent `scorpionIsRegisteredThroughItsModule`. Cycle baseline: `ability<->ability.ironman` pair resolved and removed; store auto-shrank ~42 stale `Heroes.*`/`AbilityRegistry.*` entries. qualityGate 71/71.
-
-
-## Architecture migration — stage D2b-1 (plan 03)
-
-- 22 controllers renamed `init()` → `register(HeroModuleContext ctx)` verbatim (init bodies — UseItemCallback/AttackEntity/JOIN/DISCONNECT listeners — kept identical inside register). MirrorDimension self-END → `ctx.ticks().early`, MadnessFlight self-START → `ctx.ticks().start`; both lost `ServerTickEvents` imports.
-- New `bootstrap/SharedMechanics.register(ctx)` = old shared rows in old relative order: HeroLandingTracker, HeroEquipmentLock, SuperJump, AutoSaturation, HeroPassiveRegen, MeleeImpact serverTick, BallisticBodyTracker, FlightController cleanup, HeavensStrike + content rows HordeManager(level), AdminBuildSync. Called from `HeroModules.bootstrap` between SharedAbilities and the per-module pass; `SharedMechanics.registerPost(ctx)` after the module pass holds the shared wiring that must stay after every hero listener/tick: `HeroMeleeImpactController.register` (AttackEntity: IronFists@64 consumed before MeleeImpact@67 — uniform module order can't place it between Omniman@14 and TimeSlow@11, post-pass keeps all hero listeners ahead; residual edge: a time-frozen attacker previously got MeleeImpact push+FX on the cancelled hit, now gets only the cancel), `Landing.tickPlayer`, `Flight.tickPlayer`.
-- Hero modules extended with their controllers' register + tick rows (old table order within each hero): Scorpion 1; Pandora 3 (Mirror early, Death global, SpatialBind global); Homelander 6; IronMan 7; Regulus 4; Invincible 1 + ViltrumiteCharge tick (sole-Invincible); Omniman 1 + Rush/Think ticks; BattleBeast 1; Rem 2; SungJinwoo 2; Doomsday 4 + DoomGrip/ChargeTackle/Footsteps ticks; Goku 2 + Kamehameha/SpiritBomb ticks + SAIYAN_AURA activeAbility; Naruto 2 + 3 Rasengan ticks + SAGE_MODE activeAbility.
-- `SuperheroesMod`: my init() calls + tick rows removed; kept core inits, worker-B init()s (Thanos×2, Kratos×2, Reinhard×3, RaidenPlunging) + B's tick rows + PassiveReconciler/ResourceController rows. registerPlayerLifecycle + inline damage lambdas untouched (D2b-2).
-- Tests: `assertControllersAreWired` deleted (STATIC_INIT scan, SUPERHEROES_MOD field); `controllersHaveNoStaticInit` strict rule added verbatim — RED until worker B removes the last 8 `*Controller.init()`.
-- Freeze store: `4c613794` −2 (my self-registered tick listeners); `8c45b479` — init()→register(ctx) descriptor rewrites (Invincible/Kawarimi/RegulusTotem) + +1 line shifts for import additions; `6ab35c1a` regenerated at current SuperheroesMod line numbers (uniform −22 from HEAD for onLeave/onDeath/onRespawn/onServerStopped; −15 vs stale store for earlier blocks).
-- Tick cross-reads (сверка): LandingTracker.tickPlayer reads Unibeam.isBusy and ViltrumiteCharge/Rush read FlightController.isFlightActive — both order flips were caught at integration and fixed by `SharedMechanics.registerPost` (Landing/Flight player ticks moved after the module pass, restoring Unibeam@345→Landing@347→Flight@380 freshness and charge/rush's pre-refresh isFlightActive read); reviewer additionally caught HeroMeleeImpactController's AttackEntity listener needing the same post-pass (IronFists consume-order). UraniumDefense.isUnderUraniumThreat read stays phase-safe (GLOBAL precedes PLAYERS both schemes). Residual documented above.
-- qualityGate NOT run here (orchestrator runs the gate); `controllersHaveNoStaticInit` expected-green after worker B's init() removals landed (aab21ad) — verified at gate.
-
-## Architecture migration — stage CL3a-1 (plan 04)
-
-- Client module contracts landed: `client/core/module/{HeroClientModule,HeroClientContext,CoreClientContext}` (plan-verbatim) + `client/bootstrap/HeroClientModules` + `client/core/input/HeroActionKeys` (one END_CLIENT_TICK drains `consumeClick()` always, fires `onPress` only when local `PUBLIC_HERO` matches; no key mappings registered yet — CL3b owns them).
-- `ScorpionClientModule` owns the `ScorpionFxS2CPayload` receiver (handler byte-identical; `ClientNetworking` lost only that receiver + import — 35→34 in-file + 1 via `ctx.receive`). `heroId() = ScorpionHero.ID` — IN_CLIENT_HERO_MODULE is excluded from the sharedClientCode rule. `HeroClientModules.bootstrap()` runs right after `ClientNetworking.init()`.
-- New ArchUnit client rules (`clientHeroModulesAreReferencedOnlyByThemselvesAndTheModuleList`, `clientCoreDoesNotKnowHeroModules`, `sharedClientCodeDoesNotDependOnConcreteHeroes`) now non-vacuous. qualityGate 71/71.
-- Runtime: receiver proven to fire via temporary `[CL3A1-FX]` println (kind=2 hellfire pillar, kind=1 spear harpoon) — Veil 4.1.2 in classpath, handler dispatches to `VeilScorpionFx`. Kunai→scorpion transform, regulus regression PASS.
-
-
-## Architecture migration — stage D2b-2 worker A (plan 03)
-
-- `SuperheroesMod.registerPlayerLifecycle`/`registerTickHandlers` deleted (onInitialize 222→61 lines): core rows → `SharedMechanics`, hero rows → owning modules via `ctx.lifecycle()` or the controller's `register(ctx)`. Split by position inside the old table: rows that OPENED an event list (HTS::onPlayerJoin/HDS::syncPublicHero onJoin; HTS::onPlayerLeave+ECL::releaseOwnedBy onLeave; ECL onDeath; HTS::onPlayerRespawn; HeroReactionController::onTransformed — global cross-hero broadcast, parked shared; Horde/EnergyLocks resetAll) sit in `SharedMechanics.register` (pre-modules), rows that CLOSED a list (AbilityCooldowns::syncAll onJoin, AC::clearAndSync onDeath, ECL::releaseOwnedBy onHeroClear) sit in `registerPost` (post-modules) — documented in javadoc.
-- Per-hero hooks moved: Regulus 10 (Greed onLeave/onDeath/stop; Madness join/leave/death/respawn/heroClear/stop; Totem heroClear), Doomsday 4 (DoomGrip leave/death/heroClear/stop), Omniman 4 (ThinkMark leave/death/heroClear/stop — ACTIVE stays a plain map: clear() has unlockTarget+setPose side effects), BattleBeast 2 (Curse reapplyOnJoin + stop), Rem 2 (Demonism heroClear+stop), SungJinwoo 1 (stop; DEATH_ECHOES keyed by ServerLevel — not convertible), Pandora 3 (MirrorDim leave+stop in its register; PandoraDeath.register adds ALLOW_DAMAGE→ALLOW_DEATH in old order + onHeroClear resetOnHeroTaken).
-- OwnedSessionMap conversions (13 maps, 11 files): all cleared-only `Map<UUID,…>` — 9 charge abilities (ChargeTackle, ViltrumiteCharge, OmnimanViltrumiteRush, GokuKamehameha, GokuSpiritBomb, NarutoRasengan/Oodama/Rasenshuriken, RepulsorCharge) got ClearOn{LEAVE,DEATH}; Unibeam 3 maps ClearOn{LEAVE,DEATH,HERO_CLEAR} (covers the old heroClear row verbatim — clearState was pure drops); MonarchsDomain ClearOn{LEAVE,DEATH}; PandoraDeath.ACTIVE + SpatialBind.BOUND ClearOn{LEAVE}. Owners = the keyed player everywhere except SpatialBind (victim uuid — map is victim-keyed). Auto-drop registers at class-init; every converted class is touched at bootstrap via `new XAbility()`/`X::tick` in its module, except RepulsorChargeController (lambda body → first player tick — safe: map is empty before any use and no leave can precede a tick).
-- AbilityRules attribution (old order preserved as module order): isAftermath blocker + isMadness freeCost → HomelanderModule (MADNESS is applied by Homelander-only MilkBottleItem — сверка correction, not Regulus); VANITY_STRIPPED → PandoraModule; DISABLED_ABILITIES (applied by ThanosSnap/SoulPulse) → ThanosModule — B's push missed it; restored by worker A post-rebase.
-- §6.3 GameTests (`LifecycleSideEffectsGameTests`, registered in gametest fabric.mod.json): DoomGrip heroClear releases victim NO_AI+caster INVULNERABLE; ThinkMark heroClear restores victim AI/gravity; madness heroClear resets REGULUS_MADNESS + strips only madness-owned effect instances (foreign DAMAGE_RESISTANCE amp-5 survives); Greed owner-leave frees frozen victim; MirrorHouse caster-leave closes + victim-leave releases; Pandora heroClear drops PANDORA_REVIVED + permanent INVULNERABLE; relog reapplies BattleBeast curse (real save/load path via new `TestPlayers.rejoin` — same GameProfile). DoomGrip/ThinkMark start() are unguarded — tests drive them without transforms.
-- Cross-read сверка: none — every hook touches only its own hero's state. Order flips vs old table (all plan-accepted module order): respawn ThanosGauntlet→RegulusMadness became Regulus→Thanos (independent attachments); onLeave/onDeath hero rows now run in HeroModules.ALL position instead of table order.
-- qualityGate NOT run (orchestrator runs the gate). Frozen store 6ab35c1a: orchestrator regenerated it to EMPTY post-integration — all 70 stale lines referenced the deleted registerTickHandlers/registerPlayerLifecycle tables (ratchet only shrinks).
-- Integration: B pushed first (contrary to plan order); rebased worker-A commit onto `origin/arch-mig/D2b-2` — one conflict (SuperheroesMod: his truncated table vs my full rewrite → took the rewrite) + `fabric.mod.json` auto-merged (both test classes registered). B's commit did NOT carry the `DISABLED_ABILITIES` rule — restored it in `ThanosModule.register` post-rebase (thanos sits at module position 10, keeping the old blocker order aftermath → disabled → vanity).
-
-## Architecture migration — stage D2b-2 orchestrator fixes + verification (plan 03)
-
-- Integration: UnibeamController.pruneGone signature widened to `Iterator<? extends Map.Entry<UUID,?>>` (OwnedSessionMap's invariant entry iterator). Ceremony gametests (`reinhardCeremony{Leave,Death}ThawsFrozenMobs`) got `player.teleportTo(zombie)` — mock players join at world spawn, outside CEREMONY_RADIUS.
-- Gametest harness findings (documented for future tests): mock ServerPlayers need `setYHeadRot`/`setYBodyRot` for `getViewVector` (setYRot alone is ignored — LivingEntity view uses head rot); `ServerPlayer.canHarmPlayer` is `isPvpAllowed() && team-check` — gametest server runs pvp off, timeslow test enables it; tests that fail mid-body leak live players into `getPlayerList()` — horde's 96-block `hasAudience` counts them (hordePausesWithoutAudience now sweeps strays first).
-- Characterization corrections vs worker's assumptions: madness-clear test — the foreign effect must not be DAMAGE_RESISTANCE et al because `RemDemonismController.clear` (global onClear chain) strips those types REGARDLESS of ownership — byte-identical on main → pre-existing bug, nit backlog; test now uses INVISIBILITY. `relogReappliesBattleBeastCurse` renamed `relogClearsBattleBeastCurseKeepsBasePassives`: instrumentation proved `onPlayerJoin → reapplyLifecyclePassives → hero.removePassives → BattleBeastCurseController.clear` wipes STAGES before the module's reapplyOnJoin runs — `reapplyOnJoin` is dead code on main too (curse never survived relog) → pre-existing dead-hook bug, nit backlog + fix-ticket candidate.
-- New ArchUnit rule `controllersHaveNoStaticInit` green; archunit_store `6ab35c1a` regenerated empty (tick/lifecycle store gone). `onInitialize` ≤60 lines, no registerTickHandlers/registerPlayerLifecycle tables.
-- qualityGate FULL PASS at c3b83d5: build + JUnit + ProjectSanityTest + jar isolation + runGametest 89/89 + verifyArchitectureBaseline.
-
-## Architecture migration — stage CL3b (plan 04)
-
-- Hero keys: `RAIDEN_SWORD_DRAW` → `RaidenClientModule.actionKey`, `NANO_WEAPON`/`ESP_TOGGLE` → `IronManClientModule.actionKey`; `ModKeys` keeps only core keys (radial/bindings/tooltips/super_jump/vfx/8 slots); guard parity verified — `HeroActionKeys` fires on synced `PUBLIC_HERO`, drains clicks unconditionally.
-- HUD: 16 hero layers moved to `ctx.hud` of owner modules with orders preserved (kratos 600; regulus 900/1100/1200/1300/1500; homelander 1400; doomsday 1600; reinhard 1700/2200/2300; pandora 1900/2400; ironman jarvis_overlay 100/jarvis_detection 200/reactor_overlay 1000).
-- Renderers: `SHADOW_SOLDIER`→sungjinwoo, `KAGE_BUNSHIN`→naruto, `SHIELD_PROJECTILE`→captainamerica, `RAM`→rem, `SMART_MISSILE`/`IRON_LEGION_DRONE`→ironman via new `HeroClientContext.entityRenderer` hook (`CoreClientContext` delegates to `EntityRendererRegistry`).
-- IronMan ticks (`ClientNanoSuitUpState`, `JarvisDetectionHud`, `tickRepulsorCharge`) → module END_CLIENT_TICK regs (no ctx tick hook in plan interface — direct Fabric call is the pattern).
-- `LightningBoltAccessor` → `client/mixin/` (client mixin config); `SuperheroesClient`/`ModKeys` carry zero hero-keyed registrations.
-- Deferred to CL4 per plan: `IronManNanoFormLayer`/`NanoSuitUpLayer` (player feature layers = CL4 scope).
-- Gate: `qualityGate` green, 73/73 gametests.
-
-
-## Architecture migration — stage C4 (plan 04)
-
-- New `core/ability/AbilityAvailability` (leaf package): `record(Map<ResourceLocation, Visibility>)`, `enum Visibility {AVAILABLE,LOCKED,HIDDEN}`, CODEC + STREAM_CODEC, `visibilityOf` default AVAILABLE. Sync task in `ability.AbilityAvailabilitySync` (would create `core.ability ↔ hero` cycle if placed in core).
-- `ModAttachments.ABILITY_AVAILABILITY` — non-persistent, `syncWith(STREAM_CODEC, targetOnly())` (PUBLIC_HERO pattern).
-- `Hero.visibility(ServerPlayer, ResourceLocation)` default AVAILABLE; impls: Doomsday (isAbilityUnlocked/DOOMSDAY_PROGRESS), Thanos (stones via GauntletStateController), Pandora (hasActiveHouse), Rem (demonism), Regulus (COUNTER_STRIKE hero-scoped). Vanity-strip → all HIDDEN in the sync task.
-- `C/ClientAbilityVisibility` reads the attachment (absent = all visible, matches old pre-sync behavior); `ClientAbilityFilter` + client tier tables deleted; 6 consumers rewired (AbilityBarHud, RadialMenuHud, AbilitiesTooltipHud, HeroInfoPanelHud, BindingsScreen, SuperheroesClient key dispatch).
-- Sync dispatcher: initially the tail of the core tick table; after merging main post-D2b-1 it registers via `SharedMechanics.registerPost` (runs after all module registers) — identical last-position in PLAYERS order.
-- GameTests +6: tier1 → HIDDEN|LOCKED, tier-up → AVAILABLE, write-on-change.
-- Runtime checklist (runClient, instrumented `[C4-VIS]` attachment-write evidence): Doomsday tiers, Thanos stones, Pandora house, Rem demonism, Regulus counterstrike-only-in-madness, vanity-strip override, no-flicker — all PASSED on 0a1131a; evidence in PR #73 comment.
-- Reviewer fix verified: Regulus COUNTER_STRIKE reads REGULUS_MADNESS attachment, not ModEffects.MADNESS (Homelander milk-madness).
-
-## Architecture migration — stage D2c (plan 03)
-
-- `Hero.keepsHeroOnDeath()` (default false; DoomsdayHero → true) and `Hero.reapplyPassivesAfterRespawn(ServerPlayer)` (default removePassives+applyPassives; DoomsdayHero → applyPassives only — his removePassives resets the tier his own death hook just granted).
-- HeroTransformService hero/controller branches deleted: `reapplyLifecyclePassives` → `PassiveReconciler.capture(player, hero.getId(), () -> hero.reapplyPassivesAfterRespawn(player))`. The capture wrapper stays in HTS deliberately — a `hero → lifecycle` import would add a package 2-cycle outside the ratchet baseline; verified every hero's removePassives is pure-removal (no addEffect), so widening capture around remove+apply records the identical effect set.
-- Per-hero hooks wired in modules: `ReinhardController.register` + `ctx.lifecycle().onRespawn`; `RemDemonismController.register` + `ctx.lifecycle().onLeave(clear)`; `IronManModule` + `ctx.lifecycle().onLeave(UnibeamController.clearState)`. Module hooks are ungated (GlobalLifecycleRegistrar) → same unconditional run as the old inline calls.
-- SuperheroesMod AFTER_DEATH: `DoomsdayHero.ID` check → `Heroes.get(heroId).keepsHeroOnDeath()`; listener remains the last registered AFTER_DEATH (PlayerLifecycle.init and HeroModules.bootstrap both precede it inside onInitialize) — all death hooks still run before forceUntransform.
-- Order сверка: SharedMechanics.register runs before the module loop, so global hooks precede module hooks in every PlayerLifecycle list. New onLeave order: EnergyLocks → clearActive → module clears (Rem, then IronMan). Neither RemDemonismController.clear nor UnibeamController.clearState reads HeroData.activeAbilities → running after clearActive is safe; strict old order (clears before clearActive) preserved only for onHeroClear paths, which already ran via hero-clear. ReinhardController.onRespawn now runs after HeroDataStore.syncFull instead of before — it writes only REINHARD_STATE + modifiers, never HeroData → equivalent.
-- PassiveReconciler сверка: it did NOT replace the respawn path (it re-asserts captured infinite effects on tick; the explicit reapplyLifecyclePassives call remained) → `reapplyPassivesAfterRespawn` introduced per plan.
-- GameTest `doomsdayKeepsHeroOnDeath` (LifecycleGameTests): kill() drives the real AFTER_DEATH chain — Doomsday keeps his hero and tiers to 2, Raiden untransforms. Respawn half driven via `HeroTransformService.onPlayerRespawn` directly — mock players have no real respawn round-trip, and it is the exact hook PlayerLifecycle RESPAWN fires; asserts tier still 2 + REGENERATION re-applied.
-- archunit_store `8c45b479` shrunk: HeroTransformService→DoomsdayHero.ID frozen line removed. qualityGate NOT run (orchestrator runs the gate).
-
-## Architecture migration — stage M1 (plan 05)
-
-- core/net/FxBroadcast (tracking/trackingAndSelf/around over PlayerLookup — transport only); 5 ModNetworking loops migrated: syncFlightState/broadcastRepulsor/broadcastThanosCosmicBeam → trackingAndSelf (was send+tracking), broadcastLaser/broadcastLaserFromEntity → tracking (old `observer != shooter` was dead code — bytecode-verified `ChunkMap$TrackedEntity.updatePlayer` returns immediately on player==entity so self is never in seenBy). Audiences identical.
-- mechanic/motion/Motion (set/add + Sync{MARK, MARK_AND_SEND_TO_PLAYER}; mark=hurtMarked, send=packet to self when player).
-- mechanic/targeting/{TargetFilter,Targeting} — record, all flags off by default; respectPvp/excludeAllies = gameplay change (audit B19), never enabled.
-- Frozen rules MechanicServiceRulesTest: motion-packet ctor coverage BOTH (Entity) and (int,Vec3) — reviewer caught the id-ctor gap; store refrozen 45+16 sites (all in ability/effect/physics/entity — wave debt). GameTests: Motion +4, MechanicTargeting +6 (each flag cuts exactly its case, and()-composition, pvp, allies). 107/107.
-- Reviewer note: reviewed stale HEAD once (pre-refreeze push) — pointed at fc35585 → APPROVE.
-
-## Architecture migration — stage F (plan 05)
-
-- Scorpion is now a fully self-contained hero module: `hero/scorpion/` (ScorpionModule/ScorpionHero/ScorpionItems + ability/, runtime/ScorpionController, net/, sound/, targeting/) + `client/hero/scorpion/` (ScorpionClientModule, fx/, fx/veil/). Only composition-root lines remain in HeroModules/HeroClientModules.
-- HeroModuleContext gained `content()` (ContentRegistrar→CreativeTabContents) and `payloads()` (PayloadRegistrar.FABRIC); CoreModuleContext wires both.
-- Intra-module DAG rule established (leaf packages own constants; runtime classes use local SCORPION_ID, not root-class refs) — mandatory for G1/waves.
-- ArchUnit F.4: every hero S2C payload registers a receiver in its client module.
-- Sanctioned behavior commit: OwnedSessionMap SPEAR_PULLS/BREATHS with ClearOn.LEAVE+DEATH (was static HashMaps); creative tab order = kunai after legacy items (module registration order).
-- build.gradle: `datagen` sourceSet (Veil-free classpath — fixes pre-existing runDatagen break on server env) + `clientnoveil` sourceSet + `runClientNoVeil` run config for Veil-free client checks.
-- Gate: qualityGate green @a7aaab2 (111/111 gametests). Golden transformation_lore reordered (kunai first — registration order, content identical). ArchUnit store refrozen with 0 scorpion entries.
-- Runtime: runClient Veil + runClientNoVeil both PASSED 7/7 (transform, 4 abilities + spear pull, untransform, OwnedSessionMap ClearOn LEAVE+DEATH proven via instrumentation).
-- Reviewer: APPROVE at HEAD 1118390. Merged #85.
-
-## G1 — Reinhard server module (PR #86)
-- hero/reinhard/ full server move: module+hero+abilities(8, own ids)+items+attachments, ability/, runtime/ (10 classes), item/RoyalIcicleItem, net/ (7 payloads), sound/ReinhardSounds.
-- New core seams: C2SGuards (requireHero/requireActiveAbility), AttachmentRegistrar (persistent/transient/initializer overload).
-- Shared cleaned: AbilityIds, ModItems, ModItemGroups, ModAttachments, ModNetworking, ModSounds, AdminAbilityDebug (debugTargetsMobs via Ability contract).
-- isReinhardSwordOnly dead-code moved disconnected to ReinhardAbilities.
-- Baseline lost ability<->debug pair; golden regen (reinhard_suit first); store refrozen.
-- Gate green; reviewer APPROVE; runtime 7/7 (bounded on icicle empowered branches — pre-existing, player-scoped).
-- HeavensStrikeController.Variant.REINHARD intentionally remains (G3).
-
-## G2 — Reinhard client module (PR #87)
-- client/hero/reinhard/: state/ (5), hud/ (3), screen/WishScreen, render/ScabbardLayer; module registers muteWorldDuringTimeSlow + swordDrawReadyHalo.
-- Client core seams: ClientSoundFilters + generic SoundEngineMixin (new client.core.mixins.json), AbilityDecoration(s), ctx.soundFilter()/abilityDecoration().
-- Old SoundEngineMixin + RadialMenuHud Reinhard branch deleted; acceptance grep → HeroClientModules only.
-- Gate green; reviewer APPROVE; runtime 8/8 (darkness/sword-death bounded — render path proven, melee trigger env-blocked solo).
-
-## G3 — Reinhard leftovers (PR #88)
-- Variant.REINHARD deleted (dead); chargeFriendly now uses BoundWeaponItem.blocksChargedAttackTiers trait (only RoyalIcicle true) — zero hero ids in SuperheroesClient.
-- Acceptance G reached: Reinhard touches shared code only via HeroModules + HeroClientModules + beam.json + lang/assets.
-- Gate green; reviewer APPROVE; no runtime needed (dead-code + semantics-identical).
-
-## H — architecture review gate (GO)
-- Independent reviewer (not F/G author): GO on all 10 checklist items. No seam-fix PRs before waves.
-- Metrics §8 on main post-G3: 76/10 UUID maps, 30 cycle pairs, 17 .init(), 0 own-tick files, 70/318-line roots.
-- R21-R23 recorded (HeroClientContext bound ≤10; ClientSoundFilters single-consumer OK; entities/particles direct reg).
-- migrate-hero SKILL.md authored from F/G lessons (characterize→move→clean; DAG; seams; traps).
-- Wave order confirmed: I1a-c → I2a-c → I3 → I4a-d → I5a-c → I6a-b + IC1-3 → O.
-
-## IC1 — horde → content/horde (PR #96)
-- Horde subsystem moved to content/horde/ + client/content/horde/ on NEW ContentModule/ContentModuleContext contract (HeroModuleContext minus hero()); composition roots bootstrap/ContentModules + client/bootstrap/ContentClientModules.
-- HordeManager.ACTIVE/OVERLAY_PLAYERS → OwnedSessionMap(global(), empty ClearOn) — clears only on SERVER_STOPPED (matches old resetAll; SharedMechanics.onServerStopped dropped).
-- GeckoLib kept (removal precondition not proven). Reviewer APPROVE, CI green.
-
-## I1a — Kazuha + Scaramouche (PR #90)
-- hero/kazuha, hero/scaramouche + client counterparts; first wave on the migrate-hero procedure.
-- Gate green; reviewer APPROVE.
-
-## I2a — Goku + Naruto + mechanic/charge (PR #91)
-- hero/goku, hero/naruto; shared charge mechanic → mechanic/charge/ (ChargeSession, Track).
-- Gate green; reviewer APPROVE.
-
-## I3 — Invincible + Omni-Man + mechanic/ability (PR #92)
-- hero/invincible, hero/omniman; ViltrumiteChargeAbility + shared ability helpers → mechanic/ability/.
-- Gate green; reviewer APPROVE.
-
-## I1b — Loki + A-Train (PR #93)
-- hero/loki, hero/atrain. Gate green; reviewer APPROVE.
-
-## I2c — Captain America (PR #95)
-- hero/captainamerica; shield projectile + vibranium items in-module. Gate green; reviewer APPROVE.
-
-## I2b — Kratos (PR #97)
-- hero/kratos; two review rounds broke a real ability<->runtime package cycle. Gate green; reviewer APPROVE.
-
-## I1c — Battle Beast (PR #98)
-- hero/battlebeast. Gate green; reviewer APPROVE.
-
-## IC2 — Homelander boss → content/boss/homelander (PR #99)
-- Boss encounter + minions + boss bar into a content module; hero Homelander stays for I6a.
-- Gate green; reviewer APPROVE.
-
-## I4b — Rem (PR #100)
-- hero/rem + client/hero/rem; demonism/npc interactions in-module. Gate green; reviewer APPROVE.
-
-## I4c — Raiden + mechanic/strike (PR #101)
-- hero/raiden; lightning strike engine → mechanic/strike/ (shared with other heroes).
-- Gate green; reviewer APPROVE.
-
-## I4a — Sung Jinwoo + mechanic/summon (PR #102)
-- hero/sungjinwoo; shadow-soldier summon engine → mechanic/summon/. Gate green; reviewer APPROVE.
-
-## IC3 — admin + commands → content modules (PR #103)
-- Admin infra and the /superheroes command root → content/admin + content/commands.
-- Gate green; reviewer APPROVE.
-
-## I4d — Doomsday (PR #104)
-- hero/doomsday: adaptation learning, doom grip, tier command seam (module commands()).
-- Gate green; reviewer APPROVE.
-
-## I5a — Thanos + InfinityStones (PR #108)
-- hero/thanos + client/hero/thanos; hero→stone mapping baked into InfinityStones.rewardFor(heroId) —
-  heroes never import siblings; ThanosStoneRewardController.registerHeroStone API deleted.
-- compat/falbiks/ snap hook + strip-mixin; tooltip stone line via ThanosClientModule.appendStoneLine
-  (ItemTooltipCallback). Remaining 6 TransformationItem subclasses collapsed to declarative rows.
-- Gate green; reviewer APPROVE.
-
-## I5b — Regulus (PR #110)
-- hero/regulus + client/hero/regulus (madness HUD/mixins via client/core FovModifiers + HudJitter).
-- Damage types → SPECS pattern (RegulusDamageTypes.SPECS → HeroModule.damageTypes()); RegulusSuitItem
-  deleted → declarative TransformationItem row; AbilityIds regulus rows removed; logs/latest.log untracked.
-- Gate green; reviewer APPROVE.
-
-## I5c — Pandora + shared client seams + compat (PR #109)
-- hero/pandora; 4 cinematic mixins → generic client/core/input/InputLock (lock reason registered by Pandora);
-  FontVanityCipherMixin → client/core/text/TextObfuscationLayers; Iris bridge → client/compat/iris/.
-- Gate green; reviewer APPROVE.
-
-## Test/infra fixes merged between waves
-- #76 horde audience isolation, #78 house-of-vanity release scope, #82 victim visibility + pvp flag restore,
-  #94 charge victim visibility, #105 horde wave stabilization, #107 runServer Veil-free classpath,
-  #112 doom-grip spatial-scan wait.
-
-## I6a — Homelander + mechanic/flight (PR #117)
-- hero/homelander + client/hero/homelander; полёт → mechanic/flight (FlightController + профили).
-- Gate green; reviewer APPROVE.
-
-## I6b — Iron Man + L2 единый лучевой payload (PR #116)
-- hero/ironman; три лучевых S2C payload'а → единый core/net/BeamFxS2CPayload + BeamRenderer.
-- Gate green; reviewer APPROVE.
-
-## O-pre — статики hero-runtime → OwnedSessionMap (PR #115)
-- Reinhard×4, Goku, Naruto и др.: статические Map/Set<UUID> → OwnedSessionMap.
-
-## O-pre — разморозка ArchUnit (PR #118)
-- Все 9 freeze-правил → strict (store-файлы пустые удалены); CapShieldSlam → Motion.set.
-
-## O-docs (PR #119)
-- AGENTS §2/§7 + README под модульную архитектуру; .agents/skills/add-hero/; migrate-hero удалён.
-
-## O-strays — распускание legacy-пакетов (PR #120)
-- effect/network/ability/physics/attachment/item распущены; ресиверы → SharedMechanics через
-  ctx.payloads(); BoundWeaponIssues attachment воссоздан; ModItemGroups/HomelanderBossEntity →
-  BuiltInRegistries seam (datagen не импортирует hero-пакеты).
-
-## O-statics2 — ноль static UUID-коллекций (PR #121)
-- 12 main + 8 client файлов: статические Map/Set<UUID> → OwnedSessionMap(ClearOn.*) /
-  приватные holder'ы с ClientSessionState.register(::reset). §8.11: 0 в src/main и src/client.
-- PassiveReconciler: DECLARED/PENDING → ClearOn.HERO_CLEAR, ручные init/clear удалены.
-
-## O-client — composition root клиента (PR #123)
-- SuperheroesClient: 242 → 17 строк тела; client/network/ClientNetworking распущен:
-  7 core-ресиверов → client/core/net/CoreClientReceivers, AdminBuild → client/content/admin;
-  HUD → client/hud/CoreHuds, клавиши/сендеры → client/core/input/, FX → client/fx/CoreFx,
-  рендереры → client/render/CoreRenderers, скрины → client/screen/ModScreens.
-- Gate green; reviewer APPROVE.
-
-## O-cycles — ноль package-циклов (PR #124)
-- Новый leaf `core/model/` (HeroData, ResourceKind, AbilityAvailability, ControlLock*, HeldLocks) —
-  разорваны все 10 пар core.*-web; ModDataComponents удалён (BOUND_WEAPON → BoundWeapons,
-  init в composition root) — убита пара item↔mechanic.boundweapon; horde-внутренние пары
-  растворены leaf-перестановками. package-cycles-baseline.txt пуст; verifyArchitectureBaseline
-  и PackageCycleRatchetTest зелёные.
-- Фикс при интеграции: ProjectSanityTest путь resolve со слэшами; 3 мёртвых import'а (нит ревьюера).
-- Gate green (362/362); reviewer APPROVE.
-
-## O-final — финальная приёмка §8
-
-Все 18 критериев `00-overview.md` §8 выполнены на main (замеры пост-мерж):
-
-| §8 | Цель | Факт |
-| :-- | :-- | :-- |
-| 1 shared-таблицы героев | 0 | 0 (строгое ArchUnit-правило, store пуст) |
-| 2 импорты героев из core/mechanic/content/compat/client.core | 0 | 0 (строгие правила) |
-| 3 ссылки на hero.<id> | только свой пакет + bootstrap-списки | ArchUnit green |
-| 4 герой→герой | 0 | 0 |
-| 5/6 файлы при добавлении героя/способности | per-skill add-hero | skill `.agents/skills/add-hero/` на месте |
-| 7 SuperheroesMod | ≤40 тела | 28 |
-| 8 SuperheroesClient | ≤40 тела | 17 |
-| 9 тики вне диспетчера | 0 | 0 |
-| 10 lifecycle вне регистраторов | 0 | строгое правило green |
-| 11 static Map/Set<UUID> | 0/0 | 0/0 (main+client) |
-| 12 package-циклы | 0 | 0 (baseline пуст) |
-| 13 ветки героев в shared-сервисах | 0 | 0 (только комменты; FlightMode-ветки — по профилю, не по герою) |
-| 14 hero-mixins в shared mixin-пакетах | 0 | 0 (4 hero-mixin'а в mixin/hero/<id>/ с обоснованием) |
-| 15 Client*State без reset | 0 | test enforced |
-| 16 ClientAbilityFilter-дубли | 0 | файла нет (C4) |
-| 17 hero S2C без ресивера | 0 | test enforced |
-| 18 qualityGate | весь набор правил | зелёный на main |
-
-**Проект переходит в режим «новый контент»:** новый герой = `hero/<id>/` + `client/hero/<id>/` +
-2 строки в bootstrap-списках + lang×2 + ассеты + golden-строки — см. `.agents/skills/add-hero/`.
-Программа миграции из PR #41 завершена.
-
-## Visual Core + OMP — ревью планов (ветка `devin/1790616018-visual-core-omp-plan-review`)
-
-Адверсариальное ревью двух планов (`docs/superpowers/plans/2026-09-28-visual-core-homelander-pilot.md`,
-`2026-09-28-homelander-omp-assets.md`): собственный проход + 5 раундов субагентов
-(spec-fidelity / тех-точность / исполняемость / consistency / spec-alignment / два final-gate).
-~65 находок, все проверены по репе и спекам, исправлены in-place (коммиты `3cb7ebc`..`7d8ecdd`).
-
-Ключевые исправления:
-- `HomelanderSounds` вынесен в `sound/` (ArchUnit запрещает `content.**`→`hero.**` и hero→hero);
-  `omniman_react` остаётся в `ModSounds`.
-- `STYLE_LASER`-регистрация сохраняется — босс `HomelanderEyeLaserGoal:155` шлёт `BeamFx.laser`.
-- `ShockwaveUtil.detonate` получает `suppressPresentation` (весь presentation-tail:
-  EXPLOSION/LARGE_SMOKE/POOF + GENERIC_EXPLODE/WOOL_PLACE/RAVAGER_STEP; урон/скриншейк сохраняются).
-- `durationMs` существующих звуков = замеренные значения (1440/4570/3450/6480);
-  ретайм вне ±30% = contract-change через `contract-changes.md` в том же коммите.
-- `contractClipEventTimesMatchManifest` связывает манифест `events` с parsed-clip `eventTimes`
-  (ms vs s, ±50мс), включается в Task 15 как `finalBuildHasNoPlaceholders`.
-- OMP: FINAL-coverage = «delivered» (baseline-diff + `# replaced` + reworked); mono-мандат;
-  prereq = Plan A Tasks 1–2 на main; PR в `feat/visual-core-homelander-pilot`.
-- Оба дизайн-спека закоммичены в `docs/design/visual-core-homelander/` — шаги, ссылающиеся
-  на spec §, теперь исполнимы из репо.
-
-Каждый факт про код подтверждён `rg`/`sed`/`ffprobe` на текущем HEAD; один ревьюер
-дал false-positive со стейл-чекаута (pre-I6b) — его находки сверены и отброшены.
-
-## Visual Core + Homelander пилот — Task 1 (ветка `devin/1790748000-vfx-contract-checkpoint`)
-
-Выполнен Task 1 плана `2026-09-28-visual-core-homelander-pilot.md` (аудит ростера,
-shared contract, контракт-тест). Коммиты `9b1d4c6`, `c300337`.
-
-- `docs/design/visual-core-homelander/roster-visual-audit.md` — 22 героя из
-  `HeroModules.ALL`, нужды/механизмы, конечный список возможностей ядра.
-- `shared-contract.md` + `src/test/resources/contracts/homelander_pilot.json` —
-  16 звуковых строк, 14 клипов, 1 модель, 6 текстур; motion envelope, граница
-  владения, правило замены плейсхолдеров.
-- `migration-workflow.md` — 12 шагов spec §17 с привязкой к таскам пилота.
-- `src/test/java/.../assets/OggInfo.java` + `HomelanderAssetContractTest.java` —
-  проверки из плана; класс под `@Disabled("enabled in Task 2 once placeholders
-  exist")`, `contractClipEventTimesMatchManifest` под `@Disabled("enabled in Task 15")`.
-- TDD: RED на отсутствующих ресурсах (звуки/модель/текстуры — клипы уже на месте),
-  после `OggInfo` остались только resource-фейлы; 5 существующих OGG читаются
-  без ошибок (замеры сверены с ffprobe: 3448/6478/4568/1440/5112 мс — записаны
-  в `durationMs` контракта).
-- Гейт: `./gradlew qualityGate --no-daemon` BUILD SUCCESSFUL (362 game tests).
-- Дальше: Task 2 (плейсхолдеры + `HomelanderSounds`) — в соседней ветке/сессии
-  оркестратора; здесь не начинать.
-
-## Visual Core + Homelander пилот — Task 2 (ветка `devin/1790748000-vfx-contract-checkpoint`)
-
-Выполнен Task 2 плана `2026-09-28-visual-core-homelander-pilot.md` (Homelander sounds
-module + плейсхолдеры контракта). Коммит `0497ecd`.
-
-- `sound/HomelanderSounds.java` — 16 событий через `ModContent.sound(...)`, вызов
-  `HomelanderSounds.init()` из `HomelanderModule.register`. Пять геройских событий
-  перенесены из `ModSounds`; `homelander.omniman_react` остаётся в `ModSounds`
-  (общий с `OmnimanReactionRule`), `ModSounds.SILENT` добавлен (пустой `sounds` в
-  sounds.json — валидный holder без звука, нужен Task 10).
-- Все call-site'ы обновлены: hero.homelander, content.boss.homelander (4 события),
-  hero.invincible / hero.doomsday / hero.raiden.
-- `sounds.json`: 11 новых событий + `silent`; `stream: true` у sun_charge,
-  sun_detonate, flight_loop, laser_loop (конвенция roar/omniman_react). Субтитры
-  в en_us + ru_ru (5 новых ключей, iron_fists переиспользует свой).
-- Плейсхолдеры только для строк без файла: 11 OGG (тримы/лупы из art-source MP3
-  и существующих OGG через ffmpeg, точные длительности 300–10000 мс), кубоидная
-  модель `models/item/milk_bottle.json` (текстура существующая, display-трансформы),
-  6 текстур `textures/vfx/homelander/*.png` (16×16, alpha=255). Манифест
-  `homelander_placeholders.txt` — 18 строк `<path> <sha256>`.
-- `datagen/ModItemModelProvider`: flat `milk_bottle` убран; `runDatagen` —
-  в `src/main/generated` удалён только `models/item/milk_bottle.json` (stale-файл
-  пришлось удалить до прогона: processResources падал на duplicate).
-- TDD: RED `manifestHashesMatchFiles` на отсутствующем манифесте → GREEN после
-  ресурсов. `finalBuildHasNoPlaceholders` под `@Disabled` до OMP Task 11/Task 15.
-  `HomelanderAssetContractTest` снят с `@Disabled` — все контрактные проверки PASS.
-- Гейт: `./gradlew qualityGate --no-daemon` BUILD SUCCESSFUL.
-- Нюанс гейта: `verifyGeneratedSources` требует чистый `git status` по
-  `src/main/generated` — удаление generated-файла надо коммитить ДО прогона
-  qualityGate (коммит предшествует гейту, не наоборот).
-- Дальше: Tasks 1–2 мёржатся в main отдельным PR (сигнал старта для OMP);
-  Task 3+ — ветка пилота.
-
-## Visual Core + Homelander пилот — Task 3 (ветка `feat/visual-core-homelander-pilot`)
-
-Выполнен Task 3 плана `2026-09-28-visual-core-homelander-pilot.md` (типизированные
-VFX-пейлоады + серверные хелперы отправки). Коммит `563ea5f`.
-
-- `core/net/VfxEventS2CPayload` — one-shot триггер эффекта
-  `(effect, sourceEntityId, origin, target, scale, seed)`, `TYPE = vfx_event`,
-  `NO_SOURCE = -1`; `target` — вторая точка прицеливания (конец луча, точка
-  взгляда), всенаправленные эффекты передают `origin`.
-- `core/net/VfxChannelS2CPayload` — непрерывный эффект `(entityId, channel,
-  state, target)`, `TYPE = vfx_channel`, `START/UPDATE/STOP = 0/1/2`; `state`
-  валидируется на декоде — вне диапазона бросает `DecoderException`.
-- `core/net/VfxFx` — `event` (trackingAndSelf для ServerPlayer, иначе tracking;
-  seed из `level().random`), `eventAround` (`FxBroadcast.around`, NO_SOURCE),
-  `channel` (trackingAndSelf); `CHANNEL_UPDATE_INTERVAL_TICKS = 2`.
-- Оба пейлоада зарегистрированы в `CoreNetworking` через `PayloadRegistrar`;
-  клиентские ресиверы — Task 4.
-- Опциональный харденинг Step 4 (расширить `everyHeroS2CPayloadHasARegisteredReceiver`
-  на `core.net`) пропущен: правило требует зарегистрированный ресивер, а ресиверы
-  появятся только в Task 4 — расширение сейчас уронило бы гейт. Делать вместе с Task 4.
-- TDD: RED — `./gradlew test --tests '*VfxPayloadCodecTest'` FAIL (12 ошибок
-  компиляции, классов нет) → GREEN после реализации (`eventRoundTrips`,
-  `channelRoundTrips`, `channelStateOutOfRangeRejected` PASS).
-- Гейт: `./gradlew qualityGate --no-daemon` BUILD SUCCESSFUL (362 game tests).
-- Дальше: Task 4 — клиентский Visual Core (runtime, params, backend) + ресиверы
-  в `CoreClientReceivers`.
-
-## Visual Core + Homelander пилот — Task 4 (ветка `feat/visual-core-homelander-pilot`)
-
-Выполнен Task 4 плана `2026-09-28-visual-core-homelander-pilot.md` (клиентский
-Visual Core: runtime, params, backend-seam + ресиверы Task-3 пейлоадов).
-Коммит `713bfc9`.
-
-- `client/core/vfx/` — интерфейсы по контракту плана: `VfxEffect`
-  (tick/render/done/cancel), `VfxChannelEffect` (+retarget/release),
-  `VfxEffectFactory`/`VfxChannelFactory`, records `VfxSpawn` и
-  `VfxRenderContext`. Константы `MAX_ACTIVE_EFFECTS = 256`,
-  `CULL_DISTANCE = 160.0`, `CHANNEL_TIMEOUT_TICKS = 10` живут в `VfxRuntime`.
-- `VfxInstanceTable`/`VfxChannelTable` — package-private, без Minecraft:
-  вся логика бюджета/выселения/истечения каналов там, `VfxRuntime` делегирует.
-  Eviction — `cancel()` старейшего; START/UPDATE на существующем канале —
-  retarget+сброс возраста (без дублей), UPDATE на неизвестном — открывает;
-  STOP — `release()` + снятие индекса, эффект доживает в instance-таблице до
-  `done()`; тишина > `CHANNEL_TIMEOUT_TICKS` — release.
-- `VfxRuntime` — реестр фабрик, `spawn` culls по `CULL_DISTANCE` от камеры,
-  неизвестный id → debug-log один раз; tick на END_CLIENT_TICK, render на
-  AFTER_TRANSLUCENT, reset через `ClientSessionState.register` в статик-блоке,
-  `init()` в `SuperheroesClient`.
-- `params/VfxParams` (+`parse`) — числа и цвета `#RRGGBB`/`#AARRGGBB`,
-  forgiving parse; `VfxParamsLoader` — `SimpleSynchronousResourceReloadListener`
-  по `assets/<ns>/vfx/<path>.json` → `<ns>:<path>`.
-- Backend-seam: `VfxBackends.current()` при `isModLoaded("veil")` инстанцирует
-  `client.core.vfx.veil.VeilVfxBackend` по имени через рефлексию — ноль
-  `foundry.veil`-символов вне будущего пакета и компилируется без класса Task 5;
-  класс отсутствует/не грузится → fallback + warn один раз.
-  `FallbackVfxBackend`: emit/light/distortion — no-op, flash — затухающий
-  HUD-оверлей (`HudRenderCallback`).
-- Ресиверы в `CoreClientReceivers`: оба пейлоада hop на клиентский тред,
-  разрешение `sourceEntityId` (`NO_SOURCE` → null) → `VfxRuntime.spawn`;
-  channel-пейлоад → `VfxRuntime.channel`.
-- `HeroClientContext.vfx/vfxChannel` + реализация в `CoreClientContext`
-  делегируют в `VfxRuntime.register*`.
-- ArchUnit-харденинг из Task 3 сделан: `everyHeroS2CPayloadHasARegisteredReceiver`
-  теперь также требует у каждого `core.net` S2CPayload TYPE, зарегистрированный
-  в `CoreClientReceivers` — гейт зелёный. `ProjectSanityTest` дополнен пином
-  `VfxRuntime.java` в `namedSingletons` (session-reset обязателен).
-- TDD: RED — `./gradlew test --tests '*client.core.vfx*'` BUILD FAILED
-  (34 ошибки компиляции, классов нет) → GREEN после реализации (9 тестов:
-  2 budget, 4 channel, 3 params). Пойман один баг: `#AARRGGBB` с alpha>=0x80
-  давал отрицательный int и отфильтровывался как malformed — sentinel переведён
-  на long.
-- Гейт: `./gradlew qualityGate --no-daemon` BUILD SUCCESSFUL.
-- Отступлений от спека нет: `src/main` не тронут, зависимостей нет, hero-id
-  символов в `client/core/vfx/**` нет.
-- Дальше: Task 5 — `client/core/vfx/veil/` (реальный VeilVfxBackend: Quasar
-  emitters, dynamic lights, post-distortion) + первый эффект поверх runtime.
-
-## Visual Core + Homelander пилот — Task 5 (ветка `feat/visual-core-homelander-pilot`)
-
-Выполнен Task 5 плана `2026-09-28-visual-core-homelander-pilot.md` (Veil backend:
-particles, dynamic lights, post pipelines). Коммит `804469d`.
-
-- `client/core/vfx/veil/VeilVfxBackend` — `implements VfxBackend`, публичный
-  no-arg конструктор (VfxBackends инстанцирует по имени). `emit` — тот же путь,
-  что у `VeilScorpionFx`: `renderer().getParticleManager().createEmitter(id)`
-  → `setPosition` → `addParticleSystem`. `light` —
-  `LightRenderer.addLight(PointLightData)` → `VeilLightHandle`
-  (move/set → light data + `markDirty()`, remove → `free()`); при исключении —
-  no-op handle. Весь boundary в `try/catch (Throwable)` с warn один раз.
-- `VeilPostEffects` — активация пайплайнов `superheroes:vfx_flash` /
-  `superheroes:vfx_distortion` через `PostProcessingManager.add/remove`,
-  юниформы `uIntensity`/`uColor`/`uCenter`/`uRadius`/`uStrength` через
-  `PostPipeline.getUniformSafe` (composite проксирует в шейдеры стадий).
-  Ленивый `END_CLIENT_TICK` гасит `uIntensity` за 6 тиков (та же длительность,
-  что у fallback-вспышки) и снимает пайплайн на нуле — активен только пока
-  intensity > 0.
-- Ассеты положены в `src/client/resources/assets/superheroes/pinwheel/`
-  (в плане — `src/main/resources`; выбран client source set: pinwheel-ассеты
-  чисто клиентские, в продакшн-jar попадают так же, существующие quasar-ассеты
-  остаются в main). Post-JSON: одна стадия `veil:blit` `in: minecraft:main`
-  → дефолтный `out: veil:post` (in==out запрещён кодеком), `renderStage:
-  after_level`. Программы `vfx/flash`/`vfx/distortion` — общий vertex
-  `veil:blit_screen`; `distortion.fsh` проецирует `uCenter`/`uRadius` из
-  world-space через `#include veil:space_helper` (UBO `VeilCamera`).
-- API Veil 4.1.2 сверен по jar/sources: `LightRenderHandle<T>`
-  (getLightData/markDirty/isValid/free), `PointLightData.setPosition/
-  setRadius/setColor(int)/setBrightness`, `PostProcessingManager.add/remove/
-  isActive/getPipeline`, `CompositePostPipeline.getUniformSafe` →
-  `ShaderUniformAccess` (setFloat/setVector). BlitPostStage биндит `in`-буфер
-  в `DiffuseSampler`; in==out отклоняется кодеком.
-- `VfxEffect.render` javadoc: запрещены вызовы `VfxRuntime.spawn`/`channel`
-  из `render()` — итерация живой очереди эффектов (контракт для Task 6+).
-- `VeilIsolationTest`: `import foundry.veil` вне `client/core/vfx/veil/` —
-  фейл; ноль `foundry.veil` в `src/main`; `VeilVfxBackend.java` обязан
-  существовать (нет вакуумного прохода).
-- TDD: RED — `veilBackendClassExists` FAILED до реализации → GREEN
-  (3 теста). `grep -rn 'foundry\.veil' src/main/java` пустой.
-  `./gradlew qualityGate --no-daemon` BUILD SUCCESSFUL.
-- Hero-символов в новых файлах нет; зависимостей не добавлено. Post/шейдеры
-  на GPU не прогонялись (нет runClient-верификации) — смотреть при Task 6+
-  визуальной проверке.
-- Дальше: Task 6 — pattern layer (`pattern/*`, `anchor/*`) +
-  `FlightBodyTransform` record.
-
-## Visual Core + Homelander пилот — Task 6 (ветка `feat/visual-core-homelander-pilot`)
-
-Выполнен Task 6 плана `2026-09-28-visual-core-homelander-pilot.md` (pattern layer +
-render anchors). Коммит `5f614a7`.
-
-- `client/core/vfx/pattern/` — `PhaseTimeline` (enum Phase CHARGE/HOLD/RELEASE/DONE;
-  `phaseAt(age, releasedAtAge)`, releasedAtAge=-1 пока held; `intensity` — ease-out
-  quad 0→1 за charge, 1 в hold, спад 1→0 за release; релиз до конца charge стартует
-  с текущего уровня), `BeamPattern.draw` (применяет `noise` сам — плавный sin-джиттер
-  конца луча — и делегирует новому оверлоду `CrossBeamRenderer`), `ImpactPattern.spawn`
-  (emitter со сдвигом по `normal` на `surfaceOffset`, опц. `distortion*`), `ShockwavePattern`
-  (VfxEffect, кольцо 40 сегментов, `radius`/`durationTicks`/`color`/`band`),
-  `AuraPattern` (VfxEffect за Entity: периодический emitter по `emitIntervalTicks`,
-  опц. `LightHandle` по `lightColor`/`lightRadius`/`lightBrightness`, свет снимается
-  на cancel/finish; `entity.isRemoved()` → finish), `TrailBuffer` (кольцо, get(0)=новейший),
-  `TrailPattern` (лента face-camera, фейд по `fadeTicks` после `finish()`),
-  `ScreenFlash` (`attenuation` = линейный спад по `radius` ×0.35 без LOS; `trigger`
-  держит состояние и перекормляет backend каждый тик; self-register на class-load:
-  END_CLIENT_TICK→tick, ClientSessionState→reset), `CameraImpulse` → `ScreenShakeManager`.
-- `client/core/vfx/anchor/` — `EyePair` record + `HumanoidAnchors`: pure
-  `eyesFrom(feet, bodyYaw, headYaw, headPitch, tilt, scale)` и interpolated
-  `eyes(player, partial, tilt, headAnimDeg)`; константы: pivot 1.5, eyes 0.25 fwd /
-  ±0.0625 lat / 0.0625 up; first-person — камера +0.35 fwd / ±0.11 lat / −0.08 down.
-  `FlightBodyTransform` — pitch-наклон вокруг правой оси тела от ступней
-  (head-first к направлению полёта), затем roll вокруг body-forward.
-- `client/core/flight/FlightBodyTransform` — record `(pitchDeg, rollDeg)` + `IDENTITY`;
-  заполнит Task 8 через `FlightPoseTracker`.
-- `client/core/render/` — `BeamLook` record ЛЕЖИТ ЗДЕСЬ, не в `vfx.pattern`
-  (отступление от плана): иначе `render ↔ vfx.pattern` цикл, который ловит
-  `PackageCycleRatchetTest` — сигнатура оверлода `draw(WorldRenderContext, Vec3, Vec3,
-  float intensity, BeamLook)` неизменна, приём как у `BeamStyle`. Существующий
-  `draw(..., widthMul)` сохраняет hardcoded look через общий приватный `drawLayers`
-  (выделенные `BeamLayers` слои), поведение вызывающих не изменилось.
-- Второе отступление: тик/сброс `ScreenFlash` — static-block self-registration
-  внутри самого класса, а не вызовы из `VfxRuntime` (иначе цикл `vfx ↔ vfx.pattern`).
-  Класс грузится при первом `trigger`/`attenuation`, регистрация ленивая.
-- TDD: RED — `./gradlew test --tests '*client.core.vfx.pattern*' --tests '*HumanoidAnchorsTest'`
-  BUILD FAILED (10 compile errors, классов нет) → GREEN (12 тестов: 4 timeline,
-  2 buffer, 3 flash, 3 anchors). `PackageCycleRatchetTest` поймал 2 новых цикла —
-  устранены (см. выше), baseline не тронут.
-- Гейт: `./gradlew qualityGate --no-daemon` BUILD SUCCESSFUL ×5 подряд. Внимание:
-  `runGametest` имеет нестабильные серверные тесты — в прогонах падали по одному
-  разному (regulus mania magnets / captainamerica shield lifetime / homelander
-  uranium), ретраи зелёные; к клиентским изменениям Task 6 отношения не имеет.
-- Hero-символов в `client/core/vfx/**` + `client/core/flight/` нет; зависимостей
-  не добавлено. Рендер-пути (кольцо, лента, beam-оверлод, flash) без runClient
-  не визуализированы — смотреть при Task 8 wiring.
-- Дальше: Task 7 — `PlayerAnimator` (GeoBone head sample) и Task 8 — Homelander
-  wiring (`FlightPoseTracker` → `FlightBodyTransform`, eyes → lasers).
-
-## Visual Core + Homelander пилот — Task 7 (ветка `feat/visual-core-homelander-pilot`)
-
-Выполнен Task 7 плана `2026-09-28-visual-core-homelander-pilot.md` (player animation
-runtime). Коммит `79df46f`.
-
-- `client/core/anim/` — `AnimationClip` record `(id, lengthSeconds, loop, bones,
-  eventTimes)` с вложенным `enum Loop {OFF, WRAP, HOLD}` (`loop`: absent/null→OFF,
-  `true`→WRAP, `"hold_on_last_frame"`→HOLD), `BoneTrack` record `(rotation, position)`
-  из `Keyframes`, `Keyframes.sample(float seconds)` → `Vector3f` (клэмп вне диапазона,
-  linear + Catmull-Rom по `lerp_mode` сегмента, easing применяется к сегменту,
-  НАЧИНАЮЩЕМУСЯ на ключе — Bedrock-конвенция; реализованы настоящие Penner-кривые:
-  `easeInCubic` t³, `easeOutCubic` 1−(1−t)³, `easeOutQuad` 1−(1−t)²,
-  `easeInOutSine` (1−cos πt)/2, `easeOutSine` sin(πt/2)).
-- `BedrockAnimationParser.parse(JsonObject, Consumer<String> warn)`: id-ключ
-  `animation.<ns>.<hero>.<clip>` → `<ns>:<hero>/<clip>`; формы значений —
-  `{"vector":[x,y,z],"easing":..}`, `{pre,post,lerp_mode}` (берётся post→pre),
-  bare `[x,y,z]`, канал-одиночный ключ (t=0); любой STRING (Molang) → warn +
-  пропуск клипа (не throw); неизвестная кость → warn + игнор кости, клип жив;
-  неизвестные easing/lerp_mode → warn + LINEAR; канал `scale` → warn + игнор
-  (в контракте отсутствует — отступление зафиксировано); malformed не-строковый
-  ключ → warn + пропуск ключа; `sound_effects`/`particle_effects`/`events` →
-  `eventTimes` (обе формы: `{секунды: payload}` и `{имя: число|{"time":s}}`),
-  отсутствие — не ошибка; `animation_length` отсутствует → последний ключ.
-- `AnimationLibrary` — `SimpleSynchronousResourceReloadListener` на
-  `assets/*/player_animations/**/*.animation.json`, `get(id) -> Optional`,
-  `init()` из `SuperheroesClient` (сразу после `VfxRuntime.init()`); релоад
-  заменяет снапшот, ошибки файлов — warn+skip.
-- `PlayerAnimator` — статик по entityId, слои `Layer {BASE, ACTION}`, `play/
-  stop/sample/tick/reset` + пакетные швы `useClock`/`playClip` для тестов
-  (дефолт — счётчик `clientTicks`, +1 в `tick()`); ACTION перекрывает BASE
-  попарно по костям весом фейда; повторный `play` на слое — crossfade
-  (deque лейна, кэп 8); OFF-клип по концу фейдится за свои fadeTicks и
-  отпускает в BASE; `stop(fadeTicks)` продолжает fade-out с ТЕКУЩЕГО веса
-  (непрерывно). static-init self-registration: END_CLIENT_TICK→tick,
-  `ClientSessionState`→reset — конвенция ScreenFlash, bootstrap-вызов не нужен.
-- `PoseSample` record + `EMPTY`: merged-сэмпл хранит combined/weight векторы с
-  `weight=max(baseW,topW)`, чтобы единый `×weight` в `PlayerPoseApplier` давал
-  верный per-bone бленд при любом фейде. `PlayerPoseApplier.apply` — флипы
-  GeckoLib Bedrock→Java точно по спеке (xRot += −rad(x), yRot += −rad(y),
-  zRot += rad(z); офсеты x += −px.x, y += −px.y, z += px.z), взвешенно.
-- `PlayerModelPoseMixin`: новый блок в TAIL `setupAnim` — `sample(entityId,
-  partialTick)` → `PlayerPoseApplier.apply` при непустом сэмпле, затем re-copy
-  `hat/jacket/leftSleeve/rightSleeve/leftPants/rightPants` (кадры-приложения
-  после статичных поз выше по коду — преднамеренно: клип перекрывает их).
-  partialTick — `Minecraft.getInstance().getTimer()
-  .getGameTimeDeltaPartialTick(true)` (в 1.21.1-маппингах нет `getDeltaTracker()`).
-- `HomelanderAssetContractTest.contractClipsSurviveTheRuntimeParser`: все 14
-  контрактных клипа парсятся с НУЛЕМ ворнингов и дают ожидаемый id
-  `superheroes:homelander/<clip>` — PASS.
-- TDD: RED — `test --tests '*client.core.anim*' --tests '*HomelanderAssetContractTest*'`
-  BUILD FAILED (67 compile errors, классов нет) → GREEN (10 новых тестов +
-  контрактный). Гейт: `./gradlew qualityGate --no-daemon` BUILD SUCCESSFUL
-  с первого прогона (runGametest зелёный, флейка не ловилась).
-- Hero-символов в `client/core/anim/**` нет; зависимостей не добавлено.
-- Дальше: Task 8 — Homelander flight wiring (`FlightPoseTracker` →
-  `FlightBodyTransform` + flight_* клипы на BASE-слое `PlayerAnimator`).
-
-## Visual Core + Homelander пилот — Task 8 (ветка `feat/visual-core-homelander-pilot`)
-
-Выполнен Task 8 плана `2026-09-28-visual-core-homelander-pilot.md` (continuous flight
-pose + Homelander flight presentation). Коммит `f42bb3f`.
-
-- `client/core/flight/` — `FlightPoseMath` (pure: `target` по фазе — HOVER 0–10°
-  по скорости, CRUISE 15–55°, BOOST 80°, остальные 0; знак по vy; roll =
-  clamp(−yawRate×2.5, ±25°); `step` = экспонента `1−2^(−dt/halfLife)`, half-life 3),
-  `FlightPoseTracker` (трек по `entitiesForRendering` + `ClientFlightState` +
-  `SkinResolver.heroIdFor` → `FlightPresentations.of`; transform(id, partial)
-  лерпит previous→current; velocity из дельты позиции — работает и для remote;
-  BASE-клипы stop+play с 4-тик кроссфейдом, takeoff/land на ACTION; луп-звук —
-  свой `FlightLoopSound extends AbstractTickableSoundInstance`, volume ∝
-  horizontalSpeed; trail-эффект спавнится один раз на вход CRUISE/BOOST;
-  cleanup: отпускает lane/звук и удаляет запись, когда сущность ушла или
-  `ClientFlightState` пуст), `FlightPresentation` record (11 компонент),
-  `FlightPresentations` реестр.
-- `HeroClientContext.flightPresentation` → `CoreClientContext` регистрирует в
-  `FlightPresentations`. `SuperheroesClient`: `FlightPoseTracker.init()` после
-  `AnimationLibrary.init()`.
-- `PlayerRendererMixin.setupRotations` TAIL: `mulPose(XP,−pitch)` + `mulPose(ZP,−roll)`
-  вокруг entity origin (feet pivot — сознательное отступление от «body center»
-  в спеке: anchors и тест `eyesFollowFlightTilt` требуют feet pivot).
-  `PlayerModelPoseMixin`: статичная поза ног только если у героя игрока нет
-  `FlightPresentation`.
-- `HomelanderVfxIds` (11 id), `HomelanderFx` — регистрационный хаб (Task 8:
-  LANDING→`FlightFx.landing`, trail/boost эффекты, `FlightPresentation` с
-  клипами homelander/flight_* и звуками `HomelanderSounds.FLIGHT_*`);
-  `FlightFx` — трейлы от рук/ног (4 `TrailPattern`, self-finish при выходе из
-  CRUISE/BOOST), boost-бёрст + `ShockwavePattern`, лендинг-композит
-  (`ImpactPattern` + кольцо + `homelander.flight.land` — единый лендинг-звук).
-- `HomelanderHero.onLanded`: все `sendParticles` + тирный `playSound` заменены на
-  `VfxFx.event(player, LANDING, pos, pos, scale)`; tier по-прежнему управляет
-  scale. `ShockwaveUtil.detonate` получил `suppressPresentation`-оверлоад
-  (старые сигнатуры сохранены): пропускает ВЕСЬ presentation-хвост (все
-  частицы + звуки), оставляет damage/block-break/`ScreenShakeS2CPayload`.
-- `SkinResolver.heroIdFor` стал public (шов remote-hero для трекера/миксина);
-  `HumanoidAnchors.tiltedPoint` — новый хелпер для якорей конечностей.
-- TDD: RED (7 ошибок компиляции — классов не было) → GREEN; `qualityGate
-  --no-daemon` BUILD SUCCESSFUL. Gametest-флейка: два прогона падали на РАЗНЫХ
-  Regulus-тестах (maniaOfGreed… / greedsEmbrace…), база чистая, третий прогон —
-  362/362 PASS. `hero_presentation.txt` не тронут.
-- Реализационные отступления (см. task-8-report): feet-pivot вместо body-center;
-  `IronFistsController.detonate` оставлен без suppress (его презентацию меняет
-  Task 11); trail — один VfxEffect на активацию вместо спавна каждый тик.
-
-## Visual Core + Homelander пилот — Task 9 (ветка `feat/visual-core-homelander-pilot`)
-
-Выполнен Task 9 плана `2026-09-28-visual-core-homelander-pilot.md` (eye lasers на
-VFX-канале). Ветка содержит коммит `feat(homelander): eye lasers on VFX channel…`.
-
-- `EyeLasersAbility`: все презентационные хвосты убраны — `BeamFx.laser`,
-  `LASER_SPARK` sendParticles и все три vanilla-звука (`BLAZE_SHOOT`,
-  `GUARDIAN_ATTACK`, `BEACON_AMBIENT`). Новый `ACTIVE_TICK` счётчик идёт
-  сквозь ураниевые паузы; на нём `VfxFx.channel(LASER)` шлёт START на
-  активации (текущий raycast-end из `fireBeam`), UPDATE каждые 2 тика
-  (`EyeLaserPhases.shouldSendUpdate` — `% CHANNEL_UPDATE_INTERVAL_TICKS`,
-  паузы не паузят поток → таймаут канала 10 тиков не срабатывает), STOP на
-  деактивации. `fireBeam` геймплейно байт-в-байт: hurt/madness explode/ignite/
-  огненное кольцо на тех же fire-тиках с тика 0; raycast выделен в общий
-  `BeamRaycast` (клип + entity-hit → chest).
-- `EyeLaserChannel` (client, `VfxChannelEffect`): два луча
-  `HumanoidAnchors.eyes(source, partial, FlightPoseTracker.transform, headAnim)`
-  → конец; конец для local = собственный клиентский raycast каждый кадр,
-  для remote = серверный end с лерпом за 2 тика; impact-эффект (`ImpactPattern`
-  + точечный свет) раз в 3 тика; `PhaseTimeline(6,8)` интенсивность;
-  ACTION-клипы `laser_charge` → `laser_hold` → `laser_release`; звуки —
-  charge/loop(entity-bound `LaserLoopSound`)/release; в madness ширина/яркость
-  умножаются (`madnessWidthMul`/`madnessIntensity` из params).
-- `HomelanderVfxIds` переехал в `hero.homelander.vfx` — импорт из
-  `hero.homelander.ability` замыкал новый 2-цикл `hero.homelander <->
-  hero.homelander.ability` (PackageCycleRatchetTest отверг). Тот же цикл
-  ждал бы Task 10–12 — листовой сабпакет лечит для всех.
-- `LocalLaserOverlay` удалён; `HomelanderClientModule` регистрирует
-  `ctx.vfxChannel(LASER, EyeLaserChannel::new)` через `HomelanderFx`.
-  `STYLE_LASER` остаётся — босс-луч шлёт `BeamFx.laser`
-  (HomelanderEyeLaserGoal:155), комментарий в коде.
-- Ассеты: `vfx/homelander/laser.json` (BeamLook + impact + свет + звуки),
-  quasar-эффект `homelander_laser_impact` (shape/particle/particle_data/color).
-- TDD: RED — `EyeLaserPhasesTest` compile-fail + gametest
-  `eyeLaserBroadcastsStartUpdateStop` «condition never became true» → GREEN;
-  gametest-лейн требует регистрации класса в `src/gametest/resources/
-  fabric.mod.json` (entrypoints.fabric-gametest). `qualityGate --no-daemon`
-  BUILD SUCCESSFUL. `hero_presentation.txt` не тронут.
-- Отступления: `BeamPattern` noise остался на `System.currentTimeMillis()` —
-  `VfxChannelFactory.open` не получает seed (он живёт только в VfxSpawn),
-  протягивание = рефактор сигнатуры, вне скоупа.
-- Дальше: Task 10 — madness `level.explode` + `detonateSun` на
-  `SilentParticles`/`VfxFx`.
-
-## Completed this session (Visual Core pilot — Task 10)
-
-- `SilentParticles.SILENT` (`superheroes:silent`) — пустой `textures` в
-  `particles/silent.json` + no-op provider в `CoreFx.init()` (provider
-  возвращает null; `ParticleEngine` это обрабатывает — `NoRenderParticle`
-  недоступен, ctor protected). Подставляется в 1.21.1-оверлоад
-  `Level.explode(..., ParticleOptions small, ParticleOptions large,
-  Holder<SoundEvent>)` вместе с `wrapAsHolder(ModSounds.SILENT)` там, где
-  визуалом владеет VFX-событие.
-- Серверные send-site'ы: `MilkBottleItem.use()` — серверный guard +
-  `VfxFx.event(MILK_DRINK)`, drink/eat-звуки → `SILENT`, `WITHER_SPAWN` из
-  `finishUsingItem` убран. `HomelanderMadnessAftermathController` —
-  `eventAround(SUN_CHARGE, 96)` на старте и `eventAround(SUN_DETONATION, 160)`
-  как единственный владелец `homelander.sun.detonate`; END_ROD/SMALL_FLAME/
-  beacon/visual-lightning/thunder-плейсхолдеры удалены; оба `explode`
-  (12f/7f MOB) переведены на silent-оверлоад — урон/огонь/разрушение
-  byte-identical. `HomelanderMadnessFlightController` — `VfxFx.event(
-  MADNESS_CRASH, scale 0.35)` на точке лома; sendParticles + GENERIC_EXPLODE
-  убраны. `EyeLasersAbility` — оба madness-`explode` на silent-оверлоад.
-- Клиент: `SunChargeFx` — 200-тиковая аура (свет 4→22 радиуса, эмбер-эмиттер,
-  heat-distortion, BASE-клип `sun_charge`, entity-bound звук с рампом
-  громкости/питча, камерный тремор для игроков < 32). Событие идёт
-  `eventAround` (NO_SOURCE) — эффект биндится к ближайшему игроку в радиусе 3
-  от origin, иначе позиционный фолбэк. `SunDetonationFx` — ScreenFlash по
-  `attenuation(dist,160,LOS)·scale`, core-light 48 с затуханием 60 тиков, 2
-  shock-кольца, distortion-пульс, ember/debris эмиттеры,
-  `CameraImpulse.shake(1.6·att, 30)`; стинг `homelander.sun.detonate` только
-  для `SUN_DETONATION` — `MADNESS_CRASH` переиспользует композицию с
-  `scale=0.35`, без стинга. `MILK_DRINK` — one-shot в `HomelanderFx`:
-  ACTION-клип `milk_drink` + bound `homelander.milk.drink`.
-- Ассеты: `vfx/homelander/{sun_charge,sun_detonation}.json`, quasar-эмиттеры
-  `homelander_sun_{ember,debris}` (+shape/particle/particle_data; цвет —
-  существующие `homelander_gold`/`homelander_dust`).
-- Тесты: `HomelanderNoVanillaParticlesTest.CLEANED` += MilkBottleItem,
-  HomelanderMadnessAftermathController, HomelanderMadnessFlightController
-  (EyeLasersAbility уже был). GameTest `sunDetonationKeepsGameplayAndSendsVfx`
-  — блоки в радиусе ломаются, ровно одно событие `sun_detonation`,
-  `LightningBolt` не спавнится.
-- Подводный камень: wire-игроки (EmbeddedChannel) в gametest НЕ тикаются как
-  LivingEntity — `MobEffectInstance` длительность не убывает; тест
-  прокручивает `aftermath.tick(player, ...)` вручную до границы детонации.
-- RED→GREEN подтверждено; `runGametest` — 364/364 (maniaofgreedmagnets и
-  shieldthrowrestorestheshield флаки — проходят на перезапуске);
-  `qualityGate --no-daemon` BUILD SUCCESSFUL. `hero_presentation.txt`
-  не тронут, Veil-импортов в src/main нет.
-- Дальше: Task 11/12 по плану; runClient-проверка sun-композиций не делалась
-  (headless) — только code review.
-
-## Completed this session (Visual Core pilot — Task 11)
-
-- Iron Fists на Visual Core: `IronFistsController` — aura-интервал теперь
-  шлёт `VfxFx.event(IRON_FISTS_ON)` каждые 4 тика (клиент дедупит повторные
-  в один бегущий эффект — так aura видна и поздно подключившимся трекерам);
-  hit-ветка — `VfxFx.event(IRON_FISTS_HIT, scale=SHOCKWAVE_RADIUS)` вместо
-  END_ROD/CRIT/`playSound(IRON_FISTS_IMPACT)`; `ShockwaveUtil.detonate` —
-  `suppressPresentation=true` (damage/knockback/ScreenShakeS2CPayload
-  сохранены, ванильный взрыв выключен — как у landing); `markDeactivated`
-  шлёт `IRON_FISTS_OFF`; `SHOCKWAVE_RADIUS` → package-private; серверные
-  charge-loop `playSound` и `spawnHandAura` удалены. `IronFistsAbility` —
-  tryActivate/onDeactivate очищены от ванильных звуков/частиц (события
-  владеют `homelander.iron_fists.*`).
-- Клиент `IronFistsFx`: `activate` — аура 200 тиков (`DURATION_TICKS`),
-  два эмиттера `homelander_iron_fists_hand` на якорях рук
-  (`HumanoidAnchors.tiltedPoint`, lateral ±0.34 / up 1.0 / fwd 0.15,
-  tilt-aware через `FlightPoseTracker`), ACTION-клип
-  `iron_fists_activate`, звук activate + entity-bound loop charge;
-  дедуп по `Map<entityId,aura>` (повторный ON → factory null → spawn
-  дропается). `deactivate` — cancel ауры. `hit` — `ShockwavePattern`
-  (радиус = scale·ringRadius), `ImpactPattern` (`surfaceOffset`,
-  distortion), `CameraImpulse` по близости, ACTION-клип `iron_fists_strike`,
-  звук impact.
-- Ассеты: `vfx/homelander/iron_fists.json`; quasar-квартеты
-  `homelander_iron_fists_{hand,impact}` (sprite `vfx/homelander/ember.png`,
-  цвет `homelander_gold`).
-- Тесты: `HomelanderNoVanillaParticlesTest.CLEANED` += IronFistsAbility +
-  IronFistsController — RED (оба файла флагались) → GREEN после реализации;
-  `qualityGate --no-daemon` BUILD SUCCESSFUL с первого прогона (runGametest
-  без флаков). `hero_presentation.txt` не тронут, геймплей
-  (dash/damage/knockback/shockwave) byte-identical, Veil-импортов в
-  src/main нет.
-- Дальше: Task 12+ по плану; runClient-проверка не делалась (headless).
-
-## Completed this session (Visual Core pilot — Task 12)
-
-- Clap + Roar на Visual Core: `HandClapAbility` — активация шлёт
-  `VfxFx.event(CLAP, eye, eye+forward·RANGE, 1)` вместо EXPLOSION/CLOUD/
-  LARGE_SMOKE `sendParticles`, `playSound(HAND_CLAP)` и ванильных
-  LIGHTNING_BOLT_THUNDER/GENERIC_EXPLODE слоёв; proximity
-  `ScreenShakeS2CPayload` убран вместе с ними — тряской теперь владеет
-  `ClapFx` (те же intensity 1.8·(1−d/24), 16 тиков, иначе был бы дабл-шейк).
-  `StunningRoarAbility` — `VfxFx.event(ROAR, mouth, mouth+forward·RADIUS, 1)`
-  вместо SONIC_BOOM/EXPLOSION/LARGE_SMOKE, `playSound(ROAR/ROAR_DEEP)` и
-  shake-пейлоуда (rumble через `RoarFx`). Геймплей (knockback/stun/radius/
-  damage/darkness/cooldown) byte-identical.
-- Клиент `ClapFx`: ACTION-клип `clap`, entity-bound `homelander.hand_clap`
-  (vol 2.0), на `contact` — flash-light между рук (затухание 8 тиков),
-  `ImpactPattern`-бёрст с distortion-пульсом, `ShockwavePattern`-кольцо,
-  dust-эмиттеры вперёд по конусу (10 шагов × 1.5 блока) + пыль у ног,
-  `CameraImpulse` по близости. Отклонение по контракту: в поставленном
-  `clap.animation.json` пока нет `contact`-event — вспышка привязана к
-  `contactSeconds=0.083` (ключ кадр сведения рук 0.0833с, внутри окна
-  ≤120мс от старта клипа); как только клип принесёт `eventTimes`, код сам
-  переключится на него.
-- Клиент `RoarFx`: ACTION-клип `roar`, оба контрактных звука слоями как
-  раньше (`homelander.roar` vol 1.6 + `homelander.roar.deep` vol 1.0,
-  entity-bound), рот реанкорится к энтити каждый тик (eye+view·0.6),
-  кольца `ShockwavePattern` + эмиттер `homelander_roar_wave` маршируют по
-  взгляду каждые 3 тика (~1500мс = длина клипа), distortion-пульс каждые
-  10 тиков, пыль у ног каждые 5, низкий rumble-shake по близости.
-- Ассеты: `vfx/homelander/{clap,roar}.json`; quasar-квартеты
-  `homelander_clap_{flash,dust}` и `homelander_roar_{wave,dust}` (спрайты
-  `vfx/homelander/shock_ring.png` + `particle/white_boom_0.png`; новый цвет
-  `homelander_shock` — холодный бело-голубой для хлопка и рыка).
-- Тесты: `HomelanderNoVanillaParticlesTest.CLEANED` += HandClapAbility +
-  StunningRoarAbility — RED (оба файла флагались) → GREEN. Binding-check
-  `rg -n 'sendParticles|ParticleTypes\.' src/main/.../hero/homelander` —
-  EMPTY: hero-дерево в src/main полностью очищено от ванильной презентации.
-  `qualityGate --no-daemon` BUILD SUCCESSFUL (364/364 gametests, datagen
-  без диффа), `hero_presentation.txt` не тронут.
-- Дальше: Task 13 по плану; runClient-проверка не делалась (headless).
-## Completed this session (Visual Core pilot — Task 13)
-
-- `core/vfx/VfxShowcases` — серверный hero-agnostic реестр showcase-сцен:
-  `register(id, VfxShowcase)` / `get` / `ids`; `VfxShowcase.run(ServerPlayer, count)`.
-- `/superheroes vfx` (perm 2) в `SuperheroesCommands`: `play <effect> [scale]`
-  — `eventAround` на look-target (pick 160), радиус 160; `scene <id> [count≤64]`
-  с suggest по `VfxShowcases.ids()`; `stress <count>` — `homelander/combat`
-  (fallback — первый id по toString), >64 → `vfx.stress.too_many`, ничего не
-  шлётся; `hud on|off` — `VfxEventS2CPayload(superheroes:debug/hud)` только
-  вызывавшему, состояние закодировано в `scale` (1/0) — детерминировано,
-  а не blind-toggle.
-- `hero/homelander/HomelanderShowcases` (зарегистрирован из `HomelanderModule`):
-  `flight_path`/`lasers`/`lasers_flying` дёргают реальный `AbilityRouter.activate`
-  (ensureHomelander — best-effort transform + взлётный импульс), `sun_detonation`
-  — только event, без взрыва (visual-only), `combat` — IRON_FISTS_HIT (scale
-  `SHOCKWAVE_RADIUS`, сделан public) + CLAP + ROAR на кольце из count точек.
-- Клиент `core/vfx/debug/`: `VfxPerfProbe` (окно 600 кадров, avgFps /
-  onePercentLowFps / frame-ms) и `VfxDebugHud` (эффекты, открытые каналы,
-  Veil on/off, FPS-статы; фрейм-тайминги снимаются внутри HUD-render вызова,
-  слой 900). `VfxRuntime.openChannelCount()` — минимальный аксессор.
-  init — `SuperheroesClient` (hero-agnostic core bootstrap).
-- Тесты: `VfxPerfProbeTest` (avg≈97/1%-low≈20, окно сбрасывает старое);
-  `VfxShowcaseGameTests` — scene вещает обоим игрокам в 20 блоках,
-  `stress 1000` → ошибка и пустой канал. RED подтверждён (compile fail),
-  GREEN: 364/364 gametests, `qualityGate --no-daemon` BUILD SUCCESSFUL.
-- Отклонения: `HomelanderShowcases` лежит в `hero.homelander` (не `.vfx`) —
-  иначе новый package-цикл `hero.homelander <-> hero.homelander.vfx`;
-  on/off вместо toggle; scene count — повторения по кольцу.
-- Дальше: Task 14 по плану; runClient-проверка не делалась (headless).
-## Completed this session (Visual Core pilot — fourth-session review, spec §14 Stream B)
-
-- Абсолютное ревью ветки `feat/visual-core-homelander-pilot` (32 коммита над main, 231 файл): все 9 областей §14.4 проверены, отчёт — `docs/design/visual-core-homelander/fourth-session-review.md`.
-- Три реальных дефекта найдены и исправлены (`fix(vfx)` коммиты с воспроизводящими тестами):
-  - `b717b06` — `PlayerAnimator.stop` гасил ВСЮ полосу слоя: SunChargeFx убивал `flight_*` BASE-луп, трекер полёта убивал `sun_charge`, EyeLaserChannel на DONE/cancel сносил чужие ACTION-клипы; `release()` никогда не гасил WRAP `laser_hold` (маскировалось лейн-киллом). Теперь `stop(entityId, layer, fadeTicks, clipIds...)` — по-клипово.
-  - `c0c2b1a` — легаси `FlightTrailManager` (ванильные END_ROD/CLOUD) работал и для Homelander → двойной след поверх FlightFx-лент. `FlightPoseTracker` маркирует presentation-owned в `ClientFlightState` (без package-цикла fx⇄core), трейл-менеджер их пропускает.
-  - `308515e` — `VeilPostEffects`/`FallbackVfxBackend` пинили вспышку на пике: 60-тиковый фейд ScreenFlash рисовался ~3с на максимуме + хвост. Новый `FlashEnvelope` (feed принимается при `intensity >= shown`) делится обоими бэкендами.
-- Тесты: `PlayerAnimatorTest` +2 (per-clip stop, fade-sibling), `FlashEnvelopeTest` (6 кейсов), `ClientFlightStateTest` (mark/unmark/clearAll). `qualityGate --no-daemon` BUILD SUCCESSFUL — test, 364/364 gametests, arch-baseline, jar-isolation, datagen-verify.
-- Паркованное не трогал (BeamPattern noise-seed, `VfxSpawn.seed` unread, roar shake 0.8 vs 2.0 — настройка в params, не контракт).
-- Вердикт: **Pilot ready for final integration**; §16 gaps — только ожидаемые OMP-блокировки.
-## Completed this session (Visual Core pilot — Task 15, final acceptance)
-
-- OMP gate: FAILED — реализационной OMP-ветки нет вообще; `omp-review.md` отсутствует на всех ref'ах, в манифесте все 18 placeholder-строк живые. Gap зафиксирован в `docs/design/visual-core-homelander/verification.md`, Steps 3 (merge+contract tests) и 5-final-assets не выполнимы.
-- Step 4 tuning: `roar.json` `ringSpacing` 1.5→1.1 (кольца выплёвывались ~15.7b при радиусе урона 12b → теперь ~12.1b). Остальные parked-minors — без дефектов в свежих записях, не тронуты.
-- Step 5: `da47948..HEAD` — три фикса параллельного ревью (b717b06 per-clip stop, c0c2b1a legacy trail off, 308515e FlashEnvelope). Перепроверено в игре на 1b58334: ленты трейла спавнятся и рендерятся (`effects: 1` в CRUISE), белая ванильная колонна исчезла, флэш детонации плавно затухает, лазеры гасятся на релизе. Механика подтверждена временным логом (revert): телепорты дают hSpeed=0 → фаза HOVER → трейла нет; нужен реальный ввод. На границе 0.08 b/t фаза флапает CRUISE↔HOVER → трейл мигает (minor, запарковано).
-- Step 6: все 5 сцен §15 пересняты/подтверждены на `1b58334`, таблица в verification.md — 5×PASS (bounded: placeholder-ассеты, llvmpipe). §16 DoD gap: только OMP-строки + ~100 FPS на Sodium-железе.
-- Риг: tmux `vfx-server` + runClient Player758; `pin-energy` убит, полёт/лазеры выключены.
-## Completed this session (OMP intake fixes — Homelander clips)
-
-- Branch `devin/1790664303-omp-intake-fixes` off `main` HEAD (post-#131). Applied the two pending OMP intake fixes from `docs/superpowers/plans/2026-09-28-homelander-omp-assets.md` §Global Constraints.
-- Tripwire: `HomelanderAssetContractTest.contractClipEventTimesMatchManifest` un-`@Disabled`ed — verified RED first (missing `contact`), GREEN after fixes. `finalBuildHasNoPlaceholders` stays disabled (11 sounds, milk model, 6 VFX textures still placeholders).
-- Fix A: `events` timeline `{"<s>": {"name": "contact"}}` — `clap` at 0.0833 (arm-cross keyframe, matches `ClapFx` fallback) and `iron_fists_strike` at 0.12 (fist full extension); both ≤120 ms. Both `BedrockAnimationParser.eventTimes` and the test helper read `effect`/`name` under `sound_effects`/`particle_effects`/`events` — `"event"` is NOT a recognised field.
-- Fix B: `body` rotation flattened per-axis to ≤±15° (scale keeps temporal shape): `flight_boost` 90°, `flight_cruise` 84°, `flight_land` 79°, `flight_takeoff` 18°, `iron_fists_strike` 26° (y-twist + 18° x), `sun_charge` 17°. `roar` = exactly 15° untouched. Runtime supplies real tilt (CRUISE ≤55°, BOOST 80°) — no contract-changes entry needed.
-- Docs: `verification.md` OMP-integration-gap section updated; stale `ClapFx` comments corrected (clip now declares `contact`).
-- Remaining OMP gap: sounds/textures/milk-model placeholders; no OMP implementation branch exists.
-## Completed this session (Homelander model-drift fix + flight clip rework)
-
-- Root cause of "model broken / drifts off": `PlayerPoseApplier` adds clip deltas on top of `ModelPart` state, but vanilla `setupAnim` never calls `resetPose` and only rewrites the axes it animates — pivot offsets (`x/y/z`) and rotations on untouched axes accumulated every frame and stayed corrupted after clips ended. `PlayerPoseApplier.apply` now snapshots every touched part's `PartPose` and returns a `Restoration`; `PlayerModelPoseMixin` restores it at HEAD of the next `setupAnim`. New `PlayerPoseApplierTest` covers apply-from-baseline, per-frame non-accumulation, restore, empty samples.
-- Flight clips reworked (`homelander` scope only): `flight_takeoff` — vertical ascent, relaxed pose, one leg trailing, no flip (end pose still lands on hover's first pose); `flight_cruise` — right arm extended forward (~128deg, superman), left tucked; `flight_land` — gentle absorb instead of +/-39deg leg kick; `flight_boost`/`flight_hover` already matched spec, unchanged. `body` root pitch stays <=15deg; loops still close on first pose; `contact` events untouched.
-- Verified: `./gradlew test` + `./gradlew qualityGate --no-daemon` BUILD SUCCESSFUL. In-game (runClient, third person): model stays assembled through laser_hold/clap/flight and returns to clean vanilla pose after clips; before-branch screenshots show the twisted head + fragmented parts for contrast.
-## Completed this session (fix — eye lasers: two red beams from the eyes)
-
-- Branch `devin/1790684081-fix-eye-lasers` off `main` HEAD (909b003). User report: lasers must be two sharp red beams from the eyes; in flight they spawn "from thin air" and read yellow.
-- Root causes found:
-  1. **Air-origin in flight**: `EyeLaserChannel.headAnim()` fed raw Bedrock sample rotations to `HumanoidAnchors.eyes`. The renderer (`PlayerPoseApplier.apply`) maps them as `xRot += -x`, `yRot += -y`, `zRot += +z` (model +z = back axis, so +zRot is a *negative* forward-roll). Correct entity-space delta is `(-v.x, -v.y, -v.z)·weight` — the old code used the raw `(+v.x, +v.y, +v.z)`, so `flight_cruise`/`flight_boost` head.x ≈ -65°/-73° put the anchor ~130° off the rendered head → beams detached in flight. Small laser-clip offsets (-2…-8°) masked it standing.
-  2. **Yellow/single look**: `laser.json` core `#FFFFF3E8` (warm white, reads yellow on additive) + glow 0.18 wide vs eyes only 0.125 apart (`EYE_LATERAL=0.0625`) → one fat pale beam.
-- Changes:
-  - `PlayerPoseApplier.renderedRotationDeg(sample, bone)` — returns `(-v.x,-v.y,-v.z)·weight`; `EyeLaserChannel.headAnim` delegates.
-  - `HumanoidAnchors.EYE_LATERAL` 0.0625 → 0.125 (2px eye centres on the 8px head face); `eyes()` javadoc pins the entity-space convention.
-  - `laser.json`: coreWidth 0.05→0.04, glowWidth 0.18→0.11, core `#FFFF3322`, glow `#8CE61400`, light `#FF2200`, noise 0.35→0.3. Impact gradient `homelander_laser.json` shifted hot-red → red → dark-red.
-- Tests: new `PlayerPoseApplierTest` (sign convention, weight rescale, empty cases); `HumanoidAnchorsTest` + eyes-under-tilted-head case. Scoped `./gradlew test` green.
-- Verification: in-game repro of the OLD bug captured (single pale beam from air). In-game re-verification of the fix STOPPED per user instruction — user verifies themselves. Beams render via `CrossBeamRenderer` (backend-independent → fallback gets the same two red eye-anchored beams).
+- Homelander EMF staged plan continues — all 14 stage branches merging on this integration branch; Stage 15 (cutover/version bump) remains in `docs/superpowers/plans/2026-09-30-homelander-emf-presentation.md` §7.
+- PR `devin/1790792031-homelander-landing-audio-s14` (Stage 14): impact-scaled landing audio — this session's PR.
+- PR #137 `devin/1790691597-homelander-sounds`: real flight/laser sfx replacing placeholder oggs — open, CI green, in the combined jar.
+- PR #138 `devin/1790691307-homelander-vfx-fix`: flight pose/limbs/eye-anchor/trail fixes with the presentation-phase commit reverted — open, CI green; Stage 10 is based on its head.
+- EMF plan Stage 9 on `devin/1790790883-homelander-laser-sound-s9` (base PR #138): continuous laser loop sound — `EyeLaserChannel` starts `LaserLoopSound` at channel open (silent → `loopVolume` ramp over `CHARGE_TICKS`), `release()` fades it over `RELEASE_TICKS` (self-stops at 0), `cancel()` still hard-stops; `LASER_CHARGE`/`LASER_RELEASE` playback removed (SoundEvent registrations + `sounds.json` kept for resource packs); per-source `LIVE` registry makes a re-START during the old tail adopt+revive it instead of stacking. New pure `LaserLoopVolume` envelope + `LaserLoopVolumeTest`. `mod_version` → 4.2.0. `qualityGate` green; in-game unverified — user will check.
+- Branch `devin/1790790868-homelander-laser-impact-s11` (PR #142; base `devin/1790691307-homelander-vfx-fix`, PR #138): EMF plan **Stage 11 — laser impact VFX**. Data-only tuning: impact emitter `count 14→5`, `max_lifetime 6→4`; particle `base_particle_size 0.12→0.06` + `particle_size_variation 0.1→0.05` (review fix — with `random_size` the mean size is now ~50%, not ~35%) and emitter sphere `dimensions 0.12→0.06` (~50% smaller); `color/homelander_laser` gradient rgb+alpha ×0.6 (~40% dimmer); `vfx/homelander/laser.json` `lightBrightness 0.85→0.4`, `lightRadius 7→3.5`, `distortionRadius 0.8→0.35`. No `impactFlashScale` — `ImpactPattern` has no flash quad, per plan. `IMPACT_INTERVAL_TICKS` stays 3. New `VfxQuasarResourcesParseTest` parses every quasar/vfx JSON. `mod_version` 4.1.3 → 4.2.0 (normal update → minor +0.1). In-game checks unverified — user will check.
+- EMF presentation plan (`docs/superpowers/plans/2026-09-30-homelander-emf-presentation.md` on `devin/1790782256-homelander-emf-plan`): Stages 10 and 12 done; Stages 9, 11, 14 also have no EMF dependency and may run in parallel; Stage 1 (EMF foundation) is the sequential blocker for 2–8. Never start from/merge `devin/1790767119-homelander-emf` (PR #140 — excluded failed experiment).
+- Standing rule: the user verifies all in-game behavior themselves — never claim visual verification for them.

@@ -4,10 +4,14 @@ import com.mojang.authlib.GameProfile;
 import io.github.grebeshok105.codex.hero.homelander.effect.HomelanderEffects;
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.hero.homelander.HomelanderAbilityIds;
+import io.github.grebeshok105.codex.hero.homelander.ability.HandClapAbility;
+import io.github.grebeshok105.codex.hero.homelander.vfx.HomelanderVfxIds;
+import io.github.grebeshok105.codex.core.net.VfxEventS2CPayload;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import io.github.grebeshok105.codex.core.ability.AbilityRegistry;
 import io.github.grebeshok105.codex.core.ability.AbilityRouter;
 import io.github.grebeshok105.codex.core.model.HeroData;
+import io.github.grebeshok105.codex.core.net.VfxEventS2CPayload;
 import io.github.grebeshok105.codex.core.transform.HeroDataStore;
 import io.github.grebeshok105.codex.core.transform.HeroTransformService;
 import io.github.grebeshok105.codex.core.hero.Heroes;
@@ -19,6 +23,7 @@ import io.github.grebeshok105.codex.hero.homelander.HomelanderItems;
 import io.github.grebeshok105.codex.mechanic.ability.SharedAbilityIds;
 import io.github.grebeshok105.codex.hero.homelander.net.UraniumPressureS2CPayload;
 import io.github.grebeshok105.codex.hero.homelander.net.UraniumThreatS2CPayload;
+import io.github.grebeshok105.codex.hero.homelander.vfx.HomelanderVfxIds;
 import io.netty.channel.embedded.EmbeddedChannel;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.core.BlockPos;
@@ -155,6 +160,114 @@ public final class HomelanderGameTests implements FabricGameTest {
 				"madness start grants regen 5");
 		TestPlayers.leave(player);
 		helper.succeed();
+	}
+
+	/** The authored 6.3 s milk sequence owns the whole use bar (EMF plan Stage 8). */
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void milkBottleUseDurationMatchesAuthoredSequence(GameTestHelper helper) {
+		ServerPlayer player = TestPlayers.join(helper);
+		ItemStack bottle = new ItemStack(HomelanderItems.MILK_BOTTLE);
+		helper.assertTrue(HomelanderItems.MILK_BOTTLE.getUseDuration(bottle, player) == 126,
+				"milk use duration is the authored 126 ticks (6.3 s), got "
+						+ HomelanderItems.MILK_BOTTLE.getUseDuration(bottle, player));
+		TestPlayers.leave(player);
+		helper.succeed();
+	}
+
+	/**
+	 * Stage 8: releasing use before the sequence finishes cancels the drink —
+	 * the vanilla {@code releaseUsingItem} path (what the release-use packet
+	 * drives server-side) ends the use, the drink tracker sees the falling
+	 * edge and broadcasts MILK_CANCEL to tracking + self, and no MADNESS is
+	 * granted. Only a full 126-tick use pays out.
+	 */
+	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 60)
+	public void milkEarlyReleaseBroadcastsCancelAndGrantsNothing(GameTestHelper helper) {
+		Wire homelander = joinAudible(helper, "milk-canceller");
+		ServerPlayer player = homelander.player();
+		startMilkDrink(helper, homelander, player);
+		// The server-side shape of a real early release: the client's
+		// RELEASE_USE_ITEM action ends in LivingEntity.releaseUsingItem,
+		// which stops the use.
+		player.releaseUsingItem();
+		helper.assertFalse(player.isUsingItem(), "early release stops the use");
+		awaitMilkCancel(helper, homelander, player);
+	}
+
+	/**
+	 * Stage 8: a hotbar slot swap or an offhand swap ends the use through
+	 * {@code stopUsingItem}, which never runs {@code Item.releaseUsing} —
+	 * the drink tracker must still broadcast exactly one MILK_CANCEL or the
+	 * authored clip would linger on remote clients until the weight expires.
+	 */
+	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 60)
+	public void milkStopUsingItemBroadcastsCancel(GameTestHelper helper) {
+		Wire homelander = joinAudible(helper, "milk-swapper");
+		ServerPlayer player = homelander.player();
+		startMilkDrink(helper, homelander, player);
+		// Server-side shape of handleSetCarriedItem / SWAP_ITEM_WITH_OFFHAND:
+		// both call stopUsingItem and nothing else.
+		player.stopUsingItem();
+		helper.assertFalse(player.isUsingItem(), "a swap-style stop ends the use");
+		awaitMilkCancel(helper, homelander, player);
+	}
+
+	/**
+	 * Stage 8: a completed 126-tick use disarms the tracker — the falling edge
+	 * that follows a natural finish broadcasts no MILK_CANCEL.
+	 */
+	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 60)
+	public void milkFinishedDrinkBroadcastsNoCancel(GameTestHelper helper) {
+		Wire homelander = joinAudible(helper, "milk-finisher");
+		ServerPlayer player = homelander.player();
+		startMilkDrink(helper, homelander, player);
+		// Vanilla order inside completeUsingItem: finishUsingItem, then stopUsingItem.
+		HomelanderItems.MILK_BOTTLE.finishUsingItem(player.getUseItem(), helper.getLevel(), player);
+		player.stopUsingItem();
+		helper.runAfterDelay(4, () -> {
+			boolean cancelled = drain(homelander.channel()).stream()
+					.anyMatch(o -> o instanceof ClientboundCustomPayloadPacket custom
+							&& custom.payload() instanceof VfxEventS2CPayload event
+							&& event.effect().equals(HomelanderVfxIds.MILK_CANCEL));
+			helper.assertFalse(cancelled, "a completed drink broadcasts no milk_cancel");
+			TestPlayers.leave(player);
+			helper.succeed();
+		});
+	}
+
+	private static void startMilkDrink(GameTestHelper helper, Wire wire, ServerPlayer player) {
+		TestHeroes.transform(player, HomelanderHero.ID);
+		player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(HomelanderItems.MILK_BOTTLE));
+		InteractionResultHolder<ItemStack> result =
+				HomelanderItems.MILK_BOTTLE.use(helper.getLevel(), player, InteractionHand.MAIN_HAND);
+		helper.assertTrue(result.getResult() == InteractionResult.CONSUME, "use() starts drinking");
+		helper.assertTrue(player.isUsingItem(), "the player is using the bottle");
+		drain(wire.channel());
+	}
+
+	private static void awaitMilkCancel(GameTestHelper helper, Wire wire, ServerPlayer player) {
+		List<VfxEventS2CPayload> cancels = new ArrayList<>();
+		await(helper, () -> {
+			for (Object o : drain(wire.channel())) {
+				if (o instanceof ClientboundCustomPayloadPacket custom
+						&& custom.payload() instanceof VfxEventS2CPayload event
+						&& event.effect().equals(HomelanderVfxIds.MILK_CANCEL)) {
+					cancels.add(event);
+				}
+			}
+			return !cancels.isEmpty();
+		}, 20, () -> {
+			helper.assertTrue(cancels.size() == 1,
+					"exactly one milk_cancel event, got " + cancels.size());
+			helper.assertTrue(cancels.get(0).sourceEntityId() == player.getId(),
+					"milk_cancel is bound to the drinker");
+			helper.assertFalse(player.hasEffect(HomelanderEffects.MADNESS),
+					"a cancelled drink grants no madness");
+			helper.assertTrue(player.getItemInHand(InteractionHand.MAIN_HAND).is(HomelanderItems.MILK_BOTTLE),
+					"the bottle is not consumed");
+			TestPlayers.leave(player);
+			helper.succeed();
+		});
 	}
 
 	@GameTest(template = EMPTY_STRUCTURE)
@@ -364,22 +477,64 @@ public final class HomelanderGameTests implements FabricGameTest {
 		});
 	}
 
-	@GameTest(template = EMPTY_STRUCTURE)
+	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 80)
 	public void handClapKnocksBackAHeadCone(GameTestHelper helper) {
-		ServerPlayer player = TestPlayers.join(helper);
+		Wire wire = joinAudible(helper, "clap-caster");
+		ServerPlayer player = wire.player();
 		TestHeroes.transform(player, HomelanderHero.ID);
 		Zombie zombie = spawnAhead(helper, player);
+		List<Object> packets = new ArrayList<>();
 		TestPlayers.awaitVisible(helper, zombie, () -> {
+			drainAll(wire);
 			AbilityRouter.activate(player, HomelanderAbilityIds.HAND_CLAP);
-			helper.assertTrue(zombie.getHealth() < zombie.getMaxHealth(),
-					"hand clap hits mobs in front");
-			helper.assertTrue(zombie.hurtMarked, "clap victim is knocked back");
+			packets.addAll(drain(wire.channel()));
+			helper.assertTrue(hasVfxEvent(packets, HomelanderVfxIds.CLAP, player.getId()),
+					"CLAP fires at activation so every client starts the clip");
+			helper.assertTrue(!hasVfxEvent(packets, HomelanderVfxIds.CLAP_IMPACT, player.getId()),
+					"no impact event at activation");
 			helper.assertTrue(AbilityCooldowns.isOnCooldown(player, HomelanderAbilityIds.HAND_CLAP),
 					"hand clap goes on a 240-tick cooldown");
 			helper.assertTrue(data(player).energy() == 50f,
 					"hand clap costs 50 energy, got " + data(player).energy());
-			TestPlayers.leave(player);
-			helper.succeed();
+			helper.runAfterDelay(HandClapAbility.IMPACT_TICKS - 3, () -> {
+				packets.addAll(drain(wire.channel()));
+				helper.assertTrue(!hasVfxEvent(packets, HomelanderVfxIds.CLAP_IMPACT, player.getId()),
+						"no impact event before the authored hand-contact frame");
+				helper.runAfterDelay(5, () -> {
+					packets.addAll(drain(wire.channel()));
+					helper.assertTrue(hasVfxEvent(packets, HomelanderVfxIds.CLAP_IMPACT, player.getId()),
+							"CLAP_IMPACT lands " + HandClapAbility.IMPACT_TICKS + " ticks after activation");
+					helper.assertTrue(zombie.getHealth() < zombie.getMaxHealth(),
+							"the impact damages mobs in the cone");
+					TestPlayers.leave(player);
+					helper.succeed();
+				});
+			});
+		});
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 80)
+	public void handClapImpactCancelsOnDeath(GameTestHelper helper) {
+		Wire wire = joinAudible(helper, "clap-dies");
+		ServerPlayer player = wire.player();
+		TestHeroes.transform(player, HomelanderHero.ID);
+		List<Object> packets = new ArrayList<>();
+		helper.runAfterDelay(5, () -> {
+			drainAll(wire);
+			AbilityRouter.activate(player, HomelanderAbilityIds.HAND_CLAP);
+			helper.runAfterDelay(10, () -> {
+				player.hurt(helper.getLevel().damageSources().genericKill(), 1000f);
+				helper.assertFalse(player.isAlive(), "the winding-up player really died");
+				helper.runAfterDelay(HandClapAbility.IMPACT_TICKS, () -> {
+					packets.addAll(drain(wire.channel()));
+					helper.assertTrue(hasVfxEvent(packets, HomelanderVfxIds.CLAP_CANCEL, player.getId()),
+							"death during the windup broadcasts CLAP_CANCEL");
+					helper.assertTrue(!hasVfxEvent(packets, HomelanderVfxIds.CLAP_IMPACT, player.getId()),
+							"a clap cancelled by death never lands");
+					TestPlayers.leave(player);
+					helper.succeed();
+				});
+			});
 		});
 	}
 
@@ -440,6 +595,38 @@ public final class HomelanderGameTests implements FabricGameTest {
 		});
 	}
 
+	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 90)
+	public void eyeLasersDamageLandsEveryTenTicks(GameTestHelper helper) {
+		ServerPlayer player = TestPlayers.join(helper);
+		TestHeroes.transform(player, HomelanderHero.ID);
+		// Full mana pins the beam at MAX_DPS = 16 → 8 damage per landed hit.
+		HeroDataStore.update(player, d -> d.withResources(100f, 100f));
+		Zombie zombie = spawnAhead(helper, player);
+		zombie.setNoAi(true);
+		// Knockback immunity pins it on the beam line: displacement would add
+		// fall/suffocation noise to the health delta.
+		zombie.getAttribute(Attributes.KNOCKBACK_RESISTANCE).setBaseValue(1.0);
+		// 200 hp keeps the victim alive through the window so the health delta
+		// measures every landed hit; fire resistance removes sun-burn noise.
+		zombie.getAttribute(Attributes.MAX_HEALTH).setBaseValue(200.0);
+		zombie.setHealth(200f);
+		zombie.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, 600));
+		TestPlayers.awaitVisible(helper, zombie, () -> {
+			AbilityRouter.activate(player, HomelanderAbilityIds.EYE_LASERS);
+			helper.runAfterDelay(45, () -> {
+				float lost = 200f - zombie.getHealth();
+				// 2 hits/s: the activation hit plus one hit per 10 firing ticks —
+				// 4 to 5 hits of 8 in this window. The pre-cadence build dealt
+				// 6.0/tick here (~240 damage), far outside this band.
+				helper.assertTrue(lost >= 30f && lost <= 42f,
+						"laser lands ~4-5 hits of 8 over the window, got " + lost);
+				AbilityRouter.deactivate(player, HomelanderAbilityIds.EYE_LASERS);
+				TestPlayers.leave(player);
+				helper.succeed();
+			});
+		});
+	}
+
 	// ---- uranium items -----------------------------------------------------
 
 	@GameTest(template = EMPTY_STRUCTURE)
@@ -496,13 +683,14 @@ public final class HomelanderGameTests implements FabricGameTest {
 		});
 	}
 
-	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 340)
+	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 370)
 	public void uraniumOffhandRadiationStacksToHunger(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		player.getInventory().offhand.set(0, new ItemStack(HomelanderItems.URANIUM_ISOTOPE));
-		// ~15 ticks of slack: tickPlayer starts only after join is processed, and
-		// the 300-tick radiation threshold otherwise sits at the assert's edge.
-		helper.runAfterDelay(315, () -> {
+		// ~30 ticks of slack: tickPlayer starts only after join is processed, and
+		// the 300-tick radiation threshold otherwise sits at the assert's edge —
+		// CI runners have taken over 15 ticks to finish join.
+		helper.runAfterDelay(330, () -> {
 			helper.assertTrue(player.hasEffect(MobEffects.HUNGER),
 					"300 ticks of offhand radiation stack to hunger");
 			TestPlayers.leave(player);
@@ -628,6 +816,19 @@ public final class HomelanderGameTests implements FabricGameTest {
 		return false;
 	}
 
+	/** Source-filtered event check: neighbouring structures' claps reach this wire too. */
+	private static boolean hasVfxEvent(List<Object> packets, ResourceLocation effect, int sourceEntityId) {
+		for (Object o : packets) {
+			if (o instanceof ClientboundCustomPayloadPacket custom
+					&& custom.payload() instanceof VfxEventS2CPayload vfx
+					&& vfx.effect().equals(effect)
+					&& vfx.sourceEntityId() == sourceEntityId) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	private static boolean hasThreat(List<Object> packets, boolean self, int count) {
 		for (Object o : packets) {
 			if (o instanceof ClientboundCustomPayloadPacket custom
@@ -647,4 +848,5 @@ public final class HomelanderGameTests implements FabricGameTest {
 		helper.getLevel().addFreshEntity(zombie);
 		return zombie;
 	}
+
 }

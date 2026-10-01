@@ -6,8 +6,6 @@ import java.util.List;
 import org.jetbrains.annotations.Nullable;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.client.core.anim.AnimationLibrary;
-import io.github.grebeshok105.codex.client.core.anim.PlayerAnimator;
 import io.github.grebeshok105.codex.client.core.vfx.VfxEffect;
 import io.github.grebeshok105.codex.client.core.vfx.VfxRenderContext;
 import io.github.grebeshok105.codex.client.core.vfx.VfxSpawn;
@@ -31,26 +29,23 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * Homelander's hand clap ({@code superheroes:homelander/clap}): the ACTION
- * {@code clap} clip on the source, the {@code homelander.hand_clap} contract
- * sound, then — timed to the clip's {@code contact} event — a light flash
- * between the hands, an {@link ImpactPattern} burst with a distortion pulse,
- * a {@link ShockwavePattern} ring and a dust cone marching along the event's
+ * Homelander's hand-clap impact ({@code superheroes:homelander/clap_impact}):
+ * the server emits it at the authored ~1.50 s hand-contact frame, so the
+ * {@code homelander.hand_clap} contract sound plays at construction and the
+ * burst lands on the hands meeting — {@code contactSeconds} stays as a
+ * tunable offset (0 in {@code clap.json}). A light flash between the hands,
+ * an {@link ImpactPattern} burst with a distortion pulse, a
+ * {@link ShockwavePattern} ring and a dust cone marching along the event's
  * origin → target axis (the server sends the eye position and the eye +
  * forward · RANGE point), plus a proximity-scaled {@link CameraImpulse}.
- * The clip declares {@code contact} at 83 ms (its arm-cross keyframe,
- * inside the contract's ≤ 120 ms window); {@code contactSeconds} is the
- * fallback when a clip carries no event. Tuning lives in
- * {@code vfx/homelander/clap.json}.
+ * Tuning lives in {@code vfx/homelander/clap.json}.
  */
 public final class ClapFx {
 	private static final ResourceLocation PARAMS = ModId.of("homelander/clap");
 	private static final ResourceLocation FLASH_EMITTER = ModId.of("homelander_clap_flash");
 	private static final ResourceLocation DUST_EMITTER = ModId.of("homelander_clap_dust");
-	private static final ResourceLocation CLIP = ModId.of("homelander/clap");
 	private static final Vec3 UP = new Vec3(0, 1, 0);
 	private static final float TICKS_PER_SECOND = 20f;
-	private static final int CLIP_FADE_TICKS = 4;
 
 	private ClapFx() {
 	}
@@ -93,23 +88,15 @@ public final class ClapFx {
 			VfxParams p = params;
 
 			Entity source = spawn.source();
-			if (source != null) {
-				PlayerAnimator.play(source.getId(), CLIP, PlayerAnimator.Layer.ACTION, CLIP_FADE_TICKS);
-			}
-
 			Vec3 axis = spawn.target().subtract(spawn.origin());
 			this.dir = axis.lengthSqr() > 1e-6 ? axis.normalize() : new Vec3(1, 0, 0);
 			this.clapPoint = spawn.origin().add(dir.scale(p.number("handForward", 0.55f)))
 					.add(0, -p.number("handDrop", 0.25f), 0);
 			this.ground = spawn.origin().add(0, -1.4, 0);
 
-			// Contact event from the clip when it declares one (the shipped
-			// clap clip declares 83 ms); the param is the fallback (≤ 120 ms).
-			Float clipContact = AnimationLibrary.get(CLIP)
-					.map(clip -> clip.eventTimes().get("contact"))
-					.orElse(null);
-			float contactSeconds = clipContact != null
-					? clipContact : p.number("contactSeconds", 0.083f);
+			// The event already lands on the authored contact frame; the param
+			// only offsets the burst when tuned above 0.
+			float contactSeconds = p.number("contactSeconds", 0f);
 			this.contactTicks = Math.max(0, Math.round(contactSeconds * TICKS_PER_SECOND));
 
 			this.coneSteps = Math.max(0, (int) p.number("coneSteps", 10f));
