@@ -8,6 +8,7 @@ import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -133,6 +134,21 @@ public final class RegulusGreedController {
 	}
 
 	public static void releaseAndFreeze(ServerPlayer player) {
+		MagnetState pending = MAGNETS.get(player.getUUID());
+		if (pending != null) {
+			Entity candidate = ((ServerLevel) player.level()).getEntity(pending.victimId);
+			// A victim already held by another caster refuses the freeze before any
+			// side effect lands: no steroids, no locks, no freeze state — only the
+			// channel itself is torn down (a leaked magnet entry roots the caster
+			// forever via tickPlayer's hasMagnet check).
+			if (candidate instanceof LivingEntity && FREEZES.containsKey(candidate.getUUID())) {
+				player.displayClientMessage(Component.translatable("superheroes.regulus.already_greed"), true);
+				MAGNETS.remove(player.getUUID());
+				player.removeEffect(MobEffects.MOVEMENT_SLOWDOWN);
+				player.removeEffect(MobEffects.JUMP);
+				return;
+			}
+		}
 		MagnetState m = MAGNETS.remove(player.getUUID());
 		player.removeEffect(MobEffects.MOVEMENT_SLOWDOWN);
 		player.removeEffect(MobEffects.JUMP);

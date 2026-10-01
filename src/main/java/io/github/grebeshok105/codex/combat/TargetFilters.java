@@ -4,6 +4,7 @@ import java.util.function.Predicate;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.OwnableEntity;
 import net.minecraft.world.entity.player.Player;
 
 /**
@@ -11,7 +12,9 @@ import net.minecraft.world.entity.player.Player;
  *
  * <p>Player-vs-player targets honor vanilla rules through {@link ServerPlayer#canHarmPlayer}:
  * {@code pvp=false} and same-team players without friendly fire are skipped, matching
- * what {@link ServerPlayer#hurt} would reject anyway.
+ * what {@link ServerPlayer#hurt} would reject anyway. Owned and allied mobs are
+ * likewise never valid hostile targets — a tamed wolf or a teammate's summon is
+ * not fair game for an AoE sweep.
  */
 public final class TargetFilters {
 	private TargetFilters() {
@@ -19,10 +22,19 @@ public final class TargetFilters {
 
 	/**
 	 * Whether {@code target} is a living, non-spectator entity other than
-	 * {@code attacker} that {@code attacker} may harm under PvP/team rules.
+	 * {@code attacker} that {@code attacker} may harm under pvp=false/team +
+	 * owned/allied mobs rules.
 	 */
 	public static boolean harmableBy(LivingEntity target, Entity attacker) {
 		if (target == attacker || !target.isAlive() || target.isSpectator()) {
+			return false;
+		}
+		// attacker is nullable — projectile owners disappear while the projectile flies.
+		if (attacker != null && target instanceof OwnableEntity ownable
+				&& attacker.equals(ownable.getOwner())) {
+			return false;
+		}
+		if (attacker != null && target.isAlliedTo(attacker)) {
 			return false;
 		}
 		return !(target instanceof ServerPlayer victim && attacker instanceof Player player)

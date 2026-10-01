@@ -9,6 +9,7 @@ import io.github.grebeshok105.codex.hero.battlebeast.runtime.BattleBeastCurseCon
 import io.github.grebeshok105.codex.hero.doomsday.runtime.DoomGripController;
 import io.github.grebeshok105.codex.hero.pandora.runtime.MirrorDimensionController;
 import io.github.grebeshok105.codex.hero.pandora.runtime.SpatialBindController;
+import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusBonusLife;
 import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusGreedController;
 import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusMadnessState;
 import io.github.grebeshok105.codex.hero.battlebeast.BattleBeastHero;
@@ -92,7 +93,8 @@ public final class LifecycleSideEffectsGameTests implements FabricGameTest {
 	public void heroClearEndsMadnessWithoutTouchingForeignEffects(GameTestHelper helper) {
 		ServerPlayer regulus = TestPlayers.join(helper, "madness-owner");
 		regulus.setAttached(RegulusAttachments.REGULUS_MADNESS,
-				RegulusMadnessState.EMPTY.withMadness(true).withBonusLife(true));
+				RegulusMadnessState.EMPTY.withMadness(true));
+		regulus.setAttached(RegulusBonusLife.ATTACHMENT, Boolean.TRUE);
 		// Madness-applied instance: fixed amplifier 2, short 60t ambient duration (B12 contract).
 		regulus.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 60, 2, true, false, true));
 		// A foreign effect on another holder madness touches — must survive the clear.

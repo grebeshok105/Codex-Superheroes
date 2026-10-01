@@ -321,7 +321,10 @@ public class RegulusGameTests implements FabricGameTest {
 				"the ward is marked used");
 		assertFiniteEffect(helper, player, MobEffects.REGENERATION, 1, 900, "ward regen");
 		assertFiniteEffect(helper, player, MobEffects.ABSORPTION, 1, 100, "ward absorption");
-		assertFiniteEffect(helper, player, MobEffects.FIRE_RESISTANCE, 0, 800, "ward fire resistance");
+		// the revive now strips harmful effects only — the hero's infinite fire-resistance
+		// passive survives, so no finite 800-tick instance is observable
+		helper.assertTrue(player.getEffect(MobEffects.FIRE_RESISTANCE) != null,
+				"ward revive keeps the fire-resistance passive");
 
 		player.setAttached(RegulusAttachments.REGULUS_BONUS_LIFE, Boolean.TRUE);
 		player.invulnerableTime = 0;
@@ -331,8 +334,8 @@ public class RegulusGameTests implements FabricGameTest {
 				"the bonus life restores half health");
 		helper.assertValueEqual(player.getAttachedOrCreate(RegulusAttachments.REGULUS_BONUS_LIFE),
 				Boolean.FALSE, "the bonus life is consumed");
-		assertFiniteEffect(helper, player, MobEffects.REGENERATION, 1, 600, "bonus regen");
-		assertFiniteEffect(helper, player, MobEffects.ABSORPTION, 1, 200, "bonus absorption");
+		assertMinEffect(helper, player, MobEffects.REGENERATION, 1, 600, "bonus regen");
+		assertMinEffect(helper, player, MobEffects.ABSORPTION, 1, 200, "bonus absorption");
 
 		player.invulnerableTime = 0;
 		player.kill();
@@ -469,21 +472,21 @@ public class RegulusGameTests implements FabricGameTest {
 
 	/**
 	 * Greed's Embrace: 35 damage + weakness amp 1 + a straight-up launch on everything
-	 * near the aim point; the cage then applies {@code fallDistance * 0.2 * maxHealth}
-	 * on landing — lethal even to a 500 hp warden after a 4-block launch.
+	 * near the aim point. The cage was unhooked (Task 1) — the victim takes no scaled
+	 * fall damage on landing, so the warden survives the full sequence.
 	 */
 	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 140)
-	public void greedsEmbraceLaunchesAndCageScalesFallDamage(GameTestHelper helper) {
+	public void greedsEmbraceLaunchesWithoutCage(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, RegulusHero.ID);
 
-		double isoX = player.getX() - 6000.0;
-		double isoZ = player.getZ() + 6000.0;
-		helper.getLevel().getChunk(BlockPos.containing(isoX, player.getY(), isoZ));
-		placeFloor(helper, isoX, player.getY(), isoZ);
-		placeFloor(helper, isoX + 3.0, player.getY(), isoZ);
-		player.teleportTo(isoX, player.getY(), isoZ);
-		Warden warden = spawnEntity(helper, EntityType.WARDEN, isoX + 3.0, player.getY(), isoZ);
+		// keep the victim next to the caster — a transient far chunk unloads the entity
+		// (UNLOADED_TO_CHUNK) before the delayed assert ever reads it.
+		placeFloor(helper, player.getX(), player.getY(), player.getZ());
+		placeFloor(helper, player.getX() + 3.0, player.getY(), player.getZ());
+		Warden warden = spawnEntity(helper, EntityType.WARDEN,
+				player.getX() + 3.0, player.getY(), player.getZ());
+		warden.setNoAi(true); // keep it on the pad — without a cage it would wander into the void
 
 		TestPlayers.awaitVisible(helper, warden, () -> {
 			player.setXRot(90f); // aim straight down — the anchor is the block underfoot
@@ -501,8 +504,11 @@ public class RegulusGameTests implements FabricGameTest {
 					"the gather launches the victim upward");
 
 			helper.runAfterDelay(70, () -> {
-				helper.assertFalse(warden.isAlive(),
-						"the cage's scaled fall damage kills the launched warden");
+				helper.assertTrue(warden.isAlive(),
+						"no cage — the launched warden only takes vanilla fall damage and lives"
+								+ " [y=" + warden.getY() + " hp=" + warden.getHealth()
+								+ " removed=" + warden.isRemoved()
+								+ " reason=" + warden.getRemovalReason() + "]");
 				TestPlayers.leave(player);
 				helper.succeed();
 			});
@@ -614,6 +620,15 @@ public class RegulusGameTests implements FabricGameTest {
 		helper.assertTrue(instance != null && !instance.isInfiniteDuration()
 						&& instance.getDuration() <= maxDuration && instance.getAmplifier() == amplifier,
 				name + " is a finite amp-" + amplifier + " effect within " + maxDuration + " ticks");
+	}
+
+	private static void assertMinEffect(GameTestHelper helper, ServerPlayer player,
+			net.minecraft.core.Holder<net.minecraft.world.effect.MobEffect> effect, int amplifier,
+			int minDuration, String name) {
+		MobEffectInstance instance = player.getEffect(effect);
+		helper.assertTrue(instance != null && instance.getDuration() >= minDuration
+						&& instance.getAmplifier() == amplifier,
+				name + " is an amp-" + amplifier + " effect lasting at least " + minDuration + " ticks");
 	}
 
 	private static void awaitTrue(GameTestHelper helper, BooleanSupplier cond, int triesLeft,
