@@ -138,6 +138,7 @@
 
 ## Active work
 
+- **Regulus rework in progress on this branch** (`devin/1790833999-regulus-rework-integration`): plan `docs/superpowers/plans/2026-09-30-regulus-rework.md` (10 тасков), design `docs/design/2026-09-30-regulus-rework-design.md`, EMF pack `art-source/regulus_emf_animation_pack/` — всё уже в дереве через merge `docs/regulus-rework-plan-clean`. Orchestrated per-task: one implementer PR per task targeting this integration branch + reviewer pass per PR. Note: plan's "Visual Core gap" section is outdated — `core/net/VfxEventS2CPayload`/`VfxChannelS2CPayload`/`VfxFx` and `client/core/{vfx,emf}` now exist on main (built during the Homelander EMF work).
 - Homelander EMF staged plan continues — all 14 stage branches merging on this integration branch; Stage 15 (cutover/version bump) remains in `docs/superpowers/plans/2026-09-30-homelander-emf-presentation.md` §7.
 - PR `devin/1790792031-homelander-landing-audio-s14` (Stage 14): impact-scaled landing audio — this session's PR.
 - PR #137 `devin/1790691597-homelander-sounds`: real flight/laser sfx replacing placeholder oggs — open, CI green, in the combined jar.
