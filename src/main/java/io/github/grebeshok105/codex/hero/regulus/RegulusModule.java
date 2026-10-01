@@ -17,8 +17,8 @@ import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusCastState;
 import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusGreedController;
 import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusHearts;
 import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusMadnessController;
-import io.github.grebeshok105.codex.hero.regulus.sound.RegulusSounds;
 import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusTotemController;
+import io.github.grebeshok105.codex.hero.regulus.sound.RegulusSounds;
 
 import java.util.List;
 

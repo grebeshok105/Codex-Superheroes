@@ -3,6 +3,7 @@ package io.github.grebeshok105.codex.gametest;
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import io.github.grebeshok105.codex.core.ability.AbilityRouter;
+import io.github.grebeshok105.codex.core.resource.EnergyLocks;
 import io.github.grebeshok105.codex.core.transform.HeroDataStore;
 import io.github.grebeshok105.codex.hero.regulus.RegulusHero;
 import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusCastState;
@@ -249,6 +250,8 @@ public final class RegulusDebrisGameTests implements FabricGameTest {
 							Blocks.AIR, "the wall line lost dirt at depth " + depth);
 				}
 				BlockPos fourth = new BlockPos(floor.getX(), floor.getY() + 1, floor.getZ() + 5);
+				assertBlock(helper, fourth.getX(), fourth.getY(), fourth.getZ(), Blocks.DIRT,
+						"the per-ray cap is three — the fourth block stands");
 				helper.assertTrue(!player.getUUID().equals(BREAKS.get(fourth)),
 						"the per-ray cap is three — the fourth block was never broken by the caster");
 				helper.assertTrue(!wasHurtBy(target, player),
@@ -377,6 +380,37 @@ public final class RegulusDebrisGameTests implements FabricGameTest {
 						"the machine charges the 250 on the fire tick");
 				helper.assertTrue(AbilityCooldowns.isOnCooldown(player, LION_ROAR),
 						"the fire tick arms the cooldown");
+				TestPlayers.leave(player);
+				helper.succeed();
+			});
+		});
+	}
+
+	/**
+	 * The energy-lock gate reaches the authored fire tick too: a locked caster's kick
+	 * fizzles at the charge, never lands a pellet, and arms no cooldown. The router's
+	 * own lock check reads {@code costOnActivate()} — which the cast machine moved to
+	 * the fire tick — so the pin lives on the charge path, not the press.
+	 */
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void debrisCastRespectsEnergyLock(GameTestHelper helper) {
+		ServerPlayer player = TestPlayers.join(helper);
+		TestHeroes.transform(player, RegulusHero.ID);
+		aimForward(player);
+		HeroDataStore.update(player, d -> d.withEnergy(1000f));
+		Zombie target = spawnAhead(helper, player, 4.5);
+		target.setNoAi(true);
+
+		TestPlayers.awaitVisible(helper, target, () -> {
+			EnergyLocks.lockTicks(player, 60);
+			activateAiming(helper, player);
+			helper.runAfterDelay(20, () -> {
+				helper.assertTrue(!wasHurtBy(target, player),
+						"a locked caster's cast fizzles at the fire tick — no pellet lands");
+				helper.assertTrue(HeroDataStore.get(player).energy() > 999f,
+						"the fizzled charge never touched the energy pool");
+				helper.assertTrue(!AbilityCooldowns.isOnCooldown(player, LION_ROAR),
+						"the fizzled cast arms no cooldown");
 				TestPlayers.leave(player);
 				helper.succeed();
 			});

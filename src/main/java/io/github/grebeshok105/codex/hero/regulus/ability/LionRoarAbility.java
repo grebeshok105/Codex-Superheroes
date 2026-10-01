@@ -17,8 +17,8 @@ import net.minecraft.world.phys.Vec3;
  * Press starts a 14-tick windup (the kick clip, Slowness I for the cast window);
  * the fire tick runs {@link DebrisKickController#fire}, charges the activation
  * cost, and arms the cooldown. Damage taken before the fire tick cancels the cast
- * for free; a manual cancel does the same. The ability id and its bound key never
- * change — persisted loadouts stay valid across the rework.
+ * for free — as does any other early end of the cast session. The ability id and
+ * its bound key never change — persisted loadouts stay valid across the rework.
  */
 public final class LionRoarAbility implements Ability {
 	private static final int FIRE_TICKS = 14;

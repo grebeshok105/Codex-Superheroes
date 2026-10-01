@@ -54,7 +54,6 @@
 			"io.github.grebeshok105.codex.gametest.RegulusBugSweepGameTests",
 			"io.github.grebeshok105.codex.gametest.RegulusCastStateGameTests",
 			"io.github.grebeshok105.codex.gametest.RegulusHeartsGameTests",
-			"io.github.grebeshok105.codex.gametest.RegulusDebrisGameTests",
 			"io.github.grebeshok105.codex.gametest.DoomsdayGameTests",
 			"io.github.grebeshok105.codex.gametest.SuperheroesCommandsGameTests",
 			"io.github.grebeshok105.codex.gametest.ThanosGameTests",
@@ -63,7 +62,8 @@
 			"io.github.grebeshok105.codex.gametest.HomelanderScorchGameTests",
 			"io.github.grebeshok105.codex.gametest.IronManGameTests",
 			"io.github.grebeshok105.codex.gametest.BeamPayloadGameTests",
-			"io.github.grebeshok105.codex.gametest.HomelanderVfxGameTests"
+			"io.github.grebeshok105.codex.gametest.HomelanderVfxGameTests",
+			"io.github.grebeshok105.codex.gametest.RegulusDebrisGameTests"
 		]
 	},
 	"depends": {
