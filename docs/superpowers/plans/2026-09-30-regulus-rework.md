@@ -373,3 +373,45 @@ public record RegulusAnimS2CPayload(java.util.UUID playerId, String clipId)
 - `GreedStasisController`/`RegulusHearts`/`RegulusCastState` — новые `OwnedSessionMap`/attachments; `GreedCageController` полностью удалён в Task 6.
 - MP-баг — synced attachment вместо ручных пакетов; клиент-прогресс только от gameTick-дедлайнов.
 - Числа: heart cap 12, window 60+40×hearts (≤27с), mania 4с/40%, stasis 80t/35%, counter 15+15%cap45, evangelium 60t ритуал/900t/0.6hp-с — подлежат in-game тюнингу.
+
+## Amendment A — Visual Core seam (2026-10-01)
+
+Пункт «Visual Core gap» в Architecture устарел: Homelander EMF-работа приземлила shared Visual Core на main. Hero-local `RegulusAnimS2CPayload` + `RegulusAnimationDriver` больше не канонный шов — Tasks 4/7/9 используют `VfxFx`/`ctx.vfx`/`ctx.vfxChannel` + EMF-тройку по прецеденту Homelander.
+
+### Что теперь существует (verified на этой ветке)
+
+| Seam | Где | Контракт |
+| --- | --- | --- |
+| One-shot VFX событие | `core/net/VfxEventS2CPayload` | `effect`(ResourceLocation) + `sourceEntityId` + `origin`/`target`/`scale`/`seed`; регистрация — `CoreNetworking.init`, приём — `CoreClientReceivers` → `VfxRuntime.spawn` |
+| Continuous канал | `core/net/VfxChannelS2CPayload` | `entityId` + `channel` + START/UPDATE/STOP + `target`; open-or-retarget, тишина 10t → release |
+| Серверные сендеры | `core/net/VfxFx` | `event(source, effect, origin, target, scale)` — ServerPlayer → `FxBroadcast.trackingAndSelf`; `eventAround`; `channel(source, channel, state, target)`; `CHANNEL_UPDATE_INTERVAL_TICKS=2` |
+| Screen shake | `core/net/ScreenShakeS2CPayload` → `client/fx/ScreenShakeManager.shake` | `intensity` + `durationTicks` |
+| Клиент-рантайм | `client/core/vfx/VfxRuntime` | `ctx.vfx(id, VfxEffectFactory)` / `ctx.vfxChannel(id, VfxChannelFactory)` (`HeroClientContext`); budget 256, cull 160б |
+| Backend-абстракция | `client/core/vfx/backend/` | `emit`/`light`/`flash`/`distortion`; `VeilVfxBackend` (Quasar `assets/superheroes/quasar/emitters/*.json`, post `src/client/resources/.../pinwheel/post/vfx_flash`,`vfx_distortion`) иначе `FallbackVfxBackend` — «ванильный fallback» уже встроен в шов, не пишется в hero-коде |
+| Паттерны | `client/core/vfx/pattern/` | `BeamPattern`, `ImpactPattern`, `ShockwavePattern`, `AuraPattern`, `TrailPattern`, `PhaseTimeline`, `CameraImpulse`, `ScreenFlash` |
+| Anchors/params | `vfx/anchor/HumanoidAnchors` (head-pose EMF-owned через `RenderedPoseCache`), `vfx/params/VfxParamsLoader` | `assets/superheroes/vfx/<hero>/<effect>.json` автоинъектируется в `VfxSpawn.params` |
+| EMF-мост | `client/core/emf/` | `EmfBridge` (`registerFloatVariable`, `registerVanillaModelCondition`, `currentEntityUuid`, `isAvailable`), `EmfPresentationOwnership.register(predicate)`, `EmfHeldItemSuppression`, `RenderedPoseCache`, `EmfProfiler` |
+| Legacy anim | `client/core/anim/PlayerAnimator` | code-driven BASE/ACTION клипы (flight path); EMF-owned игроки его байпасят в `PlayerModelPoseMixin` — для Regulus НЕ использовать |
+| Прецедент | `hero/homelander/vfx/HomelanderVfxIds` (src/main), `client/hero/homelander/fx/HomelanderFx`, `emf/HomelanderEmf`+`HomelanderEmfVariables`+`HomelanderPoseState` | трёх-событийный контракт CLAP: `HandClapAbility` → `VfxFx.event` → `ctx.vfx` factory → `HomelanderEmf.clapStarted(source)` → pose-state clip clock; jem `assets/minecraft/emf/cem/player.jem` |
+| Regulus EMF pack | `art-source/regulus_emf_animation_pack/` | `Regulus_All_Animations.bbmodel` + `Regulus_EMF_Authoring.json` + `HANDOFF.md`; контракт `var.regulus_<clip>_time` на клип |
+
+### Вердикты
+
+**a) `RegulusAnimS2CPayload` — НЕ создавать.** Заменяется `VfxFx.event`: `playerId` → `sourceEntityId`, `clipId` → сам effect-id `superheroes:regulus/anim/<clip>` (per-clip id в `hero/regulus/vfx/RegulusVfxIds` — src/main, shared). Покрытие полное, аудитория `trackingAndSelf` — та, что план требовал. `ctx.payloads().s2c`/`ctx.receive` не нужны: core payload уже глобально зарегистрирован, sanity `everyHeroS2CPayloadHasARegisteredReceiver` не применяется. Клиент-сторона: `ctx.vfx(id, factory)` в `RegulusClientModule`; клип-ивент без собственного визуала возвращает однотиковый done-эффект (`DoneFx` в `HomelanderFx`). `HeartsSyncS2CPayload` НЕ затронут — synced state остаётся hero-unicast payload.
+
+**b) Общего clip→var registry нет** — переиспользуемый механизм это *паттерн* `HomelanderEmf`+`HomelanderEmfVariables`+`HomelanderPoseState`, реализация hero-local (hero→hero импорты запрещены): `client/hero/regulus/emf/RegulusEmf` (hub: `EmfPresentationOwnership.register(p -> RegulusHero.ID.equals(SkinResolver.heroIdFor(p)))`, `EmfBridge.registerVanillaModelCondition(uuid -> !EmfPresentationOwnership.isOwned(uuid))` — регистрировать самим, не полагаясь на чужой модуль), `RegulusEmfVariables` (`EmfBridge.registerFloatVariable` на каждую var из сгенерённого jem — минимум `regulus_<clip>_time` ×10 по авторинг-контракту), `RegulusPoseState` (`Map<UUID,Entry>` clip clocks + weights; `ClientSessionState.register` + пин в `namedSingletons` `ProjectSanityTest`, как `HomelanderPoseState`). One-shot: `VfxEvent → factory → startClip(uuid)` — reset clock; конец по authored длительности; `combat_idle`/`evangelium_active_idle` — локально из synced `madness`, НЕ события. `HomelanderPoseMath.ClipClock` hero-local — Regulus пишет свой аналог в своём `emf/` пакете. Jem: дополняется **существующий** `assets/minecraft/emf/cem/player.jem` (+ `player_slim.jem`) — один jem на всех EMF-героев, выражения Regulus гейтуются весами; генерация из authoring JSON — работа Task 9 (HANDOFF: схема ≠ готовый jem).
+
+**c) Veil-VFX** — дом: `client/hero/regulus/fx/` + `RegulusFx.register(ctx)` hub (прецедент `HomelanderFx`). Эффекты зовут только `VfxBackends.current()`: `emit(ModId.of("regulus_<x>"), pos)` → `assets/superheroes/quasar/emitters/regulus_*.json`; `light`/`flash`/`distortion`. `foundry.veil` в hero-коде запрещён (только `vfx/veil/`). Continuous строки таблицы §6 (магнит-нить, стазис-купол, lion-heart купол, пульс сердец) — `ctx.vfxChannel` + `VfxChannelEffect` (`retarget`/`release`; сервер UPDATE каждые 2t). Тюнинг — `assets/superheroes/vfx/regulus/<effect>.json`. T7 visual-explosion: `VfxFx.event` (particles) + `ScreenShakeS2CPayload` + client `CameraImpulse`/`ScreenFlash` — «существующий визуальный payload» из плана теперь конкретизирован.
+
+**d) Остаётся в силе:** канон таймингов + `ceil(seconds*20)` (серверная cast-машина не меняется); `animation.regulus.<clip>` как authored clip id — теперь внутри EMF (jem/var), на проводе его кодирует effect-id `regulus/anim/<clip>` (маппинг 1:1 в `RegulusVfxIds`); аудитория trackingAndSelf; клиент-часы только от клиент-тиков/gameTick (не wall-clock, не `mc.player.tickCount`) — паттерн: clock += 1/20 на клиент-тик, рендер интерполирует partial tick; `ClientSessionState.register` + `namedSingletons`-пин на session-state синглтоны; трёх-событийный контракт — activate-ивент стартует клип, fire-тик несёт отдельный VFX-ивент (debris: `anim/debris_kick` на cast-start + `debris_impact` @0.70с; evangelium: `anim/evangelium_activation` + `evangelium_major` @1.66с — событие, не рестарт клипа). Late tracking: пропущенный one-shot не играет (тот же принятый gap, что у Homelander); каналы цепляются следующим UPDATE бесплатно.
+
+**e) EMF hard-dep — частично сделан:** `fabric.mod.json.depends` уже содержит `entity_model_features >=3.3`; build.gradle бандлит EMF+ETF jar-in-jar (`include`), dedicated-server → envDisabledMods, dep softens. НЕ сделано: `environment` всё ещё `"*"`; `servernoveil`/`clientnoveil`/`runServer` и gametest/datagen-фильтры на месте; AGENTS.md §7 не правлен. Task 9 закрывает это как запланировано. Step 0 precondition фактически выполнен — пакет лежит в `art-source/regulus_emf_animation_pack/`; стоп-условие переносится на jem-generation + верификацию реального EMF API (`var.regulus_<clip>_time`).
+
+### Редакционные правки тасков (без изменения механики)
+
+- **Task 4:** убрать `Create: hero/regulus/net/RegulusAnimS2CPayload.java`; `Create: hero/regulus/vfx/RegulusVfxIds.java`. Step 1: `VfxFx.event(player, RegulusVfxIds.ANIM_LION_HEART_ACTIVATION, origin, origin, 1f)` на cast-start. «Consumes/Produces: RegulusAnimS2CPayload» → `VfxFx`/`RegulusVfxIds`.
+- **Task 5 Step 1:** anim → `VfxFx.event(ANIM_DEBRIS_KICK)` на cast-start; impact-визуал @0.70с → `VfxFx.event(regulus/debris_impact)` на fire-тике.
+- **Task 6 Step 1:** anim `greeds_embrace_cast` → `VfxFx.event(ANIM_GREEDS_EMBRACE_CAST)`.
+- **Task 7:** `RegulusAnimS2CPayload` consumes → `VfxFx`; Step 1b counter-клип → `VfxFx.event(ANIM_COUNTER_ATTACK)`; Step 2 visual-explosion → `VfxFx.event` + `ScreenShakeS2CPayload`.
+- **Task 8:** `anim evangelium_activation`/`evangelium_deactivation` → `VfxFx.event(ANIM_*)` на begin/коллапсе; `evangelium_major` @1.66с — отдельный VFX-ивент.
+- **Task 9:** `anim/RegulusAnimationDriver` + `state/ClientRegulusAnimState` → `emf/RegulusEmf`, `emf/RegulusEmfVariables`, `emf/RegulusPoseState` + `fx/RegulusFx`; `RegulusVfxIds` в main; регистрации через `ctx.vfx`/`ctx.vfxChannel`; `namedSingletons`-пины для не-`Client*State` синглтонов.
