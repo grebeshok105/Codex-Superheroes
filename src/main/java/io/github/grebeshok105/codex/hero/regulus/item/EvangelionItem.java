@@ -66,6 +66,14 @@ public class EvangelionItem extends Item {
 				return InteractionResultHolder.fail(stack);
 			}
 			RegulusMadnessController.beginReading(sp);
+		} else {
+			// The client mirrors the gates from synced state — without them a use
+			// the server refuses still predicts a ghost 60-tick channel.
+			RegulusMadnessState state = player.getAttachedOrCreate(RegulusMadnessState.ATTACHMENT);
+			if (!ModId.of("regulus").equals(player.getAttached(CoreAttachments.PUBLIC_HERO))
+					|| state.madness() || state.isReading(level.getGameTime())) {
+				return InteractionResultHolder.fail(stack);
+			}
 		}
 		player.startUsingItem(hand);
 		return InteractionResultHolder.consume(stack);

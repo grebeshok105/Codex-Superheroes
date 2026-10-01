@@ -18,7 +18,6 @@ import io.github.grebeshok105.codex.hero.regulus.RegulusItems;
 import io.github.grebeshok105.codex.hero.regulus.RegulusHero;
 import io.github.grebeshok105.codex.mechanic.ability.SharedAbilityIds;
 import java.util.List;
-import java.util.function.BooleanSupplier;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
@@ -512,17 +511,6 @@ public class RegulusGameTests implements FabricGameTest {
 				"regulus passive " + name + " is infinite amp-" + amplifier);
 	}
 
-	/** The madness-owned signature: 60-tick, ambient, icon-only, fixed amplifier. */
-	private static void assertMadnessEffect(GameTestHelper helper, ServerPlayer player,
-			net.minecraft.core.Holder<net.minecraft.world.effect.MobEffect> effect, int amplifier) {
-		MobEffectInstance instance = player.getEffect(effect);
-		helper.assertTrue(instance != null && !instance.isInfiniteDuration()
-						&& instance.getDuration() <= 60 && instance.getAmplifier() == amplifier
-						&& instance.isAmbient() && !instance.isVisible(),
-				"madness applies " + effect.unwrapKey().map(k -> k.location().toString()).orElse("?")
-						+ " as a 60-tick ambient amp-" + amplifier + " instance");
-	}
-
 	private static void assertModifierAmount(GameTestHelper helper, ServerPlayer player,
 			net.minecraft.core.Holder<net.minecraft.world.entity.ai.attributes.Attribute> attribute,
 			ResourceLocation modifierId, double amount, String name) {
@@ -548,17 +536,6 @@ public class RegulusGameTests implements FabricGameTest {
 		helper.assertTrue(instance != null && instance.getDuration() >= minDuration
 						&& instance.getAmplifier() == amplifier,
 				name + " is an amp-" + amplifier + " effect lasting at least " + minDuration + " ticks");
-	}
-
-	private static void awaitTrue(GameTestHelper helper, BooleanSupplier cond, int triesLeft,
-			Runnable body) {
-		helper.runAfterDelay(1, () -> {
-			if (cond.getAsBoolean() || triesLeft <= 1) {
-				body.run();
-				return;
-			}
-			awaitTrue(helper, cond, triesLeft - 1, body);
-		});
 	}
 
 	private static Zombie spawnAhead(GameTestHelper helper, ServerPlayer player, double distance) {

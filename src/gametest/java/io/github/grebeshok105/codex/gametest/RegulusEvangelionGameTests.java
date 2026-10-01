@@ -5,8 +5,6 @@ import io.github.grebeshok105.codex.core.attachment.CoreAttachments;
 import io.github.grebeshok105.codex.hero.regulus.RegulusAttachments;
 import io.github.grebeshok105.codex.hero.regulus.RegulusHero;
 import io.github.grebeshok105.codex.hero.regulus.RegulusItems;
-import io.github.grebeshok105.codex.hero.regulus.registry.RegulusDamageTypes;
-import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusMadnessController;
 import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusMadnessState;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.core.BlockPos;
@@ -16,6 +14,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
@@ -109,9 +108,9 @@ public class RegulusEvangelionGameTests implements FabricGameTest {
 		helper.assertTrue(player.isUsingItem(), "channel running");
 
 		helper.runAfterDelay(2, () -> {
-			// Mock players never tick useItemRemaining, so the test completes the
-			// channel the way vanilla's completeUsingItem does: finishUsingItem,
-			// then stopUsingItem.
+			// Complete the channel the way vanilla's completeUsingItem does —
+			// finishUsingItem then stopUsingItem — at a fixed +2t instead of
+			// racing the mock's own use-channel ticking against the 60t deadline.
 			long finishNow = helper.getLevel().getGameTime();
 			RegulusItems.EVANGELION.finishUsingItem(player.getUseItem(), helper.getLevel(), player);
 			player.stopUsingItem();
@@ -127,8 +126,28 @@ public class RegulusEvangelionGameTests implements FabricGameTest {
 					"normal completion does not arm the abort cooldown");
 			assertModifierAmount(helper, player, Attributes.MAX_HEALTH,
 					ModId.of("modifiers/regulus/madness_max_health"), 0.20);
+			helper.assertTrue(Math.abs(player.getMaxHealth() - 24.0f) < 0.01f,
+					"madness scales max health x1.2");
 			helper.assertTrue(Math.abs(player.getHealth() - player.getMaxHealth()) < 0.01f,
 					"madness heals to full");
+			assertModifierAmount(helper, player, Attributes.ARMOR,
+					ModId.of("modifiers/regulus/madness_armor"), 10.0);
+			helper.assertTrue(Math.abs(player.getAttributeValue(Attributes.ARMOR) - 30.0) < 0.001,
+					"the resolved armor value clamps at vanilla's 30 cap");
+			assertModifierAmount(helper, player, Attributes.ATTACK_DAMAGE,
+					ModId.of("modifiers/regulus/madness_damage"), 0.40);
+			assertMadnessEffect(helper, player, MobEffects.MOVEMENT_SPEED, 2);
+			assertMadnessEffect(helper, player, MobEffects.DAMAGE_BOOST, 2);
+			assertMadnessEffect(helper, player, MobEffects.JUMP, 2);
+			assertMadnessEffect(helper, player, MobEffects.DAMAGE_RESISTANCE, 0);
+			// The amp-0 madness regen loses the merge to the infinite amp-0
+			// passive — only the passive instance is observable.
+			MobEffectInstance regen = player.getEffect(MobEffects.REGENERATION);
+			helper.assertTrue(regen != null && regen.isInfiniteDuration(),
+					"the passive regen survives into madness");
+			helper.assertFalse(RegulusItems.EVANGELION.use(helper.getLevel(), player, InteractionHand.MAIN_HAND)
+							.getResult().consumesAction(),
+					"evangelion refuses while mad");
 			TestPlayers.leave(player);
 			helper.succeed();
 		});
@@ -161,8 +180,8 @@ public class RegulusEvangelionGameTests implements FabricGameTest {
 		helper.assertTrue(player.isUsingItem(), "channel running");
 
 		// >0.5 blocks — the anchor check inside onUseTick aborts the channel.
-		// Mock players never fire onUseTick on their own, so invoke the same
-		// per-tick call vanilla makes.
+		// Invoke the same per-tick call vanilla's updatingUsingItem makes right
+		// after the teleport rather than waiting for the next real tick.
 		player.teleportTo(player.getX() + 1.0, player.getY(), player.getZ());
 		RegulusItems.EVANGELION.onUseTick(helper.getLevel(), player, player.getUseItem(), 40);
 
@@ -196,27 +215,22 @@ public class RegulusEvangelionGameTests implements FabricGameTest {
 		long now = helper.getLevel().getGameTime();
 		player.setAttached(RegulusAttachments.REGULUS_MADNESS,
 				madness(player).withMadness(true).withMadnessUntil(now + 900));
-		player.setHealth(player.getMaxHealth());
-
-		// Passive regeneration makes health deltas unobservable — count the actual
-		// blood-price hits instead (listener stays inert for every other entity).
-		java.util.concurrent.atomic.AtomicInteger tithes = new java.util.concurrent.atomic.AtomicInteger();
-		java.util.concurrent.atomic.AtomicReference<Float> lastAmount = new java.util.concurrent.atomic.AtomicReference<>();
-		net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents.AFTER_DAMAGE.register(
-				(entity, source, baseDamage, damageTaken, blocked) -> {
-					if (entity == player && source.is(RegulusDamageTypes.BLOOD_PRICE)) {
-						tithes.incrementAndGet();
-						lastAmount.set(damageTaken);
-					}
-				});
+		// Take the passive regen out — its heal would pollute the health deltas
+		// the tithes are counted by. The blood-price type bypasses armor,
+		// resistance and enchantments, so every 20-tick hit lands raw.
+		player.removeEffect(MobEffects.REGENERATION);
+		float baseline = player.getMaxHealth();
+		player.setHealth(baseline);
 
 		helper.runAfterDelay(25, () -> {
-			helper.assertValueEqual(tithes.get(), 1, "exactly one tithe after 20 ticks");
-			helper.assertTrue(lastAmount.get() != null && Math.abs(lastAmount.get() - 0.6f) < 0.001f,
-					"tithe is 0.6hp");
+			float lost = baseline - player.getHealth();
+			helper.assertTrue(lost > 0.55f && lost < 0.65f,
+					"exactly one 0.6hp tithe after 20 ticks (lost=" + lost + ")");
 		});
 		helper.runAfterDelay(85, () -> {
-			helper.assertValueEqual(tithes.get(), 4, "four tithes after 80 ticks");
+			float lost = baseline - player.getHealth();
+			helper.assertTrue(lost > 2.35f && lost < 2.45f,
+					"four 0.6hp tithes after 80 ticks (lost=" + lost + ")");
 			TestPlayers.leave(player);
 			helper.succeed();
 		});
@@ -321,6 +335,17 @@ public class RegulusEvangelionGameTests implements FabricGameTest {
 				helper.getLevel().setBlock(center.offset(dx, 0, dz), Blocks.STONE.defaultBlockState(), 3);
 			}
 		}
+	}
+
+	/** The madness-owned signature: 60-tick, ambient, icon-only, fixed amplifier. */
+	private static void assertMadnessEffect(GameTestHelper helper, ServerPlayer player,
+			net.minecraft.core.Holder<net.minecraft.world.effect.MobEffect> effect, int amplifier) {
+		MobEffectInstance instance = player.getEffect(effect);
+		helper.assertTrue(instance != null && !instance.isInfiniteDuration()
+						&& instance.getDuration() <= 60 && instance.getAmplifier() == amplifier
+						&& instance.isAmbient() && !instance.isVisible(),
+				"madness applies " + effect.unwrapKey().map(k -> k.location().toString()).orElse("?")
+						+ " as a 60-tick ambient amp-" + amplifier + " instance");
 	}
 
 	private static void assertModifierAmount(GameTestHelper helper, ServerPlayer player,

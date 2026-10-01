@@ -17,8 +17,7 @@ public final class RegulusFx {
 	/**
 	 * Clip-start events with no own visual yet: the EMF clip states land with the
 	 * Veil/EMF task — until then a one-tick done effect keeps the contract alive.
-	 * Also used for {@code evangelium_major}, which gets a small glyph burst at
-	 * the source so the authored hit-frame reads before the real VFX lands.
+	 * Also used for {@code evangelium_major} (the authored hit-frame event).
 	 */
 	public static VfxEffect clipOnly(VfxSpawn spawn) {
 		return new DoneFx();
