@@ -151,7 +151,7 @@ public final class LionHeartController {
 	/** Toggle-off / forced-off path: the shockwave push, then full teardown. */
 	public static void deactivate(ServerPlayer player) {
 		if (WINDOW_DEADLINES.containsKey(player.getUUID())) {
-			pushNearby(player);
+			pushNearby(player, FROZEN_PROJECTILES.get(player.getUUID()));
 		}
 		shutdown(player);
 	}
@@ -236,13 +236,17 @@ public final class LionHeartController {
 		});
 	}
 
-	/** Deactivation shockwave: an impulse on every live non-spectator entity in radius. */
-	private static void pushNearby(ServerPlayer player) {
+	/**
+	 * Deactivation shockwave: an impulse on every live non-spectator entity in radius —
+	 * except the still-frozen projectiles, which the release drops rather than re-arms.
+	 */
+	private static void pushNearby(ServerPlayer player, Set<UUID> frozen) {
 		ServerLevel level = player.serverLevel();
 		Vec3 origin = player.position();
 		AABB area = new AABB(origin, origin).inflate(PUSH_RADIUS);
 		List<Entity> nearby = level.getEntities(player, area,
-				e -> e != player && e.isAlive() && !e.isSpectator());
+				e -> e != player && e.isAlive() && !e.isSpectator()
+						&& (frozen == null || !frozen.contains(e.getUUID())));
 		for (Entity entity : nearby) {
 			double dx = entity.getX() - player.getX();
 			double dz = entity.getZ() - player.getZ();
