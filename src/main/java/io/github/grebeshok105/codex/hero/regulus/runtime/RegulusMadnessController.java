@@ -444,8 +444,6 @@ public final class RegulusMadnessController {
 		level.sendParticles(ParticleTypes.FLASH, attacker.getX(), attacker.getY() + 1.0, attacker.getZ(), 3, 0, 0, 0, 0);
 		level.sendParticles(ParticleTypes.END_ROD, attacker.getX(), attacker.getY() + 1.0, attacker.getZ(),
 				40, 0.8, 1.0, 0.8, 0.1);
-		VfxFx.event(player, RegulusVfxIds.COUNTER_LIFT,
-				attacker.position(), attacker.getEyePosition(), 1f);
 
 		COUNTERS.put(player.getUUID(), player.getUUID(), new CounterState(player.getUUID(), attacker.getUUID(), level.dimension()));
 	}
@@ -529,8 +527,6 @@ public final class RegulusMadnessController {
 						attacker.setDeltaMovement(0, -3.5, 0);
 						attacker.hurtMarked = true;
 						attacker.hurt(RegulusDamageTypes.counterStrike(level, player), 30f);
-						VfxFx.event(player, RegulusVfxIds.ANIM_COUNTER_ATTACK,
-								player.position(), attacker.position(), 1f);
 						level.playSound(null, attacker.getX(), attacker.getY(), attacker.getZ(),
 								SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 1.4f, 0.9f);
 					}
@@ -588,8 +584,6 @@ public final class RegulusMadnessController {
 					impact.getX(), impact.getY(), impact.getZ(), 3, 1.0, 0.5, 1.0, 0);
 			level.sendParticles(ParticleTypes.LARGE_SMOKE,
 					impact.getX(), impact.getY(), impact.getZ(), 80, 3.0, 1.0, 3.0, 0.1);
-			VfxFx.event(player, RegulusVfxIds.COUNTER_SLAM,
-					player.position(), impact.getCenter(), 1f);
 			return true;
 		}
 
