@@ -82,7 +82,9 @@ public final class RegulusMadnessController {
 				return true;
 			}
 			RegulusMadnessState state = player.getAttachedOrCreate(RegulusMadnessState.ATTACHMENT);
-			if (state.isReading(player.level().getGameTime())) {
+			// Internal true-cost damage (heart backlash) always lands — it is the
+			// owner's own bookkeeping, not an attack the reading window protects from.
+			if (state.isReading(player.level().getGameTime()) && !RegulusDamageTypes.isInternal(source)) {
 				return false;
 			}
 			return true;

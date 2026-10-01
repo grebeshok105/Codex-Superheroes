@@ -45,7 +45,8 @@ public final class ResourceController {
 		}
 		if (data.energy() < hero.getEnergyMax() && !EnergyLocks.isLocked(player)) {
 			HeroDataStore.update(player, d -> d.withEnergy(
-					Math.min(hero.getEnergyMax(), d.energy() + hero.getEnergyRegenPerTick())));
+					Math.min(hero.getEnergyMax(),
+							d.energy() + hero.getEnergyRegenPerTick() + hero.energyRegenBonus(player))));
 		}
 	}
 

@@ -13,6 +13,7 @@ import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.entity.Entity;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Regulus's damage types. Keys stay byte-identical to the rows {@code ModDamageTypes} used to
@@ -22,13 +23,35 @@ import java.util.List;
 public final class RegulusDamageTypes {
 	public static final ResourceKey<DamageType> COUNTER_STRIKE = key("counter_strike");
 	public static final ResourceKey<DamageType> LION_ROAR = key("lion_roar");
+	public static final ResourceKey<DamageType> HEART_BACKLASH = key("regulus_heart_backlash");
 
 	public static final List<DamageTypeSpec> SPECS = List.of(
 			DamageTypeSpec.of("counter_strike", DamageScaling.NEVER, 0.0F,
 					DamageTypeTags.BYPASSES_COOLDOWN),
 			DamageTypeSpec.of("lion_roar", DamageScaling.NEVER, 0.0F,
-					DamageTypeTags.BYPASSES_COOLDOWN)
+					DamageTypeTags.BYPASSES_COOLDOWN),
+			DamageTypeSpec.of("regulus_heart_backlash", DamageScaling.NEVER, 0.0F,
+					DamageTypeTags.BYPASSES_ARMOR, DamageTypeTags.BYPASSES_RESISTANCE,
+					DamageTypeTags.BYPASSES_ENCHANTMENTS, DamageTypeTags.BYPASSES_COOLDOWN,
+					DamageTypeTags.NO_KNOCKBACK)
 	);
+
+	/**
+	 * Internal true-cost types — self-inflicted bookkeeping damage that must always
+	 * land even through damage-denial windows (the evangelion reading gate,
+	 * Task 4's lion-heart safety window). Task 4 extends the set with the other
+	 * internal costs (lion_heart_overheat, blood_price, counter_strike).
+	 */
+	private static final Set<ResourceKey<DamageType>> INTERNAL = Set.of(HEART_BACKLASH);
+
+	public static boolean isInternal(DamageSource source) {
+		for (ResourceKey<DamageType> key : INTERNAL) {
+			if (source.is(key)) {
+				return true;
+			}
+		}
+		return false;
+	}
 
 	private RegulusDamageTypes() {
 	}
@@ -43,5 +66,10 @@ public final class RegulusDamageTypes {
 
 	public static DamageSource lionRoar(ServerLevel level, Entity attacker) {
 		return DamageSources.of(level, LION_ROAR, attacker);
+	}
+
+	/** Heart backlash is a self-cost — no attacker, it always belongs to the owner. */
+	public static DamageSource heartBacklash(ServerLevel level) {
+		return DamageSources.of(level, HEART_BACKLASH);
 	}
 }
