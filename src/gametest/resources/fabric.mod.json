@@ -54,6 +54,7 @@
 			"io.github.grebeshok105.codex.gametest.RegulusBugSweepGameTests",
 			"io.github.grebeshok105.codex.gametest.RegulusCastStateGameTests",
 			"io.github.grebeshok105.codex.gametest.RegulusHeartsGameTests",
+			"io.github.grebeshok105.codex.gametest.RegulusLionHeartGameTests",
 			"io.github.grebeshok105.codex.gametest.DoomsdayGameTests",
 			"io.github.grebeshok105.codex.gametest.SuperheroesCommandsGameTests",
 			"io.github.grebeshok105.codex.gametest.ThanosGameTests",

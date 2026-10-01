@@ -131,6 +131,8 @@
 	"death.attack.shadow_attack.player": "%1$s was slain by %2$s",
 	"death.attack.regulus_heart_backlash": "%1$s's hidden heart burned out in a lost bearer",
 	"death.attack.regulus_heart_backlash.player": "%1$s's hidden heart burned out in a lost bearer",
+	"death.attack.regulus_lion_heart_overheat": "%1$s's lion heart burned out",
+	"death.attack.regulus_lion_heart_overheat.player": "%1$s's lion heart burned out",
 	"item.superheroes.uranium_isotope": "Uranium-238 Isotope",
 	"item.superheroes.uranium_isotope.lore.line1": "Mined on a planet under FICSIT protectorate.",
 	"item.superheroes.uranium_isotope.lore.line2": "Ordinary uranium does nothing to superheroes — this isotope is the only thing that weakens them.",

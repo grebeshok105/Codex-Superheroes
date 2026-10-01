@@ -471,48 +471,6 @@ public class RegulusGameTests implements FabricGameTest {
 	}
 
 	/**
-	 * Lion's Heart is a toggle: amp-4 infinite resistance on activation, a 4-block
-	 * shockwave push, 10 energy per tick drained against the +2 regen while active, and
-	 * the resistance stripped on deactivate.
-	 */
-	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 80)
-	public void lionHeartTogglesResistancePushesAndDrains(GameTestHelper helper) {
-		ServerPlayer player = TestPlayers.join(helper);
-		TestHeroes.transform(player, RegulusHero.ID);
-		// Player-relative spawn — the mock player does not stand at the structure origin.
-		Zombie zombie = spawnAhead(helper, player, 2.5);
-		zombie.setNoAi(true); // a pathing zombie re-closes the gap and cancels the knockback assert
-		float energy0 = HeroDataStore.get(player).energy();
-
-		AbilityRouter.activate(player, LION_HEART);
-		helper.assertTrue(HeroDataStore.get(player).isActive(LION_HEART),
-				"lion's heart toggles on");
-		MobEffectInstance resist = player.getEffect(MobEffects.DAMAGE_RESISTANCE);
-		helper.assertTrue(resist != null && resist.getAmplifier() == 4 && resist.isInfiniteDuration(),
-				"activation grants infinite amp-4 resistance");
-		// tryActivate applies the shockwave impulse synchronously — pin the impulse,
-		// not a later position (walls and the vertical component make distance racy).
-		helper.assertTrue(zombie.getDeltaMovement().horizontalDistance() > 1.0,
-				"the activation shockwave pushes nearby mobs away");
-
-		double dist0 = zombie.distanceTo(player);
-		helper.runAfterDelay(8, () -> {
-			helper.assertTrue(zombie.distanceTo(player) >= dist0 - 0.1,
-					"the pushed zombie never drifts back inside its start radius");
-			helper.assertTrue(HeroDataStore.get(player).energy() < energy0,
-					"the toggle drains 10 energy per tick while active");
-
-			AbilityRouter.deactivate(player, LION_HEART);
-			helper.assertFalse(HeroDataStore.get(player).isActive(LION_HEART),
-					"lion's heart toggles off");
-			helper.assertFalse(player.hasEffect(MobEffects.DAMAGE_RESISTANCE),
-					"deactivate strips the resistance");
-			TestPlayers.leave(player);
-			helper.succeed();
-		});
-	}
-
-	/**
 	 * Lion's Roar is a 45° half-angle cone at 18 blocks for 14 damage + knockback and
 	 * costs 150 energy — targets behind the caster are untouched.
 	 */

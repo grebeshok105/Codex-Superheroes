@@ -80,6 +80,14 @@ public interface Hero {
 
 	boolean cancelsFallDamage(Player player);
 
+	/**
+	 * Whether food exhaustion ({@code Player#causeFoodExhaustion}) is voided right now —
+	 * lion-heart-grade absolute defense covers the hunger pipeline too. Default: never.
+	 */
+	default boolean blocksExhaustionWhile(ServerPlayer player) {
+		return false;
+	}
+
 	@Nullable
 	default ResourceLocation getSkinTexture() {
 		return null;
