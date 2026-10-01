@@ -1,5 +1,6 @@
 package io.github.grebeshok105.codex.client.hero.regulus.hud;
 
+import io.github.grebeshok105.codex.client.hero.regulus.state.ClientHeartsState;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -24,6 +25,15 @@ public final class CracksOverlayHud {
 
 	public static void render(GuiGraphics graphics, DeltaTracker tracker) {
 		float ramp = ClientHudGlitch.ramp();
+		// Lion-heart overheat drives the same crack ramp by stage (overheatTicks / 40t);
+		// a forced-off hits full intensity for a short flash.
+		int overheat = ClientHeartsState.overheatTicks();
+		if (ClientHeartsState.isLionHeartActive() && overheat > 0) {
+			ramp = Math.max(ramp, Mth.clamp(overheat / 40f, 0f, 1f));
+		}
+		if (ClientHeartsState.forcedOffFlash()) {
+			ramp = 1f;
+		}
 		if (ramp <= 0.05f) return;
 		Minecraft mc = Minecraft.getInstance();
 		int sw = mc.getWindow().getGuiScaledWidth();

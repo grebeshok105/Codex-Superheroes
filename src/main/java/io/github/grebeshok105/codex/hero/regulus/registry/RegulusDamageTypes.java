@@ -24,6 +24,9 @@ public final class RegulusDamageTypes {
 	public static final ResourceKey<DamageType> COUNTER_STRIKE = key("counter_strike");
 	public static final ResourceKey<DamageType> LION_ROAR = key("lion_roar");
 	public static final ResourceKey<DamageType> HEART_BACKLASH = key("regulus_heart_backlash");
+	public static final ResourceKey<DamageType> LION_HEART_OVERHEAT = key("regulus_lion_heart_overheat");
+	/** Task 8 owns the spec; the key exists early so the internal set matches it the day it lands. */
+	public static final ResourceKey<DamageType> BLOOD_PRICE = key("regulus_blood_price");
 
 	public static final List<DamageTypeSpec> SPECS = List.of(
 			DamageTypeSpec.of("counter_strike", DamageScaling.NEVER, 0.0F,
@@ -33,16 +36,22 @@ public final class RegulusDamageTypes {
 			DamageTypeSpec.of("regulus_heart_backlash", DamageScaling.NEVER, 0.0F,
 					DamageTypeTags.BYPASSES_ARMOR, DamageTypeTags.BYPASSES_RESISTANCE,
 					DamageTypeTags.BYPASSES_ENCHANTMENTS, DamageTypeTags.BYPASSES_COOLDOWN,
+					DamageTypeTags.NO_KNOCKBACK),
+			DamageTypeSpec.of("regulus_lion_heart_overheat", DamageScaling.NEVER, 0.0F,
+					DamageTypeTags.BYPASSES_ARMOR, DamageTypeTags.BYPASSES_RESISTANCE,
+					DamageTypeTags.BYPASSES_ENCHANTMENTS, DamageTypeTags.BYPASSES_COOLDOWN,
 					DamageTypeTags.NO_KNOCKBACK)
 	);
 
 	/**
 	 * Internal true-cost types — self-inflicted bookkeeping damage that must always
-	 * land even through damage-denial windows (the evangelion reading gate,
-	 * Task 4's lion-heart safety window). Task 4 extends the set with the other
-	 * internal costs (lion_heart_overheat, blood_price, counter_strike).
+	 * land even through damage-denial windows (the madness reading gate, the
+	 * lion-heart void). Matched by key, never instanceof: {@link #BLOOD_PRICE} is
+	 * forward-compat — its spec lands with Task 8 and {@code source.is(key)} simply
+	 * never matches until then.
 	 */
-	private static final Set<ResourceKey<DamageType>> INTERNAL = Set.of(HEART_BACKLASH);
+	private static final Set<ResourceKey<DamageType>> INTERNAL = Set.of(
+			HEART_BACKLASH, LION_HEART_OVERHEAT, BLOOD_PRICE, COUNTER_STRIKE);
 
 	public static boolean isInternal(DamageSource source) {
 		for (ResourceKey<DamageType> key : INTERNAL) {
@@ -71,5 +80,10 @@ public final class RegulusDamageTypes {
 	/** Heart backlash is a self-cost — no attacker, it always belongs to the owner. */
 	public static DamageSource heartBacklash(ServerLevel level) {
 		return DamageSources.of(level, HEART_BACKLASH);
+	}
+
+	/** Lion-heart overheat burn — a self-cost, like the backlash. */
+	public static DamageSource lionHeartOverheat(ServerLevel level) {
+		return DamageSources.of(level, LION_HEART_OVERHEAT);
 	}
 }

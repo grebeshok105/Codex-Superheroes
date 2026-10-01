@@ -11,6 +11,7 @@ import io.github.grebeshok105.codex.core.hero.LandingImpact;
 import io.github.grebeshok105.codex.core.hero.PassiveGlyph;
 import io.github.grebeshok105.codex.mechanic.shockwave.ShockwaveUtil;
 import io.github.grebeshok105.codex.core.model.ResourceKind;
+import io.github.grebeshok105.codex.hero.regulus.runtime.LionHeartController;
 import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusHearts;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
@@ -151,6 +152,11 @@ public final class RegulusHero implements Hero {
 	@Override
 	public boolean cancelsFallDamage(Player player) {
 		return true;
+	}
+
+	@Override
+	public boolean blocksExhaustionWhile(ServerPlayer player) {
+		return LionHeartController.isBlocking(player);
 	}
 
 	@Override

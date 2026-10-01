@@ -131,6 +131,8 @@
 	"death.attack.shadow_attack.player": "%1$s был убит %2$s",
 	"death.attack.regulus_heart_backlash": "Скрытое сердце %1$s сгорело в погибшем носителе",
 	"death.attack.regulus_heart_backlash.player": "Скрытое сердце %1$s сгорело в погибшем носителе",
+	"death.attack.regulus_lion_heart_overheat": "Львиное сердце %1$s перегорело",
+	"death.attack.regulus_lion_heart_overheat.player": "Львиное сердце %1$s перегорело",
 	"item.superheroes.uranium_isotope": "Изотоп Урана-238",
 	"item.superheroes.uranium_isotope.lore.line1": "Добыто с планеты под протекторатом FICSIT.",
 	"item.superheroes.uranium_isotope.lore.line2": "Обычный уран на супергероев не действует, а этот изотоп — единственное, что их ослабляет.",
