@@ -14,9 +14,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * Isolation audit for the Veil backend: {@code foundry.veil} may only be
  * imported inside {@code client/core/vfx/veil/}. Everything else in
- * {@code client/core} — and all of {@code src/main} — must compile and run
- * on the Veil-free classpaths ({@code clientnoveil}/{@code servernoveil}),
- * so a stray import is a bug, not a style issue.
+ * {@code client/core} — and all of {@code src/main} — must stay Veil-free so
+ * a stray import is a bug, not a style issue.
  */
 class VeilIsolationTest {
 	private static final Path ROOT = Path.of("").toAbsolutePath();

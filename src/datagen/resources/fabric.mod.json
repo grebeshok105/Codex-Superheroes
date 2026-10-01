@@ -1,0 +1,24 @@
+{
+	"schemaVersion": 1,
+	"id": "superheroes-datagen",
+	"version": "1.0.0",
+	"name": "Codex Superheroes Datagen",
+	"description": "Datagen harness for Codex Superheroes. Development only, never shipped.",
+	"license": "CC0-1.0",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"io.github.grebeshok105.codex.datagen.DatagenBootstrap"
+		],
+		"fabric-datagen": [
+			"io.github.grebeshok105.codex.datagen.SuperheroesDataGenerator"
+		]
+	},
+	"mixins": [
+		"superheroes.mixins.json",
+		"superheroes.compat.mixins.json"
+	],
+	"depends": {
+		"fabric-api": "*"
+	}
+}

@@ -6,6 +6,9 @@ import io.github.grebeshok105.codex.core.lifecycle.EntityControlLock;
 import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
+import io.github.grebeshok105.codex.core.net.VfxChannelS2CPayload;
+import io.github.grebeshok105.codex.core.net.VfxFx;
+import io.github.grebeshok105.codex.hero.regulus.vfx.RegulusVfxIds;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
@@ -85,7 +88,10 @@ public final class RegulusGreedController {
 	/** Server-thread leave/death hook — drops the caster's greed state and frees their victims. */
 	public static void onPlayerGone(ServerPlayer player) {
 		UUID id = player.getUUID();
-		MAGNETS.remove(id);
+		if (MAGNETS.remove(id) != null) {
+			VfxFx.channel(player, RegulusVfxIds.CHANNEL_GREED_MAGNET,
+					VfxChannelS2CPayload.STOP, player.position());
+		}
 		if (CASTER_FREEZE_UNTIL.remove(id) != null) {
 			removeKnockback(player);
 		}
@@ -109,6 +115,8 @@ public final class RegulusGreedController {
 
 	public static void startMagnet(ServerPlayer player, LivingEntity victim) {
 		MAGNETS.put(player.getUUID(), player.getUUID(), new MagnetState(victim.getUUID(), player.tickCount));
+		VfxFx.channel(player, RegulusVfxIds.CHANNEL_GREED_MAGNET,
+				VfxChannelS2CPayload.START, victim.getEyePosition());
 		player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, FREEZE_TICKS, 250, true, false, false));
 		player.addEffect(new MobEffectInstance(MobEffects.JUMP, FREEZE_TICKS, -50, true, false, false));
 	}
@@ -123,7 +131,13 @@ public final class RegulusGreedController {
 			player.removeEffect(MobEffects.MOVEMENT_SLOWDOWN);
 			player.removeEffect(MobEffects.JUMP);
 			MAGNETS.remove(player.getUUID());
+			VfxFx.channel(player, RegulusVfxIds.CHANNEL_GREED_MAGNET,
+					VfxChannelS2CPayload.STOP, player.position());
 			return;
+		}
+		if (player.tickCount % VfxFx.CHANNEL_UPDATE_INTERVAL_TICKS == 0) {
+			VfxFx.channel(player, RegulusVfxIds.CHANNEL_GREED_MAGNET,
+					VfxChannelS2CPayload.UPDATE, victim.getEyePosition());
 		}
 		Vec3 dir = player.position().subtract(victim.position()).normalize().scale(PULL_STRENGTH);
 		victim.setDeltaMovement(dir);
@@ -154,12 +168,18 @@ public final class RegulusGreedController {
 				MAGNETS.remove(player.getUUID());
 				player.removeEffect(MobEffects.MOVEMENT_SLOWDOWN);
 				player.removeEffect(MobEffects.JUMP);
+				VfxFx.channel(player, RegulusVfxIds.CHANNEL_GREED_MAGNET,
+						VfxChannelS2CPayload.STOP, player.position());
 				return;
 			}
 		}
 		MagnetState m = MAGNETS.remove(player.getUUID());
 		player.removeEffect(MobEffects.MOVEMENT_SLOWDOWN);
 		player.removeEffect(MobEffects.JUMP);
+		if (m != null) {
+			VfxFx.channel(player, RegulusVfxIds.CHANNEL_GREED_MAGNET,
+					VfxChannelS2CPayload.STOP, player.position());
+		}
 		if (m == null) {
 			return;
 		}

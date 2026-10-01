@@ -6,7 +6,10 @@ import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
 import io.github.grebeshok105.codex.core.model.HeroData;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
+import io.github.grebeshok105.codex.core.net.VfxChannelS2CPayload;
+import io.github.grebeshok105.codex.core.net.VfxFx;
 import io.github.grebeshok105.codex.hero.regulus.net.HeartsSyncS2CPayload;
+import io.github.grebeshok105.codex.hero.regulus.vfx.RegulusVfxIds;
 import io.github.grebeshok105.codex.hero.regulus.registry.RegulusDamageTypes;
 import io.github.grebeshok105.codex.tag.ModEntityTypeTags;
 import java.util.ArrayList;
@@ -78,6 +81,7 @@ public final class RegulusHearts {
 	private static final class SyncState {
 		private View lastSent;
 		private int overheatTicks;
+		private boolean pulseChannelOpen;
 	}
 
 	/** Live hearts owned by this player. */
@@ -147,6 +151,8 @@ public final class RegulusHearts {
 			ServerPlayer owner = srv.getPlayerList().getPlayer(ownerId);
 			if (owner != null && !owner.hasDisconnected()) {
 				clearDamageScale(owner);
+				VfxFx.channel(owner, RegulusVfxIds.CHANNEL_HEART_PULSE,
+						VfxChannelS2CPayload.STOP, owner.position());
 				ServerPlayNetworking.send(owner, new HeartsSyncS2CPayload(List.of(), false, 0));
 			}
 		}
@@ -166,11 +172,42 @@ public final class RegulusHearts {
 
 	private static void tickOwner(MinecraftServer srv, ServerPlayer owner, HeroData data) {
 		server = srv;
+		updatePulseChannel(owner);
 		if (owner.level().getGameTime() % SCAN_INTERVAL_TICKS != 0L) {
 			return;
 		}
 		collect(owner);
 		syncView(owner, data);
+	}
+
+	/**
+	 * The owner-only golden pulse over live bearers: opens the channel on the
+	 * empty→non-empty transition, keeps it alive under the client-side 10t
+	 * silence timeout, and closes it when the last heart is gone.
+	 */
+	private static void updatePulseChannel(ServerPlayer owner) {
+		Set<UUID> set = HEARTS.get(owner.getUUID());
+		boolean has = set != null && !set.isEmpty();
+		SyncState sync = SYNC.get(owner.getUUID());
+		if (!has) {
+			if (sync != null && sync.pulseChannelOpen) {
+				VfxFx.channel(owner, RegulusVfxIds.CHANNEL_HEART_PULSE,
+						VfxChannelS2CPayload.STOP, owner.position());
+				sync.pulseChannelOpen = false;
+			}
+			return;
+		}
+		if (sync == null) {
+			sync = syncState(owner.getUUID());
+		}
+		if (!sync.pulseChannelOpen) {
+			VfxFx.channel(owner, RegulusVfxIds.CHANNEL_HEART_PULSE,
+					VfxChannelS2CPayload.START, owner.position());
+			sync.pulseChannelOpen = true;
+		} else if (owner.tickCount % 8 == 0) {
+			VfxFx.channel(owner, RegulusVfxIds.CHANNEL_HEART_PULSE,
+					VfxChannelS2CPayload.UPDATE, owner.position());
+		}
 	}
 
 	/** The claim scan: any eligible vanilla mob in the aura joins until the cap bites. */

@@ -4,6 +4,7 @@ import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.client.core.hud.AbilityDecoration;
 import io.github.grebeshok105.codex.client.core.module.HeroClientContext;
 import io.github.grebeshok105.codex.client.core.module.HeroClientModule;
+import io.github.grebeshok105.codex.client.hero.regulus.emf.RegulusEmf;
 import io.github.grebeshok105.codex.client.hero.regulus.fx.RegulusFx;
 import io.github.grebeshok105.codex.client.hero.regulus.hud.BloodRainHud;
 import io.github.grebeshok105.codex.client.hero.regulus.hud.ClientHudGlitch;
@@ -18,7 +19,6 @@ import io.github.grebeshok105.codex.hero.regulus.RegulusAbilities;
 import io.github.grebeshok105.codex.hero.regulus.RegulusHero;
 import io.github.grebeshok105.codex.hero.regulus.net.HeartsSyncS2CPayload;
 import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusMadnessController;
-import io.github.grebeshok105.codex.hero.regulus.vfx.RegulusVfxIds;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
@@ -38,9 +38,11 @@ public record RegulusClientModule() implements HeroClientModule {
 		ctx.hud(1500, ModId.of("cracks_overlay"), CracksOverlayHud::render);
 		ctx.hudGlitchSource(ClientHudGlitch.SOURCE);
 		ctx.playerLayer(EvangelionBookLayer::new);
-		ctx.vfx(RegulusVfxIds.ANIM_EVANGELIUM_ACTIVATION, RegulusFx::clipOnly);
-		ctx.vfx(RegulusVfxIds.ANIM_EVANGELIUM_DEACTIVATION, RegulusFx::clipOnly);
-		ctx.vfx(RegulusVfxIds.EVANGELIUM_MAJOR, RegulusFx::clipOnly);
+		// EMF presentation (clip clocks + merged-jem variables) and every
+		// RegulusVfxIds one-shot/channel factory. Both are no-ops when EMF is
+		// absent (RegulusEmf gates on EmfBridge.isAvailable()).
+		RegulusEmf.register(ctx);
+		RegulusFx.register(ctx);
 		// The evangelion reading zoom: shrink fov over the 60-tick channel, computed
 		// from the synced game-tick deadline (never wall-clock — a client that
 		// observes the ritual late still gets the right remaining time).

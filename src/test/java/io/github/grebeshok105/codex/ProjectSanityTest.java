@@ -279,7 +279,7 @@ public final class ProjectSanityTest {
 				// a dropped register(...) call fails here (§7 stage 15 audit).
 				"BloodRainHud.java", "ClientHeroDimsWatcher.java", "EyeLaserChannel.java", "FlightPoseTracker.java",
 				"HomelanderPoseState.java", "IronFistsFx.java", "MeleeChargeSender.java",
-				"PlayerAnimator.java", "RenderedPoseCache.java", "ScorchMarkStore.java",
+				"PlayerAnimator.java", "RegulusPoseState.java", "RenderedPoseCache.java", "ScorchMarkStore.java",
 				"ScreenFlash.java", "ThirdPersonFraming.java");
 		forEachJavaFile(CLIENT_JAVA, file -> {
 			String name = file.getFileName().toString();

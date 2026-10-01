@@ -3,7 +3,9 @@ package io.github.grebeshok105.codex.hero.regulus.ability;
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
+import io.github.grebeshok105.codex.core.net.VfxFx;
 import io.github.grebeshok105.codex.hero.regulus.registry.RegulusDamageTypes;
+import io.github.grebeshok105.codex.hero.regulus.vfx.RegulusVfxIds;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -50,6 +52,11 @@ public final class LionRoarAbility implements Ability {
 		ServerLevel level = player.serverLevel();
 		Vec3 origin = player.getEyePosition();
 		Vec3 forward = player.getViewVector(1f).normalize();
+		// Cast clip + impact visuals share the event; the future cast-gated
+		// debris fan (plan Task 5) moves the impact to its authored fire tick.
+		VfxFx.event(player, RegulusVfxIds.ANIM_DEBRIS_KICK, origin, origin.add(forward), 1f);
+		VfxFx.event(player, RegulusVfxIds.DEBRIS_IMPACT, origin,
+				origin.add(forward.scale(4.0)), 1f);
 
 		AABB area = new AABB(origin, origin).inflate(RANGE);
 		List<Entity> candidates = level.getEntities(player, area,

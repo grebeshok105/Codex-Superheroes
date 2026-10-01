@@ -4,7 +4,9 @@ import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
+import io.github.grebeshok105.codex.core.net.VfxFx;
 import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusGreedController;
+import io.github.grebeshok105.codex.hero.regulus.vfx.RegulusVfxIds;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -50,6 +52,8 @@ public final class ManiaOfGreedAbility implements Ability {
 			return false;
 		}
 		ServerLevel level = player.serverLevel();
+		Vec3 origin = player.getEyePosition();
+		VfxFx.event(player, RegulusVfxIds.ANIM_MANIA_OF_GREED_CAST, origin, origin, 1f);
 		RegulusGreedController.startMagnet(player, victim);
 		level.playSound(null, player.getX(), player.getY(), player.getZ(),
 				SoundEvents.BEACON_ACTIVATE, SoundSource.PLAYERS, 1.2f, 0.6f);

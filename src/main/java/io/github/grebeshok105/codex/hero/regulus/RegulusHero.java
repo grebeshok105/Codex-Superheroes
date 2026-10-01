@@ -11,7 +11,9 @@ import io.github.grebeshok105.codex.core.hero.LandingImpact;
 import io.github.grebeshok105.codex.core.hero.PassiveGlyph;
 import io.github.grebeshok105.codex.mechanic.shockwave.ShockwaveUtil;
 import io.github.grebeshok105.codex.core.model.ResourceKind;
+import io.github.grebeshok105.codex.core.net.VfxFx;
 import io.github.grebeshok105.codex.hero.regulus.runtime.LionHeartController;
+import io.github.grebeshok105.codex.hero.regulus.vfx.RegulusVfxIds;
 import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusHearts;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
@@ -163,6 +165,7 @@ public final class RegulusHero implements Hero {
 	public void onLanded(ServerPlayer player, LandingImpact impact) {
 		float intensity = impact.intensity();
 		float scale = 0.25f + intensity * 1.05f;
+		VfxFx.event(player, RegulusVfxIds.LANDING, player.position(), player.position(), scale);
 		double radius = 2.5 + scale * 6.5;
 		float damage = 3.0f + scale * 8.0f;
 		ShockwaveUtil.detonate(player, player.position(), radius, damage, false);
