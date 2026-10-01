@@ -3,6 +3,7 @@ package io.github.grebeshok105.codex.gametest;
 import io.github.grebeshok105.codex.hero.pandora.PandoraAttachments;
 import io.github.grebeshok105.codex.hero.pandora.ability.MirrorDimensionAbility;
 import io.github.grebeshok105.codex.hero.regulus.RegulusAttachments;
+import io.github.grebeshok105.codex.hero.regulus.RegulusHero;
 import io.github.grebeshok105.codex.hero.omniman.ability.OmnimanThinkMarkAbility;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
 import io.github.grebeshok105.codex.hero.battlebeast.runtime.BattleBeastCurseController;
@@ -118,6 +119,8 @@ public final class LifecycleSideEffectsGameTests implements FabricGameTest {
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void ownerLeaveReleasesGreedFrozenVictim(GameTestHelper helper) {
 		ServerPlayer regulus = TestPlayers.join(helper, "greed-owner");
+		// The freeze costs 150 energy — only a transformed caster can pay it.
+		TestHeroes.transform(regulus, RegulusHero.ID);
 		Zombie zombie = helper.spawn(EntityType.ZOMBIE, 2, 1, 2);
 
 		// startMagnet holds the victim by ref, but leave-release resolves by uuid — wait for visibility.

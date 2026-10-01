@@ -42,6 +42,9 @@ public record RegulusClientModule() implements HeroClientModule {
 		ctx.vfx(RegulusVfxIds.ANIM_EVANGELIUM_ACTIVATION, RegulusFx::clipOnly);
 		ctx.vfx(RegulusVfxIds.ANIM_EVANGELIUM_DEACTIVATION, RegulusFx::clipOnly);
 		ctx.vfx(RegulusVfxIds.EVANGELIUM_MAJOR, RegulusFx::clipOnly);
+		ctx.vfx(RegulusVfxIds.ANIM_MANIA_OF_GREED_CAST, RegulusFx::clipOnly);
+		ctx.vfx(RegulusVfxIds.ANIM_COUNTER_ATTACK, RegulusFx::clipOnly);
+		ctx.vfx(RegulusVfxIds.COUNTER_SLAM_IMPACT, RegulusFx::counterSlam);
 		// The evangelion reading zoom: shrink fov over the 60-tick channel, computed
 		// from the synced game-tick deadline (never wall-clock — a client that
 		// observes the ritual late still gets the right remaining time).

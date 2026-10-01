@@ -143,8 +143,8 @@ public class RegulusGameTests implements FabricGameTest {
 	/**
 	 * The counter sequence: the last damager is NO_AI/NO_GRAVITY-locked and lifted
 	 * ~30 blocks over 20 ticks, the Regulus player is teleported in (20 ticks), then the
-	 * victim is slammed back down — carving a crater, dealing counter damage and locking
-	 * the player's energy for 15 s.
+	 * victim is slammed back down — carving a crater, dealing one formula hit and locking
+	 * the player's energy for 8 s.
 	 */
 	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 170)
 	public void counterStrikeLiftsSlamsAndLocks(GameTestHelper helper) {
@@ -155,8 +155,8 @@ public class RegulusGameTests implements FabricGameTest {
 				RegulusMadnessState.EMPTY.withMadness(true));
 
 		// Stay on the structure: the counter resolves its victim through the entity
-		// section manager, which drops entities once a transient chunk load ends, and
-		// findTarget prefers the recorded last damager over the 120-block sweep anyway.
+		// section manager, which drops entities once a transient chunk load ends — and
+		// the only accepted target is the recorded last damager inside 40 blocks.
 		Warden warden = spawnEntity(helper, EntityType.WARDEN,
 				player.getX() + 2.0, player.getY(), player.getZ());
 
@@ -168,7 +168,7 @@ public class RegulusGameTests implements FabricGameTest {
 			double startY = warden.getY();
 			AbilityRouter.activate(player, COUNTER_STRIKE);
 			helper.assertTrue(AbilityCooldowns.isOnCooldown(player, COUNTER_STRIKE),
-					"counter strike arms its 30 s cooldown");
+					"counter strike arms its 40 s cooldown");
 			helper.assertTrue(RegulusMadnessController.isCounterInvolved(warden),
 					"the warden is the counter victim");
 
@@ -183,7 +183,7 @@ public class RegulusGameTests implements FabricGameTest {
 				helper.assertTrue(warden.getHealth() < warden.getMaxHealth(),
 						"the slam dealt counter damage");
 				helper.assertTrue(EnergyLocks.isLocked(player),
-						"the final slam locks Regulus energy for 15 s");
+						"the final slam locks Regulus energy for 8 s");
 				TestPlayers.leave(player);
 				helper.succeed();
 			});
@@ -263,12 +263,14 @@ public class RegulusGameTests implements FabricGameTest {
 	}
 
 	/**
-	 * Mania of Greed: a toggle that magnet-pulls the aimed victim while rooting the
-	 * caster (amp-250 slowdown). Toggling off freezes the victim for 200 ticks — NO_AI,
-	 * pinned to its lock position, damage queued instead of applied — and buffs the
-	 * caster; the queued damage lands when the freeze ends.
+	 * Mania of Greed: a toggle that opens a 19-tick windup cast; the magnet engages on
+	 * the authored fire tick and pulls the aimed victim while rooting the caster
+	 * (amp-250 slowdown). Toggling off freezes the victim for 200 ticks — NO_AI,
+	 * pinned to its lock position, damage queued instead of applied — for 150 energy;
+	 * the queued damage lands when the freeze ends. No steroids ride the freeze
+	 * anymore (the old Resist V/Speed III/Str II/+2kb bundle is gone).
 	 */
-	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 300)
+	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 400)
 	public void maniaOfGreedMagnetsFreezesAndQueuesDamage(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, RegulusHero.ID);
@@ -277,6 +279,9 @@ public class RegulusGameTests implements FabricGameTest {
 		// registered but never ticked, so the magnet's pull never displaces them. And it
 		// must stand level with the caster: if it lands in a lower pocket the normalized
 		// pull dir goes steep and the horizontal impulse shrinks below the assert floor.
+		// The cast is damage-interruptible — keep the caster immune so stray
+		// blasts from neighbouring tests cannot cancel the windup.
+		player.setInvulnerable(true);
 		Zombie zombie = spawnAhead(helper, player, 4.0);
 		zombie.setNoAi(true);
 		BlockPos feet = zombie.blockPosition();
@@ -294,9 +299,9 @@ public class RegulusGameTests implements FabricGameTest {
 			Vec3 anchor = zombie.position();
 			AbilityRouter.activate(player, MANIA_OF_GREED);
 			helper.assertTrue(HeroDataStore.get(player).isActive(MANIA_OF_GREED),
-					"the magnet engages on the aimed target");
+					"the toggle engages — the magnet waits for the authored fire tick");
 
-			awaitGreedPull(helper, player, zombie, anchor, 15, () -> {
+			awaitGreedPull(helper, player, zombie, anchor, 45, () -> {
 				MobEffectInstance slow = player.getEffect(MobEffects.MOVEMENT_SLOWDOWN);
 				helper.assertTrue(slow != null && slow.getAmplifier() == 250
 								&& slow.getDuration() <= 200 && slow.isAmbient(),
@@ -306,16 +311,19 @@ public class RegulusGameTests implements FabricGameTest {
 				helper.assertFalse(HeroDataStore.get(player).isActive(MANIA_OF_GREED),
 						"toggling off releases the magnet");
 				helper.assertTrue(AbilityCooldowns.isOnCooldown(player, MANIA_OF_GREED),
-						"release arms the 25 s cooldown");
+						"release arms the 500-tick cooldown");
 				helper.assertTrue(RegulusGreedController.isFrozen(zombie),
 						"the victim is frozen");
 				helper.assertTrue(
 						TestPlayers.lockOwners(zombie, ControlLockKind.NO_AI).contains(player.getUUID()),
 						"freeze holds the NO_AI lock");
-				MobEffectInstance resist = player.getEffect(MobEffects.DAMAGE_RESISTANCE);
-				helper.assertTrue(resist != null && resist.getAmplifier() == 4
-								&& !resist.isInfiniteDuration() && resist.getDuration() <= 200,
-						"the caster gains the 200-tick amp-4 resistance");
+				helper.assertTrue(player.getEffect(MobEffects.DAMAGE_RESISTANCE) == null,
+						"no steroid resistance rides the freeze anymore");
+				AttributeInstance knockback = player.getAttribute(Attributes.ATTACK_KNOCKBACK);
+				helper.assertTrue(knockback == null
+								|| !knockback.hasModifier(ResourceLocation.fromNamespaceAndPath(
+										"superheroes", "greed_knockback")),
+						"the +2 attack-knockback steroid is gone");
 
 				float hp = zombie.getHealth();
 				helper.assertFalse(

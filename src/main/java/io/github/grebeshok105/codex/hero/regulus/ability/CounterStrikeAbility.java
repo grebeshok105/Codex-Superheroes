@@ -1,22 +1,15 @@
 package io.github.grebeshok105.codex.hero.regulus.ability;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusMadnessController;
 import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusMadnessState;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
 
 public final class CounterStrikeAbility implements Ability {
-	private static final double SEARCH_RANGE = 120.0;
-
 	public static final ResourceLocation ID = ModId.of("counter_strike");
 
 	@Override
@@ -39,7 +32,7 @@ public final class CounterStrikeAbility implements Ability {
 		return 0f;
 	}
 
-	public static final int COOLDOWN_TICKS = 30 * 20;
+	public static final int COOLDOWN_TICKS = 800;
 
 	@Override
 	public boolean canActivate(ServerPlayer player) {
@@ -66,26 +59,8 @@ public final class CounterStrikeAbility implements Ability {
 	}
 
 	private static LivingEntity findTarget(ServerPlayer player) {
-		LivingEntity tracked = RegulusMadnessController.getLastDamager(player);
-		if (tracked != null && tracked.distanceTo(player) <= SEARCH_RANGE) {
-			return tracked;
-		}
-		LivingEntity last = player.getLastHurtByMob();
-		if (last != null && last.isAlive() && last.distanceTo(player) <= SEARCH_RANGE) {
-			return last;
-		}
-		ServerLevel level = player.serverLevel();
-		Vec3 eye = player.getEyePosition(1f);
-		AABB box = new AABB(eye, eye).inflate(SEARCH_RANGE);
-		LivingEntity best = null;
-		double bestDist = SEARCH_RANGE * SEARCH_RANGE;
-		for (Entity e : level.getEntities(player, box, ent -> ent instanceof LivingEntity le && TargetFilters.hostileTo(player).test(le))) {
-			double d = e.distanceToSqr(player);
-			if (d < bestDist) {
-				bestDist = d;
-				best = (LivingEntity) e;
-			}
-		}
-		return best;
+		// Only the recorded last damager inside the controller's search range — no
+		// getLastHurtByMob or nearest-hostile fallback (see RegulusMadnessController).
+		return RegulusMadnessController.findCounterTarget(player);
 	}
 }
