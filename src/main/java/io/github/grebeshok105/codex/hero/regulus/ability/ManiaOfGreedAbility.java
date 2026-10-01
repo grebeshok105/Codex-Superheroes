@@ -97,8 +97,12 @@ public final class ManiaOfGreedAbility implements Ability {
 	@Override
 	public void onDeactivate(ServerPlayer player) {
 		// Dropping the cast first: a pre-fire abort must not let the fire tick run
-		// on a toggle that is already off (post-fire cancels are silent no-ops).
-		RegulusCastState.cancel(player);
+		// on a toggle that is already off. cancel() clears whatever cast record is
+		// live — mania's own record expires at castUntil, so only touch it while it
+		// is still tracked or a different ability's windup would be aborted.
+		if (RegulusCastState.isCasting(player, ID)) {
+			RegulusCastState.cancel(player);
+		}
 		// Cooldown only when a magnet really started — an abort before tick 19 is free.
 		boolean hadMagnet = RegulusGreedController.hasMagnet(player);
 		RegulusGreedController.releaseAndFreeze(player);
