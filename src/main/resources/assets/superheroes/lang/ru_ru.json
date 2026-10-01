@@ -155,7 +155,7 @@
 	"ability.superheroes.mania_of_greed": "Мания Жадности",
 	"ability.superheroes.mania_of_greed.desc": "Притянуть цель и заморозить время — отложенный урон",
 	"ability.superheroes.greeds_embrace": "Объятия Алчности",
-	"ability.superheroes.greeds_embrace.desc": "Метка точки — всё живое в радиусе 20 блоков стягивается к ней, получает 35 урона и подбрасывается. Пять секунд их держит купольная клетка из света.",
+	"ability.superheroes.greeds_embrace.desc": "Короткая подготовка, затем остановка времени в куполе радиусом 8 в точке прицела. Враги замирают; урон внутри купола копится и обрушивается при его схлопывании — не больше 35% их макс. здоровья.",
 	"ability.superheroes.lion_roar": "Львиный Рёв",
 	"ability.superheroes.lion_roar.desc": "Звуковой импульс, отбрасывающий врагов",
 	"item.superheroes.evangelion": "Евангелие",

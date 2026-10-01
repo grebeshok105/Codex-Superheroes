@@ -59,6 +59,12 @@ public final class RegulusGreedController {
 	public static void register(HeroModuleContext ctx) {
 
 		ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> {
+			// Stasis first: a dome-held victim queues into the dome and never reaches the
+			// freeze queue — no double-queueing across the two systems.
+			if (entity instanceof LivingEntity living
+					&& GreedStasisController.tryQueue(living, source, amount)) {
+				return false;
+			}
 			FreezeState st = FREEZES.get(entity.getUUID());
 			if (st == null) {
 				return true;
@@ -222,12 +228,7 @@ public final class RegulusGreedController {
 			LivingEntity v = victim(server);
 			if (v == null) return;
 			EntityControlLock.release(v, ControlLockKind.NO_AI, casterId);
-			LinkedHashMap<SourceKey, AggregatedDamage> aggregated = new LinkedHashMap<>();
-			for (QueuedDamage q : queuedDamage) {
-				SourceKey key = SourceKey.of(q.source);
-				aggregated.merge(key, new AggregatedDamage(q.source, q.amount), AggregatedDamage::merge);
-			}
-			for (AggregatedDamage agg : aggregated.values()) {
+			for (AggregatedDamage agg : aggregate(queuedDamage).values()) {
 				if (!v.isAlive()) break;
 				v.invulnerableTime = 0;
 				v.hurt(agg.representative, agg.total);
@@ -239,10 +240,21 @@ public final class RegulusGreedController {
 		}
 	}
 
-	private record QueuedDamage(DamageSource source, float amount) {
+	/** The greed damage queue record — shared with the stasis dome's release flow. */
+	record QueuedDamage(DamageSource source, float amount) {
 	}
 
-	private record SourceKey(UUID directEntityId, UUID causingEntityId, ResourceLocation typeId) {
+	/** Groups queued hits by representative source, insertion order kept. */
+	static LinkedHashMap<SourceKey, AggregatedDamage> aggregate(List<QueuedDamage> queued) {
+		LinkedHashMap<SourceKey, AggregatedDamage> aggregated = new LinkedHashMap<>();
+		for (QueuedDamage q : queued) {
+			SourceKey key = SourceKey.of(q.source());
+			aggregated.merge(key, new AggregatedDamage(q.source(), q.amount()), AggregatedDamage::merge);
+		}
+		return aggregated;
+	}
+
+	record SourceKey(UUID directEntityId, UUID causingEntityId, ResourceLocation typeId) {
 		static SourceKey of(DamageSource source) {
 			Entity direct = source.getDirectEntity();
 			Entity causing = source.getEntity();
@@ -269,7 +281,7 @@ public final class RegulusGreedController {
 		}
 	}
 
-	private static final class AggregatedDamage {
+	static final class AggregatedDamage {
 		final DamageSource representative;
 		float total;
 

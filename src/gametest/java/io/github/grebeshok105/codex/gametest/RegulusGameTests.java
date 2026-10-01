@@ -47,7 +47,7 @@ import net.minecraft.world.phys.Vec3;
  * I5b characterization pins for Regulus — current behavior of the madness pipeline
  * (Evangelion reading window → madness + bonus life + attribute/effect schedule),
  * the totem ward, the counter sequence (lift/arrive/slam, flight strip, energy lock)
- * and greed/cage/roar/lion-heart mechanics, so the move to {@code hero/regulus} can
+ * and greed/roar/lion-heart mechanics, so the move to {@code hero/regulus} can
  * be judged byte-equivalent. Ability ids stay literal {@code ModId.of(...)} — the
  * {@code AbilityIds} constants relocate during the wave.
  */
@@ -471,51 +471,6 @@ public class RegulusGameTests implements FabricGameTest {
 	}
 
 	/**
-	 * Greed's Embrace: 35 damage + weakness amp 1 + a straight-up launch on everything
-	 * near the aim point. The cage was unhooked (Task 1) — the victim takes no scaled
-	 * fall damage on landing, so the warden survives the full sequence.
-	 */
-	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 140)
-	public void greedsEmbraceLaunchesWithoutCage(GameTestHelper helper) {
-		ServerPlayer player = TestPlayers.join(helper);
-		TestHeroes.transform(player, RegulusHero.ID);
-
-		// keep the victim next to the caster — a transient far chunk unloads the entity
-		// (UNLOADED_TO_CHUNK) before the delayed assert ever reads it.
-		placeFloor(helper, player.getX(), player.getY(), player.getZ());
-		placeFloor(helper, player.getX() + 3.0, player.getY(), player.getZ());
-		Warden warden = spawnEntity(helper, EntityType.WARDEN,
-				player.getX() + 3.0, player.getY(), player.getZ());
-		warden.setNoAi(true); // keep it on the pad — without a cage it would wander into the void
-
-		TestPlayers.awaitVisible(helper, warden, () -> {
-			player.setXRot(90f); // aim straight down — the anchor is the block underfoot
-			AbilityRouter.activate(player, GREEDS_EMBRACE);
-			helper.assertTrue(AbilityCooldowns.isOnCooldown(player, GREEDS_EMBRACE),
-					"greed's embrace arms its 60 s cooldown");
-			helper.assertTrue(HeroDataStore.get(player).energy() < 400f,
-					"the 700-energy activation is charged");
-			helper.assertTrue(warden.getHealth() < warden.getMaxHealth(),
-					"the gather deals its 35 damage");
-			MobEffectInstance weakness = warden.getEffect(MobEffects.WEAKNESS);
-			helper.assertTrue(weakness != null && weakness.getAmplifier() == 1,
-					"the gather applies amp-1 weakness");
-			helper.assertTrue(warden.getDeltaMovement().y > 0.0,
-					"the gather launches the victim upward");
-
-			helper.runAfterDelay(70, () -> {
-				helper.assertTrue(warden.isAlive(),
-						"no cage — the launched warden only takes vanilla fall damage and lives"
-								+ " [y=" + warden.getY() + " hp=" + warden.getHealth()
-								+ " removed=" + warden.isRemoved()
-								+ " reason=" + warden.getRemovalReason() + "]");
-				TestPlayers.leave(player);
-				helper.succeed();
-			});
-		});
-	}
-
-	/**
 	 * Lion's Heart is a toggle: amp-4 infinite resistance on activation, a 4-block
 	 * shockwave push, 10 energy per tick drained against the +2 regen while active, and
 	 * the resistance stripped on deactivate.
@@ -658,13 +613,4 @@ public class RegulusGameTests implements FabricGameTest {
 		return entity;
 	}
 
-	/** A 3x3 stone pad at feet level — the gametest world is void outside structures. */
-	private static void placeFloor(GameTestHelper helper, double x, double y, double z) {
-		BlockPos center = BlockPos.containing(x, y - 1.0, z);
-		for (int dx = -1; dx <= 1; dx++) {
-			for (int dz = -1; dz <= 1; dz++) {
-				helper.getLevel().setBlock(center.offset(dx, 0, dz), Blocks.STONE.defaultBlockState(), 3);
-			}
-		}
-	}
 }
