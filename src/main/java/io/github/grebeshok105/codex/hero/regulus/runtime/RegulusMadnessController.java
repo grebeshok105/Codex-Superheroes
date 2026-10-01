@@ -53,11 +53,6 @@ public final class RegulusMadnessController {
 	private static final int COUNTER_SLAM_TICKS = 120;
 	private static final double CRATER_RADIUS = 4.0;
 	private static final int CRATER_DEPTH = 20;
-	private static final int DODGE_COOLDOWN_TICKS = 60;
-
-	private static final OwnedSessionMap<UUID, Long> DODGE_COOLDOWN = OwnedSessionMap.create(
-			LifecycleRegistrar.global(), EnumSet.of(ClearOn.LEAVE, ClearOn.DEATH, ClearOn.HERO_CLEAR));
-
 	// ClearOn.EMPTY: a dropped counter must run restoreOnAbort inside clearMadness, not silently.
 	private static final OwnedSessionMap<UUID, CounterState> COUNTERS = OwnedSessionMap.create(
 			LifecycleRegistrar.global(), EnumSet.noneOf(ClearOn.class));
@@ -149,7 +144,6 @@ public final class RegulusMadnessController {
 	/** World shutdown — counters, cooldowns and damager memory die with the world. */
 	public static void resetAll() {
 		COUNTERS.clear();
-		DODGE_COOLDOWN.clear();
 		LAST_DAMAGER.clear();
 		LAST_DAMAGER_TICK.clear();
 	}
@@ -291,12 +285,12 @@ public final class RegulusMadnessController {
 		removeMadnessEffect(player, MobEffects.DAMAGE_RESISTANCE, 0);
 		LAST_DAMAGER.remove(player.getUUID());
 		LAST_DAMAGER_TICK.remove(player.getUUID());
-		DODGE_COOLDOWN.remove(player.getUUID());
 		CounterState counter = COUNTERS.remove(player.getUUID());
 		if (counter != null && player.level() instanceof ServerLevel sl) {
 			counter.restoreOnAbort(sl);
 		}
 		player.setAttached(RegulusMadnessState.ATTACHMENT, RegulusMadnessState.EMPTY);
+		player.setAttached(RegulusBonusLife.ATTACHMENT, Boolean.FALSE);
 		ServerPlayNetworking.send(player, new MadnessVisualS2CPayload(MadnessVisualS2CPayload.EVENT_EXIT));
 		sync(player);
 	}
@@ -366,7 +360,6 @@ public final class RegulusMadnessController {
 	}
 
 	public static void triggerCounter(ServerPlayer player, LivingEntity attacker) {
-		DODGE_COOLDOWN.put(player.getUUID(), player.getUUID(), player.level().getGameTime() + DODGE_COOLDOWN_TICKS);
 		stripFlight(attacker);
 
 		ServerLevel level = (ServerLevel) player.level();

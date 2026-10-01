@@ -34,8 +34,6 @@ public final class MadnessHudOverlay {
 	};
 
 	private static final String[] FLOATING_SYMBOLS = new String[]{
-			// occult / religious
-			"卐", "✟", "\u2620", "\u2695", "\u26B0", "\u2694", "\u2623",
 			// greek / math
 			"Ω", "Σ", "Δ", "Ψ", "Λ", "Θ", "Ξ", "∞", "⊗", "⟁",
 			// kanji / sin / pride

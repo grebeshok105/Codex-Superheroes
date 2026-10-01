@@ -1,9 +1,9 @@
 package io.github.grebeshok105.codex.hero.regulus.ability;
 
 import io.github.grebeshok105.codex.ModId;
+import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
-import io.github.grebeshok105.codex.hero.regulus.runtime.GreedCageController;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -72,12 +72,9 @@ public final class GreedsEmbraceAbility implements Ability {
 				anchor.x - GATHER_RADIUS, anchor.y - GATHER_RADIUS, anchor.z - GATHER_RADIUS,
 				anchor.x + GATHER_RADIUS, anchor.y + GATHER_RADIUS, anchor.z + GATHER_RADIUS);
 		final Vec3 anchorFinal = anchor;
-		var targets = level.getEntitiesOfClass(LivingEntity.class, gather, e -> {
-			if (!e.isAlive()) return false;
-			if (e == player) return false;
-			if (e instanceof Player p && p.getUUID().equals(player.getUUID())) return false;
-			return e.position().distanceToSqr(anchorFinal) <= GATHER_RADIUS * GATHER_RADIUS;
-		});
+		var targets = level.getEntitiesOfClass(LivingEntity.class, gather,
+				e -> TargetFilters.hostileTo(player).test(e)
+						&& e.position().distanceToSqr(anchorFinal) <= GATHER_RADIUS * GATHER_RADIUS);
 
 		DamageSource src = level.damageSources().playerAttack(player);
 		for (LivingEntity le : targets) {
@@ -95,8 +92,6 @@ public final class GreedsEmbraceAbility implements Ability {
 		level.playSound(null, anchor.x, anchor.y, anchor.z, SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 1.6f, 0.7f);
 		level.playSound(null, anchor.x, anchor.y, anchor.z, SoundEvents.BEACON_ACTIVATE, SoundSource.PLAYERS, 1.4f, 0.6f);
 		level.playSound(null, anchor.x, anchor.y, anchor.z, SoundEvents.ENDER_DRAGON_GROWL, SoundSource.PLAYERS, 0.8f, 1.4f);
-
-		GreedCageController.create(level, anchor, targets, CAGE_TICKS);
 
 		AbilityCooldowns.setCooldownTicks(player, getId(), COOLDOWN_TICKS);
 		return true;
