@@ -1,5 +1,6 @@
 package io.github.grebeshok105.codex.client.hero.regulus.hud;
 
+import io.github.grebeshok105.codex.client.ClientSessionState;
 import io.github.grebeshok105.codex.client.hero.regulus.state.ClientMadnessState;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.gui.GuiGraphics;
@@ -25,6 +26,12 @@ public final class BloodRainHud {
 	private static final List<Drop> DROPS = new CopyOnWriteArrayList<>();
 	private static final List<Splat> SPLATS = new CopyOnWriteArrayList<>();
 	private static final Random RNG = new Random();
+
+	static {
+		// Drops/splats are session state — die with the world like every other
+		// named singleton.
+		ClientSessionState.register(BloodRainHud::clear);
+	}
 
 	private BloodRainHud() {
 	}

@@ -4,16 +4,19 @@ import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.client.core.hud.AbilityDecoration;
 import io.github.grebeshok105.codex.client.core.module.HeroClientContext;
 import io.github.grebeshok105.codex.client.core.module.HeroClientModule;
+import io.github.grebeshok105.codex.client.hero.regulus.fx.RegulusFx;
 import io.github.grebeshok105.codex.client.hero.regulus.hud.BloodRainHud;
 import io.github.grebeshok105.codex.client.hero.regulus.hud.ClientHudGlitch;
 import io.github.grebeshok105.codex.client.hero.regulus.hud.CracksOverlayHud;
 import io.github.grebeshok105.codex.client.hero.regulus.hud.EvangelionZoomHud;
 import io.github.grebeshok105.codex.client.hero.regulus.hud.MadnessHudOverlay;
+import io.github.grebeshok105.codex.client.hero.regulus.render.EvangelionBookLayer;
 import io.github.grebeshok105.codex.client.hero.regulus.state.ClientMadnessState;
 import io.github.grebeshok105.codex.hero.regulus.RegulusAbilities;
 import io.github.grebeshok105.codex.hero.regulus.RegulusHero;
-import io.github.grebeshok105.codex.hero.regulus.net.MadnessSyncS2CPayload;
-import io.github.grebeshok105.codex.hero.regulus.net.MadnessVisualS2CPayload;
+import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusMadnessController;
+import io.github.grebeshok105.codex.hero.regulus.vfx.RegulusVfxIds;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.resources.ResourceLocation;
 
@@ -30,26 +33,39 @@ public record RegulusClientModule() implements HeroClientModule {
 		ctx.hud(1300, ModId.of("evangelion_zoom"), EvangelionZoomHud::render);
 		ctx.hud(1500, ModId.of("cracks_overlay"), CracksOverlayHud::render);
 		ctx.hudGlitchSource(ClientHudGlitch.SOURCE);
-		// The evangelion reading zoom: linearly shrink fov over the 10s channel.
+		ctx.playerLayer(EvangelionBookLayer::new);
+		ctx.vfx(RegulusVfxIds.ANIM_EVANGELIUM_ACTIVATION, RegulusFx::clipOnly);
+		ctx.vfx(RegulusVfxIds.ANIM_EVANGELIUM_DEACTIVATION, RegulusFx::clipOnly);
+		ctx.vfx(RegulusVfxIds.EVANGELIUM_MAJOR, RegulusFx::clipOnly);
+		// The evangelion reading zoom: shrink fov over the 60-tick channel, computed
+		// from the synced game-tick deadline (never wall-clock — a client that
+		// observes the ritual late still gets the right remaining time).
 		ctx.fovModifier((camera, partial, fov) -> {
-			if (!ClientMadnessState.isReading()) {
+			Minecraft mc = Minecraft.getInstance();
+			if (mc.level == null || !ClientMadnessState.isReading()) {
 				return fov;
 			}
-			long until = ClientMadnessState.readingUntilMs();
-			long now = System.currentTimeMillis();
-			long total = 10000L;
-			long remaining = until - now;
-			if (remaining <= 0L || remaining > total) {
+			long remaining = ClientMadnessState.ritualUntilTick() - mc.level.getGameTime();
+			if (remaining <= 0L || remaining > RegulusMadnessController.RITUAL_TICKS) {
 				return fov;
 			}
-			float progress = 1f - (remaining / (float) total);
+			// 1200 = 60 ticks × 20 sub-tick units — the progress unit the plan fixes.
+			float progress = 1f - (remaining * 20f) / 1200f;
 			double zoomFactor = 1.0 - progress * 0.7;
 			return fov * zoomFactor;
 		});
-		// While the book is open the inventory screen must not cover the zoom.
 		ctx.clientTick(client -> {
+			// While the book is open the inventory screen must not cover the zoom.
 			if (ClientMadnessState.isReading() && client.screen instanceof InventoryScreen) {
 				client.setScreen(null);
+			}
+			// Blood rain rides the synced madness flag's edges — the old
+			// madness_visual payload is gone.
+			int edge = ClientMadnessState.madnessEdge();
+			if (edge > 0) {
+				BloodRainHud.trigger();
+			} else if (edge < 0) {
+				BloodRainHud.clear();
 			}
 		});
 		// Counter-Strike stays a mystery in the panel until madness reveals it.
@@ -64,17 +80,5 @@ public record RegulusClientModule() implements HeroClientModule {
 				return !ClientMadnessState.isMadness();
 			}
 		});
-		ctx.receive(MadnessSyncS2CPayload.TYPE, (payload, context) ->
-				context.client().execute(() -> ClientMadnessState.update(
-						payload.madness(), payload.bonusLifeAvailable(),
-						payload.readingRemainingMs(), payload.manaLockRemainingMs())));
-		ctx.receive(MadnessVisualS2CPayload.TYPE, (payload, context) ->
-				context.client().execute(() -> {
-					if (payload.event() == MadnessVisualS2CPayload.EVENT_ENTER) {
-						BloodRainHud.trigger();
-					} else if (payload.event() == MadnessVisualS2CPayload.EVENT_EXIT) {
-						BloodRainHud.clear();
-					}
-				}));
 	}
 }

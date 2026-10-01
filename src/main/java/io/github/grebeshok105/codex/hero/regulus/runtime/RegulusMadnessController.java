@@ -10,18 +10,18 @@ import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
+import io.github.grebeshok105.codex.core.net.VfxFx;
 import io.github.grebeshok105.codex.core.resource.EnergyLocks;
 import io.github.grebeshok105.codex.mechanic.effect.EffectRefresh;
 import io.github.grebeshok105.codex.mechanic.flight.FlightController;
 import io.github.grebeshok105.codex.mechanic.flight.FlightAbilityState;
-import io.github.grebeshok105.codex.hero.regulus.net.MadnessSyncS2CPayload;
-import io.github.grebeshok105.codex.hero.regulus.net.MadnessVisualS2CPayload;
+import io.github.grebeshok105.codex.hero.regulus.vfx.RegulusVfxIds;
 import io.github.grebeshok105.codex.hero.regulus.registry.RegulusDamageTypes;
 import io.github.grebeshok105.codex.mechanic.falls.FallDamageHandlers;
 import io.github.grebeshok105.codex.core.model.HeroData;
 import io.github.grebeshok105.codex.mechanic.world.WorldDestructionPolicy;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
@@ -33,6 +33,7 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +47,24 @@ import net.minecraft.server.MinecraftServer;
 
 public final class RegulusMadnessController {
 	private static final ResourceLocation REGULUS_ID = ModId.of("regulus");
-	private static final long READING_DURATION_TICKS = 200L;
+	private static final ResourceLocation EVANGELION_ID = ModId.of("evangelion");
+
+	/** The Evangelion channel: 60 game ticks of vanilla item use. */
+	public static final int RITUAL_TICKS = 60;
+	/** Damage at or above this aborts the ritual (interrupt, not block — the hit still lands). */
+	public static final float RITUAL_INTERRUPT_DAMAGE = 4.0f;
+	/** Moving more than this far from the ritual's anchor aborts it (0.5 blocks, squared). */
+	private static final double RITUAL_MOVE_LIMIT_SQR = 0.25;
+	/** Item cooldown armed on every early ritual abort. */
+	public static final int INTERRUPT_COOLDOWN_TICKS = 400;
+	/** Madness lasts 900 game ticks (45 s). */
+	public static final int MADNESS_DURATION_TICKS = 900;
+	/** The blood price: 0.6 HP of true damage every 20 ticks while mad. */
+	public static final float BLOOD_PRICE_AMOUNT = 0.6f;
+	private static final int BLOOD_PRICE_PERIOD_TICKS = 20;
+	/** Tick inside the ritual when the authored evangelium_major VFX event fires (~1.66 s). */
+	private static final int EVANGELIUM_MAJOR_TICK = 34;
+
 	private static final int COUNTER_LIFT_TICKS = 20;
 	private static final double COUNTER_LIFT_HEIGHT = 30.0;
 	private static final int COUNTER_ARRIVE_TICKS = 20;
@@ -63,6 +81,10 @@ public final class RegulusMadnessController {
 			LifecycleRegistrar.global(), EnumSet.of(ClearOn.LEAVE, ClearOn.DEATH, ClearOn.HERO_CLEAR));
 	private static final int LAST_DAMAGER_TIMEOUT_TICKS = 200;
 
+	/** Where each reader stood when the ritual began — the >0.5-block movement cancel anchor. */
+	private static final OwnedSessionMap<UUID, Vec3> RITUAL_ANCHORS = OwnedSessionMap.create(
+			LifecycleRegistrar.global(), EnumSet.of(ClearOn.LEAVE, ClearOn.DEATH, ClearOn.HERO_CLEAR));
+
 	private static final int MADNESS_EFFECT_TICKS = 60;
 	private static final int MADNESS_BUFF_AMPLIFIER = 2;
 
@@ -77,8 +99,11 @@ public final class RegulusMadnessController {
 				return true;
 			}
 			RegulusMadnessState state = player.getAttachedOrCreate(RegulusMadnessState.ATTACHMENT);
-			if (state.isReading(player.level().getGameTime())) {
-				return false;
+			// The ritual is interruptible, not blocking: a heavy enough hit releases the
+			// channel (releaseUsingItem → Item#releaseUsing → interruptRitual — NOT
+			// stopUsingItem, which would skip the abort logic) and the damage still lands.
+			if (state.isReading(player.level().getGameTime()) && amount >= RITUAL_INTERRUPT_DAMAGE) {
+				player.releaseUsingItem();
 			}
 			return true;
 		});
@@ -172,12 +197,22 @@ public final class RegulusMadnessController {
 
 	private static void tickPlayer(ServerPlayer player) {
 		RegulusMadnessState state = player.getAttachedOrCreate(RegulusMadnessState.ATTACHMENT);
-		if (state.isReading(player.level().getGameTime())) {
-			player.setDeltaMovement(Vec3.ZERO);
-			player.hurtMarked = true;
-			EffectRefresh.refresh(player, MobEffects.DAMAGE_RESISTANCE, 8, 4, true, false, false);
-			EffectRefresh.refresh(player, MobEffects.MOVEMENT_SLOWDOWN, 8, 250, true, false, false);
+		long now = player.level().getGameTime();
+		if (state.isReading(now)) {
+			// Slowness II while the book is open — movement is allowed but beyond the
+			// anchor limit it aborts the channel (checked in Item#onUseTick).
+			EffectRefresh.refresh(player, MobEffects.MOVEMENT_SLOWDOWN, 8, 1, true, false, false);
+			// A use-state dropped without releaseUsing (slot swap, item loss, stopUsingItem)
+			// never reaches Item#releaseUsing — treat it as an abort here.
+			if (!player.isUsingItem()) {
+				interruptRitual(player);
+				state = player.getAttachedOrCreate(RegulusMadnessState.ATTACHMENT);
+			}
 			ServerLevel level = (ServerLevel) player.level();
+			if (now == state.ritualUntilTick() - RITUAL_TICKS + EVANGELIUM_MAJOR_TICK) {
+				Vec3 p = player.position();
+				VfxFx.event(player, RegulusVfxIds.EVANGELIUM_MAJOR, p, p, 1f);
+			}
 			if (player.tickCount % 2 == 0) {
 				level.sendParticles(ParticleTypes.END_ROD,
 						player.getX(), player.getY() + 1.0, player.getZ(),
@@ -193,11 +228,21 @@ public final class RegulusMadnessController {
 				level.playSound(null, player.getX(), player.getY(), player.getZ(),
 						SoundEvents.RESPAWN_ANCHOR_DEPLETE.value(), SoundSource.PLAYERS, 1.0f, 0.7f);
 			}
-		} else if (state.readingUntilTick() > 0L && !state.madness()) {
-			finishReading(player);
+		} else if (state.ritualUntilTick() > 0L && now > state.ritualUntilTick() && !state.madness()) {
+			// Deadline lapsed without finishUsingItem ever running — resolve as an abort.
+			interruptRitual(player);
 		}
 		if (state.madness() && isRegulus(player)) {
 			tickMadnessAmbient(player);
+			if (state.madnessUntilTick() > 0L) {
+				long elapsed = now - (state.madnessUntilTick() - MADNESS_DURATION_TICKS);
+				if (now >= state.madnessUntilTick()) {
+					clearMadness(player);
+				} else if (elapsed > 0L && elapsed % BLOOD_PRICE_PERIOD_TICKS == 0) {
+					player.hurt(RegulusDamageTypes.bloodPrice((ServerLevel) player.level()),
+							BLOOD_PRICE_AMOUNT);
+				}
+			}
 		}
 	}
 
@@ -222,14 +267,23 @@ public final class RegulusMadnessController {
 			level.sendParticles(ParticleTypes.END_ROD,
 					player.getX(), player.getY() + 1.0, player.getZ(),
 					2, 0.6, 0.8, 0.6, 0.02);
-			level.sendParticles(ParticleTypes.LAVA,
-					player.getX(), player.getY() + 0.1, player.getZ(),
-					1, 0.3, 0.05, 0.3, 0.0);
+			// SOUL wisps — the rune-glyph ambient that replaced the old LAVA sparkle.
+			level.sendParticles(ParticleTypes.SOUL,
+					player.getX(), player.getY() + 0.3, player.getZ(),
+					2, 0.3, 0.3, 0.3, 0.0);
 		}
 		if (t % 20 == 0) {
-			level.sendParticles(ParticleTypes.ANGRY_VILLAGER,
-					player.getX(), player.getY() + 1.9, player.getZ(),
-					2, 0.3, 0.1, 0.3, 0.0);
+			// A ring of ENCHANT glyph-letters at chest height — runes circling the mad
+			// reader (replaces the old ANGRY_VILLAGER sparkle; the real Veil rune is
+			// Task 9's territory).
+			for (int i = 0; i < 8; i++) {
+				double a = (Math.PI / 4.0) * i;
+				level.sendParticles(ParticleTypes.ENCHANT,
+						player.getX() + Math.cos(a) * 0.9,
+						player.getY() + 1.1,
+						player.getZ() + Math.sin(a) * 0.9,
+						1, 0.0, 0.05, 0.0, 0.0);
+			}
 		}
 		if (t % 30 == 0) {
 			level.playSound(null, player.getX(), player.getY(), player.getZ(),
@@ -242,23 +296,54 @@ public final class RegulusMadnessController {
 		return data.hasHero() && REGULUS_ID.equals(data.heroId());
 	}
 
-	public static void startReading(ServerPlayer player) {
+	public static void beginReading(ServerPlayer player) {
 		long now = player.level().getGameTime();
 		RegulusMadnessState state = player.getAttachedOrCreate(RegulusMadnessState.ATTACHMENT)
-				.withReading(now + READING_DURATION_TICKS);
+				.withRitual(now + RITUAL_TICKS);
 		player.setAttached(RegulusMadnessState.ATTACHMENT, state);
+		RITUAL_ANCHORS.put(player.getUUID(), player.getUUID(), player.position());
 		ServerLevel level = (ServerLevel) player.level();
 		level.playSound(null, player.getX(), player.getY(), player.getZ(),
 				SoundEvents.EVOKER_PREPARE_ATTACK, SoundSource.PLAYERS, 1.4f, 0.6f);
-		sync(player);
+		Vec3 p = player.position();
+		VfxFx.event(player, RegulusVfxIds.ANIM_EVANGELIUM_ACTIVATION, p, p, 1f);
 	}
 
-	private static void finishReading(ServerPlayer player) {
+	/**
+	 * @return whether the player drifted more than 0.5 blocks from the ritual anchor
+	 *         (checked from {@code Item#onUseTick} while the channel runs).
+	 */
+	public static boolean ritualMovedTooFar(ServerPlayer player) {
+		Vec3 anchor = RITUAL_ANCHORS.get(player.getUUID());
+		return anchor != null && player.position().distanceToSqr(anchor) > RITUAL_MOVE_LIMIT_SQR;
+	}
+
+	/** Every early exit from the ritual: releases the channel, clears the deadline, arms the cooldown. */
+	public static void interruptRitual(ServerPlayer player) {
+		RegulusMadnessState state = player.getAttachedOrCreate(RegulusMadnessState.ATTACHMENT);
+		if (state.ritualUntilTick() <= 0L) {
+			return;
+		}
+		RITUAL_ANCHORS.remove(player.getUUID());
+		player.setAttached(RegulusMadnessState.ATTACHMENT, state.withRitual(0L));
+		Item book = BuiltInRegistries.ITEM.get(EVANGELION_ID);
+		player.getCooldowns().addCooldown(book, INTERRUPT_COOLDOWN_TICKS);
+		ServerLevel level = (ServerLevel) player.level();
+		level.playSound(null, player.getX(), player.getY(), player.getZ(),
+				SoundEvents.BOOK_PUT, SoundSource.PLAYERS, 1.0f, 0.8f);
+	}
+
+	/** Natural completion of the 60-tick channel — Item#finishUsingItem calls this. */
+	public static void completeRitual(ServerPlayer player) {
+		long now = player.level().getGameTime();
 		RegulusMadnessState state = player.getAttachedOrCreate(RegulusMadnessState.ATTACHMENT)
-				.withReading(0L)
-				.withMadness(true);
+				.withRitual(0L)
+				.withMadness(true)
+				.withMadnessUntil(now + MADNESS_DURATION_TICKS);
 		player.setAttached(RegulusMadnessState.ATTACHMENT, state);
+		// The single write-site for the bonus-life grant.
 		player.setAttached(RegulusBonusLife.ATTACHMENT, Boolean.TRUE);
+		RITUAL_ANCHORS.remove(player.getUUID());
 
 		RegulusModifiers.REGULUS_MADNESS.apply(player);
 		player.setHealth(player.getMaxHealth());
@@ -270,8 +355,6 @@ public final class RegulusMadnessController {
 		level.sendParticles(ParticleTypes.FLASH, player.getX(), player.getY() + 1.0, player.getZ(), 3, 0, 0, 0, 0);
 		level.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, player.getX(), player.getY() + 1.0, player.getZ(),
 				80, 1.5, 2.0, 1.5, 0.05);
-		ServerPlayNetworking.send(player, new MadnessVisualS2CPayload(MadnessVisualS2CPayload.EVENT_ENTER));
-		sync(player);
 	}
 
 	public static void clearMadness(ServerPlayer player) {
@@ -289,10 +372,14 @@ public final class RegulusMadnessController {
 		if (counter != null && player.level() instanceof ServerLevel sl) {
 			counter.restoreOnAbort(sl);
 		}
+		RegulusMadnessState state = player.getAttachedOrCreate(RegulusMadnessState.ATTACHMENT);
+		boolean wasMad = state.madness();
 		player.setAttached(RegulusMadnessState.ATTACHMENT, RegulusMadnessState.EMPTY);
 		player.setAttached(RegulusBonusLife.ATTACHMENT, Boolean.FALSE);
-		ServerPlayNetworking.send(player, new MadnessVisualS2CPayload(MadnessVisualS2CPayload.EVENT_EXIT));
-		sync(player);
+		if (wasMad) {
+			Vec3 p = player.position();
+			VfxFx.event(player, RegulusVfxIds.ANIM_EVANGELIUM_DEACTIVATION, p, p, 1f);
+		}
 	}
 
 	private static void applyMadnessEffects(ServerPlayer player) {
@@ -343,20 +430,7 @@ public final class RegulusMadnessController {
 		level.sendParticles(ParticleTypes.FLASH, player.getX(), player.getY() + 1.0, player.getZ(), 4, 0, 0, 0, 0);
 		level.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, player.getX(), player.getY() + 1.0, player.getZ(),
 				120, 1.0, 2.0, 1.0, 0.1);
-		sync(player);
 		return true;
-	}
-
-	public static void sync(ServerPlayer player) {
-		RegulusMadnessState state = player.getAttachedOrCreate(RegulusMadnessState.ATTACHMENT);
-		Boolean bonusLife = player.getAttachedOrCreate(RegulusBonusLife.ATTACHMENT);
-		long now = player.level().getGameTime();
-		ServerPlayNetworking.send(player, new MadnessSyncS2CPayload(
-				state.madness(),
-				bonusLife != null && bonusLife,
-				Math.max(0L, state.readingUntilTick() - now) * 50L,
-				Math.max(0L, state.manaRegenLockUntilTick() - now) * 50L
-		));
 	}
 
 	public static void triggerCounter(ServerPlayer player, LivingEntity attacker) {
@@ -372,7 +446,6 @@ public final class RegulusMadnessController {
 				40, 0.8, 1.0, 0.8, 0.1);
 
 		COUNTERS.put(player.getUUID(), player.getUUID(), new CounterState(player.getUUID(), attacker.getUUID(), level.dimension()));
-		sync(player);
 	}
 
 	private static final class CounterState {

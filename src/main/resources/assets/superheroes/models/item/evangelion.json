@@ -1,6 +1,83 @@
 {
-	"parent": "minecraft:item/generated",
+	"credit": "Open Evangelion book — hand-authored 3D model (Task 8 ritual rework).",
+	"texture_size": [32, 16],
 	"textures": {
-		"layer0": "superheroes:item/evangelion"
+		"book": "superheroes:item/evangelion_book",
+		"particle": "superheroes:item/evangelion"
+	},
+	"elements": [
+		{
+			"from": [6.5, 0.0, 5.0],
+			"to": [9.5, 1.0, 11.0],
+			"faces": {
+				"north": {"uv": [20, 6, 23, 7], "texture": "#book"},
+				"east": {"uv": [20, 7, 23, 13], "texture": "#book", "rotation": 90},
+				"south": {"uv": [20, 6, 23, 7], "texture": "#book"},
+				"west": {"uv": [20, 7, 23, 13], "texture": "#book", "rotation": 90},
+				"up": {"uv": [20, 7, 23, 13], "texture": "#book"},
+				"down": {"uv": [20, 7, 23, 13], "texture": "#book"}
+			}
+		},
+		{
+			"from": [1.5, 0.5, 5.0],
+			"to": [7.5, 1.5, 11.0],
+			"rotation": {"origin": [7.5, 1.0, 8.0], "axis": "z", "angle": 22.5},
+			"faces": {
+				"north": {"uv": [0, 0, 6, 1], "texture": "#book"},
+				"east": {"uv": [6, 0, 12, 1], "texture": "#book"},
+				"south": {"uv": [0, 1, 6, 2], "texture": "#book"},
+				"west": {"uv": [6, 1, 12, 2], "texture": "#book"},
+				"up": {"uv": [0, 2, 6, 8], "texture": "#book"},
+				"down": {"uv": [0, 8, 6, 14], "texture": "#book"}
+			}
+		},
+		{
+			"from": [8.5, 0.5, 5.0],
+			"to": [14.5, 1.5, 11.0],
+			"rotation": {"origin": [8.5, 1.0, 8.0], "axis": "z", "angle": -22.5},
+			"faces": {
+				"north": {"uv": [0, 0, 6, 1], "texture": "#book"},
+				"east": {"uv": [6, 0, 12, 1], "texture": "#book"},
+				"south": {"uv": [0, 1, 6, 2], "texture": "#book"},
+				"west": {"uv": [6, 1, 12, 2], "texture": "#book"},
+				"up": {"uv": [6, 2, 12, 8], "texture": "#book"},
+				"down": {"uv": [6, 8, 12, 14], "texture": "#book"}
+			}
+		},
+		{
+			"from": [2.0, 1.4, 5.4],
+			"to": [7.5, 2.1, 10.6],
+			"rotation": {"origin": [7.5, 1.5, 8.0], "axis": "z", "angle": 22.5},
+			"faces": {
+				"north": {"uv": [12, 0, 18, 1], "texture": "#book"},
+				"east": {"uv": [12, 0, 17, 1], "texture": "#book"},
+				"south": {"uv": [12, 1, 18, 2], "texture": "#book"},
+				"west": {"uv": [12, 1, 17, 2], "texture": "#book"},
+				"up": {"uv": [12, 2, 18, 8], "texture": "#book"},
+				"down": {"uv": [12, 8, 18, 14], "texture": "#book"}
+			}
+		},
+		{
+			"from": [8.5, 1.4, 5.4],
+			"to": [14.0, 2.1, 10.6],
+			"rotation": {"origin": [8.5, 1.5, 8.0], "axis": "z", "angle": -22.5},
+			"faces": {
+				"north": {"uv": [12, 0, 18, 1], "texture": "#book"},
+				"east": {"uv": [12, 0, 17, 1], "texture": "#book"},
+				"south": {"uv": [12, 1, 18, 2], "texture": "#book"},
+				"west": {"uv": [12, 1, 17, 2], "texture": "#book"},
+				"up": {"uv": [12, 2, 18, 8], "texture": "#book"},
+				"down": {"uv": [12, 8, 18, 14], "texture": "#book"}
+			}
+		}
+	],
+	"display": {
+		"thirdperson_righthand": {"rotation": [75, 45, 0], "translation": [0, 2.5, 0], "scale": [0.375, 0.375, 0.375]},
+		"thirdperson_lefthand": {"rotation": [75, 45, 0], "translation": [0, 2.5, 0], "scale": [0.375, 0.375, 0.375]},
+		"firstperson_righthand": {"rotation": [0, 45, 0], "scale": [0.4, 0.4, 0.4]},
+		"firstperson_lefthand": {"rotation": [0, 45, 0], "scale": [0.4, 0.4, 0.4]},
+		"gui": {"rotation": [30, 225, 0], "scale": [0.625, 0.625, 0.625]},
+		"ground": {"translation": [0, 3, 0], "scale": [0.25, 0.25, 0.25]},
+		"fixed": {"scale": [0.5, 0.5, 0.5]}
 	}
 }

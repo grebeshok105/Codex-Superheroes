@@ -13,7 +13,6 @@ import io.github.grebeshok105.codex.client.hero.ironman.state.ClientRepulsorChar
 import io.github.grebeshok105.codex.client.hero.ironman.state.ClientSuitVariantState;
 import io.github.grebeshok105.codex.client.hero.kratos.state.ClientKratosRageState;
 import io.github.grebeshok105.codex.client.hero.rem.state.ClientRemDemonismState;
-import io.github.grebeshok105.codex.client.hero.regulus.state.ClientMadnessState;
 import io.github.grebeshok105.codex.client.hero.sungjinwoo.state.ClientShadowArmyState;
 import io.github.grebeshok105.codex.client.hero.reinhard.state.ClientReinhardCeremonyState;
 import io.github.grebeshok105.codex.client.hero.reinhard.state.ClientReinhardDarknessState;
@@ -61,7 +60,9 @@ class ClientSessionStateResetTest {
 			ClientReinhardTimeSlowState.update(true);
 			ClientPandoraDeathState.start(1, 2, 0.0, 0.0, 0.0);
 			ClientKratosRageState.update(50f, true);
-			ClientMadnessState.update(true, true, 5_000L, 5_000L);
+			// ClientMadnessState is skipped: it is a read-through of the synced
+			// regulus_madness attachment — dirtied only with a live player
+			// (ProjectSanityTest covers its register(...) call).
 			ClientNanoWeaponState.cycle(1);
 			ClientRepulsorChargeState.flash(); // lastFireMs dirty; charge stays 0
 			ClientRepulsorChargeState.clientTick(true, true);
@@ -106,7 +107,6 @@ class ClientSessionStateResetTest {
 			assertTrue(ClientReinhardTimeSlowState.active());
 			assertTrue(ClientPandoraDeathState.active());
 			assertTrue(ClientKratosRageState.active());
-			assertTrue(ClientMadnessState.isMadness());
 			assertTrue(ClientNanoWeaponState.selectedIndex() != 0);
 			assertTrue(ClientRepulsorChargeState.charge() > 0f);
 			assertTrue(ClientUraniumThreatState.isSelfThreatened());
@@ -135,11 +135,6 @@ class ClientSessionStateResetTest {
 			assertFalse(ClientReinhardTimeSlowState.active());
 			assertFalse(ClientPandoraDeathState.active());
 			assertFalse(ClientKratosRageState.active());
-			assertFalse(ClientMadnessState.isMadness());
-			assertFalse(ClientMadnessState.isBonusLifeAvailable());
-			assertEquals(0L, ClientMadnessState.readingUntilMs());
-			assertEquals(0L, ClientMadnessState.manaLockUntilMs());
-			assertEquals(0L, ClientMadnessState.madnessStartedAtMs());
 			assertEquals(0, ClientNanoWeaponState.selectedIndex());
 			assertEquals(0L, ClientNanoWeaponState.lastSwitchMs());
 			assertEquals(0f, ClientRepulsorChargeState.charge());

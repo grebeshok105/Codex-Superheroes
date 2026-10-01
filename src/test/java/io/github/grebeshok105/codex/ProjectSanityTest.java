@@ -277,7 +277,7 @@ public final class ProjectSanityTest {
 				"VfxRuntime.java",
 				// Session-state holders outside the Client*State naming — pinned by name so
 				// a dropped register(...) call fails here (§7 stage 15 audit).
-				"ClientHeroDimsWatcher.java", "EyeLaserChannel.java", "FlightPoseTracker.java",
+				"BloodRainHud.java", "ClientHeroDimsWatcher.java", "EyeLaserChannel.java", "FlightPoseTracker.java",
 				"HomelanderPoseState.java", "IronFistsFx.java", "MeleeChargeSender.java",
 				"PlayerAnimator.java", "RenderedPoseCache.java", "ScorchMarkStore.java",
 				"ScreenFlash.java", "ThirdPersonFraming.java");

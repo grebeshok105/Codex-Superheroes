@@ -9,8 +9,7 @@ import io.github.grebeshok105.codex.hero.regulus.ability.GreedsEmbraceAbility;
 import io.github.grebeshok105.codex.hero.regulus.ability.LionHeartAbility;
 import io.github.grebeshok105.codex.hero.regulus.ability.LionRoarAbility;
 import io.github.grebeshok105.codex.hero.regulus.ability.ManiaOfGreedAbility;
-import io.github.grebeshok105.codex.hero.regulus.net.MadnessSyncS2CPayload;
-import io.github.grebeshok105.codex.hero.regulus.net.MadnessVisualS2CPayload;
+
 import io.github.grebeshok105.codex.hero.regulus.registry.RegulusDamageTypes;
 import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusCastState;
 import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusGreedController;
@@ -36,8 +35,7 @@ public final class RegulusModule implements HeroModule {
 	public void register(HeroModuleContext ctx) {
 		RegulusAttachments.init();
 		RegulusItems.register(ctx.content());
-		ctx.payloads().s2c(MadnessSyncS2CPayload.TYPE, MadnessSyncS2CPayload.STREAM_CODEC);
-		ctx.payloads().s2c(MadnessVisualS2CPayload.TYPE, MadnessVisualS2CPayload.STREAM_CODEC);
+
 		// Regulus→TIME stone reward row lives in InfinityStones' static table (hero.thanos
 		// owns the stone registry — heroes never import sibling heroes).
 		ctx.abilities().register(new LionHeartAbility());

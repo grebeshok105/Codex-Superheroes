@@ -22,12 +22,21 @@ import java.util.List;
 public final class RegulusDamageTypes {
 	public static final ResourceKey<DamageType> COUNTER_STRIKE = key("counter_strike");
 	public static final ResourceKey<DamageType> LION_ROAR = key("lion_roar");
+	public static final ResourceKey<DamageType> BLOOD_PRICE = key("regulus_blood_price");
 
 	public static final List<DamageTypeSpec> SPECS = List.of(
 			DamageTypeSpec.of("counter_strike", DamageScaling.NEVER, 0.0F,
 					DamageTypeTags.BYPASSES_COOLDOWN),
 			DamageTypeSpec.of("lion_roar", DamageScaling.NEVER, 0.0F,
-					DamageTypeTags.BYPASSES_COOLDOWN)
+					DamageTypeTags.BYPASSES_COOLDOWN),
+			// The madness tithe: a nameless periodic true damage — no attacker on purpose
+			// (nothing to record as lastDamager, nothing to counter).
+			DamageTypeSpec.of("regulus_blood_price", DamageScaling.NEVER, 0.0F,
+					DamageTypeTags.BYPASSES_ARMOR,
+					DamageTypeTags.BYPASSES_RESISTANCE,
+					DamageTypeTags.BYPASSES_ENCHANTMENTS,
+					DamageTypeTags.BYPASSES_COOLDOWN,
+					DamageTypeTags.NO_KNOCKBACK)
 	);
 
 	private RegulusDamageTypes() {
@@ -43,5 +52,11 @@ public final class RegulusDamageTypes {
 
 	public static DamageSource lionRoar(ServerLevel level, Entity attacker) {
 		return DamageSources.of(level, LION_ROAR, attacker);
+	}
+
+	/** The madness tithe — deliberately attackerless (a ritual price, not a hit). */
+	public static DamageSource bloodPrice(ServerLevel level) {
+		return new DamageSource(
+				level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(BLOOD_PRICE));
 	}
 }

@@ -1,13 +1,13 @@
 package io.github.grebeshok105.codex.client.hero.regulus.hud;
 
 import io.github.grebeshok105.codex.client.hero.regulus.state.ClientMadnessState;
+import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusMadnessController;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.util.Mth;
 
 public final class EvangelionZoomHud {
-	private static final long TOTAL_MS = 10000L;
 	private static final float BAR_FRACTION_MAX = 0.18f;
 
 	private EvangelionZoomHud() {
@@ -17,14 +17,16 @@ public final class EvangelionZoomHud {
 		if (!ClientMadnessState.isReading()) {
 			return;
 		}
-		long now = System.currentTimeMillis();
-		long until = ClientMadnessState.readingUntilMs();
-		long remaining = until - now;
-		if (remaining <= 0L || remaining > TOTAL_MS) {
+		Minecraft mc = Minecraft.getInstance();
+		if (mc.level == null) {
 			return;
 		}
-		float progress = 1f - (remaining / (float) TOTAL_MS);
-		Minecraft mc = Minecraft.getInstance();
+		long remaining = ClientMadnessState.ritualUntilTick() - mc.level.getGameTime();
+		if (remaining <= 0L || remaining > RegulusMadnessController.RITUAL_TICKS) {
+			return;
+		}
+		// 1200 = 60 ticks × 20 sub-tick units — progress is pure game-tick math.
+		float progress = 1f - (remaining * 20f) / 1200f;
 		int sw = mc.getWindow().getGuiScaledWidth();
 		int sh = mc.getWindow().getGuiScaledHeight();
 

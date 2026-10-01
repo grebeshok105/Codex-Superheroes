@@ -80,7 +80,8 @@ public final class MadnessHudOverlay {
 			return;
 		}
 		long now = System.currentTimeMillis();
-		long elapsed = now - ClientMadnessState.madnessStartedAtMs();
+		// Madness age comes from the synced game-tick deadline, not wall-clock.
+		long elapsed = ClientMadnessState.madnessElapsedTicks() * 50L;
 		double phase = Math.min(1.0, elapsed / (double) HEARTBEAT_RAMP_MS);
 		double eased = phase * phase * (3.0 - 2.0 * phase);
 		double interval = HEARTBEAT_INTERVAL_START_MS
@@ -225,13 +226,14 @@ public final class MadnessHudOverlay {
 	}
 
 	private static void renderReading(GuiGraphics graphics, int sw, int sh) {
-		long now = System.currentTimeMillis();
-		long left = ClientMadnessState.readingUntilMs() - now;
-		float t = 1.0f - Math.max(0, Math.min(5000, left)) / 5000.0f;
+		Minecraft mc = Minecraft.getInstance();
+		long left = mc.level == null ? 0L
+				: ClientMadnessState.ritualUntilTick() - mc.level.getGameTime();
+		// Gold tint ramps over the last 30 ticks of the 60-tick channel.
+		float t = 1.0f - Math.max(0, Math.min(30, left)) / 30.0f;
 		int gold = (int) (t * 80f);
 		int color = (Math.min(255, gold) << 24) | 0x00FFD700;
 		graphics.fill(0, 0, sw, sh, color);
-		Minecraft mc = Minecraft.getInstance();
 		Component msg = Component.translatable("superheroes.madness.reading").withStyle(ChatFormatting.GOLD).withStyle(ChatFormatting.BOLD);
 		int w = mc.font.width(msg);
 		graphics.drawString(mc.font, msg, sw / 2 - w / 2, sh / 3, 0xFFFFE47A, true);
