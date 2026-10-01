@@ -13,6 +13,7 @@ import io.github.grebeshok105.codex.hero.regulus.net.MadnessSyncS2CPayload;
 import io.github.grebeshok105.codex.hero.regulus.net.MadnessVisualS2CPayload;
 import io.github.grebeshok105.codex.hero.regulus.registry.RegulusDamageTypes;
 import io.github.grebeshok105.codex.hero.regulus.runtime.GreedCageController;
+import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusCastState;
 import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusGreedController;
 import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusMadnessController;
 import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusTotemController;
@@ -46,6 +47,7 @@ public final class RegulusModule implements HeroModule {
 		ctx.abilities().register(new LionRoarAbility());
 		ctx.abilities().register(new CounterStrikeAbility());
 		RegulusTotemController.register(ctx);
+		RegulusCastState.register(ctx);
 		RegulusGreedController.register(ctx);
 		RegulusMadnessController.register(ctx);
 		ctx.ticks().global(RegulusGreedController::tickFreezes);
