@@ -262,6 +262,42 @@ public final class RegulusCastStateGameTests implements FabricGameTest {
 	}
 
 	/**
+	 * Damage interruption applies to the windup only: past the fire tick the authored
+	 * event already happened, so a hit lands without touching the session — no interrupt
+	 * hook, and {@code isCasting}/{@code hasFired} keep reporting the live cast until
+	 * {@code castUntil}.
+	 */
+	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 60)
+	public void damageDoesNotInterruptAfterFire(GameTestHelper helper) {
+		ServerPlayer player = TestPlayers.join(helper);
+		TestPlayers.clearSpawnInvulnerability(player);
+		AtomicBoolean interrupted = new AtomicBoolean();
+
+		helper.assertTrue(RegulusCastState.startCast(player, spec(
+				CAST_A, 5, 30, 0f, 0, true,
+				() -> {
+				}, () -> interrupted.set(true))), "startCast accepted");
+
+		helper.runAfterDelay(8, () -> {
+			helper.assertTrue(RegulusCastState.hasFired(player, CAST_A),
+					"precondition: the cast already fired");
+			helper.assertTrue(player.hurt(helper.getLevel().damageSources().generic(), 1f),
+					"the damage lands");
+			helper.assertFalse(interrupted.get(), "no interrupt hook past the fire tick");
+			helper.assertTrue(RegulusCastState.isCasting(player, CAST_A),
+					"post-fire damage does not drop the session");
+			helper.assertTrue(RegulusCastState.hasFired(player, CAST_A),
+					"hasFired survives post-fire damage");
+		});
+		helper.runAfterDelay(34, () -> {
+			helper.assertFalse(RegulusCastState.isCasting(player, CAST_A),
+					"the session still ends at castUntil");
+			TestPlayers.leave(player);
+			helper.succeed();
+		});
+	}
+
+	/**
 	 * A charge that fails on the fire tick cancels the cast for free: the interrupt hook
 	 * runs, no cooldown arms, and the session is gone.
 	 */

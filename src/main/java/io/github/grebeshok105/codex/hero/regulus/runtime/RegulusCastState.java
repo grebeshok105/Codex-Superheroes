@@ -25,8 +25,10 @@ import java.util.UUID;
  * first (a failed charge cancels the cast for free — interrupt hook, no cooldown), runs
  * {@code onFire}, then arms the cooldown. The record is removed at
  * {@code startTick + castUntilTick}, when the clip has played out. Incoming damage on a
- * cast marked {@code damageInterrupts} cancels it the same free way — the damage itself
- * still lands (interrupt, not block).
+ * cast marked {@code damageInterrupts} cancels it the same free way while it is still
+ * winding up — the damage itself still lands (interrupt, not block). Damage past the
+ * fire tick does not touch the session: the effect already happened and the recovery
+ * bookkeeping runs until {@code castUntilTick}.
  */
 public final class RegulusCastState {
 	/**
@@ -63,7 +65,7 @@ public final class RegulusCastState {
 				return true;
 			}
 			Cast cast = CASTS.get(player.getUUID());
-			if (cast == null || !cast.spec.damageInterrupts()) {
+			if (cast == null || cast.fired || !cast.spec.damageInterrupts()) {
 				return true;
 			}
 			cancel(player);
