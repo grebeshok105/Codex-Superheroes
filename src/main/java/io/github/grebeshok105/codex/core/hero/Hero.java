@@ -20,6 +20,15 @@ public interface Hero {
 
 	float getEnergyRegenPerTick();
 
+	/**
+	 * Bonus energy regen per tick on top of {@link #getEnergyRegenPerTick()}, granted by
+	 * hero-owned mechanics (Regulus's held hearts scale it). Applied inside the same
+	 * {@code EnergyLocks} gate as the base regen — a lock suppresses both. Default 0.
+	 */
+	default float energyRegenBonus(ServerPlayer player) {
+		return 0f;
+	}
+
 	float getManaMax();
 
 	@Nullable

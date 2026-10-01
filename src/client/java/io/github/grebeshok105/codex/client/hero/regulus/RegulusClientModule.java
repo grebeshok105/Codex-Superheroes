@@ -9,9 +9,12 @@ import io.github.grebeshok105.codex.client.hero.regulus.hud.ClientHudGlitch;
 import io.github.grebeshok105.codex.client.hero.regulus.hud.CracksOverlayHud;
 import io.github.grebeshok105.codex.client.hero.regulus.hud.EvangelionZoomHud;
 import io.github.grebeshok105.codex.client.hero.regulus.hud.MadnessHudOverlay;
+import io.github.grebeshok105.codex.client.hero.regulus.render.RegulusHeartsRenderer;
+import io.github.grebeshok105.codex.client.hero.regulus.state.ClientHeartsState;
 import io.github.grebeshok105.codex.client.hero.regulus.state.ClientMadnessState;
 import io.github.grebeshok105.codex.hero.regulus.RegulusAbilities;
 import io.github.grebeshok105.codex.hero.regulus.RegulusHero;
+import io.github.grebeshok105.codex.hero.regulus.net.HeartsSyncS2CPayload;
 import io.github.grebeshok105.codex.hero.regulus.net.MadnessSyncS2CPayload;
 import io.github.grebeshok105.codex.hero.regulus.net.MadnessVisualS2CPayload;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
@@ -64,6 +67,11 @@ public record RegulusClientModule() implements HeroClientModule {
 				return !ClientMadnessState.isMadness();
 			}
 		});
+		// Owner-only little-king highlight pass (golden corners on bearer entities).
+		RegulusHeartsRenderer.register();
+		ctx.receive(HeartsSyncS2CPayload.TYPE, (payload, context) ->
+				context.client().execute(() -> ClientHeartsState.update(
+						payload.heartEntityIds(), payload.lionHeartActive(), payload.overheatTicks())));
 		ctx.receive(MadnessSyncS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> ClientMadnessState.update(
 						payload.madness(), payload.bonusLifeAvailable(),

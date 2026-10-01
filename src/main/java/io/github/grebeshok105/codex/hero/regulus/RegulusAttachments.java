@@ -1,7 +1,9 @@
 package io.github.grebeshok105.codex.hero.regulus;
 
 import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusBonusLife;
+import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusHeartMark;
 import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusMadnessState;
+import java.util.UUID;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
 
 /**
@@ -13,6 +15,8 @@ import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
 public final class RegulusAttachments {
 	public static final AttachmentType<RegulusMadnessState> REGULUS_MADNESS = RegulusMadnessState.ATTACHMENT;
 	public static final AttachmentType<Boolean> REGULUS_BONUS_LIFE = RegulusBonusLife.ATTACHMENT;
+	/** The little-king heart mark on bearer entities — transient, entity-held owner UUID. */
+	public static final AttachmentType<UUID> REGULUS_HEART_OWNER = RegulusHeartMark.ATTACHMENT;
 
 	private RegulusAttachments() {
 	}
@@ -22,5 +26,6 @@ public final class RegulusAttachments {
 	public static void init() {
 		RegulusMadnessState.ATTACHMENT.hashCode();
 		RegulusBonusLife.ATTACHMENT.hashCode();
+		RegulusHeartMark.ATTACHMENT.hashCode();
 	}
 }

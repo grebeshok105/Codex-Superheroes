@@ -11,6 +11,7 @@ import io.github.grebeshok105.codex.core.hero.LandingImpact;
 import io.github.grebeshok105.codex.core.hero.PassiveGlyph;
 import io.github.grebeshok105.codex.mechanic.shockwave.ShockwaveUtil;
 import io.github.grebeshok105.codex.core.model.ResourceKind;
+import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusHearts;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -78,6 +79,11 @@ public final class RegulusHero implements Hero {
 	}
 
 	@Override
+	public float energyRegenBonus(ServerPlayer player) {
+		return RegulusHearts.energyRegenBonus(player);
+	}
+
+	@Override
 	public float getManaMax() {
 		return 0f;
 	}
@@ -121,6 +127,9 @@ public final class RegulusHero implements Hero {
 	@Override
 	public void applyPassives(Player player) {
 		PASSIVES.apply(player);
+		// Recompute the hearts melee scale against the surviving owner set (fresh entity
+		// after relog/respawn — the transient modifier never carries over).
+		RegulusHearts.refreshDamageScale(player);
 		player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, -1, 0, true, false, true));
 		player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, -1, 1, true, false, true));
 		player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, -1, 1, true, false, true));
@@ -131,6 +140,7 @@ public final class RegulusHero implements Hero {
 	@Override
 	public void removePassives(Player player) {
 		PASSIVES.remove(player);
+		RegulusHearts.clearDamageScale(player);
 		player.removeEffect(MobEffects.REGENERATION);
 		player.removeEffect(MobEffects.MOVEMENT_SPEED);
 		player.removeEffect(MobEffects.DAMAGE_BOOST);

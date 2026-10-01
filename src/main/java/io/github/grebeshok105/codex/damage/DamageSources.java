@@ -16,4 +16,10 @@ public final class DamageSources {
 		return new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE)
 				.getHolderOrThrow(key), attacker, attacker);
 	}
+
+	/** Self-cost damage with no attacker — internal true-cost types (heart backlash). */
+	public static DamageSource of(ServerLevel level, ResourceKey<DamageType> key) {
+		return new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE)
+				.getHolderOrThrow(key), null, null);
+	}
 }

@@ -9,11 +9,13 @@ import io.github.grebeshok105.codex.hero.regulus.ability.GreedsEmbraceAbility;
 import io.github.grebeshok105.codex.hero.regulus.ability.LionHeartAbility;
 import io.github.grebeshok105.codex.hero.regulus.ability.LionRoarAbility;
 import io.github.grebeshok105.codex.hero.regulus.ability.ManiaOfGreedAbility;
+import io.github.grebeshok105.codex.hero.regulus.net.HeartsSyncS2CPayload;
 import io.github.grebeshok105.codex.hero.regulus.net.MadnessSyncS2CPayload;
 import io.github.grebeshok105.codex.hero.regulus.net.MadnessVisualS2CPayload;
 import io.github.grebeshok105.codex.hero.regulus.registry.RegulusDamageTypes;
 import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusCastState;
 import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusGreedController;
+import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusHearts;
 import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusMadnessController;
 import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusTotemController;
 
@@ -37,6 +39,7 @@ public final class RegulusModule implements HeroModule {
 		RegulusAttachments.init();
 		RegulusItems.register(ctx.content());
 		ctx.payloads().s2c(MadnessSyncS2CPayload.TYPE, MadnessSyncS2CPayload.STREAM_CODEC);
+		ctx.payloads().s2c(HeartsSyncS2CPayload.TYPE, HeartsSyncS2CPayload.STREAM_CODEC);
 		ctx.payloads().s2c(MadnessVisualS2CPayload.TYPE, MadnessVisualS2CPayload.STREAM_CODEC);
 		// Regulus→TIME stone reward row lives in InfinityStones' static table (hero.thanos
 		// owns the stone registry — heroes never import sibling heroes).
@@ -47,6 +50,7 @@ public final class RegulusModule implements HeroModule {
 		ctx.abilities().register(new CounterStrikeAbility());
 		RegulusTotemController.register(ctx);
 		RegulusCastState.register(ctx);
+		RegulusHearts.register(ctx);
 		RegulusGreedController.register(ctx);
 		RegulusMadnessController.register(ctx);
 		ctx.ticks().global(RegulusGreedController::tickFreezes);
