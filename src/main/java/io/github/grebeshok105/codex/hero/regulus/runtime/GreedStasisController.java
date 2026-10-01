@@ -246,7 +246,7 @@ public final class GreedStasisController {
 		dome.closing = true;
 		ServerLevel level = server.getLevel(dome.dimension);
 		for (Map.Entry<UUID, Held> en : dome.held.entrySet()) {
-			Entity raw = level != null ? level.getEntity(en.getKey()) : null;
+			Entity raw = findEntity(server, en.getKey());
 			if (!(raw instanceof LivingEntity victim)) {
 				continue;
 			}
@@ -260,6 +260,17 @@ public final class GreedStasisController {
 			level.sendParticles(ParticleTypes.EXPLOSION, dome.center.x, dome.center.y + 1.0, dome.center.z,
 					4, DOME_RADIUS * 0.4, 1.0, DOME_RADIUS * 0.4, 0.0);
 		}
+	}
+
+	/** The victim may have crossed dimensions while held — look past the dome's level. */
+	private static Entity findEntity(MinecraftServer server, UUID entityId) {
+		for (ServerLevel level : server.getAllLevels()) {
+			Entity entity = level.getEntity(entityId);
+			if (entity != null) {
+				return entity;
+			}
+		}
+		return null;
 	}
 
 	private static void releaseLocks(Entity victim, UUID casterId) {
