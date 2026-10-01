@@ -34,6 +34,9 @@ public final class RegulusBugSweepGameTests implements FabricGameTest {
 	public void secondCasterCannotStealFrozenVictim(GameTestHelper helper) {
 		ServerPlayer caster1 = TestPlayers.join(helper, "greed-caster-1");
 		ServerPlayer caster2 = TestPlayers.join(helper, "greed-caster-2");
+		// The freeze costs 150 energy — the first caster must be a real Regulus
+		// owner (the second is refused at the victim check before any charge).
+		TestHeroes.transform(caster1, RegulusHero.ID);
 		TestPlayers.clearSpawnInvulnerability(caster1);
 		TestPlayers.clearSpawnInvulnerability(caster2);
 		Zombie victim = helper.spawn(EntityType.ZOMBIE, 2, 1, 2);

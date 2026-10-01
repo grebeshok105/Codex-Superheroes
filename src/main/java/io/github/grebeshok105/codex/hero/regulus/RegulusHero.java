@@ -10,10 +10,13 @@ import io.github.grebeshok105.codex.core.hero.JarvisThreatClass;
 import io.github.grebeshok105.codex.core.hero.LandingImpact;
 import io.github.grebeshok105.codex.core.hero.PassiveGlyph;
 import io.github.grebeshok105.codex.mechanic.shockwave.ShockwaveUtil;
+import io.github.grebeshok105.codex.core.model.HeroData;
 import io.github.grebeshok105.codex.core.model.ResourceKind;
 import io.github.grebeshok105.codex.hero.regulus.runtime.LionHeartController;
 import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusHearts;
+import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusMadnessController;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -113,6 +116,23 @@ public final class RegulusHero implements Hero {
 		return !RegulusAbilities.COUNTER_STRIKE.equals(abilityId) || madness
 				? AbilityAvailability.Visibility.AVAILABLE
 				: AbilityAvailability.Visibility.HIDDEN;
+	}
+
+	@Override
+	public boolean canUseAbility(ServerPlayer player, HeroData data, ResourceLocation abilityId) {
+		// The counter only exists against a real recorded attacker — without one the
+		// press is denied here (not inside canActivate) so onAbilityDenied can speak.
+		if (RegulusAbilities.COUNTER_STRIKE.equals(abilityId)) {
+			return RegulusMadnessController.findCounterTarget(player) != null;
+		}
+		return true;
+	}
+
+	@Override
+	public void onAbilityDenied(ServerPlayer player, ResourceLocation abilityId) {
+		if (RegulusAbilities.COUNTER_STRIKE.equals(abilityId)) {
+			player.displayClientMessage(Component.translatable("superheroes.regulus.counter_no_target"), true);
+		}
 	}
 
 	@Override

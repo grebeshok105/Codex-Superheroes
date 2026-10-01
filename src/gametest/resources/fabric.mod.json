@@ -65,7 +65,8 @@
 			"io.github.grebeshok105.codex.gametest.IronManGameTests",
 			"io.github.grebeshok105.codex.gametest.BeamPayloadGameTests",
 			"io.github.grebeshok105.codex.gametest.HomelanderVfxGameTests",
-			"io.github.grebeshok105.codex.gametest.RegulusStasisGameTests"
+			"io.github.grebeshok105.codex.gametest.RegulusStasisGameTests",
+			"io.github.grebeshok105.codex.gametest.RegulusManiaCounterGameTests"
 		]
 	},
 	"depends": {

@@ -1,6 +1,9 @@
 package io.github.grebeshok105.codex.hero.regulus.runtime;
 
+import io.github.grebeshok105.codex.ModId;
+import io.github.grebeshok105.codex.core.ability.AbilityRouter;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
+import io.github.grebeshok105.codex.core.resource.ResourceController;
 import io.github.grebeshok105.codex.core.model.ControlLockKind;
 import io.github.grebeshok105.codex.core.lifecycle.EntityControlLock;
 import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
@@ -18,9 +21,6 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.ai.attributes.AttributeInstance;
-import net.minecraft.world.entity.ai.attributes.AttributeModifier;
-import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.resources.ResourceLocation;
 
@@ -36,18 +36,24 @@ import io.github.grebeshok105.codex.core.model.HeroData;
 import net.minecraft.server.MinecraftServer;
 
 public final class RegulusGreedController {
-	private static final int FREEZE_TICKS = 200;
+	private static final ResourceLocation MANIA_ID = ModId.of("mania_of_greed");
+	/** Players thaw fast, mobs hold the old 10 s lock. */
+	private static final int FREEZE_TICKS_PLAYER = 80;
+	private static final int FREEZE_TICKS_MOB = 200;
+	/** Energy paid to turn a released magnet into a freeze; unpaid → the victim just walks. */
+	private static final float FREEZE_ENERGY_COST = 150f;
+	/** Aggregate release damage caps as a fraction of the victim's max health. */
+	private static final float RELEASE_CAP_PLAYER = 0.40f;
+	private static final float RELEASE_CAP_MOB = 0.60f;
+	/** Duration of the caster's magnet-channel debuffs (re-pinned while the magnet lives). */
+	private static final int MAGNET_DEBUFF_TICKS = 200;
 	private static final double PULL_STRENGTH = 0.6;
 	private static final double MAX_MAGNET_DISTANCE = 110.0;
-
-	private static final ResourceLocation KNOCKBACK_MODIFIER_ID = ResourceLocation.fromNamespaceAndPath("superheroes", "greed_knockback");
-	private static final AttributeModifier KNOCKBACK_MODIFIER =
-			new AttributeModifier(KNOCKBACK_MODIFIER_ID, 2.0, AttributeModifier.Operation.ADD_VALUE);
 
 	private static final OwnedSessionMap<UUID, MagnetState> MAGNETS = OwnedSessionMap.create(
 			LifecycleRegistrar.global(), EnumSet.of(ClearOn.LEAVE, ClearOn.DEATH));
 	// ClearOn.EMPTY for both freeze maps: removal runs release() (control lock + queued
-	// damage) / removeKnockback() inside onPlayerGone's ordering, never silently.
+	// damage) inside onPlayerGone's ordering, never silently.
 	private static final OwnedSessionMap<UUID, FreezeState> FREEZES = OwnedSessionMap.create(
 			LifecycleRegistrar.global(), EnumSet.noneOf(ClearOn.class));
 	private static final OwnedSessionMap<UUID, Long> CASTER_FREEZE_UNTIL = OwnedSessionMap.create(
@@ -82,13 +88,30 @@ public final class RegulusGreedController {
 		return FREEZES.containsKey(entity.getUUID());
 	}
 
+	/** A live magnet channel is pulling a victim for this caster right now. */
+	public static boolean hasMagnet(ServerPlayer player) {
+		return MAGNETS.containsKey(player.getUUID());
+	}
+
+	/**
+	 * The per-tick energy drain, run from the ability's {@code onTickActive} because
+	 * {@code costPerTick()} is parameterless and cannot read the magnet state: nothing
+	 * is charged before the authored fire tick grabbed a victim. Unpaid → deactivate.
+	 */
+	public static void drainMagnet(ServerPlayer player, float amount) {
+		if (!MAGNETS.containsKey(player.getUUID())) {
+			return;
+		}
+		if (ResourceController.charge(player, MANIA_ID, amount) == null) {
+			AbilityRouter.deactivate(player, MANIA_ID);
+		}
+	}
+
 	/** Server-thread leave/death hook — drops the caster's greed state and frees their victims. */
 	public static void onPlayerGone(ServerPlayer player) {
 		UUID id = player.getUUID();
 		MAGNETS.remove(id);
-		if (CASTER_FREEZE_UNTIL.remove(id) != null) {
-			removeKnockback(player);
-		}
+		CASTER_FREEZE_UNTIL.remove(id);
 		var server = player.server;
 		for (Iterator<Map.Entry<UUID, FreezeState>> it = FREEZES.iterator(); it.hasNext();) {
 			FreezeState st = it.next().getValue();
@@ -109,8 +132,8 @@ public final class RegulusGreedController {
 
 	public static void startMagnet(ServerPlayer player, LivingEntity victim) {
 		MAGNETS.put(player.getUUID(), player.getUUID(), new MagnetState(victim.getUUID(), player.tickCount));
-		player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, FREEZE_TICKS, 250, true, false, false));
-		player.addEffect(new MobEffectInstance(MobEffects.JUMP, FREEZE_TICKS, -50, true, false, false));
+		player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, MAGNET_DEBUFF_TICKS, 250, true, false, false));
+		player.addEffect(new MobEffectInstance(MobEffects.JUMP, MAGNET_DEBUFF_TICKS, -50, true, false, false));
 	}
 
 	public static void tickMagnet(ServerPlayer player) {
@@ -167,34 +190,21 @@ public final class RegulusGreedController {
 		if (victim == null || !victim.isAlive()) {
 			return;
 		}
-		player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, FREEZE_TICKS, 4, true, false, true));
-		player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, FREEZE_TICKS, 2, true, false, true));
-		player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, FREEZE_TICKS, 1, true, false, true));
-		applyKnockback(player);
-		CASTER_FREEZE_UNTIL.put(player.getUUID(), player.getUUID(), player.level().getGameTime() + FREEZE_TICKS);
+		// The freeze costs 150 energy: unpaid, the victim is released without a lock.
+		if (ResourceController.charge(player, MANIA_ID, FREEZE_ENERGY_COST) == null) {
+			return;
+		}
+		int freezeTicks = victim instanceof ServerPlayer ? FREEZE_TICKS_PLAYER : FREEZE_TICKS_MOB;
+		CASTER_FREEZE_UNTIL.put(player.getUUID(), player.getUUID(), player.level().getGameTime() + freezeTicks);
 
 		FreezeState st = new FreezeState(victim.getUUID(), player.getUUID(),
-				victim.getX(), victim.getY(), victim.getZ(), FREEZE_TICKS);
+				victim.getX(), victim.getY(), victim.getZ(), freezeTicks);
 		EntityControlLock.acquire(victim, ControlLockKind.NO_AI, player);
 		FREEZES.put(victim.getUUID(), player.getUUID(), st);
 		ServerLevel sl = (ServerLevel) player.level();
 		sl.playSound(null, victim.getX(), victim.getY(), victim.getZ(),
 				SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 0.7f, 1.4f);
 		sl.sendParticles(ParticleTypes.FLASH, victim.getX(), victim.getY() + 1.0, victim.getZ(), 1, 0, 0, 0, 0);
-	}
-
-	private static void applyKnockback(ServerPlayer player) {
-		AttributeInstance attr = player.getAttribute(Attributes.ATTACK_KNOCKBACK);
-		if (attr == null) return;
-		if (!attr.hasModifier(KNOCKBACK_MODIFIER_ID)) {
-			attr.addTransientModifier(KNOCKBACK_MODIFIER);
-		}
-	}
-
-	private static void removeKnockback(ServerPlayer player) {
-		AttributeInstance attr = player.getAttribute(Attributes.ATTACK_KNOCKBACK);
-		if (attr == null) return;
-		attr.removeModifier(KNOCKBACK_MODIFIER_ID);
 	}
 
 	private record MagnetState(UUID victimId, int startTick) {
@@ -230,10 +240,16 @@ public final class RegulusGreedController {
 			LivingEntity v = victim(server);
 			if (v == null) return;
 			EntityControlLock.release(v, ControlLockKind.NO_AI, casterId);
+			// One release budget per thaw: capped at 40% (players) / 60% (mobs) of max
+			// health across the whole aggregate, walked in insertion order.
+			float cap = v.getMaxHealth() * (v instanceof ServerPlayer ? RELEASE_CAP_PLAYER : RELEASE_CAP_MOB);
+			float spent = 0f;
 			for (AggregatedDamage agg : aggregate(queuedDamage).values()) {
-				if (!v.isAlive()) break;
+				if (!v.isAlive() || spent >= cap) break;
+				float amount = Math.min(agg.total, cap - spent);
+				spent += amount;
 				v.invulnerableTime = 0;
-				v.hurt(agg.representative, agg.total);
+				v.hurt(agg.representative, amount);
 			}
 			ServerLevel sl = (ServerLevel) v.level();
 			sl.playSound(null, v.getX(), v.getY(), v.getZ(),
@@ -308,7 +324,6 @@ public final class RegulusGreedController {
 			player.setDeltaMovement(0, Math.min(0, dm.y), 0);
 			player.hurtMarked = true;
 		} else if (freezeUntil != null) {
-			removeKnockback(player);
 			CASTER_FREEZE_UNTIL.remove(uid);
 		}
 	}

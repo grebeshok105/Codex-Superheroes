@@ -20,6 +20,13 @@ public final class RegulusVfxIds {
 	/** Lion-heart cast: starts the authored 1.60s activation clip (trigger frame 0.70s). */
 	public static final ResourceLocation ANIM_LION_HEART_ACTIVATION = ModId.of("regulus/anim/lion_heart_activation");
 
+	/** Mania of Greed windup clip (2.10 s), emitted at cast start; the magnet grabs at 0.94 s. */
+	public static final ResourceLocation ANIM_MANIA_OF_GREED_CAST = ModId.of("regulus/anim/mania_of_greed_cast");
+	/** Counter strike clip (0.90 s, impact @0.32 s), emitted late in ARRIVE so the hit frame meets the slam. */
+	public static final ResourceLocation ANIM_COUNTER_ATTACK = ModId.of("regulus/anim/counter_attack");
+	/** Visual slam impact (particles + shake + client flash) — the old {@code level.explode} replacement. */
+	public static final ResourceLocation COUNTER_SLAM_IMPACT = ModId.of("regulus/counter_slam_impact");
+
 	/** Ritual begin: starts the authored {@code evangelium_activation} clip (3.40 s). */
 	public static final ResourceLocation ANIM_EVANGELIUM_ACTIVATION = ModId.of("regulus/anim/evangelium_activation");
 	/** Madness collapse: starts the authored {@code evangelium_deactivation} clip (2.00 s). */

@@ -10,6 +10,8 @@ import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
+import io.github.grebeshok105.codex.core.net.FxBroadcast;
+import io.github.grebeshok105.codex.core.net.ScreenShakeS2CPayload;
 import io.github.grebeshok105.codex.core.net.VfxFx;
 import io.github.grebeshok105.codex.core.resource.EnergyLocks;
 import io.github.grebeshok105.codex.mechanic.effect.EffectRefresh;
@@ -21,6 +23,7 @@ import io.github.grebeshok105.codex.mechanic.falls.FallDamageHandlers;
 import io.github.grebeshok105.codex.core.model.HeroData;
 import io.github.grebeshok105.codex.mechanic.world.WorldDestructionPolicy;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.core.BlockPos;
@@ -68,9 +71,24 @@ public final class RegulusMadnessController {
 	private static final int COUNTER_LIFT_TICKS = 20;
 	private static final double COUNTER_LIFT_HEIGHT = 30.0;
 	private static final int COUNTER_ARRIVE_TICKS = 20;
+	/** The counter-attack clip fires this many ticks before ARRIVE ends so its 0.32 s impact meets the slam. */
+	private static final int COUNTER_CLIP_LEAD_TICKS = 6;
 	private static final int COUNTER_SLAM_TICKS = 120;
-	private static final double CRATER_RADIUS = 4.0;
-	private static final int CRATER_DEPTH = 20;
+	/** One-hit slam formula: flat 15 + 15% of the victim's max health, hard cap 45. */
+	private static final float COUNTER_DAMAGE_FLAT = 15f;
+	private static final float COUNTER_DAMAGE_RATIO = 0.15f;
+	private static final float COUNTER_DAMAGE_CAP = 45f;
+	private static final double CRATER_RADIUS = 3.0;
+	private static final int CRATER_DEPTH = 8;
+	/** How far below the impact the victim is dropped — the old crater-depth reuse, now its own number. */
+	private static final int SLAM_DROP_DEPTH = 20;
+	/** The target must be a recorded damager no older than this (12 s) and inside {@link #COUNTER_SEARCH_RANGE}. */
+	private static final double COUNTER_SEARCH_RANGE = 40.0;
+	/** Energy lock armed by the final slam (8 s). */
+	private static final int COUNTER_ENERGY_LOCK_TICKS = 8 * 20;
+	/** Radius of the screen-shake audience around the slam impact. */
+	private static final double SLAM_SHAKE_RADIUS = 24.0;
+	private static final int SLAM_SHAKE_TICKS = 12;
 	// ClearOn.EMPTY: a dropped counter must run restoreOnAbort inside clearMadness, not silently.
 	private static final OwnedSessionMap<UUID, CounterState> COUNTERS = OwnedSessionMap.create(
 			LifecycleRegistrar.global(), EnumSet.noneOf(ClearOn.class));
@@ -79,7 +97,7 @@ public final class RegulusMadnessController {
 			LifecycleRegistrar.global(), EnumSet.of(ClearOn.LEAVE, ClearOn.DEATH, ClearOn.HERO_CLEAR));
 	private static final OwnedSessionMap<UUID, Long> LAST_DAMAGER_TICK = OwnedSessionMap.create(
 			LifecycleRegistrar.global(), EnumSet.of(ClearOn.LEAVE, ClearOn.DEATH, ClearOn.HERO_CLEAR));
-	private static final int LAST_DAMAGER_TIMEOUT_TICKS = 200;
+	private static final int LAST_DAMAGER_TIMEOUT_TICKS = 240;
 
 	/** Where each reader stood when the ritual began — the >0.5-block movement cancel anchor. */
 	private static final OwnedSessionMap<UUID, Vec3> RITUAL_ANCHORS = OwnedSessionMap.create(
@@ -146,6 +164,19 @@ public final class RegulusMadnessController {
 		Entity found = ((ServerLevel) player.level()).getEntity(damagerId);
 		if (found instanceof LivingEntity le && le.isAlive()) {
 			return le;
+		}
+		return null;
+	}
+
+	/**
+	 * The counter's only target: the recorded last damager, still in reach. There is
+	 * deliberately no {@code getLastHurtByMob} or nearest-hostile fallback — without a
+	 * real attacker inside {@link #COUNTER_SEARCH_RANGE} the ability stays silent.
+	 */
+	public static LivingEntity findCounterTarget(ServerPlayer player) {
+		LivingEntity tracked = getLastDamager(player);
+		if (tracked != null && tracked.distanceTo(player) <= COUNTER_SEARCH_RANGE) {
+			return tracked;
 		}
 		return null;
 	}
@@ -515,6 +546,12 @@ public final class RegulusMadnessController {
 				case ARRIVE -> {
 					attacker.setDeltaMovement(0, 0, 0);
 					player.setDeltaMovement(0, 0, 0);
+					if (tick == COUNTER_ARRIVE_TICKS - COUNTER_CLIP_LEAD_TICKS) {
+						// The 0.90 s counter_attack clip starts here so its authored
+						// 0.32 s impact frame (~6.4 t later) lands on the contact.
+						Vec3 origin = player.position();
+						VfxFx.event(player, RegulusVfxIds.ANIM_COUNTER_ATTACK, origin, origin, 1f);
+					}
 					if (tick % 2 == 0) {
 						level.sendParticles(ParticleTypes.FLASH,
 								attacker.getX(), attacker.getY() + 1.0, attacker.getZ(),
@@ -526,7 +563,12 @@ public final class RegulusMadnessController {
 						releaseLocks(attacker, player);
 						attacker.setDeltaMovement(0, -3.5, 0);
 						attacker.hurtMarked = true;
-						attacker.hurt(RegulusDamageTypes.counterStrike(level, player), 30f);
+						// The single counter hit — lift and slam together: 15 flat + 15% of
+						// max health capped at 45, scaled by the owner's hearts.
+						float damage = Math.min(COUNTER_DAMAGE_CAP,
+								COUNTER_DAMAGE_FLAT + COUNTER_DAMAGE_RATIO * attacker.getMaxHealth())
+								* RegulusHearts.damageScale(player);
+						attacker.hurt(RegulusDamageTypes.counterStrike(level, player), damage);
 						level.playSound(null, attacker.getX(), attacker.getY(), attacker.getZ(),
 								SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 1.4f, 0.9f);
 					}
@@ -571,11 +613,11 @@ public final class RegulusMadnessController {
 
 		boolean finalSlam(ServerLevel level, ServerPlayer player, LivingEntity attacker) {
 			BlockPos impact = attacker.blockPosition();
-			level.explode(player, impact.getX(), impact.getY(), impact.getZ(), 6.0f, Level.ExplosionInteraction.NONE);
+			// Strictly visual: no level.explode — even ExplosionInteraction.NONE hurts
+			// entities, which would break the one-hit formula and catch bystanders.
 			RegulusMadnessController.carveCrater(level, impact, player);
-			attacker.teleportTo(impact.getX() + 0.5, impact.getY() - CRATER_DEPTH + 1, impact.getZ() + 0.5);
-			attacker.hurt(RegulusDamageTypes.counterStrike(level, player), 27f);
-			io.github.grebeshok105.codex.core.resource.EnergyLocks.lockTicks(player, 15 * 20);
+			attacker.teleportTo(impact.getX() + 0.5, impact.getY() - SLAM_DROP_DEPTH + 1, impact.getZ() + 0.5);
+			EnergyLocks.lockTicks(player, COUNTER_ENERGY_LOCK_TICKS);
 			level.playSound(null, impact.getX(), impact.getY(), impact.getZ(),
 					SoundEvents.GENERIC_EXPLODE.value(), SoundSource.PLAYERS, 2.0f, 0.4f);
 			level.playSound(null, impact.getX(), impact.getY(), impact.getZ(),
@@ -584,6 +626,15 @@ public final class RegulusMadnessController {
 					impact.getX(), impact.getY(), impact.getZ(), 3, 1.0, 0.5, 1.0, 0);
 			level.sendParticles(ParticleTypes.LARGE_SMOKE,
 					impact.getX(), impact.getY(), impact.getZ(), 80, 3.0, 1.0, 3.0, 0.1);
+			Vec3 center = Vec3.atCenterOf(impact);
+			VfxFx.event(player, RegulusVfxIds.COUNTER_SLAM_IMPACT, center, center, 1f);
+			for (ServerPlayer nearby : FxBroadcast.aroundAudience(level, center, SLAM_SHAKE_RADIUS)) {
+				float intensity = (float) Math.max(0.0,
+						1.0 - nearby.position().distanceTo(center) / SLAM_SHAKE_RADIUS);
+				if (intensity > 0.05f) {
+					ServerPlayNetworking.send(nearby, new ScreenShakeS2CPayload(intensity, SLAM_SHAKE_TICKS));
+				}
+			}
 			return true;
 		}
 
