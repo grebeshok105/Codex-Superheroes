@@ -42,6 +42,7 @@ public class RegulusHeartsGameTests implements FabricGameTest {
 	public void heartsMarkOnlyVanillaMobs(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, RegulusHero.ID);
+		isolate(player, 0);
 		Pig pigA = spawnEntity(helper, EntityType.PIG, player.getX() + 2.0, player.getY(), player.getZ());
 		Pig pigB = spawnEntity(helper, EntityType.PIG, player.getX() - 2.0, player.getY(), player.getZ());
 
@@ -59,6 +60,7 @@ public class RegulusHeartsGameTests implements FabricGameTest {
 	public void hostileMobCannotCarryHeart(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, RegulusHero.ID);
+		isolate(player, 1);
 		Zombie zombie = spawnEntity(helper, EntityType.ZOMBIE, player.getX() + 2.0, player.getY(), player.getZ());
 		zombie.setNoAi(true);
 
@@ -76,6 +78,7 @@ public class RegulusHeartsGameTests implements FabricGameTest {
 	public void heartsCapAtTwelve(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, RegulusHero.ID);
+		isolate(player, 2);
 		Pig[] pigs = new Pig[CAP + 1];
 		for (int i = 0; i < pigs.length; i++) {
 			pigs[i] = spawnEntity(helper, EntityType.PIG,
@@ -99,6 +102,7 @@ public class RegulusHeartsGameTests implements FabricGameTest {
 	public void heartBacklashOnBearerDeath(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, RegulusHero.ID);
+		isolate(player, 3);
 		TestPlayers.clearSpawnInvulnerability(player);
 		Pig pig = spawnEntity(helper, EntityType.PIG, player.getX() + 2.0, player.getY(), player.getZ());
 
@@ -125,6 +129,7 @@ public class RegulusHeartsGameTests implements FabricGameTest {
 	public void heartLostQuietlyOnUnload(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, RegulusHero.ID);
+		isolate(player, 4);
 		TestPlayers.clearSpawnInvulnerability(player);
 		Pig pig = spawnEntity(helper, EntityType.PIG, player.getX() + 2.0, player.getY(), player.getZ());
 
@@ -146,6 +151,7 @@ public class RegulusHeartsGameTests implements FabricGameTest {
 	public void heartRejectsCustomEntity(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, RegulusHero.ID);
+		isolate(player, 5);
 		var ram = spawnEntity(helper, RemEntities.RAM, player.getX() + 2.0, player.getY(), player.getZ());
 		ram.setNoAi(true);
 
@@ -163,6 +169,7 @@ public class RegulusHeartsGameTests implements FabricGameTest {
 	public void armorStandCannotCarryHeart(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, RegulusHero.ID);
+		isolate(player, 6);
 		ArmorStand stand = spawnEntity(helper, EntityType.ARMOR_STAND,
 				player.getX() + 2.0, player.getY(), player.getZ());
 
@@ -180,6 +187,7 @@ public class RegulusHeartsGameTests implements FabricGameTest {
 	public void heartEnergyRegenScales(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, RegulusHero.ID);
+		isolate(player, 7);
 		for (int i = 0; i < 4; i++) {
 			spawnEntity(helper, EntityType.PIG, player.getX() + 1.0 + i, player.getY(), player.getZ() + 1.0);
 		}
@@ -200,6 +208,7 @@ public class RegulusHeartsGameTests implements FabricGameTest {
 	public void heartRegenRespectsEnergyLock(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, RegulusHero.ID);
+		isolate(player, 8);
 		for (int i = 0; i < 4; i++) {
 			spawnEntity(helper, EntityType.PIG, player.getX() + 1.0 + i, player.getY(), player.getZ() + 1.0);
 		}
@@ -220,6 +229,7 @@ public class RegulusHeartsGameTests implements FabricGameTest {
 	public void heartDamageScalesMelee(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, RegulusHero.ID);
+		isolate(player, 9);
 		for (int i = 0; i < 5; i++) {
 			spawnEntity(helper, EntityType.PIG, player.getX() + 1.0 + i, player.getY(), player.getZ() + 1.0);
 		}
@@ -241,6 +251,7 @@ public class RegulusHeartsGameTests implements FabricGameTest {
 	public void heartOwnerCleanupRemovesBearerMarks(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, RegulusHero.ID);
+		isolate(player, 10);
 		Pig pig = spawnEntity(helper, EntityType.PIG, player.getX() + 2.0, player.getY(), player.getZ());
 
 		awaitHearts(helper, player, 1, 80, () -> {
@@ -256,6 +267,7 @@ public class RegulusHeartsGameTests implements FabricGameTest {
 	public void overheatSyncChangesWithoutHeartSetChange(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, RegulusHero.ID);
+		isolate(player, 11);
 
 		// The first sync lands on the next 20-tick boundary even with an empty heart set.
 		awaitTrue(helper, () -> RegulusHearts.syncedOverheatTicks(player) >= 0, 60, () -> {
@@ -286,11 +298,27 @@ public class RegulusHeartsGameTests implements FabricGameTest {
 		});
 	}
 
+	/**
+	 * Park the owner far east of the test grid and 40 blocks up: hearts are claimed by
+	 * ANY regulus player inside the 20-block aura, and sibling gametests share the
+	 * world — without isolation a foreign owner can steal a spawned bearer on the same
+	 * global scan tick. A hovering player also keeps pigs away from structure edges.
+	 */
+	private static void isolate(ServerPlayer player, int slot) {
+		player.teleportTo(player.getX() + 512.0 + 96.0 * slot, player.getY() + 40.0, player.getZ());
+		player.setNoGravity(true);
+	}
+
 	private static <T extends Entity> T spawnEntity(GameTestHelper helper, EntityType<T> type,
 			double x, double y, double z) {
-		helper.getLevel().getChunk(BlockPos.containing(x, y, z));
+		BlockPos pos = BlockPos.containing(x, y, z);
+		helper.getLevel().setChunkForced(pos.getX() >> 4, pos.getZ() >> 4, true);
 		T entity = type.create(helper.getLevel());
 		entity.moveTo(x, y, z, 0f, 0f);
+		entity.setNoGravity(true);
+		if (entity instanceof net.minecraft.world.entity.Mob mob) {
+			mob.setNoAi(true);
+		}
 		helper.getLevel().addFreshEntity(entity);
 		return entity;
 	}
