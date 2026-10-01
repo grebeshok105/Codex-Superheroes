@@ -117,6 +117,8 @@
 	"death.attack.counter_strike.player": "%1$s был сокрушён контрударом игрока %2$s",
 	"death.attack.lion_roar": "%1$s был разорван рёвом героя %2$s",
 	"death.attack.lion_roar.player": "%1$s был разорван рёвом игрока %2$s",
+	"death.attack.regulus_blood_price": "%1$s заплатил безумию кровью",
+	"death.attack.regulus_blood_price.player": "%1$s заплатил безумию кровью",
 	"death.attack.doomsday_smash": "%1$s был раздавлен слэмом героя %2$s",
 	"death.attack.doomsday_smash.player": "%1$s был раздавлен слэмом игрока %2$s",
 	"death.attack.doomsday_roar": "%1$s был оглушён боевым рёвом героя %2$s",

@@ -25,7 +25,6 @@ public final class RegulusDamageTypes {
 	public static final ResourceKey<DamageType> LION_ROAR = key("lion_roar");
 	public static final ResourceKey<DamageType> HEART_BACKLASH = key("regulus_heart_backlash");
 	public static final ResourceKey<DamageType> LION_HEART_OVERHEAT = key("regulus_lion_heart_overheat");
-	/** Task 8 owns the spec; the key exists early so the internal set matches it the day it lands. */
 	public static final ResourceKey<DamageType> BLOOD_PRICE = key("regulus_blood_price");
 
 	public static final List<DamageTypeSpec> SPECS = List.of(
@@ -40,15 +39,21 @@ public final class RegulusDamageTypes {
 			DamageTypeSpec.of("regulus_lion_heart_overheat", DamageScaling.NEVER, 0.0F,
 					DamageTypeTags.BYPASSES_ARMOR, DamageTypeTags.BYPASSES_RESISTANCE,
 					DamageTypeTags.BYPASSES_ENCHANTMENTS, DamageTypeTags.BYPASSES_COOLDOWN,
+					DamageTypeTags.NO_KNOCKBACK),
+			// The madness tithe: a nameless periodic true damage — no attacker on purpose
+			// (nothing to record as lastDamager, nothing to counter).
+			DamageTypeSpec.of("regulus_blood_price", DamageScaling.NEVER, 0.0F,
+					DamageTypeTags.BYPASSES_ARMOR,
+					DamageTypeTags.BYPASSES_RESISTANCE,
+					DamageTypeTags.BYPASSES_ENCHANTMENTS,
+					DamageTypeTags.BYPASSES_COOLDOWN,
 					DamageTypeTags.NO_KNOCKBACK)
 	);
 
 	/**
 	 * Internal true-cost types — self-inflicted bookkeeping damage that must always
 	 * land even through damage-denial windows (the madness reading gate, the
-	 * lion-heart void). Matched by key, never instanceof: {@link #BLOOD_PRICE} is
-	 * forward-compat — its spec lands with Task 8 and {@code source.is(key)} simply
-	 * never matches until then.
+	 * lion-heart void). Matched by key, never instanceof.
 	 */
 	private static final Set<ResourceKey<DamageType>> INTERNAL = Set.of(
 			HEART_BACKLASH, LION_HEART_OVERHEAT, BLOOD_PRICE, COUNTER_STRIKE);
@@ -85,5 +90,11 @@ public final class RegulusDamageTypes {
 	/** Lion-heart overheat burn — a self-cost, like the backlash. */
 	public static DamageSource lionHeartOverheat(ServerLevel level) {
 		return DamageSources.of(level, LION_HEART_OVERHEAT);
+	}
+
+	/** The madness tithe — deliberately attackerless (a ritual price, not a hit). */
+	public static DamageSource bloodPrice(ServerLevel level) {
+		return new DamageSource(
+				level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(BLOOD_PRICE));
 	}
 }

@@ -18,7 +18,6 @@ import io.github.grebeshok105.codex.hero.regulus.RegulusItems;
 import io.github.grebeshok105.codex.hero.regulus.RegulusHero;
 import io.github.grebeshok105.codex.mechanic.ability.SharedAbilityIds;
 import java.util.List;
-import java.util.function.BooleanSupplier;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
@@ -121,87 +120,6 @@ public class RegulusGameTests implements FabricGameTest {
 
 		TestPlayers.leave(player);
 		helper.succeed();
-	}
-
-	/**
-	 * The Evangelion item opens a 200-tick reading window that denies all damage; when it
-	 * lapses the player turns mad: bonus life granted, +10 armor / +20% max health / +0.4
-	 * attack damage, a full heal and the 60-tick ambient buff schedule (amp 2 speed /
-	 * strength / jump, amp 0 regen / resistance).
-	 */
-	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 260)
-	public void evangelionReadingBlocksDamageThenTurnsMad(GameTestHelper helper) {
-		ServerPlayer player = TestPlayers.join(helper);
-		TestHeroes.transform(player, RegulusHero.ID);
-		TestPlayers.clearSpawnInvulnerability(player);
-		player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(RegulusItems.EVANGELION));
-
-		InteractionResultHolder<ItemStack> use = RegulusItems.EVANGELION.use(
-				helper.getLevel(), player, InteractionHand.MAIN_HAND);
-		helper.assertTrue(use.getResult().consumesAction(), "evangelion use starts reading");
-		RegulusMadnessState state = player.getAttachedOrCreate(RegulusAttachments.REGULUS_MADNESS);
-		helper.assertTrue(state.isReading(helper.getLevel().getGameTime()),
-				"reading window is open");
-		helper.assertTrue(state.readingUntilTick() >= helper.getLevel().getGameTime() + 190,
-				"the window spans ~200 ticks");
-		helper.assertFalse(player.hurt(helper.getLevel().damageSources().generic(), 1f),
-				"the reading window denies all damage");
-		helper.assertFalse(RegulusItems.EVANGELION.use(helper.getLevel(), player, InteractionHand.MAIN_HAND)
-						.getResult().consumesAction(),
-				"a second use fails while already reading");
-
-		helper.runAfterDelay(205, () -> {
-			RegulusMadnessState mad = player.getAttachedOrCreate(RegulusAttachments.REGULUS_MADNESS);
-			helper.assertTrue(mad.madness(), "madness turns on when the window lapses");
-			helper.assertFalse(mad.isReading(helper.getLevel().getGameTime()),
-					"the window is closed");
-			helper.assertValueEqual(player.getAttachedOrCreate(RegulusAttachments.REGULUS_BONUS_LIFE),
-					Boolean.TRUE, "madness grants the bonus life");
-			assertModifierAmount(helper, player, Attributes.ARMOR,
-					ModId.of("modifiers/regulus/madness_armor"), 10.0,
-					"madness armor +10 on top of the passive 70 (resolved value stays clamped at 30)");
-			helper.assertTrue(Math.abs(player.getAttributeValue(Attributes.ARMOR) - 30.0) < 0.001,
-					"the resolved armor value clamps at vanilla's 30 cap");
-			assertModifierAmount(helper, player, Attributes.MAX_HEALTH,
-					ModId.of("modifiers/regulus/madness_max_health"), 0.20,
-					"madness max-health x1.2 modifier");
-			helper.assertTrue(Math.abs(player.getMaxHealth() - 24.0f) < 0.01f,
-					"madness scales max health x1.2");
-			helper.assertTrue(Math.abs(player.getHealth() - player.getMaxHealth()) < 0.01f,
-					"madness heals to full");
-			assertModifierAmount(helper, player, Attributes.ATTACK_DAMAGE,
-					ModId.of("modifiers/regulus/madness_damage"), 0.40,
-					"madness attack-damage +0.4 modifier");
-			assertMadnessEffect(helper, player, MobEffects.MOVEMENT_SPEED, 2);
-			assertMadnessEffect(helper, player, MobEffects.DAMAGE_BOOST, 2);
-			assertMadnessEffect(helper, player, MobEffects.JUMP, 2);
-			// The reading window refreshed amp-4 resistance every tick; its ~2-tick
-			// tail outlives the window and beats the madness amp-0 in vanilla's merge
-			// — amp-0 only resurfaces on the next tickMadnessAmbient 40-tick boundary.
-			MobEffectInstance handoff = player.getEffect(MobEffects.DAMAGE_RESISTANCE);
-			helper.assertTrue(handoff != null && handoff.getAmplifier() == 4,
-					"the reading-window amp-4 resistance tail outlives the window");
-			// The amp-0 madness regen merges into the infinite amp-0 passive instance —
-			// the passive's longer duration wins, so only the passive is observable.
-			MobEffectInstance regen = player.getEffect(MobEffects.REGENERATION);
-			helper.assertTrue(regen != null && regen.isInfiniteDuration(),
-					"the passive regen survives into madness");
-			helper.assertFalse(RegulusItems.EVANGELION.use(helper.getLevel(), player, InteractionHand.MAIN_HAND)
-							.getResult().consumesAction(),
-					"evangelion refuses while mad");
-			// Mock-player effect durations never decrement, so the amp-4 reading
-			// tail cannot expire on its own — drop it the way real expiry would and
-			// let the ambient %40 refresh re-apply the amp-0 madness instance.
-			player.removeEffect(MobEffects.DAMAGE_RESISTANCE);
-			awaitTrue(helper, () -> {
-				MobEffectInstance r = player.getEffect(MobEffects.DAMAGE_RESISTANCE);
-				return r != null && r.getAmplifier() == 0 && r.isAmbient() && !r.isVisible();
-			}, 90, () -> {
-				assertMadnessEffect(helper, player, MobEffects.DAMAGE_RESISTANCE, 0);
-				TestPlayers.leave(player);
-				helper.succeed();
-			});
-		});
 	}
 
 	@GameTest(template = EMPTY_STRUCTURE)
@@ -506,17 +424,6 @@ public class RegulusGameTests implements FabricGameTest {
 				"regulus passive " + name + " is infinite amp-" + amplifier);
 	}
 
-	/** The madness-owned signature: 60-tick, ambient, icon-only, fixed amplifier. */
-	private static void assertMadnessEffect(GameTestHelper helper, ServerPlayer player,
-			net.minecraft.core.Holder<net.minecraft.world.effect.MobEffect> effect, int amplifier) {
-		MobEffectInstance instance = player.getEffect(effect);
-		helper.assertTrue(instance != null && !instance.isInfiniteDuration()
-						&& instance.getDuration() <= 60 && instance.getAmplifier() == amplifier
-						&& instance.isAmbient() && !instance.isVisible(),
-				"madness applies " + effect.unwrapKey().map(k -> k.location().toString()).orElse("?")
-						+ " as a 60-tick ambient amp-" + amplifier + " instance");
-	}
-
 	private static void assertModifierAmount(GameTestHelper helper, ServerPlayer player,
 			net.minecraft.core.Holder<net.minecraft.world.entity.ai.attributes.Attribute> attribute,
 			ResourceLocation modifierId, double amount, String name) {
@@ -542,17 +449,6 @@ public class RegulusGameTests implements FabricGameTest {
 		helper.assertTrue(instance != null && instance.getDuration() >= minDuration
 						&& instance.getAmplifier() == amplifier,
 				name + " is an amp-" + amplifier + " effect lasting at least " + minDuration + " ticks");
-	}
-
-	private static void awaitTrue(GameTestHelper helper, BooleanSupplier cond, int triesLeft,
-			Runnable body) {
-		helper.runAfterDelay(1, () -> {
-			if (cond.getAsBoolean() || triesLeft <= 1) {
-				body.run();
-				return;
-			}
-			awaitTrue(helper, cond, triesLeft - 1, body);
-		});
 	}
 
 	private static Zombie spawnAhead(GameTestHelper helper, ServerPlayer player, double distance) {

@@ -117,6 +117,8 @@
 	"death.attack.counter_strike.player": "%1$s was struck down by %2$s's counter-attack",
 	"death.attack.lion_roar": "%1$s was shattered by %2$s's roar",
 	"death.attack.lion_roar.player": "%1$s was shattered by %2$s's roar",
+	"death.attack.regulus_blood_price": "%1$s paid the madness's blood price",
+	"death.attack.regulus_blood_price.player": "%1$s paid the madness's blood price",
 	"death.attack.doomsday_smash": "%1$s was crushed by %2$s's smash",
 	"death.attack.doomsday_smash.player": "%1$s was crushed by %2$s's smash",
 	"death.attack.doomsday_roar": "%1$s was deafened by %2$s's battle roar",

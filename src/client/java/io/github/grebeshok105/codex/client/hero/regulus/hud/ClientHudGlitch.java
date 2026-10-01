@@ -29,10 +29,9 @@ public final class ClientHudGlitch {
 
 	public static float ramp() {
 		if (!ClientMadnessState.isMadness()) return 0f;
-		long start = ClientMadnessState.madnessStartedAtMs();
-		if (start <= 0L) return 0f;
-		long elapsed = System.currentTimeMillis() - start;
-		float steps = elapsed / (float) STEP_INTERVAL_MS;
+		// Madness age from the synced deadline (game-tick math, not wall-clock).
+		long elapsedMs = ClientMadnessState.madnessElapsedTicks() * 50L;
+		float steps = elapsedMs / (float) STEP_INTERVAL_MS;
 		return Mth.clamp(RAMP_BASE + steps * RAMP_STEP_PER_INTERVAL, 0f, RAMP_CAP);
 	}
 
