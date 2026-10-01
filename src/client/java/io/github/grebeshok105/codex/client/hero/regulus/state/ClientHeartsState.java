@@ -1,6 +1,7 @@
 package io.github.grebeshok105.codex.client.hero.regulus.state;
 
 import io.github.grebeshok105.codex.client.ClientSessionState;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -21,7 +22,7 @@ public final class ClientHeartsState {
 	private ClientHeartsState() {
 	}
 
-	public static void update(java.util.List<Integer> ids, boolean lionActive, int overheat) {
+	public static void update(List<Integer> ids, boolean lionActive, int overheat) {
 		heartEntityIds = ids.isEmpty() ? Set.of() : Set.copyOf(ids);
 		lionHeartActive = lionActive;
 		overheatTicks = overheat;

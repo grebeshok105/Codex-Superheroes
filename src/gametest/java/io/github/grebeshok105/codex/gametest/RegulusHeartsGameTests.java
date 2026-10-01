@@ -4,22 +4,20 @@ import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.resource.EnergyLocks;
 import io.github.grebeshok105.codex.core.resource.ResourceController;
 import io.github.grebeshok105.codex.core.transform.HeroDataStore;
+import io.github.grebeshok105.codex.core.transform.HeroTransformService;
 import io.github.grebeshok105.codex.hero.regulus.RegulusAttachments;
 import io.github.grebeshok105.codex.hero.regulus.RegulusHero;
 import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusHearts;
 import io.github.grebeshok105.codex.hero.rem.runtime.RemEntities;
-import java.util.UUID;
 import java.util.function.BooleanSupplier;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -294,6 +292,34 @@ public class RegulusHeartsGameTests implements FabricGameTest {
 		});
 	}
 
+	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 170)
+	public void heartsDamageScaleDropsOnHeroClear(GameTestHelper helper) {
+		ServerPlayer player = TestPlayers.join(helper);
+		TestHeroes.transform(player, RegulusHero.ID);
+		isolate(player, 12);
+		Pig pig = spawnEntity(helper, EntityType.PIG, player.getX() + 2.0, player.getY(), player.getZ());
+
+		awaitHearts(helper, player, 1, 100, () -> {
+			// Transform carries a 20-tick cooldown — the untransform must wait it out.
+			helper.runAfterDelay(25, () -> {
+				AttributeInstance instance = player.getAttribute(Attributes.ATTACK_DAMAGE);
+				helper.assertTrue(instance != null
+								&& instance.getModifier(RegulusHearts.HEARTS_DAMAGE_MODIFIER_ID) != null,
+						"precondition: the hearts modifier is applied while hearts are held");
+				helper.assertTrue(HeroTransformService.untransform(player),
+						"untransform succeeds once the transform cooldown has passed");
+				helper.assertTrue(instance.getModifier(RegulusHearts.HEARTS_DAMAGE_MODIFIER_ID) == null,
+						"hero clear drops the hearts damage modifier instead of recomputing it");
+				helper.assertTrue(pig.getAttached(RegulusAttachments.REGULUS_HEART_OWNER) == null,
+						"hero clear strips the mark from still-loaded bearers");
+				helper.assertValueEqual(RegulusHearts.count(player), 0, "hero clear empties the owner set");
+				releaseIsolation(helper, player);
+				TestPlayers.leave(player);
+				helper.succeed();
+			});
+		});
+	}
+
 	private static void awaitHearts(GameTestHelper helper, ServerPlayer player, int expected,
 			int tries, Runnable body) {
 		awaitTrue(helper, () -> RegulusHearts.count(player) >= expected, tries, body);
@@ -311,20 +337,31 @@ public class RegulusHeartsGameTests implements FabricGameTest {
 	}
 
 	/**
-	 * Park the owner far east of the test grid and 40 blocks up: hearts are claimed by
+	 * Park the owner far east of the test grid and 160 blocks up: hearts are claimed by
 	 * ANY regulus player inside the 20-block aura, and sibling gametests share the
 	 * world — without isolation a foreign owner can steal a spawned bearer on the same
-	 * global scan tick. A hovering player also keeps pigs away from structure edges.
+	 * global scan tick. The altitude is load-bearing, not cosmetic: the gametest world
+	 * is default terrain, and at +40 a wandering animal or river fish can sit inside
+	 * the aura and eat a cap slot (cap/negative tests assert exact counts). Midair is
+	 * guaranteed empty of eligible bearers.
 	 */
 	private static void isolate(ServerPlayer player, int slot) {
-		player.teleportTo(player.getX() + 512.0 + 96.0 * slot, player.getY() + 40.0, player.getZ());
+		player.teleportTo(player.getX() + 512.0 + 96.0 * slot, player.getY() + 160.0, player.getZ());
 		player.setNoGravity(true);
 	}
 
-	/** Free the far chunk ticket — leftover bearers unload and quietly lose their hearts. */
+	/**
+	 * Free the far chunk tickets — leftover bearers unload and quietly lose their hearts.
+	 * Bearers spawn offset from the owner and can sit in a neighbouring chunk, so the
+	 * 3x3 area around the player is released, not just the player's own chunk.
+	 */
 	private static void releaseIsolation(GameTestHelper helper, ServerPlayer player) {
 		BlockPos pos = player.blockPosition();
-		helper.getLevel().setChunkForced(pos.getX() >> 4, pos.getZ() >> 4, false);
+		for (int dx = -1; dx <= 1; dx++) {
+			for (int dz = -1; dz <= 1; dz++) {
+				helper.getLevel().setChunkForced((pos.getX() >> 4) + dx, (pos.getZ() >> 4) + dz, false);
+			}
+		}
 	}
 
 	private static <T extends Entity> T spawnEntity(GameTestHelper helper, EntityType<T> type,

@@ -121,8 +121,10 @@ public final class RegulusHearts {
 
 	/**
 	 * Drops every heart this owner holds: strips {@code REGULUS_HEART_OWNER} from all
-	 * still-loaded bearers BEFORE the owner-set is cleared, refreshes the damage scale,
-	 * and pushes a final empty view so the client highlight dies with the session.
+	 * still-loaded bearers BEFORE the owner-set is cleared, removes the damage-scale
+	 * modifier outright (recomputing it here would read the not-yet-cleared set and
+	 * resurrect it on hero-clear, which runs after {@code removePassives}), and pushes
+	 * a final empty view so the client highlight dies with the session.
 	 */
 	public static void dropAll(UUID ownerId) {
 		dropAll(server, ownerId);
@@ -144,7 +146,7 @@ public final class RegulusHearts {
 			}
 			ServerPlayer owner = srv.getPlayerList().getPlayer(ownerId);
 			if (owner != null && !owner.hasDisconnected()) {
-				refreshDamageScale(owner);
+				clearDamageScale(owner);
 				ServerPlayNetworking.send(owner, new HeartsSyncS2CPayload(List.of(), false, 0));
 			}
 		}
@@ -205,8 +207,8 @@ public final class RegulusHearts {
 		if (set != null) {
 			set.remove(entity.getUUID());
 		}
-		MinecraftServer server = entity.getServer();
-		ServerPlayer owner = server == null ? null : server.getPlayerList().getPlayer(ownerId);
+		MinecraftServer srv = entity.getServer();
+		ServerPlayer owner = srv == null ? null : srv.getPlayerList().getPlayer(ownerId);
 		if (owner == null || owner.hasDisconnected()) {
 			return;
 		}
