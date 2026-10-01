@@ -304,17 +304,13 @@ public class RegulusManiaCounterGameTests implements FabricGameTest {
 		player.setInvulnerable(true);
 		HeroDataStore.update(player, d -> d.withResources(40f, d.mana()));
 
-		// A husk: daylight cannot burn it and a stray blast cannot kill it before
-		// the cast fires — only the authored drain may drop the channel.
-		Mob zombie = spawnAhead(helper, player, EntityType.HUSK, 4.0);
-		zombie.setNoAi(true);
-		zombie.setInvulnerable(true);
+		Mob zombie = spawnGreedVictim(helper, player);
 		Vec3 home = zombie.position();
 
 		TestPlayers.awaitVisible(helper, zombie, () -> {
+			player.lookAt(EntityAnchorArgument.Anchor.EYES,
+					zombie.getBoundingBox().getCenter());
 			awaitGreedSees(helper, player, zombie, 40, () -> {
-				player.lookAt(EntityAnchorArgument.Anchor.EYES,
-						zombie.getBoundingBox().getCenter());
 				AbilityRouter.activate(player, MANIA_OF_GREED);
 				// A stray blast can still knock the invulnerable victim (or the
 				// caster) out of the cone during the windup — re-seat both just
@@ -353,28 +349,16 @@ public class RegulusManiaCounterGameTests implements FabricGameTest {
 		TestHeroes.transform(player, RegulusHero.ID);
 		player.setInvulnerable(true);
 
-		// A husk: daylight cannot burn it during the 200-tick freeze, and no
-		// gravity so the thawed victim stays put — the measured release damage
-		// is only the capped aggregate, not a fall or a burn.
-		Mob zombie = spawnAhead(helper, player, EntityType.HUSK, 4.0);
-		zombie.setNoAi(true);
-		zombie.setNoGravity(true);
-		// Immune until the freeze lands: a stray blast must not kill or knock the
-		// victim out of the magnet before release. Cleared once frozen so the
-		// queued hits reach the arbiter.
-		zombie.setInvulnerable(true);
-		BlockPos feet = zombie.blockPosition();
-		for (BlockPos pos : BlockPos.betweenClosed(feet.offset(-1, -1, -1), feet.offset(1, -1, 1))) {
-			helper.getLevel().setBlock(pos, Blocks.STONE.defaultBlockState(), 3);
-		}
-		zombie.moveTo(feet.getX() + 0.5, feet.getY(), feet.getZ() + 0.5, 0f, 0f);
-		zombie.setDeltaMovement(Vec3.ZERO);
+		// The measured release damage is only the capped aggregate: the husk
+		// hovers (no burn, no fall) and stays immune until the freeze lands, so
+		// a stray blast can neither kill it nor knock it out of the magnet.
+		Mob zombie = spawnGreedVictim(helper, player);
 		Vec3 home = zombie.position();
 
 		TestPlayers.awaitVisible(helper, zombie, () -> {
+			player.lookAt(EntityAnchorArgument.Anchor.EYES,
+					zombie.getBoundingBox().getCenter());
 			awaitGreedSees(helper, player, zombie, 40, () -> {
-				player.lookAt(EntityAnchorArgument.Anchor.EYES,
-						zombie.getBoundingBox().getCenter());
 				AbilityRouter.activate(player, MANIA_OF_GREED);
 				helper.runAfterDelay(16, () -> reseatVictim(player, zombie, home));
 
@@ -415,17 +399,13 @@ public class RegulusManiaCounterGameTests implements FabricGameTest {
 		TestHeroes.transform(player, RegulusHero.ID);
 		player.setInvulnerable(true);
 
-		// Husk + invulnerable: the victim must still be in the cone at the fire
-		// tick — a burn or a stray blast must not remove it mid-windup.
-		Mob zombie = spawnAhead(helper, player, EntityType.HUSK, 4.0);
-		zombie.setNoAi(true);
-		zombie.setInvulnerable(true);
+		Mob zombie = spawnGreedVictim(helper, player);
 		Vec3 home = zombie.position();
 
 		TestPlayers.awaitVisible(helper, zombie, () -> {
+			player.lookAt(EntityAnchorArgument.Anchor.EYES,
+					zombie.getBoundingBox().getCenter());
 			awaitGreedSees(helper, player, zombie, 40, () -> {
-				player.lookAt(EntityAnchorArgument.Anchor.EYES,
-						zombie.getBoundingBox().getCenter());
 				long t0 = helper.getLevel().getGameTime();
 				AbilityRouter.activate(player, MANIA_OF_GREED);
 				helper.runAfterDelay(16, () -> reseatVictim(player, zombie, home));
@@ -483,6 +463,22 @@ public class RegulusManiaCounterGameTests implements FabricGameTest {
 			EntityType<T> type, double distance) {
 		Vec3 ahead = player.position().add(player.getViewVector(1f).normalize().scale(distance));
 		return spawnEntity(helper, type, ahead.x, player.getY(), ahead.z);
+	}
+
+	/**
+	 * The mania tests' victim: a husk hovering ~2.5 blocks above the caster's
+	 * feet four blocks ahead. The elevation keeps the scan ray in open sky — a
+	 * stray pad or blast-carved ledge on the ground plane can never sit on the
+	 * ray and fail {@code findTarget}'s block clip — while invulnerability and
+	 * no gravity keep burn/knockback noise out of the measurement.
+	 */
+	private static Mob spawnGreedVictim(GameTestHelper helper, ServerPlayer player) {
+		Vec3 ahead = player.position().add(player.getViewVector(1f).normalize().scale(4.0));
+		Mob victim = spawnEntity(helper, EntityType.HUSK, ahead.x, player.getY() + 2.5, ahead.z);
+		victim.setNoAi(true);
+		victim.setNoGravity(true);
+		victim.setInvulnerable(true);
+		return victim;
 	}
 
 	/** Polls until the mania magnet exists on the caster (or tries run out). */
