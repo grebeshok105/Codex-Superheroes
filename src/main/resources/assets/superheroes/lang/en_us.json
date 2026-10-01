@@ -157,7 +157,7 @@
 	"ability.superheroes.mania_of_greed": "Mania of Greed",
 	"ability.superheroes.mania_of_greed.desc": "Pull a target and freeze time — damage delayed",
 	"ability.superheroes.greeds_embrace": "Greed's Embrace",
-	"ability.superheroes.greeds_embrace.desc": "Mark a point — every living thing within 20 blocks is dragged in, struck for 35 damage and flung up. A 5-second light-cage seals them inside.",
+	"ability.superheroes.greeds_embrace.desc": "Charge up, then freeze time in an 8-block dome at the aimed point. Enemies hang motionless; damage they take inside is stored and lands when the dome collapses, capped at 35% of their max health.",
 	"ability.superheroes.lion_roar": "Lion's Roar",
 	"ability.superheroes.lion_roar.desc": "Sonic blast that knocks back foes",
 	"item.superheroes.evangelion": "Evangelion",
