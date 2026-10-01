@@ -120,7 +120,7 @@ public final class PandoraGameTests implements FabricGameTest {
 	/** Transform applies the -0.25 SCALE passive (75% body); untransform removes it and the hero. */
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void transformAppliesBodyScaleAndUntransformRestores(GameTestHelper helper) {
-		ServerPlayer player = TestPlayers.join(helper);
+		ServerPlayer player = TestPlayers.join(helper, "pd-body");
 		floor(helper, 4, 4);
 		park(helper, player, 4.5, 4.5);
 		TestHeroes.transform(player, PANDORA);
@@ -147,7 +147,7 @@ public final class PandoraGameTests implements FabricGameTest {
 	 *  traps Pandora herself. Closing the House lets the immunity window fade. */
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void openHouseGrantsCasterAuthorityAndUnlocksAbilities(GameTestHelper helper) {
-		ServerPlayer pandora = TestPlayers.join(helper);
+		ServerPlayer pandora = TestPlayers.join(helper, "pd-house");
 		parkIso(helper, pandora, isoSpot(helper, 1), 0.0, 0.0);
 		TestHeroes.transform(pandora, PANDORA);
 		Hero hero = Heroes.get(PANDORA);
@@ -191,7 +191,7 @@ public final class PandoraGameTests implements FabricGameTest {
 	 *  via removeEffect — mock players never tick down durations in this harness). */
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void vanityStripSuppressesVictimAbilitiesInsideHouse(GameTestHelper helper) {
-		ServerPlayer pandora = TestPlayers.join(helper);
+		ServerPlayer pandora = TestPlayers.join(helper, "pd-vanity");
 		Vec3 iso = isoSpot(helper, 2);
 		parkIso(helper, pandora, iso, 0.0, 0.0);
 		TestHeroes.transform(pandora, PANDORA);
@@ -242,7 +242,7 @@ public final class PandoraGameTests implements FabricGameTest {
 	 *  every bound victim with the space_crush damage type and releases the bind. */
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void spatialBindRootsAndSpaceCrushKillsBoundVictim(GameTestHelper helper) {
-		ServerPlayer pandora = TestPlayers.join(helper);
+		ServerPlayer pandora = TestPlayers.join(helper, "pd-crush");
 		Vec3 iso = isoSpot(helper, 3);
 		parkIso(helper, pandora, iso, 0.0, 0.0);
 		TestHeroes.transform(pandora, PANDORA);
@@ -272,7 +272,15 @@ public final class PandoraGameTests implements FabricGameTest {
 		helper.runAfterDelay(6, () -> {
 			helper.assertTrue(Math.abs(victim.getX() - anchor.x) < 0.5,
 					"a bound victim is snapped back to the anchor");
-			AbilityRouter.activate(pandora, PandoraAbilities.SPACE_CRUSH);
+			// The crush's damage source carries the pandora player, so it is gated by the
+			// global server pvp flag — a concurrent test may hold it false; wrap and restore.
+			boolean oldPvp = helper.getLevel().getServer().isPvpAllowed();
+			helper.getLevel().getServer().setPvpAllowed(true);
+			try {
+				AbilityRouter.activate(pandora, PandoraAbilities.SPACE_CRUSH);
+			} finally {
+				helper.getLevel().getServer().setPvpAllowed(oldPvp);
+			}
 			helper.assertTrue(AbilityCooldowns.isOnCooldown(pandora, PandoraAbilities.SPACE_CRUSH),
 					"the crush goes on cooldown after firing");
 			helper.assertTrue(victim.isDeadOrDying(),
@@ -295,7 +303,7 @@ public final class PandoraGameTests implements FabricGameTest {
 	 *  and permanently untouchable. */
 	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 300)
 	public void lethalHitTriggersRevivalCinematicBehindKiller(GameTestHelper helper) {
-		ServerPlayer pandora = TestPlayers.join(helper);
+		ServerPlayer pandora = TestPlayers.join(helper, "pd-revive");
 		floor(helper, 4, 4);
 		park(helper, pandora, 4.5, 4.5);
 		TestHeroes.transform(pandora, PANDORA);
@@ -361,7 +369,7 @@ public final class PandoraGameTests implements FabricGameTest {
 	 *  her mortal again. */
 	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 300)
 	public void revivalWithoutKillerReturnsToAnchorAndUntransformClearsIt(GameTestHelper helper) {
-		ServerPlayer pandora = TestPlayers.join(helper);
+		ServerPlayer pandora = TestPlayers.join(helper, "pd-anchor");
 		floor(helper, 4, 4);
 		park(helper, pandora, 4.5, 4.5);
 		TestHeroes.transform(pandora, PANDORA);

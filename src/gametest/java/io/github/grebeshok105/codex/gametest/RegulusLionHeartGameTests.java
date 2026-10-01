@@ -41,9 +41,21 @@ public final class RegulusLionHeartGameTests implements FabricGameTest {
 	 * refused wholesale ({@code hurt} returns false, health untouched) while the
 	 * shield is up.
 	 */
+	/**
+	 * Joins a named player parked far above the structure pads: the shared batch can
+	 * throw stray hits (cast interrupts) and second-owner freezes (lock contamination)
+	 * at a test, so every lion-heart player works on its own empty column.
+	 */
+	private static ServerPlayer joinIsolated(GameTestHelper helper, String name) {
+		ServerPlayer player = TestPlayers.join(helper, name);
+		player.setNoGravity(true);
+		player.teleportTo(player.getX(), player.getY() + 300, player.getZ());
+		return player;
+	}
+
 	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 60)
 	public void lionHeartBlocksExternalDamageAfterTrigger(GameTestHelper helper) {
-		ServerPlayer player = TestPlayers.join(helper);
+		ServerPlayer player = joinIsolated(helper, "lh-void");
 		TestHeroes.transform(player, RegulusHero.ID);
 		TestPlayers.clearSpawnInvulnerability(player);
 
@@ -71,7 +83,7 @@ public final class RegulusLionHeartGameTests implements FabricGameTest {
 	 */
 	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 60)
 	public void lionHeartAllowsInternalTrueCostDamage(GameTestHelper helper) {
-		ServerPlayer player = TestPlayers.join(helper);
+		ServerPlayer player = joinIsolated(helper, "lh-internal");
 		TestHeroes.transform(player, RegulusHero.ID);
 		TestPlayers.clearSpawnInvulnerability(player);
 
@@ -94,7 +106,7 @@ public final class RegulusLionHeartGameTests implements FabricGameTest {
 	 */
 	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 80)
 	public void lionHeartStopsExhaustion(GameTestHelper helper) {
-		ServerPlayer player = TestPlayers.join(helper);
+		ServerPlayer player = joinIsolated(helper, "lh-exhaustion");
 		TestHeroes.transform(player, RegulusHero.ID);
 
 		AbilityRouter.activate(player, LION_HEART);
@@ -123,7 +135,7 @@ public final class RegulusLionHeartGameTests implements FabricGameTest {
 	 */
 	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 80)
 	public void projectilesFreezeAndDrop(GameTestHelper helper) {
-		ServerPlayer player = TestPlayers.join(helper);
+		ServerPlayer player = joinIsolated(helper, "lh-freeze");
 		TestHeroes.transform(player, RegulusHero.ID);
 
 		AbilityRouter.activate(player, LION_HEART);
@@ -165,8 +177,8 @@ public final class RegulusLionHeartGameTests implements FabricGameTest {
 	 */
 	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 80)
 	public void projectileLocksReleaseIndividually(GameTestHelper helper) {
-		ServerPlayer player = TestPlayers.join(helper);
-		ServerPlayer other = TestPlayers.join(helper, "other-owner");
+		ServerPlayer player = joinIsolated(helper, "lh-owners");
+		ServerPlayer other = joinIsolated(helper, "other-owner");
 		TestHeroes.transform(player, RegulusHero.ID);
 
 		Arrow arrow = EntityType.ARROW.create(helper.getLevel());
@@ -206,7 +218,7 @@ public final class RegulusLionHeartGameTests implements FabricGameTest {
 	 */
 	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 130)
 	public void windowThenOverheat(GameTestHelper helper) {
-		ServerPlayer player = TestPlayers.join(helper);
+		ServerPlayer player = joinIsolated(helper, "lh-overheat");
 		TestHeroes.transform(player, RegulusHero.ID);
 		TestPlayers.clearSpawnInvulnerability(player);
 
@@ -232,7 +244,7 @@ public final class RegulusLionHeartGameTests implements FabricGameTest {
 	 */
 	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 60)
 	public void forcedOffAtLowHp(GameTestHelper helper) {
-		ServerPlayer player = TestPlayers.join(helper);
+		ServerPlayer player = joinIsolated(helper, "lh-forceoff");
 		TestHeroes.transform(player, RegulusHero.ID);
 
 		AbilityRouter.activate(player, LION_HEART);
@@ -260,7 +272,7 @@ public final class RegulusLionHeartGameTests implements FabricGameTest {
 	 */
 	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 60)
 	public void castInterruptedBeforeTrigger(GameTestHelper helper) {
-		ServerPlayer player = TestPlayers.join(helper);
+		ServerPlayer player = joinIsolated(helper, "lh-interrupt");
 		TestHeroes.transform(player, RegulusHero.ID);
 		TestPlayers.clearSpawnInvulnerability(player);
 
@@ -290,7 +302,7 @@ public final class RegulusLionHeartGameTests implements FabricGameTest {
 	 */
 	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 80)
 	public void lionHeartDrainsAndPushesOnDeactivate(GameTestHelper helper) {
-		ServerPlayer player = TestPlayers.join(helper);
+		ServerPlayer player = joinIsolated(helper, "lh-drain");
 		TestHeroes.transform(player, RegulusHero.ID);
 		float energyAtActivate = HeroDataStore.get(player).energy();
 
