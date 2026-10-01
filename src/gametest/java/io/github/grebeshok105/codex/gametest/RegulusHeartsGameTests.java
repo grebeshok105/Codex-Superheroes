@@ -51,6 +51,7 @@ public class RegulusHeartsGameTests implements FabricGameTest {
 					player.getUUID(), "the first pig carries this owner's heart mark");
 			helper.assertValueEqual(pigB.getAttached(RegulusAttachments.REGULUS_HEART_OWNER),
 					player.getUUID(), "the second pig carries this owner's heart mark");
+			releaseIsolation(helper, player);
 			TestPlayers.leave(player);
 			helper.succeed();
 		});
@@ -69,6 +70,7 @@ public class RegulusHeartsGameTests implements FabricGameTest {
 			helper.assertValueEqual(RegulusHearts.count(player), 0, "a zombie is never a heart bearer");
 			helper.assertTrue(zombie.getAttached(RegulusAttachments.REGULUS_HEART_OWNER) == null,
 					"the zombie carries no heart mark");
+			releaseIsolation(helper, player);
 			TestPlayers.leave(player);
 			helper.succeed();
 		});
@@ -93,6 +95,7 @@ public class RegulusHeartsGameTests implements FabricGameTest {
 				}
 			}
 			helper.assertValueEqual(marked, CAP, "exactly " + CAP + " bearers marked — the cap holds");
+			releaseIsolation(helper, player);
 			TestPlayers.leave(player);
 			helper.succeed();
 		});
@@ -120,6 +123,7 @@ public class RegulusHeartsGameTests implements FabricGameTest {
 			helper.assertTrue(weakness != null && weakness.getAmplifier() == 0
 							&& weakness.getDuration() <= 60,
 					"the backlash applies Weakness I for 60 ticks");
+			releaseIsolation(helper, player);
 			TestPlayers.leave(player);
 			helper.succeed();
 		});
@@ -141,7 +145,8 @@ public class RegulusHeartsGameTests implements FabricGameTest {
 						"an unloaded bearer loses the heart quietly — no backlash");
 				helper.assertFalse(player.hasEffect(MobEffects.WEAKNESS),
 						"an unloaded bearer applies no weakness");
-				TestPlayers.leave(player);
+				releaseIsolation(helper, player);
+			TestPlayers.leave(player);
 				helper.succeed();
 			});
 		});
@@ -160,6 +165,7 @@ public class RegulusHeartsGameTests implements FabricGameTest {
 					"a mod-owned entity type is never a heart bearer (namespace gate)");
 			helper.assertTrue(ram.getAttached(RegulusAttachments.REGULUS_HEART_OWNER) == null,
 					"the custom entity carries no heart mark");
+			releaseIsolation(helper, player);
 			TestPlayers.leave(player);
 			helper.succeed();
 		});
@@ -178,6 +184,7 @@ public class RegulusHeartsGameTests implements FabricGameTest {
 					"an armor stand is heartless (entity tag)");
 			helper.assertTrue(stand.getAttached(RegulusAttachments.REGULUS_HEART_OWNER) == null,
 					"the armor stand carries no heart mark");
+			releaseIsolation(helper, player);
 			TestPlayers.leave(player);
 			helper.succeed();
 		});
@@ -199,6 +206,7 @@ public class RegulusHeartsGameTests implements FabricGameTest {
 			float gained = HeroDataStore.get(player).energy() - before;
 			helper.assertTrue(Math.abs(gained - (2.0f + 0.15f * 4)) < 0.001f,
 					"4 hearts add +0.6 energy per tick on top of the base 2.0 (gained " + gained + ")");
+			releaseIsolation(helper, player);
 			TestPlayers.leave(player);
 			helper.succeed();
 		});
@@ -220,6 +228,7 @@ public class RegulusHeartsGameTests implements FabricGameTest {
 			ResourceController.tick(player);
 			helper.assertTrue(Math.abs(HeroDataStore.get(player).energy() - before) < 0.001f,
 					"an energy lock suppresses base regen AND the heart bonus");
+			releaseIsolation(helper, player);
 			TestPlayers.leave(player);
 			helper.succeed();
 		});
@@ -242,6 +251,7 @@ public class RegulusHeartsGameTests implements FabricGameTest {
 							&& modifier.operation() == AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL
 							&& Math.abs(modifier.amount() - 0.10) < 0.001,
 					"5 hearts apply a +10% ATTACK_DAMAGE multiply-total modifier");
+			releaseIsolation(helper, player);
 			TestPlayers.leave(player);
 			helper.succeed();
 		});
@@ -255,6 +265,7 @@ public class RegulusHeartsGameTests implements FabricGameTest {
 		Pig pig = spawnEntity(helper, EntityType.PIG, player.getX() + 2.0, player.getY(), player.getZ());
 
 		awaitHearts(helper, player, 1, 80, () -> {
+			releaseIsolation(helper, player);
 			TestPlayers.leave(player);
 			helper.assertTrue(pig.getAttached(RegulusAttachments.REGULUS_HEART_OWNER) == null,
 					"leaving strips the heart mark from still-loaded bearers");
@@ -276,7 +287,8 @@ public class RegulusHeartsGameTests implements FabricGameTest {
 			awaitTrue(helper, () -> RegulusHearts.syncedOverheatTicks(player) == 7, 60, () -> {
 				helper.assertValueEqual(RegulusHearts.count(player), 0,
 						"the heart set never changed — the dirty rule fired on overheat alone");
-				TestPlayers.leave(player);
+				releaseIsolation(helper, player);
+			TestPlayers.leave(player);
 				helper.succeed();
 			});
 		});
@@ -307,6 +319,12 @@ public class RegulusHeartsGameTests implements FabricGameTest {
 	private static void isolate(ServerPlayer player, int slot) {
 		player.teleportTo(player.getX() + 512.0 + 96.0 * slot, player.getY() + 40.0, player.getZ());
 		player.setNoGravity(true);
+	}
+
+	/** Free the far chunk ticket — leftover bearers unload and quietly lose their hearts. */
+	private static void releaseIsolation(GameTestHelper helper, ServerPlayer player) {
+		BlockPos pos = player.blockPosition();
+		helper.getLevel().setChunkForced(pos.getX() >> 4, pos.getZ() >> 4, false);
 	}
 
 	private static <T extends Entity> T spawnEntity(GameTestHelper helper, EntityType<T> type,
