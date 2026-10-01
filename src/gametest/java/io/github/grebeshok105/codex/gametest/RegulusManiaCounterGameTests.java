@@ -295,7 +295,7 @@ public class RegulusManiaCounterGameTests implements FabricGameTest {
 	 * The freeze costs 150 energy: a caster who cannot pay releases the victim
 	 * with no lock at all.
 	 */
-	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 120)
+	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 300)
 	public void maniaFreezeDeniedAtZeroEnergy(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, RegulusHero.ID);
@@ -310,7 +310,7 @@ public class RegulusManiaCounterGameTests implements FabricGameTest {
 		TestPlayers.awaitVisible(helper, zombie, () -> {
 			player.lookAt(EntityAnchorArgument.Anchor.EYES,
 					zombie.getBoundingBox().getCenter());
-			awaitGreedSees(helper, player, zombie, 40, () -> {
+			awaitGreedSees(helper, player, zombie, 80, () -> {
 				AbilityRouter.activate(player, MANIA_OF_GREED);
 				// A stray blast can still knock the invulnerable victim (or the
 				// caster) out of the cone during the windup — re-seat both just
@@ -319,7 +319,7 @@ public class RegulusManiaCounterGameTests implements FabricGameTest {
 
 				// The magnet must really start before the drain can collapse it —
 				// a whiff would satisfy "not frozen" vacuously.
-				awaitMagnet(helper, player, 60, () -> {
+				awaitMagnet(helper, player, 100, () -> {
 					helper.assertTrue(RegulusGreedController.hasMagnet(player),
 							"the magnet grabbed the victim," + castDiag(helper, player, zombie));
 
@@ -358,11 +358,11 @@ public class RegulusManiaCounterGameTests implements FabricGameTest {
 		TestPlayers.awaitVisible(helper, zombie, () -> {
 			player.lookAt(EntityAnchorArgument.Anchor.EYES,
 					zombie.getBoundingBox().getCenter());
-			awaitGreedSees(helper, player, zombie, 40, () -> {
+			awaitGreedSees(helper, player, zombie, 80, () -> {
 				AbilityRouter.activate(player, MANIA_OF_GREED);
 				helper.runAfterDelay(16, () -> reseatVictim(player, zombie, home));
 
-				awaitMagnet(helper, player, 60, () -> {
+				awaitMagnet(helper, player, 100, () -> {
 					helper.assertTrue(RegulusGreedController.hasMagnet(player),
 							"the magnet grabbed the victim," + castDiag(helper, player, zombie));
 					AbilityRouter.deactivate(player, MANIA_OF_GREED);
@@ -393,7 +393,7 @@ public class RegulusManiaCounterGameTests implements FabricGameTest {
 	 * the 19-tick windup there is no magnet and no cooldown; both appear only
 	 * once the cast fires.
 	 */
-	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 120)
+	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 300)
 	public void maniaDoesNotTargetBefore19t(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, RegulusHero.ID);

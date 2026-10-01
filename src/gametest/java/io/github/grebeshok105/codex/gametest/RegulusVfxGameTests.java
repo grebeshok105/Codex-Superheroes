@@ -168,7 +168,7 @@ public final class RegulusVfxGameTests implements FabricGameTest {
 				regulus.player().getX() + 4.0, regulus.player().getY(), regulus.player().getZ());
 
 		List<VfxChannelS2CPayload> magnet = new ArrayList<>();
-		awaitGreedSees(helper, regulus.player(), zombie, 40, () -> {
+		awaitGreedSees(helper, regulus.player(), zombie, 80, () -> {
 			regulus.player().lookAt(EntityAnchorArgument.Anchor.EYES,
 					zombie.getBoundingBox().getCenter());
 			drain(regulus.channel());
@@ -179,7 +179,7 @@ public final class RegulusVfxGameTests implements FabricGameTest {
 				collectChannel(drain(regulus.channel()), RegulusVfxIds.CHANNEL_GREED_MAGNET,
 						regulus.player().getId(), magnet);
 				return !magnet.isEmpty();
-			}, 40, () -> helper.runAfterDelay(8, () -> {
+			}, 60, () -> helper.runAfterDelay(8, () -> {
 				AbilityRouter.deactivate(regulus.player(), RegulusAbilities.MANIA_OF_GREED);
 				await(helper, () -> {
 					collectChannel(drain(regulus.channel()), RegulusVfxIds.CHANNEL_GREED_MAGNET,

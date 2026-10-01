@@ -595,12 +595,18 @@ public final class HomelanderGameTests implements FabricGameTest {
 		});
 	}
 
-	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 90)
+	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 300)
 	public void eyeLasersDamageLandsEveryTenTicks(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, HomelanderHero.ID);
 		// Full mana pins the beam at MAX_DPS = 16 → 8 damage per landed hit.
 		HeroDataStore.update(player, d -> d.withResources(100f, 100f));
+		// Foreign hits inflate the raw health delta either way — pull the pair
+		// far out so only this beam lands.
+		double isoX = player.getX() + 2000.0;
+		double isoZ = player.getZ() + 2000.0;
+		helper.getLevel().setChunkForced(((int) isoX) >> 4, ((int) isoZ) >> 4, true);
+		player.teleportTo(isoX, player.getY(), isoZ);
 		Zombie zombie = spawnAhead(helper, player);
 		zombie.setNoAi(true);
 		// Knockback immunity pins it on the beam line: displacement would add
@@ -842,9 +848,13 @@ public final class HomelanderGameTests implements FabricGameTest {
 
 	private static Zombie spawnAhead(GameTestHelper helper, ServerPlayer player) {
 		Vec3 ahead = player.position().add(player.getViewVector(1f).normalize().scale(2.0));
+		// Forced load: a transiently loaded chunk can unload mid-test and drop the
+		// zombie from the spatial section ability scans read.
+		helper.getLevel().setChunkForced(((int) ahead.x) >> 4, ((int) ahead.z) >> 4, true);
 		helper.getLevel().getChunk(BlockPos.containing(ahead.x, player.getY(), ahead.z));
 		Zombie zombie = EntityType.ZOMBIE.create(helper.getLevel());
 		zombie.moveTo(ahead.x, player.getY(), ahead.z, 0f, 0f);
+		zombie.setNoGravity(true);
 		helper.getLevel().addFreshEntity(zombie);
 		return zombie;
 	}

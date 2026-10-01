@@ -127,7 +127,7 @@ public class RegulusHeartsGameTests implements FabricGameTest {
 		});
 	}
 
-	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 120)
+	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 300)
 	public void heartLostQuietlyOnUnload(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, RegulusHero.ID);
@@ -138,7 +138,7 @@ public class RegulusHeartsGameTests implements FabricGameTest {
 		awaitHearts(helper, player, 1, 80, () -> {
 			float health = player.getHealth();
 			pig.discard();
-			awaitTrue(helper, () -> RegulusHearts.count(player) == 0, 20, () -> {
+			awaitTrue(helper, () -> RegulusHearts.count(player) == 0, 60, () -> {
 				helper.assertTrue(Math.abs(player.getHealth() - health) < 0.001f,
 						"an unloaded bearer loses the heart quietly — no backlash");
 				helper.assertFalse(player.hasEffect(MobEffects.WEAKNESS),

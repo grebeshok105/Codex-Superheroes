@@ -524,7 +524,7 @@ public final class DoomsdayGameTests implements FabricGameTest {
 	 * the {@code onLeave} lifecycle hook releases everything. Actors are teleported to +2000
 	 * so no foreign test entity can win the scan.
 	 */
-	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 120)
+	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 300)
 	public void doomGripLocksTargetAndReleasesOnLeave(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, DOOMSDAY);
@@ -532,12 +532,13 @@ public final class DoomsdayGameTests implements FabricGameTest {
 
 		double isoX = player.getX() + 2000.0;
 		double isoZ = player.getZ() + 2000.0;
+		helper.getLevel().setChunkForced(((int) isoX) >> 4, ((int) isoZ) >> 4, true);
 		helper.getLevel().getChunk(BlockPos.containing(isoX, player.getY(), isoZ));
 		player.teleportTo(isoX, player.getY(), isoZ);
 		Zombie zombie = spawnAhead(helper, player);
 
 		TestPlayers.awaitVisible(helper, zombie, () -> {
-			awaitScanSees(helper, player, zombie, 40, () -> {
+			awaitScanSees(helper, player, zombie, 100, () -> {
 				gripBody(helper, player, zombie);
 			});
 		});
@@ -579,9 +580,14 @@ public final class DoomsdayGameTests implements FabricGameTest {
 
 	private static Zombie spawnAhead(GameTestHelper helper, ServerPlayer player) {
 		Vec3 ahead = player.position().add(player.getViewVector(1f).normalize().scale(2.0));
+		// Forced load: a transiently loaded chunk can unload mid-test and drop the
+		// zombie from the spatial section the ability's scan reads.
+		helper.getLevel().setChunkForced(((int) ahead.x) >> 4, ((int) ahead.z) >> 4, true);
 		helper.getLevel().getChunk(BlockPos.containing(ahead.x, player.getY(), ahead.z));
 		Zombie zombie = EntityType.ZOMBIE.create(helper.getLevel());
 		zombie.moveTo(ahead.x, player.getY(), ahead.z, 0f, 0f);
+		zombie.setNoAi(true);
+		zombie.setNoGravity(true);
 		helper.getLevel().addFreshEntity(zombie);
 		return zombie;
 	}

@@ -90,7 +90,7 @@ public final class RegulusDebrisGameTests implements FabricGameTest {
 	 * bystander ~30° off-axis (inside the old 70° fan, outside the spec'd aperture)
 	 * — and the windup slows the caster for the cast duration.
 	 */
-	@GameTest(template = EMPTY_STRUCTURE)
+	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 300)
 	public void debrisFanHitsConeOnly(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, RegulusHero.ID);
@@ -107,11 +107,11 @@ public final class RegulusDebrisGameTests implements FabricGameTest {
 
 		TestPlayers.awaitVisible(helper, ahead, () -> TestPlayers.awaitVisible(helper, behind, () -> {
 			TestPlayers.awaitVisible(helper, offAxis, () -> {
-				activateAiming(helper, player);
+				activateAiming(helper, player, ahead, behind, offAxis);
 				helper.runAfterDelay(8, () -> helper.assertTrue(
 						player.getEffect(MobEffects.MOVEMENT_SLOWDOWN) != null,
 						"the windup slows the caster"));
-				helper.runAfterDelay(20, () -> {
+				helper.runAfterDelay(30, () -> {
 					helper.assertTrue(ahead.getHealth() < ahead.getMaxHealth(),
 							"the fan hits in front of the caster");
 					helper.assertTrue(!wasHurtBy(behind, player),
@@ -130,18 +130,23 @@ public final class RegulusDebrisGameTests implements FabricGameTest {
 	 * from every ray whose AABB it crosses. A point-blank giant intersects several
 	 * rays, so the total must exceed a couple of pellets, not a flat cone hit.
 	 */
-	@GameTest(template = EMPTY_STRUCTURE)
+	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 300)
 	public void debrisPelletsStackOnLargeTarget(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, RegulusHero.ID);
+		// The 100-hp read-back dies to foreign pellets in a crowded batch — pull
+		// the pair far out like doomGrip does so only this caster's rays reach it.
+		double isoX = player.getX() + 2000.0;
+		double isoZ = player.getZ() + 2000.0;
+		player.teleportTo(isoX, player.getY(), isoZ);
 		aimForward(helper, player);
 		Giant giant = spawnEntity(helper, EntityType.GIANT,
 				player.getX(), player.getY(), player.getZ() + 2.5);
 		giant.setNoAi(true);
 
 		TestPlayers.awaitVisible(helper, giant, () -> {
-			activateAiming(helper, player);
-			helper.runAfterDelay(20, () -> {
+			activateAiming(helper, player, giant);
+			helper.runAfterDelay(30, () -> {
 				float dealt = giant.getMaxHealth() - giant.getHealth();
 				helper.assertTrue(dealt > 15f && wasHurtBy(giant, player),
 						"a large point-blank target eats several pellets (dealt " + dealt
@@ -158,7 +163,7 @@ public final class RegulusDebrisGameTests implements FabricGameTest {
 	 * scale the claim race left the owner with (the 20-block aura can overlap a
 	 * concurrent Regulus test).
 	 */
-	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 160)
+	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 300)
 	public void debrisDamageScalesWithHearts(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, RegulusHero.ID);
@@ -180,8 +185,8 @@ public final class RegulusDebrisGameTests implements FabricGameTest {
 			target.setNoAi(true);
 			TestPlayers.awaitVisible(helper, target, () -> {
 				float scaleAtCast = RegulusHearts.damageScale(player);
-				activateAiming(helper, player);
-				helper.runAfterDelay(20, () -> {
+				activateAiming(helper, player, target);
+				helper.runAfterDelay(30, () -> {
 					float scaleNow = RegulusHearts.damageScale(player);
 					// ALLOW_DAMAGE records the offered amount — raw pellets, no
 					// armor/death drift — attributed to the caster who fired.
@@ -207,7 +212,7 @@ public final class RegulusDebrisGameTests implements FabricGameTest {
 	 * indestructible one — the bedrock cap stands, no break lands the caster's id,
 	 * and the zombie behind it is never touched by this caster.
 	 */
-	@GameTest(template = EMPTY_STRUCTURE)
+	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 300)
 	public void debrisBreaksBlocksButNotBedrock(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, RegulusHero.ID);
@@ -224,8 +229,8 @@ public final class RegulusDebrisGameTests implements FabricGameTest {
 		target.setNoAi(true);
 
 		TestPlayers.awaitVisible(helper, target, () -> {
-			activateAiming(helper, player);
-			helper.runAfterDelay(20, () -> {
+			activateAiming(helper, player, target);
+			helper.runAfterDelay(30, () -> {
 				for (int depth = 2; depth <= 4; depth++) {
 					assertBlock(helper, floor.getX(), floor.getY() + 1, floor.getZ() + depth,
 							Blocks.AIR, "the wall line lost its dirt block at depth " + depth);
@@ -245,7 +250,7 @@ public final class RegulusDebrisGameTests implements FabricGameTest {
 	 * blocks loses only the first three, the caster's ray never breaks the fourth,
 	 * and the zombie behind the wall is never reached by this caster.
 	 */
-	@GameTest(template = EMPTY_STRUCTURE)
+	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 300)
 	public void debrisBreaksAtMostThreeBlocksPerRay(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, RegulusHero.ID);
@@ -258,8 +263,8 @@ public final class RegulusDebrisGameTests implements FabricGameTest {
 		target.setNoAi(true);
 
 		TestPlayers.awaitVisible(helper, target, () -> {
-			activateAiming(helper, player);
-			helper.runAfterDelay(20, () -> {
+			activateAiming(helper, player, target);
+			helper.runAfterDelay(30, () -> {
 				for (int depth = 2; depth <= 4; depth++) {
 					assertBlock(helper, floor.getX(), floor.getY() + 1, floor.getZ() + depth,
 							Blocks.AIR, "the wall line lost dirt at depth " + depth);
@@ -279,7 +284,7 @@ public final class RegulusDebrisGameTests implements FabricGameTest {
 	 * A ray that meets an indestructible block dies on it immediately — a single
 	 * bedrock slab eats the whole center ray and shields the zombie behind it.
 	 */
-	@GameTest(template = EMPTY_STRUCTURE)
+	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 300)
 	public void debrisRayBlockedByUnbreakable(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, RegulusHero.ID);
@@ -290,8 +295,8 @@ public final class RegulusDebrisGameTests implements FabricGameTest {
 		target.setNoAi(true);
 
 		TestPlayers.awaitVisible(helper, target, () -> {
-			activateAiming(helper, player);
-			helper.runAfterDelay(20, () -> {
+			activateAiming(helper, player, target);
+			helper.runAfterDelay(30, () -> {
 				assertBlock(helper, floor.getX(), floor.getY() + 1, floor.getZ() + 3,
 						Blocks.BEDROCK, "the unbreakable block survives");
 				helper.assertTrue(!wasHurtBy(target, player),
@@ -306,7 +311,7 @@ public final class RegulusDebrisGameTests implements FabricGameTest {
 	 * The fan shoots through walls it just broke: a 2-deep dirt wall loses both
 	 * blocks and the ray continues into the zombie behind it.
 	 */
-	@GameTest(template = EMPTY_STRUCTURE)
+	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 300)
 	public void debrisRayPassesThroughBrokenBlocks(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, RegulusHero.ID);
@@ -321,8 +326,8 @@ public final class RegulusDebrisGameTests implements FabricGameTest {
 		target.setNoAi(true);
 
 		TestPlayers.awaitVisible(helper, target, () -> {
-			activateAiming(helper, player);
-			helper.runAfterDelay(20, () -> {
+			activateAiming(helper, player, target);
+			helper.runAfterDelay(30, () -> {
 				for (int depth = 2; depth <= 3; depth++) {
 					assertBlock(helper, floor.getX(), floor.getY() + 1, floor.getZ() + depth,
 							Blocks.AIR, "the wall line lost its dirt block at depth " + depth);
@@ -340,7 +345,7 @@ public final class RegulusDebrisGameTests implements FabricGameTest {
 	 * never exists — this caster never lands a pellet, no charge, no cooldown, and
 	 * the windup slowness leaves with the cast.
 	 */
-	@GameTest(template = EMPTY_STRUCTURE)
+	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 300)
 	public void castInterruptCancelsShot(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, RegulusHero.ID);
@@ -350,9 +355,9 @@ public final class RegulusDebrisGameTests implements FabricGameTest {
 		target.setNoAi(true);
 
 		TestPlayers.awaitVisible(helper, target, () -> {
-			activateAiming(helper, player);
+			activateAiming(helper, player, target);
 			helper.runAfterDelay(4, () -> RegulusCastState.cancel(player));
-			helper.runAfterDelay(20, () -> {
+			helper.runAfterDelay(30, () -> {
 				helper.assertTrue(!wasHurtBy(target, player),
 						"a cancelled cast never fires");
 				helper.assertTrue(!AbilityCooldowns.isOnCooldown(player, LION_ROAR),
@@ -373,7 +378,7 @@ public final class RegulusDebrisGameTests implements FabricGameTest {
 	 * energy after it is down by roughly the activation cost, and the cooldown
 	 * is armed.
 	 */
-	@GameTest(template = EMPTY_STRUCTURE)
+	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 300)
 	public void castDoesNotChargeBeforeAuthoredEvent(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, RegulusHero.ID);
@@ -388,7 +393,7 @@ public final class RegulusDebrisGameTests implements FabricGameTest {
 			helper.runAfterDelay(10, () -> helper.assertTrue(
 					HeroDataStore.get(player).energy() >= before - 0.5f,
 					"no energy is spent before the authored fire tick"));
-			helper.runAfterDelay(20, () -> {
+			helper.runAfterDelay(30, () -> {
 				helper.assertTrue(HeroDataStore.get(player).energy() <= before - 200f,
 						"the machine charges the 250 on the fire tick");
 				helper.assertTrue(AbilityCooldowns.isOnCooldown(player, LION_ROAR),
@@ -405,7 +410,7 @@ public final class RegulusDebrisGameTests implements FabricGameTest {
 	 * own lock check reads {@code costOnActivate()} — which the cast machine moved to
 	 * the fire tick — so the pin lives on the charge path, not the press.
 	 */
-	@GameTest(template = EMPTY_STRUCTURE)
+	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 300)
 	public void debrisCastRespectsEnergyLock(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, RegulusHero.ID);
@@ -416,8 +421,8 @@ public final class RegulusDebrisGameTests implements FabricGameTest {
 
 		TestPlayers.awaitVisible(helper, target, () -> {
 			EnergyLocks.lockTicks(player, 60);
-			activateAiming(helper, player);
-			helper.runAfterDelay(20, () -> {
+			activateAiming(helper, player, target);
+			helper.runAfterDelay(30, () -> {
 				helper.assertTrue(!wasHurtBy(target, player),
 						"a locked caster's cast fizzles at the fire tick — no pellet lands");
 				helper.assertTrue(HeroDataStore.get(player).energy() > 999f,
@@ -466,16 +471,48 @@ public final class RegulusDebrisGameTests implements FabricGameTest {
 	 * The position is re-pinned too — foreign debris knockback slides the caster
 	 * otherwise.
 	 */
-	private static void activateAiming(GameTestHelper helper, ServerPlayer player) {
-		AbilityRouter.activate(player, LION_ROAR);
-		helper.runAfterDelay(13, () -> {
-			aimForward(helper, player);
-			Vec3 anchor = ANCHORS.get(player.getUUID());
-			if (anchor != null) {
-				player.setPos(anchor.x, anchor.y, anchor.z);
-				player.setDeltaMovement(Vec3.ZERO);
+	private static void activateAiming(GameTestHelper helper, ServerPlayer player,
+			LivingEntity... sees) {
+		awaitSweepSees(helper, 80, () -> {
+			AbilityRouter.activate(player, LION_ROAR);
+			// Re-pin ticks 13 and 14: a foreign pellet's knockback in the one-tick
+			// gap between a single re-pin and the fire tick can slide the eye into
+			// the wall line and change which blocks the rays reach.
+			for (int t = 13; t <= 14; t++) {
+				helper.runAfterDelay(t, () -> {
+					aimForward(helper, player);
+					Vec3 anchor = ANCHORS.get(player.getUUID());
+					if (anchor != null) {
+						player.setPos(anchor.x, anchor.y, anchor.z);
+						player.setDeltaMovement(Vec3.ZERO);
+					}
+				});
 			}
-		});
+		}, sees);
+	}
+
+	/**
+	 * The pellets' sweep reads {@code getEntitiesOfClass} — the spatial section,
+	 * which can trail the uuid index {@link TestPlayers#awaitVisible} covers by
+	 * enough ticks to eat the whole cast windup. Poll every witness through the
+	 * same query shape before the cast starts; on expiry the body runs anyway so
+	 * a genuinely missing victim still fails the assert, not the wait.
+	 */
+	private static void awaitSweepSees(GameTestHelper helper, int tries, Runnable body,
+			LivingEntity... victims) {
+		boolean all = true;
+		for (LivingEntity victim : victims) {
+			if (helper.getLevel().getEntitiesOfClass(LivingEntity.class,
+					victim.getBoundingBox().inflate(2.0), e -> e == victim).isEmpty()) {
+				all = false;
+				break;
+			}
+		}
+		if (tries <= 0 || all) {
+			body.run();
+			return;
+		}
+		helper.runAfterDelay(1, () -> awaitSweepSees(helper, tries - 1, body, victims));
 	}
 
 	private static Zombie spawnAhead(GameTestHelper helper, ServerPlayer player, double distance) {
