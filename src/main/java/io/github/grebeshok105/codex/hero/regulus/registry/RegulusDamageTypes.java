@@ -24,11 +24,14 @@ public final class RegulusDamageTypes {
 	public static final ResourceKey<DamageType> COUNTER_STRIKE = key("counter_strike");
 	public static final ResourceKey<DamageType> LION_ROAR = key("lion_roar");
 	public static final ResourceKey<DamageType> HEART_BACKLASH = key("regulus_heart_backlash");
+	public static final ResourceKey<DamageType> DEBRIS = key("regulus_debris");
 
 	public static final List<DamageTypeSpec> SPECS = List.of(
 			DamageTypeSpec.of("counter_strike", DamageScaling.NEVER, 0.0F,
 					DamageTypeTags.BYPASSES_COOLDOWN),
 			DamageTypeSpec.of("lion_roar", DamageScaling.NEVER, 0.0F,
+					DamageTypeTags.BYPASSES_COOLDOWN),
+			DamageTypeSpec.of("regulus_debris", DamageScaling.NEVER, 0.1F,
 					DamageTypeTags.BYPASSES_COOLDOWN),
 			DamageTypeSpec.of("regulus_heart_backlash", DamageScaling.NEVER, 0.0F,
 					DamageTypeTags.BYPASSES_ARMOR, DamageTypeTags.BYPASSES_RESISTANCE,
@@ -64,8 +67,8 @@ public final class RegulusDamageTypes {
 		return DamageSources.of(level, COUNTER_STRIKE, attacker);
 	}
 
-	public static DamageSource lionRoar(ServerLevel level, Entity attacker) {
-		return DamageSources.of(level, LION_ROAR, attacker);
+	public static DamageSource debris(ServerLevel level, Entity attacker) {
+		return DamageSources.of(level, DEBRIS, attacker);
 	}
 
 	/** Heart backlash is a self-cost — no attacker, it always belongs to the owner. */

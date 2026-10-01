@@ -1,27 +1,30 @@
 package io.github.grebeshok105.codex.hero.regulus.ability;
 
 import io.github.grebeshok105.codex.ModId;
-import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
-import io.github.grebeshok105.codex.hero.regulus.registry.RegulusDamageTypes;
-import net.minecraft.core.particles.ParticleTypes;
+import io.github.grebeshok105.codex.core.net.VfxFx;
+import io.github.grebeshok105.codex.hero.regulus.runtime.DebrisKickController;
+import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusCastState;
+import io.github.grebeshok105.codex.hero.regulus.vfx.RegulusVfxIds;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.phys.AABB;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.List;
-
+/**
+ * The debris kick — authored-cast shotgun on the persisted {@code lion_roar} slot.
+ * Press starts a 14-tick windup (the kick clip, Slowness I for the cast window);
+ * the fire tick runs {@link DebrisKickController#fire}, charges the activation
+ * cost, and arms the cooldown. Damage taken before the fire tick cancels the cast
+ * for free; a manual cancel does the same. The ability id and its bound key never
+ * change — persisted loadouts stay valid across the rework.
+ */
 public final class LionRoarAbility implements Ability {
-	private static final double RANGE = 18.0;
-	private static final double CONE_HALF_ANGLE_COS = Math.cos(Math.toRadians(45.0));
-	private static final float DAMAGE = 14.0f;
-	private static final double KNOCKBACK = 3.0;
+	private static final int FIRE_TICKS = 14;
+	private static final int CAST_UNTIL_TICKS = 44;
+	private static final float ACTIVATE_COST = 250f;
+	private static final int COOLDOWN_TICKS = 400;
 
 	public static final ResourceLocation ID = ModId.of("lion_roar");
 
@@ -35,9 +38,16 @@ public final class LionRoarAbility implements Ability {
 		return false;
 	}
 
+	/** The router sees a free press — the cast machine charges on the authored fire tick. */
 	@Override
 	public float costOnActivate() {
-		return 150f;
+		return 0f;
+	}
+
+	/** The HUD still advertises the real price even though the press itself is free. */
+	@Override
+	public float displayCostOnActivate() {
+		return ACTIVATE_COST;
 	}
 
 	@Override
@@ -47,42 +57,17 @@ public final class LionRoarAbility implements Ability {
 
 	@Override
 	public boolean tryActivate(ServerPlayer player) {
-		ServerLevel level = player.serverLevel();
-		Vec3 origin = player.getEyePosition();
-		Vec3 forward = player.getViewVector(1f).normalize();
-
-		AABB area = new AABB(origin, origin).inflate(RANGE);
-		List<Entity> candidates = level.getEntities(player, area,
-				e -> e instanceof LivingEntity le && TargetFilters.hostileTo(player).test(le));
-
-		for (Entity entity : candidates) {
-			Vec3 toTarget = entity.position().add(0, entity.getBbHeight() * 0.5, 0).subtract(origin);
-			double dist = toTarget.length();
-			if (dist > RANGE || dist < 0.001) {
-				continue;
-			}
-			Vec3 toNorm = toTarget.normalize();
-			double dot = toNorm.dot(forward);
-			if (dot < CONE_HALF_ANGLE_COS) {
-				continue;
-			}
-			entity.hurt(RegulusDamageTypes.lionRoar(level, player), DAMAGE);
-			Vec3 push = forward.scale(KNOCKBACK);
-			entity.push(push.x, 0.5, push.z);
-			entity.hurtMarked = true;
+		if (!RegulusCastState.startCast(player, new RegulusCastState.Spec(
+				ID, FIRE_TICKS, CAST_UNTIL_TICKS, ACTIVATE_COST, COOLDOWN_TICKS, true,
+				() -> DebrisKickController.fire(player),
+				() -> player.removeEffect(MobEffects.MOVEMENT_SLOWDOWN)))) {
+			return false;
 		}
-
-		level.playSound(null, player.getX(), player.getY(), player.getZ(),
-				SoundEvents.RAVAGER_ROAR, SoundSource.PLAYERS, 1.6f, 0.7f);
-		level.playSound(null, player.getX(), player.getY(), player.getZ(),
-				SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 1.0f, 1.1f);
-
-		Vec3 cloudOrigin = origin.add(forward.scale(2.0));
-		level.sendParticles(ParticleTypes.SONIC_BOOM,
-				cloudOrigin.x, cloudOrigin.y, cloudOrigin.z, 1, 0.0, 0.0, 0.0, 0.0);
-		level.sendParticles(ParticleTypes.CLOUD,
-				cloudOrigin.x, cloudOrigin.y, cloudOrigin.z, 60,
-				2.0, 1.0, 2.0, 0.2);
+		player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN,
+				CAST_UNTIL_TICKS, 0, true, false, true));
+		Vec3 eye = player.getEyePosition();
+		VfxFx.event(player, RegulusVfxIds.ANIM_DEBRIS_KICK, eye,
+				eye.add(player.getViewVector(1f).scale(DebrisKickController.RANGE)), 1f);
 		return true;
 	}
 }

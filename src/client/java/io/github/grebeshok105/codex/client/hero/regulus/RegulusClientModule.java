@@ -8,6 +8,7 @@ import io.github.grebeshok105.codex.client.hero.regulus.hud.BloodRainHud;
 import io.github.grebeshok105.codex.client.hero.regulus.hud.ClientHudGlitch;
 import io.github.grebeshok105.codex.client.hero.regulus.hud.CracksOverlayHud;
 import io.github.grebeshok105.codex.client.hero.regulus.hud.EvangelionZoomHud;
+import io.github.grebeshok105.codex.client.hero.regulus.fx.RegulusFx;
 import io.github.grebeshok105.codex.client.hero.regulus.hud.MadnessHudOverlay;
 import io.github.grebeshok105.codex.client.hero.regulus.render.RegulusHeartsRenderer;
 import io.github.grebeshok105.codex.client.hero.regulus.state.ClientHeartsState;
@@ -28,6 +29,7 @@ public record RegulusClientModule() implements HeroClientModule {
 
 	@Override
 	public void register(HeroClientContext ctx) {
+		RegulusFx.register(ctx);
 		ctx.hud(1100, ModId.of("madness_overlay"), MadnessHudOverlay::render);
 		ctx.hud(1200, ModId.of("blood_rain"), BloodRainHud::render);
 		ctx.hud(1300, ModId.of("evangelion_zoom"), EvangelionZoomHud::render);

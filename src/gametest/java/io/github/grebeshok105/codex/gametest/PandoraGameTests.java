@@ -272,7 +272,15 @@ public final class PandoraGameTests implements FabricGameTest {
 		helper.runAfterDelay(6, () -> {
 			helper.assertTrue(Math.abs(victim.getX() - anchor.x) < 0.5,
 					"a bound victim is snapped back to the anchor");
-			AbilityRouter.activate(pandora, PandoraAbilities.SPACE_CRUSH);
+			// space_crush credits Pandora — ServerPlayer.canHarmPlayer gates player-sourced
+			// hurt() on isPvpAllowed, and the batch server runs pvp off; wrap and restore.
+			boolean oldPvp = helper.getLevel().getServer().isPvpAllowed();
+			helper.getLevel().getServer().setPvpAllowed(true);
+			try {
+				AbilityRouter.activate(pandora, PandoraAbilities.SPACE_CRUSH);
+			} finally {
+				helper.getLevel().getServer().setPvpAllowed(oldPvp);
+			}
 			helper.assertTrue(AbilityCooldowns.isOnCooldown(pandora, PandoraAbilities.SPACE_CRUSH),
 					"the crush goes on cooldown after firing");
 			helper.assertTrue(victim.isDeadOrDying(),

@@ -311,5 +311,23 @@
         "stream": true
       }
     ]
+  },
+  "regulus.debris_roar": {
+    "subtitle": "subtitles.superheroes.regulus.debris_roar",
+    "sounds": [
+      {
+        "name": "superheroes:regulus/debris_roar",
+        "stream": true
+      }
+    ]
+  },
+  "regulus.debris_impact": {
+    "subtitle": "subtitles.superheroes.regulus.debris_impact",
+    "sounds": [
+      {
+        "name": "superheroes:regulus/debris_impact",
+        "stream": true
+      }
+    ]
   }
 }
