@@ -161,7 +161,11 @@ public final class LionHeartController {
 	public static void shutdown(ServerPlayer player) {
 		WINDOW_DEADLINES.remove(player.getUUID());
 		releaseFrozen(player);
-		RegulusHearts.setOverheatTicks(player, 0);
+		// Hearts' own drop hook already cleared SYNC on leave/death/clear — reset only
+		// a live view instead of recreating a stale entry for a departing player.
+		if (RegulusHearts.syncedOverheatTicks(player) >= 0) {
+			RegulusHearts.setOverheatTicks(player, 0);
+		}
 	}
 
 	private static void resetAll() {
