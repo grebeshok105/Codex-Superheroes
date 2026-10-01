@@ -10,7 +10,10 @@ import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
 import io.github.grebeshok105.codex.core.model.ControlLockKind;
 import io.github.grebeshok105.codex.core.model.HeroData;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
+import io.github.grebeshok105.codex.core.net.VfxChannelS2CPayload;
+import io.github.grebeshok105.codex.core.net.VfxFx;
 import io.github.grebeshok105.codex.core.resource.ResourceController;
+import io.github.grebeshok105.codex.hero.regulus.vfx.RegulusVfxIds;
 import io.github.grebeshok105.codex.hero.regulus.registry.RegulusDamageTypes;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.minecraft.core.Holder;
@@ -133,6 +136,8 @@ public final class LionHeartController {
 				player.getX(), player.getY() + 1.0, player.getZ(), 1, 0.0, 0.0, 0.0, 0.0);
 		level.sendParticles(ParticleTypes.END_ROD,
 				player.getX(), player.getY() + 1.0, player.getZ(), 40, 1.5, 0.5, 1.5, 0.05);
+		VfxFx.channel(player, RegulusVfxIds.CHANNEL_LION_HEART_DOME,
+				VfxChannelS2CPayload.START, player.position());
 	}
 
 	/**
@@ -159,7 +164,10 @@ public final class LionHeartController {
 
 	/** Every teardown — window, frozen set, overheat counter. Safe to repeat. */
 	public static void shutdown(ServerPlayer player) {
-		WINDOW_DEADLINES.remove(player.getUUID());
+		if (WINDOW_DEADLINES.remove(player.getUUID()) != null) {
+			VfxFx.channel(player, RegulusVfxIds.CHANNEL_LION_HEART_DOME,
+					VfxChannelS2CPayload.STOP, player.position());
+		}
 		releaseFrozen(player);
 		// Hearts' own drop hook already cleared SYNC on leave/death/clear — reset only
 		// a live view instead of recreating a stale entry for a departing player.
@@ -177,6 +185,11 @@ public final class LionHeartController {
 		Long deadline = WINDOW_DEADLINES.get(player.getUUID());
 		if (deadline == null) {
 			return;
+		}
+		// Channel keepalive: 10t of silence closes the client-side dome.
+		if (player.tickCount % 6 == 0) {
+			VfxFx.channel(player, RegulusVfxIds.CHANNEL_LION_HEART_DOME,
+					VfxChannelS2CPayload.UPDATE, player.position());
 		}
 		freezeProjectiles(player);
 		if (player.getHealth() <= FORCE_OFF_HEALTH) {

@@ -1,0 +1,14 @@
+{
+  "shape": "hemisphere",
+  "dimensions": [
+    2.5,
+    0.3,
+    2.5
+  ],
+  "rotation": [
+    0,
+    0,
+    0
+  ],
+  "from_surface": true
+}

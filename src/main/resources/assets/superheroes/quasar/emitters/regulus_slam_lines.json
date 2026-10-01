@@ -1,0 +1,11 @@
+{
+  "max_lifetime": 8,
+  "loop": false,
+  "rate": 1,
+  "count": 30,
+  "emitter_settings": {
+    "shape": "superheroes:regulus_slam_lines",
+    "particle_settings": "superheroes:regulus_slam_lines"
+  },
+  "particle_data": "superheroes:regulus_slam_lines"
+}

@@ -50,18 +50,32 @@ public final class MadnessHudOverlay {
 			"ΨΛΞΣ", "RΞGᐖ⌘", "▲▽▲▽", "ᚨᚺᛋ", "Ꮷ⎺⎺ᗰ", "𓂀𓁹𓆣", "⌇⌇⌇"
 	};
 
-	private static final long HEARTBEAT_RAMP_MS = 180_000L;
-	private static final double HEARTBEAT_INTERVAL_START_MS = 1100.0;
-	private static final double HEARTBEAT_INTERVAL_END_MS = 160.0;
+	/** Heartbeat ramp horizon — 180 s of madness age. */
+	private static final double HEARTBEAT_RAMP_TICKS = 3600.0;
+	private static final double HEARTBEAT_INTERVAL_START_TICKS = 22.0;
+	private static final double HEARTBEAT_INTERVAL_END_TICKS = 3.2;
+	private static final double HEARTBEAT_INTERVAL_MIN_TICKS = 2.4;
 
-	private static long lastBeatMs = 0L;
-	private static long lastVoiceMs = 0L;
+	/** Last heartbeat, in synced game-ticks (fractional — includes the render partial). */
+	private static float lastBeatTick = 0f;
+	/** Current heartbeat envelope (0..1), refreshed each rendered frame — the blood hud's driver. */
+	private static float heartbeatPulse = 0f;
+	private static long lastVoiceTick = 0L;
 	private static Component currentVoice = null;
-	private static long currentVoiceStartedMs = 0L;
-	private static long currentVoiceUntilMs = 0L;
+	private static long currentVoiceStartedTick = 0L;
+	private static long currentVoiceUntilTick = 0L;
 	private static final Random RNG = new Random();
 
 	private MadnessHudOverlay() {
+	}
+
+	/**
+	 * The current heartbeat envelope (0..1) — refreshed each rendered frame
+	 * while madness runs, 0 otherwise. Shared driver for the blood overlay's
+	 * alpha pulse ({@link BloodRainHud}).
+	 */
+	public static float heartbeatPulse() {
+		return heartbeatPulse;
 	}
 
 	public static void render(GuiGraphics graphics, DeltaTracker tracker) {
@@ -75,22 +89,25 @@ public final class MadnessHudOverlay {
 			renderReading(graphics, sw, sh);
 		}
 		if (!ClientMadnessState.isMadness()) {
-			lastBeatMs = 0L;
+			lastBeatTick = 0f;
+			heartbeatPulse = 0f;
 			currentVoice = null;
 			return;
 		}
-		long now = System.currentTimeMillis();
-		// Madness age comes from the synced game-tick deadline, not wall-clock.
-		long elapsed = ClientMadnessState.madnessElapsedTicks() * 50L;
-		double phase = Math.min(1.0, elapsed / (double) HEARTBEAT_RAMP_MS);
+		// All clocks are synced game-tick — never wall-clock; a late-tracking
+		// client lands on the same deadlines as everyone else.
+		float now = mc.level.getGameTime()
+				+ mc.getTimer().getGameTimeDeltaPartialTick(true);
+		// Madness age comes from the synced game-tick deadline.
+		double elapsedTicks = ClientMadnessState.madnessElapsedTicks();
+		double phase = Math.min(1.0, elapsedTicks / HEARTBEAT_RAMP_TICKS);
 		double eased = phase * phase * (3.0 - 2.0 * phase);
-		double interval = HEARTBEAT_INTERVAL_START_MS
-				- (HEARTBEAT_INTERVAL_START_MS - HEARTBEAT_INTERVAL_END_MS) * eased;
-		long interv = Math.max(120L, (long) interval);
-		if (lastBeatMs == 0L) lastBeatMs = now - interv;
+		double interv = Math.max(HEARTBEAT_INTERVAL_MIN_TICKS, HEARTBEAT_INTERVAL_START_TICKS
+				- (HEARTBEAT_INTERVAL_START_TICKS - HEARTBEAT_INTERVAL_END_TICKS) * eased);
+		if (lastBeatTick == 0f) lastBeatTick = now - (float) interv;
 		float beatStrength;
-		if (now - lastBeatMs >= interv) {
-			lastBeatMs = now;
+		if (now - lastBeatTick >= interv) {
+			lastBeatTick = now;
 			float volume = 0.6f + (float) eased * 0.7f;
 			float pitch = 1.0f - (float) eased * 0.25f;
 			mc.level.playLocalSound(p.getX(), p.getY(), p.getZ(),
@@ -103,9 +120,10 @@ public final class MadnessHudOverlay {
 			}
 			beatStrength = 1f;
 		} else {
-			float t = (now - lastBeatMs) / (float) interv;
+			float t = (now - lastBeatTick) / (float) interv;
 			beatStrength = Math.max(0f, 1f - t * 4f);
 		}
+		heartbeatPulse = beatStrength;
 
 		float alphaBase = 0.18f + (float) eased * 0.55f;
 		float pulse = beatStrength * alphaBase;
@@ -120,7 +138,7 @@ public final class MadnessHudOverlay {
 
 		tickAndDrawVoice(graphics, mc, sw, sh, now, eased);
 
-		long seed = (now / 450L);
+		long seed = (long) (now / 9.0f);
 		Random r = new Random(seed);
 		int symbolCount = 12 + (int) (eased * 14);
 		for (int i = 0; i < symbolCount; i++) {
@@ -141,7 +159,7 @@ public final class MadnessHudOverlay {
 		// burning high-contrast mid-screen glyphs, flicker with heartbeat
 		int flickerAlpha = (int) (beatStrength * 220f);
 		if (flickerAlpha > 15) {
-			long seed2 = now / 180L;
+			long seed2 = (long) (now / 3.6f);
 			Random r2 = new Random(seed2);
 			int flashCount = 2 + r2.nextInt(3);
 			for (int i = 0; i < flashCount; i++) {
@@ -183,14 +201,14 @@ public final class MadnessHudOverlay {
 		}
 	}
 
-	private static void tickAndDrawVoice(GuiGraphics graphics, Minecraft mc, int sw, int sh, long now, double eased) {
-		long interval = (long) (9000.0 - 5000.0 * eased);
-		if (currentVoice == null || now > currentVoiceUntilMs) {
-			if (now - lastVoiceMs > interval) {
+	private static void tickAndDrawVoice(GuiGraphics graphics, Minecraft mc, int sw, int sh, float now, double eased) {
+		long interval = (long) (180.0 - 100.0 * eased);
+		if (currentVoice == null || now > currentVoiceUntilTick) {
+			if (now - lastVoiceTick > interval) {
 				currentVoice = VOICES[RNG.nextInt(VOICES.length)];
-				currentVoiceStartedMs = now;
-				currentVoiceUntilMs = now + 2800L;
-				lastVoiceMs = now;
+				currentVoiceStartedTick = (long) now;
+				currentVoiceUntilTick = (long) now + 56L;
+				lastVoiceTick = (long) now;
 				if (mc.player != null && mc.level != null) {
 					mc.level.playLocalSound(mc.player.getX(), mc.player.getY(), mc.player.getZ(),
 							SoundEvents.EVOKER_CAST_SPELL, net.minecraft.sounds.SoundSource.PLAYERS,
@@ -201,11 +219,11 @@ public final class MadnessHudOverlay {
 				}
 			}
 		}
-		if (currentVoice != null && now <= currentVoiceUntilMs) {
-			long sinceStart = now - currentVoiceStartedMs;
-			float fadeIn = Math.min(1f, sinceStart / 180f);
-			long left = currentVoiceUntilMs - now;
-			float fadeOut = left < 600L ? left / 600f : 1f;
+		if (currentVoice != null && now <= currentVoiceUntilTick) {
+			float sinceStart = now - currentVoiceStartedTick;
+			float fadeIn = Math.min(1f, sinceStart / 3.6f);
+			float left = currentVoiceUntilTick - now;
+			float fadeOut = left < 12f ? left / 12f : 1f;
 			float fade = fadeIn * fadeOut;
 			float scale = 1f + (1f - fadeIn) * 0.3f;
 			int va = (int) (fade * 220f);

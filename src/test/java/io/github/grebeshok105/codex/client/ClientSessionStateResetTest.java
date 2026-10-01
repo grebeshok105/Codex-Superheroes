@@ -20,6 +20,7 @@ import io.github.grebeshok105.codex.client.hero.reinhard.state.ClientReinhardSwo
 import io.github.grebeshok105.codex.client.hero.reinhard.state.ClientReinhardSwordKillState;
 import io.github.grebeshok105.codex.client.hero.reinhard.state.ClientReinhardTimeSlowState;
 import io.github.grebeshok105.codex.client.hero.pandora.hud.MirrorWarpFlashHud;
+import io.github.grebeshok105.codex.client.hero.regulus.state.ClientHeartsState;
 import io.github.grebeshok105.codex.client.hero.pandora.state.ClientPandoraDeathState;
 import io.github.grebeshok105.codex.client.hero.pandora.state.ClientPandoraHouseState;
 import net.minecraft.core.BlockPos;
@@ -76,6 +77,7 @@ class ClientSessionStateResetTest {
 			ClientReinhardSwordKillState.update(true);
 			ClientReinhardDarknessState.activate(200);
 			ClientThinkMarkState.update(PLAYER, true);
+			ClientHeartsState.update(List.of(1, 2), true, 5);
 			ClientRemDemonismState.update(PLAYER, 30f, true, false);
 			ClientShadowArmyState.update(PLAYER, true, 4, true);
 			ClientSuitVariantState.update(PLAYER, 2);
@@ -119,6 +121,8 @@ class ClientSessionStateResetTest {
 			assertTrue(ClientReinhardSwordKillState.active());
 			assertTrue(ClientReinhardDarknessState.active());
 			assertTrue(ClientThinkMarkState.isActive(PLAYER));
+			assertTrue(ClientHeartsState.isLionHeartActive());
+			assertTrue(!ClientHeartsState.heartEntityIds().isEmpty());
 			assertTrue(ClientRemDemonismState.isActive(PLAYER));
 			assertTrue(ClientShadowArmyState.hasShadows(PLAYER));
 			assertEquals(2, ClientSuitVariantState.variantFor(PLAYER));
@@ -153,6 +157,9 @@ class ClientSessionStateResetTest {
 			assertFalse(ClientReinhardSwordKillState.active());
 			assertFalse(ClientReinhardDarknessState.active());
 			assertFalse(ClientThinkMarkState.isActive(PLAYER));
+			assertFalse(ClientHeartsState.isLionHeartActive());
+			assertTrue(ClientHeartsState.heartEntityIds().isEmpty());
+			assertEquals(0, ClientHeartsState.overheatTicks());
 			assertFalse(ClientRemDemonismState.isActive(PLAYER));
 			assertFalse(ClientShadowArmyState.hasShadows(PLAYER));
 			assertEquals(0, ClientSuitVariantState.variantFor(PLAYER));

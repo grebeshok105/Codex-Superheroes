@@ -57,32 +57,28 @@ sourceSets {
 		}
 	}
 	// Server GameTests run against the real mod; never packaged (auditReleaseJarIsolation enforces it).
+	// The mod is environment:"client" (EMF is a hard dep), so Fabric env-filters it
+	// here — the superheroes-gametest harness mod re-runs onInitialize() itself.
 	gametest {
 		compileClasspath += main.compileClasspath + main.output
-		// Veil hard-depends on client-only Fabric modules, so it cannot load on a dedicated server.
+		// Veil declares environment "*" yet hard-depends on client-only Fabric
+		// modules, so it must stay off the dedicated-server classpath.
 		runtimeClasspath += main.runtimeClasspath.filter { !it.path.contains('veil') } + main.output
 	}
-	// Datagen runs a server environment: same Veil exclusion as the GameTest classpath.
+	// Datagen runs a server environment: same Veil exclusion as the GameTest
+	// classpath, and the same env-filtered mod (superheroes-datagen bootstraps it).
 	datagen {
 		compileClasspath += main.compileClasspath + main.output
 		runtimeClasspath += main.runtimeClasspath.filter { !it.path.contains('veil') } + main.output
 	}
-	// Veil-free client run: Veil FX code paths are guarded by isModLoaded("veil"),
-	// so runtime checks without Veil need a classpath that simply lacks the jar.
-	// loom creates the split-env 'client' source set after this block evaluates,
-	// hence the eager empty set here and the lazy classpath below.
-	clientnoveil
-	// Veil-free dedicated-server run: Veil hard-depends on client-only Fabric
-	// modules, so it can never load in a server env — same exclusion as gametest.
-	servernoveil
 }
 
-afterEvaluate {
-	sourceSets.clientnoveil.compileClasspath += sourceSets.client.compileClasspath + sourceSets.client.output + sourceSets.main.output
-	sourceSets.clientnoveil.runtimeClasspath += sourceSets.client.runtimeClasspath.filter { !it.path.contains('veil') } + sourceSets.client.output + sourceSets.main.output
-	// servernoveil has no sources of its own; it exists purely as a filtered classpath.
-	sourceSets.servernoveil.compileClasspath += sourceSets.main.compileClasspath
-	sourceSets.servernoveil.runtimeClasspath += sourceSets.main.runtimeClasspath.filter { !it.path.contains('veil') } + sourceSets.main.output
+// The env-filtered mod's datapack (damage types, tags, recipes) is not
+// registered on the GameTest server — the harness mod re-mounts it inside its
+// own container (filtered so the main fabric.mod.json can never collide).
+processGametestResources {
+	from('src/main/generated') { include 'data/**' }
+	from('src/main/resources') { include 'data/**' }
 }
 
 // JUnit covers pure client-side state too (Client*State session resets, cooldown clocks —
@@ -163,22 +159,23 @@ loom {
 		"superheroes-gametest" {
 			sourceSet sourceSets.gametest
 		}
+		"superheroes-datagen" {
+			sourceSet sourceSets.datagen
+		}
 	}
 
 	runs {
-		// runServer must boot without Veil: it lives on the filtered
-		// servernoveil classpath (client-only Fabric modules can't resolve
-		// in a dedicated-server env). datagen/gametest already filter Veil.
-		server {
-			source sourceSets.servernoveil
-		}
+		// No dedicated-server run config: the mod is environment:"client"
+		// (EMF is a hard dep), so a dedicated server cannot load it at all.
 		datagen {
-			inherit server
+			server()
 			source sourceSets.datagen
 			name "Data Generation"
 			vmArg "-Dfabric-api.datagen"
 			vmArg "-Dfabric-api.datagen.output-dir=${file("src/main/generated")}"
-			vmArg "-Dfabric-api.datagen.modid=superheroes"
+			// The env-filtered superheroes mod owns no datagen entrypoint in a
+			// server env — the superheroes-datagen harness mod does.
+			vmArg "-Dfabric-api.datagen.modid=superheroes-datagen"
 			runDir "build/datagen"
 		}
 		// Headless GameTest server: exits with the number of failed required tests.
@@ -189,14 +186,6 @@ loom {
 			vmArg "-Dfabric-api.gametest"
 			vmArg "-Dfabric-api.gametest.report-file=${file("build/gametest/junit.xml")}"
 			runDir "build/gametest"
-		}
-		// Veil-free client (see the clientnoveil source set): exercises the
-		// isModLoaded("veil") fallback paths for hero FX.
-		clientNoVeil {
-			client()
-			name "Client (no Veil)"
-			source sourceSets.clientnoveil
-			runDir "build/clientnoveil"
 		}
 	}
 }

@@ -66,7 +66,7 @@ public final class ManiaOfGreedAbility implements Ability {
 		if (!started) {
 			return false;
 		}
-		Vec3 origin = player.position();
+		Vec3 origin = player.getEyePosition();
 		VfxFx.event(player, RegulusVfxIds.ANIM_MANIA_OF_GREED_CAST, origin, origin, 1f);
 		player.serverLevel().playSound(null, player.getX(), player.getY(), player.getZ(),
 				SoundEvents.BEACON_ACTIVATE, SoundSource.PLAYERS, 1.2f, 0.6f);

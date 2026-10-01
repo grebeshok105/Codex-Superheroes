@@ -1,0 +1,11 @@
+{
+  "max_lifetime": 14,
+  "loop": false,
+  "rate": 1,
+  "count": 24,
+  "emitter_settings": {
+    "shape": "superheroes:regulus_evangelium_gold",
+    "particle_settings": "superheroes:regulus_evangelium_gold"
+  },
+  "particle_data": "superheroes:regulus_evangelium_gold"
+}

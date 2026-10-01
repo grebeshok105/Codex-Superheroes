@@ -1,0 +1,11 @@
+{
+  "chargeTicks": 2,
+  "releaseTicks": 6,
+  "coreWidth": 0.02,
+  "glowWidth": 0.07,
+  "coreColor": "#FFFFE870",
+  "glowColor": "#60C89000",
+  "noise": 0.4,
+  "victimDistortionRadius": 0.5,
+  "victimDistortionStrength": 0.25
+}

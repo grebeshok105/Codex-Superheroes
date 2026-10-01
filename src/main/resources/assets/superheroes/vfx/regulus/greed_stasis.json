@@ -1,0 +1,10 @@
+{
+  "domeRadius": 8.0,
+  "chargeTicks": 10,
+  "releaseTicks": 8,
+  "distortionRadius": 4.4,
+  "distortionStrength": 0.35,
+  "lightColor": "#A8D8E0",
+  "lightRadius": 6.4,
+  "lightBrightness": 0.4
+}

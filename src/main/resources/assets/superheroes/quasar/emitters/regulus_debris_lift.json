@@ -1,0 +1,11 @@
+{
+  "max_lifetime": 14,
+  "loop": false,
+  "rate": 1,
+  "count": 22,
+  "emitter_settings": {
+    "shape": "superheroes:regulus_debris_lift",
+    "particle_settings": "superheroes:regulus_debris_lift"
+  },
+  "particle_data": "superheroes:regulus_debris_lift"
+}

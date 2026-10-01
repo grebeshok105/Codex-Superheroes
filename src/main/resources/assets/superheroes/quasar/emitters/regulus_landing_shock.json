@@ -1,0 +1,11 @@
+{
+  "max_lifetime": 18,
+  "loop": false,
+  "rate": 1,
+  "count": 36,
+  "emitter_settings": {
+    "shape": "superheroes:regulus_landing_shock",
+    "particle_settings": "superheroes:regulus_landing_shock"
+  },
+  "particle_data": "superheroes:regulus_landing_shock"
+}

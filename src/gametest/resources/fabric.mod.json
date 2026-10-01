@@ -67,11 +67,18 @@
 			"io.github.grebeshok105.codex.gametest.HomelanderVfxGameTests",
 			"io.github.grebeshok105.codex.gametest.RegulusStasisGameTests",
 			"io.github.grebeshok105.codex.gametest.RegulusDebrisGameTests",
-			"io.github.grebeshok105.codex.gametest.RegulusManiaCounterGameTests"
+			"io.github.grebeshok105.codex.gametest.RegulusManiaCounterGameTests",
+			"io.github.grebeshok105.codex.gametest.RegulusVfxGameTests"
+		],
+		"main": [
+			"io.github.grebeshok105.codex.gametest.GametestBootstrap"
 		]
 	},
 	"depends": {
-		"superheroes": "*",
 		"fabric-gametest-api-v1": "*"
-	}
+	},
+	"mixins": [
+		"superheroes.mixins.json",
+		"superheroes.compat.mixins.json"
+	]
 }

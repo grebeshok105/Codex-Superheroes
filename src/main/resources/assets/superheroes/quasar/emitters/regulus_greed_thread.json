@@ -1,0 +1,11 @@
+{
+  "max_lifetime": 8,
+  "loop": false,
+  "rate": 1,
+  "count": 3,
+  "emitter_settings": {
+    "shape": "superheroes:regulus_greed_thread",
+    "particle_settings": "superheroes:regulus_greed_thread"
+  },
+  "particle_data": "superheroes:regulus_greed_thread"
+}

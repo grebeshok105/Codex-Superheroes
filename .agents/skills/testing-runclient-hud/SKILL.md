@@ -11,7 +11,7 @@ Applies to Codex-Superheroes (Fabric 1.21.1). Use for any stage that touches inp
 
 - Worktree: always the dedicated `wt-*` worktree, NOT the main checkout. Launch must be its OWN command (fails inside `&&`):
   `cd /home/ubuntu/wt-X && DISPLAY=:0 nohup ./gradlew runClient --no-daemon > /path/boot.log 2>&1 & disown`
-- `runClient` = Veil present (default). `runClientNoVeil` exists (separate runDir `build/clientnoveil`); veil-absence is provable via the "recommends veil which is missing" warning + the ResourceManager mod list.
+- `runClient` = Veil present (default). Veil stays `recommends`, so its absence is handled at runtime by the VFX backend fallback — there is no separate noveil run config.
 - Window id ~`0x03600007` (check `wmctrl -l | grep -i mine`). Maximize for recording: `wmctrl -i -r 0x03600007 -b add,maximized_vert,maximized_horz` (NOT `xdotool super+Up` — that half-tiles).
 - Screenshots: `import -window 0x03600007 /tmp/x.png` (ImageMagick) on the right window — more reliable than the computer-tool screenshot for capturing the exact client frame.
 - Kill: `pkill -f "wt-X.*KnotClient|wt-X.*gradlew"`. Runtime log: `wt-X/run/logs/latest.log`.

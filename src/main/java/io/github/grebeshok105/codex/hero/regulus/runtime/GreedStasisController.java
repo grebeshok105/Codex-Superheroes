@@ -9,6 +9,9 @@ import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
 import io.github.grebeshok105.codex.core.model.ControlLockKind;
 import io.github.grebeshok105.codex.core.model.HeroData;
 import io.github.grebeshok105.codex.core.module.HeroModuleContext;
+import io.github.grebeshok105.codex.core.net.VfxChannelS2CPayload;
+import io.github.grebeshok105.codex.core.net.VfxFx;
+import io.github.grebeshok105.codex.hero.regulus.vfx.RegulusVfxIds;
 import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusGreedController.AggregatedDamage;
 import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusGreedController.QueuedDamage;
 import net.minecraft.core.particles.ParticleTypes;
@@ -144,6 +147,8 @@ public final class GreedStasisController {
 			level.sendParticles(ParticleTypes.FLASH, anchor.x, anchor.y + 1.0, anchor.z, 1, 0, 0, 0, 0);
 		}
 		DOMES.put(caster.getUUID(), caster.getUUID(), dome);
+		VfxFx.channel(caster, RegulusVfxIds.CHANNEL_GREED_STASIS,
+				VfxChannelS2CPayload.START, anchor);
 	}
 
 	public static void tickPlayer(MinecraftServer server, ServerPlayer player, HeroData data) {
@@ -175,6 +180,12 @@ public final class GreedStasisController {
 				continue;
 			}
 			tickDome(level, caster, dome);
+			// Channel keepalive: the client-side dome closes on its own after 10t of
+			// silence, so refresh well under that while the dome lives.
+			if ((level.getGameTime() - dome.openTick) % 6 == 0) {
+				VfxFx.channel(caster, RegulusVfxIds.CHANNEL_GREED_STASIS,
+						VfxChannelS2CPayload.UPDATE, dome.center);
+			}
 			if (level.getGameTime() >= dome.openTick + DOME_TICKS) {
 				toRelease.add(e.getKey());
 			}
@@ -244,6 +255,11 @@ public final class GreedStasisController {
 	 */
 	private static void releaseDome(MinecraftServer server, StasisDome dome) {
 		dome.closing = true;
+		ServerPlayer caster = server.getPlayerList().getPlayer(dome.casterId);
+		if (caster != null) {
+			VfxFx.channel(caster, RegulusVfxIds.CHANNEL_GREED_STASIS,
+					VfxChannelS2CPayload.STOP, dome.center);
+		}
 		ServerLevel level = server.getLevel(dome.dimension);
 		for (Map.Entry<UUID, Held> en : dome.held.entrySet()) {
 			Entity raw = findEntity(server, en.getKey());

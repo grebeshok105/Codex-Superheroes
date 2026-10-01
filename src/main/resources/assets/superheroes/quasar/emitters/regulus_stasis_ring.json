@@ -1,0 +1,11 @@
+{
+  "max_lifetime": 12,
+  "loop": false,
+  "rate": 1,
+  "count": 16,
+  "emitter_settings": {
+    "shape": "superheroes:regulus_stasis_ring",
+    "particle_settings": "superheroes:regulus_stasis_ring"
+  },
+  "particle_data": "superheroes:regulus_stasis_ring"
+}
