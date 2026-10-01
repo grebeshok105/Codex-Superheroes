@@ -20,6 +20,11 @@ public final class RegulusVfxIds {
 	/** Lion-heart cast: starts the authored 1.60s activation clip (trigger frame 0.70s). */
 	public static final ResourceLocation ANIM_LION_HEART_ACTIVATION = ModId.of("regulus/anim/lion_heart_activation");
 
+	/** Debris-kick activation: starts the authored kick clip on every client. */
+	public static final ResourceLocation ANIM_DEBRIS_KICK = ModId.of("regulus/anim/debris_kick");
+	/** Fire tick of the debris fan (~0.70 s in): the debris burst + impact bed. */
+	public static final ResourceLocation DEBRIS_IMPACT = ModId.of("regulus/debris_impact");
+
 	/** Ritual begin: starts the authored {@code evangelium_activation} clip (3.40 s). */
 	public static final ResourceLocation ANIM_EVANGELIUM_ACTIVATION = ModId.of("regulus/anim/evangelium_activation");
 	/** Madness collapse: starts the authored {@code evangelium_deactivation} clip (2.00 s). */

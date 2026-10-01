@@ -388,33 +388,6 @@ public class RegulusGameTests implements FabricGameTest {
 		helper.runAfterDelay(1, () -> awaitGreedPull(helper, player, victim, anchor, tries - 1, body));
 	}
 
-	/**
-	 * Lion's Roar is a 45° half-angle cone at 18 blocks for 14 damage + knockback and
-	 * costs 150 energy — targets behind the caster are untouched.
-	 */
-	@GameTest(template = EMPTY_STRUCTURE)
-	public void lionRoarHitsConeNotBehind(GameTestHelper helper) {
-		ServerPlayer player = TestPlayers.join(helper);
-		TestHeroes.transform(player, RegulusHero.ID);
-		Zombie ahead = spawnAhead(helper, player, 3.0);
-		ahead.setNoAi(true);
-		Vec3 back = player.position().subtract(player.getViewVector(1f).normalize().scale(3.0));
-		Zombie behind = spawnEntity(helper, EntityType.ZOMBIE, back.x, player.getY(), back.z);
-		behind.setNoAi(true);
-
-		TestPlayers.awaitVisible(helper, ahead, () -> TestPlayers.awaitVisible(helper, behind, () -> {
-			AbilityRouter.activate(player, LION_ROAR);
-			helper.assertTrue(ahead.getHealth() < ahead.getMaxHealth(),
-					"the roar hits in front of the caster");
-			helper.assertTrue(Math.abs(behind.getHealth() - behind.getMaxHealth()) < 0.001f,
-					"the roar misses behind the caster");
-			helper.assertTrue(HeroDataStore.get(player).energy() <= 850.5f,
-					"the roar charges 150 energy");
-			TestPlayers.leave(player);
-			helper.succeed();
-		}));
-	}
-
 	private static void assertInfinite(GameTestHelper helper, ServerPlayer player,
 			net.minecraft.core.Holder<net.minecraft.world.effect.MobEffect> effect, int amplifier,
 			String name) {

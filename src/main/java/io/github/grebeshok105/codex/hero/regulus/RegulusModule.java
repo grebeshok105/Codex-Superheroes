@@ -18,6 +18,7 @@ import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusGreedController;
 import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusHearts;
 import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusMadnessController;
 import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusTotemController;
+import io.github.grebeshok105.codex.hero.regulus.sound.RegulusSounds;
 
 import java.util.List;
 
@@ -37,6 +38,7 @@ public final class RegulusModule implements HeroModule {
 	@Override
 	public void register(HeroModuleContext ctx) {
 		RegulusAttachments.init();
+		RegulusSounds.init();
 		RegulusItems.register(ctx.content());
 		ctx.payloads().s2c(HeartsSyncS2CPayload.TYPE, HeartsSyncS2CPayload.STREAM_CODEC);
 		// Regulus→TIME stone reward row lives in InfinityStones' static table (hero.thanos

@@ -13,6 +13,16 @@ public interface Ability {
 	float costPerTick();
 
 	/**
+	 * The activation cost the HUD advertises — normally identical to {@link #costOnActivate()}.
+	 * Authored-cast abilities charge through their cast machine on a later tick and report
+	 * {@code costOnActivate() == 0} for the press itself; they override this so the ability
+	 * panel still shows the real price.
+	 */
+	default float displayCostOnActivate() {
+		return costOnActivate();
+	}
+
+	/**
 	 * Runs activation side effects on the server.
 	 * Return {@code false} when the activation did not actually start; {@link AbilityRouter}
 	 * will not spend the activation cost for that attempt.

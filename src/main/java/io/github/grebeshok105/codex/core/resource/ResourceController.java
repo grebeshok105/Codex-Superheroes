@@ -58,6 +58,8 @@ public final class ResourceController {
 	 * Spends {@code amount} following the ability's binding.
 	 *
 	 * @return what was taken from each pool, or {@code null} when the player cannot pay
+	 *         or the energy pool is locked (mirrors the router's {@link EnergyLocks} gate —
+	 *         authored-cast abilities charge on a later tick, past the router's check)
 	 */
 	@Nullable
 	public static ResourcePayment charge(ServerPlayer player, ResourceLocation abilityId, float amount) {
@@ -73,6 +75,9 @@ public final class ResourceController {
 			return null;
 		}
 		ResourceKind kind = data.binding(abilityId, hero.getDefaultBinding(abilityId));
+		if (kind == ResourceKind.ENERGY && EnergyLocks.isLocked(player)) {
+			return null;
+		}
 		ResourcePayment payment = ResourcePayment.pay(data.energy(), data.mana(), kind, amount);
 		if (!payment.success()) {
 			return null;

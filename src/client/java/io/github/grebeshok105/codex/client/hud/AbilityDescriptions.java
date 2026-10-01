@@ -66,7 +66,7 @@ public final class AbilityDescriptions {
 			}
 			return formatFloat(perSec) + "/s";
 		}
-		float cost = ability.costOnActivate();
+		float cost = ability.displayCostOnActivate();
 		if (cost <= 0f) {
 			return "";
 		}
