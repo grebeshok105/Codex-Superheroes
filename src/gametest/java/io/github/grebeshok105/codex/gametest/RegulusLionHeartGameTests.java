@@ -16,6 +16,8 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.entity.projectile.Arrow;
@@ -61,16 +63,25 @@ public final class RegulusLionHeartGameTests implements FabricGameTest {
 
 		AbilityRouter.activate(player, LION_HEART);
 		helper.assertTrue(RegulusCastState.isCasting(player, LION_HEART), "the cast session opened");
+		player.addEffect(new MobEffectInstance(MobEffects.POISON, 200));
+		player.addEffect(new MobEffectInstance(MobEffects.GLOWING, 200));
+		player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 200));
 
 		helper.runAfterDelay(16, () -> {
 			helper.assertTrue(LionHeartController.isBlocking(player),
 					"the shield is up after the authored fire tick (14)");
+			helper.assertFalse(player.hasEffect(MobEffects.POISON),
+					"the shield-up cleanse strips harmful effects");
+			helper.assertTrue(player.hasEffect(MobEffects.GLOWING),
+					"neutral effects are not 'negative' — they survive the cleanse");
+			helper.assertTrue(player.hasEffect(MobEffects.REGENERATION),
+					"beneficial effects survive the cleanse");
 			float hp = player.getHealth();
 			helper.assertFalse(player.hurt(helper.getLevel().damageSources().generic(), 4f),
 					"external damage is voided while blocking");
 			helper.assertTrue(Math.abs(player.getHealth() - hp) < 0.001f,
 					"health untouched by the voided hit");
-			helper.assertFalse(player.hasEffect(net.minecraft.world.effect.MobEffects.DAMAGE_RESISTANCE),
+			helper.assertFalse(player.hasEffect(MobEffects.DAMAGE_RESISTANCE),
 					"the rework grants no resistance effect — the gate replaces it");
 			TestPlayers.leave(player);
 			helper.succeed();

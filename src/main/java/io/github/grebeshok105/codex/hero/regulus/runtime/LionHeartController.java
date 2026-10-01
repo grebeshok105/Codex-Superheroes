@@ -22,6 +22,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.projectile.Projectile;
@@ -266,7 +267,7 @@ public final class LionHeartController {
 	private static void cleanseNegativeEffects(ServerPlayer player) {
 		List<Holder<MobEffect>> harmful = new ArrayList<>();
 		for (MobEffectInstance instance : player.getActiveEffects()) {
-			if (!instance.getEffect().value().isBeneficial()) {
+			if (instance.getEffect().value().getCategory() == MobEffectCategory.HARMFUL) {
 				harmful.add(instance.getEffect());
 			}
 		}
