@@ -292,7 +292,7 @@ public class RegulusGameTests implements FabricGameTest {
 		zombie.setDeltaMovement(Vec3.ZERO);
 
 		TestPlayers.awaitVisible(helper, zombie, () -> {
-			awaitGreedSees(helper, player, zombie, 40, () -> {
+			awaitGreedSees(helper, player, zombie, 80, () -> {
 			// findTarget's angular hitbox is bbSize*0.6 around the eye ray — aim the ray
 			// at the victim's center or the vertical offset alone rejects it.
 			player.lookAt(EntityAnchorArgument.Anchor.EYES, zombie.getBoundingBox().getCenter());

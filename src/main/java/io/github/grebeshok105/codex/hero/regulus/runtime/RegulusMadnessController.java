@@ -475,6 +475,8 @@ public final class RegulusMadnessController {
 		level.sendParticles(ParticleTypes.FLASH, attacker.getX(), attacker.getY() + 1.0, attacker.getZ(), 3, 0, 0, 0, 0);
 		level.sendParticles(ParticleTypes.END_ROD, attacker.getX(), attacker.getY() + 1.0, attacker.getZ(),
 				40, 0.8, 1.0, 0.8, 0.1);
+		Vec3 at = attacker.position();
+		VfxFx.event(player, RegulusVfxIds.COUNTER_LIFT, at, at, 1f);
 
 		COUNTERS.put(player.getUUID(), player.getUUID(), new CounterState(player.getUUID(), attacker.getUUID(), level.dimension()));
 	}

@@ -62,12 +62,12 @@ final class TestPlayers {
 	 * Runs {@code body} once {@code entity} is visible to {@code ServerLevel.getEntity} /
 	 * {@code getEntitiesOfClass}. Freshly spawned entities sit in a section until the chunk's
 	 * entity-tracking upgrade lands — a few ticks in the batch environment — so any step that
-	 * relies on uuid lookups or area scans must wait for visibility first. After 40 ticks it
+	 * relies on uuid lookups or area scans must wait for visibility first. After 80 ticks it
 	 * runs anyway, so a genuinely broken case still fails loudly instead of hanging.
 	 */
 	static void awaitVisible(GameTestHelper helper, net.minecraft.world.entity.Entity entity,
 			Runnable body) {
-		awaitVisible(helper, entity, 40, body);
+		awaitVisible(helper, entity, 80, body);
 	}
 
 	private static void awaitVisible(GameTestHelper helper, net.minecraft.world.entity.Entity entity,

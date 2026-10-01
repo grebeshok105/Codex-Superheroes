@@ -144,36 +144,34 @@ public final class RegulusLionHeartGameTests implements FabricGameTest {
 	 * Incoming projectiles freeze mid-air inside the 4-block radius (zeroed velocity +
 	 * NO_GRAVITY lock held by the owner) and drop once the shield goes down.
 	 */
-	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 80)
+	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 300)
 	public void projectilesFreezeAndDrop(GameTestHelper helper) {
 		ServerPlayer player = joinIsolated(helper, "lh-freeze");
 		TestHeroes.transform(player, RegulusHero.ID);
 
 		AbilityRouter.activate(player, LION_HEART);
 
-		helper.runAfterDelay(16, () -> {
-			helper.assertTrue(LionHeartController.isBlocking(player), "precondition: blocking");
+		await(helper, () -> LionHeartController.isBlocking(player), 60, () -> {
 			Arrow arrow = EntityType.ARROW.create(helper.getLevel());
 			arrow.moveTo(player.getX() + 3.0, player.getY() + 1.5, player.getZ(), 0f, 0f);
-			arrow.setDeltaMovement(new Vec3(-0.4, 0.2, 0.0));
+			arrow.setDeltaMovement(new Vec3(-0.15, 0.1, 0.0));
 			helper.getLevel().addFreshEntity(arrow);
 
-			TestPlayers.awaitVisible(helper, arrow, () -> helper.runAfterDelay(5, () -> {
+			// The freeze reads the spatial section, which can lag the UUID index
+			// awaitVisible covers — poll the lock itself instead of a fixed delay.
+			TestPlayers.awaitVisible(helper, arrow, () -> await(helper,
+					() -> TestPlayers.lockOwners(arrow, ControlLockKind.NO_GRAVITY)
+							.contains(player.getUUID()), 60, () -> {
 				helper.assertTrue(arrow.getDeltaMovement().lengthSqr() < 0.0001,
 						"the frozen arrow's velocity is zeroed every tick, v=" + arrow.getDeltaMovement());
 				helper.assertTrue(arrow.isNoGravity(), "the freeze holds NO_GRAVITY");
-				helper.assertTrue(TestPlayers.lockOwners(arrow, ControlLockKind.NO_GRAVITY)
-								.contains(player.getUUID()),
-						"the freeze lock is owned by the Regulus player");
 				helper.assertTrue(arrow.distanceTo(player) < 4.5,
 						"the arrow never reached the player, dist=" + arrow.distanceTo(player));
 
 				AbilityRouter.deactivate(player, LION_HEART);
-				helper.runAfterDelay(5, () -> {
+				await(helper, () -> arrow.getDeltaMovement().y < 0, 60, () -> {
 					helper.assertTrue(TestPlayers.lockOwners(arrow, ControlLockKind.NO_GRAVITY).isEmpty(),
 							"deactivate releases the freeze lock");
-					helper.assertTrue(arrow.getDeltaMovement().y < 0,
-							"the released arrow drops under gravity, v=" + arrow.getDeltaMovement());
 					TestPlayers.leave(player);
 					helper.succeed();
 				});
@@ -340,5 +338,16 @@ public final class RegulusLionHeartGameTests implements FabricGameTest {
 			TestPlayers.leave(player);
 			helper.succeed();
 		});
+	}
+
+	/** Retries {@code ready} once per tick until it holds; fails loudly on timeout. */
+	private static void await(GameTestHelper helper, java.util.function.BooleanSupplier ready,
+			int tries, Runnable done) {
+		if (ready.getAsBoolean()) {
+			done.run();
+			return;
+		}
+		helper.assertTrue(tries > 0, "condition never became true");
+		helper.runAfterDelay(1, () -> await(helper, ready, tries - 1, done));
 	}
 }

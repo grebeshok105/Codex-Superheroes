@@ -168,12 +168,18 @@ public final class RegulusVfxGameTests implements FabricGameTest {
 				regulus.player().getX() + 4.0, regulus.player().getY(), regulus.player().getZ());
 
 		List<VfxChannelS2CPayload> magnet = new ArrayList<>();
-		awaitGreedSees(helper, regulus.player(), zombie, 40, () -> {
+		awaitGreedSees(helper, regulus.player(), zombie, 80, () -> {
 			regulus.player().lookAt(EntityAnchorArgument.Anchor.EYES,
 					zombie.getBoundingBox().getCenter());
 			drain(regulus.channel());
 			AbilityRouter.activate(regulus.player(), RegulusAbilities.MANIA_OF_GREED);
-			helper.runAfterDelay(8, () -> {
+			// The magnet only engages on the authored fire tick (19) — a fixed
+			// delay shorter than that cancels the windup before any START lands.
+			await(helper, () -> {
+				collectChannel(drain(regulus.channel()), RegulusVfxIds.CHANNEL_GREED_MAGNET,
+						regulus.player().getId(), magnet);
+				return !magnet.isEmpty();
+			}, 60, () -> helper.runAfterDelay(8, () -> {
 				AbilityRouter.deactivate(regulus.player(), RegulusAbilities.MANIA_OF_GREED);
 				await(helper, () -> {
 					collectChannel(drain(regulus.channel()), RegulusVfxIds.CHANNEL_GREED_MAGNET,
@@ -195,7 +201,7 @@ public final class RegulusVfxGameTests implements FabricGameTest {
 					TestPlayers.leave(regulus.player());
 					helper.succeed();
 				});
-			});
+			}));
 		});
 	}
 
