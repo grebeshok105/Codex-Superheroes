@@ -143,11 +143,13 @@ public final class RegulusGreedController {
 		MagnetState pending = MAGNETS.get(player.getUUID());
 		if (pending != null) {
 			Entity candidate = ((ServerLevel) player.level()).getEntity(pending.victimId);
-			// A victim already held by another caster refuses the freeze before any
-			// side effect lands: no steroids, no locks, no freeze state — only the
-			// channel itself is torn down (a leaked magnet entry roots the caster
-			// forever via tickPlayer's hasMagnet check).
-			if (candidate instanceof LivingEntity && FREEZES.containsKey(candidate.getUUID())) {
+			// A victim already held by another caster (or by a stasis dome) refuses the
+			// freeze before any side effect lands: no steroids, no locks, no freeze state
+			// — only the channel itself is torn down (a leaked magnet entry roots the
+			// caster forever via tickPlayer's hasMagnet check).
+			if (candidate instanceof LivingEntity
+					&& (FREEZES.containsKey(candidate.getUUID())
+							|| GreedStasisController.inStasis(candidate))) {
 				player.displayClientMessage(Component.translatable("superheroes.regulus.already_greed"), true);
 				MAGNETS.remove(player.getUUID());
 				player.removeEffect(MobEffects.MOVEMENT_SLOWDOWN);

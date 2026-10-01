@@ -211,6 +211,7 @@ public final class GreedStasisController {
 		AABB area = new AABB(dome.center, dome.center).inflate(DOME_RADIUS);
 		List<LivingEntity> targets = level.getEntitiesOfClass(LivingEntity.class, area,
 				e -> e.isAlive() && !dome.held.containsKey(e.getUUID())
+						&& !RegulusGreedController.isFrozen(e)
 						&& TargetFilters.hostileTo(caster).test(e)
 						&& e.position().distanceToSqr(dome.center) <= DOME_RADIUS * DOME_RADIUS);
 		for (LivingEntity victim : targets) {

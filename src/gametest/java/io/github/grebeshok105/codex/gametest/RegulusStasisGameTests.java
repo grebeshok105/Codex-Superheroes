@@ -8,6 +8,7 @@ import io.github.grebeshok105.codex.hero.regulus.RegulusHero;
 import io.github.grebeshok105.codex.hero.regulus.ability.GreedsEmbraceAbility;
 import io.github.grebeshok105.codex.hero.regulus.runtime.GreedStasisController;
 import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusCastState;
+import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusGreedController;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -272,6 +273,48 @@ public class RegulusStasisGameTests {
 				helper.assertTrue(zombieFullHp(a), "untouched victim is unhurt by the swap");
 				helper.succeed();
 			});
+		}));
+	}
+
+	/** A greed-frozen victim inside the dome radius is never captured — the two systems
+	 *  would fight over the same control locks (same lock owner). */
+	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 120)
+	public void stasisSkipsFrozenVictim(GameTestHelper helper) {
+		ServerPlayer caster = TestPlayers.join(helper);
+		TestHeroes.transform(caster, RegulusHero.ID);
+		TestPlayers.clearSpawnInvulnerability(caster);
+		Vec3 spot = isolate(helper, caster, 8, 10);
+		Zombie zombie = spawnAt(helper, EntityType.HUSK, spot.x + 2.0, spot.y, spot.z);
+		TestPlayers.awaitVisible(helper, zombie, () -> helper.runAfterDelay(2, () -> {
+			RegulusGreedController.startMagnet(caster, zombie);
+			RegulusGreedController.releaseAndFreeze(caster);
+			helper.assertTrue(RegulusGreedController.isFrozen(zombie), "precondition: mania freeze holds the victim");
+			GreedStasisController.tryOpen(caster, spot);
+			helper.runAfterDelay(3, () -> {
+				helper.assertFalse(GreedStasisController.inStasis(zombie), "frozen victim is not dome-captured");
+				helper.assertTrue(RegulusGreedController.isFrozen(zombie), "the freeze still owns its victim");
+				helper.succeed();
+			});
+		}));
+	}
+
+	/** A dome-held victim refuses the mania freeze — releasing either side would
+	 *  otherwise strip a control lock the other system still owns. */
+	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 120)
+	public void freezeRefusedOnStasisVictim(GameTestHelper helper) {
+		ServerPlayer caster = TestPlayers.join(helper);
+		TestHeroes.transform(caster, RegulusHero.ID);
+		TestPlayers.clearSpawnInvulnerability(caster);
+		Vec3 spot = isolate(helper, caster, 9, 10);
+		Zombie zombie = spawnAt(helper, EntityType.HUSK, spot.x + 2.0, spot.y, spot.z);
+		TestPlayers.awaitVisible(helper, zombie, () -> helper.runAfterDelay(2, () -> {
+			GreedStasisController.tryOpen(caster, spot);
+			helper.assertTrue(GreedStasisController.inStasis(zombie), "precondition: dome holds the victim");
+			RegulusGreedController.startMagnet(caster, zombie);
+			RegulusGreedController.releaseAndFreeze(caster);
+			helper.assertFalse(RegulusGreedController.isFrozen(zombie), "stasis-held victim refuses the freeze");
+			helper.assertTrue(GreedStasisController.inStasis(zombie), "the dome still owns its victim");
+			helper.succeed();
 		}));
 	}
 
