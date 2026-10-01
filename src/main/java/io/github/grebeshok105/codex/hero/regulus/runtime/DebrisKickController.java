@@ -25,9 +25,9 @@ import java.util.List;
 
 /**
  * The debris kick's fire tick — a pellet-rule shotgun fan instead of the old flat
- * cone. Nine rays inside a {@value #CONE_HALF_ANGLE_DEG}-degree cone at
- * {@value #RANGE} blocks: one through the crosshair, eight evenly spaced on the
- * rim. Each ray independently re-runs a COLLIDER block raycast through the walls
+ * cone. Nine rays inside a 35-degree cone at {@value #RANGE} blocks: one through
+ * the crosshair, eight evenly spaced on the rim at ±{@value #CONE_HALF_ANGLE_DEG}°.
+ * Each ray independently re-runs a COLLIDER block raycast through the walls
  * it just broke (at most {@value #MAX_BREAKS_PER_RAY} per ray, dead stop on the
  * first block {@link WorldDestructionPolicy} refuses), then hits every hostile
  * whose AABB the surviving segment crosses — no dedupe, so a wide target standing
@@ -40,7 +40,7 @@ public final class DebrisKickController {
 	public static final float PELLET_DAMAGE = 7.0f;
 
 	private static final int RIM_RAYS = 8;
-	private static final double CONE_HALF_ANGLE_DEG = 35.0;
+	private static final double CONE_HALF_ANGLE_DEG = 17.5;
 	private static final double CONE_TAN = Math.tan(Math.toRadians(CONE_HALF_ANGLE_DEG));
 	private static final int MAX_BREAKS_PER_RAY = 3;
 	private static final double KNOCKBACK = 1.5;

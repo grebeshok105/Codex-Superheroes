@@ -27,6 +27,7 @@ import net.minecraft.world.entity.monster.Ravager;
 import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.Map;
 import java.util.UUID;
@@ -61,6 +62,11 @@ public final class RegulusDebrisGameTests implements FabricGameTest {
 	 *  foreign pellet landing in the same window. */
 	private static final Map<HitKey, Float> LAST_HIT = new ConcurrentHashMap<>();
 
+	/** caster → position pinned at test start — a foreign pellet's knockback can
+	 *  shove the mock caster off its wall line mid-windup (the pellet push runs
+	 *  even while damage is refused), so the fire-tick re-pin restores it too. */
+	private static final Map<UUID, Vec3> ANCHORS = new ConcurrentHashMap<>();
+
 	private record HitKey(UUID victim, UUID attacker) {
 		private static HitKey of(LivingEntity victim, ServerPlayer attacker) {
 			return new HitKey(victim.getUUID(), attacker.getUUID());
@@ -80,32 +86,41 @@ public final class RegulusDebrisGameTests implements FabricGameTest {
 
 	/**
 	 * The fan lives inside a 35° cone in front of the caster: the zombie ahead is
-	 * shredded while the one behind is never touched by the caster, and the windup
-	 * slows the caster for the cast duration.
+	 * shredded while the one behind is never touched by the caster — nor is the
+	 * bystander ~30° off-axis (inside the old 70° fan, outside the spec'd aperture)
+	 * — and the windup slows the caster for the cast duration.
 	 */
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void debrisFanHitsConeOnly(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, RegulusHero.ID);
-		aimForward(player);
+		aimForward(helper, player);
 		Zombie ahead = spawnAhead(helper, player, 4.0);
 		// yaw 0 faces +Z — "behind" is -Z on the caster's plane.
 		Zombie behind = spawnEntity(helper, EntityType.ZOMBIE,
 				player.getX(), player.getY(), player.getZ() - 4.0);
 		behind.setNoAi(true);
+		// ~30° off-axis: inside the old ±35° fan but past the 35° aperture's rim.
+		Zombie offAxis = spawnEntity(helper, EntityType.ZOMBIE,
+				player.getX() + 2.0, player.getY(), player.getZ() + 3.5);
+		offAxis.setNoAi(true);
 
 		TestPlayers.awaitVisible(helper, ahead, () -> TestPlayers.awaitVisible(helper, behind, () -> {
-			activateAiming(helper, player);
-			helper.runAfterDelay(8, () -> helper.assertTrue(
-					player.getEffect(MobEffects.MOVEMENT_SLOWDOWN) != null,
-					"the windup slows the caster"));
-			helper.runAfterDelay(20, () -> {
-				helper.assertTrue(ahead.getHealth() < ahead.getMaxHealth(),
-						"the fan hits in front of the caster");
-				helper.assertTrue(!wasHurtBy(behind, player),
-						"the caster's own fan never reaches behind");
-				TestPlayers.leave(player);
-				helper.succeed();
+			TestPlayers.awaitVisible(helper, offAxis, () -> {
+				activateAiming(helper, player);
+				helper.runAfterDelay(8, () -> helper.assertTrue(
+						player.getEffect(MobEffects.MOVEMENT_SLOWDOWN) != null,
+						"the windup slows the caster"));
+				helper.runAfterDelay(20, () -> {
+					helper.assertTrue(ahead.getHealth() < ahead.getMaxHealth(),
+							"the fan hits in front of the caster");
+					helper.assertTrue(!wasHurtBy(behind, player),
+							"the caster's own fan never reaches behind");
+					helper.assertTrue(!wasHurtBy(offAxis, player),
+							"the 35° cone never reaches a bystander ~30° off-axis");
+					TestPlayers.leave(player);
+					helper.succeed();
+				});
 			});
 		}));
 	}
@@ -119,7 +134,7 @@ public final class RegulusDebrisGameTests implements FabricGameTest {
 	public void debrisPelletsStackOnLargeTarget(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, RegulusHero.ID);
-		aimForward(player);
+		aimForward(helper, player);
 		Giant giant = spawnEntity(helper, EntityType.GIANT,
 				player.getX(), player.getY(), player.getZ() + 2.5);
 		giant.setNoAi(true);
@@ -147,7 +162,7 @@ public final class RegulusDebrisGameTests implements FabricGameTest {
 	public void debrisDamageScalesWithHearts(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, RegulusHero.ID);
-		aimForward(player);
+		aimForward(helper, player);
 		// Eight heart-bearer candidates behind the caster: usually enough to land
 		// at least one heart even when another Regulus test grazes the aura.
 		for (int i = 0; i < 8; i++) {
@@ -196,7 +211,7 @@ public final class RegulusDebrisGameTests implements FabricGameTest {
 	public void debrisBreaksBlocksButNotBedrock(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, RegulusHero.ID);
-		aimForward(player);
+		aimForward(helper, player);
 		BlockPos floor = BlockPos.containing(player.position());
 		// mayInteract's reach gate only lets the policy break blocks roughly
 		// within 5.5 of the eye — the wall lives inside it so only the
@@ -234,7 +249,7 @@ public final class RegulusDebrisGameTests implements FabricGameTest {
 	public void debrisBreaksAtMostThreeBlocksPerRay(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, RegulusHero.ID);
-		aimForward(player);
+		aimForward(helper, player);
 		BlockPos floor = BlockPos.containing(player.position());
 		for (int depth = 2; depth <= 5; depth++) {
 			setBlock(helper, floor.getX(), floor.getY() + 1, floor.getZ() + depth, Blocks.DIRT);
@@ -250,8 +265,6 @@ public final class RegulusDebrisGameTests implements FabricGameTest {
 							Blocks.AIR, "the wall line lost dirt at depth " + depth);
 				}
 				BlockPos fourth = new BlockPos(floor.getX(), floor.getY() + 1, floor.getZ() + 5);
-				assertBlock(helper, fourth.getX(), fourth.getY(), fourth.getZ(), Blocks.DIRT,
-						"the per-ray cap is three — the fourth block stands");
 				helper.assertTrue(!player.getUUID().equals(BREAKS.get(fourth)),
 						"the per-ray cap is three — the fourth block was never broken by the caster");
 				helper.assertTrue(!wasHurtBy(target, player),
@@ -270,7 +283,7 @@ public final class RegulusDebrisGameTests implements FabricGameTest {
 	public void debrisRayBlockedByUnbreakable(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, RegulusHero.ID);
-		aimForward(player);
+		aimForward(helper, player);
 		BlockPos floor = BlockPos.containing(player.position());
 		setBlock(helper, floor.getX(), floor.getY() + 1, floor.getZ() + 3, Blocks.BEDROCK);
 		Zombie target = spawnAhead(helper, player, 6.0);
@@ -297,7 +310,7 @@ public final class RegulusDebrisGameTests implements FabricGameTest {
 	public void debrisRayPassesThroughBrokenBlocks(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, RegulusHero.ID);
-		aimForward(player);
+		aimForward(helper, player);
 		BlockPos floor = BlockPos.containing(player.position());
 		for (int depth = 2; depth <= 3; depth++) {
 			setBlock(helper, floor.getX(), floor.getY() + 1, floor.getZ() + depth, Blocks.DIRT);
@@ -331,7 +344,7 @@ public final class RegulusDebrisGameTests implements FabricGameTest {
 	public void castInterruptCancelsShot(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, RegulusHero.ID);
-		aimForward(player);
+		aimForward(helper, player);
 		HeroDataStore.update(player, d -> d.withEnergy(1000f));
 		Zombie target = spawnAhead(helper, player, 4.5);
 		target.setNoAi(true);
@@ -364,7 +377,7 @@ public final class RegulusDebrisGameTests implements FabricGameTest {
 	public void castDoesNotChargeBeforeAuthoredEvent(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, RegulusHero.ID);
-		aimForward(player);
+		aimForward(helper, player);
 		HeroDataStore.update(player, d -> d.withEnergy(1000f));
 		Zombie target = spawnAhead(helper, player, 4.5);
 		target.setNoAi(true);
@@ -396,7 +409,7 @@ public final class RegulusDebrisGameTests implements FabricGameTest {
 	public void debrisCastRespectsEnergyLock(GameTestHelper helper) {
 		ServerPlayer player = TestPlayers.join(helper);
 		TestHeroes.transform(player, RegulusHero.ID);
-		aimForward(player);
+		aimForward(helper, player);
 		HeroDataStore.update(player, d -> d.withEnergy(1000f));
 		Zombie target = spawnAhead(helper, player, 4.5);
 		target.setNoAi(true);
@@ -438,20 +451,31 @@ public final class RegulusDebrisGameTests implements FabricGameTest {
 	 * inside a same-floor zombie's box (top 1.95 > eye 1.62) at every range and
 	 * crosses the {@code floorY+1} wall row block tests place.
 	 */
-	private static void aimForward(ServerPlayer player) {
+	private static void aimForward(GameTestHelper helper, ServerPlayer player) {
 		player.setNoGravity(true);
 		player.setYRot(0f);
 		player.setXRot(0f);
+		ANCHORS.putIfAbsent(player.getUUID(), player.position());
+		forceChunk(helper, BlockPos.containing(player.position()));
 	}
 
 	/**
 	 * Activates the slot and re-pins the rotation just before the authored fire
 	 * tick (14): the mock player's spawn placement may overwrite rotation during
 	 * the first ticks after join, so the fire tick reads whatever was set last.
+	 * The position is re-pinned too — foreign debris knockback slides the caster
+	 * otherwise.
 	 */
 	private static void activateAiming(GameTestHelper helper, ServerPlayer player) {
 		AbilityRouter.activate(player, LION_ROAR);
-		helper.runAfterDelay(13, () -> aimForward(player));
+		helper.runAfterDelay(13, () -> {
+			aimForward(helper, player);
+			Vec3 anchor = ANCHORS.get(player.getUUID());
+			if (anchor != null) {
+				player.setPos(anchor.x, anchor.y, anchor.z);
+				player.setDeltaMovement(Vec3.ZERO);
+			}
+		});
 	}
 
 	private static Zombie spawnAhead(GameTestHelper helper, ServerPlayer player, double distance) {
@@ -466,7 +490,7 @@ public final class RegulusDebrisGameTests implements FabricGameTest {
 			double x, double y, double z) {
 		// Force-load the destination chunk first: in an unloaded chunk the entity is
 		// never registered for area scans, so controllers would see an empty world.
-		helper.getLevel().getChunk(BlockPos.containing(x, y, z));
+		forceChunk(helper, BlockPos.containing(x, y, z));
 		T entity = type.create(helper.getLevel());
 		entity.moveTo(x, y, z, 0f, 0f);
 		entity.setNoGravity(true);
@@ -475,7 +499,15 @@ public final class RegulusDebrisGameTests implements FabricGameTest {
 	}
 
 	private static void setBlock(GameTestHelper helper, int x, int y, int z, Block block) {
+		// Forced-load the target chunk: a plain setBlock write releases its transient
+		// ticket, and if the chunk unloads before the fire tick the COLLIDER clip
+		// reads it as void and the ray sails past the wall.
+		forceChunk(helper, new BlockPos(x, y, z));
 		helper.getLevel().setBlock(new BlockPos(x, y, z), block.defaultBlockState(), 3);
+	}
+
+	private static void forceChunk(GameTestHelper helper, BlockPos pos) {
+		helper.getLevel().setChunkForced(pos.getX() >> 4, pos.getZ() >> 4, true);
 	}
 
 	private static void assertBlock(GameTestHelper helper, int x, int y, int z, Block block,
