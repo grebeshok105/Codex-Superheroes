@@ -4,7 +4,9 @@ import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
+import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusFx;
 import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusGreedController;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -55,6 +57,14 @@ public final class ManiaOfGreedAbility implements Ability {
 				SoundEvents.BEACON_ACTIVATE, SoundSource.PLAYERS, 1.2f, 0.6f);
 		level.playSound(null, victim.getX(), victim.getY(), victim.getZ(),
 				SoundEvents.SOUL_ESCAPE, SoundSource.PLAYERS, 1.2f, 0.7f);
+		// Greed mark: ominous sigil + soul wisps rising off the victim + crimson ring.
+		level.sendParticles(ParticleTypes.RAID_OMEN,
+				victim.getX(), victim.getY() + victim.getBbHeight() + 0.4, victim.getZ(),
+				1, 0.0, 0.0, 0.0, 0.0);
+		level.sendParticles(ParticleTypes.SCULK_SOUL,
+				victim.getX(), victim.getY() + 0.5, victim.getZ(),
+				10, 0.4, 0.7, 0.4, 0.02);
+		RegulusFx.greedPulse(victim);
 		return true;
 	}
 

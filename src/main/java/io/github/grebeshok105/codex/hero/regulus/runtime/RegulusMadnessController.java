@@ -25,6 +25,7 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.core.particles.ShriekParticleOption;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -377,6 +378,12 @@ public final class RegulusMadnessController {
 		level.sendParticles(ParticleTypes.FLASH, attacker.getX(), attacker.getY() + 1.0, attacker.getZ(), 3, 0, 0, 0, 0);
 		level.sendParticles(ParticleTypes.END_ROD, attacker.getX(), attacker.getY() + 1.0, attacker.getZ(),
 				40, 0.8, 1.0, 0.8, 0.1);
+		level.sendParticles(new ShriekParticleOption(0), attacker.getX(), attacker.getY() + 1.0, attacker.getZ(), 1, 0, 0, 0, 0);
+		level.sendParticles(new net.minecraft.core.particles.DustParticleOptions(
+				new org.joml.Vector3f(0.9f, 0.15f, 0.16f), 1.0f),
+				attacker.getX(), attacker.getY() + 1.0, attacker.getZ(),
+				24, 0.7, 0.9, 0.7, 0.05);
+		RegulusFx.greedPulse(attacker);
 
 		COUNTERS.put(player.getUUID(), player.getUUID(), new CounterState(player.getUUID(), attacker.getUUID(), level.dimension()));
 		sync(player);

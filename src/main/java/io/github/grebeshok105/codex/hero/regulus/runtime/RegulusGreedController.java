@@ -7,7 +7,9 @@ import io.github.grebeshok105.codex.core.lifecycle.LifecycleRegistrar;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap;
 import io.github.grebeshok105.codex.core.lifecycle.OwnedSessionMap.ClearOn;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
+import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.core.particles.ShriekParticleOption;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -33,11 +35,15 @@ import java.util.Objects;
 import java.util.UUID;
 import io.github.grebeshok105.codex.core.model.HeroData;
 import net.minecraft.server.MinecraftServer;
+import org.joml.Vector3f;
 
 public final class RegulusGreedController {
 	private static final int FREEZE_TICKS = 200;
 	private static final double PULL_STRENGTH = 0.6;
 	private static final double MAX_MAGNET_DISTANCE = 110.0;
+
+	private static final DustParticleOptions GREED_MOTE =
+			new DustParticleOptions(new Vector3f(1.0f, 0.75f, 0.2f), 1.2f);
 
 	private static final ResourceLocation KNOCKBACK_MODIFIER_ID = ResourceLocation.fromNamespaceAndPath("superheroes", "greed_knockback");
 	private static final AttributeModifier KNOCKBACK_MODIFIER =
@@ -123,12 +129,20 @@ public final class RegulusGreedController {
 		victim.hurtMarked = true;
 		ServerLevel sl = (ServerLevel) player.level();
 		if (player.tickCount % 4 == 0) {
+			// Golden greed-tether: a dotted line of solar motes from victim to caster.
+			for (int i = 1; i <= 5; i++) {
+				Vec3 p = victim.position().add(0, victim.getBbHeight() * 0.5, 0)
+						.lerp(player.position().add(0, player.getBbHeight() * 0.5, 0), i / 6.0);
+				sl.sendParticles(GREED_MOTE, p.x, p.y, p.z, 3, 0.14, 0.14, 0.14, 0.0);
+			}
 			Vec3 mid = player.position().add(victim.position()).scale(0.5);
-			sl.sendParticles(ParticleTypes.END_ROD, mid.x, mid.y + 1.0, mid.z, 4, 0.3, 0.3, 0.3, 0.02);
+			sl.sendParticles(ParticleTypes.END_ROD, mid.x, mid.y + 1.0, mid.z, 2, 0.25, 0.25, 0.25, 0.02);
 		}
 		if (player.tickCount % 20 == 0) {
 			sl.playSound(null, player.getX(), player.getY(), player.getZ(),
 					SoundEvents.BEACON_AMBIENT, SoundSource.PLAYERS, 0.6f, 1.2f);
+			sl.sendParticles(ParticleTypes.SCULK_SOUL,
+					victim.getX(), victim.getY() + 0.5, victim.getZ(), 3, 0.3, 0.5, 0.3, 0.02);
 		}
 	}
 
@@ -157,6 +171,10 @@ public final class RegulusGreedController {
 		sl.playSound(null, victim.getX(), victim.getY(), victim.getZ(),
 				SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 0.7f, 1.4f);
 		sl.sendParticles(ParticleTypes.FLASH, victim.getX(), victim.getY() + 1.0, victim.getZ(), 1, 0, 0, 0, 0);
+		sl.sendParticles(new ShriekParticleOption(0), victim.getX(), victim.getY() + 1.0, victim.getZ(), 1, 0, 0, 0, 0);
+		// Crimson detonation on release: greed claim ring on both ends.
+		RegulusFx.greedPulse(victim);
+		RegulusFx.ringBurst(player);
 	}
 
 	private static void applyKnockback(ServerPlayer player) {

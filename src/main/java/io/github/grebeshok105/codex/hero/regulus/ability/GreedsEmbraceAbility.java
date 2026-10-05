@@ -4,7 +4,9 @@ import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.core.ability.AbilityCooldowns;
 import io.github.grebeshok105.codex.hero.regulus.runtime.GreedCageController;
+import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusFx;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.core.particles.ShriekParticleOption;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -91,6 +93,9 @@ public final class GreedsEmbraceAbility implements Ability {
 		level.sendParticles(ParticleTypes.PORTAL, anchor.x, anchor.y + 1.0, anchor.z, 200, 2.5, 2.0, 2.5, 1.2);
 		level.sendParticles(ParticleTypes.FLASH, anchor.x, anchor.y + 1.0, anchor.z, 4, 0, 0, 0, 0);
 		level.sendParticles(ParticleTypes.SONIC_BOOM, anchor.x, anchor.y + 1.0, anchor.z, 1, 0, 0, 0, 0);
+		level.sendParticles(new ShriekParticleOption(0), anchor.x, anchor.y + 1.0, anchor.z, 1, 0, 0, 0, 0);
+		RegulusFx.flashAt(level, anchor);
+		RegulusFx.ringBurstAt(level, anchor);
 
 		level.playSound(null, anchor.x, anchor.y, anchor.z, SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 1.6f, 0.7f);
 		level.playSound(null, anchor.x, anchor.y, anchor.z, SoundEvents.BEACON_ACTIVATE, SoundSource.PLAYERS, 1.4f, 0.6f);
