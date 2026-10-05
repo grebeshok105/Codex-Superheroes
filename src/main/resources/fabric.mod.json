@@ -43,7 +43,11 @@
 		"java": ">=21",
 		"fabric-api": ">=0.116.12",
 		"geckolib": ">=4.5.0",
-		"entity_model_features": ">=3.3"
+		"entity_model_features": ">=3.3",
+		"photon": "*",
+		"ldlib2": "*",
+		"architectury": "*",
+		"forgeconfigapiport": "*"
 	},
 	"recommends": {
 		"veil": ">=4.1.2"

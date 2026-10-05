@@ -35,6 +35,24 @@ repositories {
 		url = 'https://maven.blamejared.com'
 	}
 
+	// Architectury maven — architectury-api dep required by photon
+	maven {
+		name = 'Architectury'
+		url = 'https://maven.architectury.dev/'
+	}
+
+	// Fabric maven — fabric-language-kotlin (hard dep of ldlib2)
+	maven {
+		name = 'FabricMC'
+		url = 'https://maven.fabricmc.net/'
+	}
+
+	// Jitpack — taffy / yoga, UI libraries bundled inside ldlib2
+	maven {
+		name = 'Jitpack'
+		url = 'https://jitpack.io/'
+	}
+
 	exclusiveContent {
 		forRepository {
 			maven {
@@ -235,10 +253,44 @@ dependencies {
 	modImplementation "maven.modrinth:entitytexturefeatures:7.2.4-fabric-1.21"
 	include "maven.modrinth:entitytexturefeatures:7.2.4-fabric-1.21"
 
+	// Photon — particle/beam/trail FX engine driving the VFXLab-authored .fx resources used
+	// by the Regulus VFX rework. photon/ldlib2 are local intermediary-mapped builds from
+	// grebeshok105/Photon (branch 1.21.1-fabric-2.2); `include` bundles all four jars into
+	// META-INF/jars so the shipped jar is self-contained. Hard-required at runtime; render
+	// code stays behind client guards.
+	modImplementation files(
+			"libs/photon-fabric-1.21.1-2.2.7.jar",
+			"libs/ldlib2-fabric-1.21.1-2.7.jar",
+			"libs/kilagraph-fabric-1.21.1-21.1.0.15.jar")
+	// ldlib2's fabric.mod.json hard-requires fabric-language-kotlin at runtime.
+	modRuntimeOnly "net.fabricmc:fabric-language-kotlin:1.12.3+kotlin.2.0.21"
+	// Loom's dev classpath doesn't surface jars nested inside file deps, so the libraries
+	// ldlib2/FCAP ship in their own META-INF/jars must sit on the classpath directly
+	// (same versions as the nested copies — the release jar gets them via the nesting).
+	implementation "dev.vfyjxf:taffy:1.1.4"
+	implementation "org.appliedenergistics.yoga:yoga:1.0.0"
+	implementation "com.electronwill.night-config:core:3.8.0"
+	implementation "com.electronwill.night-config:toml:3.8.0"
+	modImplementation "dev.architectury:architectury-fabric:13.0.8"
+	include "dev.architectury:architectury-fabric:13.0.8"
+	// Forge Config API Port (ModConfigSpec) — same coordinates the photon build uses.
+	modImplementation "maven.modrinth:forge-config-api-port:v21.1.6-1.21.1-Fabric"
+	include "maven.modrinth:forge-config-api-port:v21.1.6-1.21.1-Fabric"
+
 	testImplementation platform("org.junit:junit-bom:5.10.2")
 	testImplementation "org.junit.jupiter:junit-jupiter"
 	testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 	testImplementation "com.tngtech.archunit:archunit-junit5:1.5.1"
+}
+
+// Local-file jar-in-jar for photon/ldlib2 (`include` rejects non-module file deps).
+// `from` copies the jar itself — zipTree would explode it; the nested jars land in
+// META-INF/jars where fabric resolves them as real mods (photon's own nested
+// kilagraph comes free with it).
+jar {
+	into('META-INF/jars') {
+		from 'libs/photon-fabric-1.21.1-2.2.7.jar', 'libs/ldlib2-fabric-1.21.1-2.7.jar'
+	}
 }
 
 tasks.withType(Test).configureEach {

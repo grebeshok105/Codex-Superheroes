@@ -4,6 +4,7 @@ import io.github.grebeshok105.codex.client.ClientAbilityCooldowns;
 import io.github.grebeshok105.codex.client.ClientFlightState;
 import io.github.grebeshok105.codex.client.ClientHeroState;
 import io.github.grebeshok105.codex.client.core.render.BeamRenderer;
+import io.github.grebeshok105.codex.client.core.vfx.PhotonFxClient;
 import io.github.grebeshok105.codex.client.core.vfx.VfxRuntime;
 import io.github.grebeshok105.codex.client.core.vfx.VfxSpawn;
 import io.github.grebeshok105.codex.client.core.vfx.params.VfxParamsLoader;
@@ -16,6 +17,7 @@ import io.github.grebeshok105.codex.core.net.HeroDataSyncS2CPayload;
 import io.github.grebeshok105.codex.core.net.ResourceUpdateS2CPayload;
 import io.github.grebeshok105.codex.core.net.ScorchMarksS2CPayload;
 import io.github.grebeshok105.codex.core.net.ScreenShakeS2CPayload;
+import io.github.grebeshok105.codex.core.net.PhotonFxS2CPayload;
 import io.github.grebeshok105.codex.core.net.VfxChannelS2CPayload;
 import io.github.grebeshok105.codex.core.net.VfxEventS2CPayload;
 import io.github.grebeshok105.codex.core.net.WallImpactDebrisS2CPayload;
@@ -100,6 +102,9 @@ public final class CoreClientReceivers {
 							payload.origin(), payload.target(), payload.scale(), payload.seed(),
 							VfxParamsLoader.get(payload.effect())));
 				}));
+
+		ClientPlayNetworking.registerGlobalReceiver(PhotonFxS2CPayload.TYPE, (payload, context) ->
+				context.client().execute(() -> PhotonFxClient.spawn(payload)));
 
 		ClientPlayNetworking.registerGlobalReceiver(VfxChannelS2CPayload.TYPE, (payload, context) ->
 				context.client().execute(() -> {
