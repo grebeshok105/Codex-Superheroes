@@ -82,6 +82,29 @@ public final class HeroLandingTracker {
 		double dz = currentZ - s.prevZ;
 		double horizontalSpeed = Math.sqrt(dx * dx + dz * dz);
 
+		// A tracked faller arriving onGround wins over the teleport heuristic below: under
+		// load, movement packets coalesce and the final landing update can itself carry a
+		// >8-block drop — treating it as a teleport would silently swallow real landings.
+		if (onGround && !s.wasOnGround && s.tracking) {
+			float fallDist = (float) Math.max(0.0, s.peakY - currentY);
+			if (fallDist >= MIN_FALL_DISTANCE && now - s.lastLandingTick > LANDING_COOLDOWN_TICKS) {
+				s.lastLandingTick = now;
+				double vSpeed = Math.abs(s.lastDeltaY);
+				double hSpeed = s.lastHorizontalSpeed;
+				LandingImpact impact = LandingImpact.compute(fallDist, vSpeed, hSpeed);
+				hero.onLanded(player, impact);
+			}
+			s.tracking = false;
+			s.peakY = currentY;
+			s.wasOnGround = true;
+			s.prevX = currentX;
+			s.prevY = currentY;
+			s.prevZ = currentZ;
+			s.lastDeltaY = -drop;
+			s.lastHorizontalSpeed = horizontalSpeed;
+			return;
+		}
+
 		if (drop > TELEPORT_DETECT_DROP || -drop > TELEPORT_DETECT_DROP) {
 			s.peakY = currentY;
 			s.tracking = !onGround;
