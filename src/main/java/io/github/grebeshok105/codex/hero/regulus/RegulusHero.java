@@ -1,6 +1,7 @@
 package io.github.grebeshok105.codex.hero.regulus;
 
 import io.github.grebeshok105.codex.ModId;
+import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusFx;
 import io.github.grebeshok105.codex.core.model.AbilityAvailability;
 import io.github.grebeshok105.codex.core.hero.AttributeModifierSet;
 import io.github.grebeshok105.codex.core.hero.Hero;
@@ -163,23 +164,29 @@ public final class RegulusHero implements Hero {
 			}
 			case NORMAL -> {
 				level.playSound(null, cx, cy, cz, SoundEvents.GENERIC_EXPLODE.value(), SoundSource.PLAYERS, 1.0f, 1.0f);
-				level.sendParticles(ParticleTypes.POOF, cx, cy + 0.1, cz, 24, radius * 0.4, 0.15, radius * 0.4, 0.06);
+				level.sendParticles(ParticleTypes.POOF, cx, cy + 0.1, cz, 14, radius * 0.4, 0.15, radius * 0.4, 0.06);
 				level.sendParticles(ParticleTypes.FLASH, cx, cy + 0.5, cz, 1, 0, 0, 0, 0);
+				RegulusFx.ringBurstAt(level, player.position());
 			}
 			case STRONG -> {
 				level.playSound(null, cx, cy, cz, SoundEvents.GENERIC_EXPLODE.value(), SoundSource.PLAYERS, 1.4f, 0.8f);
 				level.playSound(null, cx, cy, cz, SoundEvents.RAVAGER_ROAR, SoundSource.PLAYERS, 1.0f, 0.9f);
-				level.sendParticles(ParticleTypes.LARGE_SMOKE, cx, cy + 0.1, cz, 40, radius * 0.55, 0.25, radius * 0.55, 0.08);
-				level.sendParticles(ParticleTypes.POOF, cx, cy + 0.1, cz, 32, radius * 0.5, 0.2, radius * 0.5, 0.1);
+				level.sendParticles(ParticleTypes.LARGE_SMOKE, cx, cy + 0.1, cz, 16, radius * 0.55, 0.25, radius * 0.55, 0.08);
+				level.sendParticles(ParticleTypes.POOF, cx, cy + 0.1, cz, 14, radius * 0.5, 0.2, radius * 0.5, 0.1);
 				level.sendParticles(ParticleTypes.FLASH, cx, cy + 0.6, cz, 2, 0, 0, 0, 0);
+				RegulusFx.ringBurstAt(level, player.position());
+				RegulusFx.flashAt(level, player.position());
 			}
 			case EPIC -> {
 				level.playSound(null, cx, cy, cz, SoundEvents.GENERIC_EXPLODE.value(), SoundSource.PLAYERS, 1.8f, 0.6f);
 				level.playSound(null, cx, cy, cz, SoundEvents.RAVAGER_ROAR, SoundSource.PLAYERS, 1.6f, 0.75f);
 				level.playSound(null, cx, cy, cz, SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 1.2f, 0.95f);
-				level.sendParticles(ParticleTypes.LARGE_SMOKE, cx, cy + 0.1, cz, 60, radius * 0.6, 0.3, radius * 0.6, 0.1);
-				level.sendParticles(ParticleTypes.POOF, cx, cy + 0.1, cz, 48, radius * 0.55, 0.25, radius * 0.55, 0.12);
+				level.sendParticles(ParticleTypes.LARGE_SMOKE, cx, cy + 0.1, cz, 22, radius * 0.6, 0.3, radius * 0.6, 0.1);
+				level.sendParticles(ParticleTypes.POOF, cx, cy + 0.1, cz, 18, radius * 0.55, 0.25, radius * 0.55, 0.12);
 				level.sendParticles(ParticleTypes.FLASH, cx, cy + 0.7, cz, 3, 0, 0, 0, 0);
+				RegulusFx.ringBurstAt(level, player.position());
+				RegulusFx.flashAt(level, player.position());
+				RegulusFx.greedPulseAt(level, player.position());
 			}
 		}
 	}

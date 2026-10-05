@@ -4,7 +4,9 @@ import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.combat.TargetFilters;
 import io.github.grebeshok105.codex.core.ability.Ability;
 import io.github.grebeshok105.codex.hero.regulus.registry.RegulusDamageTypes;
+import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusFx;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.core.particles.ShriekParticleOption;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -80,9 +82,16 @@ public final class LionRoarAbility implements Ability {
 		Vec3 cloudOrigin = origin.add(forward.scale(2.0));
 		level.sendParticles(ParticleTypes.SONIC_BOOM,
 				cloudOrigin.x, cloudOrigin.y, cloudOrigin.z, 1, 0.0, 0.0, 0.0, 0.0);
-		level.sendParticles(ParticleTypes.CLOUD,
-				cloudOrigin.x, cloudOrigin.y, cloudOrigin.z, 60,
-				2.0, 1.0, 2.0, 0.2);
+		level.sendParticles(new ShriekParticleOption(0),
+				cloudOrigin.x, cloudOrigin.y, cloudOrigin.z, 1, 0.0, 0.0, 0.0, 0.0);
+		// Golden shockwave wake: a staggered cone of embers along the roar path.
+		for (double d = 2.0; d <= 7.0; d += 2.5) {
+			Vec3 p = cloudOrigin.add(forward.scale(d));
+			level.sendParticles(ParticleTypes.END_ROD,
+					p.x, p.y, p.z, 8, 0.35 + d * 0.06, 0.25, 0.35 + d * 0.06, 0.22);
+		}
+		RegulusFx.flash(player);
+		RegulusFx.ringBurst(player);
 		return true;
 	}
 }

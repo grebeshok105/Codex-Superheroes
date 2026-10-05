@@ -1,5 +1,6 @@
 package io.github.grebeshok105.codex.hero.regulus.runtime;
 
+import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
@@ -24,6 +25,8 @@ public final class GreedCageController {
 	private static final double RING_RADIUS = 2.6;
 	private static final int TRACK_DURATION_TICKS = 600;
 	private static final float FALL_DAMAGE_PER_BLOCK_PCT = 0.2f;
+	private static final DustParticleOptions GREED_MOTE =
+			new DustParticleOptions(new org.joml.Vector3f(0.9f, 0.2f, 0.2f), 0.8f);
 
 	private GreedCageController() {
 	}
@@ -60,6 +63,10 @@ public final class GreedCageController {
 			boolean expired = now >= cage.trackDeadline;
 			cage.tickCount++;
 
+			if (visible && cage.tickCount % 30 == 0) {
+				RegulusFx.greedPulseAt(level, cage.center);
+			}
+
 			for (UUID id : cage.targetIds) {
 				if (cage.damaged.contains(id)) continue;
 				Entity ent = level.getEntity(id);
@@ -90,6 +97,10 @@ public final class GreedCageController {
 								2, 0.05, 1.2, 0.05, 0.0);
 						level.sendParticles(ParticleTypes.END_ROD, sx, le.position().y + 1.0, sz,
 								1, 0.05, 1.2, 0.05, 0.0);
+						if ((s & 1) == 0) {
+							level.sendParticles(GREED_MOTE, sx, le.position().y + 1.0, sz,
+									1, 0.05, 1.2, 0.05, 0.0);
+						}
 					}
 				}
 

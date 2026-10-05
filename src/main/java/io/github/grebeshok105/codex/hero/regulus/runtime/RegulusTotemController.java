@@ -46,6 +46,8 @@ public final class RegulusTotemController {
 					player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 600, 1));
 					player.addEffect(new MobEffectInstance(MobEffects.ABSORPTION, 200, 1));
 					player.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, 600, 0));
+					RegulusFx.flash(player);
+					RegulusFx.ringBurst(player);
 					return false;
 				}
 				return true;
@@ -62,6 +64,8 @@ public final class RegulusTotemController {
 					60, 0.4, 0.6, 0.4, 0.3);
 			level.playSound(null, player.getX(), player.getY(), player.getZ(),
 					SoundEvents.TOTEM_USE, SoundSource.PLAYERS, 1f, 1f);
+			RegulusFx.flash(player);
+			RegulusFx.ringBurst(player);
 			return false;
 		});
 	}

@@ -2,6 +2,7 @@ package io.github.grebeshok105.codex.hero.regulus.ability;
 
 import io.github.grebeshok105.codex.ModId;
 import io.github.grebeshok105.codex.core.ability.Ability;
+import io.github.grebeshok105.codex.hero.regulus.runtime.RegulusFx;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -69,6 +70,8 @@ public final class LionHeartAbility implements Ability {
 		level.sendParticles(ParticleTypes.END_ROD,
 				player.getX(), player.getY() + 1.0, player.getZ(),
 				40, 1.5, 0.5, 1.5, 0.05);
+		RegulusFx.ringBurst(player);
+		RegulusFx.flash(player);
 		return true;
 	}
 
@@ -76,6 +79,9 @@ public final class LionHeartAbility implements Ability {
 	public void onTickActive(ServerPlayer player) {
 		if (player.tickCount % 20 == 0 && !player.hasEffect(MobEffects.DAMAGE_RESISTANCE)) {
 			player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, -1, 4, true, false, true));
+		}
+		if (player.tickCount % 22 == 0) {
+			RegulusFx.auraPulse(player);
 		}
 	}
 

@@ -4,11 +4,13 @@ public record LandingImpact(float fallDistance, double verticalSpeed, double hor
 	public enum Tier { WEAK, NORMAL, STRONG, EPIC }
 
 	public static LandingImpact compute(float fallDistance, double verticalSpeed, double horizontalSpeed) {
-		float heightFactor = clamp01((fallDistance - 10.0f) / 50.0f);
-		float vSpeedFactor = (float) clamp01((Math.abs(verticalSpeed) - 0.6) / 2.4);
+		float heightFactor = clamp01((fallDistance - 8.0f) / 40.0f);
+		float vSpeedFactor = (float) clamp01((Math.abs(verticalSpeed) - 0.6) / 1.1);
 		float hSpeedFactor = (float) clamp01((horizontalSpeed - 0.4) / 1.6);
 		float speedFactor = Math.max(vSpeedFactor, hSpeedFactor * 0.85f);
-		float intensity = clamp01(0.55f * heightFactor + 0.45f * speedFactor);
+		// Height carries the tier — a gravity fall tops out near 1.7 blocks/tick, so
+		// speed alone can never reach EPIC; weight the drop distance accordingly.
+		float intensity = clamp01(0.80f * heightFactor + 0.20f * speedFactor);
 		Tier tier;
 		if (intensity < 0.20f) {
 			tier = Tier.WEAK;

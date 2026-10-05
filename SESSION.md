@@ -1,5 +1,19 @@
 # SESSION.md
 
+## Completed this session (Regulus VFX rework via Photon/VFXLab)
+
+- Full VFX rework of hero Regulus on `devin/1759699200-regulus-vfx-rework`, first end-to-end exercise of the `Photon 1.21.1 + VFXLab + JEV` pipeline on a real hero; `mod_version` 4.7.0 → 4.8.0.
+- **Photon seam (server-authoritative):** `PhotonFx.follow(entity, fx)` / `PhotonFx.at(level, pos, fx)` (`core/net`) → `PhotonFxS2CPayload` → `CoreClientReceivers` → `client/core/vfx/PhotonFxClient` (FXHelper + EntityEffectExecutor/BlockEffectExecutor). Deps: photon/ldlib2/kilagraph local intermediary-mapped jars under `libs/` (from grebeshok105/Photon 1.21.1-fabric-2.2), architectury + forge-config-api-port via maven, fabric-language-kotlin runtime for ldlib2; `include` jar-in-jar. New mavens: architectury.dev, fabricmc.net, jitpack.io (taffy/yoga/night-config on the dev classpath — same versions as nested).
+- **Authored .fx** (`assets/vfxlab/fx/`, produced via VFXLab fx_clone/fx_patch — no hand-editing): `solar_flash` (non-looping), `solar_aura_ring` (feet aura), `sun_ring_burst` (ground ring burst), `greed_ring` (crimson recolor). Regulus uses 4 Photon effects layered on the existing vanilla particle choreography.
+- **RegulusFx** (`hero/regulus/runtime`): named anchors FEET(-1.15), CROWN(+0.55), GROUND_RING(+0.25), GROUND_FLASH(+0.6); helpers ringBurstAt/flashAt/greedPulseAt.
+- **Per-ability:** LionHeart Z — solar crown burst + aura ring on activate; LionRoar V — crown flash + soul-flame accents; ManiaOfGreed X — greed_ring on drained marks; GreedsEmbrace C — ring at cage anchor + storm accents; totem revive (`RegulusTotemController`) — flash + ring at revive point; landings (`RegulusHero.onLanded`) — ring burst NORMAL+, flash STRONG+, greed pulse EPIC.
+- **LandingImpact retune:** `intensity = 0.80*heightFactor + 0.20*speedFactor`, `heightFactor=(fall-8)/40`, `vSpeedFactor=(|vSpd|-0.6)/1.1`, `hSpeedFactor=(hSpd-0.4)/1.6` — verified live: WEAK 0.056@10.8m, NORMAL 0.215@18.8m, STRONG 0.50-0.73@33-35m, EPIC >=0.80@~60m.
+- **HeroLandingTracker fix (real bug):** the >8-block teleport heuristic ran BEFORE the landing check and could swallow the landing packet itself under packet coalescing (observed ~50% of tp'd drops AND a real 60m super-jump landing); landing check moved ahead, guarded `onGround && !wasOnGround && tracking`. Mid-fall coalescing still resets peakY/speeds — known telemetry loss, noted.
+- Vanilla landing smoke trimmed ~3x so the photon ring carries the impact frame.
+- Verified in-game by direct drive (xdotool + ffmpeg x11grab): per-ability third-person takes, consecutive uses, totem revive, weak→epic landing ladder; HUD F1 + panel `h` hidden for captures. LAND-DBG instrumentation removed before commit.
+- Recordings: `/home/ubuntu/vfx_before/` (13 segs, BEFORE_regulus_vfx.mp4 304s), `/home/ubuntu/vfx_after/` (12 segs + AFTER_regulus_vfx.mp4 143s + OLD_NEW_compare.mp4 202s side-by-side + frames/).
+- Known bug for report: blood-rain/glyph overlay persisted after death+respawn despite cleared server attachment (stale client madness state; relog fixes).
+
 ## Completed this session (Homelander EMF plan — Stage 15, integration pass)
 
 - Final stage of `docs/superpowers/plans/2026-09-30-homelander-emf-presentation.md` on `devin/1790808750-homelander-integration-s15` (union base `abbbb98b`): multiplayer/perf/integration pass over stages 1–14, `mod_version` 4.6.0 → 4.7.0.
